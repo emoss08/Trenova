@@ -488,6 +488,8 @@ var RateQuoteSpec TypeSpec
 
 var RateZoneSpec TypeSpec
 
+var RateZoneMemberSpec TypeSpec
+
 var RecurringDeductionSpec TypeSpec
 
 var RecurringEarningSpec TypeSpec
@@ -517,6 +519,8 @@ var RoutingGuideEntrySpec TypeSpec
 var SCIMDirectorySpec TypeSpec
 
 var SCIMGroupRoleMappingSpec TypeSpec
+
+var SequenceConfigSpec TypeSpec
 
 var ServiceFailureSpec TypeSpec
 
@@ -22594,6 +22598,10 @@ func init() {
 				Column: "description",
 			},
 			{
+				Name:   "kind",
+				Column: "kind",
+			},
+			{
 				Name:   "status",
 				Column: "status",
 			},
@@ -22608,6 +22616,46 @@ func init() {
 			{
 				Name:   "updatedAt",
 				Column: "updated_at",
+			},
+			{
+				Name: "members",
+				Relation: &RelationSpec{
+					Target: &RateZoneMemberSpec,
+				},
+			},
+		},
+	}
+
+	RateZoneMemberSpec = TypeSpec{
+		TypeName: "RateZoneMember",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "rateZoneId",
+				Column: "rate_zone_id",
+			},
+			{
+				Name:   "scopeType",
+				Column: "scope_type",
+			},
+			{
+				Name:   "scopeValue",
+				Column: "scope_value",
+			},
+			{
+				Name:   "city",
+				Column: "city",
+			},
+			{
+				Name:   "matchKey",
+				Column: "match_key",
 			},
 		},
 	}
@@ -23746,6 +23794,112 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &RoleSpec,
 				},
+			},
+		},
+	}
+
+	SequenceConfigSpec = TypeSpec{
+		TypeName: "SequenceConfig",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "sequenceType",
+				Column: "sequence_type",
+			},
+			{
+				Name:   "prefix",
+				Column: "prefix",
+			},
+			{
+				Name:   "includeYear",
+				Column: "include_year",
+			},
+			{
+				Name:   "yearDigits",
+				Column: "year_digits",
+			},
+			{
+				Name:   "includeMonth",
+				Column: "include_month",
+			},
+			{
+				Name:   "includeWeekNumber",
+				Column: "include_week_number",
+			},
+			{
+				Name:   "includeDay",
+				Column: "include_day",
+			},
+			{
+				Name:   "sequenceDigits",
+				Column: "sequence_digits",
+			},
+			{
+				Name:   "includeLocationCode",
+				Column: "include_location_code",
+			},
+			{
+				Name:   "includeRandomDigits",
+				Column: "include_random_digits",
+			},
+			{
+				Name:   "randomDigitsCount",
+				Column: "random_digits_count",
+			},
+			{
+				Name:   "includeCheckDigit",
+				Column: "include_check_digit",
+			},
+			{
+				Name:   "includeBusinessUnitCode",
+				Column: "include_business_unit_code",
+			},
+			{
+				Name:   "useSeparators",
+				Column: "use_separators",
+			},
+			{
+				Name:   "separatorChar",
+				Column: "separator_char",
+			},
+			{
+				Name:   "allowCustomFormat",
+				Column: "allow_custom_format",
+			},
+			{
+				Name:   "customFormat",
+				Column: "custom_format",
+			},
+			{
+				Name:   "locationCodeStrategy",
+				Column: "location_code_strategy",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}

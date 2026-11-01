@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { apiService } from "@/services/api";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { ShipmentTypeRow } from "@/lib/graphql/shipment-type-table";
@@ -34,7 +35,9 @@ export function ShipmentTypePanel({
         onOpenChange={onOpenChange}
         row={row}
         form={form}
-        url="/shipment-types/"
+        mutationFn={(values, currentRow) =>
+          apiService.shipmentTypeService.update(currentRow.id, values)
+        }
         queryKey="shipment-type-list"
         title={t("Shipment type")}
         fieldKey="code"
@@ -48,7 +51,7 @@ export function ShipmentTypePanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/shipment-types/"
+      mutationFn={(values) => apiService.shipmentTypeService.create(values)}
       queryKey="shipment-type-list"
       title={t("Shipment type")}
       formComponent={<ShipmentTypeForm />}

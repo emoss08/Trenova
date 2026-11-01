@@ -54,3 +54,11 @@ extend type Query {
   storedMileages(input: DataTableConnectionInput!): StoredMileageConnection!
   storedMileage(id: ID!): StoredMileage
 }
+
+extend type Mutation {
+  """
+  Retires a stored mileage so the next rating asks the routing provider again.
+  Needs delete on stored mileages.
+  """
+  deactivateStoredMileage(id: ID!): Boolean!
+}

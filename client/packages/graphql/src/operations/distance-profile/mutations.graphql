@@ -1,0 +1,25 @@
+mutation CreateDistanceProfile($input: DistanceProfileInput!) {
+  createDistanceProfile(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateDistanceProfile($id: ID!, $input: DistanceProfileInput!) {
+  updateDistanceProfile(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation DeleteDistanceProfile($id: ID!) {
+  deleteDistanceProfile(id: $id)
+}
+
+mutation SetDefaultDistanceProfile($id: ID!) {
+  setDefaultDistanceProfile(id: $id) {
+    id
+    isDefault
+    version
+  }
+}

@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -100,6 +101,9 @@ func (r *MutationResolver) BulkUpdateTrailerStatus(ctx context.Context, input gq
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceTrailer, permission.OpUpdate)
 	if err != nil {
 		return nil, err
+	}
+	if authCtx.IsAPIKey() {
+		return nil, errortypes.NewAuthorizationError("API keys cannot bulk update trailers")
 	}
 
 	trailerIDs, err := gqlid.ParseIDs(input.TrailerIds)

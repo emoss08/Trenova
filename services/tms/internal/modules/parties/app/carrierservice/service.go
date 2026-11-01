@@ -92,13 +92,6 @@ func (s *Service) updateAndQueueSync(
 	return updated, nil
 }
 
-func (s *Service) List(
-	ctx context.Context,
-	req *carrierports.ListCarrierRequest,
-) (*pagination.ListResult[*carrier.Carrier], error) {
-	return s.repo.List(ctx, req)
-}
-
 func (s *Service) ListConnection(
 	ctx context.Context,
 	req *carrierports.ListCarrierConnectionRequest,

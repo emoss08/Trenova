@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { apiService } from "@/services/api";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { CustomFieldDefinitionRow } from "@/lib/graphql/custom-field-definition-table";
@@ -43,7 +44,9 @@ export function CustomFieldDefinitionPanel({
         onOpenChange={onOpenChange}
         row={row}
         form={form}
-        url="/custom-fields/definitions/"
+        mutationFn={(values, currentRow) =>
+          apiService.customFieldService.update(currentRow.id, values)
+        }
         queryKey="custom-field-definition-list"
         title={t("Custom field definition")}
         fieldKey="label"
@@ -57,7 +60,7 @@ export function CustomFieldDefinitionPanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/custom-fields/definitions/"
+      mutationFn={(values) => apiService.customFieldService.create(values)}
       queryKey="custom-field-definition-list"
       title={t("Custom field definition")}
       formComponent={<CustomFieldDefinitionForm />}

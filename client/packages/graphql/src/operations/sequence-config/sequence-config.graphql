@@ -1,0 +1,53 @@
+fragment SequenceConfigFields on SequenceConfig {
+  id
+  organizationId
+  businessUnitId
+  sequenceType
+  prefix
+  includeYear
+  yearDigits
+  includeMonth
+  includeWeekNumber
+  includeDay
+  sequenceDigits
+  includeLocationCode
+  includeRandomDigits
+  randomDigitsCount
+  includeCheckDigit
+  includeBusinessUnitCode
+  useSeparators
+  separatorChar
+  allowCustomFormat
+  customFormat
+  locationCodeStrategy {
+    components
+    componentWidth
+    sequenceDigits
+    separator
+    casing
+    fallbackPrefix
+  }
+  version
+  createdAt
+  updatedAt
+}
+
+fragment SequenceConfigDocumentFields on SequenceConfigDocument {
+  organizationId
+  businessUnitId
+  configs {
+    ...SequenceConfigFields
+  }
+}
+
+query SequenceConfigs {
+  sequenceConfigs {
+    ...SequenceConfigDocumentFields
+  }
+}
+
+mutation UpdateSequenceConfigs($input: SequenceConfigDocumentInput!) {
+  updateSequenceConfigs(input: $input) {
+    ...SequenceConfigDocumentFields
+  }
+}

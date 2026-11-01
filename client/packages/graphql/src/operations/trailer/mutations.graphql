@@ -1,0 +1,35 @@
+mutation CreateTrailer($input: TrailerInput!) {
+  createTrailer(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateTrailer($id: ID!, $input: TrailerInput!) {
+  updateTrailer(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation PatchTrailer($id: ID!, $input: TrailerPatchInput!) {
+  patchTrailer(id: $id, input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation BulkUpdateTrailerStatus($input: BulkUpdateTrailerStatusInput!) {
+  bulkUpdateTrailerStatus(input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation LocateTrailer($input: LocateTrailerInput!) {
+  locateTrailer(input: $input) {
+    id
+  }
+}

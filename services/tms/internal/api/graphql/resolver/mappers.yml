@@ -26,6 +26,16 @@ types:
       status: domaintypes.EquipmentStatusAvailable
   TableConfiguration:
     skip: true
+  CarrierContact:
+    skip: true
+  CarrierInsurancePolicy:
+    skip: true
+  DistanceOverrideStop:
+    skip: true
+  SequenceConfig:
+    skip: true
+  WorkerProfile:
+    skip: true
   AgentControl:
     skip: true
   User:

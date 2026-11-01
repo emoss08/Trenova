@@ -9,12 +9,15 @@ import (
 	"context"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -70,4 +73,75 @@ func (r *QueryResolver) Carrier(ctx context.Context, id string) (*carrier.Carrie
 		carrierID,
 		resolvercore.TenantInfo(authCtx),
 	))
+}
+
+func (r *MutationResolver) CreateCarrier(ctx context.Context, input gqlmodel.CarrierInput) (*carrier.Carrier, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrier, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := carrierFromInput(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.CarrierService.Create(ctx, entity, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) UpdateCarrier(ctx context.Context, id string, input gqlmodel.CarrierInput) (*carrier.Carrier, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrier, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.existingCarrier(ctx, id, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = applyCarrierInput(existing, &input); err != nil {
+		return nil, err
+	}
+
+	return r.CarrierService.Update(ctx, existing, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) PatchCarrier(ctx context.Context, id string, input gqlmodel.CarrierPatchInput) (*carrier.Carrier, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrier, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.existingCarrier(ctx, id, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = applyCarrierPatch(existing, &input); err != nil {
+		return nil, err
+	}
+
+	return r.CarrierService.Update(ctx, existing, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) BulkUpdateCarrierStatus(ctx context.Context, input gqlmodel.BulkUpdateCarrierStatusInput) ([]*carrier.Carrier, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrier, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	if authCtx.IsAPIKey() {
+		return nil, errortypes.NewAuthorizationError("API keys cannot bulk update carrier status")
+	}
+
+	carrierIDs, err := gqlid.ParseIDs(input.CarrierIds)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.CarrierService.BulkUpdateStatus(ctx, &carrierports.BulkUpdateCarrierStatusRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		CarrierIDs: carrierIDs,
+		Status:     input.Status,
+	})
 }

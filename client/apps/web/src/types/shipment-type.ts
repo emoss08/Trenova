@@ -24,9 +24,3 @@ export const bulkUpdateShipmentTypeStatusRequestSchema = z.object({
 export type BulkUpdateShipmentTypeStatusRequest = z.infer<
   typeof bulkUpdateShipmentTypeStatusRequestSchema
 >;
-
-export const bulkUpdateShipmentTypeStatusResponseSchema = z.array(shipmentTypeSchema);
-
-export type BulkUpdateShipmentTypeStatusResponse = z.infer<
-  typeof bulkUpdateShipmentTypeStatusResponseSchema
->;

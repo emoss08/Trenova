@@ -30,3 +30,36 @@ extend type Query {
   serviceTypes(input: DataTableConnectionInput!): ServiceTypeConnection!
   serviceType(id: ID!): ServiceType
 }
+
+input ServiceTypeInput {
+  status: EntityStatus!
+  code: String!
+  description: String
+  color: String
+  version: Int
+}
+
+input ServiceTypePatchInput {
+  "Omit to leave unchanged; null is rejected."
+  status: EntityStatus @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  code: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  description: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  color: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  version: Int @goField(omittable: true)
+}
+
+input BulkUpdateServiceTypeStatusInput {
+  serviceTypeIds: [ID!]!
+  status: EntityStatus!
+}
+
+extend type Mutation {
+  createServiceType(input: ServiceTypeInput!): ServiceType!
+  updateServiceType(id: ID!, input: ServiceTypeInput!): ServiceType!
+  patchServiceType(id: ID!, input: ServiceTypePatchInput!): ServiceType!
+  bulkUpdateServiceTypeStatus(input: BulkUpdateServiceTypeStatusInput!): [ServiceType!]!
+}

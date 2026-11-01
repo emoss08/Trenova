@@ -8,12 +8,15 @@ package shipmenttyperesolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/shipmenttypeports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -57,5 +60,67 @@ func (r *QueryResolver) ShipmentType(ctx context.Context, id string) (*shipmentt
 	return r.ShipmentTypeService.Get(ctx, shipmenttypeports.GetShipmentTypeByIDRequest{
 		ID:         shipmentTypeID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+}
+
+func (r *MutationResolver) CreateShipmentType(ctx context.Context, input gqlmodel.ShipmentTypeInput) (*shipmenttype.ShipmentType, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipmentType, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ShipmentTypeService.Create(ctx, shipmentTypeFromInput(&input, authCtx), actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) UpdateShipmentType(ctx context.Context, id string, input gqlmodel.ShipmentTypeInput) (*shipmenttype.ShipmentType, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipmentType, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.existingShipmentType(ctx, id, authCtx)
+	if err != nil {
+		return nil, err
+	}
+	applyShipmentTypeInput(existing, &input)
+
+	return r.ShipmentTypeService.Update(ctx, existing, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) PatchShipmentType(ctx context.Context, id string, input gqlmodel.ShipmentTypePatchInput) (*shipmenttype.ShipmentType, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipmentType, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.existingShipmentType(ctx, id, authCtx)
+	if err != nil {
+		return nil, err
+	}
+	if err = applyShipmentTypePatch(existing, &input); err != nil {
+		return nil, err
+	}
+
+	return r.ShipmentTypeService.Update(ctx, existing, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) BulkUpdateShipmentTypeStatus(ctx context.Context, input gqlmodel.BulkUpdateShipmentTypeStatusInput) ([]*shipmenttype.ShipmentType, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipmentType, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	if authCtx.IsAPIKey() {
+		return nil, errortypes.NewAuthorizationError("API keys cannot bulk update shipment types")
+	}
+
+	ids, err := gqlid.ParseIDs(input.ShipmentTypeIds)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ShipmentTypeService.BulkUpdateStatus(ctx, &shipmenttypeports.BulkUpdateShipmentTypeStatusRequest{
+		TenantInfo:      resolvercore.TenantInfo(authCtx),
+		ShipmentTypeIDs: ids,
+		Status:          input.Status,
 	})
 }

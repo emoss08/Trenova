@@ -1,0 +1,32 @@
+fragment RateZoneRecordFields on RateZone {
+  ...RateZoneRowFields
+  kind
+  members {
+    id
+    rateZoneId
+    scopeType
+    scopeValue
+    city
+    matchKey
+  }
+}
+
+query RateZoneRecord($id: ID!) {
+  rateZone(id: $id) {
+    ...RateZoneRecordFields
+  }
+}
+
+mutation CreateRateZone($input: RateZoneInput!) {
+  createRateZone(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateRateZone($id: ID!, $input: RateZoneInput!) {
+  updateRateZone(id: $id, input: $input) {
+    id
+    version
+  }
+}

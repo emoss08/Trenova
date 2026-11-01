@@ -12,4 +12,6 @@ type Deps struct {
 	ServiceFailureReasonCodeSvc servicefailureports.ServiceFailureReasonCodeService
 }
 
+type MutationResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }

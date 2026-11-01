@@ -696,13 +696,13 @@ writes:
     reason: "Scan profiles are presets an administrator maintains for the organization's scanners."
 
   # carrier
-  "PATCH /api/v1/carriers/:carrierID/":
-    tools: [carrier_update]
-  "POST /api/v1/carriers/":
-    tools: [carrier_create]
-  "POST /api/v1/carriers/bulk-update-status/":
+  "mutation bulkUpdateCarrierStatus":
     tools: [carrier_set_status]
-  "PUT /api/v1/carriers/:carrierID/":
+  "mutation createCarrier":
+    tools: [carrier_create]
+  "mutation patchCarrier":
+    tools: [carrier_update]
+  "mutation updateCarrier":
     tools: [carrier_update]
 
   # carriercapacity
@@ -869,16 +869,16 @@ writes:
     tools: [receivable_unapply_credit_memo]
 
   # customfield
-  "DELETE /api/v1/custom-fields/definitions/:definitionID/":
+  "mutation createCustomFieldDefinition":
     exempt: configuration
     reason: "Custom field definitions change the shape of records for everyone; an administrator owns them."
-  "PATCH /api/v1/custom-fields/definitions/:definitionID/":
+  "mutation deleteCustomFieldDefinition":
     exempt: configuration
     reason: "Custom field definitions change the shape of records for everyone; an administrator owns them."
-  "POST /api/v1/custom-fields/definitions/":
+  "mutation patchCustomFieldDefinition":
     exempt: configuration
     reason: "Custom field definitions change the shape of records for everyone; an administrator owns them."
-  "PUT /api/v1/custom-fields/definitions/:definitionID/":
+  "mutation updateCustomFieldDefinition":
     exempt: configuration
     reason: "Custom field definitions change the shape of records for everyone; an administrator owns them."
 
@@ -961,33 +961,27 @@ writes:
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
 
   # distanceoverride
-  "DELETE /api/v1/distance-overrides/:distanceOverrideID/":
+  "mutation createDistanceOverride":
     exempt: configuration
     reason: "A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it."
-  "PATCH /api/v1/distance-overrides/:distanceOverrideID/":
+  "mutation deleteDistanceOverride":
     exempt: configuration
     reason: "A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it."
-  "POST /api/v1/distance-overrides/":
-    exempt: configuration
-    reason: "A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it."
-  "PUT /api/v1/distance-overrides/:distanceOverrideID/":
+  "mutation updateDistanceOverride":
     exempt: configuration
     reason: "A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it."
 
   # distanceprofile
-  "DELETE /api/v1/distance-profiles/:distanceProfileID/":
+  "mutation createDistanceProfile":
     exempt: configuration
     reason: "Routing profiles decide how every distance is computed; an administrator maintains them."
-  "PATCH /api/v1/distance-profiles/:distanceProfileID/":
+  "mutation deleteDistanceProfile":
     exempt: configuration
     reason: "Routing profiles decide how every distance is computed; an administrator maintains them."
-  "POST /api/v1/distance-profiles/":
+  "mutation setDefaultDistanceProfile":
     exempt: configuration
     reason: "Routing profiles decide how every distance is computed; an administrator maintains them."
-  "POST /api/v1/distance-profiles/:distanceProfileID/set-default/":
-    exempt: configuration
-    reason: "Routing profiles decide how every distance is computed; an administrator maintains them."
-  "PUT /api/v1/distance-profiles/:distanceProfileID/":
+  "mutation updateDistanceProfile":
     exempt: configuration
     reason: "Routing profiles decide how every distance is computed; an administrator maintains them."
 
@@ -2159,12 +2153,14 @@ writes:
     tools: [receivable_assess_late_charges]
 
   # location
-  "PATCH /api/v1/locations/:locationID/":
-    tools: [location_update]
-  "POST /api/v1/locations/":
-    tools: [location_create]
-  "POST /api/v1/locations/bulk-update-status/":
+  "mutation bulkUpdateLocationStatus":
     tools: [location_set_status]
+  "mutation createLocation":
+    tools: [location_create]
+  "mutation patchLocation":
+    tools: [location_update]
+  "mutation updateLocation":
+    tools: [location_update]
 
   # locationcategory
   "mutation createLocationCategory":
@@ -2456,10 +2452,10 @@ writes:
     tools: [rate_run_simulation]
 
   # ratezone
-  "POST /api/v1/rate-zones/":
+  "mutation createRateZone":
     exempt: configuration
     reason: "Rate zones are the geography agreements price against, which an administrator defines once for every agreement."
-  "PUT /api/v1/rate-zones/:rateZoneID/":
+  "mutation updateRateZone":
     exempt: configuration
     reason: "Rate zones are the geography agreements price against, which an administrator defines once for every agreement."
 
@@ -2606,7 +2602,7 @@ writes:
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
 
   # sequenceconfig
-  "PUT /api/v1/sequence-configs/":
+  "mutation updateSequenceConfigs":
     exempt: configuration
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
 
@@ -2630,33 +2626,30 @@ writes:
     tools: [exception_evaluate_service_failures]
 
   # servicefailurereasoncode
-  "POST /api/v1/service-failure-reason-codes/":
+  "mutation activateServiceFailureReasonCode":
     exempt: configuration
     reason: "A lookup list every record points at, maintained by an administrator."
-  "POST /api/v1/service-failure-reason-codes/:reasonCodeID/activate/":
+  "mutation archiveServiceFailureReasonCode":
     exempt: configuration
     reason: "A lookup list every record points at, maintained by an administrator."
-  "POST /api/v1/service-failure-reason-codes/:reasonCodeID/archive/":
+  "mutation createServiceFailureReasonCode":
     exempt: configuration
     reason: "A lookup list every record points at, maintained by an administrator."
-  "POST /api/v1/service-failure-reason-codes/reorder/":
-    exempt: configuration
-    reason: "A lookup list every record points at, maintained by an administrator."
-  "PUT /api/v1/service-failure-reason-codes/:reasonCodeID/":
+  "mutation updateServiceFailureReasonCode":
     exempt: configuration
     reason: "A lookup list every record points at, maintained by an administrator."
 
   # servicetype
-  "PATCH /api/v1/service-types/:serviceTypeID/":
+  "mutation bulkUpdateServiceTypeStatus":
     exempt: configuration
     reason: "A lookup list every record points at, maintained by an administrator."
-  "POST /api/v1/service-types/":
+  "mutation createServiceType":
     exempt: configuration
     reason: "A lookup list every record points at, maintained by an administrator."
-  "POST /api/v1/service-types/bulk-update-status/":
+  "mutation patchServiceType":
     exempt: configuration
     reason: "A lookup list every record points at, maintained by an administrator."
-  "PUT /api/v1/service-types/:serviceTypeID/":
+  "mutation updateServiceType":
     exempt: configuration
     reason: "A lookup list every record points at, maintained by an administrator."
 
@@ -2746,16 +2739,16 @@ writes:
     tools: [dispatch_record_stop_actual]
 
   # shipmenttype
-  "PATCH /api/v1/shipment-types/:shipmentTypeID/":
+  "mutation bulkUpdateShipmentTypeStatus":
     exempt: configuration
     reason: "A lookup list every record points at, maintained by an administrator."
-  "POST /api/v1/shipment-types/":
+  "mutation createShipmentType":
     exempt: configuration
     reason: "A lookup list every record points at, maintained by an administrator."
-  "POST /api/v1/shipment-types/bulk-update-status/":
+  "mutation patchShipmentType":
     exempt: configuration
     reason: "A lookup list every record points at, maintained by an administrator."
-  "PUT /api/v1/shipment-types/:shipmentTypeID/":
+  "mutation updateShipmentType":
     exempt: configuration
     reason: "A lookup list every record points at, maintained by an administrator."
 
@@ -2765,7 +2758,7 @@ writes:
     reason: "A person's own interface state; it changes nothing anyone else sees."
 
   # storedmileage
-  "DELETE /api/v1/stored-mileages/:storedMileageID/":
+  "mutation deactivateStoredMileage":
     exempt: infrastructure
     reason: "A stored mileage is a cached routing answer; clearing one only makes the next rating ask the routing provider again."
 
@@ -3044,9 +3037,6 @@ writes:
     tools: [exception_wake]
 
   # worker
-  "POST /api/v1/workers/":
-    exempt: attestation
-    reason: "Hiring a worker is an employment decision with its eligibility and qualification checks; a person makes it."
   "mutation approveWorkerPTO":
     tools: [worker_approve_pto]
   "mutation bulkWorkerPTOAction":
@@ -3054,6 +3044,9 @@ writes:
     reason: "Approves, rejects or cancels several requests at once; worker_approve_pto, worker_reject_pto and worker_cancel_pto each do one."
   "mutation cancelWorkerPTO":
     tools: [worker_cancel_pto]
+  "mutation createWorker":
+    exempt: attestation
+    reason: "Hiring a worker is an employment decision with its eligibility and qualification checks; a person makes it."
   "mutation createWorkerPTO":
     tools: [worker_request_pto]
   "mutation patchWorker":
@@ -3061,6 +3054,9 @@ writes:
     reason: "Changes a worker's employment status, classification or personal record, which are HR decisions a person makes and signs."
   "mutation rejectWorkerPTO":
     tools: [worker_reject_pto]
+  "mutation updateWorker":
+    exempt: attestation
+    reason: "Changes a worker's employment status, classification or personal record, which are HR decisions a person makes and signs."
   "mutation updateWorkerPTO":
     tools: [worker_update_pto]
 

@@ -323,6 +323,59 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createDistanceProfile",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "DistanceProfile",
+				Args:       field_Mutation_createDistanceProfile_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateDistanceProfile(ctx, fc.Args["input"].(gqlmodel.DistanceProfileInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNDistanceProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋdistanceprofileᚐDistanceProfile),
+			},
+			{
+				Name:       "updateDistanceProfile",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "DistanceProfile",
+				Args:       field_Mutation_updateDistanceProfile_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateDistanceProfile(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.DistanceProfileInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNDistanceProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋdistanceprofileᚐDistanceProfile),
+			},
+			{
+				Name:       "deleteDistanceProfile",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild2,
+				Args:       field_Mutation_deleteDistanceProfile_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteDistanceProfile(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:       "setDefaultDistanceProfile",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "DistanceProfile",
+				Args:       field_Mutation_setDefaultDistanceProfile_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetDefaultDistanceProfile(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNDistanceProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋdistanceprofileᚐDistanceProfile),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "distanceProfiles",
@@ -353,14 +406,25 @@ var Shard = &gqlexec.Shard{
 			},
 		}},
 	},
+	Inputs: []gqlexec.Input{
+		{Name: "DistanceProfileInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputDistanceProfileInput)},
+	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "DistanceProfile", Check: func(r any) bool { _, ok := r.(resolverDistanceProfile); return ok }},
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
 }
 
 type resolverDistanceProfile interface {
 	Provider(ctx context.Context, obj *distanceprofile.DistanceProfile) (string, error)
+}
+
+type resolverMutation interface {
+	CreateDistanceProfile(ctx context.Context, input gqlmodel.DistanceProfileInput) (*distanceprofile.DistanceProfile, error)
+	UpdateDistanceProfile(ctx context.Context, id string, input gqlmodel.DistanceProfileInput) (*distanceprofile.DistanceProfile, error)
+	DeleteDistanceProfile(ctx context.Context, id string) (bool, error)
+	SetDefaultDistanceProfile(ctx context.Context, id string) (*distanceprofile.DistanceProfile, error)
 }
 
 type resolverQuery interface {
@@ -375,6 +439,66 @@ var (
 	errNoChild3 = errors.New("field of type Int does not have child fields")
 	errNoChild4 = errors.New("field of type Timestamp does not have child fields")
 )
+
+func field_Mutation_createDistanceProfile_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DistanceProfileInput, error) {
+			return unmarshalNDistanceProfileInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDistanceProfileInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateDistanceProfile_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DistanceProfileInput, error) {
+			return unmarshalNDistanceProfileInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDistanceProfileInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_deleteDistanceProfile_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Mutation_setDefaultDistanceProfile_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
 
 func field_Query_distanceProfiles_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -402,8 +526,148 @@ func field_Query_distanceProfile_args(ctx context.Context, ec *gqlexec.Exec, raw
 	return args, nil
 }
 
+func unmarshalInputDistanceProfileInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DistanceProfileInput, error) {
+	var it gqlmodel.DistanceProfileInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "description", "status", "isDefault", "provider", "dataVersion", "region", "routingType", "distanceUnits", "locationGranularity", "profileName", "highwayOnly", "tollRoads", "bordersOpen", "includeTollData", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "isDefault":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isDefault"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsDefault = data
+		case "provider":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Provider = data
+		case "dataVersion":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataVersion"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataVersion = data
+		case "region":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("region"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Region = data
+		case "routingType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("routingType"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RoutingType = data
+		case "distanceUnits":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("distanceUnits"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DistanceUnits = data
+		case "locationGranularity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locationGranularity"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.LocationGranularity = data
+		case "profileName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("profileName"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ProfileName = data
+		case "highwayOnly":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("highwayOnly"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HighwayOnly = data
+		case "tollRoads":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tollRoads"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.TollRoads = data
+		case "bordersOpen":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bordersOpen"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.BordersOpen = data
+		case "includeTollData":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("includeTollData"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.IncludeTollData = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
+}
+
+func unmarshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool, error) {
+	res, err := graphql.UnmarshalBoolean(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
@@ -411,9 +675,35 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNDistanceProfileInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDistanceProfileInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DistanceProfileInput, error) {
+	res, err := unmarshalInputDistanceProfileInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {

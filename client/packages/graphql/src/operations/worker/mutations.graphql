@@ -1,0 +1,13 @@
+mutation CreateWorker($input: WorkerInput!) {
+  createWorker(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateWorker($id: ID!, $input: WorkerInput!) {
+  updateWorker(id: $id, input: $input) {
+    id
+    version
+  }
+}

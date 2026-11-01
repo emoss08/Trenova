@@ -1,0 +1,32 @@
+mutation CreateServiceType($input: ServiceTypeInput!) {
+  createServiceType(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateServiceType($id: ID!, $input: ServiceTypeInput!) {
+  updateServiceType(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation PatchServiceType($id: ID!, $input: ServiceTypePatchInput!) {
+  patchServiceType(id: $id, input: $input) {
+    id
+    status
+    code
+    description
+    color
+    version
+  }
+}
+
+mutation BulkUpdateServiceTypeStatus($input: BulkUpdateServiceTypeStatusInput!) {
+  bulkUpdateServiceTypeStatus(input: $input) {
+    id
+    status
+    version
+  }
+}

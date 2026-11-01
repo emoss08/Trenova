@@ -1,6 +1,13 @@
 import { z } from "zod";
 import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import {
+  CreateRateZoneDocument,
+  RateZoneRecordDocument,
+  UpdateRateZoneDocument,
+  type RateZoneInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   rateAgreementLanePageSchema,
   rateAgreementLaneSummarySchema,
@@ -210,23 +217,57 @@ export class RateAgreementService {
   }
 }
 
+export function toRateZoneInput(data: RateZone): RateZoneInput {
+  return {
+    code: data.code,
+    name: data.name,
+    description: data.description || null,
+    kind: data.kind,
+    status: data.status,
+    version: data.version,
+    members: data.members.map((member) => ({
+      id: member.id || null,
+      scopeType: member.scopeType,
+      scopeValue: member.scopeValue || null,
+      city: member.city || null,
+    })),
+  };
+}
+
 export class RateZoneService {
-  public async getById(id: string): Promise<RateZone> {
-    const response = await api.get<RateZone>(`/rate-zones/${id}/`);
+  /** The zone as its form edits it, with every place it covers. */
+  public async getById(id: string, options?: { signal?: AbortSignal }): Promise<RateZone> {
+    const response = await requestGraphQL({
+      document: RateZoneRecordDocument,
+      operationName: "RateZoneRecord",
+      variables: { id },
+      signal: options?.signal,
+    });
+    if (!response.rateZone) {
+      throw new Error("Rate zone not found");
+    }
 
-    return safeParse(rateZoneSchema, response, "Rate Zone");
+    return safeParse(rateZoneSchema, response.rateZone, "Rate Zone");
   }
 
-  public async create(data: RateZone): Promise<RateZone> {
-    const response = await api.post<RateZone>("/rate-zones/", data);
+  public async create(data: RateZone) {
+    const response = await requestGraphQL({
+      document: CreateRateZoneDocument,
+      operationName: "CreateRateZone",
+      variables: { input: toRateZoneInput(data) },
+    });
 
-    return safeParse(rateZoneSchema, response, "Rate Zone");
+    return response.createRateZone;
   }
 
-  public async update(id: string, data: RateZone): Promise<RateZone> {
-    const response = await api.put<RateZone>(`/rate-zones/${id}/`, data);
+  public async update(id: string, data: RateZone) {
+    const response = await requestGraphQL({
+      document: UpdateRateZoneDocument,
+      operationName: "UpdateRateZone",
+      variables: { id, input: toRateZoneInput(data) },
+    });
 
-    return safeParse(rateZoneSchema, response, "Rate Zone");
+    return response.updateRateZone;
   }
 }
 

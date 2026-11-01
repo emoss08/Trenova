@@ -12,4 +12,6 @@ type Deps struct {
 	CustomFieldService *customfieldservice.Service
 }
 
+type MutationResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }

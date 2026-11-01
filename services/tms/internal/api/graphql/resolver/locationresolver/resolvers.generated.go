@@ -12,4 +12,6 @@ type Deps struct {
 	LocationService *locationservice.Service
 }
 
+type MutationResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }

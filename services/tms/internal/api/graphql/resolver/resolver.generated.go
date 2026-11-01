@@ -110,6 +110,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/securityactivityresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/selectoptionsresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/selfserviceresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/sequenceconfigresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/servicefailurereasoncoderesolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/servicefailureresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/servicetyperesolver"
@@ -1067,6 +1068,10 @@ func FromServices(s *Services) *Resolver {
 		Core:               s.Core,
 		SelfServiceService: s.SelfServiceService,
 	}
+	sequenceconfigDeps := &sequenceconfigresolver.Deps{
+		Core:                  s.Core,
+		SequenceConfigService: s.SequenceConfigService,
+	}
 	servicefailureDeps := &servicefailureresolver.Deps{
 		Core:              s.Core,
 		ServiceFailureSvc: s.ServiceFailureSvc,
@@ -1458,99 +1463,110 @@ func FromServices(s *Services) *Resolver {
 		locationCategory:                   &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps},
 		mFAAuthenticator:                   &securityactivityresolver.MFAAuthenticatorResolver{Deps: securityactivityDeps},
 		mutation: &mutationResolver{
-			accessorialchargeMutation:     &accessorialchargeMutation{Deps: accessorialchargeDeps},
-			accountingsyncMutation:        &accountingsyncMutation{Deps: accountingsyncDeps},
-			accounttypeMutation:           &accounttypeMutation{Deps: accounttypeDeps},
-			agentMutation:                 &agentMutation{Deps: agentDeps},
-			agentdefinitionMutation:       &agentdefinitionMutation{Deps: agentdefinitionDeps},
-			agentprofileMutation:          &agentprofileMutation{Deps: agentprofileDeps},
-			agentqualityMutation:          &agentqualityMutation{Deps: agentqualityDeps},
-			agentsafetyMutation:           &agentsafetyMutation{Deps: agentsafetyDeps},
-			agentsuggestionMutation:       &agentsuggestionMutation{Deps: agentsuggestionDeps},
-			aiauditMutation:               &aiauditMutation{Deps: aiauditDeps},
-			aicontrolMutation:             &aicontrolMutation{Deps: aicontrolDeps},
-			aifeedbackMutation:            &aifeedbackMutation{Deps: aifeedbackDeps},
-			aiproviderMutation:            &aiproviderMutation{Deps: aiproviderDeps},
-			airetrievalMutation:           &airetrievalMutation{Deps: airetrievalDeps},
-			benefitsMutation:              &benefitsMutation{Deps: benefitsDeps},
-			billingqueueMutation:          &billingqueueMutation{Deps: billingqueueDeps},
-			billingtransferMutation:       &billingtransferMutation{Deps: billingtransferDeps},
-			briefingMutation:              &briefingMutation{Deps: briefingDeps},
-			bulkeditMutation:              &bulkeditMutation{Deps: bulkeditDeps},
-			captureMutation:               &captureMutation{Deps: captureDeps},
-			carriercapacityMutation:       &carriercapacityMutation{Deps: carriercapacityDeps},
-			carrierintelligenceMutation:   &carrierintelligenceMutation{Deps: carrierintelligenceDeps},
-			carriersettlementMutation:     &carriersettlementMutation{Deps: carriersettlementDeps},
-			checkcallMutation:             &checkcallMutation{Deps: checkcallDeps},
-			commodityMutation:             &commodityMutation{Deps: commodityDeps},
-			costingMutation:               &costingMutation{Deps: costingDeps},
-			customerMutation:              &customerMutation{Deps: customerDeps},
-			customerpaymentMutation:       &customerpaymentMutation{Deps: customerpaymentDeps},
-			customertrackingMutation:      &customertrackingMutation{Deps: customertrackingDeps},
-			decisionsMutation:             &decisionsMutation{Deps: decisionsDeps},
-			deskmemoryMutation:            &deskmemoryMutation{Deps: deskmemoryDeps},
-			detentionMutation:             &detentionMutation{Deps: detentionDeps},
-			dispatchconsoleMutation:       &dispatchconsoleMutation{Deps: dispatchconsoleDeps},
-			documenttemplateMutation:      &documenttemplateMutation{Deps: documenttemplateDeps},
-			documenttypeMutation:          &documenttypeMutation{Deps: documenttypeDeps},
-			driverportalMutation:          &driverportalMutation{Deps: driverportalDeps},
-			driversettlementMutation:      &driversettlementMutation{Deps: driversettlementDeps},
-			equipmentmanufacturerMutation: &equipmentmanufacturerMutation{Deps: equipmentmanufacturerDeps},
-			equipmenttypeMutation:         &equipmenttypeMutation{Deps: equipmenttypeDeps},
-			extractionevalMutation:        &extractionevalMutation{Deps: extractionevalDeps},
-			extractionrolloutMutation:     &extractionrolloutMutation{Deps: extractionrolloutDeps},
-			extractionshadowMutation:      &extractionshadowMutation{Deps: extractionshadowDeps},
-			factoringMutation:             &factoringMutation{Deps: factoringDeps},
-			factoringcompanyMutation:      &factoringcompanyMutation{Deps: factoringcompanyDeps},
-			fleetcodeMutation:             &fleetcodeMutation{Deps: fleetcodeDeps},
-			fleetsafetyMutation:           &fleetsafetyMutation{Deps: fleetsafetyDeps},
-			fuelpurchaseMutation:          &fuelpurchaseMutation{Deps: fuelpurchaseDeps},
-			fuelsurchargeMutation:         &fuelsurchargeMutation{Deps: fuelsurchargeDeps},
-			hazardousmaterialMutation:     &hazardousmaterialMutation{Deps: hazardousmaterialDeps},
-			hazmatsegregationruleMutation: &hazmatsegregationruleMutation{Deps: hazmatsegregationruleDeps},
-			holdreasonMutation:            &holdreasonMutation{Deps: holdreasonDeps},
-			homelayoutMutation:            &homelayoutMutation{Deps: homelayoutDeps},
-			iftaMutation:                  &iftaMutation{Deps: iftaDeps},
-			inboundmessageMutation:        &inboundmessageMutation{Deps: inboundmessageDeps},
-			inboundreplyMutation:          &inboundreplyMutation{Deps: inboundreplyDeps},
-			invoiceMutation:               &invoiceMutation{Deps: invoiceDeps},
-			invoiceadjustmentMutation:     &invoiceadjustmentMutation{Deps: invoiceadjustmentDeps},
-			invoicedisputeMutation:        &invoicedisputeMutation{Deps: invoicedisputeDeps},
-			journalentryMutation:          &journalentryMutation{Deps: journalentryDeps},
-			latechargeMutation:            &latechargeMutation{Deps: latechargeDeps},
-			locationcategoryMutation:      &locationcategoryMutation{Deps: locationcategoryDeps},
-			notificationMutation:          &notificationMutation{Deps: notificationDeps},
-			orderMutation:                 &orderMutation{Deps: orderDeps},
-			orgholidayMutation:            &orgholidayMutation{Deps: orgholidayDeps},
-			orgstructureMutation:          &orgstructureMutation{Deps: orgstructureDeps},
-			performancereviewMutation:     &performancereviewMutation{Deps: performancereviewDeps},
-			ptopolicyMutation:             &ptopolicyMutation{Deps: ptopolicyDeps},
-			reportMutation:                &reportMutation{Deps: reportDeps},
-			schedulingMutation:            &schedulingMutation{Deps: schedulingDeps},
-			selfserviceMutation:           &selfserviceMutation{Deps: selfserviceDeps},
-			shipmentMutation:              &shipmentMutation{Deps: shipmentDeps},
-			shipmentboardMutation:         &shipmentboardMutation{Deps: shipmentboardDeps},
-			sidebarpreferenceMutation:     &sidebarpreferenceMutation{Deps: sidebarpreferenceDeps},
-			tableconfigurationMutation:    &tableconfigurationMutation{Deps: tableconfigurationDeps},
-			tablelayoutMutation:           &tablelayoutMutation{Deps: tablelayoutDeps},
-			telematicsMutation:            &telematicsMutation{Deps: telematicsDeps},
-			tenantMutation:                &tenantMutation{Deps: tenantDeps},
-			timesheetMutation:             &timesheetMutation{Deps: timesheetDeps},
-			tractorMutation:               &tractorMutation{Deps: tractorDeps},
-			trailerMutation:               &trailerMutation{Deps: trailerDeps},
-			triageMutation:                &triageMutation{Deps: triageDeps},
-			userMutation:                  &userMutation{Deps: userDeps},
-			watchtowerMutation:            &watchtowerMutation{Deps: watchtowerDeps},
-			workerMutation:                &workerMutation{Deps: workerDeps},
-			workerchecklistMutation:       &workerchecklistMutation{Deps: workerchecklistDeps},
-			workercredentialMutation:      &workercredentialMutation{Deps: workercredentialDeps},
-			workerdqfMutation:             &workerdqfMutation{Deps: workerdqfDeps},
-			workerdrugalcoholMutation:     &workerdrugalcoholMutation{Deps: workerdrugalcoholDeps},
-			workeremploymentMutation:      &workeremploymentMutation{Deps: workeremploymentDeps},
-			workerinjuryMutation:          &workerinjuryMutation{Deps: workerinjuryDeps},
-			workerleaveMutation:           &workerleaveMutation{Deps: workerleaveDeps},
-			workersafetyMutation:          &workersafetyMutation{Deps: workersafetyDeps},
-			workertrainingMutation:        &workertrainingMutation{Deps: workertrainingDeps},
+			accessorialchargeMutation:        &accessorialchargeMutation{Deps: accessorialchargeDeps},
+			accountingsyncMutation:           &accountingsyncMutation{Deps: accountingsyncDeps},
+			accounttypeMutation:              &accounttypeMutation{Deps: accounttypeDeps},
+			agentMutation:                    &agentMutation{Deps: agentDeps},
+			agentdefinitionMutation:          &agentdefinitionMutation{Deps: agentdefinitionDeps},
+			agentprofileMutation:             &agentprofileMutation{Deps: agentprofileDeps},
+			agentqualityMutation:             &agentqualityMutation{Deps: agentqualityDeps},
+			agentsafetyMutation:              &agentsafetyMutation{Deps: agentsafetyDeps},
+			agentsuggestionMutation:          &agentsuggestionMutation{Deps: agentsuggestionDeps},
+			aiauditMutation:                  &aiauditMutation{Deps: aiauditDeps},
+			aicontrolMutation:                &aicontrolMutation{Deps: aicontrolDeps},
+			aifeedbackMutation:               &aifeedbackMutation{Deps: aifeedbackDeps},
+			aiproviderMutation:               &aiproviderMutation{Deps: aiproviderDeps},
+			airetrievalMutation:              &airetrievalMutation{Deps: airetrievalDeps},
+			benefitsMutation:                 &benefitsMutation{Deps: benefitsDeps},
+			billingqueueMutation:             &billingqueueMutation{Deps: billingqueueDeps},
+			billingtransferMutation:          &billingtransferMutation{Deps: billingtransferDeps},
+			briefingMutation:                 &briefingMutation{Deps: briefingDeps},
+			bulkeditMutation:                 &bulkeditMutation{Deps: bulkeditDeps},
+			captureMutation:                  &captureMutation{Deps: captureDeps},
+			carrierMutation:                  &carrierMutation{Deps: carrierDeps},
+			carriercapacityMutation:          &carriercapacityMutation{Deps: carriercapacityDeps},
+			carrierintelligenceMutation:      &carrierintelligenceMutation{Deps: carrierintelligenceDeps},
+			carriersettlementMutation:        &carriersettlementMutation{Deps: carriersettlementDeps},
+			checkcallMutation:                &checkcallMutation{Deps: checkcallDeps},
+			commodityMutation:                &commodityMutation{Deps: commodityDeps},
+			costingMutation:                  &costingMutation{Deps: costingDeps},
+			customerMutation:                 &customerMutation{Deps: customerDeps},
+			customerpaymentMutation:          &customerpaymentMutation{Deps: customerpaymentDeps},
+			customertrackingMutation:         &customertrackingMutation{Deps: customertrackingDeps},
+			customfielddefinitionMutation:    &customfielddefinitionMutation{Deps: customfielddefinitionDeps},
+			decisionsMutation:                &decisionsMutation{Deps: decisionsDeps},
+			deskmemoryMutation:               &deskmemoryMutation{Deps: deskmemoryDeps},
+			detentionMutation:                &detentionMutation{Deps: detentionDeps},
+			dispatchconsoleMutation:          &dispatchconsoleMutation{Deps: dispatchconsoleDeps},
+			distanceoverrideMutation:         &distanceoverrideMutation{Deps: distanceoverrideDeps},
+			distanceprofileMutation:          &distanceprofileMutation{Deps: distanceprofileDeps},
+			documenttemplateMutation:         &documenttemplateMutation{Deps: documenttemplateDeps},
+			documenttypeMutation:             &documenttypeMutation{Deps: documenttypeDeps},
+			driverportalMutation:             &driverportalMutation{Deps: driverportalDeps},
+			driversettlementMutation:         &driversettlementMutation{Deps: driversettlementDeps},
+			equipmentmanufacturerMutation:    &equipmentmanufacturerMutation{Deps: equipmentmanufacturerDeps},
+			equipmenttypeMutation:            &equipmenttypeMutation{Deps: equipmenttypeDeps},
+			extractionevalMutation:           &extractionevalMutation{Deps: extractionevalDeps},
+			extractionrolloutMutation:        &extractionrolloutMutation{Deps: extractionrolloutDeps},
+			extractionshadowMutation:         &extractionshadowMutation{Deps: extractionshadowDeps},
+			factoringMutation:                &factoringMutation{Deps: factoringDeps},
+			factoringcompanyMutation:         &factoringcompanyMutation{Deps: factoringcompanyDeps},
+			fleetcodeMutation:                &fleetcodeMutation{Deps: fleetcodeDeps},
+			fleetsafetyMutation:              &fleetsafetyMutation{Deps: fleetsafetyDeps},
+			fuelpurchaseMutation:             &fuelpurchaseMutation{Deps: fuelpurchaseDeps},
+			fuelsurchargeMutation:            &fuelsurchargeMutation{Deps: fuelsurchargeDeps},
+			hazardousmaterialMutation:        &hazardousmaterialMutation{Deps: hazardousmaterialDeps},
+			hazmatsegregationruleMutation:    &hazmatsegregationruleMutation{Deps: hazmatsegregationruleDeps},
+			holdreasonMutation:               &holdreasonMutation{Deps: holdreasonDeps},
+			homelayoutMutation:               &homelayoutMutation{Deps: homelayoutDeps},
+			iftaMutation:                     &iftaMutation{Deps: iftaDeps},
+			inboundmessageMutation:           &inboundmessageMutation{Deps: inboundmessageDeps},
+			inboundreplyMutation:             &inboundreplyMutation{Deps: inboundreplyDeps},
+			invoiceMutation:                  &invoiceMutation{Deps: invoiceDeps},
+			invoiceadjustmentMutation:        &invoiceadjustmentMutation{Deps: invoiceadjustmentDeps},
+			invoicedisputeMutation:           &invoicedisputeMutation{Deps: invoicedisputeDeps},
+			journalentryMutation:             &journalentryMutation{Deps: journalentryDeps},
+			latechargeMutation:               &latechargeMutation{Deps: latechargeDeps},
+			locationMutation:                 &locationMutation{Deps: locationDeps},
+			locationcategoryMutation:         &locationcategoryMutation{Deps: locationcategoryDeps},
+			notificationMutation:             &notificationMutation{Deps: notificationDeps},
+			orderMutation:                    &orderMutation{Deps: orderDeps},
+			orgholidayMutation:               &orgholidayMutation{Deps: orgholidayDeps},
+			orgstructureMutation:             &orgstructureMutation{Deps: orgstructureDeps},
+			performancereviewMutation:        &performancereviewMutation{Deps: performancereviewDeps},
+			ptopolicyMutation:                &ptopolicyMutation{Deps: ptopolicyDeps},
+			rateMutation:                     &rateMutation{Deps: rateDeps},
+			reportMutation:                   &reportMutation{Deps: reportDeps},
+			schedulingMutation:               &schedulingMutation{Deps: schedulingDeps},
+			selfserviceMutation:              &selfserviceMutation{Deps: selfserviceDeps},
+			sequenceconfigMutation:           &sequenceconfigMutation{Deps: sequenceconfigDeps},
+			servicefailurereasoncodeMutation: &servicefailurereasoncodeMutation{Deps: servicefailurereasoncodeDeps},
+			servicetypeMutation:              &servicetypeMutation{Deps: servicetypeDeps},
+			shipmentMutation:                 &shipmentMutation{Deps: shipmentDeps},
+			shipmentboardMutation:            &shipmentboardMutation{Deps: shipmentboardDeps},
+			shipmenttypeMutation:             &shipmenttypeMutation{Deps: shipmenttypeDeps},
+			sidebarpreferenceMutation:        &sidebarpreferenceMutation{Deps: sidebarpreferenceDeps},
+			storedmileageMutation:            &storedmileageMutation{Deps: storedmileageDeps},
+			tableconfigurationMutation:       &tableconfigurationMutation{Deps: tableconfigurationDeps},
+			tablelayoutMutation:              &tablelayoutMutation{Deps: tablelayoutDeps},
+			telematicsMutation:               &telematicsMutation{Deps: telematicsDeps},
+			tenantMutation:                   &tenantMutation{Deps: tenantDeps},
+			timesheetMutation:                &timesheetMutation{Deps: timesheetDeps},
+			tractorMutation:                  &tractorMutation{Deps: tractorDeps},
+			trailerMutation:                  &trailerMutation{Deps: trailerDeps},
+			triageMutation:                   &triageMutation{Deps: triageDeps},
+			userMutation:                     &userMutation{Deps: userDeps},
+			watchtowerMutation:               &watchtowerMutation{Deps: watchtowerDeps},
+			workerMutation:                   &workerMutation{Deps: workerDeps},
+			workerchecklistMutation:          &workerchecklistMutation{Deps: workerchecklistDeps},
+			workercredentialMutation:         &workercredentialMutation{Deps: workercredentialDeps},
+			workerdqfMutation:                &workerdqfMutation{Deps: workerdqfDeps},
+			workerdrugalcoholMutation:        &workerdrugalcoholMutation{Deps: workerdrugalcoholDeps},
+			workeremploymentMutation:         &workeremploymentMutation{Deps: workeremploymentDeps},
+			workerinjuryMutation:             &workerinjuryMutation{Deps: workerinjuryDeps},
+			workerleaveMutation:              &workerleaveMutation{Deps: workerleaveDeps},
+			workersafetyMutation:             &workersafetyMutation{Deps: workersafetyDeps},
+			workertrainingMutation:           &workertrainingMutation{Deps: workertrainingDeps},
 		},
 		myAgent:                   &agentdefinitionresolver.MyAgentResolver{Deps: agentdefinitionDeps},
 		myPTOBalance:              &driverportalresolver.MyPTOBalanceResolver{Deps: driverportalDeps},
@@ -1680,6 +1696,7 @@ func FromServices(s *Services) *Resolver {
 			securityactivityQuery:         &securityactivityQuery{Deps: securityactivityDeps},
 			selectoptionsQuery:            &selectoptionsQuery{Deps: selectoptionsDeps},
 			selfserviceQuery:              &selfserviceQuery{Deps: selfserviceDeps},
+			sequenceconfigQuery:           &sequenceconfigQuery{Deps: sequenceconfigDeps},
 			servicefailureQuery:           &servicefailureQuery{Deps: servicefailureDeps},
 			servicefailurereasoncodeQuery: &servicefailurereasoncodeQuery{Deps: servicefailurereasoncodeDeps},
 			servicetypeQuery:              &servicetypeQuery{Deps: servicetypeDeps},
@@ -2665,6 +2682,7 @@ type mutationResolver struct {
 	*briefingMutation
 	*bulkeditMutation
 	*captureMutation
+	*carrierMutation
 	*carriercapacityMutation
 	*carrierintelligenceMutation
 	*carriersettlementMutation
@@ -2674,10 +2692,13 @@ type mutationResolver struct {
 	*customerMutation
 	*customerpaymentMutation
 	*customertrackingMutation
+	*customfielddefinitionMutation
 	*decisionsMutation
 	*deskmemoryMutation
 	*detentionMutation
 	*dispatchconsoleMutation
+	*distanceoverrideMutation
+	*distanceprofileMutation
 	*documenttemplateMutation
 	*documenttypeMutation
 	*driverportalMutation
@@ -2705,6 +2726,7 @@ type mutationResolver struct {
 	*invoicedisputeMutation
 	*journalentryMutation
 	*latechargeMutation
+	*locationMutation
 	*locationcategoryMutation
 	*notificationMutation
 	*orderMutation
@@ -2712,12 +2734,18 @@ type mutationResolver struct {
 	*orgstructureMutation
 	*performancereviewMutation
 	*ptopolicyMutation
+	*rateMutation
 	*reportMutation
 	*schedulingMutation
 	*selfserviceMutation
+	*sequenceconfigMutation
+	*servicefailurereasoncodeMutation
+	*servicetypeMutation
 	*shipmentMutation
 	*shipmentboardMutation
+	*shipmenttypeMutation
 	*sidebarpreferenceMutation
+	*storedmileageMutation
 	*tableconfigurationMutation
 	*tablelayoutMutation
 	*telematicsMutation
@@ -2941,6 +2969,7 @@ type queryResolver struct {
 	*securityactivityQuery
 	*selectoptionsQuery
 	*selfserviceQuery
+	*sequenceconfigQuery
 	*servicefailureQuery
 	*servicefailurereasoncodeQuery
 	*servicetypeQuery
@@ -3271,251 +3300,263 @@ func (r *Resolver) WorkerTrainingRecord() generated.WorkerTrainingRecordResolver
 }
 
 type (
-	agentAgentDecision              = agentresolver.AgentDecisionResolver
-	agentpreviewAgentDecision       = agentpreviewresolver.AgentDecisionResolver
-	agentAgentPlan                  = agentresolver.AgentPlanResolver
-	decisionsAgentPlan              = decisionsresolver.AgentPlanResolver
-	agentAgentProposal              = agentresolver.AgentProposalResolver
-	decisionsAgentProposal          = decisionsresolver.AgentProposalResolver
-	agentAgentRun                   = agentresolver.AgentRunResolver
-	decisionsAgentRun               = decisionsresolver.AgentRunResolver
-	customerCustomerBillingProfile  = customerresolver.CustomerBillingProfileResolver
-	factoringCustomerBillingProfile = factoringresolver.CustomerBillingProfileResolver
-	inboundmessageInboundAttachment = inboundmessageresolver.InboundAttachmentResolver
-	inboundreplyInboundAttachment   = inboundreplyresolver.InboundAttachmentResolver
-	inboundmessageInboundMessage    = inboundmessageresolver.InboundMessageResolver
-	inboundreplyInboundMessage      = inboundreplyresolver.InboundMessageResolver
-	triageInboundMessage            = triageresolver.InboundMessageResolver
-	factoringInvoice                = factoringresolver.InvoiceResolver
-	invoiceInvoice                  = invoiceresolver.InvoiceResolver
-	invoicedisputeInvoice           = invoicedisputeresolver.InvoiceResolver
-	latechargeInvoice               = latechargeresolver.InvoiceResolver
-	accessorialchargeMutation       = accessorialchargeresolver.MutationResolver
-	accountingsyncMutation          = accountingsyncresolver.MutationResolver
-	accounttypeMutation             = accounttyperesolver.MutationResolver
-	agentMutation                   = agentresolver.MutationResolver
-	agentdefinitionMutation         = agentdefinitionresolver.MutationResolver
-	agentprofileMutation            = agentprofileresolver.MutationResolver
-	agentqualityMutation            = agentqualityresolver.MutationResolver
-	agentsafetyMutation             = agentsafetyresolver.MutationResolver
-	agentsuggestionMutation         = agentsuggestionresolver.MutationResolver
-	aiauditMutation                 = aiauditresolver.MutationResolver
-	aicontrolMutation               = aicontrolresolver.MutationResolver
-	aifeedbackMutation              = aifeedbackresolver.MutationResolver
-	aiproviderMutation              = aiproviderresolver.MutationResolver
-	airetrievalMutation             = airetrievalresolver.MutationResolver
-	benefitsMutation                = benefitsresolver.MutationResolver
-	billingqueueMutation            = billingqueueresolver.MutationResolver
-	billingtransferMutation         = billingtransferresolver.MutationResolver
-	briefingMutation                = briefingresolver.MutationResolver
-	bulkeditMutation                = bulkeditresolver.MutationResolver
-	captureMutation                 = captureresolver.MutationResolver
-	carriercapacityMutation         = carriercapacityresolver.MutationResolver
-	carrierintelligenceMutation     = carrierintelligenceresolver.MutationResolver
-	carriersettlementMutation       = carriersettlementresolver.MutationResolver
-	checkcallMutation               = checkcallresolver.MutationResolver
-	commodityMutation               = commodityresolver.MutationResolver
-	costingMutation                 = costingresolver.MutationResolver
-	customerMutation                = customerresolver.MutationResolver
-	customerpaymentMutation         = customerpaymentresolver.MutationResolver
-	customertrackingMutation        = customertrackingresolver.MutationResolver
-	decisionsMutation               = decisionsresolver.MutationResolver
-	deskmemoryMutation              = deskmemoryresolver.MutationResolver
-	detentionMutation               = detentionresolver.MutationResolver
-	dispatchconsoleMutation         = dispatchconsoleresolver.MutationResolver
-	documenttemplateMutation        = documenttemplateresolver.MutationResolver
-	documenttypeMutation            = documenttyperesolver.MutationResolver
-	driverportalMutation            = driverportalresolver.MutationResolver
-	driversettlementMutation        = driversettlementresolver.MutationResolver
-	equipmentmanufacturerMutation   = equipmentmanufacturerresolver.MutationResolver
-	equipmenttypeMutation           = equipmenttyperesolver.MutationResolver
-	extractionevalMutation          = extractionevalresolver.MutationResolver
-	extractionrolloutMutation       = extractionrolloutresolver.MutationResolver
-	extractionshadowMutation        = extractionshadowresolver.MutationResolver
-	factoringMutation               = factoringresolver.MutationResolver
-	factoringcompanyMutation        = factoringcompanyresolver.MutationResolver
-	fleetcodeMutation               = fleetcoderesolver.MutationResolver
-	fleetsafetyMutation             = fleetsafetyresolver.MutationResolver
-	fuelpurchaseMutation            = fuelpurchaseresolver.MutationResolver
-	fuelsurchargeMutation           = fuelsurchargeresolver.MutationResolver
-	hazardousmaterialMutation       = hazardousmaterialresolver.MutationResolver
-	hazmatsegregationruleMutation   = hazmatsegregationruleresolver.MutationResolver
-	holdreasonMutation              = holdreasonresolver.MutationResolver
-	homelayoutMutation              = homelayoutresolver.MutationResolver
-	iftaMutation                    = iftaresolver.MutationResolver
-	inboundmessageMutation          = inboundmessageresolver.MutationResolver
-	inboundreplyMutation            = inboundreplyresolver.MutationResolver
-	invoiceMutation                 = invoiceresolver.MutationResolver
-	invoiceadjustmentMutation       = invoiceadjustmentresolver.MutationResolver
-	invoicedisputeMutation          = invoicedisputeresolver.MutationResolver
-	journalentryMutation            = journalentryresolver.MutationResolver
-	latechargeMutation              = latechargeresolver.MutationResolver
-	locationcategoryMutation        = locationcategoryresolver.MutationResolver
-	notificationMutation            = notificationresolver.MutationResolver
-	orderMutation                   = orderresolver.MutationResolver
-	orgholidayMutation              = orgholidayresolver.MutationResolver
-	orgstructureMutation            = orgstructureresolver.MutationResolver
-	performancereviewMutation       = performancereviewresolver.MutationResolver
-	ptopolicyMutation               = ptopolicyresolver.MutationResolver
-	reportMutation                  = reportresolver.MutationResolver
-	schedulingMutation              = schedulingresolver.MutationResolver
-	selfserviceMutation             = selfserviceresolver.MutationResolver
-	shipmentMutation                = shipmentresolver.MutationResolver
-	shipmentboardMutation           = shipmentboardresolver.MutationResolver
-	sidebarpreferenceMutation       = sidebarpreferenceresolver.MutationResolver
-	tableconfigurationMutation      = tableconfigurationresolver.MutationResolver
-	tablelayoutMutation             = tablelayoutresolver.MutationResolver
-	telematicsMutation              = telematicsresolver.MutationResolver
-	tenantMutation                  = tenantresolver.MutationResolver
-	timesheetMutation               = timesheetresolver.MutationResolver
-	tractorMutation                 = tractorresolver.MutationResolver
-	trailerMutation                 = trailerresolver.MutationResolver
-	triageMutation                  = triageresolver.MutationResolver
-	userMutation                    = userresolver.MutationResolver
-	watchtowerMutation              = watchtowerresolver.MutationResolver
-	workerMutation                  = workerresolver.MutationResolver
-	workerchecklistMutation         = workerchecklistresolver.MutationResolver
-	workercredentialMutation        = workercredentialresolver.MutationResolver
-	workerdqfMutation               = workerdqfresolver.MutationResolver
-	workerdrugalcoholMutation       = workerdrugalcoholresolver.MutationResolver
-	workeremploymentMutation        = workeremploymentresolver.MutationResolver
-	workerinjuryMutation            = workerinjuryresolver.MutationResolver
-	workerleaveMutation             = workerleaveresolver.MutationResolver
-	workersafetyMutation            = workersafetyresolver.MutationResolver
-	workertrainingMutation          = workertrainingresolver.MutationResolver
-	accessorialchargeQuery          = accessorialchargeresolver.QueryResolver
-	accountingsyncQuery             = accountingsyncresolver.QueryResolver
-	accountsreceivableQuery         = accountsreceivableresolver.QueryResolver
-	accounttypeQuery                = accounttyperesolver.QueryResolver
-	agentQuery                      = agentresolver.QueryResolver
-	agentdefinitionQuery            = agentdefinitionresolver.QueryResolver
-	agentpreviewQuery               = agentpreviewresolver.QueryResolver
-	agentprofileQuery               = agentprofileresolver.QueryResolver
-	agentqualityQuery               = agentqualityresolver.QueryResolver
-	agentruneventQuery              = agentruneventresolver.QueryResolver
-	agentsafetyQuery                = agentsafetyresolver.QueryResolver
-	agentscorecardQuery             = agentscorecardresolver.QueryResolver
-	aianalyticsQuery                = aianalyticsresolver.QueryResolver
-	aiauditQuery                    = aiauditresolver.QueryResolver
-	aicontrolQuery                  = aicontrolresolver.QueryResolver
-	aifeedbackQuery                 = aifeedbackresolver.QueryResolver
-	aiproviderQuery                 = aiproviderresolver.QueryResolver
-	airetrievalQuery                = airetrievalresolver.QueryResolver
-	aitrainingQuery                 = aitrainingresolver.QueryResolver
-	aiusageQuery                    = aiusageresolver.QueryResolver
-	apikeyQuery                     = apikeyresolver.QueryResolver
-	attentionQuery                  = attentionresolver.QueryResolver
-	auditlogQuery                   = auditlogresolver.QueryResolver
-	benefitsQuery                   = benefitsresolver.QueryResolver
-	billingqueueQuery               = billingqueueresolver.QueryResolver
-	billingtransferQuery            = billingtransferresolver.QueryResolver
-	briefingQuery                   = briefingresolver.QueryResolver
-	bulkeditQuery                   = bulkeditresolver.QueryResolver
-	captureQuery                    = captureresolver.QueryResolver
-	carrierQuery                    = carrierresolver.QueryResolver
-	carriercapacityQuery            = carriercapacityresolver.QueryResolver
-	carrierintelligenceQuery        = carrierintelligenceresolver.QueryResolver
-	carriersettlementQuery          = carriersettlementresolver.QueryResolver
-	checkcallQuery                  = checkcallresolver.QueryResolver
-	commodityQuery                  = commodityresolver.QueryResolver
-	costingQuery                    = costingresolver.QueryResolver
-	customerQuery                   = customerresolver.QueryResolver
-	customerpaymentQuery            = customerpaymentresolver.QueryResolver
-	customertrackingQuery           = customertrackingresolver.QueryResolver
-	customfielddefinitionQuery      = customfielddefinitionresolver.QueryResolver
-	datatableinsightQuery           = datatableinsightresolver.QueryResolver
-	decisionsQuery                  = decisionsresolver.QueryResolver
-	deskboardQuery                  = deskboardresolver.QueryResolver
-	deskmemoryQuery                 = deskmemoryresolver.QueryResolver
-	detentionQuery                  = detentionresolver.QueryResolver
-	dispatchconsoleQuery            = dispatchconsoleresolver.QueryResolver
-	distanceoverrideQuery           = distanceoverrideresolver.QueryResolver
-	distanceprofileQuery            = distanceprofileresolver.QueryResolver
-	documentpacketruleQuery         = documentpacketruleresolver.QueryResolver
-	documenttemplateQuery           = documenttemplateresolver.QueryResolver
-	documenttypeQuery               = documenttyperesolver.QueryResolver
-	driverportalQuery               = driverportalresolver.QueryResolver
-	driversettlementQuery           = driversettlementresolver.QueryResolver
-	ediQuery                        = ediresolver.QueryResolver
-	emailprofileQuery               = emailprofileresolver.QueryResolver
-	equipmentmanufacturerQuery      = equipmentmanufacturerresolver.QueryResolver
-	equipmenttypeQuery              = equipmenttyperesolver.QueryResolver
-	extractionevalQuery             = extractionevalresolver.QueryResolver
-	extractionrolloutQuery          = extractionrolloutresolver.QueryResolver
-	extractionshadowQuery           = extractionshadowresolver.QueryResolver
-	factoringQuery                  = factoringresolver.QueryResolver
-	factoringcompanyQuery           = factoringcompanyresolver.QueryResolver
-	fiscalperiodQuery               = fiscalperiodresolver.QueryResolver
-	fiscalyearQuery                 = fiscalyearresolver.QueryResolver
-	fleetcodeQuery                  = fleetcoderesolver.QueryResolver
-	fleetsafetyQuery                = fleetsafetyresolver.QueryResolver
-	formulalibraryQuery             = formulalibraryresolver.QueryResolver
-	formulatemplateQuery            = formulatemplateresolver.QueryResolver
-	fuelpurchaseQuery               = fuelpurchaseresolver.QueryResolver
-	fuelsurchargeQuery              = fuelsurchargeresolver.QueryResolver
-	hazardousmaterialQuery          = hazardousmaterialresolver.QueryResolver
-	hazmatsegregationruleQuery      = hazmatsegregationruleresolver.QueryResolver
-	holdreasonQuery                 = holdreasonresolver.QueryResolver
-	homelayoutQuery                 = homelayoutresolver.QueryResolver
-	iftaQuery                       = iftaresolver.QueryResolver
-	inboundmessageQuery             = inboundmessageresolver.QueryResolver
-	inboundreplyQuery               = inboundreplyresolver.QueryResolver
-	invoiceQuery                    = invoiceresolver.QueryResolver
-	invoiceadjustmentQuery          = invoiceadjustmentresolver.QueryResolver
-	invoicedisputeQuery             = invoicedisputeresolver.QueryResolver
-	journalentryQuery               = journalentryresolver.QueryResolver
-	journalreversalQuery            = journalreversalresolver.QueryResolver
-	jurisdictionruleQuery           = jurisdictionruleresolver.QueryResolver
-	latechargeQuery                 = latechargeresolver.QueryResolver
-	locationQuery                   = locationresolver.QueryResolver
-	locationcategoryQuery           = locationcategoryresolver.QueryResolver
-	manualjournalQuery              = manualjournalresolver.QueryResolver
-	notificationQuery               = notificationresolver.QueryResolver
-	orderQuery                      = orderresolver.QueryResolver
-	orgholidayQuery                 = orgholidayresolver.QueryResolver
-	orgstructureQuery               = orgstructureresolver.QueryResolver
-	pageaccessQuery                 = pageaccessresolver.QueryResolver
-	performancereviewQuery          = performancereviewresolver.QueryResolver
-	ptopolicyQuery                  = ptopolicyresolver.QueryResolver
-	rateQuery                       = rateresolver.QueryResolver
-	recurringshipmentQuery          = recurringshipmentresolver.QueryResolver
-	reportQuery                     = reportresolver.QueryResolver
-	roleQuery                       = roleresolver.QueryResolver
-	routingguideQuery               = routingguideresolver.QueryResolver
-	schedulingQuery                 = schedulingresolver.QueryResolver
-	scimgrouprolemappingQuery       = scimgrouprolemappingresolver.QueryResolver
-	securityactivityQuery           = securityactivityresolver.QueryResolver
-	selectoptionsQuery              = selectoptionsresolver.QueryResolver
-	selfserviceQuery                = selfserviceresolver.QueryResolver
-	servicefailureQuery             = servicefailureresolver.QueryResolver
-	servicefailurereasoncodeQuery   = servicefailurereasoncoderesolver.QueryResolver
-	servicetypeQuery                = servicetyperesolver.QueryResolver
-	shipmentQuery                   = shipmentresolver.QueryResolver
-	shipmentboardQuery              = shipmentboardresolver.QueryResolver
-	shipmenttypeQuery               = shipmenttyperesolver.QueryResolver
-	sidebarpreferenceQuery          = sidebarpreferenceresolver.QueryResolver
-	storedmileageQuery              = storedmileageresolver.QueryResolver
-	tablechangealertQuery           = tablechangealertresolver.QueryResolver
-	tableconfigurationQuery         = tableconfigurationresolver.QueryResolver
-	tablelayoutQuery                = tablelayoutresolver.QueryResolver
-	telematicsQuery                 = telematicsresolver.QueryResolver
-	tenantQuery                     = tenantresolver.QueryResolver
-	tenderQuery                     = tenderresolver.QueryResolver
-	timesheetQuery                  = timesheetresolver.QueryResolver
-	tractorQuery                    = tractorresolver.QueryResolver
-	trailerQuery                    = trailerresolver.QueryResolver
-	triageQuery                     = triageresolver.QueryResolver
-	userQuery                       = userresolver.QueryResolver
-	watchtowerQuery                 = watchtowerresolver.QueryResolver
-	workerQuery                     = workerresolver.QueryResolver
-	workerchecklistQuery            = workerchecklistresolver.QueryResolver
-	workercredentialQuery           = workercredentialresolver.QueryResolver
-	workerdqfQuery                  = workerdqfresolver.QueryResolver
-	workerdrugalcoholQuery          = workerdrugalcoholresolver.QueryResolver
-	workeremploymentQuery           = workeremploymentresolver.QueryResolver
-	workerinjuryQuery               = workerinjuryresolver.QueryResolver
-	workerleaveQuery                = workerleaveresolver.QueryResolver
-	workeroverviewQuery             = workeroverviewresolver.QueryResolver
-	workersafetyQuery               = workersafetyresolver.QueryResolver
-	workertrainingQuery             = workertrainingresolver.QueryResolver
+	agentAgentDecision               = agentresolver.AgentDecisionResolver
+	agentpreviewAgentDecision        = agentpreviewresolver.AgentDecisionResolver
+	agentAgentPlan                   = agentresolver.AgentPlanResolver
+	decisionsAgentPlan               = decisionsresolver.AgentPlanResolver
+	agentAgentProposal               = agentresolver.AgentProposalResolver
+	decisionsAgentProposal           = decisionsresolver.AgentProposalResolver
+	agentAgentRun                    = agentresolver.AgentRunResolver
+	decisionsAgentRun                = decisionsresolver.AgentRunResolver
+	customerCustomerBillingProfile   = customerresolver.CustomerBillingProfileResolver
+	factoringCustomerBillingProfile  = factoringresolver.CustomerBillingProfileResolver
+	inboundmessageInboundAttachment  = inboundmessageresolver.InboundAttachmentResolver
+	inboundreplyInboundAttachment    = inboundreplyresolver.InboundAttachmentResolver
+	inboundmessageInboundMessage     = inboundmessageresolver.InboundMessageResolver
+	inboundreplyInboundMessage       = inboundreplyresolver.InboundMessageResolver
+	triageInboundMessage             = triageresolver.InboundMessageResolver
+	factoringInvoice                 = factoringresolver.InvoiceResolver
+	invoiceInvoice                   = invoiceresolver.InvoiceResolver
+	invoicedisputeInvoice            = invoicedisputeresolver.InvoiceResolver
+	latechargeInvoice                = latechargeresolver.InvoiceResolver
+	accessorialchargeMutation        = accessorialchargeresolver.MutationResolver
+	accountingsyncMutation           = accountingsyncresolver.MutationResolver
+	accounttypeMutation              = accounttyperesolver.MutationResolver
+	agentMutation                    = agentresolver.MutationResolver
+	agentdefinitionMutation          = agentdefinitionresolver.MutationResolver
+	agentprofileMutation             = agentprofileresolver.MutationResolver
+	agentqualityMutation             = agentqualityresolver.MutationResolver
+	agentsafetyMutation              = agentsafetyresolver.MutationResolver
+	agentsuggestionMutation          = agentsuggestionresolver.MutationResolver
+	aiauditMutation                  = aiauditresolver.MutationResolver
+	aicontrolMutation                = aicontrolresolver.MutationResolver
+	aifeedbackMutation               = aifeedbackresolver.MutationResolver
+	aiproviderMutation               = aiproviderresolver.MutationResolver
+	airetrievalMutation              = airetrievalresolver.MutationResolver
+	benefitsMutation                 = benefitsresolver.MutationResolver
+	billingqueueMutation             = billingqueueresolver.MutationResolver
+	billingtransferMutation          = billingtransferresolver.MutationResolver
+	briefingMutation                 = briefingresolver.MutationResolver
+	bulkeditMutation                 = bulkeditresolver.MutationResolver
+	captureMutation                  = captureresolver.MutationResolver
+	carrierMutation                  = carrierresolver.MutationResolver
+	carriercapacityMutation          = carriercapacityresolver.MutationResolver
+	carrierintelligenceMutation      = carrierintelligenceresolver.MutationResolver
+	carriersettlementMutation        = carriersettlementresolver.MutationResolver
+	checkcallMutation                = checkcallresolver.MutationResolver
+	commodityMutation                = commodityresolver.MutationResolver
+	costingMutation                  = costingresolver.MutationResolver
+	customerMutation                 = customerresolver.MutationResolver
+	customerpaymentMutation          = customerpaymentresolver.MutationResolver
+	customertrackingMutation         = customertrackingresolver.MutationResolver
+	customfielddefinitionMutation    = customfielddefinitionresolver.MutationResolver
+	decisionsMutation                = decisionsresolver.MutationResolver
+	deskmemoryMutation               = deskmemoryresolver.MutationResolver
+	detentionMutation                = detentionresolver.MutationResolver
+	dispatchconsoleMutation          = dispatchconsoleresolver.MutationResolver
+	distanceoverrideMutation         = distanceoverrideresolver.MutationResolver
+	distanceprofileMutation          = distanceprofileresolver.MutationResolver
+	documenttemplateMutation         = documenttemplateresolver.MutationResolver
+	documenttypeMutation             = documenttyperesolver.MutationResolver
+	driverportalMutation             = driverportalresolver.MutationResolver
+	driversettlementMutation         = driversettlementresolver.MutationResolver
+	equipmentmanufacturerMutation    = equipmentmanufacturerresolver.MutationResolver
+	equipmenttypeMutation            = equipmenttyperesolver.MutationResolver
+	extractionevalMutation           = extractionevalresolver.MutationResolver
+	extractionrolloutMutation        = extractionrolloutresolver.MutationResolver
+	extractionshadowMutation         = extractionshadowresolver.MutationResolver
+	factoringMutation                = factoringresolver.MutationResolver
+	factoringcompanyMutation         = factoringcompanyresolver.MutationResolver
+	fleetcodeMutation                = fleetcoderesolver.MutationResolver
+	fleetsafetyMutation              = fleetsafetyresolver.MutationResolver
+	fuelpurchaseMutation             = fuelpurchaseresolver.MutationResolver
+	fuelsurchargeMutation            = fuelsurchargeresolver.MutationResolver
+	hazardousmaterialMutation        = hazardousmaterialresolver.MutationResolver
+	hazmatsegregationruleMutation    = hazmatsegregationruleresolver.MutationResolver
+	holdreasonMutation               = holdreasonresolver.MutationResolver
+	homelayoutMutation               = homelayoutresolver.MutationResolver
+	iftaMutation                     = iftaresolver.MutationResolver
+	inboundmessageMutation           = inboundmessageresolver.MutationResolver
+	inboundreplyMutation             = inboundreplyresolver.MutationResolver
+	invoiceMutation                  = invoiceresolver.MutationResolver
+	invoiceadjustmentMutation        = invoiceadjustmentresolver.MutationResolver
+	invoicedisputeMutation           = invoicedisputeresolver.MutationResolver
+	journalentryMutation             = journalentryresolver.MutationResolver
+	latechargeMutation               = latechargeresolver.MutationResolver
+	locationMutation                 = locationresolver.MutationResolver
+	locationcategoryMutation         = locationcategoryresolver.MutationResolver
+	notificationMutation             = notificationresolver.MutationResolver
+	orderMutation                    = orderresolver.MutationResolver
+	orgholidayMutation               = orgholidayresolver.MutationResolver
+	orgstructureMutation             = orgstructureresolver.MutationResolver
+	performancereviewMutation        = performancereviewresolver.MutationResolver
+	ptopolicyMutation                = ptopolicyresolver.MutationResolver
+	rateMutation                     = rateresolver.MutationResolver
+	reportMutation                   = reportresolver.MutationResolver
+	schedulingMutation               = schedulingresolver.MutationResolver
+	selfserviceMutation              = selfserviceresolver.MutationResolver
+	sequenceconfigMutation           = sequenceconfigresolver.MutationResolver
+	servicefailurereasoncodeMutation = servicefailurereasoncoderesolver.MutationResolver
+	servicetypeMutation              = servicetyperesolver.MutationResolver
+	shipmentMutation                 = shipmentresolver.MutationResolver
+	shipmentboardMutation            = shipmentboardresolver.MutationResolver
+	shipmenttypeMutation             = shipmenttyperesolver.MutationResolver
+	sidebarpreferenceMutation        = sidebarpreferenceresolver.MutationResolver
+	storedmileageMutation            = storedmileageresolver.MutationResolver
+	tableconfigurationMutation       = tableconfigurationresolver.MutationResolver
+	tablelayoutMutation              = tablelayoutresolver.MutationResolver
+	telematicsMutation               = telematicsresolver.MutationResolver
+	tenantMutation                   = tenantresolver.MutationResolver
+	timesheetMutation                = timesheetresolver.MutationResolver
+	tractorMutation                  = tractorresolver.MutationResolver
+	trailerMutation                  = trailerresolver.MutationResolver
+	triageMutation                   = triageresolver.MutationResolver
+	userMutation                     = userresolver.MutationResolver
+	watchtowerMutation               = watchtowerresolver.MutationResolver
+	workerMutation                   = workerresolver.MutationResolver
+	workerchecklistMutation          = workerchecklistresolver.MutationResolver
+	workercredentialMutation         = workercredentialresolver.MutationResolver
+	workerdqfMutation                = workerdqfresolver.MutationResolver
+	workerdrugalcoholMutation        = workerdrugalcoholresolver.MutationResolver
+	workeremploymentMutation         = workeremploymentresolver.MutationResolver
+	workerinjuryMutation             = workerinjuryresolver.MutationResolver
+	workerleaveMutation              = workerleaveresolver.MutationResolver
+	workersafetyMutation             = workersafetyresolver.MutationResolver
+	workertrainingMutation           = workertrainingresolver.MutationResolver
+	accessorialchargeQuery           = accessorialchargeresolver.QueryResolver
+	accountingsyncQuery              = accountingsyncresolver.QueryResolver
+	accountsreceivableQuery          = accountsreceivableresolver.QueryResolver
+	accounttypeQuery                 = accounttyperesolver.QueryResolver
+	agentQuery                       = agentresolver.QueryResolver
+	agentdefinitionQuery             = agentdefinitionresolver.QueryResolver
+	agentpreviewQuery                = agentpreviewresolver.QueryResolver
+	agentprofileQuery                = agentprofileresolver.QueryResolver
+	agentqualityQuery                = agentqualityresolver.QueryResolver
+	agentruneventQuery               = agentruneventresolver.QueryResolver
+	agentsafetyQuery                 = agentsafetyresolver.QueryResolver
+	agentscorecardQuery              = agentscorecardresolver.QueryResolver
+	aianalyticsQuery                 = aianalyticsresolver.QueryResolver
+	aiauditQuery                     = aiauditresolver.QueryResolver
+	aicontrolQuery                   = aicontrolresolver.QueryResolver
+	aifeedbackQuery                  = aifeedbackresolver.QueryResolver
+	aiproviderQuery                  = aiproviderresolver.QueryResolver
+	airetrievalQuery                 = airetrievalresolver.QueryResolver
+	aitrainingQuery                  = aitrainingresolver.QueryResolver
+	aiusageQuery                     = aiusageresolver.QueryResolver
+	apikeyQuery                      = apikeyresolver.QueryResolver
+	attentionQuery                   = attentionresolver.QueryResolver
+	auditlogQuery                    = auditlogresolver.QueryResolver
+	benefitsQuery                    = benefitsresolver.QueryResolver
+	billingqueueQuery                = billingqueueresolver.QueryResolver
+	billingtransferQuery             = billingtransferresolver.QueryResolver
+	briefingQuery                    = briefingresolver.QueryResolver
+	bulkeditQuery                    = bulkeditresolver.QueryResolver
+	captureQuery                     = captureresolver.QueryResolver
+	carrierQuery                     = carrierresolver.QueryResolver
+	carriercapacityQuery             = carriercapacityresolver.QueryResolver
+	carrierintelligenceQuery         = carrierintelligenceresolver.QueryResolver
+	carriersettlementQuery           = carriersettlementresolver.QueryResolver
+	checkcallQuery                   = checkcallresolver.QueryResolver
+	commodityQuery                   = commodityresolver.QueryResolver
+	costingQuery                     = costingresolver.QueryResolver
+	customerQuery                    = customerresolver.QueryResolver
+	customerpaymentQuery             = customerpaymentresolver.QueryResolver
+	customertrackingQuery            = customertrackingresolver.QueryResolver
+	customfielddefinitionQuery       = customfielddefinitionresolver.QueryResolver
+	datatableinsightQuery            = datatableinsightresolver.QueryResolver
+	decisionsQuery                   = decisionsresolver.QueryResolver
+	deskboardQuery                   = deskboardresolver.QueryResolver
+	deskmemoryQuery                  = deskmemoryresolver.QueryResolver
+	detentionQuery                   = detentionresolver.QueryResolver
+	dispatchconsoleQuery             = dispatchconsoleresolver.QueryResolver
+	distanceoverrideQuery            = distanceoverrideresolver.QueryResolver
+	distanceprofileQuery             = distanceprofileresolver.QueryResolver
+	documentpacketruleQuery          = documentpacketruleresolver.QueryResolver
+	documenttemplateQuery            = documenttemplateresolver.QueryResolver
+	documenttypeQuery                = documenttyperesolver.QueryResolver
+	driverportalQuery                = driverportalresolver.QueryResolver
+	driversettlementQuery            = driversettlementresolver.QueryResolver
+	ediQuery                         = ediresolver.QueryResolver
+	emailprofileQuery                = emailprofileresolver.QueryResolver
+	equipmentmanufacturerQuery       = equipmentmanufacturerresolver.QueryResolver
+	equipmenttypeQuery               = equipmenttyperesolver.QueryResolver
+	extractionevalQuery              = extractionevalresolver.QueryResolver
+	extractionrolloutQuery           = extractionrolloutresolver.QueryResolver
+	extractionshadowQuery            = extractionshadowresolver.QueryResolver
+	factoringQuery                   = factoringresolver.QueryResolver
+	factoringcompanyQuery            = factoringcompanyresolver.QueryResolver
+	fiscalperiodQuery                = fiscalperiodresolver.QueryResolver
+	fiscalyearQuery                  = fiscalyearresolver.QueryResolver
+	fleetcodeQuery                   = fleetcoderesolver.QueryResolver
+	fleetsafetyQuery                 = fleetsafetyresolver.QueryResolver
+	formulalibraryQuery              = formulalibraryresolver.QueryResolver
+	formulatemplateQuery             = formulatemplateresolver.QueryResolver
+	fuelpurchaseQuery                = fuelpurchaseresolver.QueryResolver
+	fuelsurchargeQuery               = fuelsurchargeresolver.QueryResolver
+	hazardousmaterialQuery           = hazardousmaterialresolver.QueryResolver
+	hazmatsegregationruleQuery       = hazmatsegregationruleresolver.QueryResolver
+	holdreasonQuery                  = holdreasonresolver.QueryResolver
+	homelayoutQuery                  = homelayoutresolver.QueryResolver
+	iftaQuery                        = iftaresolver.QueryResolver
+	inboundmessageQuery              = inboundmessageresolver.QueryResolver
+	inboundreplyQuery                = inboundreplyresolver.QueryResolver
+	invoiceQuery                     = invoiceresolver.QueryResolver
+	invoiceadjustmentQuery           = invoiceadjustmentresolver.QueryResolver
+	invoicedisputeQuery              = invoicedisputeresolver.QueryResolver
+	journalentryQuery                = journalentryresolver.QueryResolver
+	journalreversalQuery             = journalreversalresolver.QueryResolver
+	jurisdictionruleQuery            = jurisdictionruleresolver.QueryResolver
+	latechargeQuery                  = latechargeresolver.QueryResolver
+	locationQuery                    = locationresolver.QueryResolver
+	locationcategoryQuery            = locationcategoryresolver.QueryResolver
+	manualjournalQuery               = manualjournalresolver.QueryResolver
+	notificationQuery                = notificationresolver.QueryResolver
+	orderQuery                       = orderresolver.QueryResolver
+	orgholidayQuery                  = orgholidayresolver.QueryResolver
+	orgstructureQuery                = orgstructureresolver.QueryResolver
+	pageaccessQuery                  = pageaccessresolver.QueryResolver
+	performancereviewQuery           = performancereviewresolver.QueryResolver
+	ptopolicyQuery                   = ptopolicyresolver.QueryResolver
+	rateQuery                        = rateresolver.QueryResolver
+	recurringshipmentQuery           = recurringshipmentresolver.QueryResolver
+	reportQuery                      = reportresolver.QueryResolver
+	roleQuery                        = roleresolver.QueryResolver
+	routingguideQuery                = routingguideresolver.QueryResolver
+	schedulingQuery                  = schedulingresolver.QueryResolver
+	scimgrouprolemappingQuery        = scimgrouprolemappingresolver.QueryResolver
+	securityactivityQuery            = securityactivityresolver.QueryResolver
+	selectoptionsQuery               = selectoptionsresolver.QueryResolver
+	selfserviceQuery                 = selfserviceresolver.QueryResolver
+	sequenceconfigQuery              = sequenceconfigresolver.QueryResolver
+	servicefailureQuery              = servicefailureresolver.QueryResolver
+	servicefailurereasoncodeQuery    = servicefailurereasoncoderesolver.QueryResolver
+	servicetypeQuery                 = servicetyperesolver.QueryResolver
+	shipmentQuery                    = shipmentresolver.QueryResolver
+	shipmentboardQuery               = shipmentboardresolver.QueryResolver
+	shipmenttypeQuery                = shipmenttyperesolver.QueryResolver
+	sidebarpreferenceQuery           = sidebarpreferenceresolver.QueryResolver
+	storedmileageQuery               = storedmileageresolver.QueryResolver
+	tablechangealertQuery            = tablechangealertresolver.QueryResolver
+	tableconfigurationQuery          = tableconfigurationresolver.QueryResolver
+	tablelayoutQuery                 = tablelayoutresolver.QueryResolver
+	telematicsQuery                  = telematicsresolver.QueryResolver
+	tenantQuery                      = tenantresolver.QueryResolver
+	tenderQuery                      = tenderresolver.QueryResolver
+	timesheetQuery                   = timesheetresolver.QueryResolver
+	tractorQuery                     = tractorresolver.QueryResolver
+	trailerQuery                     = trailerresolver.QueryResolver
+	triageQuery                      = triageresolver.QueryResolver
+	userQuery                        = userresolver.QueryResolver
+	watchtowerQuery                  = watchtowerresolver.QueryResolver
+	workerQuery                      = workerresolver.QueryResolver
+	workerchecklistQuery             = workerchecklistresolver.QueryResolver
+	workercredentialQuery            = workercredentialresolver.QueryResolver
+	workerdqfQuery                   = workerdqfresolver.QueryResolver
+	workerdrugalcoholQuery           = workerdrugalcoholresolver.QueryResolver
+	workeremploymentQuery            = workeremploymentresolver.QueryResolver
+	workerinjuryQuery                = workerinjuryresolver.QueryResolver
+	workerleaveQuery                 = workerleaveresolver.QueryResolver
+	workeroverviewQuery              = workeroverviewresolver.QueryResolver
+	workersafetyQuery                = workersafetyresolver.QueryResolver
+	workertrainingQuery              = workertrainingresolver.QueryResolver
 )

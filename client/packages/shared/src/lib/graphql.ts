@@ -281,6 +281,12 @@ export class GraphQLRequestError extends Error {
     const parsed = editConflictSchema.safeParse(this.extensions?.conflict);
     return parsed.success ? parsed.data : null;
   }
+
+  // getUsageStats returns what a conflict counted as still in use (the values a custom
+  // field definition holds, for one), or undefined when the refusal carried none.
+  public getUsageStats(): unknown {
+    return this.extensions?.usageStats;
+  }
 }
 
 export function resolveGraphQLURL(apiBaseURL = API_BASE_URL, operationName?: string): string {

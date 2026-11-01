@@ -24,6 +24,20 @@ var Shard = &gqlexec.Shard{
 		{Name: "StoredMileageEdge", Implementors: []string{"StoredMileageEdge"}},
 	},
 	Fields: []gqlexec.Fields{
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "deactivateStoredMileage",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild0,
+				Args:       field_Mutation_deactivateStoredMileage_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeactivateStoredMileage(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "storedMileages",
@@ -57,7 +71,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "method",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StopKey)
 					return obj.Method, nil
@@ -67,7 +81,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "key",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StopKey)
 					return obj.Key, nil
@@ -77,7 +91,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "city",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StopKey)
 					return obj.City, nil
@@ -87,7 +101,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "state",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StopKey)
 					return obj.State, nil
@@ -97,7 +111,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "postalCode",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StopKey)
 					return obj.PostalCode, nil
@@ -107,7 +121,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "placeId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StopKey)
 					return obj.PlaceID, nil
@@ -116,7 +130,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "coordinates",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StopKey)
 					return obj.Coordinates, nil
@@ -128,7 +142,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StoredMileage)
 					return obj.ID, nil
@@ -138,7 +152,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StoredMileage)
 					return obj.BusinessUnitID, nil
@@ -148,7 +162,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StoredMileage)
 					return obj.OrganizationID, nil
@@ -158,7 +172,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StoredMileage)
 					return obj.Status, nil
@@ -200,7 +214,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "routeSignature",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StoredMileage)
 					return obj.RouteSignature, nil
@@ -210,7 +224,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "routeHash",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StoredMileage)
 					return obj.RouteHash, nil
@@ -220,7 +234,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "distance",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StoredMileage)
 					return obj.Distance, nil
@@ -230,7 +244,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "distanceUnits",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StoredMileage)
 					return obj.DistanceUnits, nil
@@ -240,7 +254,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "provider",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StoredMileage)
 					return obj.Provider, nil
@@ -250,7 +264,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "source",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StoredMileage)
 					return obj.Source, nil
@@ -260,7 +274,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "routingType",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StoredMileage)
 					return obj.RoutingType, nil
@@ -270,7 +284,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "method",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StoredMileage)
 					return obj.Method, nil
@@ -280,7 +294,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "locationGranularity",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StoredMileage)
 					return obj.LocationGranularity, nil
@@ -290,7 +304,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "dataVersion",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StoredMileage)
 					return obj.DataVersion, nil
@@ -300,7 +314,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "distanceProfileId",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StoredMileage)
 					return obj.DistanceProfileID, nil
@@ -310,7 +324,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "distanceProfileName",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StoredMileage)
 					return obj.DistanceProfileName, nil
@@ -320,7 +334,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "hitCount",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StoredMileage)
 					return obj.HitCount, nil
@@ -330,7 +344,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "lastCalculatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StoredMileage)
 					return obj.LastCalculatedAt, nil
@@ -340,7 +354,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StoredMileage)
 					return obj.Version, nil
@@ -350,7 +364,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StoredMileage)
 					return obj.CreatedAt, nil
@@ -360,7 +374,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*storedmileage.StoredMileage)
 					return obj.UpdatedAt, nil
@@ -413,7 +427,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.StoredMileageConnection)
 					return obj.TotalCount, nil
@@ -423,7 +437,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.StoredMileageConnection)
 					return obj.TotalCountExact, nil
@@ -446,7 +460,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.StoredMileageEdge)
 					return obj.Cursor, nil
@@ -456,8 +470,13 @@ var Shard = &gqlexec.Shard{
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
+}
+
+type resolverMutation interface {
+	DeactivateStoredMileage(ctx context.Context, id string) (bool, error)
 }
 
 type resolverQuery interface {
@@ -466,13 +485,26 @@ type resolverQuery interface {
 }
 
 var (
-	errNoChild0 = errors.New("field of type String does not have child fields")
-	errNoChild1 = errors.New("field of type Float does not have child fields")
-	errNoChild2 = errors.New("field of type ID does not have child fields")
-	errNoChild3 = errors.New("field of type Int does not have child fields")
-	errNoChild4 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild5 = errors.New("field of type Boolean does not have child fields")
+	errNoChild0 = errors.New("field of type Boolean does not have child fields")
+	errNoChild1 = errors.New("field of type String does not have child fields")
+	errNoChild2 = errors.New("field of type Float does not have child fields")
+	errNoChild3 = errors.New("field of type ID does not have child fields")
+	errNoChild4 = errors.New("field of type Int does not have child fields")
+	errNoChild5 = errors.New("field of type Timestamp does not have child fields")
 )
+
+func field_Mutation_deactivateStoredMileage_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
 
 func field_Query_storedMileages_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)

@@ -111,3 +111,76 @@ extend type Query {
   "The resource types custom fields can be defined on."
   customFieldResourceTypes: [String!]!
 }
+
+input CustomFieldSelectOptionInput {
+  value: String!
+  label: String!
+  color: String
+  description: String
+}
+
+input CustomFieldValidationRulesInput {
+  minLength: Int
+  maxLength: Int
+  min: Int
+  max: Int
+  pattern: String
+}
+
+input CustomFieldUIAttributesInput {
+  placeholder: String
+  helpText: String
+  width: String
+}
+
+input CustomFieldDefinitionInput {
+  resourceType: String!
+  name: String!
+  label: String!
+  description: String
+  fieldType: FieldType!
+  isRequired: Boolean!
+  isActive: Boolean!
+  displayOrder: Int!
+  color: String
+  options: [CustomFieldSelectOptionInput!]
+  validationRules: CustomFieldValidationRulesInput
+  "Value pre-filled when a record is created; its shape follows fieldType."
+  defaultValue: Any
+  uiAttributes: CustomFieldUIAttributesInput
+  version: Int
+}
+
+input CustomFieldDefinitionPatchInput {
+  "Omit to leave unchanged; null is rejected."
+  label: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  description: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  isRequired: Boolean @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  isActive: Boolean @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  displayOrder: Int @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  color: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  version: Int @goField(omittable: true)
+}
+
+extend type Mutation {
+  createCustomFieldDefinition(input: CustomFieldDefinitionInput!): CustomFieldDefinition!
+  updateCustomFieldDefinition(
+    id: ID!
+    input: CustomFieldDefinitionInput!
+  ): CustomFieldDefinition!
+  patchCustomFieldDefinition(
+    id: ID!
+    input: CustomFieldDefinitionPatchInput!
+  ): CustomFieldDefinition!
+  """
+  Deletes a definition no record holds a value for. One with values is refused as
+  a conflict whose usageStats extension counts them; deactivate it instead.
+  """
+  deleteCustomFieldDefinition(id: ID!): Boolean!
+}

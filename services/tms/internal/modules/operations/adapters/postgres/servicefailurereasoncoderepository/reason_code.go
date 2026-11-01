@@ -43,37 +43,6 @@ func New(p Params) servicefailureports.ServiceFailureReasonCodeRepository {
 	}
 }
 
-func (r *repository) List(
-	ctx context.Context,
-	req *servicefailureports.ListServiceFailureReasonCodesRequest,
-) (*pagination.ListResult[*servicefailure.ReasonCode], error) {
-	return dbtx.Read(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*servicefailure.ReasonCode], error) {
-			if req.Filter != nil && req.Filter.Pagination.Limit <= 0 {
-				req.Filter.Pagination.Limit = 50
-			}
-
-			rc := servicefailuredb.ReasonCodes
-			result, err := listquery.List(
-				ctx,
-				r.db.Keel(ctx),
-				rc.Query(),
-				&listquery.Request[servicefailure.ReasonCode]{
-					Filter: req.Filter,
-					Then:   []keel.Order{rc.SortOrder.Asc(), rc.Code.Asc()},
-				},
-			)
-			if err != nil {
-				return nil, fmt.Errorf("list service failure reason codes: %w", err)
-			}
-
-			return result, nil
-		},
-	)
-}
-
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *servicefailureports.ListServiceFailureReasonCodeConnectionRequest,
@@ -271,43 +240,6 @@ func (r *repository) Activate(
 		}
 
 		return r.get(ctx, id)
-	})
-}
-
-func (r *repository) Reorder(
-	ctx context.Context,
-	req *servicefailureports.ReorderServiceFailureReasonCodesRequest,
-) ([]*servicefailure.ReasonCode, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*servicefailure.ReasonCode, error) {
-		if len(req.ReasonIDs) == 0 {
-			return []*servicefailure.ReasonCode{}, nil
-		}
-
-		ids := make([]string, len(req.ReasonIDs))
-		orders := make([]int32, len(req.ReasonIDs))
-		for idx, id := range req.ReasonIDs {
-			ids[idx] = id.String()
-			orders[idx] = int32((idx + 1) * 10)
-		}
-
-		rc := servicefailuredb.ReasonCodes
-		db := r.db.Keel(ctx)
-		positions := keel.Unnest("positions", []string{"id", "sort_order"}, ids, orders)
-		if _, err := rc.With(positions).
-			Join(positions, positions.Col("id").EqCol(rc.ID)).
-			Where(keel.True()).
-			Update(ctx, db, rc.SortOrder.ToExpr(positions.Col("sort_order"))); err != nil {
-			return nil, fmt.Errorf("reorder service failure reason codes: %w", err)
-		}
-
-		entities, err := rc.Where(rc.ID.In(req.ReasonIDs...)).
-			Order(rc.SortOrder.Asc()).
-			All(ctx, db)
-		if err != nil {
-			return nil, fmt.Errorf("list reordered service failure reason codes: %w", err)
-		}
-
-		return entities, nil
 	})
 }
 

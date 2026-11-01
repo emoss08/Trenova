@@ -101,7 +101,7 @@ export function WorkerCreatePanel({ open, onOpenChange, form }: WorkerCreatePane
     }
   }, [open, setActiveTab]);
 
-  const { mutateAsync } = useApiMutation<Worker, Worker, unknown, Worker>({
+  const { mutateAsync } = useApiMutation<unknown, Worker, unknown, Worker>({
     mutationFn: async (values: Worker) => {
       return await apiService.workerService.create(values);
     },

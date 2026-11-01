@@ -44,3 +44,34 @@ extend type Query {
   distanceProfiles(input: DataTableConnectionInput!): DistanceProfileConnection!
   distanceProfile(id: ID!): DistanceProfile
 }
+
+input DistanceProfileInput {
+  name: String!
+  description: String
+  status: String!
+  isDefault: Boolean!
+  provider: String!
+  "Blank takes the provider's current data."
+  dataVersion: String
+  region: String!
+  "Blank takes Practical."
+  routingType: String
+  "Blank takes Miles."
+  distanceUnits: String
+  locationGranularity: String!
+  profileName: String
+  highwayOnly: Boolean!
+  tollRoads: Boolean!
+  bordersOpen: Boolean!
+  includeTollData: Boolean!
+  version: Int
+}
+
+extend type Mutation {
+  createDistanceProfile(input: DistanceProfileInput!): DistanceProfile!
+  updateDistanceProfile(id: ID!, input: DistanceProfileInput!): DistanceProfile!
+  "Deletes a profile; the default profile is refused."
+  deleteDistanceProfile(id: ID!): Boolean!
+  "Makes the profile the organization's default, clearing the flag on the previous one."
+  setDefaultDistanceProfile(id: ID!): DistanceProfile!
+}

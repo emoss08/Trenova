@@ -22,19 +22,15 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/billingqueuehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/capturehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierassignmenthandler"
-	"github.com/emoss08/trenova/internal/api/handlers/carrierhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carriertrackingpublichandler"
 	"github.com/emoss08/trenova/internal/api/handlers/casechecklisthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/collectionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerstatementhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataretentionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/detentionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dispatchcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distancecontrolhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/distanceoverridehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/distanceprofilehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentpacketrulehandler"
@@ -64,7 +60,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/invoicesharehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/journalreversalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/jurisdictionrulehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/notificationpreferencehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/onboardinghandler"
@@ -82,34 +77,25 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/ratematrixhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratequotehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratesimulationhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/ratezonehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/realtimehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/recurringshipmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/reporthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rolehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/routingguidehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/searchhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/sequenceconfighandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicefailurehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/servicefailurereasoncodehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/servicetypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentmovehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttrackingpublichandler"
-	"github.com/emoss08/trenova/internal/api/handlers/shipmenttypehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/storedmileagehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tablechangealerthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tablequeryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/telematicshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tenderhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tenderpublichandler"
-	"github.com/emoss08/trenova/internal/api/handlers/tractorhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/trailerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/userhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/versionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/weatheralerthandler"
-	"github.com/emoss08/trenova/internal/api/handlers/workerhandler"
 	"github.com/emoss08/trenova/internal/api/sessionwatch"
 	"go.uber.org/fx"
 )
@@ -128,20 +114,16 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	formulalibraryhandler.New,
 	formulatemplatehandler.New,
 	pagefavoritehandler.New,
-	tractorhandler.New,
-	trailerhandler.New,
 	integrationhandler.New,
 	invoicehandler.New,
 	invoicerunhandler.New,
 	invoicesharehandler.New,
-	workerhandler.New,
 	permissionhandler.New,
 	sessionwatch.New,
 	realtimehandler.New,
 	inboxpresencehandler.New,
 	rolehandler.New,
 	searchhandler.New,
-	customfieldhandler.New,
 	documenthandler.New,
 	reporthandler.New,
 	documentpacketrulehandler.New,
@@ -162,16 +144,12 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	bankreceipthandler.New,
 	bankreceiptworkitemhandler.New,
 	versionhandler.New,
-	servicetypehandler.New,
-	servicefailurereasoncodehandler.New,
 	servicefailurehandler.New,
-	sequenceconfighandler.New,
 	shipmentcontrolhandler.New,
 	shipmentmovehandler.New,
 	shipmenthandler.New,
 	permithandler.New,
 	jurisdictionrulehandler.New,
-	shipmenttypehandler.New,
 	edihandler.New,
 	edisetuphandler.New,
 	editransferhandler.New,
@@ -185,7 +163,6 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	tenderpublichandler.New,
 	tenderhandler.New,
 	routingguidehandler.New,
-	carrierhandler.New,
 	rateconfirmationhandler.New,
 	rateconfirmationpublichandler.New,
 	carriertrackingpublichandler.New,
@@ -196,10 +173,8 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	glbalancehandler.New,
 	fiscalyearhandler.New,
 	fiscalperiodhandler.New,
-	locationhandler.New,
 	recurringshipmenthandler.New,
 	rateagreementhandler.New,
-	ratezonehandler.New,
 	ratematrixhandler.New,
 	ratesimulationhandler.New,
 	rateimporthandler.New,
@@ -217,9 +192,6 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	dispatchcontrolhandler.New,
 	documentcontrolhandler.New,
 	distancecontrolhandler.New,
-	distanceoverridehandler.New,
-	distanceprofilehandler.New,
-	storedmileagehandler.New,
 	exchangeratehandler.New,
 	analyticshandler.New,
 	apikeyhandler.New,

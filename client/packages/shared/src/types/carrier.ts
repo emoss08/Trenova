@@ -208,7 +208,3 @@ export const bulkUpdateCarrierStatusRequestSchema = z.object({
 });
 
 export type BulkUpdateCarrierStatusRequest = z.infer<typeof bulkUpdateCarrierStatusRequestSchema>;
-
-export const bulkUpdateCarrierStatusResponseSchema = z.array(carrierSchema);
-
-export type BulkUpdateCarrierStatusResponse = z.infer<typeof bulkUpdateCarrierStatusResponseSchema>;

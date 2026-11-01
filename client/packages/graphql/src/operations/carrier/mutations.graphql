@@ -1,0 +1,29 @@
+mutation CreateCarrier($input: CarrierInput!) {
+  createCarrier(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateCarrier($id: ID!, $input: CarrierInput!) {
+  updateCarrier(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation PatchCarrier($id: ID!, $input: CarrierPatchInput!) {
+  patchCarrier(id: $id, input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation BulkUpdateCarrierStatus($input: BulkUpdateCarrierStatusInput!) {
+  bulkUpdateCarrierStatus(input: $input) {
+    id
+    status
+    version
+  }
+}

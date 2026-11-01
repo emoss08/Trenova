@@ -96,7 +96,7 @@ type TabbedFormEditPanelProps<T extends FieldValues, TData extends Record<string
    */
   isRecordLoading?: boolean;
   recordFailed?: boolean;
-  mutationFn?: (values: T, row: TData) => Promise<T>;
+  mutationFn?: (values: T, row: TData) => Promise<unknown>;
   /** Labels for the change review; see FormEditPanel. */
   changeFields?: ChangeFields;
   /** Why the form cannot be saved yet, shown in the footer beside the changes. */
@@ -190,7 +190,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
     }
   }, [open, defaultTab, setActiveTab]);
 
-  const { mutateAsync } = useApiMutation<T, T, unknown, T>({
+  const { mutateAsync } = useApiMutation<unknown, T, unknown, T>({
     mutationFn: async (values: T) => {
       if (mutationFn && row) {
         return mutationFn(values, row);

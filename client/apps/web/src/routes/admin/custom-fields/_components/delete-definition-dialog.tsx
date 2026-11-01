@@ -10,7 +10,7 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
-import { ApiRequestError } from "@trenova/shared/lib/api";
+import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import type { CustomFieldDefinitionRow } from "@/lib/graphql/custom-field-definition-table";
 import { CustomFieldService } from "@/services/custom-field";
 import type { DefinitionUsageStats } from "@/types/custom-field";
@@ -58,7 +58,7 @@ export function DeleteDefinitionDialog({
       handleClose();
     },
     onError: (error) => {
-      if (error instanceof ApiRequestError && error.isConflictError()) {
+      if (error instanceof GraphQLRequestError && error.isConflictError()) {
         const stats = error.getUsageStats() as DefinitionUsageStats;
         if (definition?.id) {
           setUsageStatsState({

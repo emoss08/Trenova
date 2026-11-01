@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/mappers"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/ptomapping"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -28,6 +27,47 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
+
+func (r *MutationResolver) CreateWorker(ctx context.Context, input gqlmodel.WorkerInput) (*worker.Worker, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorker, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := workerFromInput(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.WorkerService.Create(ctx, entity, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) UpdateWorker(ctx context.Context, id string, input gqlmodel.WorkerInput) (*worker.Worker, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorker, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	workerID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.WorkerService.Get(ctx, workerports.GetWorkerByIDRequest{
+		ID:             workerID,
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
+		IncludeProfile: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = applyWorkerInput(existing, &input); err != nil {
+		return nil, err
+	}
+
+	return r.WorkerService.Update(ctx, existing, actorutil.FromAuthContext(authCtx))
+}
 
 func (r *MutationResolver) PatchWorker(ctx context.Context, id string, input gqlmodel.WorkerPatchInput) (*worker.Worker, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorker, permission.OpUpdate)
@@ -49,7 +89,7 @@ func (r *MutationResolver) PatchWorker(ctx context.Context, id string, input gql
 		return nil, err
 	}
 
-	if err = mappers.ApplyWorkerPatch(existing, input); err != nil {
+	if err = applyWorkerPatch(existing, &input); err != nil {
 		return nil, err
 	}
 

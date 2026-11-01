@@ -2048,6 +2048,11 @@ export type BulkUpdateAccountTypeStatusInput = {
   status: EntityStatus;
 };
 
+export type BulkUpdateCarrierStatusInput = {
+  carrierIds: Array<string | number>;
+  status: CarrierStatus;
+};
+
 export type BulkUpdateCommodityStatusInput = {
   commodityIds: Array<string | number>;
   status: EntityStatus;
@@ -2076,6 +2081,31 @@ export type BulkUpdateFleetCodeStatusInput = {
 export type BulkUpdateHazardousMaterialStatusInput = {
   hazardousMaterialIds: Array<string | number>;
   status: EntityStatus;
+};
+
+export type BulkUpdateLocationStatusInput = {
+  locationIds: Array<string | number>;
+  status: EntityStatus;
+};
+
+export type BulkUpdateServiceTypeStatusInput = {
+  serviceTypeIds: Array<string | number>;
+  status: EntityStatus;
+};
+
+export type BulkUpdateShipmentTypeStatusInput = {
+  shipmentTypeIds: Array<string | number>;
+  status: EntityStatus;
+};
+
+export type BulkUpdateTractorStatusInput = {
+  status: EquipmentStatus;
+  tractorIds: Array<string | number>;
+};
+
+export type BulkUpdateTrailerStatusInput = {
+  status: EquipmentStatus;
+  trailerIds: Array<string | number>;
 };
 
 export type BulkWorkerPtoActionInput = {
@@ -2320,6 +2350,18 @@ export type CarrierComplianceStatus =
   | 'Pending'
   | 'Qualified';
 
+/** A contact the carrier keeps. Sent with an id, the saved contact is updated; without one, it is added. */
+export type CarrierContactInput = {
+  email?: string | null | undefined;
+  id?: string | number | null | undefined;
+  isPrimary: boolean;
+  name: string;
+  phone?: string | null | undefined;
+  receivesRateConfirmations: boolean;
+  title?: string | null | undefined;
+  version?: number | null | undefined;
+};
+
 export type CarrierCostEventStatus =
   | 'Attached'
   | 'Pending'
@@ -2338,6 +2380,62 @@ export type CarrierEquipmentVerificationResult =
   | 'NotFound'
   | 'ProviderError'
   | 'Unverifiable';
+
+/**
+ * A carrier and the contacts and insurance policies it keeps. Contacts and
+ * policies left out of the lists are removed; the carrier's EDI channels are kept.
+ */
+export type CarrierInput = {
+  addressLine1?: string | null | undefined;
+  addressLine2?: string | null | undefined;
+  carrierType: CarrierType;
+  city?: string | null | undefined;
+  code: string;
+  complianceStatus: CarrierComplianceStatus;
+  contacts?: Array<CarrierContactInput> | null | undefined;
+  dbaName?: string | null | undefined;
+  disqualifiedReason?: string | null | undefined;
+  dotNumber?: string | null | undefined;
+  email?: string | null | undefined;
+  externalId?: string | null | undefined;
+  insurancePolicies?: Array<CarrierInsurancePolicyInput> | null | undefined;
+  is1099Eligible: boolean;
+  mcNumber?: string | null | undefined;
+  name: string;
+  notes?: string | null | undefined;
+  paymentMethod: CarrierPaymentMethod;
+  paymentTermDays: number;
+  phone?: string | null | undefined;
+  postalCode?: string | null | undefined;
+  qualifiedAt?: number | null | undefined;
+  remitAddressLine1?: string | null | undefined;
+  remitAddressLine2?: string | null | undefined;
+  remitCity?: string | null | undefined;
+  remitPostalCode?: string | null | undefined;
+  remitStateId?: string | number | null | undefined;
+  remitToName?: string | null | undefined;
+  safetyRating: CarrierSafetyRating;
+  scac?: string | null | undefined;
+  stateId?: string | number | null | undefined;
+  status: CarrierStatus;
+  taxId?: string | null | undefined;
+  taxIdType?: CarrierTaxIdType | null | undefined;
+  version?: number | null | undefined;
+  w9OnFile: boolean;
+};
+
+/** An insurance policy on file. Sent with an id, the saved policy is updated; without one, it is added. */
+export type CarrierInsurancePolicyInput = {
+  coverageAmount: string;
+  effectiveDate: number;
+  expirationDate: number;
+  id?: string | number | null | undefined;
+  isVerified: boolean;
+  policyNumber: string;
+  policyType: CarrierInsurancePolicyType;
+  providerName: string;
+  version?: number | null | undefined;
+};
 
 export type CarrierInsurancePolicyType =
   | 'AutoLiability'
@@ -2595,6 +2693,37 @@ export type CarrierLedgerEntryType =
 export type CarrierMonitoringEnrollmentFilterInput = {
   desiredState?: CarrierIntelDesiredState | null | undefined;
   vendorStates?: Array<CarrierIntelVendorState> | null | undefined;
+};
+
+export type CarrierPatchInput = {
+  /** Omit to leave unchanged; null is rejected. */
+  carrierType?: CarrierType | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  complianceStatus?: CarrierComplianceStatus | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  dbaName?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  disqualifiedReason?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  email?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  externalId?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  name?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  notes?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  paymentMethod?: CarrierPaymentMethod | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  paymentTermDays?: number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  phone?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  safetyRating?: CarrierSafetyRating | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  status?: CarrierStatus | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  version?: number | null | undefined;
 };
 
 export type CarrierPaymentMethod =
@@ -3133,6 +3262,62 @@ export type CreditMemoApplicationInput = {
 export type CreditMemoApplicationStatus =
   | 'Applied'
   | 'Unapplied';
+
+export type CustomFieldDefinitionInput = {
+  color?: string | null | undefined;
+  /** Value pre-filled when a record is created; its shape follows fieldType. */
+  defaultValue?: unknown;
+  description?: string | null | undefined;
+  displayOrder: number;
+  fieldType: FieldType;
+  isActive: boolean;
+  isRequired: boolean;
+  label: string;
+  name: string;
+  options?: Array<CustomFieldSelectOptionInput> | null | undefined;
+  resourceType: string;
+  uiAttributes?: CustomFieldUiAttributesInput | null | undefined;
+  validationRules?: CustomFieldValidationRulesInput | null | undefined;
+  version?: number | null | undefined;
+};
+
+export type CustomFieldDefinitionPatchInput = {
+  /** Omit to leave unchanged; pass null to clear. */
+  color?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  description?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  displayOrder?: number | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  isActive?: boolean | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  isRequired?: boolean | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  label?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  version?: number | null | undefined;
+};
+
+export type CustomFieldSelectOptionInput = {
+  color?: string | null | undefined;
+  description?: string | null | undefined;
+  label: string;
+  value: string;
+};
+
+export type CustomFieldUiAttributesInput = {
+  helpText?: string | null | undefined;
+  placeholder?: string | null | undefined;
+  width?: string | null | undefined;
+};
+
+export type CustomFieldValidationRulesInput = {
+  max?: number | null | undefined;
+  maxLength?: number | null | undefined;
+  min?: number | null | undefined;
+  minLength?: number | null | undefined;
+  pattern?: string | null | undefined;
+};
 
 /** How often a statement-billed customer is billed. */
 export type CustomerBillingCycle =
@@ -3981,6 +4166,43 @@ export type DisputeAdjustmentInput = {
   amountMinor: number;
   description: string;
   payCodeId?: string | number | null | undefined;
+};
+
+export type DistanceOverrideInput = {
+  /** Set to apply the override only to this customer's shipments. */
+  customerId?: string | number | null | undefined;
+  destinationLocationId: string | number;
+  distance: number;
+  /** The stops between origin and destination, in the order the route visits them. */
+  intermediateStops?: Array<DistanceOverrideStopInput> | null | undefined;
+  originLocationId: string | number;
+  version?: number | null | undefined;
+};
+
+export type DistanceOverrideStopInput = {
+  locationId: string | number;
+};
+
+export type DistanceProfileInput = {
+  bordersOpen: boolean;
+  /** Blank takes the provider's current data. */
+  dataVersion?: string | null | undefined;
+  description?: string | null | undefined;
+  /** Blank takes Miles. */
+  distanceUnits?: string | null | undefined;
+  highwayOnly: boolean;
+  includeTollData: boolean;
+  isDefault: boolean;
+  locationGranularity: string;
+  name: string;
+  profileName?: string | null | undefined;
+  provider: string;
+  region: string;
+  /** Blank takes Practical. */
+  routingType?: string | null | undefined;
+  status: string;
+  tollRoads: boolean;
+  version?: number | null | undefined;
 };
 
 export type DocumentCategory =
@@ -5143,6 +5365,11 @@ export type GenerateSettlementBatchInput = {
   periodStart?: number | null | undefined;
 };
 
+export type GeofenceVertexInput = {
+  latitude: number;
+  longitude: number;
+};
+
 export type GrantCarrierIntelOverrideInput = {
   carrierId: string | number;
   expiresAt?: number | null | undefined;
@@ -5995,6 +6222,11 @@ export type LinkInboundMessageInput = {
   shipmentId?: string | number | null | undefined;
 };
 
+export type LocateTrailerInput = {
+  newLocationId: string | number;
+  trailerId: string | number;
+};
+
 export type LocationCategoryInput = {
   allowsOvernight: boolean;
   color?: string | null | undefined;
@@ -6019,11 +6251,78 @@ export type LocationCategoryType =
   | 'TruckStop'
   | 'Warehouse';
 
+export type LocationCodeCasing =
+  | 'lower'
+  | 'upper';
+
+export type LocationCodeComponent =
+  | 'city'
+  | 'name'
+  | 'postal_code'
+  | 'state';
+
+export type LocationCodeStrategyInput = {
+  casing: LocationCodeCasing;
+  componentWidth: number;
+  components: Array<LocationCodeComponent>;
+  fallbackPrefix: string;
+  separator: string;
+  sequenceDigits: number;
+};
+
 export type LocationGeofenceType =
   | 'auto'
   | 'circle'
   | 'draw'
   | 'rectangle';
+
+export type LocationInput = {
+  addressLine1: string;
+  addressLine2?: string | null | undefined;
+  city: string;
+  /** Left blank, the location code sequence assigns one on create. */
+  code?: string | null | undefined;
+  description?: string | null | undefined;
+  geofenceRadiusMeters?: number | null | undefined;
+  geofenceType: LocationGeofenceType;
+  geofenceVertices?: Array<GeofenceVertexInput> | null | undefined;
+  isGeocoded: boolean;
+  latitude?: number | null | undefined;
+  locationCategoryId: string | number;
+  longitude?: number | null | undefined;
+  name: string;
+  placeId?: string | null | undefined;
+  postalCode: string;
+  stateId: string | number;
+  status: EntityStatus;
+  timezone?: string | null | undefined;
+  version?: number | null | undefined;
+};
+
+export type LocationPatchInput = {
+  /** Omit to leave unchanged; null is rejected. */
+  addressLine1?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  addressLine2?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  city?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  description?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  locationCategoryId?: string | number | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  name?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  postalCode?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  stateId?: string | number | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  status?: EntityStatus | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  timezone?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  version?: number | null | undefined;
+};
 
 export type LogCheckCallInput = {
   city?: string | null | undefined;
@@ -6768,6 +7067,25 @@ export type RateUnit =
   | 'Hour'
   | 'Mile'
   | 'Stop';
+
+/** A rate zone and every place it covers; members left out of the list are removed. */
+export type RateZoneInput = {
+  code: string;
+  description?: string | null | undefined;
+  /** Custom, KMA, Regional, Metro or Country. */
+  kind: string;
+  members: Array<RateZoneMemberInput>;
+  name: string;
+  status: EntityStatus;
+  version?: number | null | undefined;
+};
+
+export type RateZoneMemberInput = {
+  city?: string | null | undefined;
+  id?: string | number | null | undefined;
+  scopeType: string;
+  scopeValue?: string | null | undefined;
+};
 
 export type RecognitionKind =
   | 'CustomerPraise'
@@ -7588,6 +7906,50 @@ export type SendInboundReplyInput = {
   toAddress?: string | null | undefined;
 };
 
+export type SequenceConfigDocumentInput = {
+  configs: Array<SequenceConfigInput>;
+};
+
+export type SequenceConfigInput = {
+  allowCustomFormat: boolean;
+  customFormat: string;
+  id?: string | number | null | undefined;
+  includeBusinessUnitCode: boolean;
+  includeCheckDigit: boolean;
+  includeDay: boolean;
+  includeLocationCode: boolean;
+  includeMonth: boolean;
+  includeRandomDigits: boolean;
+  includeWeekNumber: boolean;
+  includeYear: boolean;
+  locationCodeStrategy?: LocationCodeStrategyInput | null | undefined;
+  prefix: string;
+  randomDigitsCount: number;
+  separatorChar: string;
+  sequenceDigits: number;
+  sequenceType: SequenceType;
+  useSeparators: boolean;
+  version?: number | null | undefined;
+  yearDigits: number;
+};
+
+export type SequenceType =
+  | 'carrier_settlement'
+  | 'consolidation'
+  | 'credit_memo'
+  | 'debit_memo'
+  | 'driver_settlement'
+  | 'factoring_submission'
+  | 'invoice'
+  | 'invoice_run'
+  | 'journal_batch'
+  | 'journal_entry'
+  | 'location_code'
+  | 'manual_journal_request'
+  | 'order'
+  | 'pro_number'
+  | 'work_order';
+
 export type ServiceFailureReasonCategory =
   | 'Appointment'
   | 'Carrier'
@@ -7606,6 +7968,23 @@ export type ServiceFailureReasonCodeAppliesTo =
   | 'Both'
   | 'Delivery'
   | 'Pickup';
+
+export type ServiceFailureReasonCodeInput = {
+  /** Omit on create for an active code; omit on update to leave it as it is. */
+  active?: boolean | null | undefined;
+  appliesTo: ServiceFailureReasonCodeAppliesTo;
+  category: ServiceFailureReasonCategory;
+  code: string;
+  defaultExceptionCode?: string | null | undefined;
+  defaultNote?: string | null | undefined;
+  defaultReasonCode?: string | null | undefined;
+  defaultStatusCode?: string | null | undefined;
+  description?: string | null | undefined;
+  externalMap?: unknown;
+  label: string;
+  sortOrder: number;
+  version?: number | null | undefined;
+};
 
 export type ServiceFailureSource =
   | 'Detected'
@@ -7626,6 +8005,27 @@ export type ServiceFailureType =
   | 'MissedDelivery'
   | 'MissedPickup'
   | 'Other';
+
+export type ServiceTypeInput = {
+  code: string;
+  color?: string | null | undefined;
+  description?: string | null | undefined;
+  status: EntityStatus;
+  version?: number | null | undefined;
+};
+
+export type ServiceTypePatchInput = {
+  /** Omit to leave unchanged; null is rejected. */
+  code?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  color?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  description?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  status?: EntityStatus | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  version?: number | null | undefined;
+};
 
 /** Chooses an accounting system record for a mapping and confirms it. */
 export type SetAccountingMappingInput = {
@@ -8202,6 +8602,27 @@ export type ShipmentTransferToBillingInput = {
   shipmentId: string | number;
 };
 
+export type ShipmentTypeInput = {
+  code: string;
+  color?: string | null | undefined;
+  description?: string | null | undefined;
+  status: EntityStatus;
+  version?: number | null | undefined;
+};
+
+export type ShipmentTypePatchInput = {
+  /** Omit to leave unchanged; null is rejected. */
+  code?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  color?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  description?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  status?: EntityStatus | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  version?: number | null | undefined;
+};
+
 export type ShipmentsInput = {
   activityWindowEnd?: number | null | undefined;
   activityWindowStart?: number | null | undefined;
@@ -8490,6 +8911,132 @@ export type TrackingEventOutcome =
   | 'Pending'
   | 'Refused'
   | 'Superseded';
+
+export type TractorInput = {
+  code: string;
+  customFields?: unknown;
+  equipmentManufacturerId: string | number;
+  equipmentTypeId: string | number;
+  externalId?: string | null | undefined;
+  fleetCodeId?: string | number | null | undefined;
+  fuelType?: IftaFuelType | null | undefined;
+  iftaQualified?: boolean | null | undefined;
+  licensePlateNumber?: string | null | undefined;
+  make?: string | null | undefined;
+  model?: string | null | undefined;
+  primaryWorkerId: string | number;
+  registrationExpiry?: number | null | undefined;
+  registrationNumber?: string | null | undefined;
+  secondaryWorkerId?: string | number | null | undefined;
+  stateId?: string | number | null | undefined;
+  status?: EquipmentStatus | null | undefined;
+  version?: number | null | undefined;
+  vin?: string | null | undefined;
+  year?: number | null | undefined;
+};
+
+export type TractorPatchInput = {
+  /** Omit to leave unchanged; null is rejected. */
+  code?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  customFields?: unknown;
+  /** Omit to leave unchanged; null is rejected. */
+  equipmentManufacturerId?: string | number | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  equipmentTypeId?: string | number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  externalId?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  fleetCodeId?: string | number | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  fuelType?: IftaFuelType | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  iftaQualified?: boolean | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  licensePlateNumber?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  make?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  model?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  primaryWorkerId?: string | number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  registrationExpiry?: number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  registrationNumber?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  secondaryWorkerId?: string | number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  stateId?: string | number | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  status?: EquipmentStatus | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  version?: number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  vin?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  year?: number | null | undefined;
+};
+
+export type TrailerInput = {
+  code: string;
+  customFields?: unknown;
+  equipmentManufacturerId: string | number;
+  equipmentTypeId: string | number;
+  externalId?: string | null | undefined;
+  fleetCodeId?: string | number | null | undefined;
+  lastInspectionDate?: number | null | undefined;
+  licensePlateNumber?: string | null | undefined;
+  make?: string | null | undefined;
+  maxLoadWeight?: number | null | undefined;
+  model?: string | null | undefined;
+  registrationExpiry?: number | null | undefined;
+  registrationNumber?: string | null | undefined;
+  registrationStateId?: string | number | null | undefined;
+  status?: EquipmentStatus | null | undefined;
+  version?: number | null | undefined;
+  vin?: string | null | undefined;
+  year?: number | null | undefined;
+};
+
+export type TrailerPatchInput = {
+  /** Omit to leave unchanged; null is rejected. */
+  code?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  customFields?: unknown;
+  /** Omit to leave unchanged; null is rejected. */
+  equipmentManufacturerId?: string | number | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  equipmentTypeId?: string | number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  externalId?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  fleetCodeId?: string | number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  lastInspectionDate?: number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  licensePlateNumber?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  make?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  maxLoadWeight?: number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  model?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  registrationExpiry?: number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  registrationNumber?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  registrationStateId?: string | number | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  status?: EquipmentStatus | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  version?: number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  vin?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  year?: number | null | undefined;
+};
 
 export type TrainingCategory =
   | 'Compliance'
@@ -9613,6 +10160,34 @@ export type WorkerGender =
   | 'Female'
   | 'Male';
 
+export type WorkerInput = {
+  addressLine1: string;
+  addressLine2?: string | null | undefined;
+  availableForDispatch: boolean;
+  canBeAssigned: boolean;
+  city: string;
+  customFields?: unknown;
+  driverType: DriverType;
+  email?: string | null | undefined;
+  emergencyContactName?: string | null | undefined;
+  emergencyContactPhone?: string | null | undefined;
+  externalId?: string | null | undefined;
+  firstName: string;
+  fleetCodeId?: string | number | null | undefined;
+  gender: WorkerGender;
+  lastName: string;
+  managerId?: string | number | null | undefined;
+  phoneNumber?: string | null | undefined;
+  /** The driving title the worker holds. */
+  positionId?: string | number | null | undefined;
+  postalCode: string;
+  profile?: WorkerProfileInput | null | undefined;
+  stateId: string | number;
+  status: EntityStatus;
+  type: WorkerType;
+  version?: number | null | undefined;
+};
+
 export type WorkerLeaveType =
   | 'FMLA'
   | 'Medical'
@@ -9686,6 +10261,36 @@ export type WorkerPolicyInput = {
   summary?: string | null | undefined;
   title: string;
   versionLabel: string;
+};
+
+/**
+ * A worker's licensing and qualification record. dob, licenseNumber and
+ * twicCardNumber are Personal: a caller who cannot see Personal fields leaves them
+ * out and the saved values stay.
+ */
+export type WorkerProfileInput = {
+  cdlClass: CdlClass;
+  cdlRestrictions?: string | null | undefined;
+  complianceStatus: ComplianceStatus;
+  disqualificationReason?: string | null | undefined;
+  dob?: number | null | undefined;
+  eldExempt: boolean;
+  endorsement: EndorsementType;
+  hazmatExpiry?: number | null | undefined;
+  hireDate?: number | null | undefined;
+  isQualified: boolean;
+  licenseExpiry?: number | null | undefined;
+  licenseNumber?: string | null | undefined;
+  licenseStateId?: string | number | null | undefined;
+  medicalCardExpiry?: number | null | undefined;
+  medicalExaminerName?: string | null | undefined;
+  medicalExaminerNpi?: string | null | undefined;
+  mvrDueDate?: number | null | undefined;
+  physicalDueDate?: number | null | undefined;
+  shortHaulExempt: boolean;
+  terminationDate?: number | null | undefined;
+  twicCardNumber?: string | null | undefined;
+  twicExpiry?: number | null | undefined;
 };
 
 export type WorkerRecognitionInput = {
@@ -12809,6 +13414,43 @@ export type RejectCarrierInvoiceMatchMutationVariables = Exact<{
 
 export type RejectCarrierInvoiceMatchMutation = { rejectCarrierInvoiceMatch: { id: string, status: CarrierInvoiceMatchStatus, version: number } };
 
+export type CreateCarrierMutationVariables = Exact<{
+  input: CarrierInput;
+}>;
+
+
+export type CreateCarrierMutation = { createCarrier: { id: string, version: number } };
+
+export type UpdateCarrierMutationVariables = Exact<{
+  id: string | number;
+  input: CarrierInput;
+}>;
+
+
+export type UpdateCarrierMutation = { updateCarrier: { id: string, version: number } };
+
+export type PatchCarrierMutationVariables = Exact<{
+  id: string | number;
+  input: CarrierPatchInput;
+}>;
+
+
+export type PatchCarrierMutation = { patchCarrier: { id: string, status: CarrierStatus, version: number } };
+
+export type BulkUpdateCarrierStatusMutationVariables = Exact<{
+  input: BulkUpdateCarrierStatusInput;
+}>;
+
+
+export type BulkUpdateCarrierStatusMutation = { bulkUpdateCarrierStatus: Array<{ id: string, status: CarrierStatus, version: number }> };
+
+export type CarrierRecordQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CarrierRecordQuery = { carrier: { ' $fragmentRefs'?: { 'CarrierTableRowFieldsFragment': CarrierTableRowFieldsFragment } } | null };
+
 export type CarrierContactFieldsFragment = { id: string, businessUnitId: string, organizationId: string, carrierId: string, name: string, title: string | null, email: string | null, phone: string | null, isPrimary: boolean, receivesRateConfirmations: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CarrierContactFieldsFragment' };
 
 export type CarrierInsurancePolicyFieldsFragment = { id: string, businessUnitId: string, organizationId: string, carrierId: string, policyType: CarrierInsurancePolicyType, policyNumber: string, providerName: string, coverageAmount: string, effectiveDate: number, expirationDate: number, isVerified: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CarrierInsurancePolicyFieldsFragment' };
@@ -12907,6 +13549,36 @@ export type CustomFieldResourceTypesQueryVariables = Exact<{ [key: string]: neve
 
 
 export type CustomFieldResourceTypesQuery = { customFieldResourceTypes: Array<string> };
+
+export type CreateCustomFieldDefinitionMutationVariables = Exact<{
+  input: CustomFieldDefinitionInput;
+}>;
+
+
+export type CreateCustomFieldDefinitionMutation = { createCustomFieldDefinition: { id: string, version: number } };
+
+export type UpdateCustomFieldDefinitionMutationVariables = Exact<{
+  id: string | number;
+  input: CustomFieldDefinitionInput;
+}>;
+
+
+export type UpdateCustomFieldDefinitionMutation = { updateCustomFieldDefinition: { id: string, version: number } };
+
+export type PatchCustomFieldDefinitionMutationVariables = Exact<{
+  id: string | number;
+  input: CustomFieldDefinitionPatchInput;
+}>;
+
+
+export type PatchCustomFieldDefinitionMutation = { patchCustomFieldDefinition: { id: string, isActive: boolean, version: number } };
+
+export type DeleteCustomFieldDefinitionMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteCustomFieldDefinitionMutation = { deleteCustomFieldDefinition: boolean };
 
 export type CustomFieldDefinitionTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, resourceType: string, name: string, label: string, description: string | null, fieldType: FieldType, isRequired: boolean, isActive: boolean, displayOrder: number, color: string | null, defaultValue: unknown, version: number, createdAt: number, updatedAt: number, options: Array<{ value: string, label: string, color: string, description: string }>, validationRules: { minLength: number | null, maxLength: number | null, min: number | null, max: number | null, pattern: string | null } | null, uiAttributes: { placeholder: string, helpText: string, width: string } | null } & { ' $fragmentName'?: 'CustomFieldDefinitionTableRowFieldsFragment' };
 
@@ -13305,6 +13977,28 @@ export type DispatchPlanAutoAssignMutationVariables = Exact<{
 
 export type DispatchPlanAutoAssignMutation = { dispatchPlanAutoAssign: { runId: string | null, shadowMode: boolean, autonomyTier: string, totalScore: number, generatedAt: number, assignments: Array<{ moveId: string, proNumber: string, workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, confidence: number, rationale: string, autoExecutable: boolean, proposalId: string | null, score: { workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, moveId: string, score: number, verdict: string, blocked: boolean, deadheadMiles: number | null, estimatedDriveMs: number, projectedArrival: number, minutesOfSlack: number, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, projectedTimeAvailable: number, hosStrategy: string, hosRestStartDeadline: number, hosProjectedDriveMs: number, hosProjectedShiftMs: number, hosProjectedCycleMs: number, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }>, factors: Array<{ key: string, label: string, raw: number, weight: number, contribution: number, detail: string }> } }>, uncovered: Array<{ moveId: string, proNumber: string, reason: string, bestBlockedFindings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }> }> } };
 
+export type CreateDistanceOverrideMutationVariables = Exact<{
+  input: DistanceOverrideInput;
+}>;
+
+
+export type CreateDistanceOverrideMutation = { createDistanceOverride: { id: string, version: number } };
+
+export type UpdateDistanceOverrideMutationVariables = Exact<{
+  id: string | number;
+  input: DistanceOverrideInput;
+}>;
+
+
+export type UpdateDistanceOverrideMutation = { updateDistanceOverride: { id: string, version: number } };
+
+export type DeleteDistanceOverrideMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteDistanceOverrideMutation = { deleteDistanceOverride: boolean };
+
 export type DistanceOverrideLocationFieldsFragment = { id: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, state: { id: string, abbreviation: string } | null } & { ' $fragmentName'?: 'DistanceOverrideLocationFieldsFragment' };
 
 export type DistanceOverrideTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, originLocationId: string, destinationLocationId: string, customerId: string | null, distance: number, version: number, createdAt: number, updatedAt: number, originLocation: { ' $fragmentRefs'?: { 'DistanceOverrideLocationFieldsFragment': DistanceOverrideLocationFieldsFragment } } | null, destinationLocation: { ' $fragmentRefs'?: { 'DistanceOverrideLocationFieldsFragment': DistanceOverrideLocationFieldsFragment } } | null, customer: { id: string, name: string } | null, intermediateStops: Array<{ locationId: string, stopOrder: number }> | null } & { ' $fragmentName'?: 'DistanceOverrideTableRowFieldsFragment' };
@@ -13316,6 +14010,35 @@ export type DistanceOverrideTableQueryVariables = Exact<{
 
 
 export type DistanceOverrideTableQuery = { distanceOverrides: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'DistanceOverrideTableRowFieldsFragment': DistanceOverrideTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type CreateDistanceProfileMutationVariables = Exact<{
+  input: DistanceProfileInput;
+}>;
+
+
+export type CreateDistanceProfileMutation = { createDistanceProfile: { id: string, version: number } };
+
+export type UpdateDistanceProfileMutationVariables = Exact<{
+  id: string | number;
+  input: DistanceProfileInput;
+}>;
+
+
+export type UpdateDistanceProfileMutation = { updateDistanceProfile: { id: string, version: number } };
+
+export type DeleteDistanceProfileMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteDistanceProfileMutation = { deleteDistanceProfile: boolean };
+
+export type SetDefaultDistanceProfileMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type SetDefaultDistanceProfileMutation = { setDefaultDistanceProfile: { id: string, isDefault: boolean, version: number } };
 
 export type DistanceProfileTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, status: string, isDefault: boolean, provider: string, dataVersion: string, region: string, routingType: string, distanceUnits: string, locationGranularity: string, profileName: string, highwayOnly: boolean, tollRoads: boolean, bordersOpen: boolean, includeTollData: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'DistanceProfileTableRowFieldsFragment' };
 
@@ -17080,7 +17803,46 @@ export type DeskLocationPoliciesQueryVariables = Exact<{
 
 export type DeskLocationPoliciesQuery = { detentionPolicies: { totalCount: number | null, totalCountExact: boolean, edges: Array<{ node: { id: string, name: string, code: string, status: DetentionPolicyStatus, priority: number, customerId: string | null, stopTypes: Array<StopType>, appointmentStopsOnly: boolean, billingFreeMinutes: number, pickupFreeMinutes: number | null, deliveryFreeMinutes: number | null, effectiveStartDate: number | null, effectiveEndDate: number | null } }> } };
 
-export type LocationTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, locationCategoryId: string, stateId: string, status: EntityStatus, code: string, name: string, description: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, isGeocoded: boolean, latitude: number | null, longitude: number | null, placeId: string, version: number, createdAt: number, updatedAt: number, state: { id: string, name: string, abbreviation: string } | null, locationCategory: { id: string, name: string, color: string } | null } & { ' $fragmentName'?: 'LocationTableRowFieldsFragment' };
+export type LocationGeofenceFieldsFragment = { id: string, code: string, name: string, description: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, latitude: number | null, longitude: number | null, geofenceType: LocationGeofenceType, geofenceRadiusMeters: number | null, geofenceVertices: Array<{ latitude: number, longitude: number }>, state: { id: string, abbreviation: string } | null } & { ' $fragmentName'?: 'LocationGeofenceFieldsFragment' };
+
+export type LocationGeofencesQueryVariables = Exact<{
+  first: number;
+}>;
+
+
+export type LocationGeofencesQuery = { locations: { edges: Array<{ node: { ' $fragmentRefs'?: { 'LocationGeofenceFieldsFragment': LocationGeofenceFieldsFragment } } }> } };
+
+export type CreateLocationMutationVariables = Exact<{
+  input: LocationInput;
+}>;
+
+
+export type CreateLocationMutation = { createLocation: { id: string, version: number } };
+
+export type UpdateLocationMutationVariables = Exact<{
+  id: string | number;
+  input: LocationInput;
+}>;
+
+
+export type UpdateLocationMutation = { updateLocation: { id: string, version: number } };
+
+export type PatchLocationMutationVariables = Exact<{
+  id: string | number;
+  input: LocationPatchInput;
+}>;
+
+
+export type PatchLocationMutation = { patchLocation: { id: string, status: EntityStatus, version: number } };
+
+export type BulkUpdateLocationStatusMutationVariables = Exact<{
+  input: BulkUpdateLocationStatusInput;
+}>;
+
+
+export type BulkUpdateLocationStatusMutation = { bulkUpdateLocationStatus: Array<{ id: string, status: EntityStatus, version: number }> };
+
+export type LocationTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, locationCategoryId: string, stateId: string, status: EntityStatus, code: string, name: string, description: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, timezone: string, isGeocoded: boolean, latitude: number | null, longitude: number | null, placeId: string, geofenceType: LocationGeofenceType, geofenceRadiusMeters: number | null, version: number, createdAt: number, updatedAt: number, geofenceVertices: Array<{ latitude: number, longitude: number }>, state: { id: string, name: string, abbreviation: string } | null, locationCategory: { id: string, name: string, color: string } | null } & { ' $fragmentName'?: 'LocationTableRowFieldsFragment' };
 
 export type LocationTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -17813,6 +18575,33 @@ export type RateQuoteTableQueryVariables = Exact<{
 
 export type RateQuoteTableQuery = { rateQuotes: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'RateQuoteRowFieldsFragment': RateQuoteRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type RateZoneRecordFieldsFragment = (
+  { kind: string, members: Array<{ id: string, rateZoneId: string, scopeType: string, scopeValue: string, city: string, matchKey: string }> | null }
+  & { ' $fragmentRefs'?: { 'RateZoneRowFieldsFragment': RateZoneRowFieldsFragment } }
+) & { ' $fragmentName'?: 'RateZoneRecordFieldsFragment' };
+
+export type RateZoneRecordQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type RateZoneRecordQuery = { rateZone: { ' $fragmentRefs'?: { 'RateZoneRecordFieldsFragment': RateZoneRecordFieldsFragment } } | null };
+
+export type CreateRateZoneMutationVariables = Exact<{
+  input: RateZoneInput;
+}>;
+
+
+export type CreateRateZoneMutation = { createRateZone: { id: string, version: number } };
+
+export type UpdateRateZoneMutationVariables = Exact<{
+  id: string | number;
+  input: RateZoneInput;
+}>;
+
+
+export type UpdateRateZoneMutation = { updateRateZone: { id: string, version: number } };
+
 export type DeskRecordActivityQueryVariables = Exact<{
   resourceId: string | number;
   input: DataTableConnectionInput;
@@ -18522,6 +19311,51 @@ export type DecideProfileChangeMutationVariables = Exact<{
 
 export type DecideProfileChangeMutation = { decideProfileChange: { id: string, status: ProfileChangeStatus, decidedAt: number | null } };
 
+export type SequenceConfigFieldsFragment = { id: string, organizationId: string, businessUnitId: string, sequenceType: SequenceType, prefix: string, includeYear: boolean, yearDigits: number, includeMonth: boolean, includeWeekNumber: boolean, includeDay: boolean, sequenceDigits: number, includeLocationCode: boolean, includeRandomDigits: boolean, randomDigitsCount: number, includeCheckDigit: boolean, includeBusinessUnitCode: boolean, useSeparators: boolean, separatorChar: string, allowCustomFormat: boolean, customFormat: string, version: number, createdAt: number, updatedAt: number, locationCodeStrategy: { components: Array<LocationCodeComponent>, componentWidth: number, sequenceDigits: number, separator: string, casing: LocationCodeCasing, fallbackPrefix: string } | null } & { ' $fragmentName'?: 'SequenceConfigFieldsFragment' };
+
+export type SequenceConfigDocumentFieldsFragment = { organizationId: string, businessUnitId: string, configs: Array<{ ' $fragmentRefs'?: { 'SequenceConfigFieldsFragment': SequenceConfigFieldsFragment } }> } & { ' $fragmentName'?: 'SequenceConfigDocumentFieldsFragment' };
+
+export type SequenceConfigsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type SequenceConfigsQuery = { sequenceConfigs: { ' $fragmentRefs'?: { 'SequenceConfigDocumentFieldsFragment': SequenceConfigDocumentFieldsFragment } } };
+
+export type UpdateSequenceConfigsMutationVariables = Exact<{
+  input: SequenceConfigDocumentInput;
+}>;
+
+
+export type UpdateSequenceConfigsMutation = { updateSequenceConfigs: { ' $fragmentRefs'?: { 'SequenceConfigDocumentFieldsFragment': SequenceConfigDocumentFieldsFragment } } };
+
+export type CreateServiceFailureReasonCodeMutationVariables = Exact<{
+  input: ServiceFailureReasonCodeInput;
+}>;
+
+
+export type CreateServiceFailureReasonCodeMutation = { createServiceFailureReasonCode: { id: string, version: number } };
+
+export type UpdateServiceFailureReasonCodeMutationVariables = Exact<{
+  id: string | number;
+  input: ServiceFailureReasonCodeInput;
+}>;
+
+
+export type UpdateServiceFailureReasonCodeMutation = { updateServiceFailureReasonCode: { id: string, version: number } };
+
+export type ActivateServiceFailureReasonCodeMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ActivateServiceFailureReasonCodeMutation = { activateServiceFailureReasonCode: { id: string, active: boolean, version: number } };
+
+export type ArchiveServiceFailureReasonCodeMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ArchiveServiceFailureReasonCodeMutation = { archiveServiceFailureReasonCode: { id: string, active: boolean, version: number } };
+
 export type ServiceFailureReasonCodeTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, code: string, label: string, description: string | null, category: ServiceFailureReasonCategory, appliesTo: ServiceFailureReasonCodeAppliesTo, defaultStatusCode: string, defaultReasonCode: string, defaultExceptionCode: string, defaultNote: string, active: boolean, sortOrder: number, externalMap: unknown, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ServiceFailureReasonCodeTableRowFieldsFragment' };
 
 export type ServiceFailureReasonCodeTableQueryVariables = Exact<{
@@ -18560,6 +19394,36 @@ export type ServiceFailureTableQueryVariables = Exact<{
 
 export type ServiceFailureTableQuery = { serviceFailures: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'ServiceFailureTableRowFieldsFragment': ServiceFailureTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type CreateServiceTypeMutationVariables = Exact<{
+  input: ServiceTypeInput;
+}>;
+
+
+export type CreateServiceTypeMutation = { createServiceType: { id: string, version: number } };
+
+export type UpdateServiceTypeMutationVariables = Exact<{
+  id: string | number;
+  input: ServiceTypeInput;
+}>;
+
+
+export type UpdateServiceTypeMutation = { updateServiceType: { id: string, version: number } };
+
+export type PatchServiceTypeMutationVariables = Exact<{
+  id: string | number;
+  input: ServiceTypePatchInput;
+}>;
+
+
+export type PatchServiceTypeMutation = { patchServiceType: { id: string, status: EntityStatus, code: string, description: string | null, color: string | null, version: number } };
+
+export type BulkUpdateServiceTypeStatusMutationVariables = Exact<{
+  input: BulkUpdateServiceTypeStatusInput;
+}>;
+
+
+export type BulkUpdateServiceTypeStatusMutation = { bulkUpdateServiceTypeStatus: Array<{ id: string, status: EntityStatus, version: number }> };
+
 export type ServiceTypeTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, description: string | null, color: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ServiceTypeTableRowFieldsFragment' };
 
 export type ServiceTypeTableQueryVariables = Exact<{
@@ -18569,6 +19433,36 @@ export type ServiceTypeTableQueryVariables = Exact<{
 
 
 export type ServiceTypeTableQuery = { serviceTypes: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'ServiceTypeTableRowFieldsFragment': ServiceTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type CreateShipmentTypeMutationVariables = Exact<{
+  input: ShipmentTypeInput;
+}>;
+
+
+export type CreateShipmentTypeMutation = { createShipmentType: { id: string, version: number } };
+
+export type UpdateShipmentTypeMutationVariables = Exact<{
+  id: string | number;
+  input: ShipmentTypeInput;
+}>;
+
+
+export type UpdateShipmentTypeMutation = { updateShipmentType: { id: string, version: number } };
+
+export type PatchShipmentTypeMutationVariables = Exact<{
+  id: string | number;
+  input: ShipmentTypePatchInput;
+}>;
+
+
+export type PatchShipmentTypeMutation = { patchShipmentType: { id: string, status: EntityStatus, code: string, description: string | null, color: string | null, version: number } };
+
+export type BulkUpdateShipmentTypeStatusMutationVariables = Exact<{
+  input: BulkUpdateShipmentTypeStatusInput;
+}>;
+
+
+export type BulkUpdateShipmentTypeStatusMutation = { bulkUpdateShipmentTypeStatus: Array<{ id: string, status: EntityStatus, version: number }> };
 
 export type ShipmentTypeTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, description: string | null, color: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ShipmentTypeTableRowFieldsFragment' };
 
@@ -19153,6 +20047,13 @@ export type SidebarCustomizationOptionsQueryVariables = Exact<{ [key: string]: n
 
 export type SidebarCustomizationOptionsQuery = { sidebarCustomizationOptions: { maxQuickActions: number, activityPageSizes: Array<number>, sections: Array<{ key: string, label: string, hideable: boolean }>, attentionMetrics: Array<{ key: string, label: string }>, quickActions: Array<{ id: string, label: string }> } };
 
+export type DeactivateStoredMileageMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeactivateStoredMileageMutation = { deactivateStoredMileage: boolean };
+
 export type StoredMileageStopKeyFieldsFragment = { method: string, key: string, city: string, state: string, postalCode: string, placeId: string, coordinates: Array<number> | null } & { ' $fragmentName'?: 'StoredMileageStopKeyFieldsFragment' };
 
 export type StoredMileageTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: string, routeSignature: string, routeHash: string, distance: number, distanceUnits: string, provider: string, source: string, routingType: string, method: string, distanceProfileId: string, distanceProfileName: string, hitCount: number, lastCalculatedAt: number, version: number, createdAt: number, updatedAt: number, originKey: { ' $fragmentRefs'?: { 'StoredMileageStopKeyFieldsFragment': StoredMileageStopKeyFieldsFragment } }, destinationKey: { ' $fragmentRefs'?: { 'StoredMileageStopKeyFieldsFragment': StoredMileageStopKeyFieldsFragment } }, intermediateKeys: Array<{ ' $fragmentRefs'?: { 'StoredMileageStopKeyFieldsFragment': StoredMileageStopKeyFieldsFragment } }> | null } & { ' $fragmentName'?: 'StoredMileageTableRowFieldsFragment' };
@@ -19537,12 +20438,79 @@ export type DeskTractorInspectionsQueryVariables = Exact<{
 
 export type DeskTractorInspectionsQuery = { vehicleInspections: Array<{ id: string, inspectionType: string, safetyStatus: string, workerName: string | null, startedAt: number, location: string | null, odometerMeters: number | null, defectCount: number, unresolvedDefectCount: number }> };
 
+export type CreateTractorMutationVariables = Exact<{
+  input: TractorInput;
+}>;
+
+
+export type CreateTractorMutation = { createTractor: { id: string, version: number } };
+
+export type UpdateTractorMutationVariables = Exact<{
+  id: string | number;
+  input: TractorInput;
+}>;
+
+
+export type UpdateTractorMutation = { updateTractor: { id: string, version: number } };
+
+export type PatchTractorMutationVariables = Exact<{
+  id: string | number;
+  input: TractorPatchInput;
+}>;
+
+
+export type PatchTractorMutation = { patchTractor: { id: string, status: EquipmentStatus, version: number } };
+
+export type BulkUpdateTractorStatusMutationVariables = Exact<{
+  input: BulkUpdateTractorStatusInput;
+}>;
+
+
+export type BulkUpdateTractorStatusMutation = { bulkUpdateTractorStatus: Array<{ id: string, status: EquipmentStatus, version: number }> };
+
 export type DeskTrailerCardQueryVariables = Exact<{
   id: string | number;
 }>;
 
 
 export type DeskTrailerCardQuery = { trailer: { id: string, code: string, status: EquipmentStatus, make: string, model: string, year: number | null, vin: string, licensePlateNumber: string, registrationNumber: string, registrationExpiry: number | null, lastInspectionDate: number | null, maxLoadWeight: number | null, externalId: string, ownershipType: EquipmentOwnershipType, lessorName: string, leaseReference: string, leaseEndDate: number | null, createdAt: number, registrationState: { abbreviation: string } | null, equipmentType: { id: string, code: string, description: string } | null, equipmentManufacturer: { id: string, name: string } | null, fleetCode: { id: string, code: string } | null, ownerWorker: { id: string, firstName: string, lastName: string } | null, lastKnownLocation: { id: string, name: string, latitude: number | null, longitude: number | null } | null } | null };
+
+export type CreateTrailerMutationVariables = Exact<{
+  input: TrailerInput;
+}>;
+
+
+export type CreateTrailerMutation = { createTrailer: { id: string, version: number } };
+
+export type UpdateTrailerMutationVariables = Exact<{
+  id: string | number;
+  input: TrailerInput;
+}>;
+
+
+export type UpdateTrailerMutation = { updateTrailer: { id: string, version: number } };
+
+export type PatchTrailerMutationVariables = Exact<{
+  id: string | number;
+  input: TrailerPatchInput;
+}>;
+
+
+export type PatchTrailerMutation = { patchTrailer: { id: string, status: EquipmentStatus, version: number } };
+
+export type BulkUpdateTrailerStatusMutationVariables = Exact<{
+  input: BulkUpdateTrailerStatusInput;
+}>;
+
+
+export type BulkUpdateTrailerStatusMutation = { bulkUpdateTrailerStatus: Array<{ id: string, status: EquipmentStatus, version: number }> };
+
+export type LocateTrailerMutationVariables = Exact<{
+  input: LocateTrailerInput;
+}>;
+
+
+export type LocateTrailerMutation = { locateTrailer: { id: string } };
 
 export type UserDetailQueryVariables = Exact<{
   id: string | number;
@@ -20596,13 +21564,28 @@ export type AttachWorkerTrainingDocumentMutationVariables = Exact<{
 
 export type AttachWorkerTrainingDocumentMutation = { attachWorkerTrainingDocument: { ' $fragmentRefs'?: { 'WorkerTrainingRecordFieldsFragment': WorkerTrainingRecordFieldsFragment } } };
 
+export type CreateWorkerMutationVariables = Exact<{
+  input: WorkerInput;
+}>;
+
+
+export type CreateWorkerMutation = { createWorker: { id: string, version: number } };
+
+export type UpdateWorkerMutationVariables = Exact<{
+  id: string | number;
+  input: WorkerInput;
+}>;
+
+
+export type UpdateWorkerMutation = { updateWorker: { id: string, version: number } };
+
 export type WorkerFleetCodeFieldsFragment = { id: string, code: string, color: string } & { ' $fragmentName'?: 'WorkerFleetCodeFieldsFragment' };
 
 export type WorkerUsStateFieldsFragment = { id: string, name: string, abbreviation: string } & { ' $fragmentName'?: 'WorkerUsStateFieldsFragment' };
 
 export type WorkerProfileTableFieldsFragment = { id: string, workerId: string, businessUnitId: string, organizationId: string, licenseStateId: string | null, dob: number | null, licenseNumber: string | null, cdlClass: CdlClass, cdlRestrictions: string, endorsement: EndorsementType, hazmatExpiry: number | null, licenseExpiry: number, medicalCardExpiry: number | null, medicalExaminerName: string, medicalExaminerNpi: string, twicCardNumber: string | null, twicExpiry: number | null, hireDate: number, terminationDate: number | null, physicalDueDate: number | null, mvrDueDate: number | null, complianceStatus: ComplianceStatus, trainingHealth: WorkerTrainingHealth, safetyRating: SafetyRating, safetyScore: number, nextCredentialExpiry: number | null, nextTrainingDue: number | null, drugAlcoholStatus: DrugAlcoholStatus, isQualified: boolean, disqualificationReason: string, lastComplianceCheck: number, lastMvrCheck: number, lastDrugTest: number | null, eldExempt: boolean, shortHaulExempt: boolean, version: number, createdAt: number, updatedAt: number, licenseState: { ' $fragmentRefs'?: { 'WorkerUsStateFieldsFragment': WorkerUsStateFieldsFragment } } | null } & { ' $fragmentName'?: 'WorkerProfileTableFieldsFragment' };
 
-export type WorkerTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, stateId: string, fleetCodeId: string | null, managerId: string | null, status: EntityStatus, type: WorkerType, driverType: DriverType, leaveType: WorkerLeaveType | null, profilePicUrl: string, firstName: string, lastName: string, wholeName: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, email: string, phoneNumber: string, emergencyContactName: string, emergencyContactPhone: string, externalId: string, assignmentBlocked: string, gender: WorkerGender, canBeAssigned: boolean, availableForDispatch: boolean, version: number, createdAt: number, updatedAt: number, customFields: unknown, fleetCode: { ' $fragmentRefs'?: { 'WorkerFleetCodeFieldsFragment': WorkerFleetCodeFieldsFragment } } | null, state: { ' $fragmentRefs'?: { 'WorkerUsStateFieldsFragment': WorkerUsStateFieldsFragment } } | null, profile: { ' $fragmentRefs'?: { 'WorkerProfileTableFieldsFragment': WorkerProfileTableFieldsFragment } } | null } & { ' $fragmentName'?: 'WorkerTableRowFieldsFragment' };
+export type WorkerTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, stateId: string, fleetCodeId: string | null, managerId: string | null, positionId: string | null, status: EntityStatus, type: WorkerType, driverType: DriverType, leaveType: WorkerLeaveType | null, profilePicUrl: string, firstName: string, lastName: string, wholeName: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, email: string, phoneNumber: string, emergencyContactName: string, emergencyContactPhone: string, externalId: string, assignmentBlocked: string, gender: WorkerGender, canBeAssigned: boolean, availableForDispatch: boolean, version: number, createdAt: number, updatedAt: number, customFields: unknown, fleetCode: { ' $fragmentRefs'?: { 'WorkerFleetCodeFieldsFragment': WorkerFleetCodeFieldsFragment } } | null, state: { ' $fragmentRefs'?: { 'WorkerUsStateFieldsFragment': WorkerUsStateFieldsFragment } } | null, profile: { ' $fragmentRefs'?: { 'WorkerProfileTableFieldsFragment': WorkerProfileTableFieldsFragment } } | null } & { ' $fragmentName'?: 'WorkerTableRowFieldsFragment' };
 
 export type WorkerPtoWorkerFieldsFragment = { id: string, firstName: string, lastName: string, wholeName: string, profilePicUrl: string } & { ' $fragmentName'?: 'WorkerPtoWorkerFieldsFragment' };
 
@@ -20770,12 +21753,15 @@ export { DeskCarrierCapacityPostingsDocument, DeskCarrierInvoiceMatchesDocument 
 export { CarrierIntelFindingFieldsFragmentDoc, CarrierIntelSnapshotSummaryFieldsFragmentDoc, CarrierIntelAddressFieldsFragmentDoc, CarrierIntelAuthorityGrantFieldsFragmentDoc, CarrierIntelProfileFieldsFragmentDoc, CarrierIntelSnapshotFieldsFragmentDoc, CarrierIntelEventFieldsFragmentDoc, CarrierMonitoringEnrollmentFieldsFragmentDoc, CarrierIntelOverrideFieldsFragmentDoc, CarrierEquipmentVerificationFieldsFragmentDoc, CarrierIntelControlFieldsFragmentDoc, CarrierIntelProviderInfoFieldsFragmentDoc, CarrierIntelFieldUpdateFieldsFragmentDoc, CarrierIntelInsuranceChangeFieldsFragmentDoc, CarrierIntelSettingsDocument, CarrierIntelCostEstimateDocument, CarrierIntelUsageDocument, CarrierIntelMonitoringStatusDocument, CarrierIntelEventTableDocument, CarrierIntelEventInboxDocument, CarrierIntelEventDocument, CarrierIntelEventCarrierSummaryDocument, CarrierMonitoringEnrollmentTableDocument, CarrierIntelReviewQueueDocument, CarrierIntelligenceDocument, CarrierIntelSnapshotHistoryDocument, CarrierIntelSyncPlanDocument, CarrierIntelOverridesDocument, CarrierIntelRawPayloadDocument, CarrierIntelLookupDocument, CarrierSourcingSearchDocument, CarrierSourcingAutocompleteDocument, CarrierEquipmentVerificationsDocument, MyCarrierIntelligenceDocument, CustomerBrokerIntelligenceDocument, UpdateCarrierIntelControlDocument, SwitchCarrierIntelProviderDocument, ResumeCarrierIntelMonitoringDocument, VetCarrierDocument, VetCustomerBrokerDocument, SetCarrierMonitoringDocument, AcknowledgeCarrierIntelEventsDocument, ResolveCarrierIntelEventDocument, MarkCarrierIntelReviewedDocument, GrantCarrierIntelOverrideDocument, RevokeCarrierIntelOverrideDocument, ApplyCarrierIntelSuggestionsDocument, ImportSourcedCarrierDocument, VerifyCarrierEquipmentDocument, OverrideCarrierEquipmentVerificationDocument, DeskCarrierIntelEventsDocument } from "./documents/carrier-intelligence/operations";
 export { DeskCarrierSettlementCardDocument } from "./documents/carrier-settlement/desk";
 export { CarrierSettlementTableDocument, CarrierSettlementDetailDocument, CarrierSettlementBatchTableDocument, CarrierSettlementBatchDetailDocument, CarrierCostEventTableDocument, CarrierSettlementControlDocument, CurrentCarrierSettlementPeriodDocument, CarrierSettlementWorkspaceSummaryDocument, CarrierLedgerEntriesDocument, CarrierInvoiceMatchesDocument, EdiCarrierInvoicesDocument, SuggestCarrierForEdiInvoiceDocument, ExportCarrierSettlementBatchCsvDocument, GenerateCarrierSettlementBatchDocument, SubmitCarrierSettlementDocument, ApproveCarrierSettlementDocument, RejectCarrierSettlementDocument, PostCarrierSettlementDocument, MarkCarrierSettlementPaidDocument, VoidCarrierSettlementDocument, RecalculateCarrierSettlementDocument, AddCarrierSettlementAdjustmentDocument, RemoveCarrierSettlementAdjustmentDocument, UpdateCarrierSettlementControlDocument, LinkEdiCarrierInvoiceToCarrierDocument, CreateCarrierInvoiceMatchDocument, AcceptCarrierInvoiceMatchDocument, AcceptCarrierInvoiceMatchWithVarianceDocument, RejectCarrierInvoiceMatchDocument } from "./documents/carrier-settlement/operations";
+export { CreateCarrierDocument, UpdateCarrierDocument, PatchCarrierDocument, BulkUpdateCarrierStatusDocument } from "./documents/carrier/mutations";
+export { CarrierRecordDocument } from "./documents/carrier/record";
 export { CarrierContactFieldsFragmentDoc, CarrierInsurancePolicyFieldsFragmentDoc, CarrierTableRowFieldsFragmentDoc, CarrierTableDocument } from "./documents/carrier/table";
 export { CommandPaletteCustomerPreviewDocument } from "./documents/command-palette/operations";
 export { CreateCommodityDocument, UpdateCommodityDocument, PatchCommodityDocument, BulkUpdateCommodityStatusDocument } from "./documents/commodity/mutations";
 export { CommodityTableRowFieldsFragmentDoc, CommodityTableDocument } from "./documents/commodity/table";
 export { CostingControlPageDocument, ResolvedCostProfilePageDocument, UpdateCostingControlDocument, UpdateCostCategoryDocument } from "./documents/cost-control/operations";
 export { CustomFieldFormFieldsDocument, CustomFieldResourceTypesDocument } from "./documents/custom-field/form";
+export { CreateCustomFieldDefinitionDocument, UpdateCustomFieldDefinitionDocument, PatchCustomFieldDefinitionDocument, DeleteCustomFieldDefinitionDocument } from "./documents/custom-field/mutations";
 export { CustomFieldDefinitionTableRowFieldsFragmentDoc, CustomFieldDefinitionTableDocument } from "./documents/custom-field/table";
 export { DeskCustomerPaymentsDocument } from "./documents/customer-payment/desk";
 export { CustomerPaymentTableDocument, CustomerPaymentDetailDocument, PostAndApplyCustomerPaymentDocument, ApplyUnappliedCustomerPaymentDocument, ReverseCustomerPaymentDocument } from "./documents/customer-payment/operations";
@@ -20791,7 +21777,9 @@ export { DetentionOccurrenceFieldsFragmentDoc, DetentionEvidenceFieldsFragmentDo
 export { DeskDetentionOccurrencesDocument } from "./documents/detention/desk-board";
 export { DetentionPolicyTierFieldsFragmentDoc, DetentionPolicyRowFieldsFragmentDoc, DetentionPolicyTableDocument, DetentionPolicyDocument, CreateDetentionPolicyDocument, UpdateDetentionPolicyDocument, DeleteDetentionPolicyDocument } from "./documents/detention/table";
 export { DispatchBoardDocument, DispatchMoveCandidatesDocument, DispatchDriverMovesDocument, DispatchAssignmentPreviewDocument, DispatchAssignMovesDocument, DispatchUnassignMovesDocument, DispatchCarrierAssignmentPreviewDocument, DispatchAssignMoveToCarrierDocument, DispatchCancelCarrierAssignmentDocument, DispatchPlanAutoAssignDocument } from "./documents/dispatch-console/page";
+export { CreateDistanceOverrideDocument, UpdateDistanceOverrideDocument, DeleteDistanceOverrideDocument } from "./documents/distance-override/mutations";
 export { DistanceOverrideLocationFieldsFragmentDoc, DistanceOverrideTableRowFieldsFragmentDoc, DistanceOverrideTableDocument } from "./documents/distance-override/table";
+export { CreateDistanceProfileDocument, UpdateDistanceProfileDocument, DeleteDistanceProfileDocument, SetDefaultDistanceProfileDocument } from "./documents/distance-profile/mutations";
 export { DistanceProfileTableRowFieldsFragmentDoc, DistanceProfileTableDocument } from "./documents/distance-profile/table";
 export { DocumentPacketRuleTableRowFieldsFragmentDoc, DocumentPacketRuleTableDocument } from "./documents/document-packet-rule/table";
 export { CreateDocumentTypeDocument, UpdateDocumentTypeDocument } from "./documents/document-type/mutations";
@@ -20878,6 +21866,8 @@ export { JurisdictionRuleTableRowFieldsFragmentDoc, JurisdictionRuleTableDocumen
 export { CreateLocationCategoryDocument, UpdateLocationCategoryDocument } from "./documents/location-category/mutations";
 export { LocationCategoryTableRowFieldsFragmentDoc, LocationCategoryTableDocument } from "./documents/location-category/table";
 export { DeskLocationCardDocument, DeskLocationDwellDocument, DeskLocationPoliciesDocument } from "./documents/location-desk/desk";
+export { LocationGeofenceFieldsFragmentDoc, LocationGeofencesDocument } from "./documents/location/geofences";
+export { CreateLocationDocument, UpdateLocationDocument, PatchLocationDocument, BulkUpdateLocationStatusDocument } from "./documents/location/mutations";
 export { LocationTableRowFieldsFragmentDoc, LocationTableDocument } from "./documents/location/table";
 export { DeskManualJournalCardDocument, DeskManualJournalsDocument } from "./documents/manual-journal/desk";
 export { ManualJournalTableRowFieldsFragmentDoc, ManualJournalTableDocument } from "./documents/manual-journal/table";
@@ -20895,7 +21885,8 @@ export { PerformanceReviewTemplateFieldsFragmentDoc, PerformanceReviewFieldsFrag
 export { PtoPolicyRuleFieldsFragmentDoc, PtoPolicyFieldsFragmentDoc, PtoPolicyAssignmentFieldsFragmentDoc, PlannedPtoAccrualFieldsFragmentDoc, WorkerPtoBalanceFieldsFragmentDoc, WorkerPtoLedgerEntryFieldsFragmentDoc, PtoPolicyTableDocument, PtoPolicyDocument, WorkerPtoPolicyAssignmentsDocument, WorkerPtoBalancesDocument, WorkerPtoLedgerDocument, WorkerPtoAvailabilityDocument, PreviewWorkerPtoAccrualDocument, PtoBalanceSummaryDocument, PtoLiabilityReportDocument, CreatePtoPolicyDocument, UpdatePtoPolicyDocument, ArchivePtoPolicyDocument, RestorePtoPolicyDocument, AssignWorkerPtoPolicyDocument, EndWorkerPtoPolicyAssignmentDocument, AdjustWorkerPtoBalanceDocument, RunPtoAccrualDocument } from "./documents/pto-policy/operations";
 export { DeskRateAgreementPricingDocument, DeskRateAgreementsDocument, DeskRateAgreementCardDocument, DeskRateMatrixCardDocument } from "./documents/rate/desk";
 export { RateMatrixRecordDocument, RateMatrixVersionAxesDocument } from "./documents/rate/matrix-record";
-export { RateAgreementRowFieldsFragmentDoc, RateZoneRowFieldsFragmentDoc, RateMatrixRowFieldsFragmentDoc, RateQuoteRowFieldsFragmentDoc, RateAgreementTableDocument, RateZoneTableDocument, RateMatrixTableDocument, RateQuoteTableDocument } from "./documents/rate/table";
+export { RateAgreementRowFieldsFragmentDoc, RateMatrixRowFieldsFragmentDoc, RateQuoteRowFieldsFragmentDoc, RateZoneRowFieldsFragmentDoc, RateAgreementTableDocument, RateZoneTableDocument, RateMatrixTableDocument, RateQuoteTableDocument } from "./documents/rate/table";
+export { RateZoneRecordFieldsFragmentDoc, RateZoneRecordDocument, CreateRateZoneDocument, UpdateRateZoneDocument } from "./documents/rate/zone";
 export { DeskRecordActivityDocument } from "./documents/record-activity/desk";
 export { DeskRecurringShipmentsDocument } from "./documents/recurring-shipment/desk";
 export { RecurringShipmentTableRowFieldsFragmentDoc, RecurringShipmentTableDocument } from "./documents/recurring-shipment/table";
@@ -20918,10 +21909,14 @@ export { ScimDirectoryFieldsFragmentDoc, ScimDirectoriesListDocument } from "./d
 export { SecurityActivityUserFieldsFragmentDoc, AuthEventTableRowFieldsFragmentDoc, RiskDecisionTableRowFieldsFragmentDoc, ExternalIdentityTableRowFieldsFragmentDoc, MfaAuthenticatorTableRowFieldsFragmentDoc, AuthEventsTableDocument, RiskDecisionsTableDocument, ExternalIdentitiesTableDocument, MfaAuthenticatorsTableDocument } from "./documents/security-activity/table";
 export { SelectOptionsDocument } from "./documents/select-options/options";
 export { WorkerPoliciesDocument, WorkerPolicyComplianceDocument, WorkerPolicyAcknowledgementsDocument, ProfileChangeRequestsDocument, CreateWorkerPolicyDocument, UpdateWorkerPolicyDocument, DecideProfileChangeDocument } from "./documents/self-service/operations";
+export { SequenceConfigFieldsFragmentDoc, SequenceConfigDocumentFieldsFragmentDoc, SequenceConfigsDocument, UpdateSequenceConfigsDocument } from "./documents/sequence-config/sequence-config";
+export { CreateServiceFailureReasonCodeDocument, UpdateServiceFailureReasonCodeDocument, ActivateServiceFailureReasonCodeDocument, ArchiveServiceFailureReasonCodeDocument } from "./documents/service-failure-reason-code/mutations";
 export { ServiceFailureReasonCodeTableRowFieldsFragmentDoc, ServiceFailureReasonCodeTableDocument } from "./documents/service-failure-reason-code/table";
 export { DeskServiceFailureCardDocument, DeskRecordFailuresDocument } from "./documents/service-failure/desk";
 export { ServiceFailureTableRowFieldsFragmentDoc, ServiceFailureTableDocument } from "./documents/service-failure/table";
+export { CreateServiceTypeDocument, UpdateServiceTypeDocument, PatchServiceTypeDocument, BulkUpdateServiceTypeStatusDocument } from "./documents/service-type/mutations";
 export { ServiceTypeTableRowFieldsFragmentDoc, ServiceTypeTableDocument } from "./documents/service-type/table";
+export { CreateShipmentTypeDocument, UpdateShipmentTypeDocument, PatchShipmentTypeDocument, BulkUpdateShipmentTypeStatusDocument } from "./documents/shipment-type/mutations";
 export { ShipmentTypeTableRowFieldsFragmentDoc, ShipmentTypeTableDocument } from "./documents/shipment-type/table";
 export { ShipmentBoardCapabilitiesDocument, ShipmentStageSummaryDocument, ShipmentBoardGroupsDocument, ShipmentQuickFilterCountsDocument, ShipmentBriefingDocument, ShipmentCapacityDocument, CapacityUnitMatchesDocument, ShipmentCoverageSuggestionsDocument, ShipmentSuggestionsDocument, ShipmentWatchlistDocument, TenderShipmentsDocument, DecideShipmentSuggestionDocument, UndoShipmentSuggestionDecisionDocument, NotifyShipmentDelayDocument } from "./documents/shipment/board";
 export { CheckCallFieldsFragmentDoc, CarrierTrackingLinkFieldsFragmentDoc, ShipmentCheckCallsDocument, CarrierTrackingLinkDocument, LogCheckCallDocument, IssueCarrierTrackingLinkDocument, RevokeCarrierTrackingLinkDocument } from "./documents/shipment/check-calls";
@@ -20930,6 +21925,7 @@ export { DeskRecordShipmentsDocument } from "./documents/shipment/desk-record";
 export { ShipmentRatingDetailFieldsFragmentDoc, ShipmentLocationFieldsFragmentDoc, ShipmentStopFieldsFragmentDoc, ShipmentTractorFieldsFragmentDoc, ShipmentTrailerFieldsFragmentDoc, ShipmentWorkerFieldsFragmentDoc, ShipmentAssignmentFieldsFragmentDoc, ShipmentCarrierAssignmentFieldsFragmentDoc, ShipmentMoveFieldsFragmentDoc, ShipmentAdditionalChargeFieldsFragmentDoc, ShipmentCommodityFieldsFragmentDoc, ChargeAllocationFieldsFragmentDoc, ShipmentUserFieldsFragmentDoc, ShipmentFieldsFragmentDoc, ShipmentPageInfoFieldsFragmentDoc, ShipmentCommentMentionFieldsFragmentDoc, ShipmentCommentAcknowledgmentFieldsFragmentDoc, ShipmentCommentAttachmentFieldsFragmentDoc, ShipmentCommentFieldsFragmentDoc, ShipmentEventFieldsFragmentDoc, ShipmentContractRateFieldsFragmentDoc, ShipmentBoardTableDocument, ShipmentDetailDocument, ShipmentPageAnalyticsDocument, ShipmentTomorrowsPickupsDocument, UnassignedShipmentsDocument, ExceptionShipmentsDocument, MapShipmentsDocument, ShipmentCommentsDocument, ShipmentCommentRepliesDocument, ShipmentCommentCountDocument, ShipmentEventsDocument, ShipmentBillingReadinessDocument, ShipmentUiPolicyDocument, ShipmentPreviousRatesDocument, CreateShipmentDocument, UpdateShipmentDocument, CancelShipmentDocument, UncancelShipmentDocument, ApproveShipmentRatingReviewDocument, DuplicateShipmentDocument, TransferShipmentOwnershipDocument, TransferShipmentToBillingItemsDocument, BulkTransferShipmentsToBillingDocument, CalculateShipmentTotalsDocument, PreviewShipmentContractRateDocument, AutoRateShipmentDocument, CalculateShipmentDistanceDocument, RecalculateShipmentDistanceDocument, CheckShipmentDuplicateBolDocument, CheckShipmentHazmatSegregationDocument, CalculateShipmentLoadingOptimizationDocument, CreateShipmentCommentDocument, UpdateShipmentCommentDocument, DeleteShipmentCommentDocument, PinShipmentCommentDocument, UnpinShipmentCommentDocument, ResolveShipmentCommentDocument, UnresolveShipmentCommentDocument, AcknowledgeShipmentCommentDocument, ShipmentProfitabilityDocument } from "./documents/shipment/page";
 export { UpdateSidebarPreferencesDocument } from "./documents/sidebar-preferences/mutations";
 export { SidebarPreferencesDocument, SidebarCustomizationOptionsDocument } from "./documents/sidebar-preferences/preferences";
+export { DeactivateStoredMileageDocument } from "./documents/stored-mileage/mutations";
 export { StoredMileageStopKeyFieldsFragmentDoc, StoredMileageTableRowFieldsFragmentDoc, StoredMileageTableDocument } from "./documents/stored-mileage/table";
 export { DeskTableChangeAlertsDocument } from "./documents/table-change-alert/desk";
 export { TcaSubscriptionTableRowFieldsFragmentDoc, TcaSubscriptionTableDocument } from "./documents/table-change-alert/table";
@@ -20940,7 +21936,9 @@ export { DeskShipmentTendersDocument } from "./documents/tender/desk";
 export { TendersByShipmentDocument, LiveTenderByMoveDocument } from "./documents/tender/operations";
 export { TimesheetsDocument, TimesheetDocument, OpenTimeClockEntryDocument, OpenTimeClockEntriesDocument, TimeClockEntriesDocument, PayrollExportsDocument, PayrollExportRowsDocument, ClockInDocument, ClockOutDocument, RecordTimeEntryDocument, DeleteTimeEntryDocument, TransitionTimesheetDocument, GeneratePayrollExportDocument, VoidPayrollExportDocument } from "./documents/timesheet/operations";
 export { DeskTractorCardDocument, DeskTractorPositionDocument, DeskVehiclePositionsDocument, DeskTractorInspectionsDocument } from "./documents/tractor/desk";
+export { CreateTractorDocument, UpdateTractorDocument, PatchTractorDocument, BulkUpdateTractorStatusDocument } from "./documents/tractor/mutations";
 export { DeskTrailerCardDocument } from "./documents/trailer/desk";
+export { CreateTrailerDocument, UpdateTrailerDocument, PatchTrailerDocument, BulkUpdateTrailerStatusDocument, LocateTrailerDocument } from "./documents/trailer/mutations";
 export { UserDetailDocument, CreateUserDocument, PatchUserDocument } from "./documents/user/detail";
 export { UserTableRowFieldsFragmentDoc, UserTableDocument } from "./documents/user/table";
 export { WatchtowerItemFieldsFragmentDoc, WatchtowerAgentFieldsFragmentDoc, WatchtowerCountsFieldsFragmentDoc, WatchtowerFeedDocument, WatchtowerCountsDocument, HandOffWatchtowerItemDocument, WatchtowerItemDetailDocument, SnoozeWatchtowerItemDocument, ResolveWatchtowerItemDocument, WatchtowerClearedDocument, WatchtowerHandOffAgentsDocument, MarkWatchtowerItemSeenDocument } from "./documents/watchtower/watchtower";
@@ -20963,4 +21961,5 @@ export { DeskWorkerSafetyEventsDocument, DeskWorkerRecognitionsDocument } from "
 export { WorkerSafetyEventFieldsFragmentDoc, WorkerDisciplinaryActionFieldsFragmentDoc, WorkerRecognitionFieldsFragmentDoc, SafetyScorecardFieldsFragmentDoc, WorkerSafetyEventsDocument, WorkerSafetyScorecardDocument, WorkerDisciplinaryActionsDocument, WorkerDisciplinaryLadderDocument, WorkerRecognitionsDocument, DefaultSafetyPointsDocument, CreateWorkerSafetyEventDocument, UpdateWorkerSafetyEventDocument, CloseWorkerSafetyEventDocument, ReviewWorkerSafetyEventDocument, ReopenWorkerSafetyEventDocument, DeleteWorkerSafetyEventDocument, IssueDisciplinaryActionDocument, RescindDisciplinaryActionDocument, GiveWorkerRecognitionDocument, DeleteWorkerRecognitionDocument } from "./documents/worker-safety/operations";
 export { DeskWorkerTrainingRecordsDocument } from "./documents/worker-training/desk";
 export { TrainingCourseFieldsFragmentDoc, WorkerTrainingRecordFieldsFragmentDoc, TrainingCourseTableDocument, ActiveTrainingCoursesDocument, WorkerTrainingRecordsDocument, WorkerTrainingSummaryDocument, CreateTrainingCourseDocument, UpdateTrainingCourseDocument, ArchiveTrainingCourseDocument, RestoreTrainingCourseDocument, AssignWorkerTrainingDocument, BulkAssignTrainingDocument, AssignRequiredWorkerTrainingDocument, CompleteWorkerTrainingDocument, WaiveWorkerTrainingDocument, CancelWorkerTrainingDocument, AttachWorkerTrainingDocumentDocument } from "./documents/worker-training/operations";
+export { CreateWorkerDocument, UpdateWorkerDocument } from "./documents/worker/mutations";
 export { WorkerFleetCodeFieldsFragmentDoc, WorkerUsStateFieldsFragmentDoc, WorkerProfileTableFieldsFragmentDoc, WorkerTableRowFieldsFragmentDoc, WorkerPtoWorkerFieldsFragmentDoc, WorkerPtoActorFieldsFragmentDoc, WorkerPtoRowFieldsFragmentDoc, WorkerDataTablePageInfoFieldsFragmentDoc, WorkerTableDocument, WorkerPtoTableDocument, UpcomingWorkerPtoDocument, WorkerPtoChartDataDocument, PatchWorkerDocument, CreateWorkerPtoDocument, UpdateWorkerPtoDocument, ApproveWorkerPtoDocument, RejectWorkerPtoDocument, CancelWorkerPtoDocument, BulkWorkerPtoActionDocument } from "./documents/worker/page";

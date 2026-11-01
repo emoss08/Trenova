@@ -58,7 +58,10 @@ export default function ShipmentTypeTable() {
         throw new Error("Code is required.");
       }
 
-      await apiService.shipmentTypeService.patch(rowId, { [field]: value });
+      await apiService.shipmentTypeService.patch(
+        rowId,
+        field === "code" ? { code: value as string } : { description: (value as string) || null },
+      );
       if (batch) return;
       await queryClient.invalidateQueries({
         queryKey: ["shipment-type-list"],

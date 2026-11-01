@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Separator } from "@trenova/shared/components/ui/separator";
-import type { Location } from "@trenova/shared/types/location";
+import type { LocationGeofence } from "@/lib/graphql/location-geofences";
 import { AdvancedMarker } from "@vis.gl/react-google-maps";
 import { Hash01Icon, MarkerPin01Icon, XCloseIcon } from "@trenova/shared/components/icons";
 import type { NormalizedGeofence } from "./geofence-types";
@@ -21,7 +21,7 @@ function geofenceAnchor(geofence: NormalizedGeofence): google.maps.LatLngLiteral
   return { lat: latSum / geofence.path.length, lng: lngSum / geofence.path.length };
 }
 
-function buildAddressLine(location: Location) {
+function buildAddressLine(location: LocationGeofence) {
   const stateAbbr = location.state?.abbreviation ?? "";
   const tail = [location.city, [stateAbbr, location.postalCode].filter(Boolean).join(" ")]
     .filter(Boolean)
@@ -35,7 +35,7 @@ export function GeofencePopover({
   onClose,
 }: {
   geofence: NormalizedGeofence;
-  location: Location | null;
+  location: LocationGeofence | null;
   onClose: () => void;
 }) {
   const t = useT();

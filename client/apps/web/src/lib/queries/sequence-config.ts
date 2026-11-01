@@ -4,6 +4,7 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
 export const sequenceConfig = createQueryKeys("sequenceConfig", {
   get: () => ({
     queryKey: ["get"],
-    queryFn: async () => apiService.sequenceConfigService.get(),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.sequenceConfigService.get({ signal }),
   }),
 });

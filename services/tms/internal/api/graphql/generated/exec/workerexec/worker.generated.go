@@ -101,6 +101,32 @@ var Shard = &gqlexec.Shard{
 		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
 			{
+				Name:       "createWorker",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "Worker",
+				Args:       field_Mutation_createWorker_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateWorker(ctx, fc.Args["input"].(gqlmodel.WorkerInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
+			},
+			{
+				Name:       "updateWorker",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "Worker",
+				Args:       field_Mutation_updateWorker_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateWorker(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.WorkerInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
+			},
+			{
 				Name:       "patchWorker",
 				NonNull:    true,
 				IsResolver: true,
@@ -1517,9 +1543,11 @@ var Shard = &gqlexec.Shard{
 		{Name: "CreateWorkerPTOInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCreateWorkerPTOInput)},
 		{Name: "UpcomingWorkerPTOInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpcomingWorkerPTOInput)},
 		{Name: "UpdateWorkerPTOInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateWorkerPTOInput)},
+		{Name: "WorkerInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputWorkerInput)},
 		{Name: "WorkerPTOChartInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputWorkerPTOChartInput)},
 		{Name: "WorkerPTOEntriesInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputWorkerPTOEntriesInput)},
 		{Name: "WorkerPatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputWorkerPatchInput)},
+		{Name: "WorkerProfileInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputWorkerProfileInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
@@ -1532,6 +1560,8 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverMutation interface {
+	CreateWorker(ctx context.Context, input gqlmodel.WorkerInput) (*worker.Worker, error)
+	UpdateWorker(ctx context.Context, id string, input gqlmodel.WorkerInput) (*worker.Worker, error)
 	PatchWorker(ctx context.Context, id string, input gqlmodel.WorkerPatchInput) (*worker.Worker, error)
 	CreateWorkerPTO(ctx context.Context, input gqlmodel.CreateWorkerPTOInput) (*worker.WorkerPTO, error)
 	UpdateWorkerPTO(ctx context.Context, input gqlmodel.UpdateWorkerPTOInput) (*worker.WorkerPTO, error)
@@ -1594,6 +1624,40 @@ var (
 	errNoChild18 = errors.New("field of type SafetyRating does not have child fields")
 	errNoChild19 = errors.New("field of type DrugAlcoholStatus does not have child fields")
 )
+
+func field_Mutation_createWorker_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.WorkerInput, error) {
+			return unmarshalNWorkerInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateWorker_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.WorkerInput, error) {
+			return unmarshalNWorkerInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
 
 func field_Mutation_patchWorker_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 2)
@@ -2039,6 +2103,197 @@ func unmarshalInputUpdateWorkerPTOInput(ctx context.Context, ec *gqlexec.Exec, o
 	return it, nil
 }
 
+func unmarshalInputWorkerInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.WorkerInput, error) {
+	var it gqlmodel.WorkerInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"stateId", "fleetCodeId", "managerId", "positionId", "status", "type", "driverType", "gender", "firstName", "lastName", "addressLine1", "addressLine2", "city", "postalCode", "email", "phoneNumber", "emergencyContactName", "emergencyContactPhone", "externalId", "canBeAssigned", "availableForDispatch", "customFields", "version", "profile"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "stateId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stateId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.StateID = data
+		case "fleetCodeId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fleetCodeId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.FleetCodeID = data
+		case "managerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("managerId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ManagerID = data
+		case "positionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("positionId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PositionID = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "type":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			data, err := unmarshalNWorkerType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerType(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Type = data
+		case "driverType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("driverType"))
+			data, err := unmarshalNDriverType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDriverType(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DriverType = data
+		case "gender":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gender"))
+			data, err := unmarshalNWorkerGender2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐGender(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Gender = data
+		case "firstName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("firstName"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.FirstName = data
+		case "lastName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastName"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastName = data
+		case "addressLine1":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addressLine1"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AddressLine1 = data
+		case "addressLine2":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addressLine2"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AddressLine2 = data
+		case "city":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("city"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.City = data
+		case "postalCode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postalCode"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PostalCode = data
+		case "email":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Email = data
+		case "phoneNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phoneNumber"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PhoneNumber = data
+		case "emergencyContactName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("emergencyContactName"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EmergencyContactName = data
+		case "emergencyContactPhone":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("emergencyContactPhone"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EmergencyContactPhone = data
+		case "externalId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("externalId"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExternalID = data
+		case "canBeAssigned":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("canBeAssigned"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CanBeAssigned = data
+		case "availableForDispatch":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("availableForDispatch"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AvailableForDispatch = data
+		case "customFields":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customFields"))
+			data, err := unmarshalOJSON2map(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomFields = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		case "profile":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("profile"))
+			data, err := unmarshalOWorkerProfileInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerProfileInput(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Profile = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputWorkerPTOChartInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.WorkerPTOChartInput, error) {
 	var it gqlmodel.WorkerPTOChartInput
 	if obj == nil {
@@ -2264,6 +2519,183 @@ func unmarshalInputWorkerPatchInput(ctx context.Context, ec *gqlexec.Exec, obj a
 	return it, nil
 }
 
+func unmarshalInputWorkerProfileInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.WorkerProfileInput, error) {
+	var it gqlmodel.WorkerProfileInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"licenseStateId", "dob", "licenseNumber", "cdlClass", "cdlRestrictions", "endorsement", "hazmatExpiry", "licenseExpiry", "medicalCardExpiry", "medicalExaminerName", "medicalExaminerNpi", "twicCardNumber", "twicExpiry", "hireDate", "terminationDate", "physicalDueDate", "mvrDueDate", "complianceStatus", "isQualified", "disqualificationReason", "eldExempt", "shortHaulExempt"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "licenseStateId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("licenseStateId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.LicenseStateID = data
+		case "dob":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dob"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Dob = data
+		case "licenseNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("licenseNumber"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.LicenseNumber = data
+		case "cdlClass":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cdlClass"))
+			data, err := unmarshalNCDLClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCDLClass(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CdlClass = data
+		case "cdlRestrictions":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cdlRestrictions"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CdlRestrictions = data
+		case "endorsement":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endorsement"))
+			data, err := unmarshalNEndorsementType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐEndorsementType(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Endorsement = data
+		case "hazmatExpiry":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hazmatExpiry"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HazmatExpiry = data
+		case "licenseExpiry":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("licenseExpiry"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.LicenseExpiry = data
+		case "medicalCardExpiry":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("medicalCardExpiry"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MedicalCardExpiry = data
+		case "medicalExaminerName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("medicalExaminerName"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MedicalExaminerName = data
+		case "medicalExaminerNpi":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("medicalExaminerNpi"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MedicalExaminerNPI = data
+		case "twicCardNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("twicCardNumber"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.TWICCardNumber = data
+		case "twicExpiry":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("twicExpiry"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.TWICExpiry = data
+		case "hireDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hireDate"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HireDate = data
+		case "terminationDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("terminationDate"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.TerminationDate = data
+		case "physicalDueDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("physicalDueDate"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PhysicalDueDate = data
+		case "mvrDueDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mvrDueDate"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MVRDueDate = data
+		case "complianceStatus":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("complianceStatus"))
+			data, err := unmarshalNComplianceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐComplianceStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ComplianceStatus = data
+		case "isQualified":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isQualified"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsQualified = data
+		case "disqualificationReason":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("disqualificationReason"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DisqualificationReason = data
+		case "eldExempt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("eldExempt"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ELDExempt = data
+		case "shortHaulExempt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("shortHaulExempt"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ShortHaulExempt = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
@@ -2280,8 +2712,25 @@ func unmarshalInputSortFieldInput(ctx context.Context, ec *gqlexec.Exec, obj any
 	return gqlexec.UnmarshalInput[gqlmodel.SortFieldInput](ctx, ec, "SortFieldInput", obj)
 }
 
+func unmarshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool, error) {
+	res, err := graphql.UnmarshalBoolean(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNBulkWorkerPTOActionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkWorkerPTOActionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.BulkWorkerPTOActionInput, error) {
 	res, err := unmarshalInputBulkWorkerPTOActionInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCDLClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCDLClass(ctx context.Context, ec *gqlexec.Exec, v any) (worker.CDLClass, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := worker.CDLClass(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNComplianceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐComplianceStatus(ctx context.Context, ec *gqlexec.Exec, v any) (worker.ComplianceStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := worker.ComplianceStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -2292,6 +2741,24 @@ func unmarshalNCreateWorkerPTOInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
 	res, err := unmarshalInputDataTableConnectionInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNDriverType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDriverType(ctx context.Context, ec *gqlexec.Exec, v any) (worker.DriverType, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := worker.DriverType(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNEndorsementType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐEndorsementType(ctx context.Context, ec *gqlexec.Exec, v any) (worker.EndorsementType, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := worker.EndorsementType(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (domaintypes.Status, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := domaintypes.Status(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -2350,6 +2817,17 @@ func unmarshalNUpdateWorkerPTOInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNWorkerGender2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐGender(ctx context.Context, ec *gqlexec.Exec, v any) (worker.Gender, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := worker.Gender(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNWorkerInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.WorkerInput, error) {
+	res, err := unmarshalInputWorkerInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNWorkerPTOBulkAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerptoportsᚐPTOBulkActionType(ctx context.Context, ec *gqlexec.Exec, v any) (workerptoports.PTOBulkActionType, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := workerptoports.PTOBulkActionType(tmp)
@@ -2368,6 +2846,12 @@ func unmarshalNWorkerPTOEntriesInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 
 func unmarshalNWorkerPatchInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPatchInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.WorkerPatchInput, error) {
 	res, err := unmarshalInputWorkerPatchInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNWorkerType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerType(ctx context.Context, ec *gqlexec.Exec, v any) (worker.WorkerType, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := worker.WorkerType(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -2427,6 +2911,14 @@ func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, e
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalOJSON2map(ctx context.Context, ec *gqlexec.Exec, v any) (map[string]any, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalMap(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalOPTOStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPTOStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.PTOStatus, error) {
 	if v == nil {
 		return nil, nil
@@ -2465,6 +2957,14 @@ func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*
 		return nil, nil
 	}
 	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOWorkerProfileInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerProfileInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.WorkerProfileInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := unmarshalInputWorkerProfileInput(ctx, ec, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

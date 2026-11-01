@@ -61,3 +61,34 @@ extend type Query {
   ): ServiceFailureReasonCodeConnection!
   serviceFailureReasonCode(id: ID!): ServiceFailureReasonCode
 }
+
+input ServiceFailureReasonCodeInput {
+  code: String!
+  label: String!
+  description: String
+  category: ServiceFailureReasonCategory!
+  appliesTo: ServiceFailureReasonCodeAppliesTo!
+  defaultStatusCode: String
+  defaultReasonCode: String
+  defaultExceptionCode: String
+  defaultNote: String
+  "Omit on create for an active code; omit on update to leave it as it is."
+  active: Boolean
+  sortOrder: Int!
+  externalMap: JSON
+  version: Int
+}
+
+extend type Mutation {
+  createServiceFailureReasonCode(
+    input: ServiceFailureReasonCodeInput!
+  ): ServiceFailureReasonCode!
+  updateServiceFailureReasonCode(
+    id: ID!
+    input: ServiceFailureReasonCodeInput!
+  ): ServiceFailureReasonCode!
+  "Puts an archived reason code back in the list people pick from."
+  activateServiceFailureReasonCode(id: ID!): ServiceFailureReasonCode!
+  "Takes a reason code out of the list people pick from; failures already coded keep it."
+  archiveServiceFailureReasonCode(id: ID!): ServiceFailureReasonCode!
+}

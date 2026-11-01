@@ -188,7 +188,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
     }
   }, [open, setActiveTab]);
 
-  const { mutateAsync } = useApiMutation<Worker, Worker, unknown, Worker>({
+  const { mutateAsync } = useApiMutation<unknown, Worker, unknown, Worker>({
     mutationFn: async (values: Worker) => {
       return await apiService.workerService.update(row?.id as string, values);
     },

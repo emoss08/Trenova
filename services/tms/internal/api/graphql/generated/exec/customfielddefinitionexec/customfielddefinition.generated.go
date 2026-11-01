@@ -523,6 +523,59 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createCustomFieldDefinition",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "CustomFieldDefinition",
+				Args:       field_Mutation_createCustomFieldDefinition_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateCustomFieldDefinition(ctx, fc.Args["input"].(gqlmodel.CustomFieldDefinitionInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNCustomFieldDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐCustomFieldDefinition),
+			},
+			{
+				Name:       "updateCustomFieldDefinition",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "CustomFieldDefinition",
+				Args:       field_Mutation_updateCustomFieldDefinition_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateCustomFieldDefinition(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.CustomFieldDefinitionInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNCustomFieldDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐCustomFieldDefinition),
+			},
+			{
+				Name:       "patchCustomFieldDefinition",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "CustomFieldDefinition",
+				Args:       field_Mutation_patchCustomFieldDefinition_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchCustomFieldDefinition(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.CustomFieldDefinitionPatchInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNCustomFieldDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐCustomFieldDefinition),
+			},
+			{
+				Name:       "deleteCustomFieldDefinition",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild3,
+				Args:       field_Mutation_deleteCustomFieldDefinition_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteCustomFieldDefinition(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "customFieldDefinitions",
@@ -578,9 +631,24 @@ var Shard = &gqlexec.Shard{
 			},
 		}},
 	},
+	Inputs: []gqlexec.Input{
+		{Name: "CustomFieldDefinitionInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCustomFieldDefinitionInput)},
+		{Name: "CustomFieldDefinitionPatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCustomFieldDefinitionPatchInput)},
+		{Name: "CustomFieldSelectOptionInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCustomFieldSelectOptionInput)},
+		{Name: "CustomFieldUIAttributesInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCustomFieldUIAttributesInput)},
+		{Name: "CustomFieldValidationRulesInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCustomFieldValidationRulesInput)},
+	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
+}
+
+type resolverMutation interface {
+	CreateCustomFieldDefinition(ctx context.Context, input gqlmodel.CustomFieldDefinitionInput) (*customfield.CustomFieldDefinition, error)
+	UpdateCustomFieldDefinition(ctx context.Context, id string, input gqlmodel.CustomFieldDefinitionInput) (*customfield.CustomFieldDefinition, error)
+	PatchCustomFieldDefinition(ctx context.Context, id string, input gqlmodel.CustomFieldDefinitionPatchInput) (*customfield.CustomFieldDefinition, error)
+	DeleteCustomFieldDefinition(ctx context.Context, id string) (bool, error)
 }
 
 type resolverQuery interface {
@@ -599,6 +667,74 @@ var (
 	errNoChild5 = errors.New("field of type Any does not have child fields")
 	errNoChild6 = errors.New("field of type Timestamp does not have child fields")
 )
+
+func field_Mutation_createCustomFieldDefinition_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.CustomFieldDefinitionInput, error) {
+			return unmarshalNCustomFieldDefinitionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomFieldDefinitionInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateCustomFieldDefinition_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.CustomFieldDefinitionInput, error) {
+			return unmarshalNCustomFieldDefinitionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomFieldDefinitionInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_patchCustomFieldDefinition_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.CustomFieldDefinitionPatchInput, error) {
+			return unmarshalNCustomFieldDefinitionPatchInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomFieldDefinitionPatchInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_deleteCustomFieldDefinition_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
 
 func field_Query_customFieldDefinitions_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -639,12 +775,384 @@ func field_Query_customFieldFormFields_args(ctx context.Context, ec *gqlexec.Exe
 	return args, nil
 }
 
+func unmarshalInputCustomFieldDefinitionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CustomFieldDefinitionInput, error) {
+	var it gqlmodel.CustomFieldDefinitionInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"resourceType", "name", "label", "description", "fieldType", "isRequired", "isActive", "displayOrder", "color", "options", "validationRules", "defaultValue", "uiAttributes", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "resourceType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceType"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceType = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "label":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("label"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Label = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "fieldType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fieldType"))
+			data, err := unmarshalNFieldType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐFieldType(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.FieldType = data
+		case "isRequired":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isRequired"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsRequired = data
+		case "isActive":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isActive"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsActive = data
+		case "displayOrder":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayOrder"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DisplayOrder = data
+		case "color":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("color"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Color = data
+		case "options":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("options"))
+			data, err := unmarshalOCustomFieldSelectOptionInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomFieldSelectOptionInputᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Options = data
+		case "validationRules":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("validationRules"))
+			data, err := unmarshalOCustomFieldValidationRulesInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomFieldValidationRulesInput(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ValidationRules = data
+		case "defaultValue":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("defaultValue"))
+			data, err := unmarshalOAny2interface(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DefaultValue = data
+		case "uiAttributes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("uiAttributes"))
+			data, err := unmarshalOCustomFieldUIAttributesInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomFieldUIAttributesInput(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.UIAttributes = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputCustomFieldDefinitionPatchInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CustomFieldDefinitionPatchInput, error) {
+	var it gqlmodel.CustomFieldDefinitionPatchInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"label", "description", "isRequired", "isActive", "displayOrder", "color", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "label":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("label"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Label = graphql.OmittableOf(data)
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = graphql.OmittableOf(data)
+		case "isRequired":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isRequired"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsRequired = graphql.OmittableOf(data)
+		case "isActive":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isActive"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsActive = graphql.OmittableOf(data)
+		case "displayOrder":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayOrder"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DisplayOrder = graphql.OmittableOf(data)
+		case "color":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("color"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Color = graphql.OmittableOf(data)
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = graphql.OmittableOf(data)
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputCustomFieldSelectOptionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CustomFieldSelectOptionInput, error) {
+	var it gqlmodel.CustomFieldSelectOptionInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"value", "label", "color", "description"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "value":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Value = data
+		case "label":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("label"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Label = data
+		case "color":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("color"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Color = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputCustomFieldUIAttributesInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CustomFieldUIAttributesInput, error) {
+	var it gqlmodel.CustomFieldUIAttributesInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"placeholder", "helpText", "width"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "placeholder":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("placeholder"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Placeholder = data
+		case "helpText":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("helpText"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HelpText = data
+		case "width":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("width"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Width = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputCustomFieldValidationRulesInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CustomFieldValidationRulesInput, error) {
+	var it gqlmodel.CustomFieldValidationRulesInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"minLength", "maxLength", "min", "max", "pattern"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "minLength":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minLength"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MinLength = data
+		case "maxLength":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxLength"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxLength = data
+		case "min":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("min"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Min = data
+		case "max":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("max"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Max = data
+		case "pattern":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pattern"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Pattern = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
 
+func unmarshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool, error) {
+	res, err := graphql.UnmarshalBoolean(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCustomFieldDefinitionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomFieldDefinitionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.CustomFieldDefinitionInput, error) {
+	res, err := unmarshalInputCustomFieldDefinitionInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCustomFieldDefinitionPatchInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomFieldDefinitionPatchInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.CustomFieldDefinitionPatchInput, error) {
+	res, err := unmarshalInputCustomFieldDefinitionPatchInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCustomFieldSelectOptionInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomFieldSelectOptionInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.CustomFieldSelectOptionInput, error) {
+	res, err := unmarshalInputCustomFieldSelectOptionInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
 	res, err := unmarshalInputDataTableConnectionInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNFieldType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐFieldType(ctx context.Context, ec *gqlexec.Exec, v any) (customfield.FieldType, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := customfield.FieldType(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -653,9 +1161,69 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOAny2interface(ctx context.Context, ec *gqlexec.Exec, v any) (any, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalAny(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalBoolean(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOCustomFieldSelectOptionInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomFieldSelectOptionInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.CustomFieldSelectOptionInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNCustomFieldSelectOptionInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomFieldSelectOptionInput)
+}
+
+func unmarshalOCustomFieldUIAttributesInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomFieldUIAttributesInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.CustomFieldUIAttributesInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := unmarshalInputCustomFieldUIAttributesInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOCustomFieldValidationRulesInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomFieldValidationRulesInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.CustomFieldValidationRulesInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := unmarshalInputCustomFieldValidationRulesInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {

@@ -58,7 +58,10 @@ export default function EquipmentTypeTable() {
         throw new Error("Code is required.");
       }
 
-      await apiService.serviceTypeService.patch(rowId, { [field]: value });
+      await apiService.serviceTypeService.patch(
+        rowId,
+        field === "code" ? { code: value as string } : { description: (value as string) || null },
+      );
       if (batch) return;
       await queryClient.invalidateQueries({
         queryKey: ["service-type-list"],

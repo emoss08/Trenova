@@ -416,10 +416,6 @@ type ServiceFailureService interface {
 }
 
 type ServiceFailureReasonCodeService interface {
-	List(
-		ctx context.Context,
-		req *ListServiceFailureReasonCodesRequest,
-	) (*pagination.ListResult[*servicefailure.ReasonCode], error)
 	ListConnection(
 		ctx context.Context,
 		req *ListServiceFailureReasonCodeConnectionRequest,
@@ -458,11 +454,6 @@ type ServiceFailureReasonCodeService interface {
 		tenantInfo pagination.TenantInfo,
 		actor *permissionports.RequestActor,
 	) (*servicefailure.ReasonCode, error)
-	Reorder(
-		ctx context.Context,
-		req *ReorderServiceFailureReasonCodesRequest,
-		actor *permissionports.RequestActor,
-	) ([]*servicefailure.ReasonCode, error)
 }
 
 func validateServiceTenantInfo(multiErr *errortypes.MultiError, tenantInfo pagination.TenantInfo) {

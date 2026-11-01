@@ -5967,3 +5967,21 @@ models:
   StopEtaDriveMethod:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/stopeta.DriveMethod
+  SequenceType:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig.SequenceType
+  LocationCodeComponent:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig.LocationCodeComponent
+  LocationCodeCasing:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig.LocationCodeCasing
+  LocationCodeStrategy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig.LocationCodeStrategy
+  SequenceConfig:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig.SequenceConfig
+  SequenceConfigDocument:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig.SequenceConfigDocument

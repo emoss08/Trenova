@@ -8,6 +8,7 @@ package servicefailurereasoncoderesolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
@@ -58,4 +59,78 @@ func (r *QueryResolver) ServiceFailureReasonCode(ctx context.Context, id string)
 		ID:         reasonID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
+}
+
+func (r *MutationResolver) CreateServiceFailureReasonCode(ctx context.Context, input gqlmodel.ServiceFailureReasonCodeInput) (*servicefailure.ReasonCode, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceServiceFailureReasonCode, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ServiceFailureReasonCodeSvc.Create(
+		ctx,
+		serviceFailureReasonCodeFromInput(&input, authCtx),
+		actorutil.FromAuthContext(authCtx),
+	)
+}
+
+func (r *MutationResolver) UpdateServiceFailureReasonCode(ctx context.Context, id string, input gqlmodel.ServiceFailureReasonCodeInput) (*servicefailure.ReasonCode, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceServiceFailureReasonCode, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	reasonCodeID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.ServiceFailureReasonCodeSvc.Get(ctx, servicefailureports.GetServiceFailureReasonCodeByIDRequest{
+		ID:         reasonCodeID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+	applyServiceFailureReasonCodeInput(existing, &input)
+
+	return r.ServiceFailureReasonCodeSvc.Update(ctx, existing, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) ActivateServiceFailureReasonCode(ctx context.Context, id string) (*servicefailure.ReasonCode, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceServiceFailureReasonCode, permission.OpArchive)
+	if err != nil {
+		return nil, err
+	}
+
+	reasonCodeID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ServiceFailureReasonCodeSvc.Activate(
+		ctx,
+		reasonCodeID,
+		resolvercore.TenantInfo(authCtx),
+		actorutil.FromAuthContext(authCtx),
+	)
+}
+
+func (r *MutationResolver) ArchiveServiceFailureReasonCode(ctx context.Context, id string) (*servicefailure.ReasonCode, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceServiceFailureReasonCode, permission.OpArchive)
+	if err != nil {
+		return nil, err
+	}
+
+	reasonCodeID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ServiceFailureReasonCodeSvc.Archive(
+		ctx,
+		reasonCodeID,
+		resolvercore.TenantInfo(authCtx),
+		actorutil.FromAuthContext(authCtx),
+	)
 }

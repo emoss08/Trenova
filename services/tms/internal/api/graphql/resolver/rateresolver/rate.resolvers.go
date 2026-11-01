@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func (r *QueryResolver) RateAgreements(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateAgreementConnection, error) {
@@ -339,4 +340,70 @@ func (r *RateMatrixVersionResolver) Cells(ctx context.Context, obj *ratematrixve
 		offset: offset,
 		limit:  limit,
 	})
+}
+
+func (r *QueryResolver) RateZone(ctx context.Context, id string) (*gqlmodel.RateZone, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateZone, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	zoneID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := r.RateZoneService.GetByID(ctx, &ratezoneports.GetRateZoneByIDRequest{
+		RateZoneID:     zoneID,
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
+		IncludeMembers: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return rateZoneToModel(entity), nil
+}
+
+func (r *MutationResolver) CreateRateZone(ctx context.Context, input gqlmodel.RateZoneInput) (*gqlmodel.RateZone, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateZone, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := rateZoneFromInput(&input, pulid.Nil, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	created, err := r.RateZoneService.Create(ctx, entity, authCtx.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	return rateZoneToModel(created), nil
+}
+
+func (r *MutationResolver) UpdateRateZone(ctx context.Context, id string, input gqlmodel.RateZoneInput) (*gqlmodel.RateZone, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateZone, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	zoneID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := rateZoneFromInput(&input, zoneID, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	updated, err := r.RateZoneService.Update(ctx, entity, authCtx.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	return rateZoneToModel(updated), nil
 }

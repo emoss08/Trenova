@@ -63,3 +63,73 @@ func (r *QueryResolver) DistanceProfile(ctx context.Context, id string) (*distan
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
+
+func (r *MutationResolver) CreateDistanceProfile(ctx context.Context, input gqlmodel.DistanceProfileInput) (*distanceprofile.DistanceProfile, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDistanceProfile, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.DistanceProfileService.Create(ctx, distanceProfileFromInput(&input, authCtx), authCtx.UserID)
+}
+
+func (r *MutationResolver) UpdateDistanceProfile(ctx context.Context, id string, input gqlmodel.DistanceProfileInput) (*distanceprofile.DistanceProfile, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDistanceProfile, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	profileID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.DistanceProfileService.Get(ctx, distanceprofileports.GetDistanceProfileByIDRequest{
+		ID:         profileID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+	applyDistanceProfileInput(existing, &input)
+
+	return r.DistanceProfileService.Update(ctx, existing, authCtx.UserID)
+}
+
+func (r *MutationResolver) DeleteDistanceProfile(ctx context.Context, id string) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDistanceProfile, permission.OpDelete)
+	if err != nil {
+		return false, err
+	}
+
+	profileID, err := pulid.MustParse(id)
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.DistanceProfileService.Delete(ctx, distanceprofileports.DeleteDistanceProfileRequest{
+		ID:         profileID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	}, authCtx.UserID); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *MutationResolver) SetDefaultDistanceProfile(ctx context.Context, id string) (*distanceprofile.DistanceProfile, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDistanceProfile, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	profileID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.DistanceProfileService.SetDefault(ctx, distanceprofileports.GetDistanceProfileByIDRequest{
+		ID:         profileID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	}, authCtx.UserID)
+}

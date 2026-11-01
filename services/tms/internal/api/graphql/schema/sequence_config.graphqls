@@ -1,0 +1,122 @@
+enum SequenceType {
+  pro_number
+  consolidation
+  order
+  invoice
+  credit_memo
+  debit_memo
+  work_order
+  journal_batch
+  journal_entry
+  manual_journal_request
+  location_code
+  driver_settlement
+  carrier_settlement
+  invoice_run
+  factoring_submission
+}
+
+enum LocationCodeComponent {
+  name
+  city
+  state
+  postal_code
+}
+
+enum LocationCodeCasing {
+  upper
+  lower
+}
+
+"How a new location's code is built from its name and address."
+type LocationCodeStrategy {
+  components: [LocationCodeComponent!]!
+  componentWidth: Int!
+  sequenceDigits: Int!
+  separator: String!
+  casing: LocationCodeCasing!
+  "Used when no component yields a letter or digit."
+  fallbackPrefix: String!
+}
+
+"How the organization numbers one kind of record."
+type SequenceConfig {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  sequenceType: SequenceType!
+  prefix: String!
+  includeYear: Boolean!
+  yearDigits: Int!
+  includeMonth: Boolean!
+  includeWeekNumber: Boolean!
+  includeDay: Boolean!
+  sequenceDigits: Int!
+  includeLocationCode: Boolean!
+  includeRandomDigits: Boolean!
+  randomDigitsCount: Int!
+  includeCheckDigit: Boolean!
+  includeBusinessUnitCode: Boolean!
+  useSeparators: Boolean!
+  separatorChar: String!
+  allowCustomFormat: Boolean!
+  customFormat: String!
+  "Set on the location_code sequence."
+  locationCodeStrategy: LocationCodeStrategy
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"Every numbering sequence the organization keeps, one per sequence type."
+type SequenceConfigDocument {
+  organizationId: ID!
+  businessUnitId: ID!
+  configs: [SequenceConfig!]!
+}
+
+input LocationCodeStrategyInput {
+  components: [LocationCodeComponent!]!
+  componentWidth: Int!
+  sequenceDigits: Int!
+  separator: String!
+  casing: LocationCodeCasing!
+  fallbackPrefix: String!
+}
+
+input SequenceConfigInput {
+  id: ID
+  sequenceType: SequenceType!
+  prefix: String!
+  includeYear: Boolean!
+  yearDigits: Int!
+  includeMonth: Boolean!
+  includeWeekNumber: Boolean!
+  includeDay: Boolean!
+  sequenceDigits: Int!
+  includeLocationCode: Boolean!
+  includeRandomDigits: Boolean!
+  randomDigitsCount: Int!
+  includeCheckDigit: Boolean!
+  includeBusinessUnitCode: Boolean!
+  useSeparators: Boolean!
+  separatorChar: String!
+  allowCustomFormat: Boolean!
+  customFormat: String!
+  locationCodeStrategy: LocationCodeStrategyInput
+  version: Int
+}
+
+input SequenceConfigDocumentInput {
+  configs: [SequenceConfigInput!]!
+}
+
+extend type Query {
+  "The organization's numbering sequences."
+  sequenceConfigs: SequenceConfigDocument!
+}
+
+extend type Mutation {
+  "Saves every numbering sequence at once."
+  updateSequenceConfigs(input: SequenceConfigDocumentInput!): SequenceConfigDocument!
+}

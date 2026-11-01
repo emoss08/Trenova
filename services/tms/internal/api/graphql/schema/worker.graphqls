@@ -331,7 +331,67 @@ extend type Query {
   workerPTOChartData(input: WorkerPTOChartInput!): [PTOChartDataPoint!]!
 }
 
+"""
+A worker's licensing and qualification record. dob, licenseNumber and
+twicCardNumber are Personal: a caller who cannot see Personal fields leaves them
+out and the saved values stay.
+"""
+input WorkerProfileInput {
+  licenseStateId: ID
+  dob: Timestamp
+  licenseNumber: String
+  cdlClass: CDLClass!
+  cdlRestrictions: String
+  endorsement: EndorsementType!
+  hazmatExpiry: Timestamp
+  licenseExpiry: Timestamp
+  medicalCardExpiry: Timestamp
+  medicalExaminerName: String
+  medicalExaminerNpi: String
+  twicCardNumber: String
+  twicExpiry: Timestamp
+  hireDate: Timestamp
+  terminationDate: Timestamp
+  physicalDueDate: Timestamp
+  mvrDueDate: Timestamp
+  complianceStatus: ComplianceStatus!
+  isQualified: Boolean!
+  disqualificationReason: String
+  eldExempt: Boolean!
+  shortHaulExempt: Boolean!
+}
+
+input WorkerInput {
+  stateId: ID!
+  fleetCodeId: ID
+  managerId: ID
+  "The driving title the worker holds."
+  positionId: ID
+  status: EntityStatus!
+  type: WorkerType!
+  driverType: DriverType!
+  gender: WorkerGender!
+  firstName: String!
+  lastName: String!
+  addressLine1: String!
+  addressLine2: String
+  city: String!
+  postalCode: String!
+  email: String
+  phoneNumber: String
+  emergencyContactName: String
+  emergencyContactPhone: String
+  externalId: String
+  canBeAssigned: Boolean!
+  availableForDispatch: Boolean!
+  customFields: JSON
+  version: Int
+  profile: WorkerProfileInput
+}
+
 extend type Mutation {
+  createWorker(input: WorkerInput!): Worker!
+  updateWorker(id: ID!, input: WorkerInput!): Worker!
   patchWorker(id: ID!, input: WorkerPatchInput!): Worker!
   createWorkerPTO(input: CreateWorkerPTOInput!): WorkerPTO!
   updateWorkerPTO(input: UpdateWorkerPTOInput!): WorkerPTO!

@@ -2,9 +2,9 @@
 import type { TypedDocumentString, RateAgreementRowFieldsFragment, RateAgreementTableQuery, RateAgreementTableQueryVariables, RateMatrixRowFieldsFragment, RateMatrixTableQuery, RateMatrixTableQueryVariables, RateQuoteRowFieldsFragment, RateQuoteTableQuery, RateQuoteTableQueryVariables, RateZoneRowFieldsFragment, RateZoneTableQuery, RateZoneTableQueryVariables } from "../../graphql";
 
 export const RateAgreementRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"RateAgreementRowFields"}} as unknown as TypedDocumentString<RateAgreementRowFieldsFragment, unknown>;
-export const RateZoneRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"RateZoneRowFields"}} as unknown as TypedDocumentString<RateZoneRowFieldsFragment, unknown>;
 export const RateMatrixRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"RateMatrixRowFields"}} as unknown as TypedDocumentString<RateMatrixRowFieldsFragment, unknown>;
 export const RateQuoteRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"RateQuoteRowFields"}} as unknown as TypedDocumentString<RateQuoteRowFieldsFragment, unknown>;
+export const RateZoneRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"RateZoneRowFields"}} as unknown as TypedDocumentString<RateZoneRowFieldsFragment, unknown>;
 export const RateAgreementTableDocument = {"__meta__":{"kind":"query","name":"RateAgreementTable","hash":"sha256:802a3d26d6cb879b2a9cb5f6050458e3ca1fe7b852a5a7ba285358fade9327c4"}} as unknown as TypedDocumentString<RateAgreementTableQuery, RateAgreementTableQueryVariables>;
 export const RateZoneTableDocument = {"__meta__":{"kind":"query","name":"RateZoneTable","hash":"sha256:206f4f1a6011ce83f6474e89603ebcd3451df74450f339454f8d54657d1a1037"}} as unknown as TypedDocumentString<RateZoneTableQuery, RateZoneTableQueryVariables>;
 export const RateMatrixTableDocument = {"__meta__":{"kind":"query","name":"RateMatrixTable","hash":"sha256:69dd003a8f607b982bc789c715084ec763b0dde76604ee2d53a66be43f8ac50f"}} as unknown as TypedDocumentString<RateMatrixTableQuery, RateMatrixTableQueryVariables>;

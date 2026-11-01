@@ -40,3 +40,24 @@ extend type Query {
   distanceOverrides(input: DataTableConnectionInput!): DistanceOverrideConnection!
   distanceOverride(id: ID!): DistanceOverride
 }
+
+input DistanceOverrideStopInput {
+  locationId: ID!
+}
+
+input DistanceOverrideInput {
+  originLocationId: ID!
+  destinationLocationId: ID!
+  "Set to apply the override only to this customer's shipments."
+  customerId: ID
+  distance: Float!
+  "The stops between origin and destination, in the order the route visits them."
+  intermediateStops: [DistanceOverrideStopInput!]
+  version: Int
+}
+
+extend type Mutation {
+  createDistanceOverride(input: DistanceOverrideInput!): DistanceOverride!
+  updateDistanceOverride(id: ID!, input: DistanceOverrideInput!): DistanceOverride!
+  deleteDistanceOverride(id: ID!): Boolean!
+}

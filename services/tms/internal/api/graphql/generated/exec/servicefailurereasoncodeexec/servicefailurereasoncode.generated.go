@@ -23,6 +23,60 @@ var Shard = &gqlexec.Shard{
 		{Name: "ServiceFailureReasonCodeEdge", Implementors: []string{"ServiceFailureReasonCodeEdge"}},
 	},
 	Fields: []gqlexec.Fields{
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createServiceFailureReasonCode",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "ServiceFailureReasonCode",
+				Args:       field_Mutation_createServiceFailureReasonCode_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateServiceFailureReasonCode(ctx, fc.Args["input"].(gqlmodel.ServiceFailureReasonCodeInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNServiceFailureReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐReasonCode),
+			},
+			{
+				Name:       "updateServiceFailureReasonCode",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "ServiceFailureReasonCode",
+				Args:       field_Mutation_updateServiceFailureReasonCode_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateServiceFailureReasonCode(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ServiceFailureReasonCodeInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNServiceFailureReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐReasonCode),
+			},
+			{
+				Name:       "activateServiceFailureReasonCode",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "ServiceFailureReasonCode",
+				Args:       field_Mutation_activateServiceFailureReasonCode_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ActivateServiceFailureReasonCode(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNServiceFailureReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐReasonCode),
+			},
+			{
+				Name:       "archiveServiceFailureReasonCode",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "ServiceFailureReasonCode",
+				Args:       field_Mutation_archiveServiceFailureReasonCode_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ArchiveServiceFailureReasonCode(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNServiceFailureReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐReasonCode),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "serviceFailureReasonCodes",
@@ -319,9 +373,20 @@ var Shard = &gqlexec.Shard{
 			},
 		}},
 	},
+	Inputs: []gqlexec.Input{
+		{Name: "ServiceFailureReasonCodeInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputServiceFailureReasonCodeInput)},
+	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
+}
+
+type resolverMutation interface {
+	CreateServiceFailureReasonCode(ctx context.Context, input gqlmodel.ServiceFailureReasonCodeInput) (*servicefailure.ReasonCode, error)
+	UpdateServiceFailureReasonCode(ctx context.Context, id string, input gqlmodel.ServiceFailureReasonCodeInput) (*servicefailure.ReasonCode, error)
+	ActivateServiceFailureReasonCode(ctx context.Context, id string) (*servicefailure.ReasonCode, error)
+	ArchiveServiceFailureReasonCode(ctx context.Context, id string) (*servicefailure.ReasonCode, error)
 }
 
 type resolverQuery interface {
@@ -339,6 +404,66 @@ var (
 	errNoChild6 = errors.New("field of type JSON does not have child fields")
 	errNoChild7 = errors.New("field of type Timestamp does not have child fields")
 )
+
+func field_Mutation_createServiceFailureReasonCode_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.ServiceFailureReasonCodeInput, error) {
+			return unmarshalNServiceFailureReasonCodeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐServiceFailureReasonCodeInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateServiceFailureReasonCode_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.ServiceFailureReasonCodeInput, error) {
+			return unmarshalNServiceFailureReasonCodeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐServiceFailureReasonCodeInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_activateServiceFailureReasonCode_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Mutation_archiveServiceFailureReasonCode_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
 
 func field_Query_serviceFailureReasonCodes_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -366,6 +491,120 @@ func field_Query_serviceFailureReasonCode_args(ctx context.Context, ec *gqlexec.
 	return args, nil
 }
 
+func unmarshalInputServiceFailureReasonCodeInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ServiceFailureReasonCodeInput, error) {
+	var it gqlmodel.ServiceFailureReasonCodeInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"code", "label", "description", "category", "appliesTo", "defaultStatusCode", "defaultReasonCode", "defaultExceptionCode", "defaultNote", "active", "sortOrder", "externalMap", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "code":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Code = data
+		case "label":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("label"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Label = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "category":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
+			data, err := unmarshalNServiceFailureReasonCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐReasonCategory(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Category = data
+		case "appliesTo":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appliesTo"))
+			data, err := unmarshalNServiceFailureReasonCodeAppliesTo2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐReasonCodeAppliesTo(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AppliesTo = data
+		case "defaultStatusCode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("defaultStatusCode"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DefaultStatusCode = data
+		case "defaultReasonCode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("defaultReasonCode"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DefaultReasonCode = data
+		case "defaultExceptionCode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("defaultExceptionCode"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DefaultExceptionCode = data
+		case "defaultNote":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("defaultNote"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DefaultNote = data
+		case "active":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("active"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Active = data
+		case "sortOrder":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sortOrder"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SortOrder = data
+		case "externalMap":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("externalMap"))
+			data, err := unmarshalOJSON2map(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExternalMap = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
@@ -378,6 +617,65 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNServiceFailureReasonCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐReasonCategory(ctx context.Context, ec *gqlexec.Exec, v any) (servicefailure.ReasonCategory, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := servicefailure.ReasonCategory(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNServiceFailureReasonCodeAppliesTo2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐReasonCodeAppliesTo(ctx context.Context, ec *gqlexec.Exec, v any) (servicefailure.ReasonCodeAppliesTo, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := servicefailure.ReasonCodeAppliesTo(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNServiceFailureReasonCodeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐServiceFailureReasonCodeInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.ServiceFailureReasonCodeInput, error) {
+	res, err := unmarshalInputServiceFailureReasonCodeInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalBoolean(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOJSON2map(ctx context.Context, ec *gqlexec.Exec, v any) (map[string]any, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalMap(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {

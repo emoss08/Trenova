@@ -82,9 +82,3 @@ export const bulkUpdateLocationStatusRequestSchema = z.object({
 });
 
 export type BulkUpdateLocationStatusRequest = z.infer<typeof bulkUpdateLocationStatusRequestSchema>;
-
-export const bulkUpdateLocationStatusResponseSchema = z.array(locationSchema);
-
-export type BulkUpdateLocationStatusResponse = z.infer<
-  typeof bulkUpdateLocationStatusResponseSchema
->;

@@ -8,12 +8,15 @@ package locationresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -57,5 +60,76 @@ func (r *QueryResolver) Location(ctx context.Context, id string) (*location.Loca
 	return r.LocationService.Get(ctx, locationports.GetLocationByIDRequest{
 		ID:         locationID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+}
+
+func (r *MutationResolver) CreateLocation(ctx context.Context, input gqlmodel.LocationInput) (*location.Location, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceLocation, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := locationFromInput(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.LocationService.Create(ctx, entity, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) UpdateLocation(ctx context.Context, id string, input gqlmodel.LocationInput) (*location.Location, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceLocation, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.existingLocation(ctx, id, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = applyLocationInput(existing, &input); err != nil {
+		return nil, err
+	}
+
+	return r.LocationService.Update(ctx, existing, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) PatchLocation(ctx context.Context, id string, input gqlmodel.LocationPatchInput) (*location.Location, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceLocation, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.existingLocation(ctx, id, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = applyLocationPatch(existing, &input); err != nil {
+		return nil, err
+	}
+
+	return r.LocationService.Update(ctx, existing, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) BulkUpdateLocationStatus(ctx context.Context, input gqlmodel.BulkUpdateLocationStatusInput) ([]*location.Location, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceLocation, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	if authCtx.IsAPIKey() {
+		return nil, errortypes.NewAuthorizationError("API keys cannot bulk update locations")
+	}
+
+	locationIDs, err := gqlid.ParseIDs(input.LocationIds)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.LocationService.BulkUpdateStatus(ctx, &locationports.BulkUpdateLocationStatusRequest{
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
+		LocationIDs: locationIDs,
+		Status:      input.Status,
 	})
 }

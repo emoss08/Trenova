@@ -1,7 +1,12 @@
-import { api } from "@trenova/shared/lib/api";
+import { DeactivateStoredMileageDocument } from "@trenova/graphql/generated/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export class StoredMileageService {
-  public async delete(id: string) {
-    await api.delete(`/stored-mileages/${id}/`);
+  public async deactivate(id: string) {
+    await requestGraphQL({
+      document: DeactivateStoredMileageDocument,
+      operationName: "DeactivateStoredMileage",
+      variables: { id },
+    });
   }
 }

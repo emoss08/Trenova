@@ -1,0 +1,32 @@
+fragment LocationGeofenceFields on Location {
+  id
+  code
+  name
+  description
+  addressLine1
+  addressLine2
+  city
+  postalCode
+  latitude
+  longitude
+  geofenceType
+  geofenceRadiusMeters
+  geofenceVertices {
+    latitude
+    longitude
+  }
+  state {
+    id
+    abbreviation
+  }
+}
+
+query LocationGeofences($first: Int!) {
+  locations(input: { first: $first }) {
+    edges {
+      node {
+        ...LocationGeofenceFields
+      }
+    }
+  }
+}

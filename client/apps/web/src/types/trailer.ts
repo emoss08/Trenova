@@ -78,10 +78,6 @@ export const bulkUpdateTrailerStatusRequestSchema = z.object({
 
 export type BulkUpdateTrailerStatusRequest = z.infer<typeof bulkUpdateTrailerStatusRequestSchema>;
 
-export const bulkUpdateTrailerStatusResponseSchema = z.array(trailerSchema);
-
-export type BulkUpdateTrailerStatusResponse = z.infer<typeof bulkUpdateTrailerStatusResponseSchema>;
-
 export const locateTrailerPayloadSchema = z.object({
   newLocationId: z.string().min(1, { error: () => translate("Location is required") }),
 });

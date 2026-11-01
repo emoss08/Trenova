@@ -115,6 +115,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/securityactivityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/selectoptionsexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/selfserviceexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/sequenceconfigexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/servicefailureexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/servicefailurereasoncodeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/servicetypeexec"
@@ -281,6 +282,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
@@ -2164,6 +2166,10 @@ type MutationResolver interface {
 	CreateCaptureProfile(ctx context.Context, input gqlmodel.CaptureProfileInput) (*captureprofile.CaptureProfile, error)
 	UpdateCaptureProfile(ctx context.Context, id string, version int, input gqlmodel.CaptureProfileInput) (*captureprofile.CaptureProfile, error)
 	DeleteCaptureProfile(ctx context.Context, id string) (bool, error)
+	CreateCarrier(ctx context.Context, input gqlmodel.CarrierInput) (*carrier.Carrier, error)
+	UpdateCarrier(ctx context.Context, id string, input gqlmodel.CarrierInput) (*carrier.Carrier, error)
+	PatchCarrier(ctx context.Context, id string, input gqlmodel.CarrierPatchInput) (*carrier.Carrier, error)
+	BulkUpdateCarrierStatus(ctx context.Context, input gqlmodel.BulkUpdateCarrierStatusInput) ([]*carrier.Carrier, error)
 	CreateCarrierCapacityPosting(ctx context.Context, input gqlmodel.CarrierCapacityPostingInput) (*carriercapacity.Posting, error)
 	UpdateCarrierCapacityPosting(ctx context.Context, id string, version int, input gqlmodel.CarrierCapacityPostingInput) (*carriercapacity.Posting, error)
 	DeleteCarrierCapacityPosting(ctx context.Context, id string, version int) (bool, error)
@@ -2207,6 +2213,10 @@ type MutationResolver interface {
 	BulkUpdateCommodityStatus(ctx context.Context, input gqlmodel.BulkUpdateCommodityStatusInput) ([]*commodity.Commodity, error)
 	UpdateCostingControl(ctx context.Context, input gqlmodel.CostingControlInput) (*gqlmodel.CostingControl, error)
 	UpdateCostCategory(ctx context.Context, input gqlmodel.CostCategoryUpdateInput) (*gqlmodel.CostCategory, error)
+	CreateCustomFieldDefinition(ctx context.Context, input gqlmodel.CustomFieldDefinitionInput) (*customfield.CustomFieldDefinition, error)
+	UpdateCustomFieldDefinition(ctx context.Context, id string, input gqlmodel.CustomFieldDefinitionInput) (*customfield.CustomFieldDefinition, error)
+	PatchCustomFieldDefinition(ctx context.Context, id string, input gqlmodel.CustomFieldDefinitionPatchInput) (*customfield.CustomFieldDefinition, error)
+	DeleteCustomFieldDefinition(ctx context.Context, id string) (bool, error)
 	CreateCustomer(ctx context.Context, input gqlmodel.CustomerInput) (*customer.Customer, error)
 	UpdateCustomer(ctx context.Context, id string, input gqlmodel.CustomerInput) (*customer.Customer, error)
 	PatchCustomer(ctx context.Context, id string, input gqlmodel.CustomerPatchInput) (*customer.Customer, error)
@@ -2239,6 +2249,13 @@ type MutationResolver interface {
 	DispatchAssignMoveToCarrier(ctx context.Context, input gqlmodel.DispatchAssignMoveToCarrierInput) (*shipment.CarrierAssignment, error)
 	DispatchCancelCarrierAssignment(ctx context.Context, moveID string, reason string) (bool, error)
 	DispatchPlanAutoAssign(ctx context.Context, input gqlmodel.DispatchPlanInput) (*gqlmodel.DispatchPlan, error)
+	CreateDistanceOverride(ctx context.Context, input gqlmodel.DistanceOverrideInput) (*distanceoverride.DistanceOverride, error)
+	UpdateDistanceOverride(ctx context.Context, id string, input gqlmodel.DistanceOverrideInput) (*distanceoverride.DistanceOverride, error)
+	DeleteDistanceOverride(ctx context.Context, id string) (bool, error)
+	CreateDistanceProfile(ctx context.Context, input gqlmodel.DistanceProfileInput) (*distanceprofile.DistanceProfile, error)
+	UpdateDistanceProfile(ctx context.Context, id string, input gqlmodel.DistanceProfileInput) (*distanceprofile.DistanceProfile, error)
+	DeleteDistanceProfile(ctx context.Context, id string) (bool, error)
+	SetDefaultDistanceProfile(ctx context.Context, id string) (*distanceprofile.DistanceProfile, error)
 	CreateDocumentTemplate(ctx context.Context, input gqlmodel.DocumentTemplateInput) (*documenttemplate.DocumentTemplate, error)
 	UpdateDocumentTemplate(ctx context.Context, id string, input gqlmodel.DocumentTemplateInput) (*documenttemplate.DocumentTemplate, error)
 	DeleteDocumentTemplate(ctx context.Context, id string) (bool, error)
@@ -2466,6 +2483,10 @@ type MutationResolver interface {
 	ApproveJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*journalentryports.JournalReviewResult, error)
 	PostJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*journalentryports.JournalReviewResult, error)
 	AssessLateCharges(ctx context.Context, input *gqlmodel.LateChargeAssessmentInput) (*latechargeports.LateChargeAssessmentResult, error)
+	CreateLocation(ctx context.Context, input gqlmodel.LocationInput) (*location.Location, error)
+	UpdateLocation(ctx context.Context, id string, input gqlmodel.LocationInput) (*location.Location, error)
+	PatchLocation(ctx context.Context, id string, input gqlmodel.LocationPatchInput) (*location.Location, error)
+	BulkUpdateLocationStatus(ctx context.Context, input gqlmodel.BulkUpdateLocationStatusInput) ([]*location.Location, error)
 	CreateLocationCategory(ctx context.Context, input gqlmodel.LocationCategoryInput) (*locationcategory.LocationCategory, error)
 	UpdateLocationCategory(ctx context.Context, id string, input gqlmodel.LocationCategoryInput) (*locationcategory.LocationCategory, error)
 	MarkNotificationsRead(ctx context.Context, ids []string) (bool, error)
@@ -2511,6 +2532,8 @@ type MutationResolver interface {
 	EndWorkerPTOPolicyAssignment(ctx context.Context, input gqlmodel.EndWorkerPTOPolicyAssignmentInput) (*pto.WorkerPTOPolicyAssignment, error)
 	AdjustWorkerPTOBalance(ctx context.Context, input gqlmodel.AdjustWorkerPTOBalanceInput) (*pto.WorkerPTOLedgerEntry, error)
 	RunPTOAccrual(ctx context.Context, input gqlmodel.RunPTOAccrualInput) (*gqlmodel.PTOAccrualRunPayload, error)
+	CreateRateZone(ctx context.Context, input gqlmodel.RateZoneInput) (*gqlmodel.RateZone, error)
+	UpdateRateZone(ctx context.Context, id string, input gqlmodel.RateZoneInput) (*gqlmodel.RateZone, error)
 	CreateReportDefinition(ctx context.Context, input gqlmodel.SaveReportDefinitionInput) (*gqlmodel.ReportDefinition, error)
 	ExportTableView(ctx context.Context, input gqlmodel.ExportTableViewInput) (*gqlmodel.TableExportResult, error)
 	ScheduleTableView(ctx context.Context, input gqlmodel.ScheduleTableViewInput) (*gqlmodel.TableExportResult, error)
@@ -2539,6 +2562,15 @@ type MutationResolver interface {
 	CreateWorkerPolicy(ctx context.Context, input gqlmodel.WorkerPolicyInput) (*workerpolicy.WorkerPolicy, error)
 	UpdateWorkerPolicy(ctx context.Context, id string, input gqlmodel.WorkerPolicyInput) (*workerpolicy.WorkerPolicy, error)
 	DecideProfileChange(ctx context.Context, input gqlmodel.DecideProfileChangeInput) (*profilechange.WorkerProfileChangeRequest, error)
+	UpdateSequenceConfigs(ctx context.Context, input gqlmodel.SequenceConfigDocumentInput) (*sequenceconfig.SequenceConfigDocument, error)
+	CreateServiceFailureReasonCode(ctx context.Context, input gqlmodel.ServiceFailureReasonCodeInput) (*servicefailure.ReasonCode, error)
+	UpdateServiceFailureReasonCode(ctx context.Context, id string, input gqlmodel.ServiceFailureReasonCodeInput) (*servicefailure.ReasonCode, error)
+	ActivateServiceFailureReasonCode(ctx context.Context, id string) (*servicefailure.ReasonCode, error)
+	ArchiveServiceFailureReasonCode(ctx context.Context, id string) (*servicefailure.ReasonCode, error)
+	CreateServiceType(ctx context.Context, input gqlmodel.ServiceTypeInput) (*servicetype.ServiceType, error)
+	UpdateServiceType(ctx context.Context, id string, input gqlmodel.ServiceTypeInput) (*servicetype.ServiceType, error)
+	PatchServiceType(ctx context.Context, id string, input gqlmodel.ServiceTypePatchInput) (*servicetype.ServiceType, error)
+	BulkUpdateServiceTypeStatus(ctx context.Context, input gqlmodel.BulkUpdateServiceTypeStatusInput) ([]*servicetype.ServiceType, error)
 	CreateShipment(ctx context.Context, input gqlmodel.ShipmentInput) (*gqlmodel.Shipment, error)
 	UpdateShipment(ctx context.Context, id string, input gqlmodel.ShipmentInput) (*gqlmodel.Shipment, error)
 	CancelShipment(ctx context.Context, id string, input *gqlmodel.ShipmentCancelInput) (*gqlmodel.Shipment, error)
@@ -2568,7 +2600,12 @@ type MutationResolver interface {
 	DecideShipmentSuggestion(ctx context.Context, input gqlmodel.DecideShipmentSuggestionInput) (bool, error)
 	UndoShipmentSuggestionDecision(ctx context.Context, key string) (bool, error)
 	NotifyShipmentDelay(ctx context.Context, input gqlmodel.NotifyShipmentDelayInput) (bool, error)
+	CreateShipmentType(ctx context.Context, input gqlmodel.ShipmentTypeInput) (*shipmenttype.ShipmentType, error)
+	UpdateShipmentType(ctx context.Context, id string, input gqlmodel.ShipmentTypeInput) (*shipmenttype.ShipmentType, error)
+	PatchShipmentType(ctx context.Context, id string, input gqlmodel.ShipmentTypePatchInput) (*shipmenttype.ShipmentType, error)
+	BulkUpdateShipmentTypeStatus(ctx context.Context, input gqlmodel.BulkUpdateShipmentTypeStatusInput) ([]*shipmenttype.ShipmentType, error)
 	UpdateSidebarPreferences(ctx context.Context, input gqlmodel.SidebarPreferencesInput) (*gqlmodel.SidebarPreferences, error)
+	DeactivateStoredMileage(ctx context.Context, id string) (bool, error)
 	CreateTableConfiguration(ctx context.Context, input gqlmodel.TableConfigurationInput) (*tableconfiguration.TableConfiguration, error)
 	UpdateTableConfiguration(ctx context.Context, id string, input gqlmodel.TableConfigurationInput) (*tableconfiguration.TableConfiguration, error)
 	PatchTableConfiguration(ctx context.Context, id string, input gqlmodel.TableConfigurationPatchInput) (*tableconfiguration.TableConfiguration, error)
@@ -2615,6 +2652,8 @@ type MutationResolver interface {
 	ReopenWatchtowerItem(ctx context.Context, id string, input gqlmodel.ReopenWatchtowerItemInput) (*watchtower.Item, error)
 	MarkWatchtowerItemSeen(ctx context.Context, id string) (*watchtower.Item, error)
 	WakeWatchtowerItem(ctx context.Context, id string, expectedVersion *int) (*watchtower.Item, error)
+	CreateWorker(ctx context.Context, input gqlmodel.WorkerInput) (*worker.Worker, error)
+	UpdateWorker(ctx context.Context, id string, input gqlmodel.WorkerInput) (*worker.Worker, error)
 	PatchWorker(ctx context.Context, id string, input gqlmodel.WorkerPatchInput) (*worker.Worker, error)
 	CreateWorkerPTO(ctx context.Context, input gqlmodel.CreateWorkerPTOInput) (*worker.WorkerPTO, error)
 	UpdateWorkerPTO(ctx context.Context, input gqlmodel.UpdateWorkerPTOInput) (*worker.WorkerPTO, error)
@@ -3343,6 +3382,7 @@ type QueryResolver interface {
 	RateAgreements(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateAgreementConnection, error)
 	RateAgreement(ctx context.Context, id string) (*gqlmodel.RateAgreement, error)
 	RateZones(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateZoneConnection, error)
+	RateZone(ctx context.Context, id string) (*gqlmodel.RateZone, error)
 	RateMatrices(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateMatrixConnection, error)
 	RateMatrix(ctx context.Context, id string) (*gqlmodel.RateMatrix, error)
 	RateMatrixVersions(ctx context.Context, rateMatrixID string, first *int) ([]*ratematrixversion.RateMatrixVersion, error)
@@ -3391,6 +3431,7 @@ type QueryResolver interface {
 	WorkerPolicyCompliance(ctx context.Context, id string) (*gqlmodel.PolicyCompliance, error)
 	WorkerPolicyAcknowledgements(ctx context.Context, workerID string) ([]*workerpolicy.WorkerPolicyAcknowledgement, error)
 	ProfileChangeRequests(ctx context.Context, filter *gqlmodel.ProfileChangeFilterInput) ([]*profilechange.WorkerProfileChangeRequest, error)
+	SequenceConfigs(ctx context.Context) (*sequenceconfig.SequenceConfigDocument, error)
 	ServiceFailures(ctx context.Context, input gqlmodel.DataTableConnectionInput, shipmentID *string, locationID *string) (*gqlmodel.ServiceFailureConnection, error)
 	ServiceFailure(ctx context.Context, id string) (*servicefailure.ServiceFailure, error)
 	ServiceFailureReasonCodes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ServiceFailureReasonCodeConnection, error)
@@ -4142,6 +4183,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		securityactivityexec.Shard,
 		selectoptionsexec.Shard,
 		selfserviceexec.Shard,
+		sequenceconfigexec.Shard,
 		servicefailureexec.Shard,
 		servicefailurereasoncodeexec.Shard,
 		servicetypeexec.Shard,

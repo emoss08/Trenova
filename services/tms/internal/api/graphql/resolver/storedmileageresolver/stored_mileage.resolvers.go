@@ -59,3 +59,24 @@ func (r *QueryResolver) StoredMileage(ctx context.Context, id string) (*storedmi
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
+
+func (r *MutationResolver) DeactivateStoredMileage(ctx context.Context, id string) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceStoredMileage, permission.OpDelete)
+	if err != nil {
+		return false, err
+	}
+
+	storedMileageID, err := pulid.MustParse(id)
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.StoredMileageService.Deactivate(ctx, storedmileageports.DeleteStoredMileageRequest{
+		ID:         storedMileageID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	}, authCtx.UserID); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}

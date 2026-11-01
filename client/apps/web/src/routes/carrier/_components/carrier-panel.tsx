@@ -1,4 +1,5 @@
 import { AccountingSyncStateLine } from "@/components/accounting-sync/sync-state-line";
+import { apiService } from "@/services/api";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { CarrierRow } from "@/lib/graphql/carrier-table";
@@ -63,7 +64,7 @@ export function CarrierPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
         onOpenChange={onOpenChange}
         row={row}
         form={form}
-        url="/carriers/"
+        mutationFn={(values, currentRow) => apiService.carrierService.update(currentRow.id, values)}
         queryKey="carrier-list"
         title={t("Carrier")}
         fieldKey="name"
@@ -79,7 +80,7 @@ export function CarrierPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/carriers/"
+      mutationFn={(values) => apiService.carrierService.create(values)}
       queryKey="carrier-list"
       title={t("Carrier")}
       size="lg"

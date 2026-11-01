@@ -106,11 +106,36 @@ func rateZoneToModel(entity *ratezone.RateZone) *gqlmodel.RateZone {
 		Code:           entity.Code,
 		Name:           entity.Name,
 		Description:    entity.Description,
+		Kind:           string(entity.Kind),
 		Status:         string(entity.Status),
 		Version:        int(entity.Version),
 		CreatedAt:      int(entity.CreatedAt),
 		UpdatedAt:      int(entity.UpdatedAt),
+		Members:        rateZoneMembersToModel(entity.Members),
 	}
+}
+
+func rateZoneMembersToModel(members []*ratezone.RateZoneMember) []*gqlmodel.RateZoneMember {
+	if members == nil {
+		return nil
+	}
+
+	out := make([]*gqlmodel.RateZoneMember, 0, len(members))
+	for _, member := range members {
+		if member == nil {
+			continue
+		}
+		out = append(out, &gqlmodel.RateZoneMember{
+			ID:         member.ID.String(),
+			RateZoneID: member.RateZoneID.String(),
+			ScopeType:  string(member.ScopeType),
+			ScopeValue: member.ScopeValue,
+			City:       member.City,
+			MatchKey:   member.MatchKey,
+		})
+	}
+
+	return out
 }
 
 func rateZoneConnectionToModel(

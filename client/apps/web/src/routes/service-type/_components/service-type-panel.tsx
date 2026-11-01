@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { apiService } from "@/services/api";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { ServiceTypeRow } from "@/lib/graphql/service-type-table";
@@ -34,7 +35,9 @@ export function ServiceTypePanel({
         onOpenChange={onOpenChange}
         row={row}
         form={form}
-        url="/service-types/"
+        mutationFn={(values, currentRow) =>
+          apiService.serviceTypeService.update(currentRow.id, values)
+        }
         queryKey="service-type-list"
         title={t("Service type")}
         fieldKey="code"
@@ -48,7 +51,7 @@ export function ServiceTypePanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/service-types/"
+      mutationFn={(values) => apiService.serviceTypeService.create(values)}
       queryKey="service-type-list"
       title={t("Service type")}
       formComponent={<ServiceTypeForm />}

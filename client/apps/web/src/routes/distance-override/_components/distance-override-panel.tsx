@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { apiService } from "@/services/api";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -34,7 +35,9 @@ export function DistanceOverridePanel({
         onOpenChange={onOpenChange}
         row={row}
         form={form}
-        url="/distance-overrides/"
+        mutationFn={(values, currentRow) =>
+          apiService.distanceOverrideService.update(currentRow.id, values)
+        }
         queryKey="distance-override-list"
         title={t("Distance override")}
         fieldKey="originLocationId"
@@ -48,7 +51,7 @@ export function DistanceOverridePanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/distance-overrides/"
+      mutationFn={(values) => apiService.distanceOverrideService.create(values)}
       queryKey="distance-override-list"
       title={t("Distance override")}
       formComponent={<DistanceOverrideForm />}

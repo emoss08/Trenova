@@ -193,3 +193,29 @@ func TestErrorPresenter_PlanRestrictionCarriesItsParams(t *testing.T) {
 		"plan":       "free_demo",
 	}, presented.Extensions["params"])
 }
+
+func TestErrorPresenter_ConflictCarriesItsUsageStats(t *testing.T) {
+	t.Parallel()
+
+	present := newErrorPresenter(&presenterTestConfig().App)
+	stats := map[string]any{"totalValueCount": 4, "resourceCount": 2}
+
+	presented := present(context.Background(), fmt.Errorf("delete definition: %w",
+		errortypes.NewConflictError("Values exist").WithUsageStats(stats)))
+	require.NotNil(t, presented)
+	assert.Equal(t,
+		"https://api.test/problems/"+string(helpers.ProblemTypeConflict),
+		presented.Extensions["type"],
+	)
+	assert.Equal(t, stats, presented.Extensions["usageStats"])
+}
+
+func TestErrorPresenter_ConflictWithoutUsageStatsOmitsTheExtension(t *testing.T) {
+	t.Parallel()
+
+	present := newErrorPresenter(&presenterTestConfig().App)
+
+	presented := present(context.Background(), errortypes.NewConflictError("Busy"))
+	require.NotNil(t, presented)
+	assert.NotContains(t, presented.Extensions, "usageStats")
+}

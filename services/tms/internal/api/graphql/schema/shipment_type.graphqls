@@ -30,3 +30,36 @@ extend type Query {
   shipmentTypes(input: DataTableConnectionInput!): ShipmentTypeConnection!
   shipmentType(id: ID!): ShipmentType
 }
+
+input ShipmentTypeInput {
+  status: EntityStatus!
+  code: String!
+  description: String
+  color: String
+  version: Int
+}
+
+input ShipmentTypePatchInput {
+  "Omit to leave unchanged; null is rejected."
+  status: EntityStatus @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  code: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  description: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  color: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  version: Int @goField(omittable: true)
+}
+
+input BulkUpdateShipmentTypeStatusInput {
+  shipmentTypeIds: [ID!]!
+  status: EntityStatus!
+}
+
+extend type Mutation {
+  createShipmentType(input: ShipmentTypeInput!): ShipmentType!
+  updateShipmentType(id: ID!, input: ShipmentTypeInput!): ShipmentType!
+  patchShipmentType(id: ID!, input: ShipmentTypePatchInput!): ShipmentType!
+  bulkUpdateShipmentTypeStatus(input: BulkUpdateShipmentTypeStatusInput!): [ShipmentType!]!
+}

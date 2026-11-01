@@ -1,0 +1,32 @@
+mutation CreateShipmentType($input: ShipmentTypeInput!) {
+  createShipmentType(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateShipmentType($id: ID!, $input: ShipmentTypeInput!) {
+  updateShipmentType(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation PatchShipmentType($id: ID!, $input: ShipmentTypePatchInput!) {
+  patchShipmentType(id: $id, input: $input) {
+    id
+    status
+    code
+    description
+    color
+    version
+  }
+}
+
+mutation BulkUpdateShipmentTypeStatus($input: BulkUpdateShipmentTypeStatusInput!) {
+  bulkUpdateShipmentTypeStatus(input: $input) {
+    id
+    status
+    version
+  }
+}

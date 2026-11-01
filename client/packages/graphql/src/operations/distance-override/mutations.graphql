@@ -1,0 +1,17 @@
+mutation CreateDistanceOverride($input: DistanceOverrideInput!) {
+  createDistanceOverride(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateDistanceOverride($id: ID!, $input: DistanceOverrideInput!) {
+  updateDistanceOverride(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation DeleteDistanceOverride($id: ID!) {
+  deleteDistanceOverride(id: $id)
+}

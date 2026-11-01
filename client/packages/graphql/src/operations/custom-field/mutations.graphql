@@ -1,0 +1,25 @@
+mutation CreateCustomFieldDefinition($input: CustomFieldDefinitionInput!) {
+  createCustomFieldDefinition(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateCustomFieldDefinition($id: ID!, $input: CustomFieldDefinitionInput!) {
+  updateCustomFieldDefinition(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation PatchCustomFieldDefinition($id: ID!, $input: CustomFieldDefinitionPatchInput!) {
+  patchCustomFieldDefinition(id: $id, input: $input) {
+    id
+    isActive
+    version
+  }
+}
+
+mutation DeleteCustomFieldDefinition($id: ID!) {
+  deleteCustomFieldDefinition(id: $id)
+}

@@ -1,0 +1,29 @@
+mutation CreateLocation($input: LocationInput!) {
+  createLocation(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateLocation($id: ID!, $input: LocationInput!) {
+  updateLocation(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation PatchLocation($id: ID!, $input: LocationPatchInput!) {
+  patchLocation(id: $id, input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation BulkUpdateLocationStatus($input: BulkUpdateLocationStatusInput!) {
+  bulkUpdateLocationStatus(input: $input) {
+    id
+    status
+    version
+  }
+}

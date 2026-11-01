@@ -95,6 +95,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
@@ -128,6 +129,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
+	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
 	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
@@ -2089,6 +2091,11 @@ type BulkUpdateAccountTypeStatusInput struct {
 	Status         domaintypes.Status `json:"status"`
 }
 
+type BulkUpdateCarrierStatusInput struct {
+	CarrierIds []string       `json:"carrierIds"`
+	Status     carrier.Status `json:"status"`
+}
+
 type BulkUpdateCommodityStatusInput struct {
 	CommodityIds []string           `json:"commodityIds"`
 	Status       domaintypes.Status `json:"status"`
@@ -2117,6 +2124,21 @@ type BulkUpdateFleetCodeStatusInput struct {
 type BulkUpdateHazardousMaterialStatusInput struct {
 	HazardousMaterialIds []string           `json:"hazardousMaterialIds"`
 	Status               domaintypes.Status `json:"status"`
+}
+
+type BulkUpdateLocationStatusInput struct {
+	LocationIds []string           `json:"locationIds"`
+	Status      domaintypes.Status `json:"status"`
+}
+
+type BulkUpdateServiceTypeStatusInput struct {
+	ServiceTypeIds []string           `json:"serviceTypeIds"`
+	Status         domaintypes.Status `json:"status"`
+}
+
+type BulkUpdateShipmentTypeStatusInput struct {
+	ShipmentTypeIds []string           `json:"shipmentTypeIds"`
+	Status          domaintypes.Status `json:"status"`
 }
 
 type BulkUpdateTractorStatusInput struct {
@@ -2345,6 +2367,18 @@ type CarrierConnection struct {
 	TotalCountExact bool `json:"totalCountExact"`
 }
 
+// A contact the carrier keeps. Sent with an id, the saved contact is updated; without one, it is added.
+type CarrierContactInput struct {
+	ID                        *string `json:"id,omitempty"`
+	Name                      string  `json:"name"`
+	Title                     *string `json:"title,omitempty"`
+	Email                     *string `json:"email,omitempty"`
+	Phone                     *string `json:"phone,omitempty"`
+	IsPrimary                 bool    `json:"isPrimary"`
+	ReceivesRateConfirmations bool    `json:"receivesRateConfirmations"`
+	Version                   *int    `json:"version,omitempty"`
+}
+
 type CarrierCostEventConnection struct {
 	Edges      []*CarrierCostEventEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
@@ -2374,6 +2408,60 @@ type CarrierCoverageSuggestion struct {
 type CarrierEdge struct {
 	Node   *carrier.Carrier `json:"node"`
 	Cursor string           `json:"cursor"`
+}
+
+// A carrier and the contacts and insurance policies it keeps. Contacts and
+// policies left out of the lists are removed; the carrier's EDI channels are kept.
+type CarrierInput struct {
+	StateID            *string                        `json:"stateId,omitempty"`
+	RemitStateID       *string                        `json:"remitStateId,omitempty"`
+	Status             carrier.Status                 `json:"status"`
+	Code               string                         `json:"code"`
+	Name               string                         `json:"name"`
+	DbaName            *string                        `json:"dbaName,omitempty"`
+	CarrierType        carrier.Type                   `json:"carrierType"`
+	DOTNumber          *string                        `json:"dotNumber,omitempty"`
+	McNumber           *string                        `json:"mcNumber,omitempty"`
+	SCAC               *string                        `json:"scac,omitempty"`
+	ComplianceStatus   carrier.ComplianceStatus       `json:"complianceStatus"`
+	SafetyRating       carrier.SafetyRating           `json:"safetyRating"`
+	QualifiedAt        *int                           `json:"qualifiedAt,omitempty"`
+	DisqualifiedReason *string                        `json:"disqualifiedReason,omitempty"`
+	TaxID              *string                        `json:"taxId,omitempty"`
+	TaxIDType          *carrier.TaxIDType             `json:"taxIdType,omitempty"`
+	W9OnFile           bool                           `json:"w9OnFile"`
+	Is1099Eligible     bool                           `json:"is1099Eligible"`
+	PaymentMethod      carrier.PaymentMethod          `json:"paymentMethod"`
+	PaymentTermDays    int                            `json:"paymentTermDays"`
+	RemitToName        *string                        `json:"remitToName,omitempty"`
+	RemitAddressLine1  *string                        `json:"remitAddressLine1,omitempty"`
+	RemitAddressLine2  *string                        `json:"remitAddressLine2,omitempty"`
+	RemitCity          *string                        `json:"remitCity,omitempty"`
+	RemitPostalCode    *string                        `json:"remitPostalCode,omitempty"`
+	AddressLine1       *string                        `json:"addressLine1,omitempty"`
+	AddressLine2       *string                        `json:"addressLine2,omitempty"`
+	City               *string                        `json:"city,omitempty"`
+	PostalCode         *string                        `json:"postalCode,omitempty"`
+	Phone              *string                        `json:"phone,omitempty"`
+	Email              *string                        `json:"email,omitempty"`
+	ExternalID         *string                        `json:"externalId,omitempty"`
+	Notes              *string                        `json:"notes,omitempty"`
+	Version            *int                           `json:"version,omitempty"`
+	Contacts           []*CarrierContactInput         `json:"contacts,omitempty"`
+	InsurancePolicies  []*CarrierInsurancePolicyInput `json:"insurancePolicies,omitempty"`
+}
+
+// An insurance policy on file. Sent with an id, the saved policy is updated; without one, it is added.
+type CarrierInsurancePolicyInput struct {
+	ID             *string                     `json:"id,omitempty"`
+	PolicyType     carrier.InsurancePolicyType `json:"policyType"`
+	PolicyNumber   string                      `json:"policyNumber"`
+	ProviderName   string                      `json:"providerName"`
+	CoverageAmount string                      `json:"coverageAmount"`
+	EffectiveDate  int                         `json:"effectiveDate"`
+	ExpirationDate int                         `json:"expirationDate"`
+	IsVerified     bool                        `json:"isVerified"`
+	Version        *int                        `json:"version,omitempty"`
 }
 
 type CarrierIntelControlPatchInput struct {
@@ -2568,6 +2656,37 @@ type CarrierMonitoringEnrollmentEdge struct {
 type CarrierMonitoringEnrollmentFilterInput struct {
 	DesiredState *carrierintelenrollment.DesiredState `json:"desiredState,omitempty"`
 	VendorStates []carrierintelenrollment.VendorState `json:"vendorStates,omitempty"`
+}
+
+type CarrierPatchInput struct {
+	// Omit to leave unchanged; null is rejected.
+	Status graphql.Omittable[*carrier.Status] `json:"status,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Name graphql.Omittable[*string] `json:"name,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	DbaName graphql.Omittable[*string] `json:"dbaName,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	CarrierType graphql.Omittable[*carrier.Type] `json:"carrierType,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	ComplianceStatus graphql.Omittable[*carrier.ComplianceStatus] `json:"complianceStatus,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	SafetyRating graphql.Omittable[*carrier.SafetyRating] `json:"safetyRating,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	DisqualifiedReason graphql.Omittable[*string] `json:"disqualifiedReason,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	PaymentMethod graphql.Omittable[*carrier.PaymentMethod] `json:"paymentMethod,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	PaymentTermDays graphql.Omittable[*int] `json:"paymentTermDays,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	Phone graphql.Omittable[*string] `json:"phone,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	Email graphql.Omittable[*string] `json:"email,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	ExternalID graphql.Omittable[*string] `json:"externalId,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	Notes graphql.Omittable[*string] `json:"notes,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Version graphql.Omittable[*int] `json:"version,omitempty"`
 }
 
 type CarrierSettlementActionInput struct {
@@ -3085,6 +3204,62 @@ type CustomFieldDefinitionConnection struct {
 type CustomFieldDefinitionEdge struct {
 	Node   *customfield.CustomFieldDefinition `json:"node"`
 	Cursor string                             `json:"cursor"`
+}
+
+type CustomFieldDefinitionInput struct {
+	ResourceType    string                           `json:"resourceType"`
+	Name            string                           `json:"name"`
+	Label           string                           `json:"label"`
+	Description     *string                          `json:"description,omitempty"`
+	FieldType       customfield.FieldType            `json:"fieldType"`
+	IsRequired      bool                             `json:"isRequired"`
+	IsActive        bool                             `json:"isActive"`
+	DisplayOrder    int                              `json:"displayOrder"`
+	Color           *string                          `json:"color,omitempty"`
+	Options         []*CustomFieldSelectOptionInput  `json:"options,omitempty"`
+	ValidationRules *CustomFieldValidationRulesInput `json:"validationRules,omitempty"`
+	// Value pre-filled when a record is created; its shape follows fieldType.
+	DefaultValue any                           `json:"defaultValue,omitempty"`
+	UIAttributes *CustomFieldUIAttributesInput `json:"uiAttributes,omitempty"`
+	Version      *int                          `json:"version,omitempty"`
+}
+
+type CustomFieldDefinitionPatchInput struct {
+	// Omit to leave unchanged; null is rejected.
+	Label graphql.Omittable[*string] `json:"label,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	Description graphql.Omittable[*string] `json:"description,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	IsRequired graphql.Omittable[*bool] `json:"isRequired,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	IsActive graphql.Omittable[*bool] `json:"isActive,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	DisplayOrder graphql.Omittable[*int] `json:"displayOrder,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	Color graphql.Omittable[*string] `json:"color,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Version graphql.Omittable[*int] `json:"version,omitempty"`
+}
+
+type CustomFieldSelectOptionInput struct {
+	Value       string  `json:"value"`
+	Label       string  `json:"label"`
+	Color       *string `json:"color,omitempty"`
+	Description *string `json:"description,omitempty"`
+}
+
+type CustomFieldUIAttributesInput struct {
+	Placeholder *string `json:"placeholder,omitempty"`
+	HelpText    *string `json:"helpText,omitempty"`
+	Width       *string `json:"width,omitempty"`
+}
+
+type CustomFieldValidationRulesInput struct {
+	MinLength *int    `json:"minLength,omitempty"`
+	MaxLength *int    `json:"maxLength,omitempty"`
+	Min       *int    `json:"min,omitempty"`
+	Max       *int    `json:"max,omitempty"`
+	Pattern   *string `json:"pattern,omitempty"`
 }
 
 type CustomerBillingProfileInput struct {
@@ -4593,6 +4768,21 @@ type DistanceOverrideEdge struct {
 	Cursor string                             `json:"cursor"`
 }
 
+type DistanceOverrideInput struct {
+	OriginLocationID      string `json:"originLocationId"`
+	DestinationLocationID string `json:"destinationLocationId"`
+	// Set to apply the override only to this customer's shipments.
+	CustomerID *string `json:"customerId,omitempty"`
+	Distance   float64 `json:"distance"`
+	// The stops between origin and destination, in the order the route visits them.
+	IntermediateStops []*DistanceOverrideStopInput `json:"intermediateStops,omitempty"`
+	Version           *int                         `json:"version,omitempty"`
+}
+
+type DistanceOverrideStopInput struct {
+	LocationID string `json:"locationId"`
+}
+
 type DistanceProfileConnection struct {
 	Edges      []*DistanceProfileEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
@@ -4604,6 +4794,28 @@ type DistanceProfileConnection struct {
 type DistanceProfileEdge struct {
 	Node   *distanceprofile.DistanceProfile `json:"node"`
 	Cursor string                           `json:"cursor"`
+}
+
+type DistanceProfileInput struct {
+	Name        string  `json:"name"`
+	Description *string `json:"description,omitempty"`
+	Status      string  `json:"status"`
+	IsDefault   bool    `json:"isDefault"`
+	Provider    string  `json:"provider"`
+	// Blank takes the provider's current data.
+	DataVersion *string `json:"dataVersion,omitempty"`
+	Region      string  `json:"region"`
+	// Blank takes Practical.
+	RoutingType *string `json:"routingType,omitempty"`
+	// Blank takes Miles.
+	DistanceUnits       *string `json:"distanceUnits,omitempty"`
+	LocationGranularity string  `json:"locationGranularity"`
+	ProfileName         *string `json:"profileName,omitempty"`
+	HighwayOnly         bool    `json:"highwayOnly"`
+	TollRoads           bool    `json:"tollRoads"`
+	BordersOpen         bool    `json:"bordersOpen"`
+	IncludeTollData     bool    `json:"includeTollData"`
+	Version             *int    `json:"version,omitempty"`
 }
 
 type DocumentPacketRuleConnection struct {
@@ -6400,6 +6612,11 @@ type GeneratedFuelTableRow struct {
 	Value    string  `json:"value"`
 }
 
+type GeofenceVertexInput struct {
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+
 type GrantCarrierIntelOverrideInput struct {
 	CarrierID string `json:"carrierId"`
 	RuleCode  string `json:"ruleCode"`
@@ -7108,6 +7325,15 @@ type LocationCategoryInput struct {
 	Version             *int                           `json:"version,omitempty"`
 }
 
+type LocationCodeStrategyInput struct {
+	Components     []sequenceconfig.LocationCodeComponent `json:"components"`
+	ComponentWidth int                                    `json:"componentWidth"`
+	SequenceDigits int                                    `json:"sequenceDigits"`
+	Separator      string                                 `json:"separator"`
+	Casing         sequenceconfig.LocationCodeCasing      `json:"casing"`
+	FallbackPrefix string                                 `json:"fallbackPrefix"`
+}
+
 type LocationConnection struct {
 	Edges      []*LocationEdge `json:"edges"`
 	PageInfo   *PageInfo       `json:"pageInfo"`
@@ -7119,6 +7345,54 @@ type LocationConnection struct {
 type LocationEdge struct {
 	Node   *location.Location `json:"node"`
 	Cursor string             `json:"cursor"`
+}
+
+type LocationInput struct {
+	Status domaintypes.Status `json:"status"`
+	// Left blank, the location code sequence assigns one on create.
+	Code                 *string                `json:"code,omitempty"`
+	Name                 string                 `json:"name"`
+	Description          *string                `json:"description,omitempty"`
+	LocationCategoryID   string                 `json:"locationCategoryId"`
+	StateID              string                 `json:"stateId"`
+	AddressLine1         string                 `json:"addressLine1"`
+	AddressLine2         *string                `json:"addressLine2,omitempty"`
+	City                 string                 `json:"city"`
+	PostalCode           string                 `json:"postalCode"`
+	Timezone             *string                `json:"timezone,omitempty"`
+	PlaceID              *string                `json:"placeId,omitempty"`
+	IsGeocoded           bool                   `json:"isGeocoded"`
+	Longitude            *float64               `json:"longitude,omitempty"`
+	Latitude             *float64               `json:"latitude,omitempty"`
+	GeofenceType         geofence.Type          `json:"geofenceType"`
+	GeofenceRadiusMeters *float64               `json:"geofenceRadiusMeters,omitempty"`
+	GeofenceVertices     []*GeofenceVertexInput `json:"geofenceVertices,omitempty"`
+	Version              *int                   `json:"version,omitempty"`
+}
+
+type LocationPatchInput struct {
+	// Omit to leave unchanged; null is rejected.
+	Status graphql.Omittable[*domaintypes.Status] `json:"status,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Name graphql.Omittable[*string] `json:"name,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	Description graphql.Omittable[*string] `json:"description,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	LocationCategoryID graphql.Omittable[*string] `json:"locationCategoryId,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	StateID graphql.Omittable[*string] `json:"stateId,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	AddressLine1 graphql.Omittable[*string] `json:"addressLine1,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	AddressLine2 graphql.Omittable[*string] `json:"addressLine2,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	City graphql.Omittable[*string] `json:"city,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	PostalCode graphql.Omittable[*string] `json:"postalCode,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	Timezone graphql.Omittable[*string] `json:"timezone,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Version graphql.Omittable[*int] `json:"version,omitempty"`
 }
 
 type LocationReference struct {
@@ -8127,10 +8401,14 @@ type RateZone struct {
 	Code           string `json:"code"`
 	Name           string `json:"name"`
 	Description    string `json:"description"`
-	Status         string `json:"status"`
-	Version        int    `json:"version"`
-	CreatedAt      int    `json:"createdAt"`
-	UpdatedAt      int    `json:"updatedAt"`
+	// Custom, KMA, Regional, Metro or Country.
+	Kind      string `json:"kind"`
+	Status    string `json:"status"`
+	Version   int    `json:"version"`
+	CreatedAt int    `json:"createdAt"`
+	UpdatedAt int    `json:"updatedAt"`
+	// The places the zone covers. Read by rateZone only.
+	Members []*RateZoneMember `json:"members,omitempty"`
 }
 
 type RateZoneConnection struct {
@@ -8144,6 +8422,38 @@ type RateZoneConnection struct {
 type RateZoneEdge struct {
 	Node   *RateZone `json:"node"`
 	Cursor string    `json:"cursor"`
+}
+
+// A rate zone and every place it covers; members left out of the list are removed.
+type RateZoneInput struct {
+	Code        string  `json:"code"`
+	Name        string  `json:"name"`
+	Description *string `json:"description,omitempty"`
+	// Custom, KMA, Regional, Metro or Country.
+	Kind    string                 `json:"kind"`
+	Status  domaintypes.Status     `json:"status"`
+	Version *int                   `json:"version,omitempty"`
+	Members []*RateZoneMemberInput `json:"members"`
+}
+
+// One place a rate zone covers, named the way a lane names one end.
+type RateZoneMember struct {
+	ID         string `json:"id"`
+	RateZoneID string `json:"rateZoneId"`
+	// How the place is named: Location, Zip5, Zip3, CityState, State, Country, Zone or Any.
+	ScopeType  string `json:"scopeType"`
+	ScopeValue string `json:"scopeValue"`
+	// The city, for a CityState member; scopeValue then holds the state id.
+	City string `json:"city"`
+	// The key lanes match the member by, computed when the zone is saved.
+	MatchKey string `json:"matchKey"`
+}
+
+type RateZoneMemberInput struct {
+	ID         *string `json:"id,omitempty"`
+	ScopeType  string  `json:"scopeType"`
+	ScopeValue *string `json:"scopeValue,omitempty"`
+	City       *string `json:"city,omitempty"`
 }
 
 type ReadyToBillCustomer struct {
@@ -9403,6 +9713,33 @@ type SendTestMessageTemplateInput struct {
 	ToEmail   string                        `json:"toEmail"`
 }
 
+type SequenceConfigDocumentInput struct {
+	Configs []*SequenceConfigInput `json:"configs"`
+}
+
+type SequenceConfigInput struct {
+	ID                      *string                     `json:"id,omitempty"`
+	SequenceType            sequenceconfig.SequenceType `json:"sequenceType"`
+	Prefix                  string                      `json:"prefix"`
+	IncludeYear             bool                        `json:"includeYear"`
+	YearDigits              int                         `json:"yearDigits"`
+	IncludeMonth            bool                        `json:"includeMonth"`
+	IncludeWeekNumber       bool                        `json:"includeWeekNumber"`
+	IncludeDay              bool                        `json:"includeDay"`
+	SequenceDigits          int                         `json:"sequenceDigits"`
+	IncludeLocationCode     bool                        `json:"includeLocationCode"`
+	IncludeRandomDigits     bool                        `json:"includeRandomDigits"`
+	RandomDigitsCount       int                         `json:"randomDigitsCount"`
+	IncludeCheckDigit       bool                        `json:"includeCheckDigit"`
+	IncludeBusinessUnitCode bool                        `json:"includeBusinessUnitCode"`
+	UseSeparators           bool                        `json:"useSeparators"`
+	SeparatorChar           string                      `json:"separatorChar"`
+	AllowCustomFormat       bool                        `json:"allowCustomFormat"`
+	CustomFormat            string                      `json:"customFormat"`
+	LocationCodeStrategy    *LocationCodeStrategyInput  `json:"locationCodeStrategy,omitempty"`
+	Version                 *int                        `json:"version,omitempty"`
+}
+
 type ServiceFailureConnection struct {
 	Edges      []*ServiceFailureEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
@@ -9429,6 +9766,23 @@ type ServiceFailureReasonCodeEdge struct {
 	Cursor string                     `json:"cursor"`
 }
 
+type ServiceFailureReasonCodeInput struct {
+	Code                 string                             `json:"code"`
+	Label                string                             `json:"label"`
+	Description          *string                            `json:"description,omitempty"`
+	Category             servicefailure.ReasonCategory      `json:"category"`
+	AppliesTo            servicefailure.ReasonCodeAppliesTo `json:"appliesTo"`
+	DefaultStatusCode    *string                            `json:"defaultStatusCode,omitempty"`
+	DefaultReasonCode    *string                            `json:"defaultReasonCode,omitempty"`
+	DefaultExceptionCode *string                            `json:"defaultExceptionCode,omitempty"`
+	DefaultNote          *string                            `json:"defaultNote,omitempty"`
+	// Omit on create for an active code; omit on update to leave it as it is.
+	Active      *bool          `json:"active,omitempty"`
+	SortOrder   int            `json:"sortOrder"`
+	ExternalMap map[string]any `json:"externalMap,omitempty"`
+	Version     *int           `json:"version,omitempty"`
+}
+
 type ServiceTypeConnection struct {
 	Edges      []*ServiceTypeEdge `json:"edges"`
 	PageInfo   *PageInfo          `json:"pageInfo"`
@@ -9440,6 +9794,27 @@ type ServiceTypeConnection struct {
 type ServiceTypeEdge struct {
 	Node   *servicetype.ServiceType `json:"node"`
 	Cursor string                   `json:"cursor"`
+}
+
+type ServiceTypeInput struct {
+	Status      domaintypes.Status `json:"status"`
+	Code        string             `json:"code"`
+	Description *string            `json:"description,omitempty"`
+	Color       *string            `json:"color,omitempty"`
+	Version     *int               `json:"version,omitempty"`
+}
+
+type ServiceTypePatchInput struct {
+	// Omit to leave unchanged; null is rejected.
+	Status graphql.Omittable[*domaintypes.Status] `json:"status,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Code graphql.Omittable[*string] `json:"code,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	Description graphql.Omittable[*string] `json:"description,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	Color graphql.Omittable[*string] `json:"color,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Version graphql.Omittable[*int] `json:"version,omitempty"`
 }
 
 // Chooses an accounting system record for a mapping and confirms it.
@@ -11351,6 +11726,27 @@ type ShipmentTypeEdge struct {
 	Cursor string                     `json:"cursor"`
 }
 
+type ShipmentTypeInput struct {
+	Status      domaintypes.Status `json:"status"`
+	Code        string             `json:"code"`
+	Description *string            `json:"description,omitempty"`
+	Color       *string            `json:"color,omitempty"`
+	Version     *int               `json:"version,omitempty"`
+}
+
+type ShipmentTypePatchInput struct {
+	// Omit to leave unchanged; null is rejected.
+	Status graphql.Omittable[*domaintypes.Status] `json:"status,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Code graphql.Omittable[*string] `json:"code,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	Description graphql.Omittable[*string] `json:"description,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	Color graphql.Omittable[*string] `json:"color,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Version graphql.Omittable[*int] `json:"version,omitempty"`
+}
+
 type ShipmentUIPolicy struct {
 	AllowMoveRemovals      bool `json:"allowMoveRemovals"`
 	CheckForDuplicateBols  bool `json:"checkForDuplicateBols"`
@@ -13075,6 +13471,34 @@ type WorkerHosViolation struct {
 	DetectedAt       int     `json:"detectedAt"`
 }
 
+type WorkerInput struct {
+	StateID     string  `json:"stateId"`
+	FleetCodeID *string `json:"fleetCodeId,omitempty"`
+	ManagerID   *string `json:"managerId,omitempty"`
+	// The driving title the worker holds.
+	PositionID            *string             `json:"positionId,omitempty"`
+	Status                domaintypes.Status  `json:"status"`
+	Type                  worker.WorkerType   `json:"type"`
+	DriverType            worker.DriverType   `json:"driverType"`
+	Gender                worker.Gender       `json:"gender"`
+	FirstName             string              `json:"firstName"`
+	LastName              string              `json:"lastName"`
+	AddressLine1          string              `json:"addressLine1"`
+	AddressLine2          *string             `json:"addressLine2,omitempty"`
+	City                  string              `json:"city"`
+	PostalCode            string              `json:"postalCode"`
+	Email                 *string             `json:"email,omitempty"`
+	PhoneNumber           *string             `json:"phoneNumber,omitempty"`
+	EmergencyContactName  *string             `json:"emergencyContactName,omitempty"`
+	EmergencyContactPhone *string             `json:"emergencyContactPhone,omitempty"`
+	ExternalID            *string             `json:"externalId,omitempty"`
+	CanBeAssigned         bool                `json:"canBeAssigned"`
+	AvailableForDispatch  bool                `json:"availableForDispatch"`
+	CustomFields          map[string]any      `json:"customFields,omitempty"`
+	Version               *int                `json:"version,omitempty"`
+	Profile               *WorkerProfileInput `json:"profile,omitempty"`
+}
+
 type WorkerPTOChartInput struct {
 	StartDateFrom int             `json:"startDateFrom"`
 	StartDateTo   int             `json:"startDateTo"`
@@ -13161,6 +13585,34 @@ type WorkerPolicyInput struct {
 	AppliesTo         workerpolicy.PolicyAudience `json:"appliesTo"`
 	EffectiveFrom     *int                        `json:"effectiveFrom,omitempty"`
 	Status            *domaintypes.Status         `json:"status,omitempty"`
+}
+
+// A worker's licensing and qualification record. dob, licenseNumber and
+// twicCardNumber are Personal: a caller who cannot see Personal fields leaves them
+// out and the saved values stay.
+type WorkerProfileInput struct {
+	LicenseStateID         *string                 `json:"licenseStateId,omitempty"`
+	Dob                    *int                    `json:"dob,omitempty"`
+	LicenseNumber          *string                 `json:"licenseNumber,omitempty"`
+	CdlClass               worker.CDLClass         `json:"cdlClass"`
+	CdlRestrictions        *string                 `json:"cdlRestrictions,omitempty"`
+	Endorsement            worker.EndorsementType  `json:"endorsement"`
+	HazmatExpiry           *int                    `json:"hazmatExpiry,omitempty"`
+	LicenseExpiry          *int                    `json:"licenseExpiry,omitempty"`
+	MedicalCardExpiry      *int                    `json:"medicalCardExpiry,omitempty"`
+	MedicalExaminerName    *string                 `json:"medicalExaminerName,omitempty"`
+	MedicalExaminerNPI     *string                 `json:"medicalExaminerNpi,omitempty"`
+	TWICCardNumber         *string                 `json:"twicCardNumber,omitempty"`
+	TWICExpiry             *int                    `json:"twicExpiry,omitempty"`
+	HireDate               *int                    `json:"hireDate,omitempty"`
+	TerminationDate        *int                    `json:"terminationDate,omitempty"`
+	PhysicalDueDate        *int                    `json:"physicalDueDate,omitempty"`
+	MVRDueDate             *int                    `json:"mvrDueDate,omitempty"`
+	ComplianceStatus       worker.ComplianceStatus `json:"complianceStatus"`
+	IsQualified            bool                    `json:"isQualified"`
+	DisqualificationReason *string                 `json:"disqualificationReason,omitempty"`
+	ELDExempt              bool                    `json:"eldExempt"`
+	ShortHaulExempt        bool                    `json:"shortHaulExempt"`
 }
 
 type WorkerRecognitionInput struct {

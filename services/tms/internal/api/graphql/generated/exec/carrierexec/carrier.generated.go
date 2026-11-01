@@ -792,6 +792,60 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
 		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createCarrier",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "Carrier",
+				Args:       field_Mutation_createCarrier_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateCarrier(ctx, fc.Args["input"].(gqlmodel.CarrierInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐCarrier),
+			},
+			{
+				Name:       "updateCarrier",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "Carrier",
+				Args:       field_Mutation_updateCarrier_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateCarrier(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.CarrierInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐCarrier),
+			},
+			{
+				Name:       "patchCarrier",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "Carrier",
+				Args:       field_Mutation_patchCarrier_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchCarrier(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.CarrierPatchInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐCarrier),
+			},
+			{
+				Name:       "bulkUpdateCarrierStatus",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "Carrier",
+				Args:       field_Mutation_bulkUpdateCarrierStatus_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkUpdateCarrierStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateCarrierStatusInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNCarrier2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐCarrierᚄ),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "carriers",
@@ -822,14 +876,29 @@ var Shard = &gqlexec.Shard{
 			},
 		}},
 	},
+	Inputs: []gqlexec.Input{
+		{Name: "BulkUpdateCarrierStatusInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputBulkUpdateCarrierStatusInput)},
+		{Name: "CarrierContactInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCarrierContactInput)},
+		{Name: "CarrierInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCarrierInput)},
+		{Name: "CarrierInsurancePolicyInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCarrierInsurancePolicyInput)},
+		{Name: "CarrierPatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCarrierPatchInput)},
+	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "CarrierInsurancePolicy", Check: func(r any) bool { _, ok := r.(resolverCarrierInsurancePolicy); return ok }},
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
 }
 
 type resolverCarrierInsurancePolicy interface {
 	CoverageAmount(ctx context.Context, obj *carrier.CarrierInsurancePolicy) (string, error)
+}
+
+type resolverMutation interface {
+	CreateCarrier(ctx context.Context, input gqlmodel.CarrierInput) (*carrier.Carrier, error)
+	UpdateCarrier(ctx context.Context, id string, input gqlmodel.CarrierInput) (*carrier.Carrier, error)
+	PatchCarrier(ctx context.Context, id string, input gqlmodel.CarrierPatchInput) (*carrier.Carrier, error)
+	BulkUpdateCarrierStatus(ctx context.Context, input gqlmodel.BulkUpdateCarrierStatusInput) ([]*carrier.Carrier, error)
 }
 
 type resolverQuery interface {
@@ -852,6 +921,74 @@ var (
 	errNoChild11 = errors.New("field of type CarrierInsurancePolicyType does not have child fields")
 	errNoChild12 = errors.New("field of type Decimal does not have child fields")
 )
+
+func field_Mutation_createCarrier_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.CarrierInput, error) {
+			return unmarshalNCarrierInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateCarrier_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.CarrierInput, error) {
+			return unmarshalNCarrierInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_patchCarrier_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.CarrierPatchInput, error) {
+			return unmarshalNCarrierPatchInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierPatchInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_bulkUpdateCarrierStatus_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.BulkUpdateCarrierStatusInput, error) {
+			return unmarshalNBulkUpdateCarrierStatusInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkUpdateCarrierStatusInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
 
 func field_Query_carriers_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -879,12 +1016,681 @@ func field_Query_carrier_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map
 	return args, nil
 }
 
+func unmarshalInputBulkUpdateCarrierStatusInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.BulkUpdateCarrierStatusInput, error) {
+	var it gqlmodel.BulkUpdateCarrierStatusInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"carrierIds", "status"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "carrierIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("carrierIds"))
+			data, err := unmarshalNID2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CarrierIds = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalNCarrierStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputCarrierContactInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CarrierContactInput, error) {
+	var it gqlmodel.CarrierContactInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "name", "title", "email", "phone", "isPrimary", "receivesRateConfirmations", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "email":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Email = data
+		case "phone":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phone"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Phone = data
+		case "isPrimary":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isPrimary"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsPrimary = data
+		case "receivesRateConfirmations":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("receivesRateConfirmations"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReceivesRateConfirmations = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputCarrierInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CarrierInput, error) {
+	var it gqlmodel.CarrierInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"stateId", "remitStateId", "status", "code", "name", "dbaName", "carrierType", "dotNumber", "mcNumber", "scac", "complianceStatus", "safetyRating", "qualifiedAt", "disqualifiedReason", "taxId", "taxIdType", "w9OnFile", "is1099Eligible", "paymentMethod", "paymentTermDays", "remitToName", "remitAddressLine1", "remitAddressLine2", "remitCity", "remitPostalCode", "addressLine1", "addressLine2", "city", "postalCode", "phone", "email", "externalId", "notes", "version", "contacts", "insurancePolicies"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "stateId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stateId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.StateID = data
+		case "remitStateId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("remitStateId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RemitStateID = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalNCarrierStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "code":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Code = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "dbaName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dbaName"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DbaName = data
+		case "carrierType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("carrierType"))
+			data, err := unmarshalNCarrierType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐType(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CarrierType = data
+		case "dotNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dotNumber"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DOTNumber = data
+		case "mcNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mcNumber"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.McNumber = data
+		case "scac":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scac"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SCAC = data
+		case "complianceStatus":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("complianceStatus"))
+			data, err := unmarshalNCarrierComplianceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐComplianceStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ComplianceStatus = data
+		case "safetyRating":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("safetyRating"))
+			data, err := unmarshalNCarrierSafetyRating2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐSafetyRating(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SafetyRating = data
+		case "qualifiedAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("qualifiedAt"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.QualifiedAt = data
+		case "disqualifiedReason":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("disqualifiedReason"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DisqualifiedReason = data
+		case "taxId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("taxId"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.TaxID = data
+		case "taxIdType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("taxIdType"))
+			data, err := unmarshalOCarrierTaxIDType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐTaxIDType(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.TaxIDType = data
+		case "w9OnFile":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("w9OnFile"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.W9OnFile = data
+		case "is1099Eligible":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("is1099Eligible"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Is1099Eligible = data
+		case "paymentMethod":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("paymentMethod"))
+			data, err := unmarshalNCarrierPaymentMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐPaymentMethod(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PaymentMethod = data
+		case "paymentTermDays":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("paymentTermDays"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PaymentTermDays = data
+		case "remitToName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("remitToName"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RemitToName = data
+		case "remitAddressLine1":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("remitAddressLine1"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RemitAddressLine1 = data
+		case "remitAddressLine2":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("remitAddressLine2"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RemitAddressLine2 = data
+		case "remitCity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("remitCity"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RemitCity = data
+		case "remitPostalCode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("remitPostalCode"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RemitPostalCode = data
+		case "addressLine1":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addressLine1"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AddressLine1 = data
+		case "addressLine2":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addressLine2"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AddressLine2 = data
+		case "city":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("city"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.City = data
+		case "postalCode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postalCode"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PostalCode = data
+		case "phone":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phone"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Phone = data
+		case "email":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Email = data
+		case "externalId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("externalId"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExternalID = data
+		case "notes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notes"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Notes = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		case "contacts":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contacts"))
+			data, err := unmarshalOCarrierContactInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierContactInputᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Contacts = data
+		case "insurancePolicies":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("insurancePolicies"))
+			data, err := unmarshalOCarrierInsurancePolicyInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierInsurancePolicyInputᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.InsurancePolicies = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputCarrierInsurancePolicyInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CarrierInsurancePolicyInput, error) {
+	var it gqlmodel.CarrierInsurancePolicyInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "policyType", "policyNumber", "providerName", "coverageAmount", "effectiveDate", "expirationDate", "isVerified", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "policyType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("policyType"))
+			data, err := unmarshalNCarrierInsurancePolicyType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐInsurancePolicyType(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PolicyType = data
+		case "policyNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("policyNumber"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PolicyNumber = data
+		case "providerName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("providerName"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ProviderName = data
+		case "coverageAmount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("coverageAmount"))
+			data, err := unmarshalNDecimal2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CoverageAmount = data
+		case "effectiveDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("effectiveDate"))
+			data, err := unmarshalNTimestamp2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EffectiveDate = data
+		case "expirationDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("expirationDate"))
+			data, err := unmarshalNTimestamp2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExpirationDate = data
+		case "isVerified":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isVerified"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsVerified = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputCarrierPatchInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CarrierPatchInput, error) {
+	var it gqlmodel.CarrierPatchInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"status", "name", "dbaName", "carrierType", "complianceStatus", "safetyRating", "disqualifiedReason", "paymentMethod", "paymentTermDays", "phone", "email", "externalId", "notes", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalOCarrierStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = graphql.OmittableOf(data)
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = graphql.OmittableOf(data)
+		case "dbaName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dbaName"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DbaName = graphql.OmittableOf(data)
+		case "carrierType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("carrierType"))
+			data, err := unmarshalOCarrierType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐType(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CarrierType = graphql.OmittableOf(data)
+		case "complianceStatus":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("complianceStatus"))
+			data, err := unmarshalOCarrierComplianceStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐComplianceStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ComplianceStatus = graphql.OmittableOf(data)
+		case "safetyRating":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("safetyRating"))
+			data, err := unmarshalOCarrierSafetyRating2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐSafetyRating(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SafetyRating = graphql.OmittableOf(data)
+		case "disqualifiedReason":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("disqualifiedReason"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DisqualifiedReason = graphql.OmittableOf(data)
+		case "paymentMethod":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("paymentMethod"))
+			data, err := unmarshalOCarrierPaymentMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐPaymentMethod(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PaymentMethod = graphql.OmittableOf(data)
+		case "paymentTermDays":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("paymentTermDays"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PaymentTermDays = graphql.OmittableOf(data)
+		case "phone":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phone"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Phone = graphql.OmittableOf(data)
+		case "email":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Email = graphql.OmittableOf(data)
+		case "externalId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("externalId"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExternalID = graphql.OmittableOf(data)
+		case "notes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notes"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Notes = graphql.OmittableOf(data)
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = graphql.OmittableOf(data)
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
 
+func unmarshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool, error) {
+	res, err := graphql.UnmarshalBoolean(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNBulkUpdateCarrierStatusInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkUpdateCarrierStatusInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.BulkUpdateCarrierStatusInput, error) {
+	res, err := unmarshalInputBulkUpdateCarrierStatusInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCarrierComplianceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐComplianceStatus(ctx context.Context, ec *gqlexec.Exec, v any) (carrier.ComplianceStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := carrier.ComplianceStatus(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCarrierContactInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierContactInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.CarrierContactInput, error) {
+	res, err := unmarshalInputCarrierContactInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCarrierInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.CarrierInput, error) {
+	res, err := unmarshalInputCarrierInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCarrierInsurancePolicyInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierInsurancePolicyInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.CarrierInsurancePolicyInput, error) {
+	res, err := unmarshalInputCarrierInsurancePolicyInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCarrierInsurancePolicyType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐInsurancePolicyType(ctx context.Context, ec *gqlexec.Exec, v any) (carrier.InsurancePolicyType, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := carrier.InsurancePolicyType(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCarrierPatchInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierPatchInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.CarrierPatchInput, error) {
+	res, err := unmarshalInputCarrierPatchInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCarrierPaymentMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐPaymentMethod(ctx context.Context, ec *gqlexec.Exec, v any) (carrier.PaymentMethod, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := carrier.PaymentMethod(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCarrierSafetyRating2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐSafetyRating(ctx context.Context, ec *gqlexec.Exec, v any) (carrier.SafetyRating, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := carrier.SafetyRating(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCarrierStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (carrier.Status, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := carrier.Status(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCarrierType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐType(ctx context.Context, ec *gqlexec.Exec, v any) (carrier.Type, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := carrier.Type(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
 	res, err := unmarshalInputDataTableConnectionInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -893,12 +1699,139 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
+}
+
+func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOCarrierComplianceStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐComplianceStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*carrier.ComplianceStatus, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := carrier.ComplianceStatus(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOCarrierContactInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierContactInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.CarrierContactInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNCarrierContactInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierContactInput)
+}
+
+func unmarshalOCarrierInsurancePolicyInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierInsurancePolicyInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.CarrierInsurancePolicyInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNCarrierInsurancePolicyInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierInsurancePolicyInput)
+}
+
+func unmarshalOCarrierPaymentMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐPaymentMethod(ctx context.Context, ec *gqlexec.Exec, v any) (*carrier.PaymentMethod, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := carrier.PaymentMethod(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOCarrierSafetyRating2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐSafetyRating(ctx context.Context, ec *gqlexec.Exec, v any) (*carrier.SafetyRating, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := carrier.SafetyRating(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOCarrierStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*carrier.Status, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := carrier.Status(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOCarrierTaxIDType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐTaxIDType(ctx context.Context, ec *gqlexec.Exec, v any) (*carrier.TaxIDType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := carrier.TaxIDType(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOCarrierType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐType(ctx context.Context, ec *gqlexec.Exec, v any) (*carrier.Type, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := carrier.Type(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
 	res := graphql.MarshalBoolean(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNCarrier2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐCarrierᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*carrier.Carrier) graphql.Marshaler {
+	return gqlexec.List[*carrier.Carrier]{
+		Elem:        marshalNCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐCarrier,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐCarrier(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrier.Carrier) graphql.Marshaler {

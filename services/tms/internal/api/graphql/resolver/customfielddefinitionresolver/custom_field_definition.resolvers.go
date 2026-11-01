@@ -91,3 +91,81 @@ func (r *QueryResolver) CustomFieldResourceTypes(ctx context.Context) ([]string,
 
 	return r.CustomFieldService.GetSupportedResourceTypes(), nil
 }
+
+func (r *MutationResolver) CreateCustomFieldDefinition(ctx context.Context, input gqlmodel.CustomFieldDefinitionInput) (*customfield.CustomFieldDefinition, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceCustomFieldDefinition, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.CustomFieldService.Create(
+		ctx,
+		customFieldDefinitionFromInput(&input, pulid.Nil, authCtx),
+		authCtx.UserID,
+	)
+}
+
+func (r *MutationResolver) UpdateCustomFieldDefinition(ctx context.Context, id string, input gqlmodel.CustomFieldDefinitionInput) (*customfield.CustomFieldDefinition, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceCustomFieldDefinition, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	definitionID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.CustomFieldService.Update(
+		ctx,
+		customFieldDefinitionFromInput(&input, definitionID, authCtx),
+		authCtx.UserID,
+	)
+}
+
+func (r *MutationResolver) PatchCustomFieldDefinition(ctx context.Context, id string, input gqlmodel.CustomFieldDefinitionPatchInput) (*customfield.CustomFieldDefinition, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceCustomFieldDefinition, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	definitionID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.CustomFieldService.Get(ctx, customfieldports.GetCustomFieldDefinitionByIDRequest{
+		ID:         definitionID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = applyCustomFieldDefinitionPatch(existing, &input); err != nil {
+		return nil, err
+	}
+
+	return r.CustomFieldService.Update(ctx, existing, authCtx.UserID)
+}
+
+func (r *MutationResolver) DeleteCustomFieldDefinition(ctx context.Context, id string) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceCustomFieldDefinition, permission.OpDelete)
+	if err != nil {
+		return false, err
+	}
+
+	definitionID, err := pulid.MustParse(id)
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.CustomFieldService.Delete(ctx, customfieldports.GetCustomFieldDefinitionByIDRequest{
+		ID:         definitionID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	}, authCtx.UserID); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}

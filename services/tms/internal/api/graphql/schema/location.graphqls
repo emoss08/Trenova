@@ -66,3 +66,68 @@ extend type Query {
   locations(input: DataTableConnectionInput!): LocationConnection!
   location(id: ID!): Location
 }
+
+input GeofenceVertexInput {
+  latitude: Float!
+  longitude: Float!
+}
+
+input LocationInput {
+  status: EntityStatus!
+  "Left blank, the location code sequence assigns one on create."
+  code: String
+  name: String!
+  description: String
+  locationCategoryId: ID!
+  stateId: ID!
+  addressLine1: String!
+  addressLine2: String
+  city: String!
+  postalCode: String!
+  timezone: String
+  placeId: String
+  isGeocoded: Boolean!
+  longitude: Float
+  latitude: Float
+  geofenceType: LocationGeofenceType!
+  geofenceRadiusMeters: Float
+  geofenceVertices: [GeofenceVertexInput!]
+  version: Int
+}
+
+input LocationPatchInput {
+  "Omit to leave unchanged; null is rejected."
+  status: EntityStatus @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  name: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  description: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  locationCategoryId: ID @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  stateId: ID @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  addressLine1: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  addressLine2: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  city: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  postalCode: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  timezone: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  version: Int @goField(omittable: true)
+}
+
+input BulkUpdateLocationStatusInput {
+  locationIds: [ID!]!
+  status: EntityStatus!
+}
+
+extend type Mutation {
+  createLocation(input: LocationInput!): Location!
+  updateLocation(id: ID!, input: LocationInput!): Location!
+  patchLocation(id: ID!, input: LocationPatchInput!): Location!
+  bulkUpdateLocationStatus(input: BulkUpdateLocationStatusInput!): [Location!]!
+}

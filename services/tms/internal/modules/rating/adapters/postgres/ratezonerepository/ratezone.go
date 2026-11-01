@@ -47,34 +47,6 @@ func mapRateZoneError(err error, id string) error {
 	return dberror.MapRetryableTransactionError(rateZoneErrors.Map(err, id), busyMessage)
 }
 
-func (r *repository) List(
-	ctx context.Context,
-	req *ratezoneports.ListRateZoneRequest,
-) (*pagination.ListResult[*ratezone.RateZone], error) {
-	return dbtx.Read(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*ratezone.RateZone], error) {
-			rz := ratezonedb.RateZones
-			result, err := listquery.List(
-				ctx,
-				r.db.Keel(ctx),
-				rz.Query(),
-				&listquery.Request[ratezone.RateZone]{
-					Filter: req.Filter,
-					Then:   []keel.Order{rz.CreatedAt.Desc()},
-				},
-			)
-			if err != nil {
-				r.l.Error("failed to list rate zones", zap.Error(err))
-				return nil, err
-			}
-
-			return result, nil
-		},
-	)
-}
-
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *ratezoneports.ListRateZoneConnectionRequest,

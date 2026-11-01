@@ -8,10 +8,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type ListRateZoneRequest struct {
-	Filter *pagination.QueryOptions `json:"filter"`
-}
-
 type ListRateZoneConnectionRequest struct {
 	Filter          *pagination.QueryOptions `json:"filter"`
 	Cursor          pagination.CursorInfo    `json:"-"`
@@ -62,10 +58,6 @@ func ZoneCodes(refs []ZoneRef) []string {
 }
 
 type RateZoneRepository interface {
-	List(
-		ctx context.Context,
-		req *ListRateZoneRequest,
-	) (*pagination.ListResult[*ratezone.RateZone], error)
 	ListConnection(
 		ctx context.Context,
 		req *ListRateZoneConnectionRequest,

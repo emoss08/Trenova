@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { apiService } from "@/services/api";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import type { TractorRow } from "@/lib/graphql/equipment-table";
@@ -86,7 +87,7 @@ export function TractorPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
         onOpenChange={onOpenChange}
         row={row}
         form={form}
-        url="/tractors/"
+        mutationFn={(values, currentRow) => apiService.tractorService.update(currentRow.id, values)}
         queryKey="tractor-list"
         title={t("Tractor")}
         fieldKey="code"
@@ -102,7 +103,7 @@ export function TractorPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/tractors/"
+      mutationFn={(values) => apiService.tractorService.create(values)}
       queryKey="tractor-list"
       title={t("Tractor")}
       formComponent={<TractorForm />}

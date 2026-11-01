@@ -141,3 +141,114 @@ extend type Query {
   carriers(input: DataTableConnectionInput!): CarrierConnection!
   carrier(id: ID!): Carrier
 }
+
+"A contact the carrier keeps. Sent with an id, the saved contact is updated; without one, it is added."
+input CarrierContactInput {
+  id: ID
+  name: String!
+  title: String
+  email: String
+  phone: String
+  isPrimary: Boolean!
+  receivesRateConfirmations: Boolean!
+  version: Int
+}
+
+"An insurance policy on file. Sent with an id, the saved policy is updated; without one, it is added."
+input CarrierInsurancePolicyInput {
+  id: ID
+  policyType: CarrierInsurancePolicyType!
+  policyNumber: String!
+  providerName: String!
+  coverageAmount: Decimal!
+  effectiveDate: Timestamp!
+  expirationDate: Timestamp!
+  isVerified: Boolean!
+  version: Int
+}
+
+"""
+A carrier and the contacts and insurance policies it keeps. Contacts and
+policies left out of the lists are removed; the carrier's EDI channels are kept.
+"""
+input CarrierInput {
+  stateId: ID
+  remitStateId: ID
+  status: CarrierStatus!
+  code: String!
+  name: String!
+  dbaName: String
+  carrierType: CarrierType!
+  dotNumber: String
+  mcNumber: String
+  scac: String
+  complianceStatus: CarrierComplianceStatus!
+  safetyRating: CarrierSafetyRating!
+  qualifiedAt: Timestamp
+  disqualifiedReason: String
+  taxId: String
+  taxIdType: CarrierTaxIDType
+  w9OnFile: Boolean!
+  is1099Eligible: Boolean!
+  paymentMethod: CarrierPaymentMethod!
+  paymentTermDays: Int!
+  remitToName: String
+  remitAddressLine1: String
+  remitAddressLine2: String
+  remitCity: String
+  remitPostalCode: String
+  addressLine1: String
+  addressLine2: String
+  city: String
+  postalCode: String
+  phone: String
+  email: String
+  externalId: String
+  notes: String
+  version: Int
+  contacts: [CarrierContactInput!]
+  insurancePolicies: [CarrierInsurancePolicyInput!]
+}
+
+input CarrierPatchInput {
+  "Omit to leave unchanged; null is rejected."
+  status: CarrierStatus @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  name: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  dbaName: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  carrierType: CarrierType @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  complianceStatus: CarrierComplianceStatus @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  safetyRating: CarrierSafetyRating @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  disqualifiedReason: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  paymentMethod: CarrierPaymentMethod @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  paymentTermDays: Int @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  phone: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  email: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  externalId: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  notes: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  version: Int @goField(omittable: true)
+}
+
+input BulkUpdateCarrierStatusInput {
+  carrierIds: [ID!]!
+  status: CarrierStatus!
+}
+
+extend type Mutation {
+  createCarrier(input: CarrierInput!): Carrier!
+  updateCarrier(id: ID!, input: CarrierInput!): Carrier!
+  patchCarrier(id: ID!, input: CarrierPatchInput!): Carrier!
+  bulkUpdateCarrierStatus(input: BulkUpdateCarrierStatusInput!): [Carrier!]!
+}

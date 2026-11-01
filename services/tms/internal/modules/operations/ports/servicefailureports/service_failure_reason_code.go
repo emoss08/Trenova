@@ -9,10 +9,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type ListServiceFailureReasonCodesRequest struct {
-	Filter *pagination.QueryOptions `json:"filter"`
-}
-
 type ListServiceFailureReasonCodeConnectionRequest struct {
 	Filter                          *pagination.QueryOptions `json:"filter"`
 	Cursor                          pagination.CursorInfo    `json:"-"`
@@ -59,44 +55,7 @@ type ServiceFailureReasonCodeSelectOptionsRequest struct {
 	AppliesTo          servicefailure.ReasonCodeAppliesTo `json:"appliesTo"`
 }
 
-type ReorderServiceFailureReasonCodesRequest struct {
-	TenantInfo pagination.TenantInfo `json:"-"`
-	ReasonIDs  []pulid.ID            `json:"reasonIds"`
-}
-
-func (r *ReorderServiceFailureReasonCodesRequest) Validate() *errortypes.MultiError {
-	multiErr := errortypes.NewMultiError()
-	if r == nil {
-		multiErr.Add("request", errortypes.ErrRequired, "Reason code reorder request is required")
-		return multiErr
-	}
-	validateTenantInfo(multiErr, r.TenantInfo)
-	if len(r.ReasonIDs) == 0 {
-		multiErr.Add("reasonIds", errortypes.ErrRequired, "Reason code IDs are required")
-	}
-	seen := make(map[pulid.ID]struct{}, len(r.ReasonIDs))
-	for _, id := range r.ReasonIDs {
-		if id.IsNil() {
-			multiErr.Add("reasonIds", errortypes.ErrInvalid, "Reason code IDs cannot be empty")
-			continue
-		}
-		if _, ok := seen[id]; ok {
-			multiErr.Add("reasonIds", errortypes.ErrInvalid, "Reason code IDs must be unique")
-			continue
-		}
-		seen[id] = struct{}{}
-	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
-}
-
 type ServiceFailureReasonCodeRepository interface {
-	List(
-		ctx context.Context,
-		req *ListServiceFailureReasonCodesRequest,
-	) (*pagination.ListResult[*servicefailure.ReasonCode], error)
 	ListConnection(
 		ctx context.Context,
 		req *ListServiceFailureReasonCodeConnectionRequest,
@@ -134,10 +93,6 @@ type ServiceFailureReasonCodeRepository interface {
 		tenantInfo pagination.TenantInfo,
 		actorID pulid.ID,
 	) (*servicefailure.ReasonCode, error)
-	Reorder(
-		ctx context.Context,
-		req *ReorderServiceFailureReasonCodesRequest,
-	) ([]*servicefailure.ReasonCode, error)
 	SelectOptions(
 		ctx context.Context,
 		req *ServiceFailureReasonCodeSelectOptionsRequest,

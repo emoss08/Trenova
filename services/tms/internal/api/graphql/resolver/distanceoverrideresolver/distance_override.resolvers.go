@@ -58,3 +58,57 @@ func (r *QueryResolver) DistanceOverride(ctx context.Context, id string) (*dista
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
+
+func (r *MutationResolver) CreateDistanceOverride(ctx context.Context, input gqlmodel.DistanceOverrideInput) (*distanceoverride.DistanceOverride, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDistanceOverride, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := distanceOverrideFromInput(&input, pulid.Nil, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.DistanceOverrideService.Create(ctx, entity, authCtx.UserID)
+}
+
+func (r *MutationResolver) UpdateDistanceOverride(ctx context.Context, id string, input gqlmodel.DistanceOverrideInput) (*distanceoverride.DistanceOverride, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDistanceOverride, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	overrideID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := distanceOverrideFromInput(&input, overrideID, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.DistanceOverrideService.Update(ctx, entity, authCtx.UserID)
+}
+
+func (r *MutationResolver) DeleteDistanceOverride(ctx context.Context, id string) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDistanceOverride, permission.OpDelete)
+	if err != nil {
+		return false, err
+	}
+
+	overrideID, err := pulid.MustParse(id)
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.DistanceOverrideService.Delete(ctx, distanceoverrideports.DeleteDistanceOverrideRequest{
+		ID:         overrideID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	}, authCtx.UserID); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}

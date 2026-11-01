@@ -1,0 +1,29 @@
+mutation CreateTractor($input: TractorInput!) {
+  createTractor(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateTractor($id: ID!, $input: TractorInput!) {
+  updateTractor(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation PatchTractor($id: ID!, $input: TractorPatchInput!) {
+  patchTractor(id: $id, input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation BulkUpdateTractorStatus($input: BulkUpdateTractorStatusInput!) {
+  bulkUpdateTractorStatus(input: $input) {
+    id
+    status
+    version
+  }
+}

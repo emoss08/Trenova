@@ -10,7 +10,7 @@ import {
   useEditPanelActionPreference,
   type EditPanelSaveAction,
 } from "@/hooks/use-panel-action-preference";
-import { api } from "@trenova/shared/lib/api";
+import { apiService } from "@/services/api";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { isRecord } from "@trenova/shared/lib/utils";
 import type { ServiceFailureReasonCodeRow } from "@/lib/graphql/service-failure-reason-code-table";
@@ -82,7 +82,7 @@ export function ServiceFailureReasonCodePanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/service-failure-reason-codes/"
+      mutationFn={(values) => apiService.serviceFailureReasonCodeService.create(values)}
       queryKey="service-failure-reason-code-list"
       title={t("Service failure reason code")}
       formComponent={<ServiceFailureReasonCodeForm />}
@@ -126,13 +126,18 @@ function ServiceFailureReasonCodeEditPanel({
   }, [open, row, reset]);
 
   const { mutateAsync } = useApiMutation<
-    ServiceFailureReasonCode,
+    unknown,
     { action: EditPanelSaveAction; values: ServiceFailureReasonCode },
     unknown,
     ServiceFailureReasonCode
   >({
-    mutationFn: async ({ values }) =>
-      api.put<ServiceFailureReasonCode>(`/service-failure-reason-codes/${row?.id}/`, values),
+    mutationFn: async ({ values }) => {
+      if (!row?.id) {
+        throw new Error("No reason code selected");
+      }
+
+      return apiService.serviceFailureReasonCodeService.update(row.id, values);
+    },
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({
         queryKey: ["service-failure-reason-code-list"],

@@ -55,7 +55,7 @@ type TabbedFormCreatePanelProps<T extends FieldValues, TData> = Pick<
   formTabs?: FormTabConfig[];
   size?: PanelSize;
   useDock?: boolean;
-  mutationFn?: (values: T) => Promise<T>;
+  mutationFn?: (values: T) => Promise<unknown>;
   /** Labels for the change review; see FormCreatePanel. */
   changeFields?: ChangeFields;
   /** Why the form cannot be saved yet, shown in the footer beside the changes. */
@@ -128,7 +128,7 @@ export function TabbedFormCreatePanel<T extends FieldValues, TData>({
     }
   }, [open, defaultTab, reset, setActiveTab]);
 
-  const { mutateAsync } = useApiMutation<T, T, unknown, T>({
+  const { mutateAsync } = useApiMutation<unknown, T, unknown, T>({
     mutationFn: async (values: T) => {
       if (mutationFn) {
         return mutationFn(values);

@@ -39,20 +39,6 @@ func New(p Params) servicefailureports.ServiceFailureReasonCodeService {
 	}
 }
 
-func (s *service) List(
-	ctx context.Context,
-	req *servicefailureports.ListServiceFailureReasonCodesRequest,
-) (*pagination.ListResult[*servicefailure.ReasonCode], error) {
-	if req == nil || req.Filter == nil {
-		return nil, errortypes.NewValidationError(
-			"request",
-			errortypes.ErrRequired,
-			"Service failure reason code list request is required",
-		)
-	}
-	return s.repo.List(ctx, req)
-}
-
 func (s *service) ListConnection(
 	ctx context.Context,
 	req *servicefailureports.ListServiceFailureReasonCodeConnectionRequest,
@@ -233,39 +219,6 @@ func (s *service) Activate(
 		"Service failure reason code activated",
 	)
 	return activated, nil
-}
-
-func (s *service) Reorder(
-	ctx context.Context,
-	req *servicefailureports.ReorderServiceFailureReasonCodesRequest,
-	actor *permissionports.RequestActor,
-) ([]*servicefailure.ReasonCode, error) {
-	if multiErr := req.Validate(); multiErr != nil {
-		return nil, multiErr
-	}
-
-	reordered, err := s.repo.Reorder(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	auditActor := actor.AuditActorOrSystem()
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
-		Resource:       permission.ResourceServiceFailureReasonCode,
-		ResourceID:     req.TenantInfo.BuID.String(),
-		Operation:      permission.OpUpdate,
-		UserID:         auditActor.UserID,
-		APIKeyID:       auditActor.APIKeyID,
-		PrincipalType:  auditActor.PrincipalType,
-		PrincipalID:    auditActor.PrincipalID,
-		CurrentState:   jsonutils.MustToJSON(reordered),
-		OrganizationID: req.TenantInfo.OrgID,
-		BusinessUnitID: req.TenantInfo.BuID,
-	}, auditservice.WithComment("Service failure reason codes reordered")); err != nil {
-		s.l.Warn("failed to log service failure reason code reorder audit", zap.Error(err))
-	}
-
-	return reordered, nil
 }
 
 func validateReasonCode(entity *servicefailure.ReasonCode) *errortypes.MultiError {

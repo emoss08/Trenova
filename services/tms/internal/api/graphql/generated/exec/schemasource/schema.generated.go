@@ -8634,6 +8634,117 @@ extend type Query {
   carriers(input: DataTableConnectionInput!): CarrierConnection!
   carrier(id: ID!): Carrier
 }
+
+"A contact the carrier keeps. Sent with an id, the saved contact is updated; without one, it is added."
+input CarrierContactInput {
+  id: ID
+  name: String!
+  title: String
+  email: String
+  phone: String
+  isPrimary: Boolean!
+  receivesRateConfirmations: Boolean!
+  version: Int
+}
+
+"An insurance policy on file. Sent with an id, the saved policy is updated; without one, it is added."
+input CarrierInsurancePolicyInput {
+  id: ID
+  policyType: CarrierInsurancePolicyType!
+  policyNumber: String!
+  providerName: String!
+  coverageAmount: Decimal!
+  effectiveDate: Timestamp!
+  expirationDate: Timestamp!
+  isVerified: Boolean!
+  version: Int
+}
+
+"""
+A carrier and the contacts and insurance policies it keeps. Contacts and
+policies left out of the lists are removed; the carrier's EDI channels are kept.
+"""
+input CarrierInput {
+  stateId: ID
+  remitStateId: ID
+  status: CarrierStatus!
+  code: String!
+  name: String!
+  dbaName: String
+  carrierType: CarrierType!
+  dotNumber: String
+  mcNumber: String
+  scac: String
+  complianceStatus: CarrierComplianceStatus!
+  safetyRating: CarrierSafetyRating!
+  qualifiedAt: Timestamp
+  disqualifiedReason: String
+  taxId: String
+  taxIdType: CarrierTaxIDType
+  w9OnFile: Boolean!
+  is1099Eligible: Boolean!
+  paymentMethod: CarrierPaymentMethod!
+  paymentTermDays: Int!
+  remitToName: String
+  remitAddressLine1: String
+  remitAddressLine2: String
+  remitCity: String
+  remitPostalCode: String
+  addressLine1: String
+  addressLine2: String
+  city: String
+  postalCode: String
+  phone: String
+  email: String
+  externalId: String
+  notes: String
+  version: Int
+  contacts: [CarrierContactInput!]
+  insurancePolicies: [CarrierInsurancePolicyInput!]
+}
+
+input CarrierPatchInput {
+  "Omit to leave unchanged; null is rejected."
+  status: CarrierStatus @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  name: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  dbaName: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  carrierType: CarrierType @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  complianceStatus: CarrierComplianceStatus @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  safetyRating: CarrierSafetyRating @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  disqualifiedReason: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  paymentMethod: CarrierPaymentMethod @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  paymentTermDays: Int @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  phone: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  email: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  externalId: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  notes: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  version: Int @goField(omittable: true)
+}
+
+input BulkUpdateCarrierStatusInput {
+  carrierIds: [ID!]!
+  status: CarrierStatus!
+}
+
+extend type Mutation {
+  createCarrier(input: CarrierInput!): Carrier!
+  updateCarrier(id: ID!, input: CarrierInput!): Carrier!
+  patchCarrier(id: ID!, input: CarrierPatchInput!): Carrier!
+  bulkUpdateCarrierStatus(input: BulkUpdateCarrierStatusInput!): [Carrier!]!
+}
 `, BuiltIn: false},
 	{Name: "../schema/carrier_capacity.graphqls", Input: `enum CarrierCapacityRateMethod {
   Flat
@@ -10895,6 +11006,79 @@ extend type Query {
   customFieldFormFields(resourceType: String!): [CustomFieldFormField!]!
   "The resource types custom fields can be defined on."
   customFieldResourceTypes: [String!]!
+}
+
+input CustomFieldSelectOptionInput {
+  value: String!
+  label: String!
+  color: String
+  description: String
+}
+
+input CustomFieldValidationRulesInput {
+  minLength: Int
+  maxLength: Int
+  min: Int
+  max: Int
+  pattern: String
+}
+
+input CustomFieldUIAttributesInput {
+  placeholder: String
+  helpText: String
+  width: String
+}
+
+input CustomFieldDefinitionInput {
+  resourceType: String!
+  name: String!
+  label: String!
+  description: String
+  fieldType: FieldType!
+  isRequired: Boolean!
+  isActive: Boolean!
+  displayOrder: Int!
+  color: String
+  options: [CustomFieldSelectOptionInput!]
+  validationRules: CustomFieldValidationRulesInput
+  "Value pre-filled when a record is created; its shape follows fieldType."
+  defaultValue: Any
+  uiAttributes: CustomFieldUIAttributesInput
+  version: Int
+}
+
+input CustomFieldDefinitionPatchInput {
+  "Omit to leave unchanged; null is rejected."
+  label: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  description: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  isRequired: Boolean @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  isActive: Boolean @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  displayOrder: Int @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  color: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  version: Int @goField(omittable: true)
+}
+
+extend type Mutation {
+  createCustomFieldDefinition(input: CustomFieldDefinitionInput!): CustomFieldDefinition!
+  updateCustomFieldDefinition(
+    id: ID!
+    input: CustomFieldDefinitionInput!
+  ): CustomFieldDefinition!
+  patchCustomFieldDefinition(
+    id: ID!
+    input: CustomFieldDefinitionPatchInput!
+  ): CustomFieldDefinition!
+  """
+  Deletes a definition no record holds a value for. One with values is refused as
+  a conflict whose usageStats extension counts them; deactivate it instead.
+  """
+  deleteCustomFieldDefinition(id: ID!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "../schema/customer.graphqls", Input: `enum CustomerPaymentTerm {
@@ -13416,6 +13600,27 @@ extend type Query {
   distanceOverrides(input: DataTableConnectionInput!): DistanceOverrideConnection!
   distanceOverride(id: ID!): DistanceOverride
 }
+
+input DistanceOverrideStopInput {
+  locationId: ID!
+}
+
+input DistanceOverrideInput {
+  originLocationId: ID!
+  destinationLocationId: ID!
+  "Set to apply the override only to this customer's shipments."
+  customerId: ID
+  distance: Float!
+  "The stops between origin and destination, in the order the route visits them."
+  intermediateStops: [DistanceOverrideStopInput!]
+  version: Int
+}
+
+extend type Mutation {
+  createDistanceOverride(input: DistanceOverrideInput!): DistanceOverride!
+  updateDistanceOverride(id: ID!, input: DistanceOverrideInput!): DistanceOverride!
+  deleteDistanceOverride(id: ID!): Boolean!
+}
 `, BuiltIn: false},
 	{Name: "../schema/distance_profile.graphqls", Input: `type DistanceProfile {
   id: ID!
@@ -13462,6 +13667,37 @@ type DistanceProfileConnection {
 extend type Query {
   distanceProfiles(input: DataTableConnectionInput!): DistanceProfileConnection!
   distanceProfile(id: ID!): DistanceProfile
+}
+
+input DistanceProfileInput {
+  name: String!
+  description: String
+  status: String!
+  isDefault: Boolean!
+  provider: String!
+  "Blank takes the provider's current data."
+  dataVersion: String
+  region: String!
+  "Blank takes Practical."
+  routingType: String
+  "Blank takes Miles."
+  distanceUnits: String
+  locationGranularity: String!
+  profileName: String
+  highwayOnly: Boolean!
+  tollRoads: Boolean!
+  bordersOpen: Boolean!
+  includeTollData: Boolean!
+  version: Int
+}
+
+extend type Mutation {
+  createDistanceProfile(input: DistanceProfileInput!): DistanceProfile!
+  updateDistanceProfile(id: ID!, input: DistanceProfileInput!): DistanceProfile!
+  "Deletes a profile; the default profile is refused."
+  deleteDistanceProfile(id: ID!): Boolean!
+  "Makes the profile the organization's default, clearing the flag on the previous one."
+  setDefaultDistanceProfile(id: ID!): DistanceProfile!
 }
 `, BuiltIn: false},
 	{Name: "../schema/document_packet_rule.graphqls", Input: `type DocumentPacketRule {
@@ -24047,6 +24283,71 @@ extend type Query {
   locations(input: DataTableConnectionInput!): LocationConnection!
   location(id: ID!): Location
 }
+
+input GeofenceVertexInput {
+  latitude: Float!
+  longitude: Float!
+}
+
+input LocationInput {
+  status: EntityStatus!
+  "Left blank, the location code sequence assigns one on create."
+  code: String
+  name: String!
+  description: String
+  locationCategoryId: ID!
+  stateId: ID!
+  addressLine1: String!
+  addressLine2: String
+  city: String!
+  postalCode: String!
+  timezone: String
+  placeId: String
+  isGeocoded: Boolean!
+  longitude: Float
+  latitude: Float
+  geofenceType: LocationGeofenceType!
+  geofenceRadiusMeters: Float
+  geofenceVertices: [GeofenceVertexInput!]
+  version: Int
+}
+
+input LocationPatchInput {
+  "Omit to leave unchanged; null is rejected."
+  status: EntityStatus @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  name: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  description: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  locationCategoryId: ID @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  stateId: ID @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  addressLine1: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  addressLine2: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  city: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  postalCode: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  timezone: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  version: Int @goField(omittable: true)
+}
+
+input BulkUpdateLocationStatusInput {
+  locationIds: [ID!]!
+  status: EntityStatus!
+}
+
+extend type Mutation {
+  createLocation(input: LocationInput!): Location!
+  updateLocation(id: ID!, input: LocationInput!): Location!
+  patchLocation(id: ID!, input: LocationPatchInput!): Location!
+  bulkUpdateLocationStatus(input: BulkUpdateLocationStatusInput!): [Location!]!
+}
 `, BuiltIn: false},
 	{Name: "../schema/location_category.graphqls", Input: `enum LocationCategoryType {
   Terminal
@@ -25596,10 +25897,27 @@ type RateZone {
   code: String!
   name: String!
   description: String!
+  "Custom, KMA, Regional, Metro or Country."
+  kind: String!
   status: String!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+  "The places the zone covers. Read by rateZone only."
+  members: [RateZoneMember!]
+}
+
+"One place a rate zone covers, named the way a lane names one end."
+type RateZoneMember {
+  id: ID!
+  rateZoneId: ID!
+  "How the place is named: Location, Zip5, Zip3, CityState, State, Country, Zone or Any."
+  scopeType: String!
+  scopeValue: String!
+  "The city, for a CityState member; scopeValue then holds the state id."
+  city: String!
+  "The key lanes match the member by, computed when the zone is saved."
+  matchKey: String!
 }
 
 type RateZoneEdge {
@@ -25820,6 +26138,8 @@ extend type Query {
   """
   rateAgreement(id: ID!): RateAgreement
   rateZones(input: DataTableConnectionInput!): RateZoneConnection!
+  "One rate zone with the places it covers."
+  rateZone(id: ID!): RateZone
   rateMatrices(input: DataTableConnectionInput!): RateMatrixConnection!
   "One rate matrix with its draft's axes; its cells are read a page at a time."
   rateMatrix(id: ID!): RateMatrix
@@ -25832,6 +26152,30 @@ extend type Query {
   "The formula template versions that pin a rate matrix, or one of its versions."
   rateMatrixUsages(rateMatrixId: ID!, versionNumber: Int): [RateMatrixUsage!]!
   rateQuotes(input: DataTableConnectionInput!): RateQuoteConnection!
+}
+
+input RateZoneMemberInput {
+  id: ID
+  scopeType: String!
+  scopeValue: String
+  city: String
+}
+
+"A rate zone and every place it covers; members left out of the list are removed."
+input RateZoneInput {
+  code: String!
+  name: String!
+  description: String
+  "Custom, KMA, Regional, Metro or Country."
+  kind: String!
+  status: EntityStatus!
+  version: Int
+  members: [RateZoneMemberInput!]!
+}
+
+extend type Mutation {
+  createRateZone(input: RateZoneInput!): RateZone!
+  updateRateZone(id: ID!, input: RateZoneInput!): RateZone!
 }
 `, BuiltIn: false},
 	{Name: "../schema/recurring_shipment.graphqls", Input: `enum RecurringShipmentStatus {
@@ -27458,6 +27802,129 @@ extend type Mutation {
   decideProfileChange(input: DecideProfileChangeInput!): WorkerProfileChangeRequest!
 }
 `, BuiltIn: false},
+	{Name: "../schema/sequence_config.graphqls", Input: `enum SequenceType {
+  pro_number
+  consolidation
+  order
+  invoice
+  credit_memo
+  debit_memo
+  work_order
+  journal_batch
+  journal_entry
+  manual_journal_request
+  location_code
+  driver_settlement
+  carrier_settlement
+  invoice_run
+  factoring_submission
+}
+
+enum LocationCodeComponent {
+  name
+  city
+  state
+  postal_code
+}
+
+enum LocationCodeCasing {
+  upper
+  lower
+}
+
+"How a new location's code is built from its name and address."
+type LocationCodeStrategy {
+  components: [LocationCodeComponent!]!
+  componentWidth: Int!
+  sequenceDigits: Int!
+  separator: String!
+  casing: LocationCodeCasing!
+  "Used when no component yields a letter or digit."
+  fallbackPrefix: String!
+}
+
+"How the organization numbers one kind of record."
+type SequenceConfig {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  sequenceType: SequenceType!
+  prefix: String!
+  includeYear: Boolean!
+  yearDigits: Int!
+  includeMonth: Boolean!
+  includeWeekNumber: Boolean!
+  includeDay: Boolean!
+  sequenceDigits: Int!
+  includeLocationCode: Boolean!
+  includeRandomDigits: Boolean!
+  randomDigitsCount: Int!
+  includeCheckDigit: Boolean!
+  includeBusinessUnitCode: Boolean!
+  useSeparators: Boolean!
+  separatorChar: String!
+  allowCustomFormat: Boolean!
+  customFormat: String!
+  "Set on the location_code sequence."
+  locationCodeStrategy: LocationCodeStrategy
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"Every numbering sequence the organization keeps, one per sequence type."
+type SequenceConfigDocument {
+  organizationId: ID!
+  businessUnitId: ID!
+  configs: [SequenceConfig!]!
+}
+
+input LocationCodeStrategyInput {
+  components: [LocationCodeComponent!]!
+  componentWidth: Int!
+  sequenceDigits: Int!
+  separator: String!
+  casing: LocationCodeCasing!
+  fallbackPrefix: String!
+}
+
+input SequenceConfigInput {
+  id: ID
+  sequenceType: SequenceType!
+  prefix: String!
+  includeYear: Boolean!
+  yearDigits: Int!
+  includeMonth: Boolean!
+  includeWeekNumber: Boolean!
+  includeDay: Boolean!
+  sequenceDigits: Int!
+  includeLocationCode: Boolean!
+  includeRandomDigits: Boolean!
+  randomDigitsCount: Int!
+  includeCheckDigit: Boolean!
+  includeBusinessUnitCode: Boolean!
+  useSeparators: Boolean!
+  separatorChar: String!
+  allowCustomFormat: Boolean!
+  customFormat: String!
+  locationCodeStrategy: LocationCodeStrategyInput
+  version: Int
+}
+
+input SequenceConfigDocumentInput {
+  configs: [SequenceConfigInput!]!
+}
+
+extend type Query {
+  "The organization's numbering sequences."
+  sequenceConfigs: SequenceConfigDocument!
+}
+
+extend type Mutation {
+  "Saves every numbering sequence at once."
+  updateSequenceConfigs(input: SequenceConfigDocumentInput!): SequenceConfigDocument!
+}
+`, BuiltIn: false},
 	{Name: "../schema/service_failure.graphqls", Input: `enum ServiceFailureType {
   LatePickup
   LateDelivery
@@ -27631,6 +28098,37 @@ extend type Query {
   ): ServiceFailureReasonCodeConnection!
   serviceFailureReasonCode(id: ID!): ServiceFailureReasonCode
 }
+
+input ServiceFailureReasonCodeInput {
+  code: String!
+  label: String!
+  description: String
+  category: ServiceFailureReasonCategory!
+  appliesTo: ServiceFailureReasonCodeAppliesTo!
+  defaultStatusCode: String
+  defaultReasonCode: String
+  defaultExceptionCode: String
+  defaultNote: String
+  "Omit on create for an active code; omit on update to leave it as it is."
+  active: Boolean
+  sortOrder: Int!
+  externalMap: JSON
+  version: Int
+}
+
+extend type Mutation {
+  createServiceFailureReasonCode(
+    input: ServiceFailureReasonCodeInput!
+  ): ServiceFailureReasonCode!
+  updateServiceFailureReasonCode(
+    id: ID!
+    input: ServiceFailureReasonCodeInput!
+  ): ServiceFailureReasonCode!
+  "Puts an archived reason code back in the list people pick from."
+  activateServiceFailureReasonCode(id: ID!): ServiceFailureReasonCode!
+  "Takes a reason code out of the list people pick from; failures already coded keep it."
+  archiveServiceFailureReasonCode(id: ID!): ServiceFailureReasonCode!
+}
 `, BuiltIn: false},
 	{Name: "../schema/service_type.graphqls", Input: `type ServiceType {
   id: ID!
@@ -27663,6 +28161,39 @@ type ServiceTypeConnection {
 extend type Query {
   serviceTypes(input: DataTableConnectionInput!): ServiceTypeConnection!
   serviceType(id: ID!): ServiceType
+}
+
+input ServiceTypeInput {
+  status: EntityStatus!
+  code: String!
+  description: String
+  color: String
+  version: Int
+}
+
+input ServiceTypePatchInput {
+  "Omit to leave unchanged; null is rejected."
+  status: EntityStatus @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  code: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  description: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  color: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  version: Int @goField(omittable: true)
+}
+
+input BulkUpdateServiceTypeStatusInput {
+  serviceTypeIds: [ID!]!
+  status: EntityStatus!
+}
+
+extend type Mutation {
+  createServiceType(input: ServiceTypeInput!): ServiceType!
+  updateServiceType(id: ID!, input: ServiceTypeInput!): ServiceType!
+  patchServiceType(id: ID!, input: ServiceTypePatchInput!): ServiceType!
+  bulkUpdateServiceTypeStatus(input: BulkUpdateServiceTypeStatusInput!): [ServiceType!]!
 }
 `, BuiltIn: false},
 	{Name: "../schema/shared.graphqls", Input: `"""
@@ -30515,6 +31046,39 @@ extend type Query {
   shipmentTypes(input: DataTableConnectionInput!): ShipmentTypeConnection!
   shipmentType(id: ID!): ShipmentType
 }
+
+input ShipmentTypeInput {
+  status: EntityStatus!
+  code: String!
+  description: String
+  color: String
+  version: Int
+}
+
+input ShipmentTypePatchInput {
+  "Omit to leave unchanged; null is rejected."
+  status: EntityStatus @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  code: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  description: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  color: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  version: Int @goField(omittable: true)
+}
+
+input BulkUpdateShipmentTypeStatusInput {
+  shipmentTypeIds: [ID!]!
+  status: EntityStatus!
+}
+
+extend type Mutation {
+  createShipmentType(input: ShipmentTypeInput!): ShipmentType!
+  updateShipmentType(id: ID!, input: ShipmentTypeInput!): ShipmentType!
+  patchShipmentType(id: ID!, input: ShipmentTypePatchInput!): ShipmentType!
+  bulkUpdateShipmentTypeStatus(input: BulkUpdateShipmentTypeStatusInput!): [ShipmentType!]!
+}
 `, BuiltIn: false},
 	{Name: "../schema/sidebar_preference.graphqls", Input: `type SidebarSectionPreference {
   key: String!
@@ -30641,6 +31205,14 @@ type StoredMileageConnection {
 extend type Query {
   storedMileages(input: DataTableConnectionInput!): StoredMileageConnection!
   storedMileage(id: ID!): StoredMileage
+}
+
+extend type Mutation {
+  """
+  Retires a stored mileage so the next rating asks the routing provider again.
+  Needs delete on stored mileages.
+  """
+  deactivateStoredMileage(id: ID!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "../schema/table_change_alert.graphqls", Input: `type TCASubscription @kind(resource: "table_change_alert") {
@@ -33030,7 +33602,67 @@ extend type Query {
   workerPTOChartData(input: WorkerPTOChartInput!): [PTOChartDataPoint!]!
 }
 
+"""
+A worker's licensing and qualification record. dob, licenseNumber and
+twicCardNumber are Personal: a caller who cannot see Personal fields leaves them
+out and the saved values stay.
+"""
+input WorkerProfileInput {
+  licenseStateId: ID
+  dob: Timestamp
+  licenseNumber: String
+  cdlClass: CDLClass!
+  cdlRestrictions: String
+  endorsement: EndorsementType!
+  hazmatExpiry: Timestamp
+  licenseExpiry: Timestamp
+  medicalCardExpiry: Timestamp
+  medicalExaminerName: String
+  medicalExaminerNpi: String
+  twicCardNumber: String
+  twicExpiry: Timestamp
+  hireDate: Timestamp
+  terminationDate: Timestamp
+  physicalDueDate: Timestamp
+  mvrDueDate: Timestamp
+  complianceStatus: ComplianceStatus!
+  isQualified: Boolean!
+  disqualificationReason: String
+  eldExempt: Boolean!
+  shortHaulExempt: Boolean!
+}
+
+input WorkerInput {
+  stateId: ID!
+  fleetCodeId: ID
+  managerId: ID
+  "The driving title the worker holds."
+  positionId: ID
+  status: EntityStatus!
+  type: WorkerType!
+  driverType: DriverType!
+  gender: WorkerGender!
+  firstName: String!
+  lastName: String!
+  addressLine1: String!
+  addressLine2: String
+  city: String!
+  postalCode: String!
+  email: String
+  phoneNumber: String
+  emergencyContactName: String
+  emergencyContactPhone: String
+  externalId: String
+  canBeAssigned: Boolean!
+  availableForDispatch: Boolean!
+  customFields: JSON
+  version: Int
+  profile: WorkerProfileInput
+}
+
 extend type Mutation {
+  createWorker(input: WorkerInput!): Worker!
+  updateWorker(id: ID!, input: WorkerInput!): Worker!
   patchWorker(id: ID!, input: WorkerPatchInput!): Worker!
   createWorkerPTO(input: CreateWorkerPTOInput!): WorkerPTO!
   updateWorkerPTO(input: UpdateWorkerPTOInput!): WorkerPTO!

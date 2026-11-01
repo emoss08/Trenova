@@ -285,6 +285,46 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationᚐLocation),
 			},
 		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createDistanceOverride",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "DistanceOverride",
+				Args:       field_Mutation_createDistanceOverride_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateDistanceOverride(ctx, fc.Args["input"].(gqlmodel.DistanceOverrideInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNDistanceOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋdistanceoverrideᚐDistanceOverride),
+			},
+			{
+				Name:       "updateDistanceOverride",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "DistanceOverride",
+				Args:       field_Mutation_updateDistanceOverride_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateDistanceOverride(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.DistanceOverrideInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNDistanceOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋdistanceoverrideᚐDistanceOverride),
+			},
+			{
+				Name:       "deleteDistanceOverride",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild4,
+				Args:       field_Mutation_deleteDistanceOverride_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteDistanceOverride(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "distanceOverrides",
@@ -315,9 +355,20 @@ var Shard = &gqlexec.Shard{
 			},
 		}},
 	},
+	Inputs: []gqlexec.Input{
+		{Name: "DistanceOverrideInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputDistanceOverrideInput)},
+		{Name: "DistanceOverrideStopInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputDistanceOverrideStopInput)},
+	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
+}
+
+type resolverMutation interface {
+	CreateDistanceOverride(ctx context.Context, input gqlmodel.DistanceOverrideInput) (*distanceoverride.DistanceOverride, error)
+	UpdateDistanceOverride(ctx context.Context, id string, input gqlmodel.DistanceOverrideInput) (*distanceoverride.DistanceOverride, error)
+	DeleteDistanceOverride(ctx context.Context, id string) (bool, error)
 }
 
 type resolverQuery interface {
@@ -333,6 +384,53 @@ var (
 	errNoChild4 = errors.New("field of type Boolean does not have child fields")
 	errNoChild5 = errors.New("field of type String does not have child fields")
 )
+
+func field_Mutation_createDistanceOverride_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DistanceOverrideInput, error) {
+			return unmarshalNDistanceOverrideInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDistanceOverrideInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateDistanceOverride_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DistanceOverrideInput, error) {
+			return unmarshalNDistanceOverrideInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDistanceOverrideInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_deleteDistanceOverride_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
 
 func field_Query_distanceOverrides_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -360,6 +458,101 @@ func field_Query_distanceOverride_args(ctx context.Context, ec *gqlexec.Exec, ra
 	return args, nil
 }
 
+func unmarshalInputDistanceOverrideInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DistanceOverrideInput, error) {
+	var it gqlmodel.DistanceOverrideInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"originLocationId", "destinationLocationId", "customerId", "distance", "intermediateStops", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "originLocationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("originLocationId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.OriginLocationID = data
+		case "destinationLocationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationLocationId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DestinationLocationID = data
+		case "customerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customerId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomerID = data
+		case "distance":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("distance"))
+			data, err := unmarshalNFloat2float64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Distance = data
+		case "intermediateStops":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("intermediateStops"))
+			data, err := unmarshalODistanceOverrideStopInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDistanceOverrideStopInputᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.IntermediateStops = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputDistanceOverrideStopInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DistanceOverrideStopInput, error) {
+	var it gqlmodel.DistanceOverrideStopInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"locationId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "locationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locationId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.LocationID = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
@@ -369,9 +562,47 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNDistanceOverrideInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDistanceOverrideInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DistanceOverrideInput, error) {
+	res, err := unmarshalInputDistanceOverrideInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNDistanceOverrideStopInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDistanceOverrideStopInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.DistanceOverrideStopInput, error) {
+	res, err := unmarshalInputDistanceOverrideStopInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNFloat2float64(ctx context.Context, ec *gqlexec.Exec, v any) (float64, error) {
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalODistanceOverrideStopInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDistanceOverrideStopInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.DistanceOverrideStopInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNDistanceOverrideStopInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDistanceOverrideStopInput)
+}
+
+func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {

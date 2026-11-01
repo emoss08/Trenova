@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { apiService } from "@/services/api";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import type { TrailerRow } from "@/lib/graphql/equipment-table";
@@ -68,7 +69,7 @@ export function TrailerPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
         onOpenChange={onOpenChange}
         row={row}
         form={form}
-        url="/trailers/"
+        mutationFn={(values, currentRow) => apiService.trailerService.update(currentRow.id, values)}
         queryKey="trailer-list"
         title={t("Trailer")}
         fieldKey="code"
@@ -84,7 +85,7 @@ export function TrailerPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/trailers/"
+      mutationFn={(values) => apiService.trailerService.create(values)}
       queryKey="trailer-list"
       title={t("Trailer")}
       formComponent={<TrailerForm />}

@@ -4,13 +4,14 @@ import {
   fetchLocationPolicies,
   type TimeWindow,
 } from "@/lib/graphql/location-card";
-import { apiService } from "@/services/api";
+import { fetchLocationGeofences } from "@/lib/graphql/location-geofences";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const location = createQueryKeys("location", {
   geofences: (limit = 100) => ({
     queryKey: ["geofences", limit],
-    queryFn: async () => apiService.locationService.listGeofenced(limit),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      fetchLocationGeofences(limit, { signal }),
   }),
   card: (locationId: string) => ({
     queryKey: ["card", locationId],

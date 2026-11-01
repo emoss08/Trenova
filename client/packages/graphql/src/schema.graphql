@@ -7995,6 +7995,11 @@ input BulkUpdateAccountTypeStatusInput {
   status: EntityStatus!
 }
 
+input BulkUpdateCarrierStatusInput {
+  carrierIds: [ID!]!
+  status: CarrierStatus!
+}
+
 input BulkUpdateCommodityStatusInput {
   commodityIds: [ID!]!
   status: EntityStatus!
@@ -8022,6 +8027,21 @@ input BulkUpdateFleetCodeStatusInput {
 
 input BulkUpdateHazardousMaterialStatusInput {
   hazardousMaterialIds: [ID!]!
+  status: EntityStatus!
+}
+
+input BulkUpdateLocationStatusInput {
+  locationIds: [ID!]!
+  status: EntityStatus!
+}
+
+input BulkUpdateServiceTypeStatusInput {
+  serviceTypeIds: [ID!]!
+  status: EntityStatus!
+}
+
+input BulkUpdateShipmentTypeStatusInput {
+  shipmentTypeIds: [ID!]!
   status: EntityStatus!
 }
 
@@ -8966,6 +8986,20 @@ type CarrierContact {
 }
 
 """
+A contact the carrier keeps. Sent with an id, the saved contact is updated; without one, it is added.
+"""
+input CarrierContactInput {
+  email: String
+  id: ID
+  isPrimary: Boolean!
+  name: String!
+  phone: String
+  receivesRateConfirmations: Boolean!
+  title: String
+  version: Int
+}
+
+"""
 The purchased-transportation accrual ledger: one cost event per buy-rate line
 on a carrier assignment, created automatically when a carrier-covered shipment
 reaches the organization's pay trigger. Events are recomputed while Pending,
@@ -9077,6 +9111,49 @@ enum CarrierEquipmentVerificationResult {
   Unverifiable
 }
 
+"""
+A carrier and the contacts and insurance policies it keeps. Contacts and
+policies left out of the lists are removed; the carrier's EDI channels are kept.
+"""
+input CarrierInput {
+  addressLine1: String
+  addressLine2: String
+  carrierType: CarrierType!
+  city: String
+  code: String!
+  complianceStatus: CarrierComplianceStatus!
+  contacts: [CarrierContactInput!]
+  dbaName: String
+  disqualifiedReason: String
+  dotNumber: String
+  email: String
+  externalId: String
+  insurancePolicies: [CarrierInsurancePolicyInput!]
+  is1099Eligible: Boolean!
+  mcNumber: String
+  name: String!
+  notes: String
+  paymentMethod: CarrierPaymentMethod!
+  paymentTermDays: Int!
+  phone: String
+  postalCode: String
+  qualifiedAt: Timestamp
+  remitAddressLine1: String
+  remitAddressLine2: String
+  remitCity: String
+  remitPostalCode: String
+  remitStateId: ID
+  remitToName: String
+  safetyRating: CarrierSafetyRating!
+  scac: String
+  stateId: ID
+  status: CarrierStatus!
+  taxId: String
+  taxIdType: CarrierTaxIDType
+  version: Int
+  w9OnFile: Boolean!
+}
+
 type CarrierInsurancePolicy {
   businessUnitId: ID!
   carrierId: ID!
@@ -9092,6 +9169,21 @@ type CarrierInsurancePolicy {
   providerName: String!
   updatedAt: Timestamp!
   version: Int!
+}
+
+"""
+An insurance policy on file. Sent with an id, the saved policy is updated; without one, it is added.
+"""
+input CarrierInsurancePolicyInput {
+  coverageAmount: Decimal!
+  effectiveDate: Timestamp!
+  expirationDate: Timestamp!
+  id: ID
+  isVerified: Boolean!
+  policyNumber: String!
+  policyType: CarrierInsurancePolicyType!
+  providerName: String!
+  version: Int
 }
 
 enum CarrierInsurancePolicyType {
@@ -10058,6 +10150,37 @@ type CarrierMonitoringEnrollmentEdge {
 input CarrierMonitoringEnrollmentFilterInput {
   desiredState: CarrierIntelDesiredState
   vendorStates: [CarrierIntelVendorState!]
+}
+
+input CarrierPatchInput {
+  """Omit to leave unchanged; null is rejected."""
+  carrierType: CarrierType @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  complianceStatus: CarrierComplianceStatus @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  dbaName: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  disqualifiedReason: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  email: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  externalId: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  name: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  notes: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  paymentMethod: CarrierPaymentMethod @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  paymentTermDays: Int @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  phone: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  safetyRating: CarrierSafetyRating @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  status: CarrierStatus @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  version: Int @goField(omittable: true)
 }
 
 enum CarrierPaymentMethod {
@@ -11193,6 +11316,43 @@ type CustomFieldDefinitionEdge {
   node: CustomFieldDefinition!
 }
 
+input CustomFieldDefinitionInput {
+  color: String
+  """
+  Value pre-filled when a record is created; its shape follows fieldType.
+  """
+  defaultValue: Any
+  description: String
+  displayOrder: Int!
+  fieldType: FieldType!
+  isActive: Boolean!
+  isRequired: Boolean!
+  label: String!
+  name: String!
+  options: [CustomFieldSelectOptionInput!]
+  resourceType: String!
+  uiAttributes: CustomFieldUIAttributesInput
+  validationRules: CustomFieldValidationRulesInput
+  version: Int
+}
+
+input CustomFieldDefinitionPatchInput {
+  """Omit to leave unchanged; pass null to clear."""
+  color: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  description: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  displayOrder: Int @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  isActive: Boolean @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  isRequired: Boolean @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  label: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  version: Int @goField(omittable: true)
+}
+
 """
 A custom field as a record's form draws it. Anyone who reads the record's resource type reads
 the fields its form shows, without reading custom field definitions.
@@ -11220,6 +11380,13 @@ type CustomFieldSelectOption {
   value: String!
 }
 
+input CustomFieldSelectOptionInput {
+  color: String
+  description: String
+  label: String!
+  value: String!
+}
+
 """Presentation hints for the field's input control."""
 type CustomFieldUIAttributes {
   helpText: String!
@@ -11227,11 +11394,25 @@ type CustomFieldUIAttributes {
   width: String!
 }
 
+input CustomFieldUIAttributesInput {
+  helpText: String
+  placeholder: String
+  width: String
+}
+
 """
 Optional bounds applied when a value is written to the field. Null bounds are
 not enforced.
 """
 type CustomFieldValidationRules {
+  max: Int
+  maxLength: Int
+  min: Int
+  minLength: Int
+  pattern: String
+}
+
+input CustomFieldValidationRulesInput {
   max: Int
   maxLength: Int
   min: Int
@@ -13798,10 +13979,27 @@ type DistanceOverrideEdge {
   node: DistanceOverride!
 }
 
+input DistanceOverrideInput {
+  """Set to apply the override only to this customer's shipments."""
+  customerId: ID
+  destinationLocationId: ID!
+  distance: Float!
+  """
+  The stops between origin and destination, in the order the route visits them.
+  """
+  intermediateStops: [DistanceOverrideStopInput!]
+  originLocationId: ID!
+  version: Int
+}
+
 type DistanceOverrideStop {
   location: Location
   locationId: ID!
   stopOrder: Int!
+}
+
+input DistanceOverrideStopInput {
+  locationId: ID!
 }
 
 type DistanceProfile {
@@ -13844,6 +14042,28 @@ type DistanceProfileConnection {
 type DistanceProfileEdge {
   cursor: String!
   node: DistanceProfile!
+}
+
+input DistanceProfileInput {
+  bordersOpen: Boolean!
+  """Blank takes the provider's current data."""
+  dataVersion: String
+  description: String
+  """Blank takes Miles."""
+  distanceUnits: String
+  highwayOnly: Boolean!
+  includeTollData: Boolean!
+  isDefault: Boolean!
+  locationGranularity: String!
+  name: String!
+  profileName: String
+  provider: String!
+  region: String!
+  """Blank takes Practical."""
+  routingType: String
+  status: String!
+  tollRoads: Boolean!
+  version: Int
 }
 
 enum DocumentCategory {
@@ -19186,6 +19406,11 @@ type GeofenceVertex {
   longitude: Float!
 }
 
+input GeofenceVertexInput {
+  latitude: Float!
+  longitude: Float!
+}
+
 input GrantCarrierIntelOverrideInput {
   carrierId: ID!
   expiresAt: Timestamp
@@ -22202,6 +22427,38 @@ enum LocationCategoryType {
   Warehouse
 }
 
+enum LocationCodeCasing {
+  lower
+  upper
+}
+
+enum LocationCodeComponent {
+  city
+  name
+  postal_code
+  state
+}
+
+"""How a new location's code is built from its name and address."""
+type LocationCodeStrategy {
+  casing: LocationCodeCasing!
+  componentWidth: Int!
+  components: [LocationCodeComponent!]!
+  """Used when no component yields a letter or digit."""
+  fallbackPrefix: String!
+  separator: String!
+  sequenceDigits: Int!
+}
+
+input LocationCodeStrategyInput {
+  casing: LocationCodeCasing!
+  componentWidth: Int!
+  components: [LocationCodeComponent!]!
+  fallbackPrefix: String!
+  separator: String!
+  sequenceDigits: Int!
+}
+
 type LocationConnection {
   edges: [LocationEdge!]!
   pageInfo: PageInfo!
@@ -22222,6 +22479,54 @@ enum LocationGeofenceType {
   circle
   draw
   rectangle
+}
+
+input LocationInput {
+  addressLine1: String!
+  addressLine2: String
+  city: String!
+  """Left blank, the location code sequence assigns one on create."""
+  code: String
+  description: String
+  geofenceRadiusMeters: Float
+  geofenceType: LocationGeofenceType!
+  geofenceVertices: [GeofenceVertexInput!]
+  isGeocoded: Boolean!
+  latitude: Float
+  locationCategoryId: ID!
+  longitude: Float
+  name: String!
+  placeId: String
+  postalCode: String!
+  stateId: ID!
+  status: EntityStatus!
+  timezone: String
+  version: Int
+}
+
+input LocationPatchInput {
+  """Omit to leave unchanged; null is rejected."""
+  addressLine1: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  addressLine2: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  city: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  description: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  locationCategoryId: ID @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  name: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  postalCode: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  stateId: ID @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  status: EntityStatus @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  timezone: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  version: Int @goField(omittable: true)
 }
 
 type LocationReference {
@@ -22452,6 +22757,8 @@ type Mutation {
   """
   acknowledgeWatchtowerItem(expectedVersion: Int, id: ID!): WatchtowerItem!
   activateFactoringAgreement(input: ChangeFactoringAgreementStatusInput!): FactoringAgreement!
+  """Puts an archived reason code back in the list people pick from."""
+  activateServiceFailureReasonCode(id: ID!): ServiceFailureReasonCode!
   """
   Add a line of guidance to the organization's profile. From someone who manages
   agent memory it is kept and the profile is written again with it; from anyone
@@ -22519,6 +22826,10 @@ type Mutation {
   archiveDocumentTemplateVersion(id: ID!): DocumentTemplateVersion!
   archivePerformanceReviewTemplate(id: ID!, version: Int): PerformanceReviewTemplate!
   archivePtoPolicy(id: ID!, version: Int): PTOPolicy!
+  """
+  Takes a reason code out of the list people pick from; failures already coded keep it.
+  """
+  archiveServiceFailureReasonCode(id: ID!): ServiceFailureReasonCode!
   archiveTrainingCourse(id: ID!, version: Int): TrainingCourse!
   archiveWorkerChecklistTemplate(id: ID!, version: Int): WorkerChecklistTemplate!
   archiveWorkerCredential(input: ArchiveWorkerCredentialInput!): WorkerCredential!
@@ -22578,12 +22889,16 @@ type Mutation {
   bulkDriverSettlementAction(input: BulkSettlementActionInput!): BulkSettlementActionPayload!
   bulkTransferShipmentsToBilling(input: ShipmentBulkTransferToBillingInput!): ShipmentBulkTransferToBillingResponse!
   bulkUpdateAccountTypeStatus(input: BulkUpdateAccountTypeStatusInput!): [AccountType!]!
+  bulkUpdateCarrierStatus(input: BulkUpdateCarrierStatusInput!): [Carrier!]!
   bulkUpdateCommodityStatus(input: BulkUpdateCommodityStatusInput!): [Commodity!]!
   bulkUpdateCustomerStatus(input: BulkUpdateCustomerStatusInput!): [Customer!]!
   bulkUpdateEquipmentManufacturerStatus(input: BulkUpdateEquipmentManufacturerStatusInput!): [EquipmentManufacturer!]!
   bulkUpdateEquipmentTypeStatus(input: BulkUpdateEquipmentTypeStatusInput!): [EquipmentType!]!
   bulkUpdateFleetCodeStatus(input: BulkUpdateFleetCodeStatusInput!): [FleetCode!]!
   bulkUpdateHazardousMaterialStatus(input: BulkUpdateHazardousMaterialStatusInput!): [HazardousMaterial!]!
+  bulkUpdateLocationStatus(input: BulkUpdateLocationStatusInput!): [Location!]!
+  bulkUpdateServiceTypeStatus(input: BulkUpdateServiceTypeStatusInput!): [ServiceType!]!
+  bulkUpdateShipmentTypeStatus(input: BulkUpdateShipmentTypeStatusInput!): [ShipmentType!]!
   bulkUpdateTractorStatus(input: BulkUpdateTractorStatusInput!): [Tractor!]!
   bulkUpdateTrailerStatus(input: BulkUpdateTrailerStatusInput!): [Trailer!]!
   bulkWorkerPTOAction(input: BulkWorkerPTOActionInput!): BulkWorkerPTOActionPayload!
@@ -22693,12 +23008,16 @@ type Mutation {
   Asks one of the caller's companions to scan, or to catch the next print, into a record.
   """
   createCaptureRequest(input: CreateCaptureRequestInput!): CaptureRequest!
+  createCarrier(input: CarrierInput!): Carrier!
   createCarrierCapacityPosting(input: CarrierCapacityPostingInput!): CarrierCapacityPosting!
   createCarrierInvoiceMatch(input: CreateCarrierInvoiceMatchInput!): CarrierInvoiceMatch!
   createCommodity(input: CommodityInput!): Commodity!
+  createCustomFieldDefinition(input: CustomFieldDefinitionInput!): CustomFieldDefinition!
   createCustomer(input: CustomerInput!): Customer!
   createDeskMemory(input: CreateDeskMemoryInput!): DeskMemory!
   createDetentionPolicy(input: DetentionPolicyInput!): DetentionPolicy!
+  createDistanceOverride(input: DistanceOverrideInput!): DistanceOverride!
+  createDistanceProfile(input: DistanceProfileInput!): DistanceProfile!
   createDocumentTemplate(input: DocumentTemplateInput!): DocumentTemplate!
   createDocumentTemplateVersion(input: CreateDocumentTemplateVersionInput!): DocumentTemplateVersion!
   createDocumentType(input: DocumentTypeInput!): DocumentType!
@@ -22734,6 +23053,7 @@ type Mutation {
   """
   createInvoicesFromShipments(offCycleReason: String, shipmentIds: [ID!]!): CreateInvoicesResult!
   createJobPosition(input: JobPositionInput!): JobPosition!
+  createLocation(input: LocationInput!): Location!
   createLocationCategory(input: LocationCategoryInput!): LocationCategory!
   """Raises a standalone credit or debit memo against a customer."""
   createMemo(input: CreateMemoInput!): Invoice!
@@ -22750,12 +23070,15 @@ type Mutation {
   createPerformanceReview(input: CreatePerformanceReviewInput!): PerformanceReview!
   createPerformanceReviewTemplate(input: PerformanceReviewTemplateInput!): PerformanceReviewTemplate!
   createPtoPolicy(input: PTOPolicyInput!): PTOPolicy!
+  createRateZone(input: RateZoneInput!): RateZone!
   createRecurringDeduction(input: CreateRecurringDeductionInput!): RecurringDeduction!
   createRecurringEarning(input: CreateRecurringEarningInput!): RecurringEarning!
   createReportDashboard(input: SaveReportDashboardInput!): ReportDashboard!
   createReportDefinition(input: SaveReportDefinitionInput!): ReportDefinition!
   createReportSchedule(input: CreateReportScheduleInput!): ReportSchedule!
   createReportView(input: CreateReportViewInput!): ReportView!
+  createServiceFailureReasonCode(input: ServiceFailureReasonCodeInput!): ServiceFailureReasonCode!
+  createServiceType(input: ServiceTypeInput!): ServiceType!
   """
   Files a dispute against one of the signed-in driver's issued settlements.
   """
@@ -22763,6 +23086,7 @@ type Mutation {
   createShiftTemplate(input: ShiftTemplateInput!): ShiftTemplate!
   createShipment(input: ShipmentInput!): Shipment!
   createShipmentComment(input: ShipmentCommentInput!, shipmentId: ID!): ShipmentComment!
+  createShipmentType(input: ShipmentTypeInput!): ShipmentType!
   createTableConfiguration(input: TableConfigurationInput!): TableConfiguration!
   createTractor(input: TractorInput!): Tractor!
   createTrailer(input: TrailerInput!): Trailer!
@@ -22773,12 +23097,18 @@ type Mutation {
   Creates a user in the current organization and emails them an invitation to choose their own password.
   """
   createUser(input: CreateUserInput!): User!
+  createWorker(input: WorkerInput!): Worker!
   createWorkerChecklistTemplate(input: WorkerChecklistTemplateInput!): WorkerChecklistTemplate!
   createWorkerCredential(input: WorkerCredentialInput!): WorkerCredential!
   createWorkerCredentialType(input: WorkerCredentialTypeInput!): WorkerCredentialType!
   createWorkerPTO(input: CreateWorkerPTOInput!): WorkerPTO!
   createWorkerPolicy(input: WorkerPolicyInput!): WorkerPolicy!
   createWorkerSafetyEvent(input: WorkerSafetyEventInput!): WorkerSafetyEvent!
+  """
+  Retires a stored mileage so the next rating asks the routing provider again.
+  Needs delete on stored mileages.
+  """
+  deactivateStoredMileage(id: ID!): Boolean!
   """
   Decides any plan, as an approver, and says what came of it. An approval of
   a plan a record of which moved on since it was proposed is recorded but
@@ -22836,7 +23166,15 @@ type Mutation {
   deleteAgentTestPrompt(agentId: ID!, id: ID!): Boolean!
   deleteCaptureProfile(id: ID!): Boolean!
   deleteCarrierCapacityPosting(id: ID!, version: Int!): Boolean!
+  """
+  Deletes a definition no record holds a value for. One with values is refused as
+  a conflict whose usageStats extension counts them; deactivate it instead.
+  """
+  deleteCustomFieldDefinition(id: ID!): Boolean!
   deleteDetentionPolicy(id: ID!): Boolean!
+  deleteDistanceOverride(id: ID!): Boolean!
+  """Deletes a profile; the default profile is refused."""
+  deleteDistanceProfile(id: ID!): Boolean!
   deleteDocumentTemplate(id: ID!): Boolean!
   deleteDocumentTemplateVersion(id: ID!): Boolean!
   deleteEmploymentVerification(id: ID!): Boolean!
@@ -23064,12 +23402,17 @@ type Mutation {
   patchAIProvider(id: ID!, input: AIProviderPatchInput!, version: Int!): AIProvider!
   patchAccessorialCharge(id: ID!, input: AccessorialChargePatchInput!): AccessorialCharge!
   patchAccountType(id: ID!, input: AccountTypePatchInput!): AccountType!
+  patchCarrier(id: ID!, input: CarrierPatchInput!): Carrier!
   patchCommodity(id: ID!, input: CommodityPatchInput!): Commodity!
+  patchCustomFieldDefinition(id: ID!, input: CustomFieldDefinitionPatchInput!): CustomFieldDefinition!
   patchCustomer(id: ID!, input: CustomerPatchInput!): Customer!
   patchEquipmentManufacturer(id: ID!, input: EquipmentManufacturerPatchInput!): EquipmentManufacturer!
   patchEquipmentType(id: ID!, input: EquipmentTypePatchInput!): EquipmentType!
   patchFleetCode(id: ID!, input: FleetCodePatchInput!): FleetCode!
   patchHazardousMaterial(id: ID!, input: HazardousMaterialPatchInput!): HazardousMaterial!
+  patchLocation(id: ID!, input: LocationPatchInput!): Location!
+  patchServiceType(id: ID!, input: ServiceTypePatchInput!): ServiceType!
+  patchShipmentType(id: ID!, input: ShipmentTypePatchInput!): ShipmentType!
   patchTableConfiguration(id: ID!, input: TableConfigurationPatchInput!): TableConfiguration!
   patchTractor(id: ID!, input: TractorPatchInput!): Tractor!
   patchTrailer(id: ID!, input: TrailerPatchInput!): Trailer!
@@ -23426,6 +23769,10 @@ type Mutation {
   """
   setAgentUnattendedRole(agentId: ID!, roleId: ID): AgentDefinition!
   setCarrierMonitoring(carrierIds: [ID!]!, enabled: Boolean!): Int!
+  """
+  Makes the profile the organization's default, clearing the flag on the previous one.
+  """
+  setDefaultDistanceProfile(id: ID!): DistanceProfile!
   setDefaultTableConfiguration(id: ID!): TableConfiguration!
   """
   Active resumes or brings back a forgotten memory, Paused sets it aside, Retired forgets it.
@@ -23577,12 +23924,14 @@ type Mutation {
   Changes a profile. Stacks already captured keep the settings they were captured with.
   """
   updateCaptureProfile(id: ID!, input: CaptureProfileInput!, version: Int!): CaptureProfile!
+  updateCarrier(id: ID!, input: CarrierInput!): Carrier!
   updateCarrierCapacityPosting(id: ID!, input: CarrierCapacityPostingInput!, version: Int!): CarrierCapacityPosting!
   updateCarrierIntelControl(input: CarrierIntelControlPatchInput!): CarrierIntelControl!
   updateCarrierSettlementControl(input: UpdateCarrierSettlementControlInput!): CarrierSettlementControl!
   updateCommodity(id: ID!, input: CommodityInput!): Commodity!
   updateCostCategory(input: CostCategoryUpdateInput!): CostCategory!
   updateCostingControl(input: CostingControlInput!): CostingControl!
+  updateCustomFieldDefinition(id: ID!, input: CustomFieldDefinitionInput!): CustomFieldDefinition!
   updateCustomer(id: ID!, input: CustomerInput!): Customer!
   """
   Change what a customer's tracking links show and which status emails it is sent.
@@ -23591,6 +23940,8 @@ type Mutation {
   """Updates the org's Dash feature toggles (back office)."""
   updateDashControl(input: UpdateDashControlInput!): DashControl!
   updateDetentionPolicy(id: ID!, input: DetentionPolicyInput!): DetentionPolicy!
+  updateDistanceOverride(id: ID!, input: DistanceOverrideInput!): DistanceOverride!
+  updateDistanceProfile(id: ID!, input: DistanceProfileInput!): DistanceProfile!
   updateDocumentTemplate(id: ID!, input: DocumentTemplateInput!): DocumentTemplate!
   updateDocumentTemplateVersion(id: ID!, input: DocumentTemplateVersionInput!): DocumentTemplateVersion!
   updateDocumentType(id: ID!, input: DocumentTypeInput!): DocumentType!
@@ -23634,6 +23985,7 @@ type Mutation {
   updateLeaveCase(input: UpdateLeaveCaseInput!): WorkerLeaveCase!
   updateLeaveControl(input: UpdateLeaveControlInput!): LeaveControl!
   updateLeaveDay(input: UpdateLeaveDayInput!): WorkerLeaveEntry!
+  updateLocation(id: ID!, input: LocationInput!): Location!
   updateLocationCategory(id: ID!, input: LocationCategoryInput!): LocationCategory!
   """
   Updates the signed-in driver's own contact details (phone, address,
@@ -23649,6 +24001,7 @@ type Mutation {
   updatePerformanceReview(input: UpdatePerformanceReviewInput!): PerformanceReview!
   updatePerformanceReviewTemplate(id: ID!, input: PerformanceReviewTemplateInput!): PerformanceReviewTemplate!
   updatePtoPolicy(id: ID!, input: PTOPolicyInput!): PTOPolicy!
+  updateRateZone(id: ID!, input: RateZoneInput!): RateZone!
   updateRecurringDeduction(input: UpdateRecurringDeductionInput!): RecurringDeduction!
   updateRecurringEarning(input: UpdateRecurringEarningInput!): RecurringEarning!
   updateReportDashboard(input: UpdateReportDashboardInput!): ReportDashboard!
@@ -23656,10 +24009,15 @@ type Mutation {
   updateReportSchedule(input: UpdateReportScheduleInput!): ReportSchedule!
   updateReportView(input: UpdateReportViewInput!): ReportView!
   updateSafetyViolation(input: UpdateSafetyViolationInput!): WorkerSafetyViolation!
+  """Saves every numbering sequence at once."""
+  updateSequenceConfigs(input: SequenceConfigDocumentInput!): SequenceConfigDocument!
+  updateServiceFailureReasonCode(id: ID!, input: ServiceFailureReasonCodeInput!): ServiceFailureReasonCode!
+  updateServiceType(id: ID!, input: ServiceTypeInput!): ServiceType!
   updateSettlementControl(input: UpdateSettlementControlInput!): SettlementControl!
   updateShiftTemplate(id: ID!, input: ShiftTemplateInput!): ShiftTemplate!
   updateShipment(id: ID!, input: ShipmentInput!): Shipment!
   updateShipmentComment(commentId: ID!, input: ShipmentCommentUpdateInput!, shipmentId: ID!): ShipmentComment!
+  updateShipmentType(id: ID!, input: ShipmentTypeInput!): ShipmentType!
   updateSidebarPreferences(input: SidebarPreferencesInput!): SidebarPreferences!
   updateTableConfiguration(id: ID!, input: TableConfigurationInput!): TableConfiguration!
   updateTractor(id: ID!, input: TractorInput!): Tractor!
@@ -23670,6 +24028,7 @@ type Mutation {
   updateTriageResponseTargets(input: [TriageResponseTargetInput!]!): [TriageResponseTarget!]!
   updateTriageRule(id: ID!, input: TriageRuleInput!, version: Int!): TriageRule!
   updateTriageSettings(input: TriageSettingsInput!): TriageSettings!
+  updateWorker(id: ID!, input: WorkerInput!): Worker!
   updateWorkerChecklistTemplate(id: ID!, input: WorkerChecklistTemplateInput!): WorkerChecklistTemplate!
   updateWorkerCredential(input: UpdateWorkerCredentialInput!): WorkerCredential!
   updateWorkerCredentialType(id: ID!, input: WorkerCredentialTypeInput!): WorkerCredentialType!
@@ -26720,6 +27079,8 @@ type Query {
   """A rate matrix's published versions, newest first."""
   rateMatrixVersions(first: Int, rateMatrixId: ID!): [RateMatrixVersion!]!
   rateQuotes(input: DataTableConnectionInput!): RateQuoteConnection!
+  """One rate zone with the places it covers."""
+  rateZone(id: ID!): RateZone
   rateZones(input: DataTableConnectionInput!): RateZoneConnection!
   """
   What was decided since a moment, newest first: proposals that stood on their own.
@@ -26778,6 +27139,8 @@ type Query {
   scimDirectories(input: DataTableConnectionInput!): SCIMDirectoryConnection!
   scimGroupRoleMappings(directoryId: ID!, input: DataTableConnectionInput!): SCIMGroupRoleMappingConnection!
   selectOptions(input: SelectOptionsInput!): SelectOptionConnection!
+  """The organization's numbering sequences."""
+  sequenceConfigs: SequenceConfigDocument!
   serviceFailure(id: ID!): ServiceFailure
   serviceFailureReasonCode(id: ID!): ServiceFailureReasonCode
   serviceFailureReasonCodes(input: DataTableConnectionInput!): ServiceFailureReasonCodeConnection!
@@ -27600,6 +27963,10 @@ type RateZone {
   createdAt: Timestamp!
   description: String!
   id: ID!
+  """Custom, KMA, Regional, Metro or Country."""
+  kind: String!
+  """The places the zone covers. Read by rateZone only."""
+  members: [RateZoneMember!]
   name: String!
   organizationId: ID!
   status: String!
@@ -27620,6 +27987,42 @@ type RateZoneConnection {
 type RateZoneEdge {
   cursor: String!
   node: RateZone!
+}
+
+"""
+A rate zone and every place it covers; members left out of the list are removed.
+"""
+input RateZoneInput {
+  code: String!
+  description: String
+  """Custom, KMA, Regional, Metro or Country."""
+  kind: String!
+  members: [RateZoneMemberInput!]!
+  name: String!
+  status: EntityStatus!
+  version: Int
+}
+
+"""One place a rate zone covers, named the way a lane names one end."""
+type RateZoneMember {
+  """The city, for a CityState member; scopeValue then holds the state id."""
+  city: String!
+  id: ID!
+  """The key lanes match the member by, computed when the zone is saved."""
+  matchKey: String!
+  rateZoneId: ID!
+  """
+  How the place is named: Location, Zip5, Zip3, CityState, State, Country, Zone or Any.
+  """
+  scopeType: String!
+  scopeValue: String!
+}
+
+input RateZoneMemberInput {
+  city: String
+  id: ID
+  scopeType: String!
+  scopeValue: String
 }
 
 type ReadyToBillCustomer {
@@ -29455,6 +29858,89 @@ input SendTestMessageTemplateInput {
   versionId: ID
 }
 
+"""How the organization numbers one kind of record."""
+type SequenceConfig {
+  allowCustomFormat: Boolean!
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  customFormat: String!
+  id: ID!
+  includeBusinessUnitCode: Boolean!
+  includeCheckDigit: Boolean!
+  includeDay: Boolean!
+  includeLocationCode: Boolean!
+  includeMonth: Boolean!
+  includeRandomDigits: Boolean!
+  includeWeekNumber: Boolean!
+  includeYear: Boolean!
+  """Set on the location_code sequence."""
+  locationCodeStrategy: LocationCodeStrategy
+  organizationId: ID!
+  prefix: String!
+  randomDigitsCount: Int!
+  separatorChar: String!
+  sequenceDigits: Int!
+  sequenceType: SequenceType!
+  updatedAt: Timestamp!
+  useSeparators: Boolean!
+  version: Int!
+  yearDigits: Int!
+}
+
+"""
+Every numbering sequence the organization keeps, one per sequence type.
+"""
+type SequenceConfigDocument {
+  businessUnitId: ID!
+  configs: [SequenceConfig!]!
+  organizationId: ID!
+}
+
+input SequenceConfigDocumentInput {
+  configs: [SequenceConfigInput!]!
+}
+
+input SequenceConfigInput {
+  allowCustomFormat: Boolean!
+  customFormat: String!
+  id: ID
+  includeBusinessUnitCode: Boolean!
+  includeCheckDigit: Boolean!
+  includeDay: Boolean!
+  includeLocationCode: Boolean!
+  includeMonth: Boolean!
+  includeRandomDigits: Boolean!
+  includeWeekNumber: Boolean!
+  includeYear: Boolean!
+  locationCodeStrategy: LocationCodeStrategyInput
+  prefix: String!
+  randomDigitsCount: Int!
+  separatorChar: String!
+  sequenceDigits: Int!
+  sequenceType: SequenceType!
+  useSeparators: Boolean!
+  version: Int
+  yearDigits: Int!
+}
+
+enum SequenceType {
+  carrier_settlement
+  consolidation
+  credit_memo
+  debit_memo
+  driver_settlement
+  factoring_submission
+  invoice
+  invoice_run
+  journal_batch
+  journal_entry
+  location_code
+  manual_journal_request
+  order
+  pro_number
+  work_order
+}
+
 type ServiceFailure {
   actualArrival: Timestamp!
   businessUnitId: ID!
@@ -29574,6 +30060,25 @@ type ServiceFailureReasonCodeEdge {
   node: ServiceFailureReasonCode!
 }
 
+input ServiceFailureReasonCodeInput {
+  """
+  Omit on create for an active code; omit on update to leave it as it is.
+  """
+  active: Boolean
+  appliesTo: ServiceFailureReasonCodeAppliesTo!
+  category: ServiceFailureReasonCategory!
+  code: String!
+  defaultExceptionCode: String
+  defaultNote: String
+  defaultReasonCode: String
+  defaultStatusCode: String
+  description: String
+  externalMap: JSON
+  label: String!
+  sortOrder: Int!
+  version: Int
+}
+
 type ServiceFailureShipment @kind(resource: "shipment") {
   bol: String
   customer: Customer
@@ -29640,6 +30145,27 @@ type ServiceTypeConnection {
 type ServiceTypeEdge {
   cursor: String!
   node: ServiceType!
+}
+
+input ServiceTypeInput {
+  code: String!
+  color: String
+  description: String
+  status: EntityStatus!
+  version: Int
+}
+
+input ServiceTypePatchInput {
+  """Omit to leave unchanged; null is rejected."""
+  code: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  color: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  description: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  status: EntityStatus @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  version: Int @goField(omittable: true)
 }
 
 """Chooses an accounting system record for a mapping and confirms it."""
@@ -32086,6 +32612,27 @@ type ShipmentTypeConnection {
 type ShipmentTypeEdge {
   cursor: String!
   node: ShipmentType!
+}
+
+input ShipmentTypeInput {
+  code: String!
+  color: String
+  description: String
+  status: EntityStatus!
+  version: Int
+}
+
+input ShipmentTypePatchInput {
+  """Omit to leave unchanged; null is rejected."""
+  code: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  color: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  description: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  status: EntityStatus @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  version: Int @goField(omittable: true)
 }
 
 type ShipmentUIPolicy {
@@ -36108,6 +36655,34 @@ type WorkerInjury {
   workerId: ID!
 }
 
+input WorkerInput {
+  addressLine1: String!
+  addressLine2: String
+  availableForDispatch: Boolean!
+  canBeAssigned: Boolean!
+  city: String!
+  customFields: JSON
+  driverType: DriverType!
+  email: String
+  emergencyContactName: String
+  emergencyContactPhone: String
+  externalId: String
+  firstName: String!
+  fleetCodeId: ID
+  gender: WorkerGender!
+  lastName: String!
+  managerId: ID
+  phoneNumber: String
+  """The driving title the worker holds."""
+  positionId: ID
+  postalCode: String!
+  profile: WorkerProfileInput
+  stateId: ID!
+  status: EntityStatus!
+  type: WorkerType!
+  version: Int
+}
+
 """
 One qualifying reason for leave. Entitlement is drawn down by the days recorded
 against a case, so a case open for months has used nothing until days are.
@@ -36559,6 +37134,36 @@ type WorkerProfileChangeRequest {
   version: Int!
   worker: Worker
   workerId: ID!
+}
+
+"""
+A worker's licensing and qualification record. dob, licenseNumber and
+twicCardNumber are Personal: a caller who cannot see Personal fields leaves them
+out and the saved values stay.
+"""
+input WorkerProfileInput {
+  cdlClass: CDLClass!
+  cdlRestrictions: String
+  complianceStatus: ComplianceStatus!
+  disqualificationReason: String
+  dob: Timestamp
+  eldExempt: Boolean!
+  endorsement: EndorsementType!
+  hazmatExpiry: Timestamp
+  hireDate: Timestamp
+  isQualified: Boolean!
+  licenseExpiry: Timestamp
+  licenseNumber: String
+  licenseStateId: ID
+  medicalCardExpiry: Timestamp
+  medicalExaminerName: String
+  medicalExaminerNpi: String
+  mvrDueDate: Timestamp
+  physicalDueDate: Timestamp
+  shortHaulExempt: Boolean!
+  terminationDate: Timestamp
+  twicCardNumber: String
+  twicExpiry: Timestamp
 }
 
 type WorkerRecognition {

@@ -86,36 +86,36 @@ matches anything fails too, so the file cannot drift behind the tools.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 85 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 247 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 244 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 48 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 112 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 48 |
-| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 53 |
+| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 54 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 10 |
 
 ## Totals
 
-1123 writes: 671 GraphQL mutations and 452 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1122 writes: 708 GraphQL mutations and 414 REST writes, after merging 16 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 443 |
-| Exempt | 678 |
+| Covered by a tool | 444 |
+| Exempt | 676 |
 | — Security | 85 |
-| — Configuration | 247 |
+| — Configuration | 244 |
 | — User preference | 40 |
 | — Infrastructure | 48 |
 | — Agent administration | 112 |
 | — Counterparty | 35 |
 | — Read-only | 48 |
-| — Attestation | 53 |
+| — Attestation | 54 |
 | — Duplicate | 10 |
 | **Pending** | **2** |
-| Total | 1123 |
+| Total | 1122 |
 
-Of the 445 writes an agent should be able to make, 443 have a tool (99%).
+Of the 446 writes an agent should be able to make, 444 have a tool (99%).
 
 ## Pending
 
@@ -176,7 +176,7 @@ The writes no tool performs yet, and what the tool would do.
 | customerpayment | 5 | 5 | 0 | 0 |
 | customerstatement | 1 | 1 | 0 | 0 |
 | customertracking | 3 | 2 | 1 | 0 |
-| customfield | 4 | 0 | 4 | 0 |
+| customfielddefinition | 4 | 0 | 4 | 0 |
 | dataentrycontrol | 1 | 0 | 1 | 0 |
 | dataretention | 1 | 0 | 1 | 0 |
 | decisions | 1 | 0 | 1 | 0 |
@@ -185,8 +185,8 @@ The writes no tool performs yet, and what the tool would do.
 | dispatchconsole | 5 | 4 | 1 | 0 |
 | dispatchcontrol | 1 | 0 | 1 | 0 |
 | distancecontrol | 1 | 0 | 1 | 0 |
-| distanceoverride | 4 | 0 | 4 | 0 |
-| distanceprofile | 5 | 0 | 5 | 0 |
+| distanceoverride | 3 | 0 | 3 | 0 |
+| distanceprofile | 4 | 0 | 4 | 0 |
 | document | 16 | 4 | 12 | 0 |
 | documentcontrol | 1 | 0 | 1 | 0 |
 | documentpacketrule | 3 | 0 | 3 | 0 |
@@ -239,7 +239,7 @@ The writes no tool performs yet, and what the tool would do.
 | journalreversal | 5 | 3 | 2 | 0 |
 | jurisdictionrule | 6 | 0 | 6 | 0 |
 | latecharge | 1 | 1 | 0 | 0 |
-| location | 3 | 3 | 0 | 0 |
+| location | 4 | 4 | 0 | 0 |
 | locationcategory | 2 | 0 | 2 | 0 |
 | manualjournal | 7 | 5 | 2 | 0 |
 | notification | 5 | 0 | 5 | 0 |
@@ -256,6 +256,7 @@ The writes no tool performs yet, and what the tool would do.
 | permit | 3 | 2 | 1 | 0 |
 | ptopolicy | 8 | 1 | 7 | 0 |
 | push | 2 | 0 | 2 | 0 |
+| rate | 2 | 0 | 2 | 0 |
 | rateagreement | 11 | 10 | 1 | 0 |
 | rateconfirmation | 4 | 4 | 0 | 0 |
 | rateconfirmationpublic | 1 | 0 | 1 | 0 |
@@ -263,7 +264,6 @@ The writes no tool performs yet, and what the tool would do.
 | ratematrix | 9 | 0 | 9 | 0 |
 | ratequote | 2 | 0 | 2 | 0 |
 | ratesimulation | 1 | 1 | 0 | 0 |
-| ratezone | 2 | 0 | 2 | 0 |
 | realtime | 4 | 0 | 4 | 0 |
 | recurringshipment | 5 | 4 | 1 | 0 |
 | report | 19 | 13 | 6 | 0 |
@@ -273,7 +273,7 @@ The writes no tool performs yet, and what the tool would do.
 | selfservice | 3 | 0 | 3 | 0 |
 | sequenceconfig | 1 | 0 | 1 | 0 |
 | servicefailure | 8 | 7 | 1 | 0 |
-| servicefailurereasoncode | 5 | 0 | 5 | 0 |
+| servicefailurereasoncode | 4 | 0 | 4 | 0 |
 | servicetype | 4 | 0 | 4 | 0 |
 | shipment | 26 | 17 | 9 | 0 |
 | shipmentboard | 4 | 3 | 1 | 0 |
@@ -297,7 +297,7 @@ The writes no tool performs yet, and what the tool would do.
 | user | 20 | 0 | 20 | 0 |
 | version | 1 | 0 | 1 | 0 |
 | watchtower | 13 | 8 | 5 | 0 |
-| worker | 8 | 5 | 3 | 0 |
+| worker | 9 | 5 | 4 | 0 |
 | workerchecklist | 10 | 6 | 4 | 0 |
 | workercredential | 9 | 4 | 5 | 0 |
 | workerdqf | 5 | 5 | 0 | 0 |
@@ -723,10 +723,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/carriers/:carrierID/`<br>carrierhandler.patch | Tool: `carrier_update` |
-| `POST /api/v1/carriers/`<br>carrierhandler.create | Tool: `carrier_create` |
-| `POST /api/v1/carriers/bulk-update-status/`<br>carrierhandler.bulkUpdateStatus | Tool: `carrier_set_status` |
-| `PUT /api/v1/carriers/:carrierID/`<br>carrierhandler.update | Tool: `carrier_update` |
+| `mutation bulkUpdateCarrierStatus` | Tool: `carrier_set_status` |
+| `mutation createCarrier` | Tool: `carrier_create` |
+| `mutation patchCarrier` | Tool: `carrier_update` |
+| `mutation updateCarrier` | Tool: `carrier_update` |
 
 ### carriercapacity
 
@@ -856,14 +856,14 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation revokeCustomerTrackingLink` | Tool: `shipment_revoke_tracking_link` |
 | `mutation updateCustomerTrackingProfile` | Exempt, configuration: What a customer's tracking page shows and which status emails it gets is a commercial agreement with the customer, set by a person on the customer record. |
 
-### customfield
+### customfielddefinition
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/custom-fields/definitions/:definitionID/`<br>customfieldhandler.delete | Exempt, configuration: Custom field definitions change the shape of records for everyone; an administrator owns them. |
-| `PATCH /api/v1/custom-fields/definitions/:definitionID/`<br>customfieldhandler.patch | Exempt, configuration: Custom field definitions change the shape of records for everyone; an administrator owns them. |
-| `POST /api/v1/custom-fields/definitions/`<br>customfieldhandler.create | Exempt, configuration: Custom field definitions change the shape of records for everyone; an administrator owns them. |
-| `PUT /api/v1/custom-fields/definitions/:definitionID/`<br>customfieldhandler.update | Exempt, configuration: Custom field definitions change the shape of records for everyone; an administrator owns them. |
+| `mutation createCustomFieldDefinition` | Exempt, configuration: Custom field definitions change the shape of records for everyone; an administrator owns them. |
+| `mutation deleteCustomFieldDefinition` | Exempt, configuration: Custom field definitions change the shape of records for everyone; an administrator owns them. |
+| `mutation patchCustomFieldDefinition` | Exempt, configuration: Custom field definitions change the shape of records for everyone; an administrator owns them. |
+| `mutation updateCustomFieldDefinition` | Exempt, configuration: Custom field definitions change the shape of records for everyone; an administrator owns them. |
 
 ### dataentrycontrol
 
@@ -933,20 +933,18 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/distance-overrides/:distanceOverrideID/`<br>distanceoverridehandler.delete | Exempt, configuration: A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it. |
-| `PATCH /api/v1/distance-overrides/:distanceOverrideID/`<br>distanceoverridehandler.patch | Exempt, configuration: A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it. |
-| `POST /api/v1/distance-overrides/`<br>distanceoverridehandler.create | Exempt, configuration: A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it. |
-| `PUT /api/v1/distance-overrides/:distanceOverrideID/`<br>distanceoverridehandler.update | Exempt, configuration: A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it. |
+| `mutation createDistanceOverride` | Exempt, configuration: A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it. |
+| `mutation deleteDistanceOverride` | Exempt, configuration: A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it. |
+| `mutation updateDistanceOverride` | Exempt, configuration: A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it. |
 
 ### distanceprofile
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/distance-profiles/:distanceProfileID/`<br>distanceprofilehandler.delete | Exempt, configuration: Routing profiles decide how every distance is computed; an administrator maintains them. |
-| `PATCH /api/v1/distance-profiles/:distanceProfileID/`<br>distanceprofilehandler.patch | Exempt, configuration: Routing profiles decide how every distance is computed; an administrator maintains them. |
-| `POST /api/v1/distance-profiles/`<br>distanceprofilehandler.create | Exempt, configuration: Routing profiles decide how every distance is computed; an administrator maintains them. |
-| `POST /api/v1/distance-profiles/:distanceProfileID/set-default/`<br>distanceprofilehandler.setDefault | Exempt, configuration: Routing profiles decide how every distance is computed; an administrator maintains them. |
-| `PUT /api/v1/distance-profiles/:distanceProfileID/`<br>distanceprofilehandler.update | Exempt, configuration: Routing profiles decide how every distance is computed; an administrator maintains them. |
+| `mutation createDistanceProfile` | Exempt, configuration: Routing profiles decide how every distance is computed; an administrator maintains them. |
+| `mutation deleteDistanceProfile` | Exempt, configuration: Routing profiles decide how every distance is computed; an administrator maintains them. |
+| `mutation setDefaultDistanceProfile` | Exempt, configuration: Routing profiles decide how every distance is computed; an administrator maintains them. |
+| `mutation updateDistanceProfile` | Exempt, configuration: Routing profiles decide how every distance is computed; an administrator maintains them. |
 
 ### document
 
@@ -1621,9 +1619,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/locations/:locationID/`<br>locationhandler.patch | Tool: `location_update` |
-| `POST /api/v1/locations/`<br>locationhandler.create | Tool: `location_create` |
-| `POST /api/v1/locations/bulk-update-status/`<br>locationhandler.bulkUpdateStatus | Tool: `location_set_status` |
+| `mutation bulkUpdateLocationStatus` | Tool: `location_set_status` |
+| `mutation createLocation` | Tool: `location_create` |
+| `mutation patchLocation` | Tool: `location_update` |
+| `mutation updateLocation` | Tool: `location_update` |
 
 ### locationcategory
 
@@ -1773,6 +1772,13 @@ Tools that change something no person-facing write does, such as sending a messa
 | `DELETE /api/v1/push/subscriptions/`<br>pushhandler.unsubscribe | Exempt, infrastructure: Registers or removes a browser push subscription for the device the person is using. |
 | `POST /api/v1/push/subscriptions/`<br>pushhandler.subscribe | Exempt, infrastructure: Registers or removes a browser push subscription for the device the person is using. |
 
+### rate
+
+| Write | Decision |
+| --- | --- |
+| `mutation createRateZone` | Exempt, configuration: Rate zones are the geography agreements price against, which an administrator defines once for every agreement. |
+| `mutation updateRateZone` | Exempt, configuration: Rate zones are the geography agreements price against, which an administrator defines once for every agreement. |
+
 ### rateagreement
 
 | Write | Decision |
@@ -1838,13 +1844,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `POST /api/v1/rate-simulations/`<br>ratesimulationhandler.create | Tool: `rate_run_simulation` |
-
-### ratezone
-
-| Write | Decision |
-| --- | --- |
-| `POST /api/v1/rate-zones/`<br>ratezonehandler.create | Exempt, configuration: Rate zones are the geography agreements price against, which an administrator defines once for every agreement. |
-| `PUT /api/v1/rate-zones/:rateZoneID/`<br>ratezonehandler.update | Exempt, configuration: Rate zones are the geography agreements price against, which an administrator defines once for every agreement. |
 
 ### realtime
 
@@ -1937,7 +1936,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PUT /api/v1/sequence-configs/`<br>sequenceconfighandler.update | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
+| `mutation updateSequenceConfigs` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
 
 ### servicefailure
 
@@ -1956,20 +1955,19 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/service-failure-reason-codes/`<br>servicefailurereasoncodehandler.create | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `POST /api/v1/service-failure-reason-codes/:reasonCodeID/activate/`<br>servicefailurereasoncodehandler.activate | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `POST /api/v1/service-failure-reason-codes/:reasonCodeID/archive/`<br>servicefailurereasoncodehandler.archive | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `POST /api/v1/service-failure-reason-codes/reorder/`<br>servicefailurereasoncodehandler.reorder | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `PUT /api/v1/service-failure-reason-codes/:reasonCodeID/`<br>servicefailurereasoncodehandler.update | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation activateServiceFailureReasonCode` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation archiveServiceFailureReasonCode` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation createServiceFailureReasonCode` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation updateServiceFailureReasonCode` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
 
 ### servicetype
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/service-types/:serviceTypeID/`<br>servicetypehandler.patch | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `POST /api/v1/service-types/`<br>servicetypehandler.create | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `POST /api/v1/service-types/bulk-update-status/`<br>servicetypehandler.bulkUpdateStatus | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `PUT /api/v1/service-types/:serviceTypeID/`<br>servicetypehandler.update | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation bulkUpdateServiceTypeStatus` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation createServiceType` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation patchServiceType` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation updateServiceType` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
 
 ### shipment
 
@@ -2028,10 +2026,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/shipment-types/:shipmentTypeID/`<br>shipmenttypehandler.patch | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `POST /api/v1/shipment-types/`<br>shipmenttypehandler.create | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `POST /api/v1/shipment-types/bulk-update-status/`<br>shipmenttypehandler.bulkUpdateStatus | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `PUT /api/v1/shipment-types/:shipmentTypeID/`<br>shipmenttypehandler.update | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation bulkUpdateShipmentTypeStatus` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation createShipmentType` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation patchShipmentType` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation updateShipmentType` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
 
 ### sidebarpreference
 
@@ -2043,7 +2041,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/stored-mileages/:storedMileageID/`<br>storedmileagehandler.delete | Exempt, infrastructure: A stored mileage is a cached routing answer; clearing one only makes the next rating ask the routing provider again. |
+| `mutation deactivateStoredMileage` | Exempt, infrastructure: A stored mileage is a cached routing answer; clearing one only makes the next rating ask the routing provider again. |
 
 ### tablechangealert
 
@@ -2128,21 +2126,21 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation bulkUpdateTractorStatus`<br>twin `POST /api/v1/tractors/bulk-update-status/` | Tool: `equipment_set_tractor_status` |
-| `mutation createTractor`<br>twin `POST /api/v1/tractors/` | Tool: `equipment_create_tractor` |
+| `mutation bulkUpdateTractorStatus` | Tool: `equipment_set_tractor_status` |
+| `mutation createTractor` | Tool: `equipment_create_tractor` |
 | `mutation locateTractor` | Tool: `equipment_set_tractor_location` |
-| `mutation patchTractor`<br>twin `PATCH /api/v1/tractors/:tractorID/` | Tool: `equipment_update_tractor` |
-| `mutation updateTractor`<br>twin `PUT /api/v1/tractors/:tractorID/` | Tool: `equipment_update_tractor` |
+| `mutation patchTractor` | Tool: `equipment_update_tractor` |
+| `mutation updateTractor` | Tool: `equipment_update_tractor` |
 
 ### trailer
 
 | Write | Decision |
 | --- | --- |
-| `mutation bulkUpdateTrailerStatus`<br>twin `POST /api/v1/trailers/bulk-update-status/` | Tool: `equipment_set_trailer_status` |
-| `mutation createTrailer`<br>twin `POST /api/v1/trailers/` | Tool: `equipment_create_trailer` |
-| `mutation locateTrailer`<br>twin `POST /api/v1/trailers/:trailerID/locate/` | Tool: `equipment_set_trailer_location` |
-| `mutation patchTrailer`<br>twin `PATCH /api/v1/trailers/:trailerID/` | Tool: `equipment_update_trailer` |
-| `mutation updateTrailer`<br>twin `PUT /api/v1/trailers/:trailerID/` | Tool: `equipment_update_trailer` |
+| `mutation bulkUpdateTrailerStatus` | Tool: `equipment_set_trailer_status` |
+| `mutation createTrailer` | Tool: `equipment_create_trailer` |
+| `mutation locateTrailer` | Tool: `equipment_set_trailer_location` |
+| `mutation patchTrailer` | Tool: `equipment_update_trailer` |
+| `mutation updateTrailer` | Tool: `equipment_update_trailer` |
 
 ### triage
 
@@ -2213,11 +2211,12 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation approveWorkerPTO` | Tool: `worker_approve_pto` |
 | `mutation bulkWorkerPTOAction` | Exempt, duplicate: Approves, rejects or cancels several requests at once; worker_approve_pto, worker_reject_pto and worker_cancel_pto each do one. |
 | `mutation cancelWorkerPTO` | Tool: `worker_cancel_pto` |
+| `mutation createWorker` | Exempt, attestation: Hiring a worker is an employment decision with its eligibility and qualification checks; a person makes it. |
 | `mutation createWorkerPTO` | Tool: `worker_request_pto` |
-| `mutation patchWorker`<br>twin `PATCH /api/v1/workers/:workerID/`<br>twin `PUT /api/v1/workers/:workerID/` | Exempt, attestation: Changes a worker's employment status, classification or personal record, which are HR decisions a person makes and signs. |
+| `mutation patchWorker` | Exempt, attestation: Changes a worker's employment status, classification or personal record, which are HR decisions a person makes and signs. |
 | `mutation rejectWorkerPTO` | Tool: `worker_reject_pto` |
+| `mutation updateWorker` | Exempt, attestation: Changes a worker's employment status, classification or personal record, which are HR decisions a person makes and signs. |
 | `mutation updateWorkerPTO` | Tool: `worker_update_pto` |
-| `POST /api/v1/workers/`<br>workerhandler.create | Exempt, attestation: Hiring a worker is an employment decision with its eligibility and qualification checks; a person makes it. |
 
 ### workerchecklist
 

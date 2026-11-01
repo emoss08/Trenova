@@ -8,12 +8,15 @@ package servicetyperesolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/servicetypeports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -57,5 +60,67 @@ func (r *QueryResolver) ServiceType(ctx context.Context, id string) (*servicetyp
 	return r.ServiceTypeService.Get(ctx, servicetypeports.GetServiceTypeByIDRequest{
 		ID:         serviceTypeID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+}
+
+func (r *MutationResolver) CreateServiceType(ctx context.Context, input gqlmodel.ServiceTypeInput) (*servicetype.ServiceType, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceServiceType, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ServiceTypeService.Create(ctx, serviceTypeFromInput(&input, authCtx), actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) UpdateServiceType(ctx context.Context, id string, input gqlmodel.ServiceTypeInput) (*servicetype.ServiceType, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceServiceType, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.existingServiceType(ctx, id, authCtx)
+	if err != nil {
+		return nil, err
+	}
+	applyServiceTypeInput(existing, &input)
+
+	return r.ServiceTypeService.Update(ctx, existing, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) PatchServiceType(ctx context.Context, id string, input gqlmodel.ServiceTypePatchInput) (*servicetype.ServiceType, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceServiceType, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.existingServiceType(ctx, id, authCtx)
+	if err != nil {
+		return nil, err
+	}
+	if err = applyServiceTypePatch(existing, &input); err != nil {
+		return nil, err
+	}
+
+	return r.ServiceTypeService.Update(ctx, existing, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) BulkUpdateServiceTypeStatus(ctx context.Context, input gqlmodel.BulkUpdateServiceTypeStatusInput) ([]*servicetype.ServiceType, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceServiceType, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	if authCtx.IsAPIKey() {
+		return nil, errortypes.NewAuthorizationError("API keys cannot bulk update service types")
+	}
+
+	ids, err := gqlid.ParseIDs(input.ServiceTypeIds)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ServiceTypeService.BulkUpdateStatus(ctx, &servicetypeports.BulkUpdateServiceTypeStatusRequest{
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
+		ServiceTypeIDs: ids,
+		Status:         input.Status,
 	})
 }

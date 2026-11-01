@@ -62,7 +62,3 @@ export const bulkUpdateTractorStatusRequestSchema = z.object({
 });
 
 export type BulkUpdateTractorStatusRequest = z.infer<typeof bulkUpdateTractorStatusRequestSchema>;
-
-export const bulkUpdateTractorStatusResponseSchema = z.array(tractorSchema);
-
-export type BulkUpdateTractorStatusResponse = z.infer<typeof bulkUpdateTractorStatusResponseSchema>;

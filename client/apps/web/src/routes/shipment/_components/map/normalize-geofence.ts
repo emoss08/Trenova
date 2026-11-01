@@ -1,8 +1,5 @@
-import type {
-  Location,
-  LocationGeofenceType,
-  LocationGeofenceVertex,
-} from "@trenova/shared/types/location";
+import type { LocationGeofence } from "@/lib/graphql/location-geofences";
+import type { LocationGeofenceType, LocationGeofenceVertex } from "@trenova/shared/types/location";
 import type { NormalizedGeofence } from "./geofence-types";
 
 export type GeofenceInput = {
@@ -92,7 +89,18 @@ export function normalizeGeofence(input: GeofenceInput): NormalizedGeofence | nu
   }
 }
 
-export function collectGeofencesFromLocations(locations: Location[]): NormalizedGeofence[] {
+export function collectGeofencesFromLocations(
+  locations: Pick<
+    LocationGeofence,
+    | "id"
+    | "name"
+    | "geofenceType"
+    | "latitude"
+    | "longitude"
+    | "geofenceRadiusMeters"
+    | "geofenceVertices"
+  >[],
+): NormalizedGeofence[] {
   const byLocation = new Map<string, NormalizedGeofence>();
 
   for (const loc of locations) {

@@ -1,36 +1,79 @@
-import { api } from "@trenova/shared/lib/api";
-import { safeParse } from "@trenova/shared/lib/parse";
-import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 import {
-  bulkUpdateLocationStatusResponseSchema,
-  locationSchema,
-  type BulkUpdateLocationStatusRequest,
-  type BulkUpdateLocationStatusResponse,
-  type Location,
-} from "@trenova/shared/types/location";
+  BulkUpdateLocationStatusDocument,
+  CreateLocationDocument,
+  PatchLocationDocument,
+  UpdateLocationDocument,
+  type LocationInput,
+  type LocationPatchInput,
+} from "@trenova/graphql/generated/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { BulkUpdateLocationStatusRequest, Location } from "@trenova/shared/types/location";
 
-const locationListSchema = createLimitOffsetResponse(locationSchema);
+export function toLocationInput(data: Location): LocationInput {
+  return {
+    status: data.status,
+    code: data.code || null,
+    name: data.name,
+    description: data.description || null,
+    locationCategoryId: data.locationCategoryId,
+    stateId: data.stateId,
+    addressLine1: data.addressLine1,
+    addressLine2: data.addressLine2 || null,
+    city: data.city,
+    postalCode: data.postalCode,
+    timezone: data.timezone || null,
+    placeId: data.placeId || null,
+    isGeocoded: data.isGeocoded,
+    longitude: data.longitude ?? null,
+    latitude: data.latitude ?? null,
+    geofenceType: data.geofenceType,
+    geofenceRadiusMeters: data.geofenceRadiusMeters ?? null,
+    geofenceVertices: data.geofenceVertices.map((vertex) => ({
+      latitude: vertex.latitude,
+      longitude: vertex.longitude,
+    })),
+    version: data.version,
+  };
+}
 
 export class LocationService {
-  public async listGeofenced(limit = 100) {
-    const qs = new URLSearchParams({ limit: String(limit) });
-    const response = await api.get(`/locations/?${qs.toString()}`);
+  public async create(data: Location) {
+    const response = await requestGraphQL({
+      document: CreateLocationDocument,
+      operationName: "CreateLocation",
+      variables: { input: toLocationInput(data) },
+    });
 
-    return safeParse(locationListSchema, response, "LocationGeofences");
+    return response.createLocation;
+  }
+
+  public async update(id: string, data: Location) {
+    const response = await requestGraphQL({
+      document: UpdateLocationDocument,
+      operationName: "UpdateLocation",
+      variables: { id, input: toLocationInput(data) },
+    });
+
+    return response.updateLocation;
   }
 
   public async bulkUpdateStatus(request: BulkUpdateLocationStatusRequest) {
-    const response = await api.post<BulkUpdateLocationStatusResponse>(
-      "/locations/bulk-update-status/",
-      request,
-    );
+    const response = await requestGraphQL({
+      document: BulkUpdateLocationStatusDocument,
+      operationName: "BulkUpdateLocationStatus",
+      variables: { input: request },
+    });
 
-    return safeParse(bulkUpdateLocationStatusResponseSchema, response, "BulkUpdateLocationStatus");
+    return response.bulkUpdateLocationStatus;
   }
 
-  public async patch(id: Location["id"], data: Partial<Location>) {
-    const response = await api.patch<Location>(`/locations/${id}/`, data);
+  public async patch(id: string, input: LocationPatchInput) {
+    const response = await requestGraphQL({
+      document: PatchLocationDocument,
+      operationName: "PatchLocation",
+      variables: { id, input },
+    });
 
-    return safeParse(locationSchema, response, "Location");
+    return response.patchLocation;
   }
 }

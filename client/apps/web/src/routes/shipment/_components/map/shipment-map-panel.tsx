@@ -55,7 +55,7 @@ export default function ShipmentMapPanel({
     refetchOnWindowFocus: false,
     enabled: backgroundEnabled,
   });
-  const locations = locationsQuery.data?.results ?? [];
+  const locations = locationsQuery.data ?? [];
   const allGeofences = collectGeofencesFromLocations(locations);
   const locationsById = new globalThis.Map<string, (typeof locations)[number]>();
   for (const loc of locations) {

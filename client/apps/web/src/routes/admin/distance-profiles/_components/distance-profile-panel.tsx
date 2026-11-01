@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { apiService } from "@/services/api";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { DistanceProfileRow } from "@/lib/graphql/distance-profile-table";
@@ -49,7 +50,9 @@ export function DistanceProfilePanel({
         onOpenChange={onOpenChange}
         row={row}
         form={form}
-        url="/distance-profiles/"
+        mutationFn={(values, currentRow) =>
+          apiService.distanceProfileService.update(currentRow.id, values)
+        }
         queryKey="distance-profile-list"
         title={t("Distance profile")}
         fieldKey="name"
@@ -63,7 +66,7 @@ export function DistanceProfilePanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/distance-profiles/"
+      mutationFn={(values) => apiService.distanceProfileService.create(values)}
       queryKey="distance-profile-list"
       title={t("Distance profile")}
       formComponent={<DistanceProfileForm />}

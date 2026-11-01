@@ -182,10 +182,27 @@ type RateZone {
   code: String!
   name: String!
   description: String!
+  "Custom, KMA, Regional, Metro or Country."
+  kind: String!
   status: String!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+  "The places the zone covers. Read by rateZone only."
+  members: [RateZoneMember!]
+}
+
+"One place a rate zone covers, named the way a lane names one end."
+type RateZoneMember {
+  id: ID!
+  rateZoneId: ID!
+  "How the place is named: Location, Zip5, Zip3, CityState, State, Country, Zone or Any."
+  scopeType: String!
+  scopeValue: String!
+  "The city, for a CityState member; scopeValue then holds the state id."
+  city: String!
+  "The key lanes match the member by, computed when the zone is saved."
+  matchKey: String!
 }
 
 type RateZoneEdge {
@@ -406,6 +423,8 @@ extend type Query {
   """
   rateAgreement(id: ID!): RateAgreement
   rateZones(input: DataTableConnectionInput!): RateZoneConnection!
+  "One rate zone with the places it covers."
+  rateZone(id: ID!): RateZone
   rateMatrices(input: DataTableConnectionInput!): RateMatrixConnection!
   "One rate matrix with its draft's axes; its cells are read a page at a time."
   rateMatrix(id: ID!): RateMatrix
@@ -418,4 +437,28 @@ extend type Query {
   "The formula template versions that pin a rate matrix, or one of its versions."
   rateMatrixUsages(rateMatrixId: ID!, versionNumber: Int): [RateMatrixUsage!]!
   rateQuotes(input: DataTableConnectionInput!): RateQuoteConnection!
+}
+
+input RateZoneMemberInput {
+  id: ID
+  scopeType: String!
+  scopeValue: String
+  city: String
+}
+
+"A rate zone and every place it covers; members left out of the list are removed."
+input RateZoneInput {
+  code: String!
+  name: String!
+  description: String
+  "Custom, KMA, Regional, Metro or Country."
+  kind: String!
+  status: EntityStatus!
+  version: Int
+  members: [RateZoneMemberInput!]!
+}
+
+extend type Mutation {
+  createRateZone(input: RateZoneInput!): RateZone!
+  updateRateZone(id: ID!, input: RateZoneInput!): RateZone!
 }

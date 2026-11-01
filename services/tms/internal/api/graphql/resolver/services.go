@@ -111,6 +111,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/pageaccessservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/sequenceconfigservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/settlementcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/tableinsightservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
@@ -318,6 +319,7 @@ type Params struct {
 	BankReceiptBatchService           bankreceiptbatchports.BankReceiptBatchService
 	DotHazmatReferenceService         *dothazmatreferenceservice.Service
 	ServiceTypeService                *servicetypeservice.Service
+	SequenceConfigService             *sequenceconfigservice.Service
 	OrderService                      *orderservice.Service
 	ShipmentTypeService               *shipmenttypeservice.Service
 	TractorService                    *tractorservice.Service
@@ -608,6 +610,7 @@ type Services struct {
 	BankReceiptBatchService           bankreceiptbatchports.BankReceiptBatchService
 	DotHazmatReferenceService         *dothazmatreferenceservice.Service
 	ServiceTypeService                *servicetypeservice.Service
+	SequenceConfigService             *sequenceconfigservice.Service
 	OrderService                      *orderservice.Service
 	ShipmentTypeService               *shipmenttypeservice.Service
 	EquipmentManufacturerService      *equipmentmanufacturerservice.Service
@@ -903,6 +906,7 @@ func newServices(p *Params) *Services {
 		BankReceiptBatchService:           p.BankReceiptBatchService,
 		DotHazmatReferenceService:         p.DotHazmatReferenceService,
 		ServiceTypeService:                p.ServiceTypeService,
+		SequenceConfigService:             p.SequenceConfigService,
 		OrderService:                      p.OrderService,
 		ShipmentTypeService:               p.ShipmentTypeService,
 		EquipmentManufacturerService:      p.EquipmentManufacturerService,

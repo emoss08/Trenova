@@ -19,9 +19,9 @@ import {
   type CreatePanelSaveAction,
   type EditPanelSaveAction,
 } from "@/hooks/use-panel-action-preference";
-import { api } from "@trenova/shared/lib/api";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { apiService } from "@/services/api";
 import type { LocationRow } from "@/lib/graphql/location-table";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { locationSchema, type Location } from "@trenova/shared/types/location";
@@ -38,7 +38,6 @@ type LocationFormInput = z.input<typeof locationSchema>;
 type LocationFormReturn = UseFormReturn<LocationFormInput, unknown, Location>;
 
 const QUERY_KEY = "location-list";
-const URL = "/locations/" as const;
 const TITLE = "Location";
 const FORM_ID = "location-dialog-form";
 
@@ -114,12 +113,12 @@ function CreateDialog({ open, onOpenChange }: CreateDialogProps) {
   }, [open, reset]);
 
   const { mutateAsync } = useApiMutation<
-    Location,
+    unknown,
     { values: Location; action: CreatePanelSaveAction },
     unknown,
     Location
   >({
-    mutationFn: async ({ values }) => api.post<Location>(URL, values),
+    mutationFn: async ({ values }) => apiService.locationService.create(values),
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
 
@@ -235,12 +234,18 @@ function EditDialog({ open, onOpenChange, row }: EditDialogProps) {
   }, [open, row?.id, reset]);
 
   const { mutateAsync } = useApiMutation<
-    Location,
+    unknown,
     { values: Location; action: EditPanelSaveAction },
     unknown,
     Location
   >({
-    mutationFn: async ({ values }) => api.put<Location>(`${URL}${row?.id as string}/`, values),
+    mutationFn: async ({ values }) => {
+      if (!row?.id) {
+        throw new Error("No location selected");
+      }
+
+      return apiService.locationService.update(row.id, values);
+    },
     onMutate: async (newValues) => {
       await queryClient.cancelQueries({ queryKey: [QUERY_KEY] });
       const previousRecord = queryClient.getQueryData([QUERY_KEY]);

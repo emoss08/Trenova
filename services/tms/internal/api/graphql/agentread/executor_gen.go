@@ -663,8 +663,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "CustomerTable",
-		Hash:     "sha256:77fc50a2943abe8cc016f3b69f09896edacab646e68166b8cc4d87a08bd86e99",
-		Document: "fragment CustomerBillingProfileFields on CustomerBillingProfile { applyLateCharges arAccountId autoApplyAccessorials autoApprove autoBill autoCreditHold autoMarkReadyToBill autoSendInvoiceOnGeneration autoTransfer billingCurrency billingCycle billingCycleAnchorDay billingCycleTimezone billingNotes businessUnitId countLateOnlyOnAppointmentStops createdAt creditBalance creditHoldAutomatic creditHoldReason creditLimit creditReviewedAt creditStatus customerId customerInvoicePrefix defaultBillerId documentTypes { code color documentCategory documentClassification id name } ediInvoiceEnabled emailInvoiceEnabled enforceCreditLimit enforceCustomerBillingReq factoringCompanyId fuelSurchargeMode fuelSurchargeProgramId gracePeriodDays hasBillingControlOverrides id invoiceCopies invoiceDelivery invoiceDetail invoiceNumberFormat lastBilledPeriodEnd lateChargeRate maxShipmentsPerInvoice minConsolidatedAmount organizationId paymentTerm requireBOLNumber requireDeliveryNumber requirePONumber revenueAccountId sectionBy sendPaymentReminders sendStatements splitBy taxExempt taxExemptNumber updatedAt validateCustomerRates version } fragment CustomerEmailProfileFields on CustomerEmailProfile { attachmentName bccRecipients businessUnitId ccRecipients comment createdAt customerId id includeShipmentDetail organizationId readReceipt subject toRecipients updatedAt version } fragment CustomerTableRowFields on Customer { addressLine1 addressLine2 allowConsolidation billingProfile { ...CustomerBillingProfileFields } businessUnitId city code consolidationPriority createdAt emailProfile { ...CustomerEmailProfileFields } exclusiveConsolidation externalId id isGeocoded latitude longitude name organizationId placeId postalCode stateId status updatedAt version } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CustomerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { customers(input: $input) { edges { cursor node { ...CustomerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:974b5806f950d3ca2b8665065d7df4b1801814d8717b546c29b5317d3131d091",
+		Document: "fragment CustomerBillingProfileFields on CustomerBillingProfile { applyLateCharges arAccountId autoApplyAccessorials autoApprove autoBill autoCreditHold autoMarkReadyToBill autoSendInvoiceOnGeneration autoTransfer billingCurrency billingCycle billingCycleAnchorDay billingCycleTimezone billingNotes businessUnitId countLateOnlyOnAppointmentStops createdAt creditBalance creditHoldAutomatic creditHoldReason creditLimit creditReviewedAt creditStatus customerId customerInvoicePrefix defaultBillerId documentTypes { code color documentCategory documentClassification id name } ediInvoiceEnabled emailInvoiceEnabled enforceCreditLimit enforceCustomerBillingReq factoringCompanyId fuelSurchargeMode fuelSurchargeProgramId gracePeriodDays hasBillingControlOverrides id invoiceCopies invoiceDelivery invoiceDetail invoiceNumberFormat lastBilledPeriodEnd lateChargeRate maxShipmentsPerInvoice minConsolidatedAmount organizationId paymentTerm requireBOLNumber requireDeliveryNumber requirePONumber revenueAccountId sectionBy sendPaymentReminders sendStatements splitBy taxExempt taxExemptNumber updatedAt validateCustomerRates version } fragment CustomerEmailProfileFields on CustomerEmailProfile { attachmentName bccRecipients businessUnitId ccRecipients comment createdAt customerId id includeShipmentDetail organizationId readReceipt subject toRecipients updatedAt version } fragment CustomerTableRowFields on Customer { addressLine1 addressLine2 allowConsolidation billingProfile { ...CustomerBillingProfileFields } brokerVettingEnabled businessUnitId checkCallIntervalHours city code consolidationPriority createdAt dotNumber emailProfile { ...CustomerEmailProfileFields } etaRiskThresholdMinutes exclusiveConsolidation externalId id isGeocoded latitude longitude mcNumber name organizationId placeId postalCode stateId status statusUpdatePreference statusUpdateRecipients updatedAt version } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CustomerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { customers(input: $input) { edges { cursor node { ...CustomerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskDetentionCard",
@@ -988,8 +988,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "LocationTable",
-		Hash:     "sha256:681b7d71ad624f4582cc0cde6bb7904ef71fcc71a77bc6ee59a51e4bcfdfce42",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment LocationTableRowFields on Location { addressLine1 addressLine2 businessUnitId city code createdAt description id isGeocoded latitude locationCategory { color id name } locationCategoryId longitude name organizationId placeId postalCode state { abbreviation id name } stateId status updatedAt version } query LocationTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { locations(input: $input) { edges { cursor node { ...LocationTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:48f7dbbdb3835409d179655e9c3a5111ecfeea1fda94d81fb1243a4da3a6c412",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment LocationTableRowFields on Location { addressLine1 addressLine2 businessUnitId city code createdAt description geofenceRadiusMeters geofenceType geofenceVertices { latitude longitude } id isGeocoded latitude locationCategory { color id name } locationCategoryId longitude name organizationId placeId postalCode state { abbreviation id name } stateId status timezone updatedAt version } query LocationTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { locations(input: $input) { edges { cursor node { ...LocationTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "LocationCategoryTable",
@@ -1003,8 +1003,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "CommodityTable",
-		Hash:     "sha256:563bed9f11970bc10ed428708f0673b049b3695462590cf2681fc74729a9593f",
-		Document: "fragment CommodityTableRowFields on Commodity { businessUnitId createdAt description fragile freightClass hazardousMaterialId id linearFeetPerUnit loadingInstructions maxQuantityPerShipment maxTemperature minTemperature name organizationId stackable status updatedAt version weightPerUnit } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CommodityTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { commodities(input: $input) { edges { cursor node { ...CommodityTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:20cdf710d66aeebbbbba36e2128af8c748fa48044d3bb6360b7077b70e892efc",
+		Document: "fragment CommodityTableRowFields on Commodity { businessUnitId createdAt description fragile freightClass hazardousMaterialId heightPerUnit id lengthPerUnit linearFeetPerUnit loadingInstructions maxQuantityPerShipment maxTemperature minTemperature name organizationId stackable status updatedAt version weightPerUnit widthPerUnit } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CommodityTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { commodities(input: $input) { edges { cursor node { ...CommodityTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "FleetCodeTable",
@@ -1018,8 +1018,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "HoldReasonTable",
-		Hash:     "sha256:a90ea543247ade1f06a13a861011a27d0e03255bc5f1d0673d628b66f547893c",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment HoldReasonTableRowFields on HoldReason { active businessUnitId code createdAt defaultBlocksBilling defaultBlocksDelivery defaultBlocksDispatch defaultSeverity defaultVisibleToCustomer description id label organizationId sortOrder type updatedAt version } query HoldReasonTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { holdReasons(input: $input) { edges { cursor node { ...HoldReasonTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:6f82d9070c470b39add2c4acea54155f342a1d4b1ea43b16dbb22f1bdfd5fd0b",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment HoldReasonTableRowFields on HoldReason { active businessUnitId code createdAt defaultBlocksBilling defaultBlocksDelivery defaultBlocksDispatch defaultSeverity defaultVisibleToCustomer description externalMap id label organizationId sortOrder type updatedAt version } query HoldReasonTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { holdReasons(input: $input) { edges { cursor node { ...HoldReasonTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "ServiceTypeTable",
@@ -1723,59 +1723,65 @@ func NewSchema(p ResolverParams) Schema {
 		invoicedisputeInvoice: &invoicedisputeInvoice{Deps: invoicedisputeDeps},
 	}
 	mutation := &mutationResolver{
-		accessorialchargeMutation:     &accessorialchargeMutation{Deps: accessorialchargeDeps},
-		accountingsyncMutation:        &accountingsyncMutation{Deps: accountingsyncDeps},
-		briefingMutation:              &briefingMutation{Deps: briefingDeps},
-		captureMutation:               &captureMutation{Deps: captureDeps},
-		carriercapacityMutation:       &carriercapacityMutation{Deps: carriercapacityDeps},
-		carrierintelligenceMutation:   &carrierintelligenceMutation{Deps: carrierintelligenceDeps},
-		carriersettlementMutation:     &carriersettlementMutation{Deps: carriersettlementDeps},
-		commodityMutation:             &commodityMutation{Deps: commodityDeps},
-		customerMutation:              &customerMutation{Deps: customerDeps},
-		customerpaymentMutation:       &customerpaymentMutation{Deps: customerpaymentDeps},
-		detentionMutation:             &detentionMutation{Deps: detentionDeps},
-		dispatchconsoleMutation:       &dispatchconsoleMutation{Deps: dispatchconsoleDeps},
-		documenttypeMutation:          &documenttypeMutation{Deps: documenttypeDeps},
-		driverportalMutation:          &driverportalMutation{Deps: driverportalDeps},
-		driversettlementMutation:      &driversettlementMutation{Deps: driversettlementDeps},
-		equipmentmanufacturerMutation: &equipmentmanufacturerMutation{Deps: equipmentmanufacturerDeps},
-		equipmenttypeMutation:         &equipmenttypeMutation{Deps: equipmenttypeDeps},
-		factoringMutation:             &factoringMutation{Deps: factoringDeps},
-		factoringcompanyMutation:      &factoringcompanyMutation{Deps: factoringcompanyDeps},
-		fleetcodeMutation:             &fleetcodeMutation{Deps: fleetcodeDeps},
-		fleetsafetyMutation:           &fleetsafetyMutation{Deps: fleetsafetyDeps},
-		fuelpurchaseMutation:          &fuelpurchaseMutation{Deps: fuelpurchaseDeps},
-		fuelsurchargeMutation:         &fuelsurchargeMutation{Deps: fuelsurchargeDeps},
-		hazardousmaterialMutation:     &hazardousmaterialMutation{Deps: hazardousmaterialDeps},
-		holdreasonMutation:            &holdreasonMutation{Deps: holdreasonDeps},
-		homelayoutMutation:            &homelayoutMutation{Deps: homelayoutDeps},
-		iftaMutation:                  &iftaMutation{Deps: iftaDeps},
-		inboundmessageMutation:        &inboundmessageMutation{Deps: inboundmessageDeps},
-		inboundreplyMutation:          &inboundreplyMutation{Deps: inboundreplyDeps},
-		invoiceMutation:               &invoiceMutation{Deps: invoiceDeps},
-		invoiceadjustmentMutation:     &invoiceadjustmentMutation{Deps: invoiceadjustmentDeps},
-		invoicedisputeMutation:        &invoicedisputeMutation{Deps: invoicedisputeDeps},
-		journalentryMutation:          &journalentryMutation{Deps: journalentryDeps},
-		locationcategoryMutation:      &locationcategoryMutation{Deps: locationcategoryDeps},
-		orderMutation:                 &orderMutation{Deps: orderDeps},
-		performancereviewMutation:     &performancereviewMutation{Deps: performancereviewDeps},
-		reportMutation:                &reportMutation{Deps: reportDeps},
-		schedulingMutation:            &schedulingMutation{Deps: schedulingDeps},
-		shipmentMutation:              &shipmentMutation{Deps: shipmentDeps},
-		telematicsMutation:            &telematicsMutation{Deps: telematicsDeps},
-		tenantMutation:                &tenantMutation{Deps: tenantDeps},
-		tractorMutation:               &tractorMutation{Deps: tractorDeps},
-		trailerMutation:               &trailerMutation{Deps: trailerDeps},
-		triageMutation:                &triageMutation{Deps: triageDeps},
-		workerMutation:                &workerMutation{Deps: workerDeps},
-		workerchecklistMutation:       &workerchecklistMutation{Deps: workerchecklistDeps},
-		workercredentialMutation:      &workercredentialMutation{Deps: workercredentialDeps},
-		workerdqfMutation:             &workerdqfMutation{Deps: workerdqfDeps},
-		workerdrugalcoholMutation:     &workerdrugalcoholMutation{Deps: workerdrugalcoholDeps},
-		workerinjuryMutation:          &workerinjuryMutation{Deps: workerinjuryDeps},
-		workerleaveMutation:           &workerleaveMutation{Deps: workerleaveDeps},
-		workersafetyMutation:          &workersafetyMutation{Deps: workersafetyDeps},
-		workertrainingMutation:        &workertrainingMutation{Deps: workertrainingDeps},
+		accessorialchargeMutation:        &accessorialchargeMutation{Deps: accessorialchargeDeps},
+		accountingsyncMutation:           &accountingsyncMutation{Deps: accountingsyncDeps},
+		briefingMutation:                 &briefingMutation{Deps: briefingDeps},
+		captureMutation:                  &captureMutation{Deps: captureDeps},
+		carrierMutation:                  &carrierMutation{Deps: carrierDeps},
+		carriercapacityMutation:          &carriercapacityMutation{Deps: carriercapacityDeps},
+		carrierintelligenceMutation:      &carrierintelligenceMutation{Deps: carrierintelligenceDeps},
+		carriersettlementMutation:        &carriersettlementMutation{Deps: carriersettlementDeps},
+		commodityMutation:                &commodityMutation{Deps: commodityDeps},
+		customerMutation:                 &customerMutation{Deps: customerDeps},
+		customerpaymentMutation:          &customerpaymentMutation{Deps: customerpaymentDeps},
+		detentionMutation:                &detentionMutation{Deps: detentionDeps},
+		dispatchconsoleMutation:          &dispatchconsoleMutation{Deps: dispatchconsoleDeps},
+		documenttypeMutation:             &documenttypeMutation{Deps: documenttypeDeps},
+		driverportalMutation:             &driverportalMutation{Deps: driverportalDeps},
+		driversettlementMutation:         &driversettlementMutation{Deps: driversettlementDeps},
+		equipmentmanufacturerMutation:    &equipmentmanufacturerMutation{Deps: equipmentmanufacturerDeps},
+		equipmenttypeMutation:            &equipmenttypeMutation{Deps: equipmenttypeDeps},
+		factoringMutation:                &factoringMutation{Deps: factoringDeps},
+		factoringcompanyMutation:         &factoringcompanyMutation{Deps: factoringcompanyDeps},
+		fleetcodeMutation:                &fleetcodeMutation{Deps: fleetcodeDeps},
+		fleetsafetyMutation:              &fleetsafetyMutation{Deps: fleetsafetyDeps},
+		fuelpurchaseMutation:             &fuelpurchaseMutation{Deps: fuelpurchaseDeps},
+		fuelsurchargeMutation:            &fuelsurchargeMutation{Deps: fuelsurchargeDeps},
+		hazardousmaterialMutation:        &hazardousmaterialMutation{Deps: hazardousmaterialDeps},
+		holdreasonMutation:               &holdreasonMutation{Deps: holdreasonDeps},
+		homelayoutMutation:               &homelayoutMutation{Deps: homelayoutDeps},
+		iftaMutation:                     &iftaMutation{Deps: iftaDeps},
+		inboundmessageMutation:           &inboundmessageMutation{Deps: inboundmessageDeps},
+		inboundreplyMutation:             &inboundreplyMutation{Deps: inboundreplyDeps},
+		invoiceMutation:                  &invoiceMutation{Deps: invoiceDeps},
+		invoiceadjustmentMutation:        &invoiceadjustmentMutation{Deps: invoiceadjustmentDeps},
+		invoicedisputeMutation:           &invoicedisputeMutation{Deps: invoicedisputeDeps},
+		journalentryMutation:             &journalentryMutation{Deps: journalentryDeps},
+		locationMutation:                 &locationMutation{Deps: locationDeps},
+		locationcategoryMutation:         &locationcategoryMutation{Deps: locationcategoryDeps},
+		orderMutation:                    &orderMutation{Deps: orderDeps},
+		performancereviewMutation:        &performancereviewMutation{Deps: performancereviewDeps},
+		rateMutation:                     &rateMutation{Deps: rateDeps},
+		reportMutation:                   &reportMutation{Deps: reportDeps},
+		schedulingMutation:               &schedulingMutation{Deps: schedulingDeps},
+		servicefailurereasoncodeMutation: &servicefailurereasoncodeMutation{Deps: servicefailurereasoncodeDeps},
+		servicetypeMutation:              &servicetypeMutation{Deps: servicetypeDeps},
+		shipmentMutation:                 &shipmentMutation{Deps: shipmentDeps},
+		shipmenttypeMutation:             &shipmenttypeMutation{Deps: shipmenttypeDeps},
+		telematicsMutation:               &telematicsMutation{Deps: telematicsDeps},
+		tenantMutation:                   &tenantMutation{Deps: tenantDeps},
+		tractorMutation:                  &tractorMutation{Deps: tractorDeps},
+		trailerMutation:                  &trailerMutation{Deps: trailerDeps},
+		triageMutation:                   &triageMutation{Deps: triageDeps},
+		workerMutation:                   &workerMutation{Deps: workerDeps},
+		workerchecklistMutation:          &workerchecklistMutation{Deps: workerchecklistDeps},
+		workercredentialMutation:         &workercredentialMutation{Deps: workercredentialDeps},
+		workerdqfMutation:                &workerdqfMutation{Deps: workerdqfDeps},
+		workerdrugalcoholMutation:        &workerdrugalcoholMutation{Deps: workerdrugalcoholDeps},
+		workerinjuryMutation:             &workerinjuryMutation{Deps: workerinjuryDeps},
+		workerleaveMutation:              &workerleaveMutation{Deps: workerleaveDeps},
+		workersafetyMutation:             &workersafetyMutation{Deps: workersafetyDeps},
+		workertrainingMutation:           &workertrainingMutation{Deps: workertrainingDeps},
 	}
 	query := &queryResolver{
 		accessorialchargeQuery:        &accessorialchargeQuery{Deps: accessorialchargeDeps},
@@ -2141,6 +2147,7 @@ type mutationResolver struct {
 	*accountingsyncMutation
 	*briefingMutation
 	*captureMutation
+	*carrierMutation
 	*carriercapacityMutation
 	*carrierintelligenceMutation
 	*carriersettlementMutation
@@ -2170,12 +2177,17 @@ type mutationResolver struct {
 	*invoiceadjustmentMutation
 	*invoicedisputeMutation
 	*journalentryMutation
+	*locationMutation
 	*locationcategoryMutation
 	*orderMutation
 	*performancereviewMutation
+	*rateMutation
 	*reportMutation
 	*schedulingMutation
+	*servicefailurereasoncodeMutation
+	*servicetypeMutation
 	*shipmentMutation
+	*shipmenttypeMutation
 	*telematicsMutation
 	*tenantMutation
 	*tractorMutation
@@ -2266,137 +2278,143 @@ type queryResolver struct {
 }
 
 type (
-	customerCustomerBillingProfile  = customerresolver.CustomerBillingProfileResolver
-	factoringCustomerBillingProfile = factoringresolver.CustomerBillingProfileResolver
-	inboundmessageInboundAttachment = inboundmessageresolver.InboundAttachmentResolver
-	inboundreplyInboundAttachment   = inboundreplyresolver.InboundAttachmentResolver
-	inboundmessageInboundMessage    = inboundmessageresolver.InboundMessageResolver
-	inboundreplyInboundMessage      = inboundreplyresolver.InboundMessageResolver
-	triageInboundMessage            = triageresolver.InboundMessageResolver
-	factoringInvoice                = factoringresolver.InvoiceResolver
-	invoiceInvoice                  = invoiceresolver.InvoiceResolver
-	invoicedisputeInvoice           = invoicedisputeresolver.InvoiceResolver
-	accessorialchargeMutation       = accessorialchargeresolver.MutationResolver
-	accountingsyncMutation          = accountingsyncresolver.MutationResolver
-	briefingMutation                = briefingresolver.MutationResolver
-	captureMutation                 = captureresolver.MutationResolver
-	carriercapacityMutation         = carriercapacityresolver.MutationResolver
-	carrierintelligenceMutation     = carrierintelligenceresolver.MutationResolver
-	carriersettlementMutation       = carriersettlementresolver.MutationResolver
-	commodityMutation               = commodityresolver.MutationResolver
-	customerMutation                = customerresolver.MutationResolver
-	customerpaymentMutation         = customerpaymentresolver.MutationResolver
-	detentionMutation               = detentionresolver.MutationResolver
-	dispatchconsoleMutation         = dispatchconsoleresolver.MutationResolver
-	documenttypeMutation            = documenttyperesolver.MutationResolver
-	driverportalMutation            = driverportalresolver.MutationResolver
-	driversettlementMutation        = driversettlementresolver.MutationResolver
-	equipmentmanufacturerMutation   = equipmentmanufacturerresolver.MutationResolver
-	equipmenttypeMutation           = equipmenttyperesolver.MutationResolver
-	factoringMutation               = factoringresolver.MutationResolver
-	factoringcompanyMutation        = factoringcompanyresolver.MutationResolver
-	fleetcodeMutation               = fleetcoderesolver.MutationResolver
-	fleetsafetyMutation             = fleetsafetyresolver.MutationResolver
-	fuelpurchaseMutation            = fuelpurchaseresolver.MutationResolver
-	fuelsurchargeMutation           = fuelsurchargeresolver.MutationResolver
-	hazardousmaterialMutation       = hazardousmaterialresolver.MutationResolver
-	holdreasonMutation              = holdreasonresolver.MutationResolver
-	homelayoutMutation              = homelayoutresolver.MutationResolver
-	iftaMutation                    = iftaresolver.MutationResolver
-	inboundmessageMutation          = inboundmessageresolver.MutationResolver
-	inboundreplyMutation            = inboundreplyresolver.MutationResolver
-	invoiceMutation                 = invoiceresolver.MutationResolver
-	invoiceadjustmentMutation       = invoiceadjustmentresolver.MutationResolver
-	invoicedisputeMutation          = invoicedisputeresolver.MutationResolver
-	journalentryMutation            = journalentryresolver.MutationResolver
-	locationcategoryMutation        = locationcategoryresolver.MutationResolver
-	orderMutation                   = orderresolver.MutationResolver
-	performancereviewMutation       = performancereviewresolver.MutationResolver
-	reportMutation                  = reportresolver.MutationResolver
-	schedulingMutation              = schedulingresolver.MutationResolver
-	shipmentMutation                = shipmentresolver.MutationResolver
-	telematicsMutation              = telematicsresolver.MutationResolver
-	tenantMutation                  = tenantresolver.MutationResolver
-	tractorMutation                 = tractorresolver.MutationResolver
-	trailerMutation                 = trailerresolver.MutationResolver
-	triageMutation                  = triageresolver.MutationResolver
-	workerMutation                  = workerresolver.MutationResolver
-	workerchecklistMutation         = workerchecklistresolver.MutationResolver
-	workercredentialMutation        = workercredentialresolver.MutationResolver
-	workerdqfMutation               = workerdqfresolver.MutationResolver
-	workerdrugalcoholMutation       = workerdrugalcoholresolver.MutationResolver
-	workerinjuryMutation            = workerinjuryresolver.MutationResolver
-	workerleaveMutation             = workerleaveresolver.MutationResolver
-	workersafetyMutation            = workersafetyresolver.MutationResolver
-	workertrainingMutation          = workertrainingresolver.MutationResolver
-	accessorialchargeQuery          = accessorialchargeresolver.QueryResolver
-	accountingsyncQuery             = accountingsyncresolver.QueryResolver
-	briefingQuery                   = briefingresolver.QueryResolver
-	captureQuery                    = captureresolver.QueryResolver
-	carrierQuery                    = carrierresolver.QueryResolver
-	carriercapacityQuery            = carriercapacityresolver.QueryResolver
-	carrierintelligenceQuery        = carrierintelligenceresolver.QueryResolver
-	carriersettlementQuery          = carriersettlementresolver.QueryResolver
-	commodityQuery                  = commodityresolver.QueryResolver
-	customerQuery                   = customerresolver.QueryResolver
-	customerpaymentQuery            = customerpaymentresolver.QueryResolver
-	detentionQuery                  = detentionresolver.QueryResolver
-	dispatchconsoleQuery            = dispatchconsoleresolver.QueryResolver
-	documenttypeQuery               = documenttyperesolver.QueryResolver
-	driverportalQuery               = driverportalresolver.QueryResolver
-	driversettlementQuery           = driversettlementresolver.QueryResolver
-	ediQuery                        = ediresolver.QueryResolver
-	emailprofileQuery               = emailprofileresolver.QueryResolver
-	equipmentmanufacturerQuery      = equipmentmanufacturerresolver.QueryResolver
-	equipmenttypeQuery              = equipmenttyperesolver.QueryResolver
-	factoringQuery                  = factoringresolver.QueryResolver
-	factoringcompanyQuery           = factoringcompanyresolver.QueryResolver
-	fiscalperiodQuery               = fiscalperiodresolver.QueryResolver
-	fleetcodeQuery                  = fleetcoderesolver.QueryResolver
-	fleetsafetyQuery                = fleetsafetyresolver.QueryResolver
-	formulalibraryQuery             = formulalibraryresolver.QueryResolver
-	formulatemplateQuery            = formulatemplateresolver.QueryResolver
-	fuelpurchaseQuery               = fuelpurchaseresolver.QueryResolver
-	fuelsurchargeQuery              = fuelsurchargeresolver.QueryResolver
-	hazardousmaterialQuery          = hazardousmaterialresolver.QueryResolver
-	holdreasonQuery                 = holdreasonresolver.QueryResolver
-	homelayoutQuery                 = homelayoutresolver.QueryResolver
-	iftaQuery                       = iftaresolver.QueryResolver
-	inboundmessageQuery             = inboundmessageresolver.QueryResolver
-	inboundreplyQuery               = inboundreplyresolver.QueryResolver
-	invoiceQuery                    = invoiceresolver.QueryResolver
-	invoiceadjustmentQuery          = invoiceadjustmentresolver.QueryResolver
-	invoicedisputeQuery             = invoicedisputeresolver.QueryResolver
-	journalentryQuery               = journalentryresolver.QueryResolver
-	journalreversalQuery            = journalreversalresolver.QueryResolver
-	locationQuery                   = locationresolver.QueryResolver
-	locationcategoryQuery           = locationcategoryresolver.QueryResolver
-	manualjournalQuery              = manualjournalresolver.QueryResolver
-	orderQuery                      = orderresolver.QueryResolver
-	performancereviewQuery          = performancereviewresolver.QueryResolver
-	rateQuery                       = rateresolver.QueryResolver
-	recurringshipmentQuery          = recurringshipmentresolver.QueryResolver
-	reportQuery                     = reportresolver.QueryResolver
-	schedulingQuery                 = schedulingresolver.QueryResolver
-	servicefailureQuery             = servicefailureresolver.QueryResolver
-	servicefailurereasoncodeQuery   = servicefailurereasoncoderesolver.QueryResolver
-	servicetypeQuery                = servicetyperesolver.QueryResolver
-	shipmentQuery                   = shipmentresolver.QueryResolver
-	shipmenttypeQuery               = shipmenttyperesolver.QueryResolver
-	tablechangealertQuery           = tablechangealertresolver.QueryResolver
-	telematicsQuery                 = telematicsresolver.QueryResolver
-	tenantQuery                     = tenantresolver.QueryResolver
-	tenderQuery                     = tenderresolver.QueryResolver
-	tractorQuery                    = tractorresolver.QueryResolver
-	trailerQuery                    = trailerresolver.QueryResolver
-	triageQuery                     = triageresolver.QueryResolver
-	workerQuery                     = workerresolver.QueryResolver
-	workerchecklistQuery            = workerchecklistresolver.QueryResolver
-	workercredentialQuery           = workercredentialresolver.QueryResolver
-	workerdqfQuery                  = workerdqfresolver.QueryResolver
-	workerdrugalcoholQuery          = workerdrugalcoholresolver.QueryResolver
-	workerinjuryQuery               = workerinjuryresolver.QueryResolver
-	workerleaveQuery                = workerleaveresolver.QueryResolver
-	workersafetyQuery               = workersafetyresolver.QueryResolver
-	workertrainingQuery             = workertrainingresolver.QueryResolver
+	customerCustomerBillingProfile   = customerresolver.CustomerBillingProfileResolver
+	factoringCustomerBillingProfile  = factoringresolver.CustomerBillingProfileResolver
+	inboundmessageInboundAttachment  = inboundmessageresolver.InboundAttachmentResolver
+	inboundreplyInboundAttachment    = inboundreplyresolver.InboundAttachmentResolver
+	inboundmessageInboundMessage     = inboundmessageresolver.InboundMessageResolver
+	inboundreplyInboundMessage       = inboundreplyresolver.InboundMessageResolver
+	triageInboundMessage             = triageresolver.InboundMessageResolver
+	factoringInvoice                 = factoringresolver.InvoiceResolver
+	invoiceInvoice                   = invoiceresolver.InvoiceResolver
+	invoicedisputeInvoice            = invoicedisputeresolver.InvoiceResolver
+	accessorialchargeMutation        = accessorialchargeresolver.MutationResolver
+	accountingsyncMutation           = accountingsyncresolver.MutationResolver
+	briefingMutation                 = briefingresolver.MutationResolver
+	captureMutation                  = captureresolver.MutationResolver
+	carrierMutation                  = carrierresolver.MutationResolver
+	carriercapacityMutation          = carriercapacityresolver.MutationResolver
+	carrierintelligenceMutation      = carrierintelligenceresolver.MutationResolver
+	carriersettlementMutation        = carriersettlementresolver.MutationResolver
+	commodityMutation                = commodityresolver.MutationResolver
+	customerMutation                 = customerresolver.MutationResolver
+	customerpaymentMutation          = customerpaymentresolver.MutationResolver
+	detentionMutation                = detentionresolver.MutationResolver
+	dispatchconsoleMutation          = dispatchconsoleresolver.MutationResolver
+	documenttypeMutation             = documenttyperesolver.MutationResolver
+	driverportalMutation             = driverportalresolver.MutationResolver
+	driversettlementMutation         = driversettlementresolver.MutationResolver
+	equipmentmanufacturerMutation    = equipmentmanufacturerresolver.MutationResolver
+	equipmenttypeMutation            = equipmenttyperesolver.MutationResolver
+	factoringMutation                = factoringresolver.MutationResolver
+	factoringcompanyMutation         = factoringcompanyresolver.MutationResolver
+	fleetcodeMutation                = fleetcoderesolver.MutationResolver
+	fleetsafetyMutation              = fleetsafetyresolver.MutationResolver
+	fuelpurchaseMutation             = fuelpurchaseresolver.MutationResolver
+	fuelsurchargeMutation            = fuelsurchargeresolver.MutationResolver
+	hazardousmaterialMutation        = hazardousmaterialresolver.MutationResolver
+	holdreasonMutation               = holdreasonresolver.MutationResolver
+	homelayoutMutation               = homelayoutresolver.MutationResolver
+	iftaMutation                     = iftaresolver.MutationResolver
+	inboundmessageMutation           = inboundmessageresolver.MutationResolver
+	inboundreplyMutation             = inboundreplyresolver.MutationResolver
+	invoiceMutation                  = invoiceresolver.MutationResolver
+	invoiceadjustmentMutation        = invoiceadjustmentresolver.MutationResolver
+	invoicedisputeMutation           = invoicedisputeresolver.MutationResolver
+	journalentryMutation             = journalentryresolver.MutationResolver
+	locationMutation                 = locationresolver.MutationResolver
+	locationcategoryMutation         = locationcategoryresolver.MutationResolver
+	orderMutation                    = orderresolver.MutationResolver
+	performancereviewMutation        = performancereviewresolver.MutationResolver
+	rateMutation                     = rateresolver.MutationResolver
+	reportMutation                   = reportresolver.MutationResolver
+	schedulingMutation               = schedulingresolver.MutationResolver
+	servicefailurereasoncodeMutation = servicefailurereasoncoderesolver.MutationResolver
+	servicetypeMutation              = servicetyperesolver.MutationResolver
+	shipmentMutation                 = shipmentresolver.MutationResolver
+	shipmenttypeMutation             = shipmenttyperesolver.MutationResolver
+	telematicsMutation               = telematicsresolver.MutationResolver
+	tenantMutation                   = tenantresolver.MutationResolver
+	tractorMutation                  = tractorresolver.MutationResolver
+	trailerMutation                  = trailerresolver.MutationResolver
+	triageMutation                   = triageresolver.MutationResolver
+	workerMutation                   = workerresolver.MutationResolver
+	workerchecklistMutation          = workerchecklistresolver.MutationResolver
+	workercredentialMutation         = workercredentialresolver.MutationResolver
+	workerdqfMutation                = workerdqfresolver.MutationResolver
+	workerdrugalcoholMutation        = workerdrugalcoholresolver.MutationResolver
+	workerinjuryMutation             = workerinjuryresolver.MutationResolver
+	workerleaveMutation              = workerleaveresolver.MutationResolver
+	workersafetyMutation             = workersafetyresolver.MutationResolver
+	workertrainingMutation           = workertrainingresolver.MutationResolver
+	accessorialchargeQuery           = accessorialchargeresolver.QueryResolver
+	accountingsyncQuery              = accountingsyncresolver.QueryResolver
+	briefingQuery                    = briefingresolver.QueryResolver
+	captureQuery                     = captureresolver.QueryResolver
+	carrierQuery                     = carrierresolver.QueryResolver
+	carriercapacityQuery             = carriercapacityresolver.QueryResolver
+	carrierintelligenceQuery         = carrierintelligenceresolver.QueryResolver
+	carriersettlementQuery           = carriersettlementresolver.QueryResolver
+	commodityQuery                   = commodityresolver.QueryResolver
+	customerQuery                    = customerresolver.QueryResolver
+	customerpaymentQuery             = customerpaymentresolver.QueryResolver
+	detentionQuery                   = detentionresolver.QueryResolver
+	dispatchconsoleQuery             = dispatchconsoleresolver.QueryResolver
+	documenttypeQuery                = documenttyperesolver.QueryResolver
+	driverportalQuery                = driverportalresolver.QueryResolver
+	driversettlementQuery            = driversettlementresolver.QueryResolver
+	ediQuery                         = ediresolver.QueryResolver
+	emailprofileQuery                = emailprofileresolver.QueryResolver
+	equipmentmanufacturerQuery       = equipmentmanufacturerresolver.QueryResolver
+	equipmenttypeQuery               = equipmenttyperesolver.QueryResolver
+	factoringQuery                   = factoringresolver.QueryResolver
+	factoringcompanyQuery            = factoringcompanyresolver.QueryResolver
+	fiscalperiodQuery                = fiscalperiodresolver.QueryResolver
+	fleetcodeQuery                   = fleetcoderesolver.QueryResolver
+	fleetsafetyQuery                 = fleetsafetyresolver.QueryResolver
+	formulalibraryQuery              = formulalibraryresolver.QueryResolver
+	formulatemplateQuery             = formulatemplateresolver.QueryResolver
+	fuelpurchaseQuery                = fuelpurchaseresolver.QueryResolver
+	fuelsurchargeQuery               = fuelsurchargeresolver.QueryResolver
+	hazardousmaterialQuery           = hazardousmaterialresolver.QueryResolver
+	holdreasonQuery                  = holdreasonresolver.QueryResolver
+	homelayoutQuery                  = homelayoutresolver.QueryResolver
+	iftaQuery                        = iftaresolver.QueryResolver
+	inboundmessageQuery              = inboundmessageresolver.QueryResolver
+	inboundreplyQuery                = inboundreplyresolver.QueryResolver
+	invoiceQuery                     = invoiceresolver.QueryResolver
+	invoiceadjustmentQuery           = invoiceadjustmentresolver.QueryResolver
+	invoicedisputeQuery              = invoicedisputeresolver.QueryResolver
+	journalentryQuery                = journalentryresolver.QueryResolver
+	journalreversalQuery             = journalreversalresolver.QueryResolver
+	locationQuery                    = locationresolver.QueryResolver
+	locationcategoryQuery            = locationcategoryresolver.QueryResolver
+	manualjournalQuery               = manualjournalresolver.QueryResolver
+	orderQuery                       = orderresolver.QueryResolver
+	performancereviewQuery           = performancereviewresolver.QueryResolver
+	rateQuery                        = rateresolver.QueryResolver
+	recurringshipmentQuery           = recurringshipmentresolver.QueryResolver
+	reportQuery                      = reportresolver.QueryResolver
+	schedulingQuery                  = schedulingresolver.QueryResolver
+	servicefailureQuery              = servicefailureresolver.QueryResolver
+	servicefailurereasoncodeQuery    = servicefailurereasoncoderesolver.QueryResolver
+	servicetypeQuery                 = servicetyperesolver.QueryResolver
+	shipmentQuery                    = shipmentresolver.QueryResolver
+	shipmenttypeQuery                = shipmenttyperesolver.QueryResolver
+	tablechangealertQuery            = tablechangealertresolver.QueryResolver
+	telematicsQuery                  = telematicsresolver.QueryResolver
+	tenantQuery                      = tenantresolver.QueryResolver
+	tenderQuery                      = tenderresolver.QueryResolver
+	tractorQuery                     = tractorresolver.QueryResolver
+	trailerQuery                     = trailerresolver.QueryResolver
+	triageQuery                      = triageresolver.QueryResolver
+	workerQuery                      = workerresolver.QueryResolver
+	workerchecklistQuery             = workerchecklistresolver.QueryResolver
+	workercredentialQuery            = workercredentialresolver.QueryResolver
+	workerdqfQuery                   = workerdqfresolver.QueryResolver
+	workerdrugalcoholQuery           = workerdrugalcoholresolver.QueryResolver
+	workerinjuryQuery                = workerinjuryresolver.QueryResolver
+	workerleaveQuery                 = workerleaveresolver.QueryResolver
+	workersafetyQuery                = workersafetyresolver.QueryResolver
+	workertrainingQuery              = workertrainingresolver.QueryResolver
 )

@@ -12,10 +12,17 @@ fragment LocationTableRowFields on Location {
   addressLine2
   city
   postalCode
+  timezone
   isGeocoded
   latitude
   longitude
   placeId
+  geofenceType
+  geofenceRadiusMeters
+  geofenceVertices {
+    latitude
+    longitude
+  }
   version
   createdAt
   updatedAt

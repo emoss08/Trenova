@@ -12,4 +12,6 @@ type Deps struct {
 	StoredMileageService *storedmileageservice.Service
 }
 
+type MutationResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }

@@ -20,7 +20,7 @@ function Panel({ withSubtitle }: { withSubtitle: boolean }) {
       onOpenChange={() => undefined}
       row={ROW as unknown as typeof ROW & Record<string, unknown>}
       form={form}
-      url="/carriers/"
+      mutationFn={async (values) => values}
       queryKey="carrier-list"
       title="Carrier"
       fieldKey="name"

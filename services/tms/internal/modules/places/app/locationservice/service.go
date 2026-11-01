@@ -58,13 +58,6 @@ func New(p Params) *Service {
 	}
 }
 
-func (s *Service) List(
-	ctx context.Context,
-	req *locationports.ListLocationRequest,
-) (*pagination.ListResult[*location.Location], error) {
-	return s.repo.List(ctx, req)
-}
-
 func (s *Service) ListConnection(
 	ctx context.Context,
 	req *locationports.ListLocationConnectionRequest,

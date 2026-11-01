@@ -1,0 +1,29 @@
+mutation CreateServiceFailureReasonCode($input: ServiceFailureReasonCodeInput!) {
+  createServiceFailureReasonCode(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateServiceFailureReasonCode($id: ID!, $input: ServiceFailureReasonCodeInput!) {
+  updateServiceFailureReasonCode(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation ActivateServiceFailureReasonCode($id: ID!) {
+  activateServiceFailureReasonCode(id: $id) {
+    id
+    active
+    version
+  }
+}
+
+mutation ArchiveServiceFailureReasonCode($id: ID!) {
+  archiveServiceFailureReasonCode(id: $id) {
+    id
+    active
+    version
+  }
+}

@@ -37,7 +37,7 @@ export default function StoredMileageTable() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await storedMileageService.delete(id);
+      await storedMileageService.deactivate(id);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["stored-mileage-list"] });
