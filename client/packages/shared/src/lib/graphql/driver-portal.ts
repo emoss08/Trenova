@@ -37,6 +37,10 @@ import {
   MyHosStateDocument,
   MyHosViolationsDocument,
   MyLoadCommentsDocument,
+  MyLoadDocumentsDocument,
+  MyLoadDocumentTypesDocument,
+  MyProfileDocumentsDocument,
+  MyProfileDocumentTypesDocument,
   MyLoadsDocument,
   MyPeriodSummaryDocument,
   MyPortalProfileDocument,
@@ -131,6 +135,8 @@ import {
   type MyHosStateQuery,
   type MyHosViolationsQuery,
   type MyLoadCommentsQuery,
+  type MyLoadDocumentsQuery,
+  type MyLoadDocumentTypesQuery,
   type MyLoadsQuery,
   type MyPeriodSummaryQuery,
   type MyPortalProfileQuery,
@@ -161,6 +167,8 @@ export type PortalLoad = MyLoadsQuery["myLoads"][number];
 export type PortalStop = PortalLoad["stops"][number];
 export type PortalPeriodSummary = MyPeriodSummaryQuery["myPeriodSummary"];
 export type PortalLoadComment = MyLoadCommentsQuery["myLoadComments"][number];
+export type PortalDocument = MyLoadDocumentsQuery["myLoadDocuments"][number];
+export type PortalDocumentType = MyLoadDocumentTypesQuery["myLoadDocumentTypes"][number];
 export type PortalPayEvent = MyRecentPayEventsQuery["myRecentPayEvents"][number];
 /*
  * Everything under `my*` is the caller's own (self-scoped), so no field of it is withheld; the
@@ -337,6 +345,52 @@ export async function fetchMyLoadComments(shipmentId: string, options?: { signal
     signal: options?.signal,
   });
   return data.myLoadComments;
+}
+
+export async function fetchMyLoadDocuments(
+  shipmentId: string,
+  options?: { signal?: AbortSignal },
+): Promise<PortalDocument[]> {
+  const data = await requestGraphQL({
+    document: MyLoadDocumentsDocument,
+    operationName: "MyLoadDocuments",
+    variables: { shipmentId },
+    signal: options?.signal,
+  });
+  return data.myLoadDocuments;
+}
+
+export async function fetchMyLoadDocumentTypes(options?: {
+  signal?: AbortSignal;
+}): Promise<PortalDocumentType[]> {
+  const data = await requestGraphQL({
+    document: MyLoadDocumentTypesDocument,
+    operationName: "MyLoadDocumentTypes",
+    signal: options?.signal,
+  });
+  return data.myLoadDocumentTypes;
+}
+
+export async function fetchMyProfileDocuments(options?: {
+  signal?: AbortSignal;
+}): Promise<PortalDocument[]> {
+  const data = await requestGraphQL({
+    document: MyProfileDocumentsDocument,
+    operationName: "MyProfileDocuments",
+    signal: options?.signal,
+  });
+  return data.myProfileDocuments;
+}
+
+export async function fetchMyProfileDocumentTypes(options?: {
+  signal?: AbortSignal;
+}): Promise<PortalDocumentType[]> {
+  const data = await requestGraphQL({
+    document: MyProfileDocumentTypesDocument,
+    operationName: "MyProfileDocumentTypes",
+    signal: options?.signal,
+  });
+  return data.myProfileDocumentTypes;
 }
 
 export async function fetchMyPeriodSummary(options?: { signal?: AbortSignal }) {

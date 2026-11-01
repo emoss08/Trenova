@@ -124,8 +124,8 @@ func (s *services) usedBy(dir string) ([]depField, error) {
 	fset := token.NewFileSet()
 	for _, e := range entries {
 		name := e.Name()
-		if e.IsDir() || !strings.HasSuffix(name, ".go") || name == resolverTypesFile ||
-			strings.HasPrefix(name, ".") {
+		if e.IsDir() || !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") ||
+			name == resolverTypesFile || strings.HasPrefix(name, ".") {
 			continue
 		}
 		file, parseErr := parser.ParseFile(fset, filepath.Join(dir, name), nil, 0)

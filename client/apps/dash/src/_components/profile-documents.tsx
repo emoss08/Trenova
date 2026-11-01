@@ -5,9 +5,9 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatRange } from "@trenova/shared/lib/date";
 import {
   fetchMyProfileDocuments,
-  fetchPortalWorkerDocumentTypes,
-  uploadMyProfileDocument,
-} from "@trenova/shared/lib/portal";
+  fetchMyProfileDocumentTypes,
+} from "@trenova/shared/lib/graphql/driver-portal";
+import { uploadMyProfileDocument } from "@trenova/shared/lib/portal";
 import { cn, formatFileSize } from "@trenova/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -32,11 +32,11 @@ export function ProfileDocuments() {
 
   const documents = useQuery({
     queryKey: ["dash-profile-documents"],
-    queryFn: fetchMyProfileDocuments,
+    queryFn: ({ signal }) => fetchMyProfileDocuments({ signal }),
   });
   const documentTypes = useQuery({
     queryKey: ["dash-worker-document-types"],
-    queryFn: fetchPortalWorkerDocumentTypes,
+    queryFn: ({ signal }) => fetchMyProfileDocumentTypes({ signal }),
     staleTime: 5 * 60 * 1000,
   });
 

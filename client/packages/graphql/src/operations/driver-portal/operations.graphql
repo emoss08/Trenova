@@ -218,6 +218,46 @@ query MyLoadComments($shipmentId: ID!) {
   }
 }
 
+query MyLoadDocuments($shipmentId: ID!) {
+  myLoadDocuments(shipmentId: $shipmentId) {
+    id
+    fileName
+    fileSize
+    status
+    documentTypeName
+    createdAt
+  }
+}
+
+query MyLoadDocumentTypes {
+  myLoadDocumentTypes {
+    id
+    code
+    name
+    color
+  }
+}
+
+query MyProfileDocuments {
+  myProfileDocuments {
+    id
+    fileName
+    fileSize
+    status
+    documentTypeName
+    createdAt
+  }
+}
+
+query MyProfileDocumentTypes {
+  myProfileDocumentTypes {
+    id
+    code
+    name
+    color
+  }
+}
+
 mutation RecordMyStopAction($input: RecordMyStopActionInput!) {
   recordMyStopAction(input: $input)
 }

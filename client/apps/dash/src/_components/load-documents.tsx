@@ -5,9 +5,9 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatRange } from "@trenova/shared/lib/date";
 import {
   fetchMyLoadDocuments,
-  fetchPortalShipmentDocumentTypes,
-  uploadMyLoadDocument,
-} from "@trenova/shared/lib/portal";
+  fetchMyLoadDocumentTypes,
+} from "@trenova/shared/lib/graphql/driver-portal";
+import { uploadMyLoadDocument } from "@trenova/shared/lib/portal";
 import { cn, formatFileSize } from "@trenova/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -32,12 +32,12 @@ export function LoadDocuments({ shipmentId }: { shipmentId: string }) {
 
   const documents = useQuery({
     queryKey: ["dash-load-documents", shipmentId],
-    queryFn: () => fetchMyLoadDocuments(shipmentId),
+    queryFn: ({ signal }) => fetchMyLoadDocuments(shipmentId, { signal }),
     enabled: shipmentId.length > 0,
   });
   const documentTypes = useQuery({
     queryKey: ["dash-shipment-document-types"],
-    queryFn: fetchPortalShipmentDocumentTypes,
+    queryFn: ({ signal }) => fetchMyLoadDocumentTypes({ signal }),
     staleTime: 5 * 60 * 1000,
   });
 

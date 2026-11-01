@@ -47,6 +47,8 @@ var Shard = &gqlexec.Shard{
 		{Name: "PortalComment", Implementors: []string{"PortalComment"}},
 		{Name: "PortalComplianceProfile", Implementors: []string{"PortalComplianceProfile"}},
 		{Name: "PortalCredential", Implementors: []string{"PortalCredential"}},
+		{Name: "PortalDocument", Implementors: []string{"PortalDocument"}},
+		{Name: "PortalDocumentType", Implementors: []string{"PortalDocumentType"}},
 		{Name: "PortalEscrowSummary", Implementors: []string{"PortalEscrowSummary"}},
 		{Name: "PortalFeatures", Implementors: []string{"PortalFeatures"}},
 		{Name: "PortalInvitation", Implementors: []string{"PortalInvitation"}},
@@ -1489,6 +1491,110 @@ var Shard = &gqlexec.Shard{
 					return gqlexec.Resolver[resolverPortalCredential](ec, "PortalCredential").DocumentID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+		}},
+		{Object: "PortalDocument", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*driverportalservice.PortalDocument)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "fileName",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*driverportalservice.PortalDocument)
+					return obj.FileName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "fileSize",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*driverportalservice.PortalDocument)
+					return obj.FileSize, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "status",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*driverportalservice.PortalDocument)
+					return obj.Status, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "documentTypeName",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*driverportalservice.PortalDocument)
+					return obj.DocumentTypeName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*driverportalservice.PortalDocument)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
+		{Object: "PortalDocumentType", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*driverportalservice.PortalDocumentType)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "code",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*driverportalservice.PortalDocumentType)
+					return obj.Code, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*driverportalservice.PortalDocumentType)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "color",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*driverportalservice.PortalDocumentType)
+					return obj.Color, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
 		{Object: "PortalEscrowSummary", Fields: []*gqlexec.Field{
@@ -2988,6 +3094,56 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNPortalComment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalCommentᚄ),
 			},
 			{
+				Name:       "myLoadDocuments",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "PortalDocument",
+				Args:       field_Query_myLoadDocuments_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").MyLoadDocuments(ctx, fc.Args["shipmentId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNPortalDocument2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalDocumentᚄ),
+			},
+			{
+				Name:       "myLoadDocumentTypes",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "PortalDocumentType",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					return gqlexec.Resolver[resolverQuery](ec, "Query").MyLoadDocumentTypes(ctx)
+				},
+				Marshal: gqlexec.Marshal(marshalNPortalDocumentType2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalDocumentTypeᚄ),
+			},
+			{
+				Name:       "myProfileDocuments",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "PortalDocument",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					return gqlexec.Resolver[resolverQuery](ec, "Query").MyProfileDocuments(ctx)
+				},
+				Marshal: gqlexec.Marshal(marshalNPortalDocument2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalDocumentᚄ),
+			},
+			{
+				Name:       "myProfileDocumentTypes",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "PortalDocumentType",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					return gqlexec.Resolver[resolverQuery](ec, "Query").MyProfileDocumentTypes(ctx)
+				},
+				Marshal: gqlexec.Marshal(marshalNPortalDocumentType2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalDocumentTypeᚄ),
+			},
+			{
 				Name:       "myPeriodSummary",
 				NonNull:    true,
 				IsResolver: true,
@@ -3752,6 +3908,10 @@ type resolverQuery interface {
 	MyComplianceProfile(ctx context.Context) (*driverportalservice.PortalComplianceProfile, error)
 	MyCredentials(ctx context.Context) ([]*driverportalrecordsservice.PortalCredential, error)
 	MyLoadComments(ctx context.Context, shipmentID string) ([]*driverportalservice.PortalComment, error)
+	MyLoadDocuments(ctx context.Context, shipmentID string) ([]*driverportalservice.PortalDocument, error)
+	MyLoadDocumentTypes(ctx context.Context) ([]*driverportalservice.PortalDocumentType, error)
+	MyProfileDocuments(ctx context.Context) ([]*driverportalservice.PortalDocument, error)
+	MyProfileDocumentTypes(ctx context.Context) ([]*driverportalservice.PortalDocumentType, error)
 	MyPeriodSummary(ctx context.Context) (*driverportalservice.PortalPeriodSummary, error)
 	MyRecentPayEvents(ctx context.Context, limit *int) ([]*driversettlement.PayEvent, error)
 	MySettlements(ctx context.Context, limit *int, offset *int) (*gqlmodel.MySettlementList, error)
@@ -4196,6 +4356,19 @@ func field_Query_myLoads_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map
 }
 
 func field_Query_myLoadComments_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["shipmentId"] = arg0
+	return args, nil
+}
+
+func field_Query_myLoadDocuments_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentId",
 		func(ctx context.Context, v any) (string, error) {
@@ -5806,6 +5979,38 @@ func marshalNPortalCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "PortalCredential", v)
+}
+
+func marshalNPortalDocument2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalDocumentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalDocument) graphql.Marshaler {
+	return gqlexec.List[*driverportalservice.PortalDocument]{
+		Elem:        marshalNPortalDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalDocument,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNPortalDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalDocument(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalDocument) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "PortalDocument", v)
+}
+
+func marshalNPortalDocumentType2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalDocumentTypeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalDocumentType) graphql.Marshaler {
+	return gqlexec.List[*driverportalservice.PortalDocumentType]{
+		Elem:        marshalNPortalDocumentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalDocumentType,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNPortalDocumentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalDocumentType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalDocumentType) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "PortalDocumentType", v)
 }
 
 func marshalNPortalEscrowSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalEscrowSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalEscrowSummary) graphql.Marshaler {

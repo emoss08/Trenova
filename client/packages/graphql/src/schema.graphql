@@ -25234,6 +25234,27 @@ type PortalCredential {
   verified: Boolean!
 }
 
+"""
+A document on one of the signed-in driver's loads or in their own
+qualification file, as Dash lists it. Archived documents are never returned.
+"""
+type PortalDocument {
+  createdAt: Timestamp!
+  documentTypeName: String!
+  fileName: String!
+  fileSize: Int!
+  id: ID!
+  status: String!
+}
+
+"""A carrier document type a driver can tag an upload with in Dash."""
+type PortalDocumentType {
+  code: String!
+  color: String!
+  id: ID!
+  name: String!
+}
+
 type PortalEscrowSummary {
   account: EscrowAccount
   transactions: [EscrowTransaction!]!
@@ -26539,6 +26560,12 @@ type Query {
   myLeave: PortalLeave!
   """Driver-visible dispatch notes for one of the signed-in driver's loads."""
   myLoadComments(shipmentId: ID!): [PortalComment!]!
+  """
+  The carrier's shipment document types (POD, BOL, ...) for tagging load uploads.
+  """
+  myLoadDocumentTypes: [PortalDocumentType!]!
+  """Documents on one of the signed-in driver's own loads."""
+  myLoadDocuments(shipmentId: ID!): [PortalDocument!]!
   """Estimated driver pay for one of the signed-in driver's own moves."""
   myLoadPayEstimate(moveId: ID!, shipmentId: ID!): PortalPayEstimate!
   myLoads(limit: Int, scope: PortalLoadScope!): [PortalLoad!]!
@@ -26570,6 +26597,13 @@ type Query {
   myPortalProfile: PortalProfile!
   """What the signed-in driver has asked to change on their record."""
   myProfileChangeRequests: [WorkerProfileChangeRequest!]!
+  """
+  The carrier's worker document types (CDL, medical card, ...) for tagging
+  qualification-file uploads.
+  """
+  myProfileDocumentTypes: [PortalDocumentType!]!
+  """The signed-in driver's own qualification-file documents."""
+  myProfileDocuments: [PortalDocument!]!
   """
   agentProposalPreview for a proposal raised in one of the caller's own conversations.
   """

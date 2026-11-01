@@ -704,6 +704,42 @@ func (r *QueryResolver) MyLoadComments(ctx context.Context, shipmentID string) (
 	return r.DriverPortalService.MyLoadComments(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
+func (r *QueryResolver) MyLoadDocuments(ctx context.Context, shipmentID string) ([]*driverportalservice.PortalDocument, error) {
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+	id, err := pulid.MustParse(shipmentID)
+	if err != nil {
+		return nil, errortypes.NewValidationError("shipmentId", errortypes.ErrInvalid, "Invalid load")
+	}
+	return r.DriverPortalService.MyLoadDocuments(ctx, resolvercore.TenantInfo(authCtx), id)
+}
+
+func (r *QueryResolver) MyLoadDocumentTypes(ctx context.Context) ([]*driverportalservice.PortalDocumentType, error) {
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.DriverPortalService.ShipmentDocumentTypes(ctx, resolvercore.TenantInfo(authCtx))
+}
+
+func (r *QueryResolver) MyProfileDocuments(ctx context.Context) ([]*driverportalservice.PortalDocument, error) {
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.DriverPortalService.MyProfileDocuments(ctx, resolvercore.TenantInfo(authCtx))
+}
+
+func (r *QueryResolver) MyProfileDocumentTypes(ctx context.Context) ([]*driverportalservice.PortalDocumentType, error) {
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.DriverPortalService.WorkerDocumentTypes(ctx, resolvercore.TenantInfo(authCtx))
+}
+
 func (r *QueryResolver) MyPeriodSummary(ctx context.Context) (*driverportalservice.PortalPeriodSummary, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {

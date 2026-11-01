@@ -55,49 +55,10 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 
 func (h *Handler) RegisterProtectedRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/portal/", responseguard.SelfScoped())
-	api.GET("document-types/", h.listShipmentDocumentTypes)
-	api.GET("loads/:shipmentID/documents/", h.listLoadDocuments)
 	api.POST("loads/:shipmentID/documents/", h.uploadLoadDocument)
-	api.GET("profile/document-types/", h.listWorkerDocumentTypes)
-	api.GET("profile/documents/", h.listProfileDocuments)
 	api.POST("profile/documents/", h.uploadProfileDocument)
 	api.POST("credentials/:credentialID/document/", h.uploadCredentialDocument)
 	api.POST("expenses/:expenseID/receipt/", h.uploadExpenseReceipt)
-}
-
-// @Summary List worker document types for the driver portal
-// @Description Returns the carrier's worker-category document types (CDL, medical card, ...) for tagging qualification-file uploads.
-// @ID listPortalWorkerDocumentTypes
-// @Tags DriverPortal
-// @Produce json
-// @Success 200 {array} driverportalservice.PortalDocumentType
-// @Failure 401 {object} helpers.ProblemDetail
-// @Router /portal/profile/document-types [get]
-func (h *Handler) listWorkerDocumentTypes(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	types, err := h.service.WorkerDocumentTypes(c.Request.Context(), tenantInfoFrom(authCtx))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	helpers.JSON(c, http.StatusOK, types)
-}
-
-// @Summary List the signed-in driver's qualification-file documents
-// @ID listPortalProfileDocuments
-// @Tags DriverPortal
-// @Produce json
-// @Success 200 {array} driverportalservice.PortalDocument
-// @Failure 401 {object} helpers.ProblemDetail
-// @Router /portal/profile/documents [get]
-func (h *Handler) listProfileDocuments(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	documents, err := h.service.MyProfileDocuments(c.Request.Context(), tenantInfoFrom(authCtx))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	helpers.JSON(c, http.StatusOK, documents)
 }
 
 // @Summary Upload a qualification-file document (license, medical card, ...)
@@ -131,55 +92,6 @@ func (h *Handler) uploadProfileDocument(c *gin.Context) {
 		return
 	}
 	helpers.JSON(c, http.StatusCreated, uploaded)
-}
-
-// @Summary List shipment document types for the driver portal
-// @Description Returns the carrier's shipment-category document types (POD, BOL, ...) for tagging uploads.
-// @ID listPortalShipmentDocumentTypes
-// @Tags DriverPortal
-// @Produce json
-// @Success 200 {array} driverportalservice.PortalDocumentType
-// @Failure 401 {object} helpers.ProblemDetail
-// @Router /portal/document-types [get]
-func (h *Handler) listShipmentDocumentTypes(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	types, err := h.service.ShipmentDocumentTypes(c.Request.Context(), tenantInfoFrom(authCtx))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	helpers.JSON(c, http.StatusOK, types)
-}
-
-// @Summary List the signed-in driver's documents for a load
-// @ID listPortalLoadDocuments
-// @Tags DriverPortal
-// @Produce json
-// @Param shipmentID path string true "Shipment ID"
-// @Success 200 {array} driverportalservice.PortalDocument
-// @Failure 401 {object} helpers.ProblemDetail
-// @Router /portal/loads/{shipmentID}/documents [get]
-func (h *Handler) listLoadDocuments(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	shipmentID, err := pulid.MustParse(c.Param("shipmentID"))
-	if err != nil {
-		h.eh.HandleError(
-			c,
-			errortypes.NewValidationError("shipmentId", errortypes.ErrInvalid, "Invalid load"),
-		)
-		return
-	}
-
-	documents, err := h.service.MyLoadDocuments(
-		c.Request.Context(),
-		tenantInfoFrom(authCtx),
-		shipmentID,
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	helpers.JSON(c, http.StatusOK, documents)
 }
 
 // @Summary Upload a document (POD, BOL photo) to one of the signed-in driver's loads

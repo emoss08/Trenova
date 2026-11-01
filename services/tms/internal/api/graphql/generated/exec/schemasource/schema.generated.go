@@ -14103,6 +14103,29 @@ type PortalComment {
 }
 
 """
+A document on one of the signed-in driver's loads or in their own
+qualification file, as Dash lists it. Archived documents are never returned.
+"""
+type PortalDocument {
+  id: ID!
+  fileName: String!
+  fileSize: Int!
+  status: String!
+  documentTypeName: String!
+  createdAt: Timestamp!
+}
+
+"""
+A carrier document type a driver can tag an upload with in Dash.
+"""
+type PortalDocumentType {
+  id: ID!
+  code: String!
+  name: String!
+  color: String!
+}
+
+"""
 The signed-in driver's qualification-file view: license, medical, and other
 FMCSA compliance dates, plus their contact details. Compliance fields are
 read-only for drivers — only contact details are self-serviceable.
@@ -14662,6 +14685,23 @@ extend type Query {
   Driver-visible dispatch notes for one of the signed-in driver's loads.
   """
   myLoadComments(shipmentId: ID!): [PortalComment!]!
+  """
+  Documents on one of the signed-in driver's own loads.
+  """
+  myLoadDocuments(shipmentId: ID!): [PortalDocument!]!
+  """
+  The carrier's shipment document types (POD, BOL, ...) for tagging load uploads.
+  """
+  myLoadDocumentTypes: [PortalDocumentType!]!
+  """
+  The signed-in driver's own qualification-file documents.
+  """
+  myProfileDocuments: [PortalDocument!]!
+  """
+  The carrier's worker document types (CDL, medical card, ...) for tagging
+  qualification-file uploads.
+  """
+  myProfileDocumentTypes: [PortalDocumentType!]!
   myPeriodSummary: PortalPeriodSummary!
   myRecentPayEvents(limit: Int): [DriverPayEvent!]!
   mySettlements(limit: Int, offset: Int): MySettlementList!

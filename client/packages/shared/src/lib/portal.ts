@@ -1,30 +1,5 @@
 import { api } from "@trenova/shared/lib/api";
-
-export type PortalLoadDocument = {
-  id: string;
-  fileName: string;
-  fileSize: number;
-  status: string;
-  documentTypeName: string;
-  createdAt: number;
-};
-
-export type PortalShipmentDocumentType = {
-  id: string;
-  code: string;
-  name: string;
-  color: string;
-};
-
-export async function fetchPortalShipmentDocumentTypes() {
-  return api.get<PortalShipmentDocumentType[]>("/portal/document-types/");
-}
-
-export async function fetchMyLoadDocuments(shipmentId: string) {
-  return api.get<PortalLoadDocument[]>(
-    `/portal/loads/${encodeURIComponent(shipmentId)}/documents/`,
-  );
-}
+import type { PortalDocument } from "@trenova/shared/lib/graphql/driver-portal";
 
 export async function uploadMyLoadDocument(
   shipmentId: string,
@@ -36,18 +11,10 @@ export async function uploadMyLoadDocument(
   if (documentTypeId) {
     formData.append("documentTypeId", documentTypeId);
   }
-  return api.upload<PortalLoadDocument>(
+  return api.upload<PortalDocument>(
     `/portal/loads/${encodeURIComponent(shipmentId)}/documents/`,
     formData,
   );
-}
-
-export async function fetchPortalWorkerDocumentTypes() {
-  return api.get<PortalShipmentDocumentType[]>("/portal/profile/document-types/");
-}
-
-export async function fetchMyProfileDocuments() {
-  return api.get<PortalLoadDocument[]>("/portal/profile/documents/");
 }
 
 export async function uploadMyProfileDocument(file: File, documentTypeId?: string) {
@@ -56,13 +23,13 @@ export async function uploadMyProfileDocument(file: File, documentTypeId?: strin
   if (documentTypeId) {
     formData.append("documentTypeId", documentTypeId);
   }
-  return api.upload<PortalLoadDocument>("/portal/profile/documents/", formData);
+  return api.upload<PortalDocument>("/portal/profile/documents/", formData);
 }
 
 export async function uploadMyCredentialDocument(credentialId: string, file: File) {
   const formData = new FormData();
   formData.append("file", file);
-  return api.upload<PortalLoadDocument>(
+  return api.upload<PortalDocument>(
     `/portal/credentials/${encodeURIComponent(credentialId)}/document/`,
     formData,
   );

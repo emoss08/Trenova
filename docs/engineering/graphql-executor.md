@@ -120,7 +120,8 @@ type QueryResolver struct{ *Deps }
 ```
 
 The generator finds a package's dependencies by name. Any `x.Name` selector or `Name:` key in
-the package that matches a `Services` field adds it, so writing `r.ShipmentService` in a
+the package's non-test files that matches a `Services` field adds it (a test naming a service's
+own params field, like `driverportalservice.Params{DocumentService: …}`, adds nothing), so writing `r.ShipmentService` in a
 resolver method and running `task gqlgen` is all it takes. The list can include a field the
 package does not really use; that only widens the package's imports.
 
