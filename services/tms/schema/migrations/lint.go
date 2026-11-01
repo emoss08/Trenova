@@ -12,6 +12,7 @@ const (
 	RuleReconcile      = "reconcile-automatic"
 	RuleNoTxIdempotent = "notx-idempotent"
 	RuleTenantRLS      = "tenant-rls"
+	RuleTableRewrite   = "table-rewrite"
 )
 
 var (
@@ -30,6 +31,7 @@ func LintRules() []migrate.LintRule {
 		{Name: RuleReconcile, Check: byPointer(checkReconcile)},
 		{Name: RuleNoTxIdempotent, Check: byPointer(checkNoTxIdempotent)},
 		{Name: RuleTenantRLS, Check: byPointer(checkTenantRLS)},
+		{Name: RuleTableRewrite, Check: byPointer(checkTableRewrite)},
 	}
 }
 
@@ -113,6 +115,134 @@ func checkTenantRLS(m *migrate.Migration) []migrate.Finding {
 	}
 
 	return out
+}
+
+var (
+	alterTable = regexp.MustCompile(
+		`(?i)\balter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?((?:"?[a-z0-9_]+"?\.)?"?[a-z0-9_]+"?)`,
+	)
+	addColumn = regexp.MustCompile(
+		`(?is)^\s*add\s+(?:column\s+)?(?:if\s+not\s+exists\s+)?("?[a-z0-9_]+"?)\s+(.*)$`,
+	)
+	addOther = regexp.MustCompile(
+		`(?i)^\s*add\s+(?:constraint|primary|unique|check|foreign|exclude)\b`,
+	)
+	serialType     = regexp.MustCompile(`(?i)^(?:small|big)?serial[248]?\b`)
+	identityColumn = regexp.MustCompile(
+		`(?i)\bgenerated\s+(?:always|by\s+default)\s+as\s+identity\b`,
+	)
+	storedColumn    = regexp.MustCompile(`(?i)\bgenerated\s+always\s+as\b[\s\S]*\bstored\b`)
+	volatileDefault = regexp.MustCompile(
+		`(?i)\bdefault\b[\s\S]*\b(gen_random_uuid|uuid_generate_v1(?:mc)?|uuid_generate_v4|uuidv4|uuidv7|random|clock_timestamp|timeofday|nextval)\s*\(`,
+	)
+)
+
+type sqlSpan struct {
+	text  string
+	start int
+}
+
+func checkTableRewrite(m *migrate.Migration) []migrate.Finding {
+	code := codeOnly(m.SQL)
+	created := map[string]int{}
+	for _, loc := range createTable.FindAllStringSubmatchIndex(code, -1) {
+		name := normalTable(code[loc[2]:loc[3]])
+		if _, ok := created[name]; !ok {
+			created[name] = loc[0]
+		}
+	}
+
+	var out []migrate.Finding
+	for _, loc := range alterTable.FindAllStringSubmatchIndex(code, -1) {
+		table := code[loc[2]:loc[3]]
+		if at, ok := created[normalTable(table)]; ok && at < loc[0] {
+			continue
+		}
+
+		for _, action := range splitTopLevel(code, loc[1]) {
+			column, why, ok := rewritingColumn(action.text)
+			if !ok {
+				continue
+			}
+			out = append(out, migrate.Finding{
+				Line:     lineOf(code, action.start),
+				Severity: migrate.SeverityWarning,
+				Message: fmt.Sprintf(
+					"adding %s to %s with %s rewrites every row under an ACCESS EXCLUSIVE lock; "+
+						"add a plain nullable column, backfill it in batches and keep it "+
+						"current from the write path or a trigger",
+					column, table, why,
+				),
+			})
+		}
+	}
+
+	return out
+}
+
+func rewritingColumn(action string) (column, why string, ok bool) {
+	if addOther.MatchString(action) {
+		return "", "", false
+	}
+	match := addColumn.FindStringSubmatch(action)
+	if match == nil {
+		return "", "", false
+	}
+
+	def := match[2]
+	switch {
+	case serialType.MatchString(def):
+		return match[1], "a serial type", true
+	case identityColumn.MatchString(def):
+		return match[1], "an identity", true
+	case storedColumn.MatchString(def):
+		return match[1], "a stored generated expression", true
+	}
+	if fn := volatileDefault.FindStringSubmatch(def); fn != nil {
+		return match[1], fmt.Sprintf("the volatile default %s()", strings.ToLower(fn[1])), true
+	}
+
+	return "", "", false
+}
+
+func splitTopLevel(code string, from int) []sqlSpan {
+	var out []sqlSpan
+	depth, start, inString := 0, from, false
+	for i := from; i < len(code); i++ {
+		c := code[i]
+		switch {
+		case inString:
+			if c == '\'' {
+				inString = false
+			}
+		case c == '\'':
+			inString = true
+		case c == '(':
+			depth++
+		case c == ')':
+			depth--
+		case depth == 0 && (c == ',' || c == ';'):
+			out = append(out, trimmedSpan(code, start, i))
+			if c == ';' {
+				return out
+			}
+			start = i + 1
+		}
+	}
+
+	return append(out, trimmedSpan(code, start, len(code)))
+}
+
+func trimmedSpan(code string, start, end int) sqlSpan {
+	text := strings.TrimLeft(code[start:end], " \t\r\n")
+
+	return sqlSpan{text: text, start: end - len(text)}
+}
+
+func normalTable(name string) string {
+	_, table := splitTableName(name)
+
+	return strings.ToLower(table)
 }
 
 var (
