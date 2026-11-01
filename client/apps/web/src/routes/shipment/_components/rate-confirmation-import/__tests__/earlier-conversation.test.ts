@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { earlierConversation } from "../earlier-conversation";
 
 /*
- * GET /documents/:id/import-assistant/history/ reads the legacy
+ * The documentImportAssistantHistory query reads the legacy
  * shipment_import_chat_* tables for one release. Active conversations were
  * carried into the page's thread by 20261231006560, so only a finished one is
  * shown from here; showing an active one would repeat the thread.

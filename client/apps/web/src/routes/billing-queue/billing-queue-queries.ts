@@ -166,10 +166,14 @@ export function laneTotal(data: { pages: BillingQueueItemConnection[] } | undefi
 export function shipmentDocumentsQuery(shipmentId: string) {
   return {
     queryKey: ["documents", "shipment", shipmentId, "includeDocumentType"] as const,
-    queryFn: () =>
-      apiService.documentService.getByResource("shipment", shipmentId, undefined, {
-        includeDocumentType: "true",
-      }),
+    queryFn: ({ signal }: { signal: AbortSignal }) =>
+      apiService.documentService.getByResource(
+        "shipment",
+        shipmentId,
+        undefined,
+        { includeDocumentType: true },
+        { signal },
+      ),
   };
 }
 

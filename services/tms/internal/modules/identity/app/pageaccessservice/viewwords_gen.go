@@ -406,7 +406,7 @@ var linkedFrom = map[string][]string{
 	"commodity":                   {"shipment"},
 	"customer":                    {"customer_payment", "distance_override", "document_template", "factoring_noa", "factoring_submission", "inbound_message", "invoice", "invoice_dispute", "order", "shipment"},
 	"customer_payment":            {"invoice"},
-	"document_type":               {"customer", "factoring_agreement"},
+	"document_type":               {"customer", "document", "factoring_agreement"},
 	"edi":                         {"customer"},
 	"equipment_manufacturer":      {"tractor", "trailer"},
 	"equipment_type":              {"carrier", "tractor", "trailer"},

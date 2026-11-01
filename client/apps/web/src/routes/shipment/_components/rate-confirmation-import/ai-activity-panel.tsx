@@ -145,7 +145,8 @@ export default function AIActivityPanel({
 
   const historyQuery = useQuery({
     queryKey: ["import-assistant-history", documentId],
-    queryFn: () => apiService.documentService.getImportAssistantHistory(documentId),
+    queryFn: ({ signal }) =>
+      apiService.documentService.getImportAssistantHistory(documentId, { signal }),
     staleTime: Number.POSITIVE_INFINITY,
     retry: false,
   });

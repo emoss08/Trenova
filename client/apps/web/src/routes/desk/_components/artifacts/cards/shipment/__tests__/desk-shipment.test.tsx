@@ -894,9 +894,13 @@ describe("DeskShipment", () => {
     await scrollToDocuments(container);
 
     const pod = await screen.findByRole("link", { name: /Proof of delivery/ });
-    expect(documentService.getByResource).toHaveBeenCalledWith("shipment", "shp_1", "", {
-      includeDocumentType: "true",
-    });
+    expect(documentService.getByResource).toHaveBeenCalledWith(
+      "shipment",
+      "shp_1",
+      "",
+      { includeDocumentType: true },
+      { signal: expect.any(AbortSignal) },
+    );
     expect(pod).toHaveAttribute("href", documentContentUrl("doc_pod", "view"));
     expect(pod).toHaveAttribute("target", "_blank");
     expect(within(pod).getByText("POD")).toBeInTheDocument();

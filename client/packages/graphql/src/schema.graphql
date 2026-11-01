@@ -3652,6 +3652,17 @@ input AcknowledgeMyPolicyInput {
   signatureName: String
 }
 
+input ActiveInsightsInput {
+  """Drops findings outside these categories; empty keeps every category."""
+  categories: [InsightCategory!]
+  """At most 25; empty or zero is the widget's default."""
+  limit: Int
+  """
+  The page asking for its own slice; empty is the home screen's full view.
+  """
+  surface: InsightSurface
+}
+
 input AddCarrierSettlementAdjustmentInput {
   amountMinor: Int!
   description: String!
@@ -7189,6 +7200,11 @@ enum AssignmentStatus {
   New
 }
 
+input AttachDocumentToShipmentInput {
+  documentId: ID!
+  shipmentId: ID!
+}
+
 input AttachPayEventsInput {
   payEventIds: [ID!]!
   settlementId: ID!
@@ -7846,6 +7862,16 @@ type BriefingWithheldSection {
   """
   partial: Boolean!
   title: String!
+}
+
+input BrowseInsightsInput {
+  categories: [InsightCategory!]
+  """At most 100."""
+  limit: Int
+  """At most 10,000."""
+  offset: Int
+  severities: [InsightSeverity!]
+  statuses: [InsightStatus!]
 }
 
 input BulkAssignTrainingInput {
@@ -13309,6 +13335,12 @@ input DismissAccountingDriftInput {
   note: String!
 }
 
+input DismissInsightInput {
+  insightId: ID!
+  """Why the finding was not worth acting on; optional."""
+  reason: String
+}
+
 input DispatchAssignMoveInput {
   moveId: ID!
   primaryWorkerId: ID!
@@ -13846,6 +13878,69 @@ type DistanceProfileEdge {
   node: DistanceProfile!
 }
 
+"""
+A stored file attached to a record, with its versions, review, signature and delivery facts.
+"""
+type Document {
+  approvedAt: Timestamp
+  approvedById: ID
+  businessUnitId: ID!
+  checksumSha256: String
+  contentError: String
+  contentStatus: DocumentContentStatus!
+  createdAt: Timestamp!
+  deliveryFacts: DocumentDeliveryFacts
+  description: String
+  detectedKind: String
+  """
+  Loaded only where the read asks for it (documentsByResource includeDocumentType).
+  """
+  documentType: DocumentType
+  documentTypeId: ID
+  expirationDate: Timestamp
+  fileName: String!
+  fileSize: Int!
+  fileType: String!
+  hasExtractedText: Boolean!
+  id: ID!
+  isCurrentVersion: Boolean!
+  isPublic: Boolean!
+  lineageId: ID!
+  organizationId: ID!
+  originalName: String!
+  previewStatus: DocumentPreviewStatus!
+  previewStoragePath: String
+  processingProfile: String!
+  rejectedAt: Timestamp
+  rejectedById: ID
+  rejectionReason: String
+  resourceId: String!
+  resourceType: String!
+  shipmentDraftStatus: DocumentShipmentDraftStatus!
+  """Extraction or Person; empty while nothing has read the signature."""
+  signatureSource: String
+  signatureStatus: DocumentSignatureStatus!
+  signatureUpdatedAt: Timestamp
+  signatureUpdatedById: ID
+  signedAt: Timestamp
+  status: DocumentStatus!
+  storageLegalHold: Boolean!
+  storagePath: String!
+  storageRetentionMode: String
+  storageRetentionUntil: Timestamp
+  storageVersionId: String
+  tags: [String!]
+  updatedAt: Timestamp!
+  uploadedById: ID!
+  version: Int!
+  versionNumber: Int!
+}
+
+type DocumentBulkDeleteResult {
+  deletedCount: Int!
+  errorCount: Int!
+}
+
 enum DocumentCategory {
   Branding
   Contract
@@ -13862,6 +13957,180 @@ enum DocumentClassification {
   Public
   Regulatory
   Sensitive
+}
+
+"""The text and classification extraction read from a document."""
+type DocumentContent {
+  businessUnitId: ID!
+  classificationConfidence: Float!
+  contentText: String
+  createdAt: Timestamp!
+  detectedDocumentKind: String
+  detectedLanguage: String
+  documentId: ID!
+  failureCode: String
+  failureMessage: String
+  id: ID!
+  lastExtractedAt: Timestamp
+  organizationId: ID!
+  pageCount: Int!
+  pages: [DocumentContentPage!]
+  sourceKind: String
+  status: String!
+  """
+  The intelligence payload extraction produced: kind, fields, stops, conflicts and diagnostics.
+  """
+  structuredData: JSON
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+"""One page of a document's extracted text."""
+type DocumentContentPage {
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  documentContentId: ID!
+  documentId: ID!
+  extractedText: String
+  height: Int!
+  id: ID!
+  metadata: JSON
+  ocrConfidence: Float!
+  organizationId: ID!
+  pageNumber: Int!
+  preprocessingApplied: Boolean!
+  sourceKind: String!
+  updatedAt: Timestamp!
+  version: Int!
+  width: Int!
+}
+
+enum DocumentContentStatus {
+  Extracted
+  Extracting
+  Failed
+  Indexed
+  Pending
+}
+
+"""
+What a delivery document or receipt says, recorded by a person or read by Nova.
+"""
+type DocumentDeliveryFacts {
+  amount: Decimal
+  arrivedAt: Timestamp
+  chargeId: ID
+  chargeLabel: String!
+  departedAt: Timestamp
+  """None, Over, Short or Damaged; empty when nothing was recorded."""
+  osd: String!
+  osdNote: String!
+  pieces: String!
+  readFields: [String!]
+  reference: String!
+  seal: String!
+  signedBy: String!
+  """Person or Agent; empty when nothing was recorded."""
+  source: String!
+  updatedAt: Timestamp!
+  updatedById: ID
+}
+
+input DocumentDeliveryFactsInput {
+  amount: Decimal
+  arrivedAt: Timestamp
+  chargeId: ID
+  chargeLabel: String
+  departedAt: Timestamp
+  osd: DocumentDeliveryOsd
+  osdNote: String
+  pieces: String
+  reference: String
+  seal: String
+  signedBy: String
+}
+
+"""Over, short or damaged freight a delivery document records."""
+enum DocumentDeliveryOsd {
+  Damaged
+  None
+  Over
+  Short
+}
+
+"""
+Whether documents can be read on this server: a model provider and a converter are both needed.
+"""
+type DocumentExtractionStatus {
+  converterAvailable: Boolean!
+  extractionAvailable: Boolean!
+  modelProviderAvailable: Boolean!
+  modelProviderReason: String!
+}
+
+"""
+A finished import assistant conversation from before the assistant moved onto the shared runtime.
+"""
+type DocumentImportAssistantHistory {
+  conversationId: String!
+  documentId: String!
+  lastMessageAt: Timestamp
+  messages: [DocumentImportAssistantMessage!]
+  """Active, Completed or Superseded; empty when no conversation was kept."""
+  status: String!
+  statusReason: String!
+  turnCount: Int!
+  updatedAt: Timestamp!
+}
+
+type DocumentImportAssistantMessage {
+  createdAt: Timestamp!
+  id: String!
+  role: String!
+  suggestions: [DocumentImportAssistantSuggestion!]
+  text: String!
+  toolCalls: [DocumentImportAssistantToolCall!]
+}
+
+type DocumentImportAssistantSuggestion {
+  action: String!
+  label: String!
+  placeholder: String!
+  prompt: String!
+  submitLabel: String!
+  type: String!
+}
+
+type DocumentImportAssistantToolCall {
+  callId: String!
+  input: String!
+  name: String!
+  output: String!
+  status: String!
+}
+
+"""Where one packet rule stands on a record."""
+enum DocumentPacketItemStatus {
+  Complete
+  Expired
+  ExpiringSoon
+  Missing
+  NeedsReview
+}
+
+"""One packet rule on a record and the current documents that satisfy it."""
+type DocumentPacketItemSummary {
+  allowMultiple: Boolean!
+  currentDocumentIds: [ID!]!
+  displayOrder: Int!
+  documentCount: Int!
+  documentTypeCode: String!
+  documentTypeId: ID!
+  documentTypeName: String!
+  expirationRequired: Boolean!
+  expirationWarningDays: Int!
+  required: Boolean!
+  status: DocumentPacketItemStatus!
 }
 
 type DocumentPacketRule {
@@ -13893,6 +14162,96 @@ type DocumentPacketRuleConnection {
 type DocumentPacketRuleEdge {
   cursor: String!
   node: DocumentPacketRule!
+}
+
+input DocumentPacketRuleInput {
+  allowMultiple: Boolean!
+  displayOrder: Int!
+  documentTypeId: ID!
+  expirationRequired: Boolean!
+  expirationWarningDays: Int!
+  required: Boolean!
+  resourceType: String!
+  version: Int
+}
+
+"""
+Whether a record's document packet is complete, judged by its packet rules.
+"""
+enum DocumentPacketStatus {
+  Complete
+  Expired
+  ExpiringSoon
+  Incomplete
+  NeedsReview
+}
+
+"""A record's document packet judged against its packet rules."""
+type DocumentPacketSummary {
+  expired: Int!
+  expiringSoon: Int!
+  items: [DocumentPacketItemSummary!]!
+  missingRequired: Int!
+  needsReview: Int!
+  resourceId: String!
+  resourceType: String!
+  satisfiedRules: Int!
+  status: DocumentPacketStatus!
+  totalRules: Int!
+}
+
+enum DocumentPreviewStatus {
+  Failed
+  Pending
+  Ready
+  Unsupported
+}
+
+"""
+The shipment extraction drafted from a document, and the shipment it was attached to.
+"""
+type DocumentShipmentDraft {
+  attachedAt: Timestamp
+  attachedById: ID
+  attachedShipmentId: ID
+  businessUnitId: ID!
+  confidence: Float!
+  createdAt: Timestamp!
+  documentId: ID!
+  documentKind: String
+  """The drafted shipment: fields, stops, conflicts and what is missing."""
+  draftData: JSON
+  failureCode: String
+  failureMessage: String
+  id: ID!
+  organizationId: ID!
+  status: String!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+enum DocumentShipmentDraftStatus {
+  Failed
+  Pending
+  Ready
+  Unavailable
+}
+
+"""Whether a document carries the signature its type needs."""
+enum DocumentSignatureStatus {
+  Signed
+  Unknown
+  Unsigned
+}
+
+enum DocumentStatus {
+  Active
+  Archived
+  Draft
+  Expired
+  Pending
+  PendingApproval
+  Rejected
 }
 
 type DocumentTemplate {
@@ -14199,6 +14558,16 @@ input DocumentTypeInput {
   documentClassification: DocumentClassification!
   name: String!
   version: Int
+}
+
+input DocumentsByResourceInput {
+  includeDocumentType: Boolean
+  """
+  Searches the documents' extracted text; empty lists every current document.
+  """
+  query: String
+  resourceId: String!
+  resourceType: String!
 }
 
 input DraftFactoringNoaInput {
@@ -20718,10 +21087,270 @@ enum InjuryTreatment {
   None
 }
 
+"""
+A finding an insight detector computed from the organization's data, with generated prose.
+"""
+type Insight {
+  businessUnitId: ID!
+  category: InsightCategory!
+  createdAt: Timestamp!
+  dedupeKey: String!
+  detectedAt: Timestamp!
+  detectorKey: String!
+  dismissReason: String!
+  dismissedAt: Timestamp
+  dismissedById: ID
+  headline: String!
+  id: ID!
+  links: [InsightLink!]
+  metrics: [InsightMetric!]
+  modelIdentifier: String!
+  """
+  Whether a model wrote the prose; false when it is the detector's own wording.
+  """
+  narrated: Boolean!
+  narrative: String!
+  organizationId: ID!
+  providerId: ID
+  recommendation: String!
+  severity: InsightSeverity!
+  """When these numbers stop being worth trusting."""
+  staleAt: Timestamp!
+  status: InsightStatus!
+  subject: String!
+  updatedAt: Timestamp!
+  version: Int!
+  windowEnd: Timestamp!
+  windowStart: Timestamp!
+}
+
+"""What an operational insight is about."""
+enum InsightCategory {
+  CashFlow
+  Compliance
+  CostLeakage
+  ServiceQuality
+}
+
+"""
+One finding with the earlier readings of the same finding and the rule behind it.
+"""
+type InsightDetail {
+  explanation: InsightExplanation!
+  history: [Insight!]
+  insight: Insight!
+}
+
+"""Which way a metric moving is bad news."""
+enum InsightDirection {
+  HigherIsWorse
+  LowerIsWorse
+  Neutral
+}
+
+"""
+What a detector measures, the threshold it raises a finding at and what it leaves out.
+"""
+type InsightExplanation {
+  excludes: String!
+  measures: String!
+  threshold: String!
+}
+
+"""A link from an insight to the records behind it."""
+type InsightLink {
+  count: Int!
+  label: String!
+  path: String!
+}
+
+"""One figure a detector computed, with the baseline it is compared to."""
+type InsightMetric {
+  baseline: Decimal
+  baselineLabel: String!
+  direction: InsightDirection!
+  key: String!
+  label: String!
+  unit: InsightUnit!
+  value: Decimal!
+}
+
+"""A page of insights, newest first."""
+type InsightPage {
+  results: [Insight!]!
+  total: Int!
+  """
+  Whether total was counted; false when it is the planner's estimate of a list too large to count.
+  """
+  totalExact: Boolean!
+}
+
+enum InsightSeverity {
+  Critical
+  Info
+  Warning
+}
+
+"""
+Where an insight is in its life: active, dismissed by a person, resolved, or replaced by a newer reading.
+"""
+enum InsightStatus {
+  Active
+  Dismissed
+  Resolved
+  Superseded
+}
+
+"""A page that shows only its own slice of insights."""
+enum InsightSurface {
+  Accounting
+  Dispatch
+  Fleet
+  Shipments
+}
+
+enum InsightUnit {
+  Count
+  Currency
+  Days
+  Hours
+  Miles
+  Percent
+}
+
 enum InspectionResult {
   Fail
   OutOfService
   Pass
+}
+
+type IntegrationCatalog {
+  items: [IntegrationCatalogItem!]!
+}
+
+"""
+An integration the organization can connect, and whether it is connected.
+"""
+type IntegrationCatalogItem {
+  category: String!
+  categoryLabel: String!
+  color: String!
+  configSpec: [IntegrationConfigFieldSpec!]
+  configured: Boolean!
+  description: String!
+  docsUrl: String!
+  enabled: Boolean!
+  featured: Boolean!
+  glowFrom: String!
+  glowTo: String!
+  links: [IntegrationCatalogLink!]!
+  logoDarkUrl: String!
+  logoLightUrl: String!
+  logoUrl: String!
+  name: String!
+  primaryActionLabel: String!
+  sortOrder: Int!
+  status: IntegrationCatalogStatus!
+  supportsTestConnect: Boolean!
+  type: IntegrationType!
+  websiteUrl: String!
+}
+
+type IntegrationCatalogLink {
+  """docs, website, support or api."""
+  kind: String!
+  label: String!
+  url: String!
+}
+
+type IntegrationCatalogStatus {
+  """configured or needs_setup."""
+  configuration: String!
+  configurationLabel: String!
+  """connected or disconnected."""
+  connection: String!
+  connectionLabel: String!
+}
+
+"""An integration's saved configuration, with sensitive values withheld."""
+type IntegrationConfig {
+  enabled: Boolean!
+  fields: [IntegrationConfigFieldValue!]!
+  spec: [IntegrationConfigFieldSpec!]!
+  type: IntegrationType!
+  updatedAt: Timestamp!
+}
+
+"""One setting an integration's configuration form asks for."""
+type IntegrationConfigFieldSpec {
+  default: String!
+  helpText: String!
+  key: String!
+  label: String!
+  options: [String!]
+  placeholder: String!
+  required: Boolean!
+  """A sensitive value is never read back; only whether it is set."""
+  sensitive: Boolean!
+  """string, url, password, select, boolean, number or multi-select."""
+  type: String!
+}
+
+"""
+One saved setting. A sensitive one carries no value, only whether it is set.
+"""
+type IntegrationConfigFieldValue {
+  hasValue: Boolean!
+  key: String!
+  value: String!
+}
+
+input IntegrationConfigValueInput {
+  key: String!
+  value: String!
+}
+
+type IntegrationConnectionTest {
+  checkedAt: Timestamp!
+  provider: IntegrationType!
+  success: Boolean!
+}
+
+"""
+What the browser needs to use an integration, such as the Google Maps browser key.
+"""
+type IntegrationRuntimeConfig {
+  """Only the client-safe settings of a ready integration, by key."""
+  config: JSON!
+  configured: Boolean!
+  enabled: Boolean!
+  missingRequiredFields: [String!]!
+  ready: Boolean!
+}
+
+"""An outside system the organization can connect Trenova to."""
+enum IntegrationType {
+  AmazonSES
+  BusinessCentral
+  CarrierOK
+  ComdataFuel
+  EIAFuelPrices
+  FMCSAQCMobile
+  GoogleMaps
+  HERE
+  Mailgun
+  NetSuite
+  OANDAExchangeRates
+  OpenWeatherMap
+  PCMiler
+  Postmark
+  QuickBooksOnline
+  RampFuel
+  Resend
+  Samsara
+  SendGrid
+  WEXFuel
+  Xero
 }
 
 input InviteWorkerToPortalInput {
@@ -22501,6 +23130,7 @@ type Mutation {
   approveCaptureDevicePairing(deviceName: String, userCode: String!): Boolean!
   approveCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   approveDetentionOccurrence(occurrenceId: ID!): DetentionOccurrence!
+  approveDocument(documentId: ID!): Document!
   approveDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   """
   Approves a pending adjustment and executes it: credit memo, rebill, and postings.
@@ -22551,6 +23181,7 @@ type Mutation {
   assignWorkerPtoPolicy(input: AssignWorkerPTOPolicyInput!): AssignWorkerPTOPolicyPayload! @authorizes(resource: "pto_policy")
   assignWorkerShift(input: AssignShiftInput!): WorkerShiftAssignment!
   assignWorkerTraining(input: AssignWorkerTrainingInput!): WorkerTrainingRecord!
+  attachDocumentToShipment(input: AttachDocumentToShipmentInput!): Document!
   attachOrderShipments(orderId: ID!, shipmentIds: [ID!]!): Order!
   """Transfer accrued pay events onto a draft settlement."""
   attachPayEventsToSettlement(input: AttachPayEventsInput!): DriverSettlement!
@@ -22572,6 +23203,7 @@ type Mutation {
   """
   blockInboundSender(messageId: ID!): InboundMessage!
   bulkAssignTraining(input: BulkAssignTrainingInput!): BulkAssignTrainingPayload!
+  bulkDeleteDocuments(ids: [ID!]!): DocumentBulkDeleteResult!
   """
   Run one lifecycle action across many settlements; per-settlement failures don't abort the rest.
   """
@@ -22699,6 +23331,7 @@ type Mutation {
   createCustomer(input: CustomerInput!): Customer!
   createDeskMemory(input: CreateDeskMemoryInput!): DeskMemory!
   createDetentionPolicy(input: DetentionPolicyInput!): DetentionPolicy!
+  createDocumentPacketRule(input: DocumentPacketRuleInput!): DocumentPacketRule!
   createDocumentTemplate(input: DocumentTemplateInput!): DocumentTemplate!
   createDocumentTemplateVersion(input: CreateDocumentTemplateVersionInput!): DocumentTemplateVersion!
   createDocumentType(input: DocumentTypeInput!): DocumentType!
@@ -22837,6 +23470,8 @@ type Mutation {
   deleteCaptureProfile(id: ID!): Boolean!
   deleteCarrierCapacityPosting(id: ID!, version: Int!): Boolean!
   deleteDetentionPolicy(id: ID!): Boolean!
+  deleteDocument(id: ID!): Boolean!
+  deleteDocumentPacketRule(id: ID!): Boolean!
   deleteDocumentTemplate(id: ID!): Boolean!
   deleteDocumentTemplateVersion(id: ID!): Boolean!
   deleteEmploymentVerification(id: ID!): Boolean!
@@ -22878,6 +23513,8 @@ type Mutation {
   Remove a pay event from a draft settlement, returning it to the unsettled pool.
   """
   detachPayEventFromSettlement(input: DetachPayEventInput!): DriverSettlement!
+  """Compares workers with Samsara and stores the drift found."""
+  detectSamsaraWorkerSyncDrift: SamsaraWorkerSyncDriftReport!
   detentionBacktest(input: DetentionBacktestInput!): DetentionBacktestResult!
   """Throws away everything in a stack that is not already filed."""
   discardCaptureBatch(id: ID!, version: Int!): CaptureBatch!
@@ -22911,6 +23548,8 @@ type Mutation {
   dismissAgentOrganizationProfileGuidance(id: ID!): AgentProfileGuidance!
   """Turns down a memory an agent offered; nothing is kept."""
   dismissDeskMemory(id: ID!): DeskMemory!
+  """Dismisses an active finding for everyone in the organization."""
+  dismissInsight(input: DismissInsightInput!): Insight!
   dismissMyNotifications(ids: [ID!]!): Boolean!
   dismissNotifications(ids: [ID!]!): Boolean!
   """Takes an item off the feed without touching the record behind it."""
@@ -23054,6 +23693,12 @@ type Mutation {
   markWatchtowerSeen(seenAt: Timestamp): WatchtowerCounts!
   markWorkerChecklistItemNotApplicable(input: WorkerChecklistItemActionInput!): WorkerChecklist!
   notifyShipmentDelay(input: NotifyShipmentDelayInput!): Boolean!
+  """
+  Opens, or returns, the caller's conversation with the shipment import assistant about one
+  document. The payload is the assistant runtime's page thread (thread and agent), read by the
+  same parser as the assistant's own routes.
+  """
+  openDocumentImportAssistantThread(documentId: ID!): Any!
   openEscrowAccount(input: OpenEscrowAccountInput!): EscrowAccount!
   """
   Opens a dispute on a posted invoice; the invoice reads Disputed until it closes.
@@ -23160,6 +23805,10 @@ type Mutation {
   """
   redateAccountingSync(id: ID!): AccountingSyncRecord!
   """
+  Reads a document again, replacing its shipment draft and archiving its import assistant conversation.
+  """
+  reextractDocument(documentId: ID!): Boolean!
+  """
   Converts each case's original file through Docling and freezes the result beside the case for runs that choose the docling text source.
   """
   refreezeExtractionEvalCases(input: RefreezeExtractionEvalCasesInput!): ExtractionEvalRefreeze!
@@ -23185,6 +23834,7 @@ type Mutation {
   rejectAccountingMapping(id: ID!): AccountingMapping!
   rejectCarrierInvoiceMatch(input: CarrierInvoiceMatchActionInput!): CarrierInvoiceMatch!
   rejectCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
+  rejectDocument(input: RejectDocumentInput!): Document!
   rejectDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   """Rejects a pending adjustment; the invoice stays as posted."""
   rejectInvoiceAdjustment(input: RejectInvoiceAdjustmentInput!): InvoiceAdjustment!
@@ -23233,6 +23883,10 @@ type Mutation {
   Sets the routing order: the first ID takes work first. Every provider must be listed once.
   """
   reorderAIProviders(ids: [ID!]!): [AIProvider!]!
+  """
+  Rewrites the Samsara drivers of the given workers to match Trenova; empty repairs every drifted worker.
+  """
+  repairSamsaraWorkerSyncDrift(workerIds: [String!]): SamsaraWorkerSyncDriftRepair!
   """
   Replays a case against its agent as it is now, writes simulated, and scores it.
   """
@@ -23292,6 +23946,10 @@ type Mutation {
   restoreAIProviderFailure(providerId: ID!): Boolean!
   """Brings a put-away tune-up back."""
   restoreAITuneUp(id: ID!, version: Int!): AITuneUp!
+  """Makes an earlier version of a document its current version."""
+  restoreDocumentVersion(documentId: ID!): Document!
+  """Undoes a dismissal."""
+  restoreInsight(id: ID!): Insight!
   restoreMyNotifications(ids: [ID!]!): Boolean!
   restoreNotifications(ids: [ID!]!): Boolean!
   restorePerformanceReviewTemplate(id: ID!, version: Int): PerformanceReviewTemplate!
@@ -23431,6 +24089,8 @@ type Mutation {
   Active resumes or brings back a forgotten memory, Paused sets it aside, Retired forgets it.
   """
   setDeskMemoryStatus(id: ID!, status: AgentMemoryStatus!): DeskMemory!
+  setDocumentDeliveryFacts(input: SetDocumentDeliveryFactsInput!): Document!
+  setDocumentSignature(input: SetDocumentSignatureInput!): Document!
   """
   Seals and stores the key a Resend mailbox reads message bodies and attachments with: a full access re_ key.
   """
@@ -23493,6 +24153,8 @@ type Mutation {
   Marks one of the signed-in driver's courses in progress and returns the link.
   """
   startMyTraining(id: ID!): PortalTraining!
+  """Starts linking every active worker to a Samsara driver."""
+  startSamsaraWorkerSync: SamsaraWorkerSyncRun!
   """Moves an open dispute into review (back office)."""
   startSettlementDisputeReview(id: ID!): SettlementDispute!
   """
@@ -23523,6 +24185,10 @@ type Mutation {
   Connects with the saved settings without sending anything, and records the result.
   """
   testFactoringTransport(factoringCompanyId: ID!): FactoringTransportTestResult!
+  """
+  Tests an integration's saved credentials and records the connection status.
+  """
+  testIntegrationConnection(type: IntegrationType!): IntegrationConnectionTest!
   """
   Tightens an agent's instructions (at most 20000 characters) without changing
   what they ask for. Saves nothing. Needs permission to create or update agents.
@@ -23591,6 +24257,7 @@ type Mutation {
   """Updates the org's Dash feature toggles (back office)."""
   updateDashControl(input: UpdateDashControlInput!): DashControl!
   updateDetentionPolicy(id: ID!, input: DetentionPolicyInput!): DetentionPolicy!
+  updateDocumentPacketRule(id: ID!, input: DocumentPacketRuleInput!): DocumentPacketRule!
   updateDocumentTemplate(id: ID!, input: DocumentTemplateInput!): DocumentTemplate!
   updateDocumentTemplateVersion(id: ID!, input: DocumentTemplateVersionInput!): DocumentTemplateVersion!
   updateDocumentType(id: ID!, input: DocumentTypeInput!): DocumentType!
@@ -23630,6 +24297,7 @@ type Mutation {
   Changes a mailbox's settings. Changing its provider clears the signing secret and the API key.
   """
   updateInboundMailbox(id: ID!, input: InboundMailboxInput!, version: Int!): InboundMailbox!
+  updateIntegrationConfig(input: UpdateIntegrationConfigInput!): IntegrationConfig!
   updateJobPosition(input: UpdateJobPositionInput!): JobPosition!
   updateLeaveCase(input: UpdateLeaveCaseInput!): WorkerLeaveCase!
   updateLeaveControl(input: UpdateLeaveControlInput!): LeaveControl!
@@ -25776,6 +26444,10 @@ type Query {
     """The accounting system, such as QuickBooksOnline or Xero."""
     integrationType: AccountingSystem!
   ): AccountingSyncSummary!
+  """
+  The active findings the reader may see: the home widget's and a page's read.
+  """
+  activeInsights(input: ActiveInsightsInput): [Insight!]!
   activePerformanceReviewTemplates: [PerformanceReviewTemplate!]!
   activeTrainingCourses: [TrainingCourse!]!
   activeWorkerChecklistTemplates: [WorkerChecklistTemplate!]!
@@ -26174,8 +26846,18 @@ type Query {
   distanceOverrides(input: DataTableConnectionInput!): DistanceOverrideConnection!
   distanceProfile(id: ID!): DistanceProfile
   distanceProfiles(input: DataTableConnectionInput!): DistanceProfileConnection!
+  document(id: ID!): Document
+  documentContent(documentId: ID!): DocumentContent!
+  documentExtractionStatus: DocumentExtractionStatus!
+  documentImportAssistantHistory(documentId: ID!): DocumentImportAssistantHistory!
   documentPacketRule(id: ID!): DocumentPacketRule
   documentPacketRules(input: DataTableConnectionInput!): DocumentPacketRuleConnection!
+  documentPacketSummary(resourceId: String!, resourceType: String!): DocumentPacketSummary!
+  """
+  Each value read from the document with the page and box it was found in: the extraction card's payload.
+  """
+  documentReading(documentId: ID!): JSON!
+  documentShipmentDraft(documentId: ID!): DocumentShipmentDraft!
   documentTemplate(id: ID!): DocumentTemplate
   documentTemplateAssignments(input: DataTableConnectionInput!): DocumentTemplateAssignmentConnection!
   """
@@ -26186,6 +26868,10 @@ type Query {
   documentTemplates(input: DataTableConnectionInput!): DocumentTemplateConnection!
   documentType(id: ID!): DocumentType
   documentTypes(input: DataTableConnectionInput!): DocumentTypeConnection!
+  """Every version of a document's lineage, newest first."""
+  documentVersions(documentId: ID!): [Document!]!
+  """The current documents attached to one record."""
+  documentsByResource(input: DocumentsByResourceInput!): [Document!]!
   dotRandomDraw(id: ID!): DOTRandomDraw! @authorizes(resource: "dot_random_pool")
   """Random selection rounds, newest first: one pool's, or every pool's."""
   dotRandomDraws(
@@ -26431,6 +27117,20 @@ type Query {
   inboundSenderProfile(messageId: ID!): InboundSenderProfile!
   """The messages in one thread, oldest first."""
   inboundThread(threadKey: String!): [InboundMessage!]!
+  """
+  One finding the reader may see, with its history; a finding the reader may not see is not found.
+  """
+  insight(id: ID!): InsightDetail!
+  """
+  Every finding the reader may see, a page at a time, filtered by lifecycle.
+  """
+  insights(input: BrowseInsightsInput!): InsightPage!
+  integrationCatalog: IntegrationCatalog!
+  integrationConfig(type: IntegrationType!): IntegrationConfig!
+  """
+  Readable by every signed-in person: only an integration's client-safe settings, such as the Google Maps browser key.
+  """
+  integrationRuntimeConfig(type: IntegrationType!): IntegrationRuntimeConfig!
   invoice(id: ID!): Invoice
   invoiceAdjustment(id: ID!): InvoiceAdjustment
   """Adjustments whose policy holds them for finance approval."""
@@ -26775,6 +27475,9 @@ type Query {
   rota(filter: RotaFilterInput): Rota!
   routingGuide(id: ID!): RoutingGuide
   routingGuides(input: DataTableConnectionInput!): RoutingGuideConnection!
+  samsaraWorkerSyncDrift: SamsaraWorkerSyncDriftReport!
+  samsaraWorkerSyncReadiness: SamsaraWorkerSyncReadiness!
+  samsaraWorkerSyncRunStatus(runId: String, workflowId: String!): SamsaraWorkerSyncRunStatus!
   scimDirectories(input: DataTableConnectionInput!): SCIMDirectoryConnection!
   scimGroupRoleMappings(directoryId: ID!, input: DataTableConnectionInput!): SCIMGroupRoleMappingConnection!
   selectOptions(input: SelectOptionsInput!): SelectOptionConnection!
@@ -28050,6 +28753,11 @@ input RefreezeExtractionEvalCasesInput {
   caseIds: [ID!]
 }
 
+input RejectDocumentInput {
+  documentId: ID!
+  reason: String!
+}
+
 input RejectInvoiceAdjustmentInput {
   adjustmentId: ID!
   reason: String
@@ -29218,6 +29926,86 @@ enum SafetySeverity {
   Moderate
 }
 
+"""A worker whose Samsara driver does not match Trenova."""
+type SamsaraWorkerSyncDrift {
+  detectedAt: Timestamp!
+  driftType: String!
+  localExternalId: String!
+  message: String!
+  remoteDriverId: String!
+  workerId: String!
+  workerName: String!
+}
+
+type SamsaraWorkerSyncDriftRepair {
+  failedWorkers: Int!
+  failures: [SamsaraWorkerSyncFailure!]
+  repairedWorkers: Int!
+  requestedWorkers: Int!
+}
+
+"""The drift found the last time workers were compared with Samsara."""
+type SamsaraWorkerSyncDriftReport {
+  drifts: [SamsaraWorkerSyncDrift!]!
+  lastCalculatedAt: Timestamp!
+  mappingMismatch: Int!
+  missingMapping: Int!
+  missingRemoteDriver: Int!
+  remoteDeactivated: Int!
+  totalDrifts: Int!
+  workersWithDrift: Int!
+}
+
+type SamsaraWorkerSyncFailure {
+  message: String!
+  operation: String!
+  worker: String!
+  workerId: String!
+}
+
+type SamsaraWorkerSyncOutcome {
+  activeWorkers: Int!
+  alreadyMapped: Int!
+  createdDrivers: Int!
+  failed: Int!
+  failures: [SamsaraWorkerSyncFailure!]
+  mappedFromExternalIds: Int!
+  remoteDrivers: Int!
+  skippedInactive: Int!
+  totalWorkers: Int!
+  updatedMappings: Int!
+  updatedRemoteDrivers: Int!
+}
+
+"""How many active workers have a linked Samsara driver."""
+type SamsaraWorkerSyncReadiness {
+  activeWorkers: Int!
+  allActiveWorkersSynced: Boolean!
+  lastCalculatedAt: Timestamp!
+  syncedActiveWorkers: Int!
+  totalWorkers: Int!
+  unsyncedActiveWorkers: Int!
+}
+
+type SamsaraWorkerSyncRun {
+  runId: String!
+  status: String!
+  submittedAt: Timestamp!
+  taskQueue: String!
+  workflowId: String!
+}
+
+type SamsaraWorkerSyncRunStatus {
+  closedAt: Timestamp!
+  error: String!
+  result: SamsaraWorkerSyncOutcome
+  runId: String!
+  startedAt: Timestamp!
+  status: String!
+  taskQueue: String!
+  workflowId: String!
+}
+
 """
 The organization's own app keys. Leave the secret or verifier token out to keep the saved one.
 """
@@ -29664,6 +30452,22 @@ input SetAvailabilityPreferenceInput {
   note: String
   preference: AvailabilityPreference!
   workerId: ID!
+}
+
+input SetDocumentDeliveryFactsInput {
+  documentId: ID!
+  facts: DocumentDeliveryFactsInput!
+  """The document version being changed."""
+  version: Int!
+}
+
+input SetDocumentSignatureInput {
+  documentId: ID!
+  """Only a signed document has a signing date."""
+  signedAt: Timestamp
+  status: DocumentSignatureStatus!
+  """The document version being changed."""
+  version: Int!
 }
 
 input SetInvoiceFactoringOverrideInput {
@@ -34427,6 +35231,15 @@ input UpdateHomeLayoutPresetInput {
   roleIds: [ID!]
   version: Int!
   widgets: [HomeWidgetInput!]!
+}
+
+input UpdateIntegrationConfigInput {
+  """
+  Every setting by key; a sensitive one left empty keeps its saved value.
+  """
+  configuration: [IntegrationConfigValueInput!]!
+  enabled: Boolean!
+  type: IntegrationType!
 }
 
 input UpdateJobPositionInput {

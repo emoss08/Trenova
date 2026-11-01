@@ -1,15 +1,25 @@
-import { api } from "@trenova/shared/lib/api";
+import {
+  ActiveInsightsDocument,
+  BrowseInsightsDocument,
+  DismissInsightDocument,
+  InsightDetailDocument,
+  RestoreInsightDocument,
+  type ActiveInsightsInput,
+  type InsightStatus,
+} from "@trenova/graphql/generated/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   insightDetailSchema,
-  insightListSchema,
   insightPageSchema,
   insightSchema,
+  insightStatusSchema,
   type Insight,
   type InsightCategory,
   type InsightSeverity,
   type InsightSurface,
 } from "@/types/insight";
+import { z } from "zod";
 
 export type BrowseInsightsParams = {
   statuses: string[];
@@ -20,19 +30,20 @@ export type BrowseInsightsParams = {
 };
 
 /**
- * The active-insights read, as a URL.
+ * The active-insights read's input.
  *
  * A page names the surface it is asking for; the home widget names none and
- * gets the whole view. The parameter is only written when given so the
- * unfiltered request says nothing it does not mean.
+ * gets the whole view. The surface is only sent when given so the unfiltered
+ * request says nothing it does not mean.
  */
-export function activeInsightsPath(limit: number, surface?: InsightSurface): string {
-  const query = new URLSearchParams({ limit: String(limit) });
-  if (surface) {
-    query.set("surface", surface);
-  }
+export function activeInsightsInput(limit: number, surface?: InsightSurface): ActiveInsightsInput {
+  return surface ? { limit, surface } : { limit };
+}
 
-  return `/insights/?${query.toString()}`;
+function knownStatuses(statuses: string[]): InsightStatus[] {
+  return statuses.filter(
+    (status): status is InsightStatus => insightStatusSchema.safeParse(status).success,
+  );
 }
 
 export class InsightService {
@@ -41,56 +52,74 @@ export class InsightService {
    * month-wide aggregates and may call a model, so it happens on a schedule and
    * this only fetches what that produced.
    */
-  public async list(limit = 5, surface?: InsightSurface) {
-    const response = await api.get(activeInsightsPath(limit, surface));
-    return safeParse(insightListSchema, response, "Insight");
+  public async list(limit = 5, surface?: InsightSurface, options: { signal?: AbortSignal } = {}) {
+    const data = await requestGraphQL({
+      document: ActiveInsightsDocument,
+      operationName: "ActiveInsights",
+      variables: { input: activeInsightsInput(limit, surface) },
+      signal: options.signal,
+    });
+    const results = await safeParse(z.array(insightSchema), data.activeInsights, "Insight");
+    return { results };
   }
 
   /**
-   * Browsing is a different endpoint from the widget's read, not the same one
-   * with a flag: this one defaults to nothing and is told exactly which
-   * lifecycle to show, so it can never quietly hand back dismissed findings to
-   * a caller that did not ask for them.
+   * Browsing is a different read from the widget's, not the same one with a
+   * flag: this one defaults to nothing and is told exactly which lifecycle to
+   * show, so it can never quietly hand back dismissed findings to a caller that
+   * did not ask for them.
    */
-  public async browse(params: BrowseInsightsParams) {
-    const query = new URLSearchParams();
-
-    for (const status of params.statuses) {
-      query.append("status", status);
-    }
-    for (const category of params.categories) {
-      query.append("category", category);
-    }
-    for (const severity of params.severities) {
-      query.append("severity", severity);
-    }
-    query.set("limit", String(params.limit));
-    query.set("offset", String(params.offset));
-
-    const response = await api.get(`/insights/browse/?${query.toString()}`);
-    return safeParse(insightPageSchema, response, "Insight");
+  public async browse(params: BrowseInsightsParams, options: { signal?: AbortSignal } = {}) {
+    const data = await requestGraphQL({
+      document: BrowseInsightsDocument,
+      operationName: "BrowseInsights",
+      variables: {
+        input: {
+          statuses: knownStatuses(params.statuses),
+          categories: params.categories,
+          severities: params.severities,
+          limit: params.limit,
+          offset: params.offset,
+        },
+      },
+      signal: options.signal,
+    });
+    return safeParse(insightPageSchema, data.insights, "Insight");
   }
 
   public async dismiss(id: Insight["id"], reason = "") {
-    const response = await api.post(`/insights/${id}/dismiss/`, { reason });
-    return safeParse(insightSchema, response, "Insight");
+    const data = await requestGraphQL({
+      document: DismissInsightDocument,
+      operationName: "DismissInsight",
+      variables: { input: { insightId: id, reason } },
+    });
+    return safeParse(insightSchema, data.dismissInsight, "Insight");
   }
 
   /**
    * One finding with its trend and the rule behind it.
    *
-   * A finding the reader may not see comes back as a 404 rather than a 403:
-   * saying "this exists but is not for you" about a card naming a customer and
-   * a revenue figure is itself a disclosure.
+   * A finding the reader may not see comes back as not found rather than
+   * forbidden: saying "this exists but is not for you" about a card naming a
+   * customer and a revenue figure is itself a disclosure.
    */
-  public async detail(id: Insight["id"]) {
-    const response = await api.get(`/insights/${id}/`);
-    return safeParse(insightDetailSchema, response, "Insight");
+  public async detail(id: Insight["id"], options: { signal?: AbortSignal } = {}) {
+    const data = await requestGraphQL({
+      document: InsightDetailDocument,
+      operationName: "InsightDetail",
+      variables: { id },
+      signal: options.signal,
+    });
+    return safeParse(insightDetailSchema, data.insight, "Insight");
   }
 
   /** Undoes a dismissal, so a misclick is not a month-long mistake. */
   public async restore(id: Insight["id"]) {
-    const response = await api.post(`/insights/${id}/restore/`, {});
-    return safeParse(insightSchema, response, "Insight");
+    const data = await requestGraphQL({
+      document: RestoreInsightDocument,
+      operationName: "RestoreInsight",
+      variables: { id },
+    });
+    return safeParse(insightSchema, data.restoreInsight, "Insight");
   }
 }

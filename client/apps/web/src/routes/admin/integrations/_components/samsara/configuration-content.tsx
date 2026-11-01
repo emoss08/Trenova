@@ -7,7 +7,7 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { Label } from "@trenova/shared/components/ui/label";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { ApiRequestError } from "@trenova/shared/lib/api";
+import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { integration } from "@/lib/queries/integration";
 import { apiService } from "@/services/api";
@@ -109,9 +109,9 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
       toast.success(t("Samsara connection successful"));
     },
     onError: (error) => {
-      if (error instanceof ApiRequestError) {
+      if (error instanceof GraphQLRequestError) {
         toast.error(t("Samsara connection test failed"), {
-          description: error.data.detail || error.data.title,
+          description: error.message,
         });
         return;
       }

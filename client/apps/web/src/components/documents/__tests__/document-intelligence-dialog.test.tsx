@@ -1,17 +1,17 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ApiRequestError } from "@trenova/shared/lib/api";
+import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { documentSchema, type Document } from "@trenova/shared/types/document";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DocumentIntelligenceDialog } from "../document-intelligence-dialog";
 
-const { get } = vi.hoisted(() => ({ get: vi.fn() }));
+const { requestGraphQL } = vi.hoisted(() => ({ requestGraphQL: vi.fn() }));
 
-vi.mock("@trenova/shared/lib/api", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@trenova/shared/lib/api")>();
-  return { ...actual, api: { ...actual.api, get } };
+vi.mock("@trenova/shared/lib/graphql", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@trenova/shared/lib/graphql")>();
+  return { ...actual, requestGraphQL };
 });
 
 afterEach(cleanup);
@@ -51,7 +51,7 @@ function rateCon(): Document {
   });
 }
 
-/** The body of GET /documents/:id/content/ as documentcontent.Content marshals it. */
+/** The documentContent query's answer, as the DocumentContent operation selects it. */
 function contentBody(acceptanceStatus: string) {
   return {
     id: "dcon_rc",
@@ -72,24 +72,40 @@ function contentBody(acceptanceStatus: string) {
     createdAt: 1_792_000_000,
     updatedAt: 1_792_000_030,
     lastExtractedAt: Math.floor(Date.now() / 1000),
-    converter: "docling",
-    converterVersion: "2.31.0",
+    pages: null,
   };
 }
 
 function apiError(status: number) {
-  return new ApiRequestError(status, {
-    type: status === 404 ? "resource-not-found" : "internal-server-error",
-    title: status === 404 ? "Not Found" : "Internal Server Error",
-    status,
+  const type =
+    status === 404
+      ? "https://trenova.app/problems/resource-not-found"
+      : "https://trenova.app/problems/internal-server-error";
+  const code = status === 404 ? "NOT_FOUND" : "SYSTEM_ERROR";
+  const message = status === 404 ? "Document content not found" : "Internal Server Error";
+  return new GraphQLRequestError({
+    kind: "graphql",
+    message,
+    status: 200,
+    graphQLErrors: [{ extensions: { code, type }, code, message, type }],
   });
 }
 
 function respond(content: () => unknown) {
-  get.mockImplementation(async (endpoint: string) => {
-    if (endpoint === "/documents/doc_rc/content/") return content();
-    throw new Error(`unexpected request ${endpoint}`);
-  });
+  requestGraphQL.mockImplementation(
+    async ({
+      operationName,
+      variables,
+    }: {
+      operationName: string;
+      variables: { documentId?: string };
+    }) => {
+      if (operationName === "DocumentContent" && variables.documentId === "doc_rc") {
+        return { documentContent: content() };
+      }
+      throw new Error(`unexpected request ${operationName}`);
+    },
+  );
 }
 
 function renderDialog() {
@@ -135,12 +151,12 @@ describe("DocumentIntelligenceDialog", () => {
       expect(screen.getByText("Reading")).toBeInTheDocument();
 
       await vi.advanceTimersByTimeAsync(5000);
-      expect(get).toHaveBeenCalledTimes(2);
+      expect(requestGraphQL).toHaveBeenCalledTimes(2);
       expect(screen.getByText(TEXT, { normalizer: (text) => text })).toBeInTheDocument();
       expect(screen.queryByText("The extracted text could not be loaded.")).toBeNull();
 
       await vi.advanceTimersByTimeAsync(5000);
-      expect(get).toHaveBeenCalledTimes(3);
+      expect(requestGraphQL).toHaveBeenCalledTimes(3);
       expect(await screen.findByText("Accepted")).toBeInTheDocument();
       expect(screen.getByText(TEXT, { normalizer: (text) => text })).toBeInTheDocument();
     } finally {

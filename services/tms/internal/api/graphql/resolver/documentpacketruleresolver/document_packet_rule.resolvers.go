@@ -10,10 +10,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentpacketruleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -58,4 +60,67 @@ func (r *QueryResolver) DocumentPacketRule(ctx context.Context, id string) (*doc
 		ID:         ruleID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
+}
+
+func (r *MutationResolver) CreateDocumentPacketRule(ctx context.Context, input gqlmodel.DocumentPacketRuleInput) (*documentpacketrule.DocumentPacketRule, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDocumentType, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := documentPacketRuleFromInput(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.DocumentPacketRuleService.Create(ctx, entity, authCtx.UserID)
+}
+
+func (r *MutationResolver) UpdateDocumentPacketRule(ctx context.Context, id string, input gqlmodel.DocumentPacketRuleInput) (*documentpacketrule.DocumentPacketRule, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDocumentType, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	ruleID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.DocumentPacketRuleService.Get(ctx, documentpacketruleports.GetDocumentPacketRuleByIDRequest{
+		ID:         ruleID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = applyDocumentPacketRuleInput(existing, &input); err != nil {
+		return nil, err
+	}
+
+	return r.DocumentPacketRuleService.Update(ctx, existing, authCtx.UserID)
+}
+
+func (r *MutationResolver) DeleteDocumentPacketRule(ctx context.Context, id string) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDocumentType, permission.OpDelete)
+	if err != nil {
+		return false, err
+	}
+
+	ruleID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.DocumentPacketRuleService.Delete(
+		ctx,
+		ruleID,
+		pagination.FromAuth(authCtx),
+		authCtx.UserID,
+	); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }

@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/boardcardservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentapprovalports"
@@ -52,6 +53,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aitrainingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
@@ -91,6 +93,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagepeekservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageruleservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
@@ -201,6 +204,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/orgholidayservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/samsarasyncservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/selfserviceservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
@@ -216,12 +220,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/jobs/samsarajobs/samsaracontract"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/bulkeditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
@@ -528,6 +534,14 @@ type Params struct {
 	IFTAService                       *iftaservice.Service
 	DistanceCalculationService        shipmentdistanceports.DistanceCalculationService `optional:"true"`
 	MonitoringConfig                  *monitoringconfig.Config                         `optional:"true"`
+	DocumentContentService            documentports.DocumentContentService
+	DocumentExtractionReader          documentports.ExtractionStatusReader
+	DocumentReader                    documentports.DocumentReader `optional:"true"`
+	PageAssistant                     assistantports.PageAssistant `optional:"true"`
+	InsightService                    *insightservice.Service
+	IntegrationService                *integrationservice.Service
+	SamsaraSyncService                *samsarasyncservice.Service
+	SamsaraSyncJobs                   *samsaracontract.Manager
 }
 
 type Services struct {
@@ -815,6 +829,14 @@ type Services struct {
 	ReportViewService                 *reportviewservice.Service
 	ReportScheduleService             *reportscheduleservice.Service
 	ReportDashboardService            *reportdashboardservice.Service
+	DocumentContentService            documentports.DocumentContentService
+	DocumentExtractionReader          documentports.ExtractionStatusReader
+	DocumentReader                    documentports.DocumentReader
+	PageAssistant                     assistantports.PageAssistant
+	InsightService                    *insightservice.Service
+	IntegrationService                *integrationservice.Service
+	SamsaraSyncService                *samsarasyncservice.Service
+	SamsaraSyncJobs                   *samsaracontract.Manager
 }
 
 //nolint:funlen // one assignment per service; splitting it would only scatter the wiring
@@ -1110,5 +1132,13 @@ func newServices(p *Params) *Services {
 		FuelPurchaseService:               p.FuelPurchaseService,
 		IftaService:                       p.IFTAService,
 		DistanceCalculationService:        p.DistanceCalculationService,
+		DocumentContentService:            p.DocumentContentService,
+		DocumentExtractionReader:          p.DocumentExtractionReader,
+		DocumentReader:                    p.DocumentReader,
+		PageAssistant:                     p.PageAssistant,
+		InsightService:                    p.InsightService,
+		IntegrationService:                p.IntegrationService,
+		SamsaraSyncService:                p.SamsaraSyncService,
+		SamsaraSyncJobs:                   p.SamsaraSyncJobs,
 	}
 }

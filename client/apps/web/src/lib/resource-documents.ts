@@ -14,10 +14,14 @@ export const PENDING_DOCUMENTS_REFETCH_MS = 3_000;
 export function resourceDocumentsQuery(resourceType: string, resourceId: string, search = "") {
   return queryOptions({
     queryKey: ["documents", resourceType, resourceId, search] as const,
-    queryFn: () =>
-      apiService.documentService.getByResource(resourceType, resourceId, search, {
-        includeDocumentType: "true",
-      }),
+    queryFn: ({ signal }) =>
+      apiService.documentService.getByResource(
+        resourceType,
+        resourceId,
+        search,
+        { includeDocumentType: true },
+        { signal },
+      ),
   });
 }
 

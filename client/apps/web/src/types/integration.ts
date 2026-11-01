@@ -9,7 +9,7 @@ export const configFieldSpecSchema = z.object({
   placeholder: z.string().optional(),
   helpText: z.string().optional(),
   default: z.string().optional(),
-  options: z.array(z.string()).optional(),
+  options: z.preprocess((value) => value ?? undefined, z.array(z.string()).optional()),
 });
 
 export const configFieldValueSchema = z.object({

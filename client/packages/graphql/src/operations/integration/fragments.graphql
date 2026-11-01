@@ -1,0 +1,51 @@
+fragment IntegrationConfigFieldSpecFields on IntegrationConfigFieldSpec {
+  key
+  label
+  type
+  required
+  sensitive
+  placeholder
+  helpText
+  default
+  options
+}
+
+fragment IntegrationConfigFields on IntegrationConfig {
+  type
+  enabled
+  fields {
+    key
+    value
+    hasValue
+  }
+  spec {
+    ...IntegrationConfigFieldSpecFields
+  }
+  updatedAt
+}
+
+fragment SamsaraWorkerSyncFailureFields on SamsaraWorkerSyncFailure {
+  workerId
+  worker
+  operation
+  message
+}
+
+fragment SamsaraWorkerSyncDriftReportFields on SamsaraWorkerSyncDriftReport {
+  drifts {
+    workerId
+    workerName
+    driftType
+    message
+    localExternalId
+    remoteDriverId
+    detectedAt
+  }
+  totalDrifts
+  workersWithDrift
+  missingMapping
+  missingRemoteDriver
+  mappingMismatch
+  remoteDeactivated
+  lastCalculatedAt
+}

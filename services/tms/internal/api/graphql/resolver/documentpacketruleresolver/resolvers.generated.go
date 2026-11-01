@@ -12,4 +12,6 @@ type Deps struct {
 	DocumentPacketRuleService *documentpacketruleservice.Service
 }
 
+type MutationResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }

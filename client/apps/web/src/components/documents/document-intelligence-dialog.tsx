@@ -20,7 +20,7 @@ import {
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { stillBeingRead } from "@/lib/document-reading";
 import { apiService } from "@/services/api";
-import { ApiRequestError } from "@trenova/shared/lib/api";
+import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import type {
   Document,
   DocumentContent,
@@ -754,7 +754,7 @@ export function DocumentIntelligenceDialog({
       try {
         return await apiService.documentService.getContent(documentID, { signal });
       } catch (error) {
-        if (error instanceof ApiRequestError && error.status === 404) return null;
+        if (error instanceof GraphQLRequestError && error.isNotFoundError()) return null;
         throw error;
       }
     },
@@ -770,10 +770,10 @@ export function DocumentIntelligenceDialog({
 
   const { data: shipmentDraft, isLoading: isDraftLoading } = useQuery({
     queryKey: ["document-shipment-draft", documentID, shipmentDraftStatus],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!documentID) return null;
       try {
-        return await apiService.documentService.getShipmentDraft(documentID);
+        return await apiService.documentService.getShipmentDraft(documentID, { signal });
       } catch {
         return null;
       }

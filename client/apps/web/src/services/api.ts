@@ -41,7 +41,6 @@ import { DistanceProfileService } from "./distance-profile";
 import { StoredMileageService } from "./stored-mileage";
 import { DocumentService } from "./document";
 import { DocumentControlService } from "./document-control";
-import { DocumentPacketRuleService } from "./document-packet-rule";
 import { EDIService } from "./edi";
 import { LadingService } from "./edi/lading";
 import { EmailService } from "./email";
@@ -174,7 +173,6 @@ class APIService {
   public assignmentService: AssignmentService;
   public notificationService: NotificationService;
   public tableChangeAlertService: TableChangeAlertService;
-  public documentPacketRuleService: DocumentPacketRuleService;
   public manualJournalService: ManualJournalService;
   public journalReversalService: JournalReversalService;
   public accountingReportService: AccountingReportService;
@@ -271,7 +269,6 @@ class APIService {
     this.assignmentService = new AssignmentService();
     this.notificationService = notificationService;
     this.tableChangeAlertService = new TableChangeAlertService();
-    this.documentPacketRuleService = new DocumentPacketRuleService();
     this.manualJournalService = new ManualJournalService();
     this.journalReversalService = new JournalReversalService();
     this.accountingReportService = new AccountingReportService();

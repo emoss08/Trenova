@@ -1,0 +1,40 @@
+mutation UpdateIntegrationConfig($input: UpdateIntegrationConfigInput!) {
+  updateIntegrationConfig(input: $input) {
+    ...IntegrationConfigFields
+  }
+}
+
+mutation TestIntegrationConnection($type: IntegrationType!) {
+  testIntegrationConnection(type: $type) {
+    provider
+    success
+    checkedAt
+  }
+}
+
+mutation StartSamsaraWorkerSync {
+  startSamsaraWorkerSync {
+    workflowId
+    runId
+    taskQueue
+    status
+    submittedAt
+  }
+}
+
+mutation DetectSamsaraWorkerSyncDrift {
+  detectSamsaraWorkerSyncDrift {
+    ...SamsaraWorkerSyncDriftReportFields
+  }
+}
+
+mutation RepairSamsaraWorkerSyncDrift($workerIds: [String!]) {
+  repairSamsaraWorkerSyncDrift(workerIds: $workerIds) {
+    requestedWorkers
+    repairedWorkers
+    failedWorkers
+    failures {
+      ...SamsaraWorkerSyncFailureFields
+    }
+  }
+}

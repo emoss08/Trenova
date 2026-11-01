@@ -203,16 +203,17 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
 
   const { data: packetSummary } = useQuery<DocumentPacketSummary>({
     queryKey: ["document-packet-summary", resourceType, resourceId],
-    queryFn: () => apiService.documentService.getPacketSummary(resourceType, resourceId),
+    queryFn: ({ signal }) =>
+      apiService.documentService.getPacketSummary(resourceType, resourceId, { signal }),
     enabled: !!resourceId,
   });
   const versionDocumentID = versionDocument?.id;
 
   const { data: versionHistory = [], isLoading: isLoadingVersions } = useQuery({
     queryKey: ["document-versions", versionDocumentID],
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       versionDocumentID
-        ? apiService.documentService.getVersions(versionDocumentID)
+        ? apiService.documentService.getVersions(versionDocumentID, { signal })
         : Promise.resolve([]),
     enabled: !!versionDocumentID,
   });

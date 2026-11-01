@@ -1,0 +1,159 @@
+"What an operational insight is about."
+enum InsightCategory {
+  ServiceQuality
+  CashFlow
+  CostLeakage
+  Compliance
+}
+
+"A page that shows only its own slice of insights."
+enum InsightSurface {
+  Accounting
+  Dispatch
+  Shipments
+  Fleet
+}
+
+enum InsightSeverity {
+  Info
+  Warning
+  Critical
+}
+
+"Where an insight is in its life: active, dismissed by a person, resolved, or replaced by a newer reading."
+enum InsightStatus {
+  Active
+  Dismissed
+  Resolved
+  Superseded
+}
+
+enum InsightUnit {
+  Count
+  Currency
+  Percent
+  Days
+  Hours
+  Miles
+}
+
+"Which way a metric moving is bad news."
+enum InsightDirection {
+  Neutral
+  HigherIsWorse
+  LowerIsWorse
+}
+
+"One figure a detector computed, with the baseline it is compared to."
+type InsightMetric {
+  key: String!
+  label: String!
+  value: Decimal!
+  unit: InsightUnit!
+  direction: InsightDirection!
+  baseline: Decimal
+  baselineLabel: String!
+}
+
+"A link from an insight to the records behind it."
+type InsightLink {
+  label: String!
+  path: String!
+  count: Int!
+}
+
+"A finding an insight detector computed from the organization's data, with generated prose."
+type Insight {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  detectorKey: String!
+  category: InsightCategory!
+  severity: InsightSeverity!
+  status: InsightStatus!
+  dedupeKey: String!
+  subject: String!
+  headline: String!
+  narrative: String!
+  recommendation: String!
+  "Whether a model wrote the prose; false when it is the detector's own wording."
+  narrated: Boolean!
+  metrics: [InsightMetric!]
+  links: [InsightLink!]
+  windowStart: Timestamp!
+  windowEnd: Timestamp!
+  detectedAt: Timestamp!
+  "When these numbers stop being worth trusting."
+  staleAt: Timestamp!
+  dismissedAt: Timestamp
+  dismissedById: ID
+  dismissReason: String!
+  modelIdentifier: String!
+  providerId: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"What a detector measures, the threshold it raises a finding at and what it leaves out."
+type InsightExplanation {
+  measures: String!
+  threshold: String!
+  excludes: String!
+}
+
+"One finding with the earlier readings of the same finding and the rule behind it."
+type InsightDetail {
+  insight: Insight!
+  history: [Insight!]
+  explanation: InsightExplanation!
+}
+
+"A page of insights, newest first."
+type InsightPage {
+  results: [Insight!]!
+  total: Int!
+  "Whether total was counted; false when it is the planner's estimate of a list too large to count."
+  totalExact: Boolean!
+}
+
+input ActiveInsightsInput {
+  "Drops findings outside these categories; empty keeps every category."
+  categories: [InsightCategory!]
+  "The page asking for its own slice; empty is the home screen's full view."
+  surface: InsightSurface
+  "At most 25; empty or zero is the widget's default."
+  limit: Int
+}
+
+input BrowseInsightsInput {
+  categories: [InsightCategory!]
+  severities: [InsightSeverity!]
+  statuses: [InsightStatus!]
+  "At most 100."
+  limit: Int
+  "At most 10,000."
+  offset: Int
+}
+
+input DismissInsightInput {
+  insightId: ID!
+  "Why the finding was not worth acting on; optional."
+  reason: String
+}
+
+extend type Query {
+  "The active findings the reader may see: the home widget's and a page's read."
+  activeInsights(input: ActiveInsightsInput): [Insight!]!
+  "Every finding the reader may see, a page at a time, filtered by lifecycle."
+  insights(input: BrowseInsightsInput!): InsightPage!
+  "One finding the reader may see, with its history; a finding the reader may not see is not found."
+  insight(id: ID!): InsightDetail!
+}
+
+extend type Mutation {
+  "Dismisses an active finding for everyone in the organization."
+  dismissInsight(input: DismissInsightInput!): Insight!
+  "Undoes a dismissal."
+  restoreInsight(id: ID!): Insight!
+}

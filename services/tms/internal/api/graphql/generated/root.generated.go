@@ -56,6 +56,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchconsoleexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/distanceoverrideexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/distanceprofileexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/documentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/documentpacketruleexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/documenttemplateexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/documenttypeexec"
@@ -86,6 +87,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/iftaexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/inboundmessageexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/inboundreplyexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/insightexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/integrationexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoiceadjustmentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoicedisputeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoiceexec"
@@ -205,6 +208,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
@@ -217,6 +221,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
@@ -247,6 +252,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
@@ -255,6 +261,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
@@ -283,16 +290,19 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -384,15 +394,19 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
+	"github.com/emoss08/trenova/internal/modules/workforce/jobs/samsarajobs/samsaracontract"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -506,6 +520,11 @@ type ResolverRoot interface {
 	DetentionPreviewResult() DetentionPreviewResultResolver
 	DisciplinaryLadder() DisciplinaryLadderResolver
 	DistanceProfile() DistanceProfileResolver
+	Document() DocumentResolver
+	DocumentContent() DocumentContentResolver
+	DocumentContentPage() DocumentContentPageResolver
+	DocumentDeliveryFacts() DocumentDeliveryFactsResolver
+	DocumentShipmentDraft() DocumentShipmentDraftResolver
 	DocumentTemplate() DocumentTemplateResolver
 	DocumentTemplateAssignment() DocumentTemplateAssignmentResolver
 	DocumentTemplateVersion() DocumentTemplateVersionResolver
@@ -582,6 +601,12 @@ type ResolverRoot interface {
 	InboundReply() InboundReplyResolver
 	InboundSnooze() InboundSnoozeResolver
 	InboundSplitDocument() InboundSplitDocumentResolver
+	InsightMetric() InsightMetricResolver
+	IntegrationCatalogItem() IntegrationCatalogItemResolver
+	IntegrationCatalogLink() IntegrationCatalogLinkResolver
+	IntegrationCatalogStatus() IntegrationCatalogStatusResolver
+	IntegrationConfigFieldSpec() IntegrationConfigFieldSpecResolver
+	IntegrationRuntimeConfig() IntegrationRuntimeConfigResolver
 	Invoice() InvoiceResolver
 	InvoiceAdjustment() InvoiceAdjustmentResolver
 	InvoiceAdjustmentApprovalQueueItem() InvoiceAdjustmentApprovalQueueItemResolver
@@ -1342,6 +1367,30 @@ type DistanceProfileResolver interface {
 	Provider(ctx context.Context, obj *distanceprofile.DistanceProfile) (string, error)
 }
 
+type DocumentResolver interface {
+	ProcessingProfile(ctx context.Context, obj *document.Document) (string, error)
+	SignatureSource(ctx context.Context, obj *document.Document) (*string, error)
+}
+
+type DocumentContentResolver interface {
+	Status(ctx context.Context, obj *documentcontent.Content) (string, error)
+	SourceKind(ctx context.Context, obj *documentcontent.Content) (*string, error)
+}
+
+type DocumentContentPageResolver interface {
+	SourceKind(ctx context.Context, obj *documentcontent.Page) (string, error)
+}
+
+type DocumentDeliveryFactsResolver interface {
+	Osd(ctx context.Context, obj *document.DeliveryFacts) (string, error)
+	Amount(ctx context.Context, obj *document.DeliveryFacts) (*string, error)
+	Source(ctx context.Context, obj *document.DeliveryFacts) (string, error)
+}
+
+type DocumentShipmentDraftResolver interface {
+	Status(ctx context.Context, obj *documentshipmentdraft.DocumentShipmentDraft) (string, error)
+}
+
 type DocumentTemplateResolver interface {
 	Kind(ctx context.Context, obj *documenttemplate.DocumentTemplate) (string, error)
 }
@@ -1884,6 +1933,32 @@ type InboundSplitDocumentResolver interface {
 	DocumentID(ctx context.Context, obj *inboundmessage.SplitDocument) (string, error)
 }
 
+type InsightMetricResolver interface {
+	Value(ctx context.Context, obj *insight.Metric) (string, error)
+	Baseline(ctx context.Context, obj *insight.Metric) (*string, error)
+}
+
+type IntegrationCatalogItemResolver interface {
+	Category(ctx context.Context, obj *integrationports.CatalogItem) (string, error)
+}
+
+type IntegrationCatalogLinkResolver interface {
+	Kind(ctx context.Context, obj *integrationports.CatalogLink) (string, error)
+}
+
+type IntegrationCatalogStatusResolver interface {
+	Connection(ctx context.Context, obj *integrationports.CatalogStatus) (string, error)
+	Configuration(ctx context.Context, obj *integrationports.CatalogStatus) (string, error)
+}
+
+type IntegrationConfigFieldSpecResolver interface {
+	Type(ctx context.Context, obj *configspec.Field) (string, error)
+}
+
+type IntegrationRuntimeConfigResolver interface {
+	Config(ctx context.Context, obj *integrationservice.RuntimeConfig) (map[string]any, error)
+}
+
 type InvoiceResolver interface {
 	ExchangeRate(ctx context.Context, obj *invoice.Invoice) (*string, error)
 	ShipperCustomer(ctx context.Context, obj *invoice.Invoice) (*customer.Customer, error)
@@ -2239,6 +2314,19 @@ type MutationResolver interface {
 	DispatchAssignMoveToCarrier(ctx context.Context, input gqlmodel.DispatchAssignMoveToCarrierInput) (*shipment.CarrierAssignment, error)
 	DispatchCancelCarrierAssignment(ctx context.Context, moveID string, reason string) (bool, error)
 	DispatchPlanAutoAssign(ctx context.Context, input gqlmodel.DispatchPlanInput) (*gqlmodel.DispatchPlan, error)
+	DeleteDocument(ctx context.Context, id string) (bool, error)
+	BulkDeleteDocuments(ctx context.Context, ids []string) (*gqlmodel.DocumentBulkDeleteResult, error)
+	RestoreDocumentVersion(ctx context.Context, documentID string) (*document.Document, error)
+	ApproveDocument(ctx context.Context, documentID string) (*document.Document, error)
+	RejectDocument(ctx context.Context, input gqlmodel.RejectDocumentInput) (*document.Document, error)
+	SetDocumentSignature(ctx context.Context, input gqlmodel.SetDocumentSignatureInput) (*document.Document, error)
+	SetDocumentDeliveryFacts(ctx context.Context, input gqlmodel.SetDocumentDeliveryFactsInput) (*document.Document, error)
+	AttachDocumentToShipment(ctx context.Context, input gqlmodel.AttachDocumentToShipmentInput) (*document.Document, error)
+	ReextractDocument(ctx context.Context, documentID string) (bool, error)
+	OpenDocumentImportAssistantThread(ctx context.Context, documentID string) (any, error)
+	CreateDocumentPacketRule(ctx context.Context, input gqlmodel.DocumentPacketRuleInput) (*documentpacketrule.DocumentPacketRule, error)
+	UpdateDocumentPacketRule(ctx context.Context, id string, input gqlmodel.DocumentPacketRuleInput) (*documentpacketrule.DocumentPacketRule, error)
+	DeleteDocumentPacketRule(ctx context.Context, id string) (bool, error)
 	CreateDocumentTemplate(ctx context.Context, input gqlmodel.DocumentTemplateInput) (*documenttemplate.DocumentTemplate, error)
 	UpdateDocumentTemplate(ctx context.Context, id string, input gqlmodel.DocumentTemplateInput) (*documenttemplate.DocumentTemplate, error)
 	DeleteDocumentTemplate(ctx context.Context, id string) (bool, error)
@@ -2453,6 +2541,13 @@ type MutationResolver interface {
 	BlockInboundSender(ctx context.Context, messageID string) (*inboundmessage.InboundMessage, error)
 	UnblockInboundSender(ctx context.Context, mailboxID string, sender string) (*inboundmessage.Mailbox, error)
 	DecideInboundStops(ctx context.Context, messageID string, decision inboundmessage.StopsDecision) (*inboundmessage.InboundMessage, error)
+	DismissInsight(ctx context.Context, input gqlmodel.DismissInsightInput) (*insight.Insight, error)
+	RestoreInsight(ctx context.Context, id string) (*insight.Insight, error)
+	UpdateIntegrationConfig(ctx context.Context, input gqlmodel.UpdateIntegrationConfigInput) (*integrationports.ConfigResponse, error)
+	TestIntegrationConnection(ctx context.Context, typeArg integration.Type) (*integrationports.TestConnectionResponse, error)
+	StartSamsaraWorkerSync(ctx context.Context) (*samsaracontract.SyncWorkflowStartResponse, error)
+	DetectSamsaraWorkerSyncDrift(ctx context.Context) (*telematicsports.WorkerSyncDriftResponse, error)
+	RepairSamsaraWorkerSyncDrift(ctx context.Context, workerIds []string) (*telematicsports.RepairWorkerSyncDriftResponse, error)
 	CreateInvoicesFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*invoiceports.CreateInvoicesResult, error)
 	CreateInvoicesFromOrder(ctx context.Context, orderID string, offCycleReason *string) (*invoiceports.CreateInvoicesResult, error)
 	VoidInvoice(ctx context.Context, input gqlmodel.VoidInvoiceInput) (*invoiceports.VoidInvoiceResult, error)
@@ -3075,6 +3170,15 @@ type QueryResolver interface {
 	DistanceOverride(ctx context.Context, id string) (*distanceoverride.DistanceOverride, error)
 	DistanceProfiles(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DistanceProfileConnection, error)
 	DistanceProfile(ctx context.Context, id string) (*distanceprofile.DistanceProfile, error)
+	Document(ctx context.Context, id string) (*document.Document, error)
+	DocumentVersions(ctx context.Context, documentID string) ([]*document.Document, error)
+	DocumentsByResource(ctx context.Context, input gqlmodel.DocumentsByResourceInput) ([]*document.Document, error)
+	DocumentPacketSummary(ctx context.Context, resourceType string, resourceID string) (*documentpacketrule.PacketSummary, error)
+	DocumentContent(ctx context.Context, documentID string) (*documentcontent.Content, error)
+	DocumentShipmentDraft(ctx context.Context, documentID string) (*documentshipmentdraft.DocumentShipmentDraft, error)
+	DocumentReading(ctx context.Context, documentID string) (map[string]any, error)
+	DocumentExtractionStatus(ctx context.Context) (*documentports.ExtractionStatus, error)
+	DocumentImportAssistantHistory(ctx context.Context, documentID string) (*shipmentimportassistantports.ShipmentImportChatHistoryResponse, error)
 	DocumentPacketRules(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DocumentPacketRuleConnection, error)
 	DocumentPacketRule(ctx context.Context, id string) (*documentpacketrule.DocumentPacketRule, error)
 	DocumentTemplates(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DocumentTemplateConnection, error)
@@ -3284,6 +3388,15 @@ type QueryResolver interface {
 	TriageCustomerPeek(ctx context.Context, customerID string) (*inboundmessageports.CustomerPeek, error)
 	InboundReplyAttachables(ctx context.Context, messageID string) ([]*inboundreplyports.ReplyAttachable, error)
 	InboundReplyAttachmentLimit(ctx context.Context) (int, error)
+	ActiveInsights(ctx context.Context, input *gqlmodel.ActiveInsightsInput) ([]*insight.Insight, error)
+	Insights(ctx context.Context, input gqlmodel.BrowseInsightsInput) (*gqlmodel.InsightPage, error)
+	Insight(ctx context.Context, id string) (*insightports.InsightDetail, error)
+	IntegrationCatalog(ctx context.Context) (*integrationports.CatalogResponse, error)
+	IntegrationConfig(ctx context.Context, typeArg integration.Type) (*integrationports.ConfigResponse, error)
+	IntegrationRuntimeConfig(ctx context.Context, typeArg integration.Type) (*integrationservice.RuntimeConfig, error)
+	SamsaraWorkerSyncReadiness(ctx context.Context) (*telematicsports.WorkerSyncReadinessResponse, error)
+	SamsaraWorkerSyncDrift(ctx context.Context) (*telematicsports.WorkerSyncDriftResponse, error)
+	SamsaraWorkerSyncRunStatus(ctx context.Context, workflowID string, runID *string) (*samsaracontract.SyncWorkflowStatusResponse, error)
 	Invoices(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.InvoiceConnection, error)
 	Invoice(ctx context.Context, id string) (*invoice.Invoice, error)
 	InvoiceAdjustment(ctx context.Context, id string) (*invoiceadjustment.InvoiceAdjustment, error)
@@ -4084,6 +4197,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		dispatchconsoleexec.Shard,
 		distanceoverrideexec.Shard,
 		distanceprofileexec.Shard,
+		documentexec.Shard,
 		documentpacketruleexec.Shard,
 		documenttemplateexec.Shard,
 		documenttypeexec.Shard,
@@ -4114,6 +4228,8 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		iftaexec.Shard,
 		inboundmessageexec.Shard,
 		inboundreplyexec.Shard,
+		insightexec.Shard,
+		integrationexec.Shard,
 		invoiceexec.Shard,
 		invoiceadjustmentexec.Shard,
 		invoicedisputeexec.Shard,
@@ -4292,6 +4408,11 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"DetentionPreviewResult":             func() any { return r.DetentionPreviewResult() },
 			"DisciplinaryLadder":                 func() any { return r.DisciplinaryLadder() },
 			"DistanceProfile":                    func() any { return r.DistanceProfile() },
+			"Document":                           func() any { return r.Document() },
+			"DocumentContent":                    func() any { return r.DocumentContent() },
+			"DocumentContentPage":                func() any { return r.DocumentContentPage() },
+			"DocumentDeliveryFacts":              func() any { return r.DocumentDeliveryFacts() },
+			"DocumentShipmentDraft":              func() any { return r.DocumentShipmentDraft() },
 			"DocumentTemplate":                   func() any { return r.DocumentTemplate() },
 			"DocumentTemplateAssignment":         func() any { return r.DocumentTemplateAssignment() },
 			"DocumentTemplateVersion":            func() any { return r.DocumentTemplateVersion() },
@@ -4368,6 +4489,12 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"InboundReply":                       func() any { return r.InboundReply() },
 			"InboundSnooze":                      func() any { return r.InboundSnooze() },
 			"InboundSplitDocument":               func() any { return r.InboundSplitDocument() },
+			"InsightMetric":                      func() any { return r.InsightMetric() },
+			"IntegrationCatalogItem":             func() any { return r.IntegrationCatalogItem() },
+			"IntegrationCatalogLink":             func() any { return r.IntegrationCatalogLink() },
+			"IntegrationCatalogStatus":           func() any { return r.IntegrationCatalogStatus() },
+			"IntegrationConfigFieldSpec":         func() any { return r.IntegrationConfigFieldSpec() },
+			"IntegrationRuntimeConfig":           func() any { return r.IntegrationRuntimeConfig() },
 			"Invoice":                            func() any { return r.Invoice() },
 			"InvoiceAdjustment":                  func() any { return r.InvoiceAdjustment() },
 			"InvoiceAdjustmentApprovalQueueItem": func() any { return r.InvoiceAdjustmentApprovalQueueItem() },

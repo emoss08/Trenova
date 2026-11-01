@@ -88,6 +88,9 @@ Resolver packages never import each other; shared code goes in `resolvercore` on
 - **Another kind's record** on a type shows its reference view; more needs
   `@requiresRead(kind:)` ([reference-views.md](../reference-views.md)).
 - Tests build `&QueryResolver{&Deps{Core: &resolvercore.Core{...}, ...}}`.
+- **Errors** are `errortypes` values; the presenter (`gqlext/errors.go`) carries their code, problem
+  type, field errors, edit conflict and a `ConflictError`'s usage stats (`extensions.usageStats`,
+  read with `GraphQLRequestError.getUsageStats()`) the way a REST problem document does.
 
 ## Transport limits
 

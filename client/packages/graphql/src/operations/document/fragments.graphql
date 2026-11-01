@@ -1,0 +1,82 @@
+fragment DocumentDeliveryFactsFields on DocumentDeliveryFacts {
+  signedBy
+  pieces
+  osd
+  osdNote
+  seal
+  arrivedAt
+  departedAt
+  amount
+  reference
+  chargeId
+  chargeLabel
+  source
+  readFields
+  updatedById
+  updatedAt
+}
+
+fragment DocumentFields on Document {
+  id
+  organizationId
+  businessUnitId
+  lineageId
+  versionNumber
+  isCurrentVersion
+  fileName
+  originalName
+  fileSize
+  fileType
+  storagePath
+  checksumSha256
+  storageVersionId
+  storageRetentionMode
+  storageRetentionUntil
+  storageLegalHold
+  status
+  description
+  resourceId
+  resourceType
+  processingProfile
+  expirationDate
+  tags
+  isPublic
+  uploadedById
+  approvedById
+  approvedAt
+  rejectedById
+  rejectedAt
+  rejectionReason
+  previewStoragePath
+  previewStatus
+  contentStatus
+  contentError
+  detectedKind
+  hasExtractedText
+  shipmentDraftStatus
+  documentTypeId
+  documentType {
+    id
+    businessUnitId
+    organizationId
+    code
+    name
+    color
+    documentClassification
+    documentCategory
+    version
+    createdAt
+    updatedAt
+  }
+  signatureStatus
+  signedAt
+  signatureSource
+  signatureUpdatedById
+  signatureUpdatedAt
+  deliveryFacts {
+    ...DocumentDeliveryFactsFields
+  }
+  version
+  createdAt
+  updatedAt
+}

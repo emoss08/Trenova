@@ -1,0 +1,231 @@
+"An outside system the organization can connect Trenova to."
+enum IntegrationType {
+  GoogleMaps
+  Samsara
+  HERE
+  OpenWeatherMap
+  OANDAExchangeRates
+  EIAFuelPrices
+  PCMiler
+  Resend
+  AmazonSES
+  SendGrid
+  Mailgun
+  Postmark
+  WEXFuel
+  ComdataFuel
+  RampFuel
+  CarrierOK
+  FMCSAQCMobile
+  QuickBooksOnline
+  Xero
+  BusinessCentral
+  NetSuite
+}
+
+"One setting an integration's configuration form asks for."
+type IntegrationConfigFieldSpec {
+  key: String!
+  label: String!
+  "string, url, password, select, boolean, number or multi-select."
+  type: String!
+  required: Boolean!
+  "A sensitive value is never read back; only whether it is set."
+  sensitive: Boolean!
+  placeholder: String!
+  helpText: String!
+  default: String!
+  options: [String!]
+}
+
+"One saved setting. A sensitive one carries no value, only whether it is set."
+type IntegrationConfigFieldValue {
+  key: String!
+  value: String!
+  hasValue: Boolean!
+}
+
+type IntegrationCatalogLink {
+  "docs, website, support or api."
+  kind: String!
+  label: String!
+  url: String!
+}
+
+type IntegrationCatalogStatus {
+  "connected or disconnected."
+  connection: String!
+  connectionLabel: String!
+  "configured or needs_setup."
+  configuration: String!
+  configurationLabel: String!
+}
+
+"An integration the organization can connect, and whether it is connected."
+type IntegrationCatalogItem {
+  type: IntegrationType!
+  name: String!
+  description: String!
+  category: String!
+  categoryLabel: String!
+  logoUrl: String!
+  logoLightUrl: String!
+  logoDarkUrl: String!
+  color: String!
+  glowFrom: String!
+  glowTo: String!
+  docsUrl: String!
+  websiteUrl: String!
+  links: [IntegrationCatalogLink!]!
+  featured: Boolean!
+  sortOrder: Int!
+  primaryActionLabel: String!
+  enabled: Boolean!
+  configured: Boolean!
+  status: IntegrationCatalogStatus!
+  configSpec: [IntegrationConfigFieldSpec!]
+  supportsTestConnect: Boolean!
+}
+
+type IntegrationCatalog {
+  items: [IntegrationCatalogItem!]!
+}
+
+"An integration's saved configuration, with sensitive values withheld."
+type IntegrationConfig {
+  type: IntegrationType!
+  enabled: Boolean!
+  fields: [IntegrationConfigFieldValue!]!
+  spec: [IntegrationConfigFieldSpec!]!
+  updatedAt: Timestamp!
+}
+
+"What the browser needs to use an integration, such as the Google Maps browser key."
+type IntegrationRuntimeConfig {
+  enabled: Boolean!
+  configured: Boolean!
+  ready: Boolean!
+  missingRequiredFields: [String!]!
+  "Only the client-safe settings of a ready integration, by key."
+  config: JSON!
+}
+
+type IntegrationConnectionTest {
+  provider: IntegrationType!
+  success: Boolean!
+  checkedAt: Timestamp!
+}
+
+type SamsaraWorkerSyncFailure {
+  workerId: String!
+  worker: String!
+  operation: String!
+  message: String!
+}
+
+type SamsaraWorkerSyncOutcome {
+  totalWorkers: Int!
+  activeWorkers: Int!
+  remoteDrivers: Int!
+  alreadyMapped: Int!
+  mappedFromExternalIds: Int!
+  createdDrivers: Int!
+  updatedRemoteDrivers: Int!
+  updatedMappings: Int!
+  skippedInactive: Int!
+  failed: Int!
+  failures: [SamsaraWorkerSyncFailure!]
+}
+
+"How many active workers have a linked Samsara driver."
+type SamsaraWorkerSyncReadiness {
+  totalWorkers: Int!
+  activeWorkers: Int!
+  syncedActiveWorkers: Int!
+  unsyncedActiveWorkers: Int!
+  allActiveWorkersSynced: Boolean!
+  lastCalculatedAt: Timestamp!
+}
+
+"A worker whose Samsara driver does not match Trenova."
+type SamsaraWorkerSyncDrift {
+  workerId: String!
+  workerName: String!
+  driftType: String!
+  message: String!
+  localExternalId: String!
+  remoteDriverId: String!
+  detectedAt: Timestamp!
+}
+
+"The drift found the last time workers were compared with Samsara."
+type SamsaraWorkerSyncDriftReport {
+  drifts: [SamsaraWorkerSyncDrift!]!
+  totalDrifts: Int!
+  workersWithDrift: Int!
+  missingMapping: Int!
+  missingRemoteDriver: Int!
+  mappingMismatch: Int!
+  remoteDeactivated: Int!
+  lastCalculatedAt: Timestamp!
+}
+
+type SamsaraWorkerSyncDriftRepair {
+  requestedWorkers: Int!
+  repairedWorkers: Int!
+  failedWorkers: Int!
+  failures: [SamsaraWorkerSyncFailure!]
+}
+
+type SamsaraWorkerSyncRun {
+  workflowId: String!
+  runId: String!
+  taskQueue: String!
+  status: String!
+  submittedAt: Timestamp!
+}
+
+type SamsaraWorkerSyncRunStatus {
+  workflowId: String!
+  runId: String!
+  taskQueue: String!
+  status: String!
+  startedAt: Timestamp!
+  closedAt: Timestamp!
+  result: SamsaraWorkerSyncOutcome
+  error: String!
+}
+
+input IntegrationConfigValueInput {
+  key: String!
+  value: String!
+}
+
+input UpdateIntegrationConfigInput {
+  type: IntegrationType!
+  enabled: Boolean!
+  "Every setting by key; a sensitive one left empty keeps its saved value."
+  configuration: [IntegrationConfigValueInput!]!
+}
+
+extend type Query {
+  integrationCatalog: IntegrationCatalog!
+  integrationConfig(type: IntegrationType!): IntegrationConfig!
+  "Readable by every signed-in person: only an integration's client-safe settings, such as the Google Maps browser key."
+  integrationRuntimeConfig(type: IntegrationType!): IntegrationRuntimeConfig!
+  samsaraWorkerSyncReadiness: SamsaraWorkerSyncReadiness!
+  samsaraWorkerSyncDrift: SamsaraWorkerSyncDriftReport!
+  samsaraWorkerSyncRunStatus(workflowId: String!, runId: String): SamsaraWorkerSyncRunStatus!
+}
+
+extend type Mutation {
+  updateIntegrationConfig(input: UpdateIntegrationConfigInput!): IntegrationConfig!
+  "Tests an integration's saved credentials and records the connection status."
+  testIntegrationConnection(type: IntegrationType!): IntegrationConnectionTest!
+  "Starts linking every active worker to a Samsara driver."
+  startSamsaraWorkerSync: SamsaraWorkerSyncRun!
+  "Compares workers with Samsara and stores the drift found."
+  detectSamsaraWorkerSyncDrift: SamsaraWorkerSyncDriftReport!
+  "Rewrites the Samsara drivers of the given workers to match Trenova; empty repairs every drifted worker."
+  repairSamsaraWorkerSyncDrift(workerIds: [String!]): SamsaraWorkerSyncDriftRepair!
+}

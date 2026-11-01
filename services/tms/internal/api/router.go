@@ -40,7 +40,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/distanceprofilehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenthandler"
-	"github.com/emoss08/trenova/internal/api/handlers/documentpacketrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttemplatehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/driverportalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/edihandler"
@@ -58,8 +57,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/iamhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/inboundhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/inboxpresencehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/insighthandler"
-	"github.com/emoss08/trenova/internal/api/handlers/integrationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoicehandler"
@@ -185,7 +182,6 @@ type RouterParams struct {
 	AgentAnalysisHandler            *agentanalysishandler.Handler
 	AgentDefinitionHandler          *agentdefinitionhandler.Handler
 	AssistantHandler                *assistanthandler.Handler
-	InsightHandler                  *insighthandler.Handler
 	AgentRunHandler                 *agentrunhandler.Handler
 	VersionHandler                  *versionhandler.Handler
 	WeatherAlertHandler             *weatheralerthandler.Handler
@@ -235,7 +231,6 @@ type RouterParams struct {
 	RateImportHandler               *rateimporthandler.Handler
 	RateQuoteHandler                *ratequotehandler.Handler
 	DetentionHandler                *detentionhandler.Handler
-	IntegrationHandler              *integrationhandler.Handler
 	InvoiceHandler                  *invoicehandler.Handler
 	InvoiceRunHandler               *invoicerunhandler.Handler
 	InvoiceShareHandler             *invoicesharehandler.Handler
@@ -258,7 +253,6 @@ type RouterParams struct {
 	AnalyticsHandler                *analyticshandler.Handler
 	ApiKeyHandler                   *apikeyhandler.Handler //nolint:revive // field name follows existing router wiring
 	TableChangeAlertHandler         *tablechangealerthandler.Handler
-	DocumentPacketRuleHandler       *documentpacketrulehandler.Handler
 	DocumentTemplateHandler         *documenttemplatehandler.Handler
 }
 
@@ -323,7 +317,6 @@ type Router struct {
 	agentAnalysisHandler            *agentanalysishandler.Handler
 	agentDefinitionHandler          *agentdefinitionhandler.Handler
 	assistantHandler                *assistanthandler.Handler
-	insightHandler                  *insighthandler.Handler
 	agentRunHandler                 *agentrunhandler.Handler
 	versionHandler                  *versionhandler.Handler
 	weatherAlertHandler             *weatheralerthandler.Handler
@@ -364,7 +357,6 @@ type Router struct {
 	rateImportHandler               *rateimporthandler.Handler
 	rateQuoteHandler                *ratequotehandler.Handler
 	detentionHandler                *detentionhandler.Handler
-	integrationHandler              *integrationhandler.Handler
 	invoiceHandler                  *invoicehandler.Handler
 	invoiceRunHandler               *invoicerunhandler.Handler
 	invoiceShareHandler             *invoicesharehandler.Handler
@@ -387,7 +379,6 @@ type Router struct {
 	analyticsHandler                *analyticshandler.Handler
 	apiKeyHandler                   *apikeyhandler.Handler
 	tableChangeAlertHandler         *tablechangealerthandler.Handler
-	documentPacketRuleHandler       *documentpacketrulehandler.Handler
 	documentTemplateHandler         *documenttemplatehandler.Handler
 }
 
@@ -454,7 +445,6 @@ func NewRouter(p RouterParams) *Router {
 		agentAnalysisHandler:            p.AgentAnalysisHandler,
 		agentDefinitionHandler:          p.AgentDefinitionHandler,
 		assistantHandler:                p.AssistantHandler,
-		insightHandler:                  p.InsightHandler,
 		agentRunHandler:                 p.AgentRunHandler,
 		versionHandler:                  p.VersionHandler,
 		weatherAlertHandler:             p.WeatherAlertHandler,
@@ -495,7 +485,6 @@ func NewRouter(p RouterParams) *Router {
 		rateImportHandler:               p.RateImportHandler,
 		rateQuoteHandler:                p.RateQuoteHandler,
 		detentionHandler:                p.DetentionHandler,
-		integrationHandler:              p.IntegrationHandler,
 		invoiceHandler:                  p.InvoiceHandler,
 		invoiceRunHandler:               p.InvoiceRunHandler,
 		invoiceShareHandler:             p.InvoiceShareHandler,
@@ -518,7 +507,6 @@ func NewRouter(p RouterParams) *Router {
 		analyticsHandler:                p.AnalyticsHandler,
 		apiKeyHandler:                   p.ApiKeyHandler,
 		tableChangeAlertHandler:         p.TableChangeAlertHandler,
-		documentPacketRuleHandler:       p.DocumentPacketRuleHandler,
 		documentTemplateHandler:         p.DocumentTemplateHandler,
 	}
 }
@@ -645,7 +633,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.agentAnalysisHandler.RegisterRoutes(protected)
 	r.agentDefinitionHandler.RegisterRoutes(protected)
 	r.assistantHandler.RegisterRoutes(protected)
-	r.insightHandler.RegisterRoutes(protected)
 	r.agentRunHandler.RegisterRoutes(protected)
 	r.serviceTypeHandler.RegisterRoutes(protected)
 	r.serviceFailureReasonCodeHandler.RegisterRoutes(protected)
@@ -686,7 +673,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.rateImportHandler.RegisterRoutes(protected)
 	r.rateQuoteHandler.RegisterRoutes(protected)
 	r.detentionHandler.RegisterRoutes(protected)
-	r.integrationHandler.RegisterRoutes(protected)
 	r.invoiceHandler.RegisterRoutes(protected)
 	r.invoiceRunHandler.RegisterRoutes(protected)
 	r.invoiceShareHandler.RegisterRoutes(protected)
@@ -709,7 +695,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.analyticsHandler.RegisterRoutes(protected)
 	r.apiKeyHandler.RegisterRoutes(protected)
 	r.tableChangeAlertHandler.RegisterRoutes(protected)
-	r.documentPacketRuleHandler.RegisterRoutes(protected)
 	r.documentTemplateHandler.RegisterRoutes(protected)
 	r.captureHandler.RegisterRoutes(protected)
 	r.editionRoutes.RegisterProtected(protected)

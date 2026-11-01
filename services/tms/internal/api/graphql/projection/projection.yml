@@ -196,6 +196,8 @@ aliases:
     mine: runAsId
 
 virtuals:
+  DocumentContent:
+    - pages
   EdiTransfer:
     - counterparty
   EdiTenderCommodity:

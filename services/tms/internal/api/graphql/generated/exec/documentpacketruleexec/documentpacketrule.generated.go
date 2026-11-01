@@ -220,6 +220,46 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createDocumentPacketRule",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "DocumentPacketRule",
+				Args:       field_Mutation_createDocumentPacketRule_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateDocumentPacketRule(ctx, fc.Args["input"].(gqlmodel.DocumentPacketRuleInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNDocumentPacketRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentpacketruleᚐDocumentPacketRule),
+			},
+			{
+				Name:       "updateDocumentPacketRule",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "DocumentPacketRule",
+				Args:       field_Mutation_updateDocumentPacketRule_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateDocumentPacketRule(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.DocumentPacketRuleInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNDocumentPacketRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentpacketruleᚐDocumentPacketRule),
+			},
+			{
+				Name:       "deleteDocumentPacketRule",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild2,
+				Args:       field_Mutation_deleteDocumentPacketRule_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteDocumentPacketRule(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "documentPacketRules",
@@ -250,9 +290,19 @@ var Shard = &gqlexec.Shard{
 			},
 		}},
 	},
+	Inputs: []gqlexec.Input{
+		{Name: "DocumentPacketRuleInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputDocumentPacketRuleInput)},
+	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
+}
+
+type resolverMutation interface {
+	CreateDocumentPacketRule(ctx context.Context, input gqlmodel.DocumentPacketRuleInput) (*documentpacketrule.DocumentPacketRule, error)
+	UpdateDocumentPacketRule(ctx context.Context, id string, input gqlmodel.DocumentPacketRuleInput) (*documentpacketrule.DocumentPacketRule, error)
+	DeleteDocumentPacketRule(ctx context.Context, id string) (bool, error)
 }
 
 type resolverQuery interface {
@@ -267,6 +317,53 @@ var (
 	errNoChild3 = errors.New("field of type Int does not have child fields")
 	errNoChild4 = errors.New("field of type Timestamp does not have child fields")
 )
+
+func field_Mutation_createDocumentPacketRule_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DocumentPacketRuleInput, error) {
+			return unmarshalNDocumentPacketRuleInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentPacketRuleInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateDocumentPacketRule_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DocumentPacketRuleInput, error) {
+			return unmarshalNDocumentPacketRuleInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentPacketRuleInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_deleteDocumentPacketRule_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
 
 func field_Query_documentPacketRules_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -294,8 +391,92 @@ func field_Query_documentPacketRule_args(ctx context.Context, ec *gqlexec.Exec, 
 	return args, nil
 }
 
+func unmarshalInputDocumentPacketRuleInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DocumentPacketRuleInput, error) {
+	var it gqlmodel.DocumentPacketRuleInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"resourceType", "documentTypeId", "required", "allowMultiple", "displayOrder", "expirationRequired", "expirationWarningDays", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "resourceType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceType"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceType = data
+		case "documentTypeId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentTypeId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DocumentTypeID = data
+		case "required":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("required"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Required = data
+		case "allowMultiple":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allowMultiple"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AllowMultiple = data
+		case "displayOrder":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayOrder"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DisplayOrder = data
+		case "expirationRequired":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("expirationRequired"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExpirationRequired = data
+		case "expirationWarningDays":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("expirationWarningDays"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExpirationWarningDays = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
+}
+
+func unmarshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool, error) {
+	res, err := graphql.UnmarshalBoolean(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
@@ -303,9 +484,32 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNDocumentPacketRuleInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentPacketRuleInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DocumentPacketRuleInput, error) {
+	res, err := unmarshalInputDocumentPacketRuleInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {

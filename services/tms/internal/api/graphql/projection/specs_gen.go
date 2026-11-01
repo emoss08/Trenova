@@ -224,7 +224,15 @@ var DistanceOverrideStopSpec TypeSpec
 
 var DistanceProfileSpec TypeSpec
 
+var DocumentSpec TypeSpec
+
+var DocumentContentSpec TypeSpec
+
+var DocumentContentPageSpec TypeSpec
+
 var DocumentPacketRuleSpec TypeSpec
+
+var DocumentShipmentDraftSpec TypeSpec
 
 var DocumentTemplateSpec TypeSpec
 
@@ -383,6 +391,8 @@ var InboundMailboxSpec TypeSpec
 var InboundMessageSpec TypeSpec
 
 var InboundReplySpec TypeSpec
+
+var InsightSpec TypeSpec
 
 var InvoiceSpec TypeSpec
 
@@ -11098,6 +11108,371 @@ func init() {
 		},
 	}
 
+	DocumentSpec = TypeSpec{
+		TypeName: "Document",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "lineageId",
+				Column: "lineage_id",
+			},
+			{
+				Name:   "versionNumber",
+				Column: "version_number",
+			},
+			{
+				Name:   "isCurrentVersion",
+				Column: "is_current_version",
+			},
+			{
+				Name:   "fileName",
+				Column: "file_name",
+			},
+			{
+				Name:   "originalName",
+				Column: "original_name",
+			},
+			{
+				Name:   "fileSize",
+				Column: "file_size",
+			},
+			{
+				Name:   "fileType",
+				Column: "file_type",
+			},
+			{
+				Name:   "storagePath",
+				Column: "storage_path",
+			},
+			{
+				Name:   "checksumSha256",
+				Column: "checksum_sha256",
+			},
+			{
+				Name:   "storageVersionId",
+				Column: "storage_version_id",
+			},
+			{
+				Name:   "storageRetentionMode",
+				Column: "storage_retention_mode",
+			},
+			{
+				Name:   "storageRetentionUntil",
+				Column: "storage_retention_until",
+			},
+			{
+				Name:   "storageLegalHold",
+				Column: "storage_legal_hold",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "description",
+				Column: "description",
+			},
+			{
+				Name:   "resourceId",
+				Column: "resource_id",
+			},
+			{
+				Name:   "resourceType",
+				Column: "resource_type",
+			},
+			{
+				Name:   "processingProfile",
+				Column: "processing_profile",
+			},
+			{
+				Name:   "expirationDate",
+				Column: "expiration_date",
+			},
+			{
+				Name:   "tags",
+				Column: "tags",
+			},
+			{
+				Name:   "isPublic",
+				Column: "is_public",
+			},
+			{
+				Name:   "uploadedById",
+				Column: "uploaded_by_id",
+			},
+			{
+				Name:   "approvedById",
+				Column: "approved_by_id",
+			},
+			{
+				Name:   "approvedAt",
+				Column: "approved_at",
+			},
+			{
+				Name:   "rejectedById",
+				Column: "rejected_by_id",
+			},
+			{
+				Name:   "rejectedAt",
+				Column: "rejected_at",
+			},
+			{
+				Name:   "rejectionReason",
+				Column: "rejection_reason",
+			},
+			{
+				Name:   "previewStoragePath",
+				Column: "preview_storage_path",
+			},
+			{
+				Name:   "previewStatus",
+				Column: "preview_status",
+			},
+			{
+				Name:   "contentStatus",
+				Column: "content_status",
+			},
+			{
+				Name:   "contentError",
+				Column: "content_error",
+			},
+			{
+				Name:   "detectedKind",
+				Column: "detected_kind",
+			},
+			{
+				Name:   "hasExtractedText",
+				Column: "has_extracted_text",
+			},
+			{
+				Name:   "shipmentDraftStatus",
+				Column: "shipment_draft_status",
+			},
+			{
+				Name:   "documentTypeId",
+				Column: "document_type_id",
+			},
+			{
+				Name:   "documentType",
+				Column: "document_type_id",
+				Relation: &RelationSpec{
+					Target: &DocumentTypeSpec,
+				},
+			},
+			{
+				Name:   "signatureStatus",
+				Column: "signature_status",
+			},
+			{
+				Name:   "signedAt",
+				Column: "signed_at",
+			},
+			{
+				Name:   "signatureSource",
+				Column: "signature_source",
+			},
+			{
+				Name:   "signatureUpdatedById",
+				Column: "signature_updated_by_id",
+			},
+			{
+				Name:   "signatureUpdatedAt",
+				Column: "signature_updated_at",
+			},
+			{
+				Name:   "deliveryFacts",
+				Column: "delivery_facts",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
+	DocumentContentSpec = TypeSpec{
+		TypeName: "DocumentContent",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "documentId",
+				Column: "document_id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "contentText",
+				Column: "content_text",
+			},
+			{
+				Name:   "pageCount",
+				Column: "page_count",
+			},
+			{
+				Name:   "sourceKind",
+				Column: "source_kind",
+			},
+			{
+				Name:   "detectedLanguage",
+				Column: "detected_language",
+			},
+			{
+				Name:   "detectedDocumentKind",
+				Column: "detected_document_kind",
+			},
+			{
+				Name:   "classificationConfidence",
+				Column: "classification_confidence",
+			},
+			{
+				Name:   "structuredData",
+				Column: "structured_data",
+			},
+			{
+				Name:   "failureCode",
+				Column: "failure_code",
+			},
+			{
+				Name:   "failureMessage",
+				Column: "failure_message",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+			{
+				Name:   "lastExtractedAt",
+				Column: "last_extracted_at",
+			},
+			{
+				Name:    "pages",
+				Special: "pages",
+			},
+		},
+	}
+
+	DocumentContentPageSpec = TypeSpec{
+		TypeName: "DocumentContentPage",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "documentContentId",
+				Column: "document_content_id",
+			},
+			{
+				Name:   "documentId",
+				Column: "document_id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "pageNumber",
+				Column: "page_number",
+			},
+			{
+				Name:   "sourceKind",
+				Column: "source_kind",
+			},
+			{
+				Name:   "extractedText",
+				Column: "extracted_text",
+			},
+			{
+				Name:   "ocrConfidence",
+				Column: "ocr_confidence",
+			},
+			{
+				Name:   "preprocessingApplied",
+				Column: "preprocessing_applied",
+			},
+			{
+				Name:   "width",
+				Column: "width",
+			},
+			{
+				Name:   "height",
+				Column: "height",
+			},
+			{
+				Name:   "metadata",
+				Column: "metadata",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
 	DocumentPacketRuleSpec = TypeSpec{
 		TypeName: "DocumentPacketRule",
 		AlwaysColumns: []string{
@@ -11144,6 +11519,80 @@ func init() {
 			{
 				Name:   "expirationWarningDays",
 				Column: "expiration_warning_days",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
+	DocumentShipmentDraftSpec = TypeSpec{
+		TypeName: "DocumentShipmentDraft",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "documentId",
+				Column: "document_id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "documentKind",
+				Column: "document_kind",
+			},
+			{
+				Name:   "confidence",
+				Column: "confidence",
+			},
+			{
+				Name:   "draftData",
+				Column: "draft_data",
+			},
+			{
+				Name:   "failureCode",
+				Column: "failure_code",
+			},
+			{
+				Name:   "failureMessage",
+				Column: "failure_message",
+			},
+			{
+				Name:   "attachedShipmentId",
+				Column: "attached_shipment_id",
+			},
+			{
+				Name:   "attachedAt",
+				Column: "attached_at",
+			},
+			{
+				Name:   "attachedById",
+				Column: "attached_by_id",
 			},
 			{
 				Name:   "version",
@@ -18398,6 +18847,124 @@ func init() {
 			{
 				Name:   "attachments",
 				Column: "attachments",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
+	InsightSpec = TypeSpec{
+		TypeName: "Insight",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "detectorKey",
+				Column: "detector_key",
+			},
+			{
+				Name:   "category",
+				Column: "category",
+			},
+			{
+				Name:   "severity",
+				Column: "severity",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "dedupeKey",
+				Column: "dedupe_key",
+			},
+			{
+				Name:   "subject",
+				Column: "subject",
+			},
+			{
+				Name:   "headline",
+				Column: "headline",
+			},
+			{
+				Name:   "narrative",
+				Column: "narrative",
+			},
+			{
+				Name:   "recommendation",
+				Column: "recommendation",
+			},
+			{
+				Name:   "narrated",
+				Column: "narrated",
+			},
+			{
+				Name:   "metrics",
+				Column: "metrics",
+			},
+			{
+				Name:   "links",
+				Column: "links",
+			},
+			{
+				Name:   "windowStart",
+				Column: "window_start",
+			},
+			{
+				Name:   "windowEnd",
+				Column: "window_end",
+			},
+			{
+				Name:   "detectedAt",
+				Column: "detected_at",
+			},
+			{
+				Name:   "staleAt",
+				Column: "stale_at",
+			},
+			{
+				Name:   "dismissedAt",
+				Column: "dismissed_at",
+			},
+			{
+				Name:   "dismissedById",
+				Column: "dismissed_by_id",
+			},
+			{
+				Name:   "dismissReason",
+				Column: "dismiss_reason",
+			},
+			{
+				Name:   "modelIdentifier",
+				Column: "model_identifier",
+			},
+			{
+				Name:   "providerId",
+				Column: "provider_id",
+			},
+			{
+				Name:   "version",
+				Column: "version",
 			},
 			{
 				Name:   "createdAt",

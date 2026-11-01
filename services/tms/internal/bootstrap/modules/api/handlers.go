@@ -37,7 +37,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/distanceprofilehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenthandler"
-	"github.com/emoss08/trenova/internal/api/handlers/documentpacketrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttemplatehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/driverportalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/edihandler"
@@ -55,8 +54,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/iamhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/inboundhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/inboxpresencehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/insighthandler"
-	"github.com/emoss08/trenova/internal/api/handlers/integrationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoicehandler"
@@ -130,7 +127,6 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	pagefavoritehandler.New,
 	tractorhandler.New,
 	trailerhandler.New,
-	integrationhandler.New,
 	invoicehandler.New,
 	invoicerunhandler.New,
 	invoicesharehandler.New,
@@ -144,12 +140,10 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	customfieldhandler.New,
 	documenthandler.New,
 	reporthandler.New,
-	documentpacketrulehandler.New,
 	documenttemplatehandler.New,
 	tablequeryhandler.New,
 	agentdefinitionhandler.New,
 	assistanthandler.New,
-	insighthandler.New,
 	aiproviderhandler.New,
 	agentextensionhandler.New,
 	agentanalysishandler.New,

@@ -1,0 +1,54 @@
+mutation DeleteDocument($id: ID!) {
+  deleteDocument(id: $id)
+}
+
+mutation BulkDeleteDocuments($ids: [ID!]!) {
+  bulkDeleteDocuments(ids: $ids) {
+    deletedCount
+    errorCount
+  }
+}
+
+mutation RestoreDocumentVersion($documentId: ID!) {
+  restoreDocumentVersion(documentId: $documentId) {
+    ...DocumentFields
+  }
+}
+
+mutation ApproveDocument($documentId: ID!) {
+  approveDocument(documentId: $documentId) {
+    ...DocumentFields
+  }
+}
+
+mutation RejectDocument($input: RejectDocumentInput!) {
+  rejectDocument(input: $input) {
+    ...DocumentFields
+  }
+}
+
+mutation SetDocumentSignature($input: SetDocumentSignatureInput!) {
+  setDocumentSignature(input: $input) {
+    ...DocumentFields
+  }
+}
+
+mutation SetDocumentDeliveryFacts($input: SetDocumentDeliveryFactsInput!) {
+  setDocumentDeliveryFacts(input: $input) {
+    ...DocumentFields
+  }
+}
+
+mutation AttachDocumentToShipment($input: AttachDocumentToShipmentInput!) {
+  attachDocumentToShipment(input: $input) {
+    ...DocumentFields
+  }
+}
+
+mutation ReextractDocument($documentId: ID!) {
+  reextractDocument(documentId: $documentId)
+}
+
+mutation OpenDocumentImportAssistantThread($documentId: ID!) {
+  openDocumentImportAssistantThread(documentId: $documentId)
+}

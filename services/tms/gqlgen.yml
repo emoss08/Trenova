@@ -4474,6 +4474,164 @@ models:
   DocumentPacketRule:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule.DocumentPacketRule
+  DocumentStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/document.Status
+  DocumentPreviewStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/document.PreviewStatus
+  DocumentContentStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/document.ContentStatus
+  DocumentShipmentDraftStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/document.ShipmentDraftStatus
+  DocumentSignatureStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/document.SignatureStatus
+  DocumentDeliveryOsd:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/document.OSDKind
+  DocumentDeliveryFacts:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/document.DeliveryFacts
+    fields:
+      amount:
+        resolver: true
+  Document:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/document.Document
+  DocumentContentPage:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent.Page
+  DocumentContent:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent.Content
+  DocumentShipmentDraft:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft.DocumentShipmentDraft
+  DocumentExtractionStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/documentports.ExtractionStatus
+  DocumentPacketStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule.PacketStatus
+  DocumentPacketItemStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule.ItemStatus
+  DocumentPacketItemSummary:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule.PacketItemSummary
+  DocumentPacketSummary:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule.PacketSummary
+  DocumentImportAssistantSuggestion:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports.ShipmentImportSuggestion
+  DocumentImportAssistantToolCall:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports.ShipmentImportToolCallRecord
+  DocumentImportAssistantMessage:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports.ShipmentImportChatMessage
+  DocumentImportAssistantHistory:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports.ShipmentImportChatHistoryResponse
+  InsightCategory:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/insight.Category
+  InsightSurface:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/insight.Surface
+  InsightSeverity:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/insight.Severity
+  InsightStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/insight.Status
+  InsightUnit:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/insight.Unit
+  InsightDirection:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/insight.Direction
+  InsightMetric:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/insight.Metric
+    fields:
+      value:
+        resolver: true
+      baseline:
+        resolver: true
+  InsightLink:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/insight.Link
+  Insight:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/insight.Insight
+  InsightExplanation:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/insightports.InsightExplanation
+  InsightDetail:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/insightports.InsightDetail
+  IntegrationType:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/integration.Type
+  IntegrationConfigFieldSpec:
+    model:
+      - github.com/emoss08/trenova/internal/modules/kernel/domain/configspec.Field
+  IntegrationConfigFieldValue:
+    model:
+      - github.com/emoss08/trenova/internal/modules/kernel/domain/configspec.FieldValue
+  IntegrationCatalogLink:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports.CatalogLink
+  IntegrationCatalogStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports.CatalogStatus
+  IntegrationCatalogItem:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports.CatalogItem
+  IntegrationCatalog:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports.CatalogResponse
+  IntegrationConfig:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports.ConfigResponse
+  IntegrationRuntimeConfig:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice.RuntimeConfig
+    fields:
+      config:
+        resolver: true
+  IntegrationConnectionTest:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports.TestConnectionResponse
+  SamsaraWorkerSyncFailure:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports.SamsaraWorkerSyncFailure
+  SamsaraWorkerSyncOutcome:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports.SamsaraWorkerSyncResult
+  SamsaraWorkerSyncReadiness:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports.WorkerSyncReadinessResponse
+  SamsaraWorkerSyncDrift:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports.WorkerSyncDrift
+  SamsaraWorkerSyncDriftReport:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports.WorkerSyncDriftResponse
+  SamsaraWorkerSyncDriftRepair:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports.RepairWorkerSyncDriftResponse
+  SamsaraWorkerSyncRun:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/jobs/samsarajobs/samsaracontract.SyncWorkflowStartResponse
+  SamsaraWorkerSyncRunStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/jobs/samsarajobs/samsaracontract.SyncWorkflowStatusResponse
   DocumentTemplate:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate.DocumentTemplate

@@ -181,13 +181,6 @@ type BulkUploadResult struct {
 	Errors    []error
 }
 
-func (s *Service) List(
-	ctx context.Context,
-	req *documentports.ListDocumentsRequest,
-) (*pagination.ListResult[*document.Document], error) {
-	return s.repo.List(ctx, req)
-}
-
 func (s *Service) SelectOptions(
 	ctx context.Context,
 	req *documentports.DocumentSelectOptionsRequest,

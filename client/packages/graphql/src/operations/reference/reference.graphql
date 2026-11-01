@@ -148,6 +148,13 @@ fragment DOTRandomPoolReference on DOTRandomPool {
   period
 }
 
+fragment DocumentReference on Document {
+  id
+  originalName
+  fileSize
+  fileType
+}
+
 fragment DocumentTypeReference on DocumentType {
   id
   code

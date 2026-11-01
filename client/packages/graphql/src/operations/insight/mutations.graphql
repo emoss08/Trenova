@@ -1,0 +1,11 @@
+mutation DismissInsight($input: DismissInsightInput!) {
+  dismissInsight(input: $input) {
+    ...InsightFields
+  }
+}
+
+mutation RestoreInsight($id: ID!) {
+  restoreInsight(id: $id) {
+    ...InsightFields
+  }
+}

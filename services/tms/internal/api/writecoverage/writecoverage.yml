@@ -992,31 +992,31 @@ writes:
     reason: "Routing profiles decide how every distance is computed; an administrator maintains them."
 
   # document
-  "DELETE /api/v1/documents/:documentID/":
+  "mutation deleteDocument":
     tools: [document_delete]
-  "POST /api/v1/documents/:documentID/approve/":
+  "mutation approveDocument":
     exempt: attestation
     reason: "Accepting a document as proof, such as a proof of delivery that lets a shipment bill, is the reviewer's sign-off on the evidence; agents may never approve."
-  "POST /api/v1/documents/:documentID/attach-to-shipment/":
+  "mutation attachDocumentToShipment":
     tools: [shipment_attach_document]
-  "POST /api/v1/documents/:documentID/import-assistant/thread/":
+  "mutation openDocumentImportAssistantThread":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
-  "POST /api/v1/documents/:documentID/reject/":
+  "mutation rejectDocument":
     exempt: attestation
     reason: "Refusing a document as proof takes it out of the shipment's billing requirements and is the reviewer's judgement of the evidence, recorded with their reason; an agent can point out a doubtful document but does not decide it."
-  "POST /api/v1/documents/:documentID/restore/":
+  "mutation restoreDocumentVersion":
     tools: [document_restore_version]
-  "POST /api/v1/documents/:documentID/shipment-draft/reextract/":
+  "mutation reextractDocument":
     exempt: infrastructure
     reason: "A repair a person asks for when the page's machine reading of a document went wrong: it runs extraction again, replaces the draft they are reviewing and archives their import assistant conversation. The extraction pipeline, not a decision, produces what replaces it."
-  "POST /api/v1/documents/:documentID/signature/":
+  "mutation setDocumentSignature":
     exempt: attestation
     reason: "Saying a proof of delivery is signed or unsigned is the reviewer's reading of the evidence that lets a shipment bill, and it overrides what extraction read; an agent can point out a doubtful signature but does not attest to one."
-  "POST /api/v1/documents/:documentID/delivery-facts/":
+  "mutation setDocumentDeliveryFacts":
     exempt: attestation
-    reason: "Recording who signed, what arrived and what a receipt cost is the reviewer's reading of the paperwork, and it overrides what Nova read from it; Nova fills these itself when it reviews the item, so an agent never attests to them through this route."
-  "POST /api/v1/documents/bulk-delete/":
+    reason: "Recording who signed, what arrived and what a receipt cost is the reviewer's reading of the paperwork, and it overrides what Nova read from it; Nova fills these itself when it reviews the item, so an agent never attests to them through this mutation."
+  "mutation bulkDeleteDocuments":
     tools: [document_delete]
   "POST /api/v1/documents/upload-bulk/":
     exempt: infrastructure
@@ -1043,13 +1043,13 @@ writes:
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
 
   # documentpacketrule
-  "DELETE /api/v1/document-packet-rules/:ruleID/":
+  "mutation deleteDocumentPacketRule":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
-  "POST /api/v1/document-packet-rules/":
+  "mutation createDocumentPacketRule":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
-  "PUT /api/v1/document-packet-rules/:ruleID/":
+  "mutation updateDocumentPacketRule":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
 
@@ -1556,9 +1556,6 @@ writes:
   "POST /api/v1/formula-libraries/:libraryID/submit":
     exempt: configuration
     reason: "Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them."
-  "POST /api/v1/formula-libraries/ai/thread/":
-    exempt: agent-administration
-    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
   "POST /api/v1/formula-libraries/duplicate":
     exempt: configuration
     reason: "Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them."
@@ -1618,9 +1615,6 @@ writes:
   "POST /api/v1/formula-templates/ai/suggest-tests":
     exempt: read-only
     reason: "Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes."
-  "POST /api/v1/formula-templates/ai/thread/":
-    exempt: agent-administration
-    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
   "POST /api/v1/formula-templates/bulk-update-status":
     exempt: configuration
     reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
@@ -2027,25 +2021,25 @@ writes:
     reason: "Presence and typing signals a browser sends while a person is on the page."
 
   # insight
-  "POST /api/v1/insights/:insightID/dismiss/":
+  "mutation dismissInsight":
     tools: [insight_dismiss]
-  "POST /api/v1/insights/:insightID/restore/":
+  "mutation restoreInsight":
     tools: [insight_restore]
 
   # integration
-  "POST /api/v1/integrations/:type/test-connection/":
+  "mutation testIntegrationConnection":
     exempt: configuration
     reason: "Tests an integration's credentials and records the connection status on its configuration."
-  "POST /api/v1/integrations/samsara/workers/sync/":
+  "mutation startSamsaraWorkerSync":
     exempt: configuration
     reason: "Creates and links drivers' accounts in the telematics provider from the integration's setup page; connecting that integration and the accounts it holds is an administrator's."
-  "POST /api/v1/integrations/samsara/workers/sync/drift/detect/":
+  "mutation detectSamsaraWorkerSyncDrift":
     exempt: read-only
-    reason: "Compares workers with the telematics provider and reports the drift."
-  "POST /api/v1/integrations/samsara/workers/sync/drift/repair/":
+    reason: "Compares workers with the telematics provider and stores the drift it reports; it changes no worker or driver account."
+  "mutation repairSamsaraWorkerSyncDrift":
     exempt: configuration
     reason: "Rewrites drivers' accounts in the telematics provider to match Trenova from the integration's setup page; an administrator owns that connection and the accounts it holds."
-  "PUT /api/v1/integrations/:type/config/":
+  "mutation updateIntegrationConfig":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
 

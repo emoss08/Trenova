@@ -56,6 +56,9 @@ func newErrorPresenter(cfg *appconfig.Config) graphql.ErrorPresenterFunc {
 		if conflict := sanitizer.ExtractConflict(err); conflict != nil {
 			gqlErr.Extensions["conflict"] = conflict
 		}
+		if usageStats := sanitizer.ExtractUsageStats(err); usageStats != nil {
+			gqlErr.Extensions["usageStats"] = usageStats
+		}
 		if validationErrors := sanitizer.ExtractErrors(err); len(validationErrors) > 0 {
 			gqlErr.Extensions["errors"] = helpers.LocalizeErrors(locale, validationErrors)
 		}

@@ -1,0 +1,152 @@
+query Document($id: ID!) {
+  document(id: $id) {
+    ...DocumentFields
+  }
+}
+
+query DocumentVersions($documentId: ID!) {
+  documentVersions(documentId: $documentId) {
+    ...DocumentFields
+  }
+}
+
+query DocumentsByResource($input: DocumentsByResourceInput!) {
+  documentsByResource(input: $input) {
+    ...DocumentFields
+  }
+}
+
+query DocumentPacketSummary($resourceType: String!, $resourceId: String!) {
+  documentPacketSummary(resourceType: $resourceType, resourceId: $resourceId) {
+    resourceId
+    resourceType
+    status
+    totalRules
+    satisfiedRules
+    missingRequired
+    expiringSoon
+    expired
+    needsReview
+    items {
+      documentTypeId
+      documentTypeCode
+      documentTypeName
+      required
+      allowMultiple
+      displayOrder
+      expirationRequired
+      expirationWarningDays
+      status
+      documentCount
+      currentDocumentIds
+    }
+  }
+}
+
+query DocumentContent($documentId: ID!) {
+  documentContent(documentId: $documentId) {
+    id
+    documentId
+    organizationId
+    businessUnitId
+    status
+    contentText
+    pageCount
+    sourceKind
+    detectedLanguage
+    detectedDocumentKind
+    classificationConfidence
+    structuredData
+    failureCode
+    failureMessage
+    version
+    createdAt
+    updatedAt
+    lastExtractedAt
+    pages {
+      id
+      documentContentId
+      documentId
+      organizationId
+      businessUnitId
+      pageNumber
+      sourceKind
+      extractedText
+      ocrConfidence
+      preprocessingApplied
+      width
+      height
+      metadata
+      version
+      createdAt
+      updatedAt
+    }
+  }
+}
+
+query DocumentShipmentDraft($documentId: ID!) {
+  documentShipmentDraft(documentId: $documentId) {
+    id
+    documentId
+    organizationId
+    businessUnitId
+    status
+    documentKind
+    confidence
+    draftData
+    failureCode
+    failureMessage
+    attachedShipmentId
+    attachedAt
+    attachedById
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+query DocumentReading($documentId: ID!) {
+  documentReading(documentId: $documentId)
+}
+
+query DocumentExtractionStatus {
+  documentExtractionStatus {
+    modelProviderAvailable
+    modelProviderReason
+    converterAvailable
+    extractionAvailable
+  }
+}
+
+query DocumentImportAssistantHistory($documentId: ID!) {
+  documentImportAssistantHistory(documentId: $documentId) {
+    documentId
+    conversationId
+    status
+    statusReason
+    turnCount
+    lastMessageAt
+    updatedAt
+    messages {
+      id
+      role
+      text
+      toolCalls {
+        name
+        callId
+        status
+        input
+        output
+      }
+      suggestions {
+        label
+        prompt
+        type
+        placeholder
+        action
+        submitLabel
+      }
+      createdAt
+    }
+  }
+}

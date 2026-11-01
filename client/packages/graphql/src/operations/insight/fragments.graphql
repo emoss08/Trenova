@@ -1,0 +1,41 @@
+fragment InsightFields on Insight {
+  id
+  businessUnitId
+  organizationId
+  detectorKey
+  category
+  severity
+  status
+  dedupeKey
+  subject
+  headline
+  narrative
+  recommendation
+  narrated
+  metrics {
+    key
+    label
+    value
+    unit
+    direction
+    baseline
+    baselineLabel
+  }
+  links {
+    label
+    path
+    count
+  }
+  windowStart
+  windowEnd
+  detectedAt
+  staleAt
+  dismissedAt
+  dismissedById
+  dismissReason
+  modelIdentifier
+  providerId
+  version
+  createdAt
+  updatedAt
+}

@@ -89,7 +89,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 247 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 48 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 112 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 110 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 48 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 53 |
@@ -97,23 +97,23 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1123 writes: 671 GraphQL mutations and 452 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1121 writes: 691 GraphQL mutations and 430 REST writes, after merging 29 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 443 |
-| Exempt | 678 |
+| Exempt | 676 |
 | — Security | 85 |
 | — Configuration | 247 |
 | — User preference | 40 |
 | — Infrastructure | 48 |
-| — Agent administration | 112 |
+| — Agent administration | 110 |
 | — Counterparty | 35 |
 | — Read-only | 48 |
 | — Attestation | 53 |
 | — Duplicate | 10 |
 | **Pending** | **2** |
-| Total | 1123 |
+| Total | 1121 |
 
 Of the 445 writes an agent should be able to make, 443 have a tool (99%).
 
@@ -211,8 +211,8 @@ The writes no tool performs yet, and what the tool would do.
 | fiscalyear | 5 | 0 | 5 | 0 |
 | fleetcode | 4 | 0 | 4 | 0 |
 | fleetsafety | 3 | 3 | 0 | 0 |
-| formulalibrary | 10 | 0 | 10 | 0 |
-| formulatemplate | 26 | 0 | 26 | 0 |
+| formulalibrary | 9 | 0 | 9 | 0 |
+| formulatemplate | 25 | 0 | 25 | 0 |
 | fuelpurchase | 13 | 7 | 6 | 0 |
 | fuelsurcharge | 9 | 2 | 7 | 0 |
 | googlemaps | 1 | 0 | 1 | 0 |
@@ -952,16 +952,16 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/documents/:documentID/`<br>documenthandler.delete | Tool: `document_delete` |
-| `POST /api/v1/documents/:documentID/approve/`<br>documenthandler.approve | Exempt, attestation: Accepting a document as proof, such as a proof of delivery that lets a shipment bill, is the reviewer's sign-off on the evidence; agents may never approve. |
-| `POST /api/v1/documents/:documentID/attach-to-shipment/`<br>documenthandler.attachToShipment | Tool: `shipment_attach_document` |
-| `POST /api/v1/documents/:documentID/delivery-facts/`<br>documenthandler.setDeliveryFacts | Exempt, attestation: Recording who signed, what arrived and what a receipt cost is the reviewer's reading of the paperwork, and it overrides what Nova read from it; Nova fills these itself when it reviews the item, so an agent never attests to them through this route. |
-| `POST /api/v1/documents/:documentID/import-assistant/thread/`<br>documenthandler.openImportAssistantThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
-| `POST /api/v1/documents/:documentID/reject/`<br>documenthandler.reject | Exempt, attestation: Refusing a document as proof takes it out of the shipment's billing requirements and is the reviewer's judgement of the evidence, recorded with their reason; an agent can point out a doubtful document but does not decide it. |
-| `POST /api/v1/documents/:documentID/restore/`<br>documenthandler.restoreVersion | Tool: `document_restore_version` |
-| `POST /api/v1/documents/:documentID/shipment-draft/reextract/`<br>documenthandler.reextractDocumentContent | Exempt, infrastructure: A repair a person asks for when the page's machine reading of a document went wrong: it runs extraction again, replaces the draft they are reviewing and archives their import assistant conversation. The extraction pipeline, not a decision, produces what replaces it. |
-| `POST /api/v1/documents/:documentID/signature/`<br>documenthandler.setSignature | Exempt, attestation: Saying a proof of delivery is signed or unsigned is the reviewer's reading of the evidence that lets a shipment bill, and it overrides what extraction read; an agent can point out a doubtful signature but does not attest to one. |
-| `POST /api/v1/documents/bulk-delete/`<br>documenthandler.bulkDelete | Tool: `document_delete` |
+| `mutation approveDocument` | Exempt, attestation: Accepting a document as proof, such as a proof of delivery that lets a shipment bill, is the reviewer's sign-off on the evidence; agents may never approve. |
+| `mutation attachDocumentToShipment` | Tool: `shipment_attach_document` |
+| `mutation bulkDeleteDocuments` | Tool: `document_delete` |
+| `mutation deleteDocument` | Tool: `document_delete` |
+| `mutation openDocumentImportAssistantThread`<br>twin `POST /api/v1/formula-libraries/ai/thread/`<br>twin `POST /api/v1/formula-templates/ai/thread/` | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
+| `mutation reextractDocument` | Exempt, infrastructure: A repair a person asks for when the page's machine reading of a document went wrong: it runs extraction again, replaces the draft they are reviewing and archives their import assistant conversation. The extraction pipeline, not a decision, produces what replaces it. |
+| `mutation rejectDocument` | Exempt, attestation: Refusing a document as proof takes it out of the shipment's billing requirements and is the reviewer's judgement of the evidence, recorded with their reason; an agent can point out a doubtful document but does not decide it. |
+| `mutation restoreDocumentVersion` | Tool: `document_restore_version` |
+| `mutation setDocumentDeliveryFacts` | Exempt, attestation: Recording who signed, what arrived and what a receipt cost is the reviewer's reading of the paperwork, and it overrides what Nova read from it; Nova fills these itself when it reviews the item, so an agent never attests to them through this mutation. |
+| `mutation setDocumentSignature` | Exempt, attestation: Saying a proof of delivery is signed or unsigned is the reviewer's reading of the evidence that lets a shipment bill, and it overrides what extraction read; an agent can point out a doubtful signature but does not attest to one. |
 | `POST /api/v1/documents/upload-bulk/`<br>documenthandler.uploadBulk | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
 | `POST /api/v1/documents/upload/`<br>documenthandler.upload | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
 | `POST /api/v1/documents/uploads/`<br>documenthandler.createUploadSession | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
@@ -979,9 +979,9 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/document-packet-rules/:ruleID/`<br>documentpacketrulehandler.delete | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `POST /api/v1/document-packet-rules/`<br>documentpacketrulehandler.create | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `PUT /api/v1/document-packet-rules/:ruleID/`<br>documentpacketrulehandler.update | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
+| `mutation createDocumentPacketRule` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
+| `mutation deleteDocumentPacketRule` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
+| `mutation updateDocumentPacketRule` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 
 ### documenttemplate
 
@@ -1297,7 +1297,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/formula-libraries/:libraryID/request-changes`<br>formulalibraryhandler.requestChanges | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
 | `POST /api/v1/formula-libraries/:libraryID/rollback`<br>formulalibraryhandler.rollback | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
 | `POST /api/v1/formula-libraries/:libraryID/submit`<br>formulalibraryhandler.submit | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
-| `POST /api/v1/formula-libraries/ai/thread/`<br>formulalibraryhandler.openAssistantThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/formula-libraries/duplicate`<br>formulalibraryhandler.duplicate | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
 | `PUT /api/v1/formula-libraries/:libraryID/`<br>formulalibraryhandler.update | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
 
@@ -1322,7 +1321,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/formula-templates/ai/explain`<br>formulatemplatehandler.explainFormula | Exempt, read-only: Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes. |
 | `POST /api/v1/formula-templates/ai/explain-test`<br>formulatemplatehandler.explainTest | Exempt, read-only: Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes. |
 | `POST /api/v1/formula-templates/ai/suggest-tests`<br>formulatemplatehandler.suggestTests | Exempt, read-only: Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes. |
-| `POST /api/v1/formula-templates/ai/thread/`<br>formulatemplatehandler.openAssistantThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/formula-templates/bulk-update-status`<br>formulatemplatehandler.bulkUpdateStatus | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
 | `POST /api/v1/formula-templates/context/cells`<br>formulatemplatehandler.getContextCells | Exempt, read-only: Reads the rate table cells a formula's tests need in the browser; nothing is saved. |
 | `POST /api/v1/formula-templates/duplicate`<br>formulatemplatehandler.duplicate | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
@@ -1516,18 +1514,18 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/insights/:insightID/dismiss/`<br>insighthandler.dismiss | Tool: `insight_dismiss` |
-| `POST /api/v1/insights/:insightID/restore/`<br>insighthandler.restore | Tool: `insight_restore` |
+| `mutation dismissInsight` | Tool: `insight_dismiss` |
+| `mutation restoreInsight` | Tool: `insight_restore` |
 
 ### integration
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/integrations/:type/test-connection/`<br>integrationhandler.testConnection | Exempt, configuration: Tests an integration's credentials and records the connection status on its configuration. |
-| `POST /api/v1/integrations/samsara/workers/sync/`<br>integrationhandler.startWorkerSync | Exempt, configuration: Creates and links drivers' accounts in the telematics provider from the integration's setup page; connecting that integration and the accounts it holds is an administrator's. |
-| `POST /api/v1/integrations/samsara/workers/sync/drift/detect/`<br>integrationhandler.detectWorkerSyncDrift | Exempt, read-only: Compares workers with the telematics provider and reports the drift. |
-| `POST /api/v1/integrations/samsara/workers/sync/drift/repair/`<br>integrationhandler.repairWorkerSyncDrift | Exempt, configuration: Rewrites drivers' accounts in the telematics provider to match Trenova from the integration's setup page; an administrator owns that connection and the accounts it holds. |
-| `PUT /api/v1/integrations/:type/config/`<br>integrationhandler.updateConfig | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
+| `mutation detectSamsaraWorkerSyncDrift` | Exempt, read-only: Compares workers with the telematics provider and stores the drift it reports; it changes no worker or driver account. |
+| `mutation repairSamsaraWorkerSyncDrift` | Exempt, configuration: Rewrites drivers' accounts in the telematics provider to match Trenova from the integration's setup page; an administrator owns that connection and the accounts it holds. |
+| `mutation startSamsaraWorkerSync` | Exempt, configuration: Creates and links drivers' accounts in the telematics provider from the integration's setup page; connecting that integration and the accounts it holds is an administrator's. |
+| `mutation testIntegrationConnection` | Exempt, configuration: Tests an integration's credentials and records the connection status on its configuration. |
+| `mutation updateIntegrationConfig` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
 
 ### invoice
 

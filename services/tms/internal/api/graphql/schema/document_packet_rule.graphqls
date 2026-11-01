@@ -31,3 +31,20 @@ extend type Query {
   documentPacketRules(input: DataTableConnectionInput!): DocumentPacketRuleConnection!
   documentPacketRule(id: ID!): DocumentPacketRule
 }
+
+input DocumentPacketRuleInput {
+  resourceType: String!
+  documentTypeId: ID!
+  required: Boolean!
+  allowMultiple: Boolean!
+  displayOrder: Int!
+  expirationRequired: Boolean!
+  expirationWarningDays: Int!
+  version: Int
+}
+
+extend type Mutation {
+  createDocumentPacketRule(input: DocumentPacketRuleInput!): DocumentPacketRule!
+  updateDocumentPacketRule(id: ID!, input: DocumentPacketRuleInput!): DocumentPacketRule!
+  deleteDocumentPacketRule(id: ID!): Boolean!
+}

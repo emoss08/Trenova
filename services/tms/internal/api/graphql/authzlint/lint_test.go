@@ -39,6 +39,10 @@ var authOnlyAllowlist = map[string]string{
 
 	"QueryResolver.HomeWidgetCatalog": "static catalog of widgets; carries no resource data",
 
+	"QueryResolver.IntegrationRuntimeConfig": "every signed-in person's maps and weather layers " +
+		"need it: it returns only an integration's client-safe settings (the Google Maps and " +
+		"OpenWeatherMap browser keys) once the integration is ready, never a server secret",
+
 	"MutationResolver.CreateTableConfiguration": "anyone may keep a private view; the service " +
 		"refuses to publish one to the organization without table_configuration:create",
 	"MutationResolver.UpdateTableConfiguration": "only the owner may change a view, and the " +
@@ -135,8 +139,12 @@ func TestEveryRootResolverIsAuthorized(t *testing.T) {
 			stale = append(stale, key)
 		}
 	}
-	assert.Empty(t, stale, "authOnlyAllowlist or selfscoped.Resolvers names resolvers that no longer exist:\n  %s",
-		strings.Join(stale, "\n  "))
+	assert.Empty(
+		t,
+		stale,
+		"authOnlyAllowlist or selfscoped.Resolvers names resolvers that no longer exist:\n  %s",
+		strings.Join(stale, "\n  "),
+	)
 }
 
 func TestAnalyzeReportsCoverage(t *testing.T) {
@@ -161,8 +169,14 @@ func TestAnalyzeReportsCoverage(t *testing.T) {
 func TestASelfScopedNameEarnsNoExemption(t *testing.T) {
 	t.Parallel()
 
-	assert.False(t, isAllowedAuthOnly(RootResolver{Receiver: "QueryResolver", Name: "MyUnlistedThing"}))
-	assert.False(t, isAllowedAuthOnly(RootResolver{Receiver: "MutationResolver", Name: "CancelMyThing"}))
+	assert.False(
+		t,
+		isAllowedAuthOnly(RootResolver{Receiver: "QueryResolver", Name: "MyUnlistedThing"}),
+	)
+	assert.False(
+		t,
+		isAllowedAuthOnly(RootResolver{Receiver: "MutationResolver", Name: "CancelMyThing"}),
+	)
 	assert.True(t, isAllowedAuthOnly(RootResolver{Receiver: "QueryResolver", Name: "MyLoads"}))
 }
 
@@ -175,7 +189,12 @@ func TestSelfScopedResolversAreListedOnce(t *testing.T) {
 			previous, dup := seen[key]
 			assert.Falsef(t, dup, "%s is listed under %q and %q", key, previous, reason)
 			_, alsoListed := authOnlyAllowlist[key]
-			assert.Falsef(t, alsoListed, "%s is in both selfscoped.Resolvers and authOnlyAllowlist", key)
+			assert.Falsef(
+				t,
+				alsoListed,
+				"%s is in both selfscoped.Resolvers and authOnlyAllowlist",
+				key,
+			)
 			seen[key] = reason
 		}
 	}

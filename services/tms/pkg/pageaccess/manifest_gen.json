@@ -1,5 +1,5 @@
 {
-  "version": "sha256:835c4b4eeb47292da4a7688afc43428b421fbcb7da446d202290b190c8d68ce8",
+  "version": "sha256:a1660aa945b8a324f332aabcd7c12df250a9efc5d2908c072d99b6236887c312",
   "screens": [
     {
       "path": "/",
@@ -84,42 +84,22 @@
         {
           "method": "GET",
           "path": "/insights/:param/",
-          "requires": [
-            {
-              "resource": "insight",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/insights/:param/dismiss/",
-          "requires": [
-            {
-              "resource": "insight",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/insights/browse/",
-          "requires": [
-            {
-              "resource": "insight",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/:param/config/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -129,32 +109,17 @@
         {
           "method": "GET",
           "path": "/integrations/catalog/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/drift/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/readiness/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -276,22 +241,12 @@
         {
           "method": "GET",
           "path": "/insights/:param/",
-          "requires": [
-            {
-              "resource": "insight",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/insights/browse/",
-          "requires": [
-            {
-              "resource": "insight",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         }
       ],
       "reads": [],
@@ -1902,12 +1857,7 @@
         {
           "method": "GET",
           "path": "/integrations/:param/config/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -1917,32 +1867,17 @@
         {
           "method": "GET",
           "path": "/integrations/catalog/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/drift/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/readiness/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         }
       ],
       "reads": [
@@ -2008,22 +1943,12 @@
         {
           "method": "GET",
           "path": "/integrations/:param/config/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "PUT",
           "path": "/integrations/:param/config/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -2033,42 +1958,22 @@
         {
           "method": "POST",
           "path": "/integrations/:param/test-connection/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/catalog/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/drift/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/readiness/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         }
       ],
       "reads": [],
@@ -3299,12 +3204,7 @@
         {
           "method": "GET",
           "path": "/integrations/:param/config/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -3314,32 +3214,17 @@
         {
           "method": "GET",
           "path": "/integrations/catalog/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/drift/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/readiness/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -3487,12 +3372,7 @@
         {
           "method": "GET",
           "path": "/documents/extraction-status/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         }
       ],
       "reads": [
@@ -3974,12 +3854,7 @@
         {
           "method": "GET",
           "path": "/documents/extraction-status/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         }
       ],
       "reads": [],
@@ -4181,42 +4056,22 @@
         {
           "method": "GET",
           "path": "/insights/:param/",
-          "requires": [
-            {
-              "resource": "insight",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/insights/:param/dismiss/",
-          "requires": [
-            {
-              "resource": "insight",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/insights/browse/",
-          "requires": [
-            {
-              "resource": "insight",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/:param/config/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -4226,32 +4081,17 @@
         {
           "method": "GET",
           "path": "/integrations/catalog/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/drift/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/readiness/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -4432,42 +4272,22 @@
         {
           "method": "GET",
           "path": "/insights/:param/",
-          "requires": [
-            {
-              "resource": "insight",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/insights/:param/dismiss/",
-          "requires": [
-            {
-              "resource": "insight",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/insights/browse/",
-          "requires": [
-            {
-              "resource": "insight",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/:param/config/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -4477,32 +4297,17 @@
         {
           "method": "GET",
           "path": "/integrations/catalog/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/drift/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/readiness/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -4701,22 +4506,12 @@
         {
           "method": "GET",
           "path": "/integrations/:param/config/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "PUT",
           "path": "/integrations/:param/config/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -4726,72 +4521,37 @@
         {
           "method": "POST",
           "path": "/integrations/:param/test-connection/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/catalog/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/integrations/samsara/workers/sync/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/drift/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/integrations/samsara/workers/sync/drift/detect/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/integrations/samsara/workers/sync/drift/repair/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/readiness/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         }
       ],
       "reads": [
@@ -6534,12 +6294,7 @@
         {
           "method": "GET",
           "path": "/integrations/:param/config/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -6549,12 +6304,7 @@
         {
           "method": "GET",
           "path": "/integrations/catalog/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -6564,22 +6314,12 @@
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/drift/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/readiness/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -6643,12 +6383,7 @@
         {
           "method": "POST",
           "path": "/document-packet-rules/",
-          "requires": [
-            {
-              "resource": "document_type",
-              "operation": "create"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -6658,12 +6393,7 @@
         {
           "method": "DELETE",
           "path": "/document-packet-rules/:param/",
-          "requires": [
-            {
-              "resource": "document_type",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -6673,12 +6403,7 @@
         {
           "method": "PUT",
           "path": "/document-packet-rules/:param/",
-          "requires": [
-            {
-              "resource": "document_type",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -6806,12 +6531,7 @@
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -7617,22 +7337,12 @@
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/content/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -8383,22 +8093,12 @@
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/content/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -9191,22 +8891,12 @@
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/content/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -9956,22 +9646,12 @@
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/content/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -10323,12 +10003,7 @@
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -10460,12 +10135,7 @@
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -10587,186 +10257,92 @@
         {
           "method": "DELETE",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/approve/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "approve"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/attach-to-shipment/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/content/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/delivery-facts/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/reading/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/reject/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "reject"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/restore/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/shipment-draft/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/shipment-draft/reextract/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/signature/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/versions/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/bulk-delete/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/extraction-status/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/resource/:param/:param/packet-summary/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -11227,186 +10803,92 @@
         {
           "method": "DELETE",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/approve/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "approve"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/attach-to-shipment/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/content/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/delivery-facts/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/reading/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/reject/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "reject"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/restore/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/shipment-draft/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/shipment-draft/reextract/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/signature/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/versions/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/bulk-delete/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/extraction-status/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/resource/:param/:param/packet-summary/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -11876,186 +11358,92 @@
         {
           "method": "DELETE",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/approve/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "approve"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/attach-to-shipment/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/content/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/delivery-facts/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/reading/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/reject/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "reject"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/restore/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/shipment-draft/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/shipment-draft/reextract/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/signature/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/versions/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/bulk-delete/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/extraction-status/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/resource/:param/:param/packet-summary/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -12713,186 +12101,92 @@
         {
           "method": "DELETE",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/approve/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "approve"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/attach-to-shipment/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/content/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/delivery-facts/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/reading/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/reject/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "reject"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/restore/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/shipment-draft/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/shipment-draft/reextract/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/signature/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/versions/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/bulk-delete/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/extraction-status/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/resource/:param/:param/packet-summary/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -13034,186 +12328,92 @@
         {
           "method": "DELETE",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/approve/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "approve"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/attach-to-shipment/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/content/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/delivery-facts/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/reading/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/reject/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "reject"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/restore/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/shipment-draft/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/shipment-draft/reextract/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/signature/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/versions/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/bulk-delete/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/extraction-status/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/resource/:param/:param/packet-summary/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -14390,186 +13590,92 @@
         {
           "method": "DELETE",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/approve/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "approve"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/attach-to-shipment/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/content/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/delivery-facts/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/reading/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/reject/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "reject"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/restore/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/shipment-draft/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/shipment-draft/reextract/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/signature/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/versions/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/bulk-delete/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/extraction-status/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/resource/:param/:param/packet-summary/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -16039,186 +15145,92 @@
         {
           "method": "DELETE",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/approve/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "approve"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/attach-to-shipment/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/content/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/delivery-facts/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/reading/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/reject/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "reject"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/restore/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/shipment-draft/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/shipment-draft/reextract/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/signature/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/versions/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/bulk-delete/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/extraction-status/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/resource/:param/:param/packet-summary/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -17821,186 +16833,92 @@
         {
           "method": "DELETE",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/approve/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "approve"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/attach-to-shipment/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/content/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/delivery-facts/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/reading/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/reject/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "reject"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/restore/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/shipment-draft/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/shipment-draft/reextract/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/signature/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/versions/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/bulk-delete/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/extraction-status/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/resource/:param/:param/packet-summary/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -18835,186 +17753,92 @@
         {
           "method": "DELETE",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/approve/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "approve"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/attach-to-shipment/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/content/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/delivery-facts/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/reading/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/reject/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "reject"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/restore/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/shipment-draft/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/shipment-draft/reextract/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/signature/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/versions/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/bulk-delete/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/extraction-status/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/resource/:param/:param/packet-summary/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -19079,22 +17903,12 @@
         {
           "method": "GET",
           "path": "/insights/:param/",
-          "requires": [
-            {
-              "resource": "insight",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/insights/browse/",
-          "requires": [
-            {
-              "resource": "insight",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -19279,12 +18093,7 @@
         {
           "method": "GET",
           "path": "/integrations/:param/config/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -19294,12 +18103,7 @@
         {
           "method": "GET",
           "path": "/integrations/catalog/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -19309,22 +18113,12 @@
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/drift/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/readiness/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "PATCH",
@@ -24441,186 +23235,92 @@
         {
           "method": "DELETE",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/approve/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "approve"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/attach-to-shipment/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/content/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/delivery-facts/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/reading/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/reject/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "reject"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/restore/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/shipment-draft/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/shipment-draft/reextract/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/signature/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/versions/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/bulk-delete/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/extraction-status/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/resource/:param/:param/packet-summary/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -25235,186 +23935,92 @@
         {
           "method": "DELETE",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/approve/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "approve"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/attach-to-shipment/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/content/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/delivery-facts/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/reading/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/reject/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "reject"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/restore/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/shipment-draft/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/shipment-draft/reextract/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/signature/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/versions/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/bulk-delete/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/extraction-status/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/resource/:param/:param/packet-summary/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -26290,186 +24896,92 @@
         {
           "method": "DELETE",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/approve/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "approve"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/attach-to-shipment/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/content/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/delivery-facts/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/reading/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/reject/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "reject"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/restore/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/shipment-draft/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/shipment-draft/reextract/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/signature/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/versions/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/bulk-delete/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/extraction-status/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/resource/:param/:param/packet-summary/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -27017,22 +25529,12 @@
         {
           "method": "GET",
           "path": "/insights/:param/",
-          "requires": [
-            {
-              "resource": "insight",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/insights/browse/",
-          "requires": [
-            {
-              "resource": "insight",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         }
       ],
       "reads": [],
@@ -27794,186 +26296,92 @@
         {
           "method": "DELETE",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/approve/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "approve"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/attach-to-shipment/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/content/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/delivery-facts/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/reading/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/reject/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "reject"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/restore/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/shipment-draft/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/shipment-draft/reextract/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/signature/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/versions/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/bulk-delete/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/extraction-status/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/resource/:param/:param/packet-summary/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -28389,42 +26797,22 @@
         {
           "method": "GET",
           "path": "/insights/:param/",
-          "requires": [
-            {
-              "resource": "insight",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/insights/:param/dismiss/",
-          "requires": [
-            {
-              "resource": "insight",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/insights/:param/restore/",
-          "requires": [
-            {
-              "resource": "insight",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/insights/browse/",
-          "requires": [
-            {
-              "resource": "insight",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         }
       ],
       "reads": [],
@@ -29345,12 +27733,7 @@
         {
           "method": "GET",
           "path": "/integrations/:param/config/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -29360,32 +27743,17 @@
         {
           "method": "GET",
           "path": "/integrations/catalog/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/drift/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/readiness/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         }
       ],
       "reads": [],
@@ -29426,12 +27794,7 @@
         {
           "method": "GET",
           "path": "/integrations/:param/config/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -29441,32 +27804,17 @@
         {
           "method": "GET",
           "path": "/integrations/catalog/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/drift/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/readiness/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         }
       ],
       "reads": [],
@@ -29507,12 +27855,7 @@
         {
           "method": "GET",
           "path": "/integrations/:param/config/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -29522,32 +27865,17 @@
         {
           "method": "GET",
           "path": "/integrations/catalog/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/drift/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/readiness/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         }
       ],
       "reads": [],
@@ -29588,12 +27916,7 @@
         {
           "method": "GET",
           "path": "/integrations/:param/config/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -29603,32 +27926,17 @@
         {
           "method": "GET",
           "path": "/integrations/catalog/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/drift/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/readiness/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         }
       ],
       "reads": [],
@@ -29669,12 +27977,7 @@
         {
           "method": "GET",
           "path": "/integrations/:param/config/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -29684,32 +27987,17 @@
         {
           "method": "GET",
           "path": "/integrations/catalog/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/drift/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/readiness/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         }
       ],
       "reads": [],
@@ -30486,186 +28774,92 @@
         {
           "method": "DELETE",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/approve/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "approve"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/attach-to-shipment/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/content/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/delivery-facts/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/reading/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/reject/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "reject"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/restore/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/shipment-draft/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/shipment-draft/reextract/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/signature/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/versions/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/bulk-delete/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/extraction-status/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/resource/:param/:param/packet-summary/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -30730,12 +28924,7 @@
         {
           "method": "GET",
           "path": "/integrations/:param/config/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -30745,32 +28934,17 @@
         {
           "method": "GET",
           "path": "/integrations/catalog/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/drift/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/readiness/",
-          "requires": [
-            {
-              "resource": "integration",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
@@ -31826,186 +30000,92 @@
         {
           "method": "DELETE",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/approve/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "approve"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/attach-to-shipment/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/content/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/delivery-facts/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/reading/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/reject/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "reject"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/restore/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/shipment-draft/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/shipment-draft/reextract/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/signature/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/versions/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/bulk-delete/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/extraction-status/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/resource/:param/:param/packet-summary/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
@@ -32776,186 +30856,92 @@
         {
           "method": "DELETE",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/approve/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "approve"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/attach-to-shipment/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/content/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/delivery-facts/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/reading/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/reject/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "reject"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/restore/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/shipment-draft/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/shipment-draft/reextract/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/:param/signature/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "update"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/:param/versions/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",
           "path": "/documents/bulk-delete/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "delete"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/extraction-status/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "GET",
           "path": "/documents/resource/:param/:param/packet-summary/",
-          "requires": [
-            {
-              "resource": "document",
-              "operation": "read"
-            }
-          ]
+          "requires": []
         },
         {
           "method": "POST",

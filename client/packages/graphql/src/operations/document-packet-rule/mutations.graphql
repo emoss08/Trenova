@@ -1,0 +1,15 @@
+mutation CreateDocumentPacketRule($input: DocumentPacketRuleInput!) {
+  createDocumentPacketRule(input: $input) {
+    ...DocumentPacketRuleTableRowFields
+  }
+}
+
+mutation UpdateDocumentPacketRule($id: ID!, $input: DocumentPacketRuleInput!) {
+  updateDocumentPacketRule(id: $id, input: $input) {
+    ...DocumentPacketRuleTableRowFields
+  }
+}
+
+mutation DeleteDocumentPacketRule($id: ID!) {
+  deleteDocumentPacketRule(id: $id)
+}

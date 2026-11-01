@@ -22,10 +22,15 @@ describe("resourceDocumentsQuery", () => {
     const query = resourceDocumentsQuery("shipment", "shp_1");
 
     expect(query.queryKey).toEqual(["documents", "shipment", "shp_1", ""]);
-    await query.queryFn?.({} as never);
-    expect(documentService.getByResource).toHaveBeenCalledWith("shipment", "shp_1", "", {
-      includeDocumentType: "true",
-    });
+    const signal = new AbortController().signal;
+    await query.queryFn?.({ signal } as never);
+    expect(documentService.getByResource).toHaveBeenCalledWith(
+      "shipment",
+      "shp_1",
+      "",
+      { includeDocumentType: true },
+      { signal },
+    );
   });
 });
 

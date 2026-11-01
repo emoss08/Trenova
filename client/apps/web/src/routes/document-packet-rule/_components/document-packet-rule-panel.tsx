@@ -3,6 +3,10 @@ import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { DocumentPacketRuleRow } from "@/lib/graphql/document-packet-rule-table";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
+import {
+  createDocumentPacketRule,
+  updateDocumentPacketRule,
+} from "@/services/document-packet-rule";
 import { documentPacketRuleSchema, type DocumentPacketRule } from "@/types/document-packet-rule";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -35,11 +39,14 @@ export function DocumentPacketRulePanel({
         open={open}
         onOpenChange={onOpenChange}
         row={row}
-        url="/document-packet-rules/"
         title={t("Document packet rule")}
         queryKey="document-packet-rule-list"
         formComponent={<DocumentPacketRuleForm />}
         form={form}
+        mutationFn={async (values, current) => {
+          await updateDocumentPacketRule(current.id, { ...values, version: current.version });
+          return values;
+        }}
       />
     );
   }
@@ -49,7 +56,10 @@ export function DocumentPacketRulePanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/document-packet-rules/"
+      mutationFn={async (values) => {
+        await createDocumentPacketRule(values);
+        return values;
+      }}
       queryKey="document-packet-rule-list"
       title={t("Document packet rule")}
       formComponent={<DocumentPacketRuleForm />}

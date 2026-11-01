@@ -7,14 +7,14 @@ export const insight = createQueryKeys("insight", {
   // whole view never share a cache entry.
   active: (limit: number, surface?: InsightSurface) => ({
     queryKey: ["insights-active", limit, surface ?? "all"],
-    queryFn: () => apiService.insightService.list(limit, surface),
+    queryFn: ({ signal }) => apiService.insightService.list(limit, surface, { signal }),
   }),
   detail: (id: string) => ({
     queryKey: ["insight-detail", id],
-    queryFn: () => apiService.insightService.detail(id),
+    queryFn: ({ signal }) => apiService.insightService.detail(id, { signal }),
   }),
   browse: (params: BrowseInsightsParams) => ({
     queryKey: ["insights-browse", params],
-    queryFn: () => apiService.insightService.browse(params),
+    queryFn: ({ signal }) => apiService.insightService.browse(params, { signal }),
   }),
 });

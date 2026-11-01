@@ -5,7 +5,7 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
 export const googleMaps = createQueryKeys("googleMaps", {
   getAPIKey: () => ({
     queryKey: ["googleMapsAPIKey"],
-    queryFn: async () => apiService.googleMapsService.getAPIKey(),
+    queryFn: async ({ signal }) => apiService.googleMapsService.getAPIKey({ signal }),
   }),
   autocomplete: (req: AutocompleteLocationRequest) => ({
     queryKey: ["autocomplete", req],

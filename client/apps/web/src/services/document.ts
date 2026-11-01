@@ -33,6 +33,30 @@ import {
 } from "@/types/document-control";
 import { z } from "zod";
 import { extractionFrom, type Extraction } from "@/lib/document-reading/extraction-payload";
+import {
+  ApproveDocumentDocument,
+  AttachDocumentToShipmentDocument,
+  BulkDeleteDocumentsDocument,
+  DeleteDocumentDocument,
+  DocumentContentDocument,
+  DocumentDocument,
+  DocumentExtractionStatusDocument,
+  DocumentImportAssistantHistoryDocument,
+  DocumentPacketSummaryDocument,
+  DocumentReadingDocument,
+  DocumentShipmentDraftDocument,
+  DocumentsByResourceDocument,
+  DocumentVersionsDocument,
+  OpenDocumentImportAssistantThreadDocument,
+  ReextractDocumentDocument,
+  RejectDocumentDocument,
+  RestoreDocumentVersionDocument,
+  SetDocumentDeliveryFactsDocument,
+  SetDocumentSignatureDocument,
+  type DocumentDeliveryFactsInput,
+} from "@trenova/graphql/generated/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export type DocumentContentAction = "download" | "view" | "preview";
 
@@ -54,6 +78,29 @@ export function documentContentEndpoint(documentId: string, action: DocumentCont
 /** One page of a PDF or an image, numbered from 1, drawn by the server as an image to read. */
 export function documentPageImageEndpoint(documentId: string, page: number): string {
   return `/documents/${encodeURIComponent(documentId)}/pages/${page}/image/`;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+/** The editable facts a person records; who recorded them and when are the server's. */
+export function toDeliveryFactsInput(facts: Partial<DeliveryFacts>): DocumentDeliveryFactsInput {
+  return {
+    signedBy: facts.signedBy ?? null,
+    pieces: facts.pieces ?? null,
+    osd: facts.osd ?? null,
+    osdNote: facts.osdNote ?? null,
+    seal: facts.seal ?? null,
+    arrivedAt: facts.arrivedAt ?? null,
+    departedAt: facts.departedAt ?? null,
+    amount: facts.amount ?? null,
+    reference: facts.reference ?? null,
+    chargeId: facts.chargeId ?? null,
+    chargeLabel: facts.chargeLabel ?? null,
+  };
 }
 
 export class DocumentService {
@@ -113,10 +160,16 @@ export class DocumentService {
   public async getExtractionStatus(options?: {
     signal?: AbortSignal;
   }): Promise<DocumentExtractionStatus> {
-    const response = await api.get<DocumentExtractionStatus>("/documents/extraction-status/", {
+    const data = await requestGraphQL({
+      document: DocumentExtractionStatusDocument,
+      operationName: "DocumentExtractionStatus",
       signal: options?.signal,
     });
-    return safeParse(documentExtractionStatusSchema, response, "Document Extraction Status");
+    return safeParse(
+      documentExtractionStatusSchema,
+      data.documentExtractionStatus,
+      "Document Extraction Status",
+    );
   }
 
   public async listActiveUploadSessions(
@@ -166,70 +219,128 @@ export class DocumentService {
     resourceType: string,
     resourceId: string,
     query?: string,
-    params?: Record<string, string>,
+    params?: { includeDocumentType?: boolean },
+    options: { signal?: AbortSignal } = {},
   ): Promise<Document[]> {
-    const searchParams = new URLSearchParams(params);
-    if (query?.trim()) {
-      searchParams.set("query", query.trim());
-    }
-    const qs = searchParams.toString();
-    const endpoint = qs
-      ? `/documents/resource/${resourceType}/${resourceId}/?${qs}`
-      : `/documents/resource/${resourceType}/${resourceId}/`;
-    const response = await api.get<Document[]>(endpoint);
-    return safeParse(z.array(documentSchema), response, "Document");
+    const data = await requestGraphQL({
+      document: DocumentsByResourceDocument,
+      operationName: "DocumentsByResource",
+      variables: {
+        input: {
+          resourceType,
+          resourceId,
+          query: query?.trim() || undefined,
+          includeDocumentType: params?.includeDocumentType,
+        },
+      },
+      signal: options.signal,
+    });
+    return safeParse(z.array(documentSchema), data.documentsByResource, "Document");
   }
 
   public async getContent(
     documentId: string,
     options?: { signal?: AbortSignal },
   ): Promise<DocumentContent> {
-    const response = await api.get<DocumentContent>(`/documents/${documentId}/content/`, {
+    const data = await requestGraphQL({
+      document: DocumentContentDocument,
+      operationName: "DocumentContent",
+      variables: { documentId },
       signal: options?.signal,
     });
-    return safeParse(documentContentSchema, response, "Document Content");
+    const content = data.documentContent;
+    return safeParse(
+      documentContentSchema,
+      {
+        ...content,
+        pages: (content.pages ?? []).map((page) => ({ ...page, metadata: page.metadata ?? {} })),
+      },
+      "Document Content",
+    );
   }
 
-  public async getShipmentDraft(documentId: string): Promise<DocumentShipmentDraft> {
-    const response = await api.get<DocumentShipmentDraft>(
-      `/documents/${documentId}/shipment-draft/`,
+  public async getShipmentDraft(
+    documentId: string,
+    options: { signal?: AbortSignal } = {},
+  ): Promise<DocumentShipmentDraft> {
+    const data = await requestGraphQL({
+      document: DocumentShipmentDraftDocument,
+      operationName: "DocumentShipmentDraft",
+      variables: { documentId },
+      signal: options.signal,
+    });
+    return safeParse(
+      documentShipmentDraftSchema,
+      data.documentShipmentDraft,
+      "Document Shipment Draft",
     );
-    return safeParse(documentShipmentDraftSchema, response, "Document Shipment Draft");
   }
 
   public async reextract(documentId: string): Promise<void> {
-    await api.post(`/documents/${documentId}/shipment-draft/reextract/`);
+    await requestGraphQL({
+      document: ReextractDocumentDocument,
+      operationName: "ReextractDocument",
+      variables: { documentId },
+    });
   }
 
-  public async getVersions(documentId: string): Promise<Document[]> {
-    const response = await api.get<Document[]>(`/documents/${documentId}/versions/`);
-    return safeParse(z.array(documentSchema), response, "Document Versions");
+  public async getVersions(
+    documentId: string,
+    options: { signal?: AbortSignal } = {},
+  ): Promise<Document[]> {
+    const data = await requestGraphQL({
+      document: DocumentVersionsDocument,
+      operationName: "DocumentVersions",
+      variables: { documentId },
+      signal: options.signal,
+    });
+    return safeParse(z.array(documentSchema), data.documentVersions, "Document Versions");
   }
 
   public async restoreVersion(documentId: string): Promise<Document> {
-    const response = await api.post<Document>(`/documents/${documentId}/restore/`);
-    return safeParse(documentSchema, response, "Document");
+    const data = await requestGraphQL({
+      document: RestoreDocumentVersionDocument,
+      operationName: "RestoreDocumentVersion",
+      variables: { documentId },
+    });
+    return safeParse(documentSchema, data.restoreDocumentVersion, "Document");
   }
 
   public async approve(documentId: string): Promise<Document> {
-    const response = await api.post<Document>(`/documents/${documentId}/approve/`);
-    return safeParse(documentSchema, response, "Document");
+    const data = await requestGraphQL({
+      document: ApproveDocumentDocument,
+      operationName: "ApproveDocument",
+      variables: { documentId },
+    });
+    return safeParse(documentSchema, data.approveDocument, "Document");
   }
 
   public async reject(documentId: string, reason: string): Promise<Document> {
-    const response = await api.post<Document>(`/documents/${documentId}/reject/`, { reason });
-    return safeParse(documentSchema, response, "Document");
+    const data = await requestGraphQL({
+      document: RejectDocumentDocument,
+      operationName: "RejectDocument",
+      variables: { input: { documentId, reason } },
+    });
+    return safeParse(documentSchema, data.rejectDocument, "Document");
   }
 
   public async setSignature(
     documentId: string,
     params: SetDocumentSignatureParams,
   ): Promise<Document> {
-    const response = await api.post<Document>(
-      `/documents/${encodeURIComponent(documentId)}/signature/`,
-      params,
-    );
-    return safeParse(documentSchema, response, "Document");
+    const data = await requestGraphQL({
+      document: SetDocumentSignatureDocument,
+      operationName: "SetDocumentSignature",
+      variables: {
+        input: {
+          documentId,
+          status: params.status,
+          signedAt: params.signedAt,
+          version: params.version,
+        },
+      },
+    });
+    return safeParse(documentSchema, data.setDocumentSignature, "Document");
   }
 
   /** The document as it was read: each value with the page and box it was found in. */
@@ -237,11 +348,13 @@ export class DocumentService {
     documentId: string,
     options: { signal?: AbortSignal } = {},
   ): Promise<Extraction> {
-    const response = await api.get<Record<string, unknown>>(
-      `/documents/${encodeURIComponent(documentId)}/reading/`,
-      { signal: options.signal },
-    );
-    return extractionFrom(response ?? {});
+    const data = await requestGraphQL({
+      document: DocumentReadingDocument,
+      operationName: "DocumentReading",
+      variables: { documentId },
+      signal: options.signal,
+    });
+    return extractionFrom(asRecord(data.documentReading));
   }
 
   /** Records what a delivery document says; a receipt naming an unbilled charge raises a check. */
@@ -250,33 +363,55 @@ export class DocumentService {
     facts: Partial<DeliveryFacts>,
     version: number,
   ): Promise<Document> {
-    const response = await api.post<Document>(
-      `/documents/${encodeURIComponent(documentId)}/delivery-facts/`,
-      { facts, version },
-    );
-    return safeParse(documentSchema, response, "Document");
+    const data = await requestGraphQL({
+      document: SetDocumentDeliveryFactsDocument,
+      operationName: "SetDocumentDeliveryFacts",
+      variables: { input: { documentId, facts: toDeliveryFactsInput(facts), version } },
+    });
+    return safeParse(documentSchema, data.setDocumentDeliveryFacts, "Document");
   }
 
   public async attachToShipment(documentId: string, shipmentId: string): Promise<Document> {
-    const response = await api.post<Document>(`/documents/${documentId}/attach-to-shipment/`, {
-      shipmentId,
+    const data = await requestGraphQL({
+      document: AttachDocumentToShipmentDocument,
+      operationName: "AttachDocumentToShipment",
+      variables: { input: { documentId, shipmentId } },
     });
-    return safeParse(documentSchema, response, "Document");
+    return safeParse(documentSchema, data.attachDocumentToShipment, "Document");
   }
 
   public async getPacketSummary(
     resourceType: string,
     resourceId: string,
+    options: { signal?: AbortSignal } = {},
   ): Promise<DocumentPacketSummary> {
-    const response = await api.get<DocumentPacketSummary>(
-      `/documents/resource/${resourceType}/${resourceId}/packet-summary/`,
+    const data = await requestGraphQL({
+      document: DocumentPacketSummaryDocument,
+      operationName: "DocumentPacketSummary",
+      variables: { resourceType, resourceId },
+      signal: options.signal,
+    });
+    return safeParse(
+      documentPacketSummarySchema,
+      data.documentPacketSummary,
+      "Document Packet Summary",
     );
-    return safeParse(documentPacketSummarySchema, response, "Document Packet Summary");
   }
 
-  public async getById(documentId: string): Promise<Document> {
-    const response = await api.get<Document>(`/documents/${documentId}/`);
-    return safeParse(documentSchema, response, "Document");
+  public async getById(
+    documentId: string,
+    options: { signal?: AbortSignal } = {},
+  ): Promise<Document> {
+    const data = await requestGraphQL({
+      document: DocumentDocument,
+      operationName: "Document",
+      variables: { id: documentId },
+      signal: options.signal,
+    });
+    if (!data.document) {
+      throw new Error(translate("Document not found"));
+    }
+    return safeParse(documentSchema, data.document, "Document");
   }
 
   public async getDownloadUrl(documentId: string): Promise<string> {
@@ -292,17 +427,22 @@ export class DocumentService {
   }
 
   public async delete(documentId: string): Promise<void> {
-    await api.delete(`/documents/${documentId}/`);
+    await requestGraphQL({
+      document: DeleteDocumentDocument,
+      operationName: "DeleteDocument",
+      variables: { id: documentId },
+    });
   }
 
   public async bulkDelete(
     documentIds: string[],
   ): Promise<{ deletedCount: number; errorCount: number }> {
-    const response = await api.post<{
-      deletedCount: number;
-      errorCount: number;
-    }>("/documents/bulk-delete/", { ids: documentIds });
-    return response;
+    const data = await requestGraphQL({
+      document: BulkDeleteDocumentsDocument,
+      operationName: "BulkDeleteDocuments",
+      variables: { ids: documentIds },
+    });
+    return data.bulkDeleteDocuments;
   }
 
   /**
@@ -310,11 +450,16 @@ export class DocumentService {
    * about this document. Its turns go through the assistant's own routes.
    */
   public async openImportAssistantThread(documentId: string): Promise<PageThread> {
-    const response = await api.post<PageThread>(
-      `/documents/${encodeURIComponent(documentId)}/import-assistant/thread/`,
-      {},
+    const data = await requestGraphQL({
+      document: OpenDocumentImportAssistantThreadDocument,
+      operationName: "OpenDocumentImportAssistantThread",
+      variables: { documentId },
+    });
+    return safeParse(
+      pageThreadSchema,
+      data.openDocumentImportAssistantThread,
+      "Import Assistant Conversation",
     );
-    return safeParse(pageThreadSchema, response, "Import Assistant Conversation");
   }
 
   /**
@@ -324,13 +469,28 @@ export class DocumentService {
    */
   public async getImportAssistantHistory(
     documentId: string,
+    options: { signal?: AbortSignal } = {},
   ): Promise<ImportAssistantChatHistoryResponse> {
-    const response = await api.get<ImportAssistantChatHistoryResponse>(
-      `/documents/${documentId}/import-assistant/history/`,
-    );
+    const data = await requestGraphQL({
+      document: DocumentImportAssistantHistoryDocument,
+      operationName: "DocumentImportAssistantHistory",
+      variables: { documentId },
+      signal: options.signal,
+    });
+    const history = data.documentImportAssistantHistory;
     return safeParse(
       importAssistantChatHistoryResponseSchema,
-      response,
+      {
+        ...history,
+        status: history.status || undefined,
+        messages: (history.messages ?? []).map((message) => ({
+          ...message,
+          suggestions: (message.suggestions ?? []).map((suggestion) => ({
+            ...suggestion,
+            type: suggestion.type || undefined,
+          })),
+        })),
+      },
       "Import Assistant Chat History",
     );
   }

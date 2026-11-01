@@ -1,0 +1,31 @@
+query ActiveInsights($input: ActiveInsightsInput) {
+  activeInsights(input: $input) {
+    ...InsightFields
+  }
+}
+
+query BrowseInsights($input: BrowseInsightsInput!) @requiresRead(kind: "insight") {
+  insights(input: $input) {
+    results {
+      ...InsightFields
+    }
+    total
+    totalExact
+  }
+}
+
+query InsightDetail($id: ID!) @requiresRead(kind: "insight") {
+  insight(id: $id) {
+    insight {
+      ...InsightFields
+    }
+    history {
+      ...InsightFields
+    }
+    explanation {
+      measures
+      threshold
+      excludes
+    }
+  }
+}

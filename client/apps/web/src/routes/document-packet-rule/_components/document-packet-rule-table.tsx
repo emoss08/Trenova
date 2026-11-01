@@ -16,7 +16,7 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
-import { DocumentPacketRuleService } from "@/services/document-packet-rule";
+import { deleteDocumentPacketRule } from "@/services/document-packet-rule";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -26,8 +26,6 @@ import { toast } from "@trenova/shared/components/ui/toast";
 import { getColumns } from "./document-packet-rule-columns";
 import { DocumentPacketRulePanel } from "./document-packet-rule-panel";
 import { translate } from "@trenova/shared/i18n/runtime";
-
-const service = new DocumentPacketRuleService();
 
 export default function DocumentPacketRuleTable() {
   const t = useT();
@@ -51,7 +49,7 @@ export default function DocumentPacketRuleTable() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await service.delete(id);
+      await deleteDocumentPacketRule(id);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({

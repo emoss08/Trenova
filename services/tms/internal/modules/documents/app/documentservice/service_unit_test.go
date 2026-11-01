@@ -452,65 +452,6 @@ func newUnitTestService(t *testing.T, repo *mockDocRepo, sc *mockStorageClient) 
 	}
 }
 
-func TestUnit_List_Success(t *testing.T) {
-	t.Parallel()
-
-	expected := &pagination.ListResult[*document.Document]{
-		Items: []*document.Document{
-			{ID: pulid.MustNew("doc_"), OriginalName: "test.pdf"},
-		},
-		Total:      1,
-		TotalExact: true,
-	}
-
-	repo := &mockDocRepo{
-		ListFn: func(_ context.Context, _ *documentports.ListDocumentsRequest) (*pagination.ListResult[*document.Document], error) {
-			return expected, nil
-		},
-	}
-	deps := newUnitTestService(t, repo, &mockStorageClient{})
-	svc := deps.svc
-
-	result, err := svc.List(t.Context(), &documentports.ListDocumentsRequest{
-		Filter: &pagination.QueryOptions{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: pulid.MustNew("org_"),
-				BuID:  pulid.MustNew("bu_"),
-			},
-			Pagination: pagination.Info{Limit: 10},
-		},
-	})
-
-	require.NoError(t, err)
-	assert.Equal(t, 1, result.Total)
-	assert.Len(t, result.Items, 1)
-}
-
-func TestUnit_List_Error(t *testing.T) {
-	t.Parallel()
-
-	repo := &mockDocRepo{
-		ListFn: func(_ context.Context, _ *documentports.ListDocumentsRequest) (*pagination.ListResult[*document.Document], error) {
-			return nil, errors.New("db error")
-		},
-	}
-	deps := newUnitTestService(t, repo, &mockStorageClient{})
-	svc := deps.svc
-
-	result, err := svc.List(t.Context(), &documentports.ListDocumentsRequest{
-		Filter: &pagination.QueryOptions{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: pulid.MustNew("org_"),
-				BuID:  pulid.MustNew("bu_"),
-			},
-			Pagination: pagination.Info{Limit: 10},
-		},
-	})
-
-	require.Error(t, err)
-	assert.Nil(t, result)
-}
-
 func TestUnit_Get_Success(t *testing.T) {
 	t.Parallel()
 

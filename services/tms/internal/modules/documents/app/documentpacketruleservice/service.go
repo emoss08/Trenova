@@ -40,13 +40,6 @@ func New(p Params) *Service {
 	}
 }
 
-func (s *Service) List(
-	ctx context.Context,
-	req *documentpacketruleports.ListDocumentPacketRulesRequest,
-) (*pagination.ListResult[*documentpacketrule.DocumentPacketRule], error) {
-	return s.repo.List(ctx, req)
-}
-
 func (s *Service) ListConnection(
 	ctx context.Context,
 	req *documentpacketruleports.ListDocumentPacketRuleConnectionRequest,

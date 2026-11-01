@@ -46,6 +46,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
@@ -69,6 +70,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
@@ -925,6 +927,15 @@ type AcknowledgeMyPolicyInput struct {
 	SignatureName *string `json:"signatureName,omitempty"`
 }
 
+type ActiveInsightsInput struct {
+	// Drops findings outside these categories; empty keeps every category.
+	Categories []insight.Category `json:"categories,omitempty"`
+	// The page asking for its own slice; empty is the home screen's full view.
+	Surface *insight.Surface `json:"surface,omitempty"`
+	// At most 25; empty or zero is the widget's default.
+	Limit *int `json:"limit,omitempty"`
+}
+
 type AddCarrierSettlementAdjustmentInput struct {
 	SettlementID string `json:"settlementId"`
 	Description  string `json:"description"`
@@ -1729,6 +1740,11 @@ type AssignWorkerTrainingInput struct {
 	Notes *string `json:"notes,omitempty"`
 }
 
+type AttachDocumentToShipmentInput struct {
+	DocumentID string `json:"documentId"`
+	ShipmentID string `json:"shipmentId"`
+}
+
 type AttachPayEventsInput struct {
 	SettlementID string   `json:"settlementId"`
 	PayEventIds  []string `json:"payEventIds"`
@@ -1992,6 +2008,16 @@ type BillingTransferRunItemEdge struct {
 
 type BillingTransferRunItemsFilterInput struct {
 	Statuses []billingtransfer.ItemStatus `json:"statuses,omitempty"`
+}
+
+type BrowseInsightsInput struct {
+	Categories []insight.Category `json:"categories,omitempty"`
+	Severities []insight.Severity `json:"severities,omitempty"`
+	Statuses   []insight.Status   `json:"statuses,omitempty"`
+	// At most 100.
+	Limit *int `json:"limit,omitempty"`
+	// At most 10,000.
+	Offset *int `json:"offset,omitempty"`
 }
 
 type BulkAssignTrainingInput struct {
@@ -4167,6 +4193,12 @@ type DismissAccountingDriftInput struct {
 	Note string `json:"note"`
 }
 
+type DismissInsightInput struct {
+	InsightID string `json:"insightId"`
+	// Why the finding was not worth acting on; optional.
+	Reason *string `json:"reason,omitempty"`
+}
+
 type DispatchAssignMoveInput struct {
 	MoveID            string  `json:"moveId"`
 	PrimaryWorkerID   string  `json:"primaryWorkerId"`
@@ -4606,6 +4638,25 @@ type DistanceProfileEdge struct {
 	Cursor string                           `json:"cursor"`
 }
 
+type DocumentBulkDeleteResult struct {
+	DeletedCount int `json:"deletedCount"`
+	ErrorCount   int `json:"errorCount"`
+}
+
+type DocumentDeliveryFactsInput struct {
+	SignedBy    *string           `json:"signedBy,omitempty"`
+	Pieces      *string           `json:"pieces,omitempty"`
+	Osd         *document.OSDKind `json:"osd,omitempty"`
+	OsdNote     *string           `json:"osdNote,omitempty"`
+	Seal        *string           `json:"seal,omitempty"`
+	ArrivedAt   *int              `json:"arrivedAt,omitempty"`
+	DepartedAt  *int              `json:"departedAt,omitempty"`
+	Amount      *string           `json:"amount,omitempty"`
+	Reference   *string           `json:"reference,omitempty"`
+	ChargeID    *string           `json:"chargeId,omitempty"`
+	ChargeLabel *string           `json:"chargeLabel,omitempty"`
+}
+
 type DocumentPacketRuleConnection struct {
 	Edges      []*DocumentPacketRuleEdge `json:"edges"`
 	PageInfo   *PageInfo                 `json:"pageInfo"`
@@ -4617,6 +4668,17 @@ type DocumentPacketRuleConnection struct {
 type DocumentPacketRuleEdge struct {
 	Node   *documentpacketrule.DocumentPacketRule `json:"node"`
 	Cursor string                                 `json:"cursor"`
+}
+
+type DocumentPacketRuleInput struct {
+	ResourceType          string `json:"resourceType"`
+	DocumentTypeID        string `json:"documentTypeId"`
+	Required              bool   `json:"required"`
+	AllowMultiple         bool   `json:"allowMultiple"`
+	DisplayOrder          int    `json:"displayOrder"`
+	ExpirationRequired    bool   `json:"expirationRequired"`
+	ExpirationWarningDays int    `json:"expirationWarningDays"`
+	Version               *int   `json:"version,omitempty"`
 }
 
 type DocumentTemplateAssignmentConnection struct {
@@ -4759,6 +4821,14 @@ type DocumentTypeInput struct {
 	DocumentClassification documenttype.DocumentClassification `json:"documentClassification"`
 	DocumentCategory       documenttype.DocumentCategory       `json:"documentCategory"`
 	Version                *int                                `json:"version,omitempty"`
+}
+
+type DocumentsByResourceInput struct {
+	ResourceType string `json:"resourceType"`
+	ResourceID   string `json:"resourceId"`
+	// Searches the documents' extracted text; empty lists every current document.
+	Query               *string `json:"query,omitempty"`
+	IncludeDocumentType *bool   `json:"includeDocumentType,omitempty"`
 }
 
 type DraftFactoringNoaInput struct {
@@ -6865,6 +6935,19 @@ type InboundMessagesInput struct {
 	Query *string `json:"query,omitempty"`
 }
 
+// A page of insights, newest first.
+type InsightPage struct {
+	Results []*insight.Insight `json:"results"`
+	Total   int                `json:"total"`
+	// Whether total was counted; false when it is the planner's estimate of a list too large to count.
+	TotalExact bool `json:"totalExact"`
+}
+
+type IntegrationConfigValueInput struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
 type InviteWorkerToPortalInput struct {
 	WorkerID string `json:"workerId"`
 	// Overrides the email on the worker record when provided.
@@ -8405,6 +8488,11 @@ type RefreezeExtractionEvalCasesInput struct {
 	CaseIds []string `json:"caseIds,omitempty"`
 }
 
+type RejectDocumentInput struct {
+	DocumentID string `json:"documentId"`
+	Reason     string `json:"reason"`
+}
+
 type RejectInvoiceAdjustmentInput struct {
 	AdjustmentID string  `json:"adjustmentId"`
 	Reason       *string `json:"reason,omitempty"`
@@ -9462,6 +9550,22 @@ type SetAvailabilityPreferenceInput struct {
 	DayOfWeek  int                                   `json:"dayOfWeek"`
 	Preference workerschedule.AvailabilityPreference `json:"preference"`
 	Note       *string                               `json:"note,omitempty"`
+}
+
+type SetDocumentDeliveryFactsInput struct {
+	DocumentID string                      `json:"documentId"`
+	Facts      *DocumentDeliveryFactsInput `json:"facts"`
+	// The document version being changed.
+	Version int `json:"version"`
+}
+
+type SetDocumentSignatureInput struct {
+	DocumentID string                   `json:"documentId"`
+	Status     document.SignatureStatus `json:"status"`
+	// Only a signed document has a signing date.
+	SignedAt *int `json:"signedAt,omitempty"`
+	// The document version being changed.
+	Version int `json:"version"`
 }
 
 type SetInvoiceFactoringOverrideInput struct {
@@ -12390,6 +12494,13 @@ type UpdateHomeLayoutPresetInput struct {
 	IsOrgDefault       bool               `json:"isOrgDefault"`
 	Locked             bool               `json:"locked"`
 	Priority           int                `json:"priority"`
+}
+
+type UpdateIntegrationConfigInput struct {
+	Type    integration.Type `json:"type"`
+	Enabled bool             `json:"enabled"`
+	// Every setting by key; a sensitive one left empty keeps its saved value.
+	Configuration []*IntegrationConfigValueInput `json:"configuration"`
 }
 
 type UpdateJobPositionInput struct {

@@ -554,6 +554,7 @@ export const REFERENCE_VIEWS = {
     "version",
   ],
   inbound_message: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
+  insight: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
   invoice: [
     "billToName",
     "businessUnitId",
@@ -1124,6 +1125,7 @@ export const KIND_OF_TYPE: Readonly<Record<string, ReferenceKind>> = {
   DetentionPolicy: "detention_policy",
   DistanceOverride: "distance_override",
   DistanceProfile: "distance_profile",
+  Document: "document",
   DocumentTemplate: "document_template",
   DocumentType: "document_type",
   DriverExpense: "driver_expense",
@@ -1177,6 +1179,7 @@ export const KIND_OF_TYPE: Readonly<Record<string, ReferenceKind>> = {
   InboundMailbox: "inbound_mailbox",
   InboundMessage: "inbound_message",
   InboundShipmentRef: "shipment",
+  Insight: "insight",
   Invoice: "invoice",
   InvoiceAdjustment: "invoice",
   InvoiceDispute: "invoice_dispute",

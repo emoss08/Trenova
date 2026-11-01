@@ -102,9 +102,13 @@ describe("DeskBillingItem's documents", () => {
     act(() => FakeIntersectionObserver.show(container.querySelector(".dk-rec-docs-body")!));
 
     const pod = await screen.findByRole("link", { name: /Proof of delivery/ });
-    expect(documentService.getByResource).toHaveBeenCalledWith("shipment", "shp_1", "", {
-      includeDocumentType: "true",
-    });
+    expect(documentService.getByResource).toHaveBeenCalledWith(
+      "shipment",
+      "shp_1",
+      "",
+      { includeDocumentType: true },
+      { signal: expect.any(AbortSignal) },
+    );
     expect(pod).toHaveAttribute("href", documentContentUrl("doc_pod", "view"));
     expect(screen.getByRole("link", { name: /Manage/ })).toHaveAttribute(
       "href",

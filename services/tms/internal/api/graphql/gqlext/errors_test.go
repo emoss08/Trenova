@@ -193,3 +193,32 @@ func TestErrorPresenter_PlanRestrictionCarriesItsParams(t *testing.T) {
 		"plan":       "free_demo",
 	}, presented.Extensions["params"])
 }
+
+func TestErrorPresenter_ConflictCarriesItsUsageStats(t *testing.T) {
+	t.Parallel()
+
+	present := newErrorPresenter(&presenterTestConfig().App)
+
+	stats := map[string]any{"workflowId": "samsara-workers-sync", "runId": "run_1"}
+	presented := present(
+		context.Background(),
+		errortypes.NewConflictError("Samsara worker sync is already running").
+			WithUsageStats(stats),
+	)
+	require.NotNil(t, presented)
+	assert.Equal(t,
+		"https://api.test/problems/"+string(helpers.ProblemTypeConflict),
+		presented.Extensions["type"],
+	)
+	assert.Equal(t, stats, presented.Extensions["usageStats"])
+}
+
+func TestErrorPresenter_OtherErrorsCarryNoUsageStats(t *testing.T) {
+	t.Parallel()
+
+	present := newErrorPresenter(&presenterTestConfig().App)
+
+	presented := present(context.Background(), errortypes.NewBusinessError("nope"))
+	require.NotNil(t, presented)
+	assert.NotContains(t, presented.Extensions, "usageStats")
+}

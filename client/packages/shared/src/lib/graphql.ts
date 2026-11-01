@@ -261,6 +261,11 @@ export class GraphQLRequestError extends Error {
     return apiProblem.isNotFoundError(this.normalize());
   }
 
+  /** What a conflict reports about the record it collided with, such as the run already going. */
+  public getUsageStats(): unknown {
+    return this.extensions?.usageStats;
+  }
+
   public isRateLimitError(): boolean {
     return apiProblem.isRateLimitError(this.normalize());
   }

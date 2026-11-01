@@ -74,7 +74,8 @@ export function workerHosQuery(id: string) {
 export function documentPreviewQuery(id: string) {
   return {
     queryKey: ["command-palette", "document-preview", id] as const,
-    queryFn: () => apiService.documentService.getById(id),
+    queryFn: ({ signal }: { signal: AbortSignal }) =>
+      apiService.documentService.getById(id, { signal }),
     staleTime: PREVIEW_STALE_TIME,
   };
 }
@@ -82,7 +83,8 @@ export function documentPreviewQuery(id: string) {
 export function documentExtractionQuery(id: string) {
   return {
     queryKey: ["command-palette", "document-extraction", id] as const,
-    queryFn: () => apiService.documentService.getShipmentDraft(id),
+    queryFn: ({ signal }: { signal: AbortSignal }) =>
+      apiService.documentService.getShipmentDraft(id, { signal }),
     staleTime: PREVIEW_STALE_TIME,
   };
 }

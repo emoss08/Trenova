@@ -960,6 +960,15 @@ export type AcknowledgeMyPolicyInput = {
   signatureName?: string | null | undefined;
 };
 
+export type ActiveInsightsInput = {
+  /** Drops findings outside these categories; empty keeps every category. */
+  categories?: Array<InsightCategory> | null | undefined;
+  /** At most 25; empty or zero is the widget's default. */
+  limit?: number | null | undefined;
+  /** The page asking for its own slice; empty is the home screen's full view. */
+  surface?: InsightSurface | null | undefined;
+};
+
 export type AddCarrierSettlementAdjustmentInput = {
   amountMinor: number;
   description: string;
@@ -1776,6 +1785,11 @@ export type AssignmentStatus =
   | 'InProgress'
   | 'New';
 
+export type AttachDocumentToShipmentInput = {
+  documentId: string | number;
+  shipmentId: string | number;
+};
+
 export type AttachPayEventsInput = {
   payEventIds: Array<string | number>;
   settlementId: string | number;
@@ -1996,6 +2010,16 @@ export type BriefingStatus =
   | 'Failed'
   | 'Pending'
   | 'Ready';
+
+export type BrowseInsightsInput = {
+  categories?: Array<InsightCategory> | null | undefined;
+  /** At most 100. */
+  limit?: number | null | undefined;
+  /** At most 10,000. */
+  offset?: number | null | undefined;
+  severities?: Array<InsightSeverity> | null | undefined;
+  statuses?: Array<InsightStatus> | null | undefined;
+};
 
 export type BulkAssignTrainingInput = {
   courseIds: Array<string | number>;
@@ -3885,6 +3909,12 @@ export type DismissAccountingDriftInput = {
   note: string;
 };
 
+export type DismissInsightInput = {
+  insightId: string | number;
+  /** Why the finding was not worth acting on; optional. */
+  reason?: string | null | undefined;
+};
+
 export type DispatchAssignMoveInput = {
   moveId: string | number;
   primaryWorkerId: string | number;
@@ -3999,6 +4029,88 @@ export type DocumentClassification =
   | 'Regulatory'
   | 'Sensitive';
 
+export type DocumentContentStatus =
+  | 'Extracted'
+  | 'Extracting'
+  | 'Failed'
+  | 'Indexed'
+  | 'Pending';
+
+export type DocumentDeliveryFactsInput = {
+  amount?: string | null | undefined;
+  arrivedAt?: number | null | undefined;
+  chargeId?: string | number | null | undefined;
+  chargeLabel?: string | null | undefined;
+  departedAt?: number | null | undefined;
+  osd?: DocumentDeliveryOsd | null | undefined;
+  osdNote?: string | null | undefined;
+  pieces?: string | null | undefined;
+  reference?: string | null | undefined;
+  seal?: string | null | undefined;
+  signedBy?: string | null | undefined;
+};
+
+/** Over, short or damaged freight a delivery document records. */
+export type DocumentDeliveryOsd =
+  | 'Damaged'
+  | 'None'
+  | 'Over'
+  | 'Short';
+
+/** Where one packet rule stands on a record. */
+export type DocumentPacketItemStatus =
+  | 'Complete'
+  | 'Expired'
+  | 'ExpiringSoon'
+  | 'Missing'
+  | 'NeedsReview';
+
+export type DocumentPacketRuleInput = {
+  allowMultiple: boolean;
+  displayOrder: number;
+  documentTypeId: string | number;
+  expirationRequired: boolean;
+  expirationWarningDays: number;
+  required: boolean;
+  resourceType: string;
+  version?: number | null | undefined;
+};
+
+/** Whether a record's document packet is complete, judged by its packet rules. */
+export type DocumentPacketStatus =
+  | 'Complete'
+  | 'Expired'
+  | 'ExpiringSoon'
+  | 'Incomplete'
+  | 'NeedsReview';
+
+export type DocumentPreviewStatus =
+  | 'Failed'
+  | 'Pending'
+  | 'Ready'
+  | 'Unsupported';
+
+export type DocumentShipmentDraftStatus =
+  | 'Failed'
+  | 'Pending'
+  | 'Ready'
+  | 'Unavailable';
+
+/** Whether a document carries the signature its type needs. */
+export type DocumentSignatureStatus =
+  | 'Signed'
+  | 'Unknown'
+  | 'Unsigned';
+
+export type DocumentStatus =
+  | 'Active'
+  | 'Archived'
+  | 'Draft'
+  | 'Expired'
+  | 'Pending'
+  | 'PendingApproval'
+  | 'Rejected';
+
 export type DocumentTypeInput = {
   code: string;
   color?: string | null | undefined;
@@ -4007,6 +4119,14 @@ export type DocumentTypeInput = {
   documentClassification: DocumentClassification;
   name: string;
   version?: number | null | undefined;
+};
+
+export type DocumentsByResourceInput = {
+  includeDocumentType?: boolean | null | undefined;
+  /** Searches the documents' extracted text; empty lists every current document. */
+  query?: string | null | undefined;
+  resourceId: string;
+  resourceType: string;
 };
 
 export type DraftFactoringNoaInput = {
@@ -5671,10 +5791,79 @@ export type InjuryTreatment =
   | 'MedicalTreatment'
   | 'None';
 
+/** What an operational insight is about. */
+export type InsightCategory =
+  | 'CashFlow'
+  | 'Compliance'
+  | 'CostLeakage'
+  | 'ServiceQuality';
+
+/** Which way a metric moving is bad news. */
+export type InsightDirection =
+  | 'HigherIsWorse'
+  | 'LowerIsWorse'
+  | 'Neutral';
+
+export type InsightSeverity =
+  | 'Critical'
+  | 'Info'
+  | 'Warning';
+
+/** Where an insight is in its life: active, dismissed by a person, resolved, or replaced by a newer reading. */
+export type InsightStatus =
+  | 'Active'
+  | 'Dismissed'
+  | 'Resolved'
+  | 'Superseded';
+
+/** A page that shows only its own slice of insights. */
+export type InsightSurface =
+  | 'Accounting'
+  | 'Dispatch'
+  | 'Fleet'
+  | 'Shipments';
+
+export type InsightUnit =
+  | 'Count'
+  | 'Currency'
+  | 'Days'
+  | 'Hours'
+  | 'Miles'
+  | 'Percent';
+
 export type InspectionResult =
   | 'Fail'
   | 'OutOfService'
   | 'Pass';
+
+export type IntegrationConfigValueInput = {
+  key: string;
+  value: string;
+};
+
+/** An outside system the organization can connect Trenova to. */
+export type IntegrationType =
+  | 'AmazonSES'
+  | 'BusinessCentral'
+  | 'CarrierOK'
+  | 'ComdataFuel'
+  | 'EIAFuelPrices'
+  | 'FMCSAQCMobile'
+  | 'GoogleMaps'
+  | 'HERE'
+  | 'Mailgun'
+  | 'NetSuite'
+  | 'OANDAExchangeRates'
+  | 'OpenWeatherMap'
+  | 'PCMiler'
+  | 'Postmark'
+  | 'QuickBooksOnline'
+  | 'RampFuel'
+  | 'Resend'
+  | 'Samsara'
+  | 'SendGrid'
+  | 'WEXFuel'
+  | 'Xero';
 
 export type InviteWorkerToPortalInput = {
   /** Overrides the email on the worker record when provided. */
@@ -7008,6 +7197,11 @@ export type RefreezeExtractionEvalCasesInput = {
   caseIds?: Array<string | number> | null | undefined;
 };
 
+export type RejectDocumentInput = {
+  documentId: string | number;
+  reason: string;
+};
+
 export type RejectInvoiceAdjustmentInput = {
   adjustmentId: string | number;
   reason?: string | null | undefined;
@@ -7649,6 +7843,22 @@ export type SetAvailabilityPreferenceInput = {
   note?: string | null | undefined;
   preference: AvailabilityPreference;
   workerId: string | number;
+};
+
+export type SetDocumentDeliveryFactsInput = {
+  documentId: string | number;
+  facts: DocumentDeliveryFactsInput;
+  /** The document version being changed. */
+  version: number;
+};
+
+export type SetDocumentSignatureInput = {
+  documentId: string | number;
+  /** Only a signed document has a signing date. */
+  signedAt?: number | null | undefined;
+  status: DocumentSignatureStatus;
+  /** The document version being changed. */
+  version: number;
 };
 
 export type SetInvoiceFactoringOverrideInput = {
@@ -8997,6 +9207,13 @@ export type UpdateHomeLayoutPresetInput = {
   roleIds?: Array<string | number> | null | undefined;
   version: number;
   widgets: Array<HomeWidgetInput>;
+};
+
+export type UpdateIntegrationConfigInput = {
+  /** Every setting by key; a sensitive one left empty keeps its saved value. */
+  configuration: Array<IntegrationConfigValueInput>;
+  enabled: boolean;
+  type: IntegrationType;
 };
 
 export type UpdateJobPositionInput = {
@@ -13327,6 +13544,28 @@ export type DistanceProfileTableQueryVariables = Exact<{
 
 export type DistanceProfileTableQuery = { distanceProfiles: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'DistanceProfileTableRowFieldsFragment': DistanceProfileTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type CreateDocumentPacketRuleMutationVariables = Exact<{
+  input: DocumentPacketRuleInput;
+}>;
+
+
+export type CreateDocumentPacketRuleMutation = { createDocumentPacketRule: { ' $fragmentRefs'?: { 'DocumentPacketRuleTableRowFieldsFragment': DocumentPacketRuleTableRowFieldsFragment } } };
+
+export type UpdateDocumentPacketRuleMutationVariables = Exact<{
+  id: string | number;
+  input: DocumentPacketRuleInput;
+}>;
+
+
+export type UpdateDocumentPacketRuleMutation = { updateDocumentPacketRule: { ' $fragmentRefs'?: { 'DocumentPacketRuleTableRowFieldsFragment': DocumentPacketRuleTableRowFieldsFragment } } };
+
+export type DeleteDocumentPacketRuleMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteDocumentPacketRuleMutation = { deleteDocumentPacketRule: boolean };
+
 export type DocumentPacketRuleTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, resourceType: string, documentTypeId: string, required: boolean, allowMultiple: boolean, displayOrder: number, expirationRequired: boolean, expirationWarningDays: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'DocumentPacketRuleTableRowFieldsFragment' };
 
 export type DocumentPacketRuleTableQueryVariables = Exact<{
@@ -13361,6 +13600,142 @@ export type DocumentTypeTableQueryVariables = Exact<{
 
 
 export type DocumentTypeTableQuery = { documentTypes: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'DocumentTypeTableRowFieldsFragment': DocumentTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DocumentDeliveryFactsFieldsFragment = { signedBy: string, pieces: string, osd: string, osdNote: string, seal: string, arrivedAt: number | null, departedAt: number | null, amount: string | null, reference: string, chargeId: string | null, chargeLabel: string, source: string, readFields: Array<string> | null, updatedById: string | null, updatedAt: number } & { ' $fragmentName'?: 'DocumentDeliveryFactsFieldsFragment' };
+
+export type DocumentFieldsFragment = { id: string, organizationId: string, businessUnitId: string, lineageId: string, versionNumber: number, isCurrentVersion: boolean, fileName: string, originalName: string, fileSize: number, fileType: string, storagePath: string, checksumSha256: string | null, storageVersionId: string | null, storageRetentionMode: string | null, storageRetentionUntil: number | null, storageLegalHold: boolean, status: DocumentStatus, description: string | null, resourceId: string, resourceType: string, processingProfile: string, expirationDate: number | null, tags: Array<string> | null, isPublic: boolean, uploadedById: string, approvedById: string | null, approvedAt: number | null, rejectedById: string | null, rejectedAt: number | null, rejectionReason: string | null, previewStoragePath: string | null, previewStatus: DocumentPreviewStatus, contentStatus: DocumentContentStatus, contentError: string | null, detectedKind: string | null, hasExtractedText: boolean, shipmentDraftStatus: DocumentShipmentDraftStatus, documentTypeId: string | null, signatureStatus: DocumentSignatureStatus, signedAt: number | null, signatureSource: string | null, signatureUpdatedById: string | null, signatureUpdatedAt: number | null, version: number, createdAt: number, updatedAt: number, documentType: { id: string, businessUnitId: string, organizationId: string, code: string, name: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory, version: number, createdAt: number, updatedAt: number } | null, deliveryFacts: { ' $fragmentRefs'?: { 'DocumentDeliveryFactsFieldsFragment': DocumentDeliveryFactsFieldsFragment } } | null } & { ' $fragmentName'?: 'DocumentFieldsFragment' };
+
+export type DeleteDocumentMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteDocumentMutation = { deleteDocument: boolean };
+
+export type BulkDeleteDocumentsMutationVariables = Exact<{
+  ids: Array<string | number> | string | number;
+}>;
+
+
+export type BulkDeleteDocumentsMutation = { bulkDeleteDocuments: { deletedCount: number, errorCount: number } };
+
+export type RestoreDocumentVersionMutationVariables = Exact<{
+  documentId: string | number;
+}>;
+
+
+export type RestoreDocumentVersionMutation = { restoreDocumentVersion: { ' $fragmentRefs'?: { 'DocumentFieldsFragment': DocumentFieldsFragment } } };
+
+export type ApproveDocumentMutationVariables = Exact<{
+  documentId: string | number;
+}>;
+
+
+export type ApproveDocumentMutation = { approveDocument: { ' $fragmentRefs'?: { 'DocumentFieldsFragment': DocumentFieldsFragment } } };
+
+export type RejectDocumentMutationVariables = Exact<{
+  input: RejectDocumentInput;
+}>;
+
+
+export type RejectDocumentMutation = { rejectDocument: { ' $fragmentRefs'?: { 'DocumentFieldsFragment': DocumentFieldsFragment } } };
+
+export type SetDocumentSignatureMutationVariables = Exact<{
+  input: SetDocumentSignatureInput;
+}>;
+
+
+export type SetDocumentSignatureMutation = { setDocumentSignature: { ' $fragmentRefs'?: { 'DocumentFieldsFragment': DocumentFieldsFragment } } };
+
+export type SetDocumentDeliveryFactsMutationVariables = Exact<{
+  input: SetDocumentDeliveryFactsInput;
+}>;
+
+
+export type SetDocumentDeliveryFactsMutation = { setDocumentDeliveryFacts: { ' $fragmentRefs'?: { 'DocumentFieldsFragment': DocumentFieldsFragment } } };
+
+export type AttachDocumentToShipmentMutationVariables = Exact<{
+  input: AttachDocumentToShipmentInput;
+}>;
+
+
+export type AttachDocumentToShipmentMutation = { attachDocumentToShipment: { ' $fragmentRefs'?: { 'DocumentFieldsFragment': DocumentFieldsFragment } } };
+
+export type ReextractDocumentMutationVariables = Exact<{
+  documentId: string | number;
+}>;
+
+
+export type ReextractDocumentMutation = { reextractDocument: boolean };
+
+export type OpenDocumentImportAssistantThreadMutationVariables = Exact<{
+  documentId: string | number;
+}>;
+
+
+export type OpenDocumentImportAssistantThreadMutation = { openDocumentImportAssistantThread: unknown };
+
+export type DocumentQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DocumentQuery = { document: { ' $fragmentRefs'?: { 'DocumentFieldsFragment': DocumentFieldsFragment } } | null };
+
+export type DocumentVersionsQueryVariables = Exact<{
+  documentId: string | number;
+}>;
+
+
+export type DocumentVersionsQuery = { documentVersions: Array<{ ' $fragmentRefs'?: { 'DocumentFieldsFragment': DocumentFieldsFragment } }> };
+
+export type DocumentsByResourceQueryVariables = Exact<{
+  input: DocumentsByResourceInput;
+}>;
+
+
+export type DocumentsByResourceQuery = { documentsByResource: Array<{ ' $fragmentRefs'?: { 'DocumentFieldsFragment': DocumentFieldsFragment } }> };
+
+export type DocumentPacketSummaryQueryVariables = Exact<{
+  resourceType: string;
+  resourceId: string;
+}>;
+
+
+export type DocumentPacketSummaryQuery = { documentPacketSummary: { resourceId: string, resourceType: string, status: DocumentPacketStatus, totalRules: number, satisfiedRules: number, missingRequired: number, expiringSoon: number, expired: number, needsReview: number, items: Array<{ documentTypeId: string, documentTypeCode: string, documentTypeName: string, required: boolean, allowMultiple: boolean, displayOrder: number, expirationRequired: boolean, expirationWarningDays: number, status: DocumentPacketItemStatus, documentCount: number, currentDocumentIds: Array<string> }> } };
+
+export type DocumentContentQueryVariables = Exact<{
+  documentId: string | number;
+}>;
+
+
+export type DocumentContentQuery = { documentContent: { id: string, documentId: string, organizationId: string, businessUnitId: string, status: string, contentText: string | null, pageCount: number, sourceKind: string | null, detectedLanguage: string | null, detectedDocumentKind: string | null, classificationConfidence: number, structuredData: unknown, failureCode: string | null, failureMessage: string | null, version: number, createdAt: number, updatedAt: number, lastExtractedAt: number | null, pages: Array<{ id: string, documentContentId: string, documentId: string, organizationId: string, businessUnitId: string, pageNumber: number, sourceKind: string, extractedText: string | null, ocrConfidence: number, preprocessingApplied: boolean, width: number, height: number, metadata: unknown, version: number, createdAt: number, updatedAt: number }> | null } };
+
+export type DocumentShipmentDraftQueryVariables = Exact<{
+  documentId: string | number;
+}>;
+
+
+export type DocumentShipmentDraftQuery = { documentShipmentDraft: { id: string, documentId: string, organizationId: string, businessUnitId: string, status: string, documentKind: string | null, confidence: number, draftData: unknown, failureCode: string | null, failureMessage: string | null, attachedShipmentId: string | null, attachedAt: number | null, attachedById: string | null, version: number, createdAt: number, updatedAt: number } };
+
+export type DocumentReadingQueryVariables = Exact<{
+  documentId: string | number;
+}>;
+
+
+export type DocumentReadingQuery = { documentReading: unknown };
+
+export type DocumentExtractionStatusQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DocumentExtractionStatusQuery = { documentExtractionStatus: { modelProviderAvailable: boolean, modelProviderReason: string, converterAvailable: boolean, extractionAvailable: boolean } };
+
+export type DocumentImportAssistantHistoryQueryVariables = Exact<{
+  documentId: string | number;
+}>;
+
+
+export type DocumentImportAssistantHistoryQuery = { documentImportAssistantHistory: { documentId: string, conversationId: string, status: string, statusReason: string, turnCount: number, lastMessageAt: number | null, updatedAt: number, messages: Array<{ id: string, role: string, text: string, createdAt: number, toolCalls: Array<{ name: string, callId: string, status: string, input: string, output: string }> | null, suggestions: Array<{ label: string, prompt: string, type: string, placeholder: string, action: string, submitLabel: string }> | null }> | null } };
 
 export type WorkerPortalStatusQueryVariables = Exact<{
   workerId: string | number;
@@ -16721,6 +17096,119 @@ export type DecideInboundStopsMutationVariables = Exact<{
 
 export type DecideInboundStopsMutation = { decideInboundStops: { ' $fragmentRefs'?: { 'InboundMessageDetailFieldsFragment': InboundMessageDetailFieldsFragment } } };
 
+export type InsightFieldsFragment = { id: string, businessUnitId: string, organizationId: string, detectorKey: string, category: InsightCategory, severity: InsightSeverity, status: InsightStatus, dedupeKey: string, subject: string, headline: string, narrative: string, recommendation: string, narrated: boolean, windowStart: number, windowEnd: number, detectedAt: number, staleAt: number, dismissedAt: number | null, dismissedById: string | null, dismissReason: string, modelIdentifier: string, providerId: string | null, version: number, createdAt: number, updatedAt: number, metrics: Array<{ key: string, label: string, value: string, unit: InsightUnit, direction: InsightDirection, baseline: string | null, baselineLabel: string }> | null, links: Array<{ label: string, path: string, count: number }> | null } & { ' $fragmentName'?: 'InsightFieldsFragment' };
+
+export type DismissInsightMutationVariables = Exact<{
+  input: DismissInsightInput;
+}>;
+
+
+export type DismissInsightMutation = { dismissInsight: { ' $fragmentRefs'?: { 'InsightFieldsFragment': InsightFieldsFragment } } };
+
+export type RestoreInsightMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type RestoreInsightMutation = { restoreInsight: { ' $fragmentRefs'?: { 'InsightFieldsFragment': InsightFieldsFragment } } };
+
+export type ActiveInsightsQueryVariables = Exact<{
+  input?: ActiveInsightsInput | null | undefined;
+}>;
+
+
+export type ActiveInsightsQuery = { activeInsights: Array<{ ' $fragmentRefs'?: { 'InsightFieldsFragment': InsightFieldsFragment } }> };
+
+export type BrowseInsightsQueryVariables = Exact<{
+  input: BrowseInsightsInput;
+}>;
+
+
+export type BrowseInsightsQuery = { insights: { total: number, totalExact: boolean, results: Array<{ ' $fragmentRefs'?: { 'InsightFieldsFragment': InsightFieldsFragment } }> } };
+
+export type InsightDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type InsightDetailQuery = { insight: { insight: { ' $fragmentRefs'?: { 'InsightFieldsFragment': InsightFieldsFragment } }, history: Array<{ ' $fragmentRefs'?: { 'InsightFieldsFragment': InsightFieldsFragment } }> | null, explanation: { measures: string, threshold: string, excludes: string } } };
+
+export type IntegrationConfigFieldSpecFieldsFragment = { key: string, label: string, type: string, required: boolean, sensitive: boolean, placeholder: string, helpText: string, default: string, options: Array<string> | null } & { ' $fragmentName'?: 'IntegrationConfigFieldSpecFieldsFragment' };
+
+export type IntegrationConfigFieldsFragment = { type: IntegrationType, enabled: boolean, updatedAt: number, fields: Array<{ key: string, value: string, hasValue: boolean }>, spec: Array<{ ' $fragmentRefs'?: { 'IntegrationConfigFieldSpecFieldsFragment': IntegrationConfigFieldSpecFieldsFragment } }> } & { ' $fragmentName'?: 'IntegrationConfigFieldsFragment' };
+
+export type SamsaraWorkerSyncFailureFieldsFragment = { workerId: string, worker: string, operation: string, message: string } & { ' $fragmentName'?: 'SamsaraWorkerSyncFailureFieldsFragment' };
+
+export type SamsaraWorkerSyncDriftReportFieldsFragment = { totalDrifts: number, workersWithDrift: number, missingMapping: number, missingRemoteDriver: number, mappingMismatch: number, remoteDeactivated: number, lastCalculatedAt: number, drifts: Array<{ workerId: string, workerName: string, driftType: string, message: string, localExternalId: string, remoteDriverId: string, detectedAt: number }> } & { ' $fragmentName'?: 'SamsaraWorkerSyncDriftReportFieldsFragment' };
+
+export type UpdateIntegrationConfigMutationVariables = Exact<{
+  input: UpdateIntegrationConfigInput;
+}>;
+
+
+export type UpdateIntegrationConfigMutation = { updateIntegrationConfig: { ' $fragmentRefs'?: { 'IntegrationConfigFieldsFragment': IntegrationConfigFieldsFragment } } };
+
+export type TestIntegrationConnectionMutationVariables = Exact<{
+  type: IntegrationType;
+}>;
+
+
+export type TestIntegrationConnectionMutation = { testIntegrationConnection: { provider: IntegrationType, success: boolean, checkedAt: number } };
+
+export type StartSamsaraWorkerSyncMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type StartSamsaraWorkerSyncMutation = { startSamsaraWorkerSync: { workflowId: string, runId: string, taskQueue: string, status: string, submittedAt: number } };
+
+export type DetectSamsaraWorkerSyncDriftMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DetectSamsaraWorkerSyncDriftMutation = { detectSamsaraWorkerSyncDrift: { ' $fragmentRefs'?: { 'SamsaraWorkerSyncDriftReportFieldsFragment': SamsaraWorkerSyncDriftReportFieldsFragment } } };
+
+export type RepairSamsaraWorkerSyncDriftMutationVariables = Exact<{
+  workerIds?: Array<string> | string | null | undefined;
+}>;
+
+
+export type RepairSamsaraWorkerSyncDriftMutation = { repairSamsaraWorkerSyncDrift: { requestedWorkers: number, repairedWorkers: number, failedWorkers: number, failures: Array<{ ' $fragmentRefs'?: { 'SamsaraWorkerSyncFailureFieldsFragment': SamsaraWorkerSyncFailureFieldsFragment } }> | null } };
+
+export type IntegrationCatalogQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type IntegrationCatalogQuery = { integrationCatalog: { items: Array<{ type: IntegrationType, name: string, description: string, category: string, categoryLabel: string, logoUrl: string, logoLightUrl: string, logoDarkUrl: string, color: string, glowFrom: string, glowTo: string, docsUrl: string, websiteUrl: string, featured: boolean, sortOrder: number, primaryActionLabel: string, enabled: boolean, configured: boolean, supportsTestConnect: boolean, links: Array<{ kind: string, label: string, url: string }>, status: { connection: string, connectionLabel: string, configuration: string, configurationLabel: string }, configSpec: Array<{ ' $fragmentRefs'?: { 'IntegrationConfigFieldSpecFieldsFragment': IntegrationConfigFieldSpecFieldsFragment } }> | null }> } };
+
+export type IntegrationConfigQueryVariables = Exact<{
+  type: IntegrationType;
+}>;
+
+
+export type IntegrationConfigQuery = { integrationConfig: { ' $fragmentRefs'?: { 'IntegrationConfigFieldsFragment': IntegrationConfigFieldsFragment } } };
+
+export type IntegrationRuntimeConfigQueryVariables = Exact<{
+  type: IntegrationType;
+}>;
+
+
+export type IntegrationRuntimeConfigQuery = { integrationRuntimeConfig: { enabled: boolean, configured: boolean, ready: boolean, missingRequiredFields: Array<string>, config: unknown } };
+
+export type SamsaraWorkerSyncReadinessQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type SamsaraWorkerSyncReadinessQuery = { samsaraWorkerSyncReadiness: { totalWorkers: number, activeWorkers: number, syncedActiveWorkers: number, unsyncedActiveWorkers: number, allActiveWorkersSynced: boolean, lastCalculatedAt: number } };
+
+export type SamsaraWorkerSyncDriftQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type SamsaraWorkerSyncDriftQuery = { samsaraWorkerSyncDrift: { ' $fragmentRefs'?: { 'SamsaraWorkerSyncDriftReportFieldsFragment': SamsaraWorkerSyncDriftReportFieldsFragment } } };
+
+export type SamsaraWorkerSyncRunStatusQueryVariables = Exact<{
+  workflowId: string;
+  runId?: string | null | undefined;
+}>;
+
+
+export type SamsaraWorkerSyncRunStatusQuery = { samsaraWorkerSyncRunStatus: { workflowId: string, runId: string, taskQueue: string, status: string, startedAt: number, closedAt: number, error: string, result: { totalWorkers: number, activeWorkers: number, remoteDrivers: number, alreadyMapped: number, mappedFromExternalIds: number, createdDrivers: number, updatedRemoteDrivers: number, updatedMappings: number, skippedInactive: number, failed: number, failures: Array<{ ' $fragmentRefs'?: { 'SamsaraWorkerSyncFailureFieldsFragment': SamsaraWorkerSyncFailureFieldsFragment } }> | null } | null } };
+
 export type InvoiceApprovalQueueItemFieldsFragment = { adjustmentId: string, originalInvoiceId: string, originalInvoiceNumber: string, originalInvoiceStatus: string, customerName: string, kind: InvoiceAdjustmentKind, reason: string, policyReason: string, policySource: string, creditTotalAmount: string, rebillTotalAmount: string, netDeltaAmount: string, wouldCreateUnappliedCredit: boolean, requiresReconciliationException: boolean, requiresReplacementInvoiceReview: boolean, submittedByName: string, submittedAt: number | null, creditMemoInvoiceId: string | null, replacementInvoiceId: string | null, rebillQueueItemId: string | null, batchId: string | null } & { ' $fragmentName'?: 'InvoiceApprovalQueueItemFieldsFragment' };
 
 export type InvoiceAdjustmentApprovalsQueryVariables = Exact<{
@@ -17871,6 +18359,8 @@ export type DotRandomDrawReferenceFragment = { id: string } & { ' $fragmentName'
 export type DotRandomDrawEntryReferenceFragment = { id: string } & { ' $fragmentName'?: 'DotRandomDrawEntryReferenceFragment' };
 
 export type DotRandomPoolReferenceFragment = { id: string, code: string, name: string, period: RandomPeriod } & { ' $fragmentName'?: 'DotRandomPoolReferenceFragment' };
+
+export type DocumentReferenceFragment = { id: string, originalName: string, fileSize: number, fileType: string } & { ' $fragmentName'?: 'DocumentReferenceFragment' };
 
 export type DocumentTypeReferenceFragment = { id: string, code: string, name: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory } & { ' $fragmentName'?: 'DocumentTypeReferenceFragment' };
 
@@ -20793,9 +21283,13 @@ export { DetentionPolicyTierFieldsFragmentDoc, DetentionPolicyRowFieldsFragmentD
 export { DispatchBoardDocument, DispatchMoveCandidatesDocument, DispatchDriverMovesDocument, DispatchAssignmentPreviewDocument, DispatchAssignMovesDocument, DispatchUnassignMovesDocument, DispatchCarrierAssignmentPreviewDocument, DispatchAssignMoveToCarrierDocument, DispatchCancelCarrierAssignmentDocument, DispatchPlanAutoAssignDocument } from "./documents/dispatch-console/page";
 export { DistanceOverrideLocationFieldsFragmentDoc, DistanceOverrideTableRowFieldsFragmentDoc, DistanceOverrideTableDocument } from "./documents/distance-override/table";
 export { DistanceProfileTableRowFieldsFragmentDoc, DistanceProfileTableDocument } from "./documents/distance-profile/table";
+export { CreateDocumentPacketRuleDocument, UpdateDocumentPacketRuleDocument, DeleteDocumentPacketRuleDocument } from "./documents/document-packet-rule/mutations";
 export { DocumentPacketRuleTableRowFieldsFragmentDoc, DocumentPacketRuleTableDocument } from "./documents/document-packet-rule/table";
 export { CreateDocumentTypeDocument, UpdateDocumentTypeDocument } from "./documents/document-type/mutations";
 export { DocumentTypeTableRowFieldsFragmentDoc, DocumentTypeTableDocument } from "./documents/document-type/table";
+export { DocumentDeliveryFactsFieldsFragmentDoc, DocumentFieldsFragmentDoc } from "./documents/document/fragments";
+export { DeleteDocumentDocument, BulkDeleteDocumentsDocument, RestoreDocumentVersionDocument, ApproveDocumentDocument, RejectDocumentDocument, SetDocumentSignatureDocument, SetDocumentDeliveryFactsDocument, AttachDocumentToShipmentDocument, ReextractDocumentDocument, OpenDocumentImportAssistantThreadDocument } from "./documents/document/mutations";
+export { DocumentDocument, DocumentVersionsDocument, DocumentsByResourceDocument, DocumentPacketSummaryDocument, DocumentContentDocument, DocumentShipmentDraftDocument, DocumentReadingDocument, DocumentExtractionStatusDocument, DocumentImportAssistantHistoryDocument } from "./documents/document/queries";
 export { PortalTrainingFieldsFragmentDoc, WorkerPortalStatusDocument, InviteWorkerToPortalDocument, RevokeWorkerPortalAccessDocument, SettlementDisputeTableDocument, SettlementDisputeDetailDocument, OpenSettlementDisputeCountDocument, StartSettlementDisputeReviewDocument, ResolveSettlementDisputeDocument, MyPortalProfileDocument, MyLoadsDocument, MyLoadCommentsDocument, RecordMyStopActionDocument, CreateMyLoadCommentDocument, MyPeriodSummaryDocument, MyRecentPayEventsDocument, MySettlementsDocument, MySettlementDocument, MyEscrowDocument, MyAdvancesDocument, MyDisputesDocument, CreateSettlementDisputeDocument, WithdrawSettlementDisputeDocument, MyComplianceProfileDocument, UpdateMyContactInfoDocument, MyPtoDocument, RequestMyPtoDocument, CancelMyPtoDocument, MyExpensesDocument, SubmitMyExpenseDocument, CancelMyExpenseDocument, RespondToMyAssignmentDocument, MyLoadPayEstimateDocument, MyYtdPayDocument, DriverExpenseTableDocument, DriverExpenseDetailDocument, PendingDriverExpenseCountDocument, ReviewDriverExpenseDocument, DashControlDocument, UpdateDashControlDocument, MyPortalFeaturesDocument, MyPoliciesDocument, MyPolicyDocumentUrlDocument, MyProfileChangeRequestsDocument, AcknowledgeMyPolicyDocument, WithdrawMyProfileChangeDocument, MyScheduleDocument, MyAvailabilityDocument, MyShiftSwapsDocument, SetMyAvailabilityDocument, ProposeMyShiftSwapDocument, RespondToMyShiftSwapDocument, MyHosStateDocument, MyHosDailyLogsDocument, MyHosViolationsDocument, MyCredentialsDocument, MyPtoBalancesDocument, MyTrainingDocument, StartMyTrainingDocument, AcknowledgeMyTrainingDocument, MySafetyScorecardDocument, MyRecognitionsDocument, MyDisciplinaryActionsDocument, AcknowledgeMyDisciplinaryActionDocument, MyReviewsDocument, AcknowledgeMyReviewDocument, MyLeaveDocument } from "./documents/driver-portal/operations";
 export { DeskDriverSettlementCardDocument, DeskDriverSettlementStatementDocument, DeskPayCodeOptionsDocument } from "./documents/driver-settlement/desk";
 export { PayProfileTableDocument, WorkerPayAssignmentsDocument, EffectiveWorkerPayAssignmentDocument, PayProfileAssignmentsDocument, PayProfileDetailDocument, RecurringDeductionTableDocument, RecurringEarningTableDocument, PayCodeTableDocument, PayAdvanceTableDocument, EscrowAccountTableDocument, EscrowAccountDetailDocument, DriverSettlementTableDocument, DriverSettlementDetailDocument, SettlementBatchTableDocument, DriverPayEventTableDocument, WorkerEarningsSummaryDocument, WorkerYtdPaySummariesDocument, SettlementControlDocument, SettlementWorkspaceSummaryDocument, UnsettledWorkerSummariesDocument, CurrentSettlementPeriodDocument, PreviewDriverSettlementDocument, ExportSettlementBatchCsvDocument, CreatePayProfileDocument, UpdatePayProfileDocument, AssignPayProfileToWorkerDocument, EndWorkerPayAssignmentDocument, CreateRecurringDeductionDocument, UpdateRecurringDeductionDocument, CreatePayCodeDocument, UpdatePayCodeDocument, CreateRecurringEarningDocument, UpdateRecurringEarningDocument, IssuePayAdvanceDocument, WriteOffPayAdvanceDocument, OpenEscrowAccountDocument, UpdateEscrowAccountDocument, AdjustEscrowAccountDocument, CloseEscrowAccountDocument, GenerateSettlementBatchDocument, GenerateDriverSettlementDocument, SubmitDriverSettlementDocument, ApproveDriverSettlementDocument, RejectDriverSettlementDocument, PostDriverSettlementDocument, MarkDriverSettlementPaidDocument, VoidDriverSettlementDocument, RecalculateDriverSettlementDocument, AddDriverSettlementAdjustmentDocument, RemoveDriverSettlementAdjustmentDocument, HoldDriverPayEventDocument, ReleaseDriverPayEventDocument, AttachPayEventsToSettlementDocument, DetachPayEventFromSettlementDocument, BulkDriverSettlementActionDocument, UpdateSettlementControlDocument, SettlementBatchDetailDocument, UnsettledPayEventsDocument, PayWorkerNowDocument } from "./documents/driver-settlement/operations";
@@ -20861,6 +21355,12 @@ export { IftaTaxRateFieldsFragmentDoc, IftaTaxRateTableDocument, UpsertIftaTaxRa
 export { DeskInboundMessagesDocument, DeskInboundMessageDocument } from "./documents/inbox/desk";
 export { InboundMailboxFieldsFragmentDoc, InboundMailboxCredentialsFieldsFragmentDoc, InboundShipmentRefFieldsFragmentDoc, TriageUserFieldsFragmentDoc, InboundMessageListFieldsFragmentDoc, InboundAttachmentFieldsFragmentDoc, InboundMessageDetailFieldsFragmentDoc, InboundMessagesDocument, InboundMessageDocument, InboundMessageCountsDocument, InboundMailboxesDocument, ReviewInboundMessageDocument, LinkInboundMessageDocument, CreateInboundMailboxDocument, UpdateInboundMailboxDocument, RotateInboundMailboxTokenDocument, SetInboundMailboxSigningSecretDocument, SetInboundMailboxApiKeyDocument } from "./documents/inbox/inbox";
 export { InboundSnoozeFieldsFragmentDoc, TriageActionFieldsFragmentDoc, InboundAttachmentDetailFieldsFragmentDoc, TriageFactFieldsFragmentDoc, TriageConflictFieldsFragmentDoc, InboundActivityFieldsFragmentDoc, InboundReplyAttachmentFieldsFragmentDoc, InboundReplyFieldsFragmentDoc, TriageLoadDraftFieldsFragmentDoc, InboundReplyAttachableFieldsFragmentDoc, TriageSampleFieldsFragmentDoc, TriageRuleFieldsFragmentDoc, TriageRulePreviewFieldsFragmentDoc, TriageDeckItemFieldsFragmentDoc, TriageRiverPointFieldsFragmentDoc, TriageViewFieldsFragmentDoc, TriageReplyTemplateFieldsFragmentDoc, TriageShipmentPeekFieldsFragmentDoc, TriageBulkResultFieldsFragmentDoc, InboundThreadDocument, TriageBriefingDocument, MyTriageViewsDocument, TriageResponseTargetsDocument, TriageSettingsDocument, TriageAssigneesDocument, TriageRulesDocument, TriageRulePreviewDocument, TriageRuleMatchesDocument, TriageSenderDomainsDocument, InboundSenderProfileDocument, TriageReplyTemplatesDocument, InboundReplyAttachablesDocument, RenderTriageReplyTemplateDocument, TriageStopTimesDocument, TriageShipmentPeekDocument, TriageCustomerPeekDocument, ReviewInboundMessagesDocument, ReopenInboundMessagesDocument, AssignInboundMessagesDocument, SnoozeInboundMessagesDocument, WakeInboundMessageDocument, WaitForInboundReplyDocument, StopWaitingForInboundReplyDocument, UnlinkInboundMessageDocument, SendInboundMailboxTestDocument, HandOffTriageDocument, ReadUnreadInboundMessagesDocument, CreateMyTriageViewDocument, RenameMyTriageViewDocument, DeleteMyTriageViewDocument, UpdateTriageResponseTargetsDocument, UpdateTriageSettingsDocument, CreateTriageRuleDocument, UpdateTriageRuleDocument, SetTriageRuleEnabledDocument, DeleteTriageRuleDocument, CorrectInboundClassificationDocument, FlagInboundFactDocument, ResolveInboundConflictDocument, ReopenInboundConflictDocument, DraftInboundReplyDocument, SaveInboundReplyDraftDocument, DiscardInboundReplyDraftDocument, SendInboundReplyDocument, DraftInboundManyDocument, CreateTriageReplyTemplateDocument, UpdateTriageReplyTemplateDocument, DeleteTriageReplyTemplateDocument, DraftInboundLoadDocument, DiscardInboundLoadDocument, CreateInboundLoadDocument, FileInboundAttachmentDocument, FileInboundManyDocument, UnfileInboundAttachmentDocument, LogInboundExceptionDocument, BlockInboundSenderDocument, UnblockInboundSenderDocument, DecideInboundStopsDocument } from "./documents/inbox/triage";
+export { InsightFieldsFragmentDoc } from "./documents/insight/fragments";
+export { DismissInsightDocument, RestoreInsightDocument } from "./documents/insight/mutations";
+export { ActiveInsightsDocument, BrowseInsightsDocument, InsightDetailDocument } from "./documents/insight/queries";
+export { IntegrationConfigFieldSpecFieldsFragmentDoc, IntegrationConfigFieldsFragmentDoc, SamsaraWorkerSyncFailureFieldsFragmentDoc, SamsaraWorkerSyncDriftReportFieldsFragmentDoc } from "./documents/integration/fragments";
+export { UpdateIntegrationConfigDocument, TestIntegrationConnectionDocument, StartSamsaraWorkerSyncDocument, DetectSamsaraWorkerSyncDriftDocument, RepairSamsaraWorkerSyncDriftDocument } from "./documents/integration/mutations";
+export { IntegrationCatalogDocument, IntegrationConfigDocument, IntegrationRuntimeConfigDocument, SamsaraWorkerSyncReadinessDocument, SamsaraWorkerSyncDriftDocument, SamsaraWorkerSyncRunStatusDocument } from "./documents/integration/queries";
 export { InvoiceApprovalQueueItemFieldsFragmentDoc, InvoiceAdjustmentApprovalsDocument, InvoiceAdjustmentApprovalDetailDocument, InvoiceAdjustmentOperationsSummaryDocument, ApproveInvoiceAdjustmentDocument, RejectInvoiceAdjustmentDocument } from "./documents/invoice-adjustment/approvals";
 export { DeskInvoiceAdjustmentCardDocument } from "./documents/invoice-adjustment/desk";
 export { DeskInvoiceNeighborFragmentDoc, DeskInvoiceCardDocument, DeskInvoicesDocument, DeskInvoiceDetailDocument, DeskInvoiceDisputesDocument } from "./documents/invoice/desk";
@@ -20899,7 +21399,7 @@ export { RateAgreementRowFieldsFragmentDoc, RateZoneRowFieldsFragmentDoc, RateMa
 export { DeskRecordActivityDocument } from "./documents/record-activity/desk";
 export { DeskRecurringShipmentsDocument } from "./documents/recurring-shipment/desk";
 export { RecurringShipmentTableRowFieldsFragmentDoc, RecurringShipmentTableDocument } from "./documents/recurring-shipment/table";
-export { InboundMailboxReferenceFragmentDoc, JournalEntryReferenceFragmentDoc, AccessorialChargeReferenceFragmentDoc, AgentProposalReferenceFragmentDoc, AgentDefinitionReferenceFragmentDoc, AgentRunReferenceFragmentDoc, BenefitPlanReferenceFragmentDoc, BusinessUnitReferenceFragmentDoc, CaptureDeviceReferenceFragmentDoc, CarrierReferenceFragmentDoc, CarrierInvoiceMatchReferenceFragmentDoc, CarrierSettlementReferenceFragmentDoc, CommodityReferenceFragmentDoc, CustomerReferenceFragmentDoc, CustomerPaymentReferenceFragmentDoc, DotRandomDrawReferenceFragmentDoc, DotRandomDrawEntryReferenceFragmentDoc, DotRandomPoolReferenceFragmentDoc, DocumentTypeReferenceFragmentDoc, DriverPayEventReferenceFragmentDoc, DriverSettlementReferenceFragmentDoc, EdiCarrierInvoiceReferenceFragmentDoc, EdiCommunicationProfileReferenceFragmentDoc, EdiFlowInstanceReferenceFragmentDoc, EdiInboundFileReferenceFragmentDoc, EdiLadingProjectReferenceFragmentDoc, EdiLadingVersionReferenceFragmentDoc, EdiMessageReferenceFragmentDoc, EdiPartnerCustomerReferenceFragmentDoc, EdiTransferReferenceFragmentDoc, EmailProfileReferenceFragmentDoc, EquipmentManufacturerReferenceFragmentDoc, EquipmentTypeReferenceFragmentDoc, EscrowAccountReferenceFragmentDoc, FactoringCompanyReferenceFragmentDoc, FactoringInvoiceStateReferenceFragmentDoc, FactoringSubmissionReferenceFragmentDoc, FiscalPeriodReferenceFragmentDoc, FuelCardReferenceFragmentDoc, FuelIndexPriceReferenceFragmentDoc, FuelProgramCurrentRateReferenceFragmentDoc, FuelPurchaseReferenceFragmentDoc, FuelPurchaseImportBatchReferenceFragmentDoc, FuelSurchargeProgramReferenceFragmentDoc, InboundShipmentRefReferenceFragmentDoc, InvoiceReferenceFragmentDoc, InvoiceAdjustmentReferenceFragmentDoc, InvoiceDisputeReferenceFragmentDoc, JournalReversalReferenceFragmentDoc, LocationReferenceFragmentDoc, LocationCategoryReferenceFragmentDoc, ManualJournalReferenceFragmentDoc, OrganizationReferenceFragmentDoc, PtoPolicyReferenceFragmentDoc, PayAdvanceReferenceFragmentDoc, PayCodeReferenceFragmentDoc, PerformanceReviewReferenceFragmentDoc, PerformanceReviewTemplateReferenceFragmentDoc, RoleReferenceFragmentDoc, RoutingGuideReferenceFragmentDoc, ServiceFailureReasonCodeReferenceFragmentDoc, ServiceFailureShipmentReferenceFragmentDoc, SettlementDisputeReferenceFragmentDoc, ShiftTemplateReferenceFragmentDoc, ShipmentReferenceFragmentDoc, ShipmentAccessorialChargeReferenceFragmentDoc, ShipmentCommodityDetailReferenceFragmentDoc, EdiPartnerReferenceFragmentDoc, ShipmentCustomerReferenceFragmentDoc, ShipmentEventShipmentReferenceReferenceFragmentDoc, TractorReferenceFragmentDoc, TrailerReferenceFragmentDoc, TrainingCourseReferenceFragmentDoc, UserReferenceFragmentDoc, FleetCodeReferenceFragmentDoc, WorkerReferenceFragmentDoc, WorkerChecklistReferenceFragmentDoc, WorkerCredentialReferenceFragmentDoc, WorkerCredentialTypeReferenceFragmentDoc, WorkerDisciplinaryActionReferenceFragmentDoc, WorkerEarningsSummaryReferenceFragmentDoc, WorkerInjuryReferenceFragmentDoc, WorkerPolicyReferenceFragmentDoc, WorkerSafetyViolationReferenceFragmentDoc, WorkerSafetyEventReferenceFragmentDoc } from "./documents/reference/reference";
+export { InboundMailboxReferenceFragmentDoc, JournalEntryReferenceFragmentDoc, AccessorialChargeReferenceFragmentDoc, AgentProposalReferenceFragmentDoc, AgentDefinitionReferenceFragmentDoc, AgentRunReferenceFragmentDoc, BenefitPlanReferenceFragmentDoc, BusinessUnitReferenceFragmentDoc, CaptureDeviceReferenceFragmentDoc, CarrierReferenceFragmentDoc, CarrierInvoiceMatchReferenceFragmentDoc, CarrierSettlementReferenceFragmentDoc, CommodityReferenceFragmentDoc, CustomerReferenceFragmentDoc, CustomerPaymentReferenceFragmentDoc, DotRandomDrawReferenceFragmentDoc, DotRandomDrawEntryReferenceFragmentDoc, DotRandomPoolReferenceFragmentDoc, DocumentReferenceFragmentDoc, DocumentTypeReferenceFragmentDoc, DriverPayEventReferenceFragmentDoc, DriverSettlementReferenceFragmentDoc, EdiCarrierInvoiceReferenceFragmentDoc, EdiCommunicationProfileReferenceFragmentDoc, EdiFlowInstanceReferenceFragmentDoc, EdiInboundFileReferenceFragmentDoc, EdiLadingProjectReferenceFragmentDoc, EdiLadingVersionReferenceFragmentDoc, EdiMessageReferenceFragmentDoc, EdiPartnerCustomerReferenceFragmentDoc, EdiTransferReferenceFragmentDoc, EmailProfileReferenceFragmentDoc, EquipmentManufacturerReferenceFragmentDoc, EquipmentTypeReferenceFragmentDoc, EscrowAccountReferenceFragmentDoc, FactoringCompanyReferenceFragmentDoc, FactoringInvoiceStateReferenceFragmentDoc, FactoringSubmissionReferenceFragmentDoc, FiscalPeriodReferenceFragmentDoc, FuelCardReferenceFragmentDoc, FuelIndexPriceReferenceFragmentDoc, FuelProgramCurrentRateReferenceFragmentDoc, FuelPurchaseReferenceFragmentDoc, FuelPurchaseImportBatchReferenceFragmentDoc, FuelSurchargeProgramReferenceFragmentDoc, InboundShipmentRefReferenceFragmentDoc, InvoiceReferenceFragmentDoc, InvoiceAdjustmentReferenceFragmentDoc, InvoiceDisputeReferenceFragmentDoc, JournalReversalReferenceFragmentDoc, LocationReferenceFragmentDoc, LocationCategoryReferenceFragmentDoc, ManualJournalReferenceFragmentDoc, OrganizationReferenceFragmentDoc, PtoPolicyReferenceFragmentDoc, PayAdvanceReferenceFragmentDoc, PayCodeReferenceFragmentDoc, PerformanceReviewReferenceFragmentDoc, PerformanceReviewTemplateReferenceFragmentDoc, RoleReferenceFragmentDoc, RoutingGuideReferenceFragmentDoc, ServiceFailureReasonCodeReferenceFragmentDoc, ServiceFailureShipmentReferenceFragmentDoc, SettlementDisputeReferenceFragmentDoc, ShiftTemplateReferenceFragmentDoc, ShipmentReferenceFragmentDoc, ShipmentAccessorialChargeReferenceFragmentDoc, ShipmentCommodityDetailReferenceFragmentDoc, EdiPartnerReferenceFragmentDoc, ShipmentCustomerReferenceFragmentDoc, ShipmentEventShipmentReferenceReferenceFragmentDoc, TractorReferenceFragmentDoc, TrailerReferenceFragmentDoc, TrainingCourseReferenceFragmentDoc, UserReferenceFragmentDoc, FleetCodeReferenceFragmentDoc, WorkerReferenceFragmentDoc, WorkerChecklistReferenceFragmentDoc, WorkerCredentialReferenceFragmentDoc, WorkerCredentialTypeReferenceFragmentDoc, WorkerDisciplinaryActionReferenceFragmentDoc, WorkerEarningsSummaryReferenceFragmentDoc, WorkerInjuryReferenceFragmentDoc, WorkerPolicyReferenceFragmentDoc, WorkerSafetyViolationReferenceFragmentDoc, WorkerSafetyEventReferenceFragmentDoc } from "./documents/reference/reference";
 export { CannedReportsDocument } from "./documents/reports/canned";
 export { ReportCatalogDocument } from "./documents/reports/catalog";
 export { ReportDashboardFieldsFragmentDoc, ReportDashboardsDocument, ReportDashboardByIdDocument, CreateReportDashboardDocument, UpdateReportDashboardDocument, DeleteReportDashboardDocument } from "./documents/reports/dashboards";

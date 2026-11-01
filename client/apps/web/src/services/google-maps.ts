@@ -1,4 +1,6 @@
+import { IntegrationRuntimeConfigDocument } from "@trenova/graphql/generated/graphql";
 import { api } from "@trenova/shared/lib/api";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   integrationRuntimeConfigResponseSchema,
@@ -11,11 +13,18 @@ import {
 } from "@/types/google-maps";
 
 export class GoogleMapsService {
-  public async getAPIKey(): Promise<IntegrationRuntimeConfigResponse> {
-    const response = await api.get("/integrations/GoogleMaps/runtime-config/");
+  public async getAPIKey(
+    options: { signal?: AbortSignal } = {},
+  ): Promise<IntegrationRuntimeConfigResponse> {
+    const data = await requestGraphQL({
+      document: IntegrationRuntimeConfigDocument,
+      operationName: "IntegrationRuntimeConfig",
+      variables: { type: "GoogleMaps" },
+      signal: options.signal,
+    });
     return safeParse(
       integrationRuntimeConfigResponseSchema,
-      response,
+      data.integrationRuntimeConfig,
       "Google Maps Runtime Config",
     );
   }

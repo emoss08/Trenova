@@ -91,10 +91,14 @@ export function DocumentUploadSection({
 
   const { data: documents = [], isLoading } = useQuery({
     queryKey,
-    queryFn: () =>
-      apiService.documentService.getByResource(resourceType, resourceId, undefined, {
-        includeDocumentType: "true",
-      }),
+    queryFn: ({ signal }) =>
+      apiService.documentService.getByResource(
+        resourceType,
+        resourceId,
+        undefined,
+        { includeDocumentType: true },
+        { signal },
+      ),
     enabled: !!resourceId,
   });
 

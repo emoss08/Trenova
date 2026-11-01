@@ -15,7 +15,7 @@ import {
   TableRow,
 } from "@trenova/shared/components/ui/table";
 import { usePermissions } from "@/hooks/use-permission";
-import { ApiRequestError } from "@trenova/shared/lib/api";
+import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import {
   formatToUserTimezone,
   generateDateTimeStringFromUnixTimestamp,
@@ -164,11 +164,11 @@ function getStatusVariant(
 }
 
 function getStatusErrorMessage(error: unknown): string {
-  if (!(error instanceof ApiRequestError)) {
+  if (!(error instanceof GraphQLRequestError)) {
     return "Unable to retrieve workflow status right now.";
   }
 
-  return error.data.detail || error.data.title || "Unable to retrieve workflow status right now.";
+  return error.message || "Unable to retrieve workflow status right now.";
 }
 
 function getDriftTypeLabel(type: string): string {
@@ -329,7 +329,7 @@ export function SamsaraWorkerSyncCard({
       );
     },
     onError: (error) => {
-      if (error instanceof ApiRequestError && error.isConflictError()) {
+      if (error instanceof GraphQLRequestError && error.isConflictError()) {
         const parsedUsageStats = conflictUsageStatsSchema.safeParse(error.getUsageStats());
 
         if (parsedUsageStats.success && parsedUsageStats.data.workflowId) {
@@ -344,14 +344,10 @@ export function SamsaraWorkerSyncCard({
         }
       }
 
-      if (error instanceof ApiRequestError) {
-        appendLog(
-          "error",
-          "sync",
-          error.data.detail || error.data.title || t("Failed to start sync"),
-        );
+      if (error instanceof GraphQLRequestError) {
+        appendLog("error", "sync", error.message || t("Failed to start sync"));
         toast.error(t("Failed to start sync"), {
-          description: error.data.detail || error.data.title,
+          description: error.message,
         });
         return;
       }
@@ -379,14 +375,10 @@ export function SamsaraWorkerSyncCard({
       });
     },
     onError: (error) => {
-      if (error instanceof ApiRequestError) {
-        appendLog(
-          "error",
-          "drift",
-          error.data.detail || error.data.title || t("Failed to detect worker drift"),
-        );
+      if (error instanceof GraphQLRequestError) {
+        appendLog("error", "drift", error.message || t("Failed to detect worker drift"));
         toast.error(t("Failed to detect worker drift"), {
-          description: error.data.detail || error.data.title,
+          description: error.message,
         });
         return;
       }
@@ -427,14 +419,10 @@ export function SamsaraWorkerSyncCard({
       ]);
     },
     onError: (error) => {
-      if (error instanceof ApiRequestError) {
-        appendLog(
-          "error",
-          "drift",
-          error.data.detail || error.data.title || t("Failed to repair worker drift"),
-        );
+      if (error instanceof GraphQLRequestError) {
+        appendLog("error", "drift", error.message || t("Failed to repair worker drift"));
         toast.error(t("Failed to repair worker drift"), {
-          description: error.data.detail || error.data.title,
+          description: error.message,
         });
         return;
       }
@@ -474,14 +462,10 @@ export function SamsaraWorkerSyncCard({
       ]);
     },
     onError: (error) => {
-      if (error instanceof ApiRequestError) {
-        appendLog(
-          "error",
-          "retry",
-          error.data.detail || error.data.title || t("Worker retry failed"),
-        );
+      if (error instanceof GraphQLRequestError) {
+        appendLog("error", "retry", error.message || t("Worker retry failed"));
         toast.error(t("Worker retry failed"), {
-          description: error.data.detail || error.data.title,
+          description: error.message,
         });
         return;
       }
@@ -497,7 +481,7 @@ export function SamsaraWorkerSyncCard({
   useEffect(() => {
     const error = statusQuery.error;
 
-    if (!(error instanceof ApiRequestError) || !error.isNotFoundError()) {
+    if (!(error instanceof GraphQLRequestError) || !error.isNotFoundError()) {
       return;
     }
 
@@ -837,7 +821,8 @@ export function SamsaraWorkerSyncCard({
           )}
           {statusQuery.error &&
             !(
-              statusQuery.error instanceof ApiRequestError && statusQuery.error.isNotFoundError()
+              statusQuery.error instanceof GraphQLRequestError &&
+              statusQuery.error.isNotFoundError()
             ) && (
               <Alert variant="destructive">
                 <AlertTriangleIcon />

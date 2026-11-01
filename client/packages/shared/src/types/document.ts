@@ -75,7 +75,10 @@ export const deliveryFactsSchema = z.object({
   reference: z.string().nullish(),
   chargeId: z.string().nullish(),
   chargeLabel: z.string().nullish(),
-  source: z.enum(["Person", "Agent"]).nullish(),
+  source: z
+    .union([z.enum(["Person", "Agent"]), z.literal("")])
+    .nullish()
+    .transform((value) => (value ? value : null)),
   readFields: z
     .array(z.string())
     .nullish()

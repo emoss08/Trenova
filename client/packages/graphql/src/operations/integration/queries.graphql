@@ -1,0 +1,99 @@
+query IntegrationCatalog {
+  integrationCatalog {
+    items {
+      type
+      name
+      description
+      category
+      categoryLabel
+      logoUrl
+      logoLightUrl
+      logoDarkUrl
+      color
+      glowFrom
+      glowTo
+      docsUrl
+      websiteUrl
+      links {
+        kind
+        label
+        url
+      }
+      featured
+      sortOrder
+      primaryActionLabel
+      enabled
+      configured
+      status {
+        connection
+        connectionLabel
+        configuration
+        configurationLabel
+      }
+      configSpec {
+        ...IntegrationConfigFieldSpecFields
+      }
+      supportsTestConnect
+    }
+  }
+}
+
+query IntegrationConfig($type: IntegrationType!) {
+  integrationConfig(type: $type) {
+    ...IntegrationConfigFields
+  }
+}
+
+query IntegrationRuntimeConfig($type: IntegrationType!) {
+  integrationRuntimeConfig(type: $type) {
+    enabled
+    configured
+    ready
+    missingRequiredFields
+    config
+  }
+}
+
+query SamsaraWorkerSyncReadiness {
+  samsaraWorkerSyncReadiness {
+    totalWorkers
+    activeWorkers
+    syncedActiveWorkers
+    unsyncedActiveWorkers
+    allActiveWorkersSynced
+    lastCalculatedAt
+  }
+}
+
+query SamsaraWorkerSyncDrift {
+  samsaraWorkerSyncDrift {
+    ...SamsaraWorkerSyncDriftReportFields
+  }
+}
+
+query SamsaraWorkerSyncRunStatus($workflowId: String!, $runId: String) {
+  samsaraWorkerSyncRunStatus(workflowId: $workflowId, runId: $runId) {
+    workflowId
+    runId
+    taskQueue
+    status
+    startedAt
+    closedAt
+    result {
+      totalWorkers
+      activeWorkers
+      remoteDrivers
+      alreadyMapped
+      mappedFromExternalIds
+      createdDrivers
+      updatedRemoteDrivers
+      updatedMappings
+      skippedInactive
+      failed
+      failures {
+        ...SamsaraWorkerSyncFailureFields
+      }
+    }
+    error
+  }
+}

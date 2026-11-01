@@ -54,6 +54,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/distanceoverrideresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/distanceprofileresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/documentpacketruleresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/documentresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/documenttemplateresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/documenttyperesolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/driverportalresolver"
@@ -83,6 +84,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/iftaresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/inboundmessageresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/inboundreplyresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/insightresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/integrationresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/invoiceadjustmentresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/invoicedisputeresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/invoiceresolver"
@@ -250,6 +253,11 @@ type Resolver struct {
 	detentionPreviewResult             *detentionresolver.DetentionPreviewResultResolver
 	disciplinaryLadder                 *workersafetyresolver.DisciplinaryLadderResolver
 	distanceProfile                    *distanceprofileresolver.DistanceProfileResolver
+	document                           *documentresolver.DocumentResolver
+	documentContent                    *documentresolver.DocumentContentResolver
+	documentContentPage                *documentresolver.DocumentContentPageResolver
+	documentDeliveryFacts              *documentresolver.DocumentDeliveryFactsResolver
+	documentShipmentDraft              *documentresolver.DocumentShipmentDraftResolver
 	documentTemplate                   *documenttemplateresolver.DocumentTemplateResolver
 	documentTemplateAssignment         *documenttemplateresolver.DocumentTemplateAssignmentResolver
 	documentTemplateVersion            *documenttemplateresolver.DocumentTemplateVersionResolver
@@ -326,6 +334,12 @@ type Resolver struct {
 	inboundReply                       *inboundreplyresolver.InboundReplyResolver
 	inboundSnooze                      *inboundmessageresolver.InboundSnoozeResolver
 	inboundSplitDocument               *inboundmessageresolver.InboundSplitDocumentResolver
+	insightMetric                      *insightresolver.InsightMetricResolver
+	integrationCatalogItem             *integrationresolver.IntegrationCatalogItemResolver
+	integrationCatalogLink             *integrationresolver.IntegrationCatalogLinkResolver
+	integrationCatalogStatus           *integrationresolver.IntegrationCatalogStatusResolver
+	integrationConfigFieldSpec         *integrationresolver.IntegrationConfigFieldSpecResolver
+	integrationRuntimeConfig           *integrationresolver.IntegrationRuntimeConfigResolver
 	invoice                            *invoiceResolver
 	invoiceAdjustment                  *invoiceadjustmentresolver.InvoiceAdjustmentResolver
 	invoiceAdjustmentApprovalQueueItem *invoiceadjustmentresolver.InvoiceAdjustmentApprovalQueueItemResolver
@@ -724,6 +738,15 @@ func FromServices(s *Services) *Resolver {
 		Core:                   s.Core,
 		DistanceProfileService: s.DistanceProfileService,
 	}
+	documentDeps := &documentresolver.Deps{
+		Core:                     s.Core,
+		ShipmentImportAssistant:  s.ShipmentImportAssistant,
+		DocumentService:          s.DocumentService,
+		DocumentContentService:   s.DocumentContentService,
+		DocumentExtractionReader: s.DocumentExtractionReader,
+		DocumentReader:           s.DocumentReader,
+		PageAssistant:            s.PageAssistant,
+	}
 	documentpacketruleDeps := &documentpacketruleresolver.Deps{
 		Core:                      s.Core,
 		DocumentPacketRuleService: s.DocumentPacketRuleService,
@@ -883,6 +906,16 @@ func FromServices(s *Services) *Resolver {
 		InboundReplyService: s.InboundReplyService,
 		TriageWorkService:   s.TriageWorkService,
 		TriagePeekService:   s.TriagePeekService,
+	}
+	insightDeps := &insightresolver.Deps{
+		Core:           s.Core,
+		InsightService: s.InsightService,
+	}
+	integrationDeps := &integrationresolver.Deps{
+		Core:               s.Core,
+		IntegrationService: s.IntegrationService,
+		SamsaraSyncService: s.SamsaraSyncService,
+		SamsaraSyncJobs:    s.SamsaraSyncJobs,
 	}
 	invoiceDeps := &invoiceresolver.Deps{
 		Core:                   s.Core,
@@ -1348,6 +1381,11 @@ func FromServices(s *Services) *Resolver {
 		detentionPreviewResult:       &detentionresolver.DetentionPreviewResultResolver{Deps: detentionDeps},
 		disciplinaryLadder:           &workersafetyresolver.DisciplinaryLadderResolver{Deps: workersafetyDeps},
 		distanceProfile:              &distanceprofileresolver.DistanceProfileResolver{Deps: distanceprofileDeps},
+		document:                     &documentresolver.DocumentResolver{Deps: documentDeps},
+		documentContent:              &documentresolver.DocumentContentResolver{Deps: documentDeps},
+		documentContentPage:          &documentresolver.DocumentContentPageResolver{Deps: documentDeps},
+		documentDeliveryFacts:        &documentresolver.DocumentDeliveryFactsResolver{Deps: documentDeps},
+		documentShipmentDraft:        &documentresolver.DocumentShipmentDraftResolver{Deps: documentDeps},
 		documentTemplate:             &documenttemplateresolver.DocumentTemplateResolver{Deps: documenttemplateDeps},
 		documentTemplateAssignment:   &documenttemplateresolver.DocumentTemplateAssignmentResolver{Deps: documenttemplateDeps},
 		documentTemplateVersion:      &documenttemplateresolver.DocumentTemplateVersionResolver{Deps: documenttemplateDeps},
@@ -1428,9 +1466,15 @@ func FromServices(s *Services) *Resolver {
 			inboundreplyInboundMessage:   &inboundreplyInboundMessage{Deps: inboundreplyDeps},
 			triageInboundMessage:         &triageInboundMessage{Deps: triageDeps},
 		},
-		inboundReply:         &inboundreplyresolver.InboundReplyResolver{Deps: inboundreplyDeps},
-		inboundSnooze:        &inboundmessageresolver.InboundSnoozeResolver{Deps: inboundmessageDeps},
-		inboundSplitDocument: &inboundmessageresolver.InboundSplitDocumentResolver{Deps: inboundmessageDeps},
+		inboundReply:               &inboundreplyresolver.InboundReplyResolver{Deps: inboundreplyDeps},
+		inboundSnooze:              &inboundmessageresolver.InboundSnoozeResolver{Deps: inboundmessageDeps},
+		inboundSplitDocument:       &inboundmessageresolver.InboundSplitDocumentResolver{Deps: inboundmessageDeps},
+		insightMetric:              &insightresolver.InsightMetricResolver{Deps: insightDeps},
+		integrationCatalogItem:     &integrationresolver.IntegrationCatalogItemResolver{Deps: integrationDeps},
+		integrationCatalogLink:     &integrationresolver.IntegrationCatalogLinkResolver{Deps: integrationDeps},
+		integrationCatalogStatus:   &integrationresolver.IntegrationCatalogStatusResolver{Deps: integrationDeps},
+		integrationConfigFieldSpec: &integrationresolver.IntegrationConfigFieldSpecResolver{Deps: integrationDeps},
+		integrationRuntimeConfig:   &integrationresolver.IntegrationRuntimeConfigResolver{Deps: integrationDeps},
 		invoice: &invoiceResolver{
 			factoringInvoice:      &factoringInvoice{Deps: factoringDeps},
 			invoiceInvoice:        &invoiceInvoice{Deps: invoiceDeps},
@@ -1491,6 +1535,8 @@ func FromServices(s *Services) *Resolver {
 			deskmemoryMutation:            &deskmemoryMutation{Deps: deskmemoryDeps},
 			detentionMutation:             &detentionMutation{Deps: detentionDeps},
 			dispatchconsoleMutation:       &dispatchconsoleMutation{Deps: dispatchconsoleDeps},
+			documentMutation:              &documentMutation{Deps: documentDeps},
+			documentpacketruleMutation:    &documentpacketruleMutation{Deps: documentpacketruleDeps},
 			documenttemplateMutation:      &documenttemplateMutation{Deps: documenttemplateDeps},
 			documenttypeMutation:          &documenttypeMutation{Deps: documenttypeDeps},
 			driverportalMutation:          &driverportalMutation{Deps: driverportalDeps},
@@ -1513,6 +1559,8 @@ func FromServices(s *Services) *Resolver {
 			iftaMutation:                  &iftaMutation{Deps: iftaDeps},
 			inboundmessageMutation:        &inboundmessageMutation{Deps: inboundmessageDeps},
 			inboundreplyMutation:          &inboundreplyMutation{Deps: inboundreplyDeps},
+			insightMutation:               &insightMutation{Deps: insightDeps},
+			integrationMutation:           &integrationMutation{Deps: integrationDeps},
 			invoiceMutation:               &invoiceMutation{Deps: invoiceDeps},
 			invoiceadjustmentMutation:     &invoiceadjustmentMutation{Deps: invoiceadjustmentDeps},
 			invoicedisputeMutation:        &invoicedisputeMutation{Deps: invoicedisputeDeps},
@@ -1624,6 +1672,7 @@ func FromServices(s *Services) *Resolver {
 			dispatchconsoleQuery:          &dispatchconsoleQuery{Deps: dispatchconsoleDeps},
 			distanceoverrideQuery:         &distanceoverrideQuery{Deps: distanceoverrideDeps},
 			distanceprofileQuery:          &distanceprofileQuery{Deps: distanceprofileDeps},
+			documentQuery:                 &documentQuery{Deps: documentDeps},
 			documentpacketruleQuery:       &documentpacketruleQuery{Deps: documentpacketruleDeps},
 			documenttemplateQuery:         &documenttemplateQuery{Deps: documenttemplateDeps},
 			documenttypeQuery:             &documenttypeQuery{Deps: documenttypeDeps},
@@ -1653,6 +1702,8 @@ func FromServices(s *Services) *Resolver {
 			iftaQuery:                     &iftaQuery{Deps: iftaDeps},
 			inboundmessageQuery:           &inboundmessageQuery{Deps: inboundmessageDeps},
 			inboundreplyQuery:             &inboundreplyQuery{Deps: inboundreplyDeps},
+			insightQuery:                  &insightQuery{Deps: insightDeps},
+			integrationQuery:              &integrationQuery{Deps: integrationDeps},
 			invoiceQuery:                  &invoiceQuery{Deps: invoiceDeps},
 			invoiceadjustmentQuery:        &invoiceadjustmentQuery{Deps: invoiceadjustmentDeps},
 			invoicedisputeQuery:           &invoicedisputeQuery{Deps: invoicedisputeDeps},
@@ -2234,6 +2285,26 @@ func (r *Resolver) DistanceProfile() generated.DistanceProfileResolver {
 	return r.distanceProfile
 }
 
+func (r *Resolver) Document() generated.DocumentResolver {
+	return r.document
+}
+
+func (r *Resolver) DocumentContent() generated.DocumentContentResolver {
+	return r.documentContent
+}
+
+func (r *Resolver) DocumentContentPage() generated.DocumentContentPageResolver {
+	return r.documentContentPage
+}
+
+func (r *Resolver) DocumentDeliveryFacts() generated.DocumentDeliveryFactsResolver {
+	return r.documentDeliveryFacts
+}
+
+func (r *Resolver) DocumentShipmentDraft() generated.DocumentShipmentDraftResolver {
+	return r.documentShipmentDraft
+}
+
 func (r *Resolver) DocumentTemplate() generated.DocumentTemplateResolver {
 	return r.documentTemplate
 }
@@ -2549,6 +2620,30 @@ func (r *Resolver) InboundSplitDocument() generated.InboundSplitDocumentResolver
 	return r.inboundSplitDocument
 }
 
+func (r *Resolver) InsightMetric() generated.InsightMetricResolver {
+	return r.insightMetric
+}
+
+func (r *Resolver) IntegrationCatalogItem() generated.IntegrationCatalogItemResolver {
+	return r.integrationCatalogItem
+}
+
+func (r *Resolver) IntegrationCatalogLink() generated.IntegrationCatalogLinkResolver {
+	return r.integrationCatalogLink
+}
+
+func (r *Resolver) IntegrationCatalogStatus() generated.IntegrationCatalogStatusResolver {
+	return r.integrationCatalogStatus
+}
+
+func (r *Resolver) IntegrationConfigFieldSpec() generated.IntegrationConfigFieldSpecResolver {
+	return r.integrationConfigFieldSpec
+}
+
+func (r *Resolver) IntegrationRuntimeConfig() generated.IntegrationRuntimeConfigResolver {
+	return r.integrationRuntimeConfig
+}
+
 func (r *Resolver) Invoice() generated.InvoiceResolver {
 	return r.invoice
 }
@@ -2678,6 +2773,8 @@ type mutationResolver struct {
 	*deskmemoryMutation
 	*detentionMutation
 	*dispatchconsoleMutation
+	*documentMutation
+	*documentpacketruleMutation
 	*documenttemplateMutation
 	*documenttypeMutation
 	*driverportalMutation
@@ -2700,6 +2797,8 @@ type mutationResolver struct {
 	*iftaMutation
 	*inboundmessageMutation
 	*inboundreplyMutation
+	*insightMutation
+	*integrationMutation
 	*invoiceMutation
 	*invoiceadjustmentMutation
 	*invoicedisputeMutation
@@ -2885,6 +2984,7 @@ type queryResolver struct {
 	*dispatchconsoleQuery
 	*distanceoverrideQuery
 	*distanceprofileQuery
+	*documentQuery
 	*documentpacketruleQuery
 	*documenttemplateQuery
 	*documenttypeQuery
@@ -2914,6 +3014,8 @@ type queryResolver struct {
 	*iftaQuery
 	*inboundmessageQuery
 	*inboundreplyQuery
+	*insightQuery
+	*integrationQuery
 	*invoiceQuery
 	*invoiceadjustmentQuery
 	*invoicedisputeQuery
@@ -3323,6 +3425,8 @@ type (
 	deskmemoryMutation              = deskmemoryresolver.MutationResolver
 	detentionMutation               = detentionresolver.MutationResolver
 	dispatchconsoleMutation         = dispatchconsoleresolver.MutationResolver
+	documentMutation                = documentresolver.MutationResolver
+	documentpacketruleMutation      = documentpacketruleresolver.MutationResolver
 	documenttemplateMutation        = documenttemplateresolver.MutationResolver
 	documenttypeMutation            = documenttyperesolver.MutationResolver
 	driverportalMutation            = driverportalresolver.MutationResolver
@@ -3345,6 +3449,8 @@ type (
 	iftaMutation                    = iftaresolver.MutationResolver
 	inboundmessageMutation          = inboundmessageresolver.MutationResolver
 	inboundreplyMutation            = inboundreplyresolver.MutationResolver
+	insightMutation                 = insightresolver.MutationResolver
+	integrationMutation             = integrationresolver.MutationResolver
 	invoiceMutation                 = invoiceresolver.MutationResolver
 	invoiceadjustmentMutation       = invoiceadjustmentresolver.MutationResolver
 	invoicedisputeMutation          = invoicedisputeresolver.MutationResolver
@@ -3431,6 +3537,7 @@ type (
 	dispatchconsoleQuery            = dispatchconsoleresolver.QueryResolver
 	distanceoverrideQuery           = distanceoverrideresolver.QueryResolver
 	distanceprofileQuery            = distanceprofileresolver.QueryResolver
+	documentQuery                   = documentresolver.QueryResolver
 	documentpacketruleQuery         = documentpacketruleresolver.QueryResolver
 	documenttemplateQuery           = documenttemplateresolver.QueryResolver
 	documenttypeQuery               = documenttyperesolver.QueryResolver
@@ -3460,6 +3567,8 @@ type (
 	iftaQuery                       = iftaresolver.QueryResolver
 	inboundmessageQuery             = inboundmessageresolver.QueryResolver
 	inboundreplyQuery               = inboundreplyresolver.QueryResolver
+	insightQuery                    = insightresolver.QueryResolver
+	integrationQuery                = integrationresolver.QueryResolver
 	invoiceQuery                    = invoiceresolver.QueryResolver
 	invoiceadjustmentQuery          = invoiceadjustmentresolver.QueryResolver
 	invoicedisputeQuery             = invoicedisputeresolver.QueryResolver

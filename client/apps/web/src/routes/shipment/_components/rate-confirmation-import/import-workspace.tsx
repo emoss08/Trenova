@@ -60,9 +60,9 @@ export function ImportWorkspace() {
 
   const { data: importedDocument } = useQuery({
     queryKey: ["shipment-import-document", uploadedDocumentId],
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       uploadedDocumentId
-        ? apiService.documentService.getById(uploadedDocumentId)
+        ? apiService.documentService.getById(uploadedDocumentId, { signal })
         : Promise.resolve(null),
     enabled: !!uploadedDocumentId,
     refetchInterval: (query) => {

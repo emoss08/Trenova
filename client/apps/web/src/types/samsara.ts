@@ -21,7 +21,10 @@ export const workerSyncResultSchema = z.object({
   createdDrivers: z.number().int().nonnegative(),
   updatedMappings: z.number().int().nonnegative(),
   failed: z.number().int().nonnegative(),
-  failures: z.array(workerSyncFailureSchema).optional(),
+  failures: z.preprocess(
+    (value) => value ?? undefined,
+    z.array(workerSyncFailureSchema).optional(),
+  ),
 });
 
 export const workerSyncSummarySchema = z.object({
@@ -74,7 +77,10 @@ export const repairWorkerSyncDriftResponseSchema = z.object({
   requestedWorkers: z.number().int(),
   repairedWorkers: z.number().int(),
   failedWorkers: z.number().int(),
-  failures: z.array(workerSyncFailureSchema).optional(),
+  failures: z.preprocess(
+    (value) => value ?? undefined,
+    z.array(workerSyncFailureSchema).optional(),
+  ),
 });
 
 export const repairWorkerSyncDriftRequestSchema = z.object({
@@ -96,7 +102,7 @@ export const syncWorkflowStatusResponseSchema = z.object({
   status: z.string(),
   startedAt: z.number().int().nonnegative().optional(),
   closedAt: z.number().int().nonnegative().optional(),
-  result: workerSyncResultSchema.optional(),
+  result: z.preprocess((value) => value ?? undefined, workerSyncResultSchema.optional()),
   error: z.string().optional(),
 });
 

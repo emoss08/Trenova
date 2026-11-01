@@ -1,0 +1,368 @@
+enum DocumentStatus {
+  Draft
+  Active
+  Archived
+  Expired
+  Pending
+  Rejected
+  PendingApproval
+}
+
+enum DocumentPreviewStatus {
+  Pending
+  Ready
+  Failed
+  Unsupported
+}
+
+enum DocumentContentStatus {
+  Pending
+  Extracting
+  Extracted
+  Indexed
+  Failed
+}
+
+enum DocumentShipmentDraftStatus {
+  Unavailable
+  Pending
+  Ready
+  Failed
+}
+
+"Whether a document carries the signature its type needs."
+enum DocumentSignatureStatus {
+  Unknown
+  Signed
+  Unsigned
+}
+
+"Whether a record's document packet is complete, judged by its packet rules."
+enum DocumentPacketStatus {
+  Complete
+  Incomplete
+  ExpiringSoon
+  Expired
+  NeedsReview
+}
+
+"Where one packet rule stands on a record."
+enum DocumentPacketItemStatus {
+  Missing
+  Complete
+  ExpiringSoon
+  Expired
+  NeedsReview
+}
+
+"Over, short or damaged freight a delivery document records."
+enum DocumentDeliveryOsd {
+  None
+  Over
+  Short
+  Damaged
+}
+
+"What a delivery document or receipt says, recorded by a person or read by Nova."
+type DocumentDeliveryFacts {
+  signedBy: String!
+  pieces: String!
+  "None, Over, Short or Damaged; empty when nothing was recorded."
+  osd: String!
+  osdNote: String!
+  seal: String!
+  arrivedAt: Timestamp
+  departedAt: Timestamp
+  amount: Decimal
+  reference: String!
+  chargeId: ID
+  chargeLabel: String!
+  "Person or Agent; empty when nothing was recorded."
+  source: String!
+  readFields: [String!]
+  updatedById: ID
+  updatedAt: Timestamp!
+}
+
+"A stored file attached to a record, with its versions, review, signature and delivery facts."
+type Document {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  lineageId: ID!
+  versionNumber: Int!
+  isCurrentVersion: Boolean!
+  fileName: String!
+  originalName: String!
+  fileSize: Int!
+  fileType: String!
+  storagePath: String!
+  checksumSha256: String
+  storageVersionId: String
+  storageRetentionMode: String
+  storageRetentionUntil: Timestamp
+  storageLegalHold: Boolean!
+  status: DocumentStatus!
+  description: String
+  resourceId: String!
+  resourceType: String!
+  processingProfile: String!
+  expirationDate: Timestamp
+  tags: [String!]
+  isPublic: Boolean!
+  uploadedById: ID!
+  approvedById: ID
+  approvedAt: Timestamp
+  rejectedById: ID
+  rejectedAt: Timestamp
+  rejectionReason: String
+  previewStoragePath: String
+  previewStatus: DocumentPreviewStatus!
+  contentStatus: DocumentContentStatus!
+  contentError: String
+  detectedKind: String
+  hasExtractedText: Boolean!
+  shipmentDraftStatus: DocumentShipmentDraftStatus!
+  documentTypeId: ID
+  "Loaded only where the read asks for it (documentsByResource includeDocumentType)."
+  documentType: DocumentType
+  signatureStatus: DocumentSignatureStatus!
+  signedAt: Timestamp
+  "Extraction or Person; empty while nothing has read the signature."
+  signatureSource: String
+  signatureUpdatedById: ID
+  signatureUpdatedAt: Timestamp
+  deliveryFacts: DocumentDeliveryFacts
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"One page of a document's extracted text."
+type DocumentContentPage {
+  id: ID!
+  documentContentId: ID!
+  documentId: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  pageNumber: Int!
+  sourceKind: String!
+  extractedText: String
+  ocrConfidence: Float!
+  preprocessingApplied: Boolean!
+  width: Int!
+  height: Int!
+  metadata: JSON
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"The text and classification extraction read from a document."
+type DocumentContent {
+  id: ID!
+  documentId: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  status: String!
+  contentText: String
+  pageCount: Int!
+  sourceKind: String
+  detectedLanguage: String
+  detectedDocumentKind: String
+  classificationConfidence: Float!
+  "The intelligence payload extraction produced: kind, fields, stops, conflicts and diagnostics."
+  structuredData: JSON
+  failureCode: String
+  failureMessage: String
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  lastExtractedAt: Timestamp
+  pages: [DocumentContentPage!]
+}
+
+"The shipment extraction drafted from a document, and the shipment it was attached to."
+type DocumentShipmentDraft {
+  id: ID!
+  documentId: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  status: String!
+  documentKind: String
+  confidence: Float!
+  "The drafted shipment: fields, stops, conflicts and what is missing."
+  draftData: JSON
+  failureCode: String
+  failureMessage: String
+  attachedShipmentId: ID
+  attachedAt: Timestamp
+  attachedById: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"Whether documents can be read on this server: a model provider and a converter are both needed."
+type DocumentExtractionStatus {
+  modelProviderAvailable: Boolean!
+  modelProviderReason: String!
+  converterAvailable: Boolean!
+  extractionAvailable: Boolean!
+}
+
+"One packet rule on a record and the current documents that satisfy it."
+type DocumentPacketItemSummary {
+  documentTypeId: ID!
+  documentTypeCode: String!
+  documentTypeName: String!
+  required: Boolean!
+  allowMultiple: Boolean!
+  displayOrder: Int!
+  expirationRequired: Boolean!
+  expirationWarningDays: Int!
+  status: DocumentPacketItemStatus!
+  documentCount: Int!
+  currentDocumentIds: [ID!]!
+}
+
+"A record's document packet judged against its packet rules."
+type DocumentPacketSummary {
+  resourceId: String!
+  resourceType: String!
+  status: DocumentPacketStatus!
+  totalRules: Int!
+  satisfiedRules: Int!
+  missingRequired: Int!
+  expiringSoon: Int!
+  expired: Int!
+  needsReview: Int!
+  items: [DocumentPacketItemSummary!]!
+}
+
+type DocumentImportAssistantSuggestion {
+  label: String!
+  prompt: String!
+  type: String!
+  placeholder: String!
+  action: String!
+  submitLabel: String!
+}
+
+type DocumentImportAssistantToolCall {
+  name: String!
+  callId: String!
+  status: String!
+  input: String!
+  output: String!
+}
+
+type DocumentImportAssistantMessage {
+  id: String!
+  role: String!
+  text: String!
+  toolCalls: [DocumentImportAssistantToolCall!]
+  suggestions: [DocumentImportAssistantSuggestion!]
+  createdAt: Timestamp!
+}
+
+"A finished import assistant conversation from before the assistant moved onto the shared runtime."
+type DocumentImportAssistantHistory {
+  documentId: String!
+  conversationId: String!
+  "Active, Completed or Superseded; empty when no conversation was kept."
+  status: String!
+  statusReason: String!
+  turnCount: Int!
+  lastMessageAt: Timestamp
+  updatedAt: Timestamp!
+  messages: [DocumentImportAssistantMessage!]
+}
+
+type DocumentBulkDeleteResult {
+  deletedCount: Int!
+  errorCount: Int!
+}
+
+input DocumentsByResourceInput {
+  resourceType: String!
+  resourceId: String!
+  "Searches the documents' extracted text; empty lists every current document."
+  query: String
+  includeDocumentType: Boolean
+}
+
+input SetDocumentSignatureInput {
+  documentId: ID!
+  status: DocumentSignatureStatus!
+  "Only a signed document has a signing date."
+  signedAt: Timestamp
+  "The document version being changed."
+  version: Int!
+}
+
+input DocumentDeliveryFactsInput {
+  signedBy: String
+  pieces: String
+  osd: DocumentDeliveryOsd
+  osdNote: String
+  seal: String
+  arrivedAt: Timestamp
+  departedAt: Timestamp
+  amount: Decimal
+  reference: String
+  chargeId: ID
+  chargeLabel: String
+}
+
+input SetDocumentDeliveryFactsInput {
+  documentId: ID!
+  facts: DocumentDeliveryFactsInput!
+  "The document version being changed."
+  version: Int!
+}
+
+input RejectDocumentInput {
+  documentId: ID!
+  reason: String!
+}
+
+input AttachDocumentToShipmentInput {
+  documentId: ID!
+  shipmentId: ID!
+}
+
+extend type Query {
+  document(id: ID!): Document
+  "Every version of a document's lineage, newest first."
+  documentVersions(documentId: ID!): [Document!]!
+  "The current documents attached to one record."
+  documentsByResource(input: DocumentsByResourceInput!): [Document!]!
+  documentPacketSummary(resourceType: String!, resourceId: String!): DocumentPacketSummary!
+  documentContent(documentId: ID!): DocumentContent!
+  documentShipmentDraft(documentId: ID!): DocumentShipmentDraft!
+  "Each value read from the document with the page and box it was found in: the extraction card's payload."
+  documentReading(documentId: ID!): JSON!
+  documentExtractionStatus: DocumentExtractionStatus!
+  documentImportAssistantHistory(documentId: ID!): DocumentImportAssistantHistory!
+}
+
+extend type Mutation {
+  deleteDocument(id: ID!): Boolean!
+  bulkDeleteDocuments(ids: [ID!]!): DocumentBulkDeleteResult!
+  "Makes an earlier version of a document its current version."
+  restoreDocumentVersion(documentId: ID!): Document!
+  approveDocument(documentId: ID!): Document!
+  rejectDocument(input: RejectDocumentInput!): Document!
+  setDocumentSignature(input: SetDocumentSignatureInput!): Document!
+  setDocumentDeliveryFacts(input: SetDocumentDeliveryFactsInput!): Document!
+  attachDocumentToShipment(input: AttachDocumentToShipmentInput!): Document!
+  "Reads a document again, replacing its shipment draft and archiving its import assistant conversation."
+  reextractDocument(documentId: ID!): Boolean!
+  """
+  Opens, or returns, the caller's conversation with the shipment import assistant about one
+  document. The payload is the assistant runtime's page thread (thread and agent), read by the
+  same parser as the assistant's own routes.
+  """
+  openDocumentImportAssistantThread(documentId: ID!): Any!
+}
