@@ -80,6 +80,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/hazmatsegregationruleresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/holdreasonresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/homelayoutresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/iamresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/iftaresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/inboundmessageresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/inboundreplyresolver"
@@ -99,6 +100,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/orgstructureresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/pageaccessresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/performancereviewresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/permissionresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/ptopolicyresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/rateresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/recurringshipmentresolver"
@@ -156,6 +158,7 @@ type Resolver struct {
 	aIProviderKeyInfo                  *aiproviderresolver.AIProviderKeyInfoResolver
 	aIRouteChoice                      *aiproviderresolver.AIRouteChoiceResolver
 	aITuneUpEvidence                   *aicontrolresolver.AITuneUpEvidenceResolver
+	accessPolicy                       *iamresolver.AccessPolicyResolver
 	accessorialCharge                  *accessorialchargeresolver.AccessorialChargeResolver
 	accountingAppCredential            *accountingsyncresolver.AccountingAppCredentialResolver
 	accountingAppSettings              *accountingsyncresolver.AccountingAppSettingsResolver
@@ -202,6 +205,7 @@ type Resolver struct {
 	agentToolSafety                    *agentsafetyresolver.AgentToolSafetyResolver
 	agentWorstRatedAnswer              *agentqualityresolver.AgentWorstRatedAnswerResolver
 	apiKey                             *apikeyresolver.ApiKeyResolver
+	apiKeyPermission                   *apikeyresolver.ApiKeyPermissionResolver
 	approvalDelegation                 *orgstructureresolver.ApprovalDelegationResolver
 	auditEntry                         *auditlogresolver.AuditEntryResolver
 	authEvent                          *securityactivityresolver.AuthEventResolver
@@ -318,6 +322,7 @@ type Resolver struct {
 	iFTAReturnLine                     *iftaresolver.IFTAReturnLineResolver
 	iFTAReturnProblem                  *iftaresolver.IFTAReturnProblemResolver
 	iFTATaxRate                        *iftaresolver.IFTATaxRateResolver
+	identityProvider                   *iamresolver.IdentityProviderResolver
 	inboundActivity                    *inboundmessageresolver.InboundActivityResolver
 	inboundAttachment                  *inboundAttachmentResolver
 	inboundMailbox                     *inboundmessageresolver.InboundMailboxResolver
@@ -371,19 +376,24 @@ type Resolver struct {
 	plannedPTOAccrual                  *ptopolicyresolver.PlannedPTOAccrualResolver
 	portalCredential                   *driverportalresolver.PortalCredentialResolver
 	portalTraining                     *workertrainingresolver.PortalTrainingResolver
+	provisioningAuditRecord            *iamresolver.ProvisioningAuditRecordResolver
 	query                              *queryResolver
 	rateAgreement                      *rateresolver.RateAgreementResolver
 	rateMatrix                         *rateresolver.RateMatrixResolver
 	rateMatrixVersion                  *rateresolver.RateMatrixVersionResolver
 	reportSchedule                     *reportresolver.ReportScheduleResolver
+	resourcePermission                 *roleresolver.ResourcePermissionResolver
 	reviewRating                       *performancereviewresolver.ReviewRatingResolver
 	riskDecision                       *securityactivityresolver.RiskDecisionResolver
 	role                               *roleresolver.RoleResolver
 	routingGuideEntry                  *routingguideresolver.RoutingGuideEntryResolver
+	sCIMToken                          *iamresolver.SCIMTokenResolver
 	safetyScorecard                    *workersafetyresolver.SafetyScorecardResolver
+	securityFinding                    *iamresolver.SecurityFindingResolver
 	serviceFailure                     *servicefailureresolver.ServiceFailureResolver
 	serviceFailureShipment             *servicefailureresolver.ServiceFailureShipmentResolver
 	serviceFailureStop                 *servicefailureresolver.ServiceFailureStopResolver
+	sessionSummary                     *userresolver.SessionSummaryResolver
 	settlementControl                  *driversettlementresolver.SettlementControlResolver
 	settlementException                *driversettlementresolver.SettlementExceptionResolver
 	shiftTemplate                      *schedulingresolver.ShiftTemplateResolver
@@ -393,6 +403,7 @@ type Resolver struct {
 	shipmentMoveJurisdictionMile       *shipmentresolver.ShipmentMoveJurisdictionMileResolver
 	shipmentRatingDetail               *shipmentresolver.ShipmentRatingDetailResolver
 	shipmentRatingReviewApproval       *shipmentresolver.ShipmentRatingReviewApprovalResolver
+	signInSummary                      *userresolver.SignInSummaryResolver
 	tCASubscription                    *tablechangealertresolver.TCASubscriptionResolver
 	tableConfiguration                 *tableconfigurationresolver.TableConfigurationResolver
 	tender                             *tenderresolver.TenderResolver
@@ -865,6 +876,12 @@ func FromServices(s *Services) *Resolver {
 		Core:              s.Core,
 		HomeLayoutService: s.HomeLayoutService,
 	}
+	iamDeps := &iamresolver.Deps{
+		Core:                    s.Core,
+		IamService:              s.IamService,
+		AccessSettingsService:   s.AccessSettingsService,
+		SecurityBriefingService: s.SecurityBriefingService,
+	}
 	iftaDeps := &iftaresolver.Deps{
 		Core:                       s.Core,
 		IftaService:                s.IftaService,
@@ -958,6 +975,12 @@ func FromServices(s *Services) *Resolver {
 		Core:                       s.Core,
 		PerformanceReviewService:   s.PerformanceReviewService,
 		DriverPortalRecordsService: s.DriverPortalRecordsService,
+	}
+	permissionDeps := &permissionresolver.Deps{
+		Core:                  s.Core,
+		APIKeyService:         s.APIKeyService,
+		PermissionRegistry:    s.PermissionRegistry,
+		PermissionScopePolicy: s.PermissionScopePolicy,
 	}
 	ptopolicyDeps := &ptopolicyresolver.Deps{
 		Core:             s.Core,
@@ -1171,8 +1194,11 @@ func FromServices(s *Services) *Resolver {
 		TriageConflictService:   s.TriageConflictService,
 	}
 	userDeps := &userresolver.Deps{
-		Core:        s.Core,
-		UserService: s.UserService,
+		Core:                 s.Core,
+		RoleService:          s.RoleService,
+		UserService:          s.UserService,
+		MFAService:           s.MFAService,
+		PasswordResetService: s.PasswordResetService,
 	}
 	watchtowerDeps := &watchtowerresolver.Deps{
 		Core:                 s.Core,
@@ -1239,6 +1265,7 @@ func FromServices(s *Services) *Resolver {
 		aIProviderKeyInfo:            &aiproviderresolver.AIProviderKeyInfoResolver{Deps: aiproviderDeps},
 		aIRouteChoice:                &aiproviderresolver.AIRouteChoiceResolver{Deps: aiproviderDeps},
 		aITuneUpEvidence:             &aicontrolresolver.AITuneUpEvidenceResolver{Deps: aicontrolDeps},
+		accessPolicy:                 &iamresolver.AccessPolicyResolver{Deps: iamDeps},
 		accessorialCharge:            &accessorialchargeresolver.AccessorialChargeResolver{Deps: accessorialchargeDeps},
 		accountingAppCredential:      &accountingsyncresolver.AccountingAppCredentialResolver{Deps: accountingsyncDeps},
 		accountingAppSettings:        &accountingsyncresolver.AccountingAppSettingsResolver{Deps: accountingsyncDeps},
@@ -1297,6 +1324,7 @@ func FromServices(s *Services) *Resolver {
 		agentToolSafety:              &agentsafetyresolver.AgentToolSafetyResolver{Deps: agentsafetyDeps},
 		agentWorstRatedAnswer:        &agentqualityresolver.AgentWorstRatedAnswerResolver{Deps: agentqualityDeps},
 		apiKey:                       &apikeyresolver.ApiKeyResolver{Deps: apikeyDeps},
+		apiKeyPermission:             &apikeyresolver.ApiKeyPermissionResolver{Deps: apikeyDeps},
 		approvalDelegation:           &orgstructureresolver.ApprovalDelegationResolver{Deps: orgstructureDeps},
 		auditEntry:                   &auditlogresolver.AuditEntryResolver{Deps: auditlogDeps},
 		authEvent:                    &securityactivityresolver.AuthEventResolver{Deps: securityactivityDeps},
@@ -1416,6 +1444,7 @@ func FromServices(s *Services) *Resolver {
 		iFTAReturnLine:               &iftaresolver.IFTAReturnLineResolver{Deps: iftaDeps},
 		iFTAReturnProblem:            &iftaresolver.IFTAReturnProblemResolver{Deps: iftaDeps},
 		iFTATaxRate:                  &iftaresolver.IFTATaxRateResolver{Deps: iftaDeps},
+		identityProvider:             &iamresolver.IdentityProviderResolver{Deps: iamDeps},
 		inboundActivity:              &inboundmessageresolver.InboundActivityResolver{Deps: inboundmessageDeps},
 		inboundAttachment: &inboundAttachmentResolver{
 			inboundmessageInboundAttachment: &inboundmessageInboundAttachment{Deps: inboundmessageDeps},
@@ -1472,6 +1501,7 @@ func FromServices(s *Services) *Resolver {
 			aifeedbackMutation:            &aifeedbackMutation{Deps: aifeedbackDeps},
 			aiproviderMutation:            &aiproviderMutation{Deps: aiproviderDeps},
 			airetrievalMutation:           &airetrievalMutation{Deps: airetrievalDeps},
+			apikeyMutation:                &apikeyMutation{Deps: apikeyDeps},
 			benefitsMutation:              &benefitsMutation{Deps: benefitsDeps},
 			billingqueueMutation:          &billingqueueMutation{Deps: billingqueueDeps},
 			billingtransferMutation:       &billingtransferMutation{Deps: billingtransferDeps},
@@ -1510,6 +1540,7 @@ func FromServices(s *Services) *Resolver {
 			hazmatsegregationruleMutation: &hazmatsegregationruleMutation{Deps: hazmatsegregationruleDeps},
 			holdreasonMutation:            &holdreasonMutation{Deps: holdreasonDeps},
 			homelayoutMutation:            &homelayoutMutation{Deps: homelayoutDeps},
+			iamMutation:                   &iamMutation{Deps: iamDeps},
 			iftaMutation:                  &iftaMutation{Deps: iftaDeps},
 			inboundmessageMutation:        &inboundmessageMutation{Deps: inboundmessageDeps},
 			inboundreplyMutation:          &inboundreplyMutation{Deps: inboundreplyDeps},
@@ -1526,6 +1557,7 @@ func FromServices(s *Services) *Resolver {
 			performancereviewMutation:     &performancereviewMutation{Deps: performancereviewDeps},
 			ptopolicyMutation:             &ptopolicyMutation{Deps: ptopolicyDeps},
 			reportMutation:                &reportMutation{Deps: reportDeps},
+			roleMutation:                  &roleMutation{Deps: roleDeps},
 			schedulingMutation:            &schedulingMutation{Deps: schedulingDeps},
 			selfserviceMutation:           &selfserviceMutation{Deps: selfserviceDeps},
 			shipmentMutation:              &shipmentMutation{Deps: shipmentDeps},
@@ -1575,6 +1607,7 @@ func FromServices(s *Services) *Resolver {
 		plannedPTOAccrual:         &ptopolicyresolver.PlannedPTOAccrualResolver{Deps: ptopolicyDeps},
 		portalCredential:          &driverportalresolver.PortalCredentialResolver{Deps: driverportalDeps},
 		portalTraining:            &workertrainingresolver.PortalTrainingResolver{Deps: workertrainingDeps},
+		provisioningAuditRecord:   &iamresolver.ProvisioningAuditRecordResolver{Deps: iamDeps},
 		query: &queryResolver{
 			accessorialchargeQuery:        &accessorialchargeQuery{Deps: accessorialchargeDeps},
 			accountingsyncQuery:           &accountingsyncQuery{Deps: accountingsyncDeps},
@@ -1650,6 +1683,7 @@ func FromServices(s *Services) *Resolver {
 			hazmatsegregationruleQuery:    &hazmatsegregationruleQuery{Deps: hazmatsegregationruleDeps},
 			holdreasonQuery:               &holdreasonQuery{Deps: holdreasonDeps},
 			homelayoutQuery:               &homelayoutQuery{Deps: homelayoutDeps},
+			iamQuery:                      &iamQuery{Deps: iamDeps},
 			iftaQuery:                     &iftaQuery{Deps: iftaDeps},
 			inboundmessageQuery:           &inboundmessageQuery{Deps: inboundmessageDeps},
 			inboundreplyQuery:             &inboundreplyQuery{Deps: inboundreplyDeps},
@@ -1669,6 +1703,7 @@ func FromServices(s *Services) *Resolver {
 			orgstructureQuery:             &orgstructureQuery{Deps: orgstructureDeps},
 			pageaccessQuery:               &pageaccessQuery{Deps: pageaccessDeps},
 			performancereviewQuery:        &performancereviewQuery{Deps: performancereviewDeps},
+			permissionQuery:               &permissionQuery{Deps: permissionDeps},
 			ptopolicyQuery:                &ptopolicyQuery{Deps: ptopolicyDeps},
 			rateQuery:                     &rateQuery{Deps: rateDeps},
 			recurringshipmentQuery:        &recurringshipmentQuery{Deps: recurringshipmentDeps},
@@ -1716,14 +1751,18 @@ func FromServices(s *Services) *Resolver {
 		rateMatrix:                   &rateresolver.RateMatrixResolver{Deps: rateDeps},
 		rateMatrixVersion:            &rateresolver.RateMatrixVersionResolver{Deps: rateDeps},
 		reportSchedule:               &reportresolver.ReportScheduleResolver{Deps: reportDeps},
+		resourcePermission:           &roleresolver.ResourcePermissionResolver{Deps: roleDeps},
 		reviewRating:                 &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps},
 		riskDecision:                 &securityactivityresolver.RiskDecisionResolver{Deps: securityactivityDeps},
 		role:                         &roleresolver.RoleResolver{Deps: roleDeps},
 		routingGuideEntry:            &routingguideresolver.RoutingGuideEntryResolver{Deps: routingguideDeps},
+		sCIMToken:                    &iamresolver.SCIMTokenResolver{Deps: iamDeps},
 		safetyScorecard:              &workersafetyresolver.SafetyScorecardResolver{Deps: workersafetyDeps},
+		securityFinding:              &iamresolver.SecurityFindingResolver{Deps: iamDeps},
 		serviceFailure:               &servicefailureresolver.ServiceFailureResolver{Deps: servicefailureDeps},
 		serviceFailureShipment:       &servicefailureresolver.ServiceFailureShipmentResolver{Deps: servicefailureDeps},
 		serviceFailureStop:           &servicefailureresolver.ServiceFailureStopResolver{Deps: servicefailureDeps},
+		sessionSummary:               &userresolver.SessionSummaryResolver{Deps: userDeps},
 		settlementControl:            &driversettlementresolver.SettlementControlResolver{Deps: driversettlementDeps},
 		settlementException:          &driversettlementresolver.SettlementExceptionResolver{Deps: driversettlementDeps},
 		shiftTemplate:                &schedulingresolver.ShiftTemplateResolver{Deps: schedulingDeps},
@@ -1733,6 +1772,7 @@ func FromServices(s *Services) *Resolver {
 		shipmentMoveJurisdictionMile: &shipmentresolver.ShipmentMoveJurisdictionMileResolver{Deps: shipmentDeps},
 		shipmentRatingDetail:         &shipmentresolver.ShipmentRatingDetailResolver{Deps: shipmentDeps},
 		shipmentRatingReviewApproval: &shipmentresolver.ShipmentRatingReviewApprovalResolver{Deps: shipmentDeps},
+		signInSummary:                &userresolver.SignInSummaryResolver{Deps: userDeps},
 		tCASubscription:              &tablechangealertresolver.TCASubscriptionResolver{Deps: tablechangealertDeps},
 		tableConfiguration:           &tableconfigurationresolver.TableConfigurationResolver{Deps: tableconfigurationDeps},
 		tender:                       &tenderresolver.TenderResolver{Deps: tenderDeps},
@@ -1831,6 +1871,10 @@ func (r *Resolver) AIRouteChoice() generated.AIRouteChoiceResolver {
 
 func (r *Resolver) AITuneUpEvidence() generated.AITuneUpEvidenceResolver {
 	return r.aITuneUpEvidence
+}
+
+func (r *Resolver) AccessPolicy() generated.AccessPolicyResolver {
+	return r.accessPolicy
 }
 
 func (r *Resolver) AccessorialCharge() generated.AccessorialChargeResolver {
@@ -2035,6 +2079,10 @@ func (r *Resolver) AgentWorstRatedAnswer() generated.AgentWorstRatedAnswerResolv
 
 func (r *Resolver) ApiKey() generated.ApiKeyResolver {
 	return r.apiKey
+}
+
+func (r *Resolver) ApiKeyPermission() generated.ApiKeyPermissionResolver {
+	return r.apiKeyPermission
 }
 
 func (r *Resolver) ApprovalDelegation() generated.ApprovalDelegationResolver {
@@ -2506,6 +2554,10 @@ func (r *Resolver) IFTATaxRate() generated.IFTATaxRateResolver {
 	return r.iFTATaxRate
 }
 
+func (r *Resolver) IdentityProvider() generated.IdentityProviderResolver {
+	return r.identityProvider
+}
+
 func (r *Resolver) InboundActivity() generated.InboundActivityResolver {
 	return r.inboundActivity
 }
@@ -2659,6 +2711,7 @@ type mutationResolver struct {
 	*aifeedbackMutation
 	*aiproviderMutation
 	*airetrievalMutation
+	*apikeyMutation
 	*benefitsMutation
 	*billingqueueMutation
 	*billingtransferMutation
@@ -2697,6 +2750,7 @@ type mutationResolver struct {
 	*hazmatsegregationruleMutation
 	*holdreasonMutation
 	*homelayoutMutation
+	*iamMutation
 	*iftaMutation
 	*inboundmessageMutation
 	*inboundreplyMutation
@@ -2713,6 +2767,7 @@ type mutationResolver struct {
 	*performancereviewMutation
 	*ptopolicyMutation
 	*reportMutation
+	*roleMutation
 	*schedulingMutation
 	*selfserviceMutation
 	*shipmentMutation
@@ -2832,6 +2887,10 @@ func (r *Resolver) PortalTraining() generated.PortalTrainingResolver {
 	return r.portalTraining
 }
 
+func (r *Resolver) ProvisioningAuditRecord() generated.ProvisioningAuditRecordResolver {
+	return r.provisioningAuditRecord
+}
+
 func (r *Resolver) Query() generated.QueryResolver {
 	return r.query
 }
@@ -2911,6 +2970,7 @@ type queryResolver struct {
 	*hazmatsegregationruleQuery
 	*holdreasonQuery
 	*homelayoutQuery
+	*iamQuery
 	*iftaQuery
 	*inboundmessageQuery
 	*inboundreplyQuery
@@ -2930,6 +2990,7 @@ type queryResolver struct {
 	*orgstructureQuery
 	*pageaccessQuery
 	*performancereviewQuery
+	*permissionQuery
 	*ptopolicyQuery
 	*rateQuery
 	*recurringshipmentQuery
@@ -2990,6 +3051,10 @@ func (r *Resolver) ReportSchedule() generated.ReportScheduleResolver {
 	return r.reportSchedule
 }
 
+func (r *Resolver) ResourcePermission() generated.ResourcePermissionResolver {
+	return r.resourcePermission
+}
+
 func (r *Resolver) ReviewRating() generated.ReviewRatingResolver {
 	return r.reviewRating
 }
@@ -3006,8 +3071,16 @@ func (r *Resolver) RoutingGuideEntry() generated.RoutingGuideEntryResolver {
 	return r.routingGuideEntry
 }
 
+func (r *Resolver) SCIMToken() generated.SCIMTokenResolver {
+	return r.sCIMToken
+}
+
 func (r *Resolver) SafetyScorecard() generated.SafetyScorecardResolver {
 	return r.safetyScorecard
+}
+
+func (r *Resolver) SecurityFinding() generated.SecurityFindingResolver {
+	return r.securityFinding
 }
 
 func (r *Resolver) ServiceFailure() generated.ServiceFailureResolver {
@@ -3020,6 +3093,10 @@ func (r *Resolver) ServiceFailureShipment() generated.ServiceFailureShipmentReso
 
 func (r *Resolver) ServiceFailureStop() generated.ServiceFailureStopResolver {
 	return r.serviceFailureStop
+}
+
+func (r *Resolver) SessionSummary() generated.SessionSummaryResolver {
+	return r.sessionSummary
 }
 
 func (r *Resolver) SettlementControl() generated.SettlementControlResolver {
@@ -3056,6 +3133,10 @@ func (r *Resolver) ShipmentRatingDetail() generated.ShipmentRatingDetailResolver
 
 func (r *Resolver) ShipmentRatingReviewApproval() generated.ShipmentRatingReviewApprovalResolver {
 	return r.shipmentRatingReviewApproval
+}
+
+func (r *Resolver) SignInSummary() generated.SignInSummaryResolver {
+	return r.signInSummary
 }
 
 func (r *Resolver) TCASubscription() generated.TCASubscriptionResolver {
@@ -3304,6 +3385,7 @@ type (
 	aifeedbackMutation              = aifeedbackresolver.MutationResolver
 	aiproviderMutation              = aiproviderresolver.MutationResolver
 	airetrievalMutation             = airetrievalresolver.MutationResolver
+	apikeyMutation                  = apikeyresolver.MutationResolver
 	benefitsMutation                = benefitsresolver.MutationResolver
 	billingqueueMutation            = billingqueueresolver.MutationResolver
 	billingtransferMutation         = billingtransferresolver.MutationResolver
@@ -3342,6 +3424,7 @@ type (
 	hazmatsegregationruleMutation   = hazmatsegregationruleresolver.MutationResolver
 	holdreasonMutation              = holdreasonresolver.MutationResolver
 	homelayoutMutation              = homelayoutresolver.MutationResolver
+	iamMutation                     = iamresolver.MutationResolver
 	iftaMutation                    = iftaresolver.MutationResolver
 	inboundmessageMutation          = inboundmessageresolver.MutationResolver
 	inboundreplyMutation            = inboundreplyresolver.MutationResolver
@@ -3358,6 +3441,7 @@ type (
 	performancereviewMutation       = performancereviewresolver.MutationResolver
 	ptopolicyMutation               = ptopolicyresolver.MutationResolver
 	reportMutation                  = reportresolver.MutationResolver
+	roleMutation                    = roleresolver.MutationResolver
 	schedulingMutation              = schedulingresolver.MutationResolver
 	selfserviceMutation             = selfserviceresolver.MutationResolver
 	shipmentMutation                = shipmentresolver.MutationResolver
@@ -3457,6 +3541,7 @@ type (
 	hazmatsegregationruleQuery      = hazmatsegregationruleresolver.QueryResolver
 	holdreasonQuery                 = holdreasonresolver.QueryResolver
 	homelayoutQuery                 = homelayoutresolver.QueryResolver
+	iamQuery                        = iamresolver.QueryResolver
 	iftaQuery                       = iftaresolver.QueryResolver
 	inboundmessageQuery             = inboundmessageresolver.QueryResolver
 	inboundreplyQuery               = inboundreplyresolver.QueryResolver
@@ -3476,6 +3561,7 @@ type (
 	orgstructureQuery               = orgstructureresolver.QueryResolver
 	pageaccessQuery                 = pageaccessresolver.QueryResolver
 	performancereviewQuery          = performancereviewresolver.QueryResolver
+	permissionQuery                 = permissionresolver.QueryResolver
 	ptopolicyQuery                  = ptopolicyresolver.QueryResolver
 	rateQuery                       = rateresolver.QueryResolver
 	recurringshipmentQuery          = recurringshipmentresolver.QueryResolver

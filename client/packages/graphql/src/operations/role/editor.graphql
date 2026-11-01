@@ -1,0 +1,84 @@
+fragment RoleEditorFields on Role {
+  id
+  organizationId
+  name
+  description
+  coreResponsibility
+  parentRoleIds
+  maxSensitivity
+  isSystem
+  createdBy
+  createdAt
+  updatedAt
+}
+
+query RoleEditor($id: ID!) {
+  role(id: $id) {
+    ...RoleEditorFields
+  }
+  rolePermissions(roleId: $id) {
+    id
+    roleId
+    resource
+    operations
+    dataScope
+    createdAt
+    updatedAt
+  }
+}
+
+query RoleImpact($roleId: ID!) {
+  roleImpact(roleId: $roleId) {
+    userId
+    userName
+    organizationId
+    orgName
+    assignmentType
+  }
+}
+
+mutation CreateRole($input: RoleInput!) {
+  createRole(input: $input) {
+    ...RoleEditorFields
+  }
+}
+
+mutation UpdateRole($id: ID!, $input: RoleInput!) {
+  updateRole(id: $id, input: $input) {
+    ...RoleEditorFields
+  }
+}
+
+mutation DeleteRole($id: ID!, $force: Boolean) {
+  deleteRole(id: $id, force: $force)
+}
+
+mutation AssignRole($roleId: ID!, $input: AssignRoleInput!) {
+  assignRole(roleId: $roleId, input: $input) {
+    id
+    userId
+    organizationId
+    roleId
+    expiresAt
+    assignedBy
+    assignedAt
+  }
+}
+
+mutation UnassignRole($assignmentId: ID!) {
+  unassignRole(assignmentId: $assignmentId)
+}
+
+query RoleOptions($first: Int!) {
+  roles(input: { first: $first }) {
+    edges {
+      node {
+        id
+        name
+        description
+        maxSensitivity
+        isSystem
+      }
+    }
+  }
+}

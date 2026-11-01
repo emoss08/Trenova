@@ -211,39 +211,6 @@ func TestUpdateRole_Success(t *testing.T) {
 	deps.roleRepo.AssertExpectations(t)
 }
 
-func TestListRoles(t *testing.T) {
-	t.Parallel()
-
-	deps := setupTestService(t)
-	ctx := t.Context()
-	orgID := pulid.MustNew("org_")
-
-	expectedRoles := []*rbac.Role{
-		{ID: pulid.MustNew("rol_"), Name: "Role 1"},
-		{ID: pulid.MustNew("rol_"), Name: "Role 2"},
-	}
-
-	req := &permissionports.ListRolesRequest{
-		Filter: &pagination.QueryOptions{
-			TenantInfo: pagination.TenantInfo{OrgID: orgID},
-			Pagination: pagination.Info{Limit: 10, Offset: 0},
-		},
-	}
-
-	deps.roleRepo.On("List", ctx, req).Return(&pagination.ListResult[*rbac.Role]{
-		Items:      expectedRoles,
-		Total:      2,
-		TotalExact: true,
-	}, nil)
-
-	result, err := deps.svc.ListRoles(ctx, req)
-
-	require.NoError(t, err)
-	assert.Len(t, result.Items, 2)
-
-	deps.roleRepo.AssertExpectations(t)
-}
-
 func TestAssignRole_Success(t *testing.T) {
 	t.Parallel()
 

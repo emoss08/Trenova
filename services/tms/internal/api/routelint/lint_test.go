@@ -32,7 +32,7 @@ func TestProtectedRoutesAreDiscovered(t *testing.T) {
 		byPackage[route.Package]++
 	}
 
-	for _, pkg := range []string{"workerhandler", "shipmenthandler", "iamhandler"} {
+	for _, pkg := range []string{"workerhandler", "shipmenthandler", "userhandler"} {
 		require.NotZerof(t, byPackage[pkg], "expected routes discovered for %s", pkg)
 	}
 }

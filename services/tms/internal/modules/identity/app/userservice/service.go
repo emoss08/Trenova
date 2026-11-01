@@ -96,13 +96,6 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 	}
 }
 
-func (s *Service) List(
-	ctx context.Context,
-	req *tenantports.ListUsersRequest,
-) (*pagination.ListResult[*tenant.User], error) {
-	return s.repo.List(ctx, req)
-}
-
 func (s *Service) ListConnection(
 	ctx context.Context,
 	req *tenantports.ListUserConnectionRequest,

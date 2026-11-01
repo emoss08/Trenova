@@ -17,7 +17,7 @@ export function RoleActivationSetting({ organizationId }: { organizationId: stri
 
   const save = useApiMutation({
     mutationFn: (requireRoleActivation: boolean) =>
-      apiService.organizationService.updateAccessSettings(organizationId, {
+      apiService.organizationService.updateAccessSettings({
         requireRoleActivation,
         version: settingsQuery.data?.version ?? 0,
       }),

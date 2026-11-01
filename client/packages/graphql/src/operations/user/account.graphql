@@ -1,0 +1,204 @@
+fragment CurrentUserFields on User {
+  id
+  businessUnitId
+  currentOrganizationId
+  status
+  name
+  username
+  emailAddress
+  profilePicUrl
+  thumbnailUrl
+  timezone
+  timeFormat
+  locale
+  isLocked
+  mustChangePassword
+  jobTitle
+  phoneNumber
+  avatarStyle
+  availabilityStatus
+  focusUntil
+  awayBackOn
+  awayDelegateUserId
+  awayNote
+  assistantHidden
+  version
+  createdAt
+  updatedAt
+  lastLoginAt
+  passwordChangedAt
+}
+
+query UserSummary($id: ID!) {
+  user(id: $id) {
+    id
+    name
+    username
+    emailAddress
+  }
+}
+
+query UserRoleAssignments($userId: ID!) {
+  userRoleAssignments(userId: $userId) {
+    id
+    userId
+    organizationId
+    roleId
+    expiresAt
+    assignedBy
+    assignedAt
+    role {
+      id
+      name
+      isSystem
+    }
+  }
+}
+
+query UserOrganizationMemberships($userId: ID!) {
+  userOrganizationMemberships(userId: $userId) {
+    id
+    userId
+    businessUnitId
+    organizationId
+    isDefault
+    joinedAt
+  }
+}
+
+mutation ReplaceUserOrganizationMemberships($userId: ID!, $organizationIds: [ID!]!) {
+  replaceUserOrganizationMemberships(userId: $userId, organizationIds: $organizationIds) {
+    id
+    userId
+    businessUnitId
+    organizationId
+    isDefault
+    joinedAt
+  }
+}
+
+query UserAvatars($ids: [ID!]!) {
+  userAvatars(ids: $ids) {
+    id
+    name
+    username
+    avatarStyle
+    availability
+    awayBackOn
+    awayNote
+  }
+}
+
+mutation BulkUpdateUserStatus($input: BulkUpdateUserStatusInput!) {
+  bulkUpdateUserStatus(input: $input) {
+    id
+    status
+  }
+}
+
+mutation ResetUserPassword($userId: ID!) {
+  resetUserPassword(userId: $userId)
+}
+
+mutation ResetUserMfa($userId: ID!) {
+  resetUserMfa(userId: $userId)
+}
+
+mutation UpdateMySettings($input: UpdateMySettingsInput!) {
+  updateMySettings(input: $input) {
+    ...CurrentUserFields
+  }
+}
+
+mutation UpdateMyProfile($input: UpdateMyProfileInput!) {
+  updateMyProfile(input: $input) {
+    ...CurrentUserFields
+  }
+}
+
+mutation UpdateMyAvailability($input: UpdateMyAvailabilityInput!) {
+  updateMyAvailability(input: $input) {
+    ...CurrentUserFields
+  }
+}
+
+mutation SetMyAssistantHidden($hidden: Boolean!) {
+  setMyAssistantHidden(hidden: $hidden) {
+    ...CurrentUserFields
+  }
+}
+
+query MySessions {
+  mySessions {
+    id
+    label
+    browser
+    os
+    device
+    ipAddress
+    authProvider
+    createdAt
+    lastAccessedAt
+    expiresAt
+    current
+  }
+}
+
+mutation RevokeMySession($sessionId: ID!) {
+  revokeMySession(sessionId: $sessionId)
+}
+
+mutation RevokeMyOtherSessions {
+  revokeMyOtherSessions
+}
+
+query MySignIns($limit: Int) {
+  mySignIns(limit: $limit) {
+    id
+    provider
+    outcome
+    mfaState
+    errorCode
+    ipAddress
+    label
+    device
+    occurredAt
+  }
+}
+
+query MyMfaStatus {
+  myMfaStatus {
+    totpEnabled
+    enrollmentPending
+    enabledAt
+    lastUsedAt
+    recoveryCodesRemaining
+    recoveryCodesNeedReplacing
+    sessionVerified
+  }
+}
+
+mutation BeginMyTotpEnrollment($password: String!) {
+  beginMyTotpEnrollment(password: $password) {
+    authenticatorId
+    secret
+    uri
+    qrCode
+  }
+}
+
+mutation ConfirmMyTotpEnrollment($code: String!) {
+  confirmMyTotpEnrollment(code: $code) {
+    recoveryCodes
+  }
+}
+
+mutation DisableMyTotp($input: DisableMyTotpInput!) {
+  disableMyTotp(input: $input)
+}
+
+mutation RegenerateMyRecoveryCodes($code: String!) {
+  regenerateMyRecoveryCodes(code: $code) {
+    recoveryCodes
+  }
+}

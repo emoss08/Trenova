@@ -78,7 +78,14 @@ export const userRoleAssignmentSchema = z.object({
   expiresAt: z.number().nullable().optional(),
   assignedBy: optionalStringSchema,
   assignedAt: timestampSchema,
-  role: roleSchema.optional(),
+  role: z
+    .object({
+      id: optionalStringSchema,
+      name: z.string(),
+      description: z.string().nullish(),
+      isSystem: z.boolean().optional(),
+    })
+    .nullish(),
 });
 export type UserRoleAssignment = z.infer<typeof userRoleAssignmentSchema>;
 
@@ -113,53 +120,8 @@ export type AssignRole = z.infer<typeof assignRoleSchema>;
 export const roleImpactSchema = z.object({
   userId: z.string(),
   userName: z.string(),
-  email: z.string(),
+  organizationId: z.string(),
+  orgName: z.string(),
+  assignmentType: z.string(),
 });
 export type RoleImpact = z.infer<typeof roleImpactSchema>;
-
-export const roleHierarchyEdgeSchema = z.object({
-  id: z.string(),
-  seniorRoleId: z.string(),
-  juniorRoleId: z.string(),
-  organizationId: z.string(),
-  businessUnitId: z.string(),
-  createdBy: optionalStringSchema,
-  createdAt: timestampSchema,
-  updatedAt: timestampSchema,
-  seniorRole: roleSchema.optional(),
-  juniorRole: roleSchema.optional(),
-});
-export type RoleHierarchyEdge = z.infer<typeof roleHierarchyEdgeSchema>;
-
-export const roleConstraintTypeSchema = z.enum(["ssd", "dsd"]);
-export type RoleConstraintType = z.infer<typeof roleConstraintTypeSchema>;
-
-export const roleConstraintSchema = z.object({
-  id: optionalStringSchema,
-  organizationId: optionalStringSchema,
-  businessUnitId: optionalStringSchema,
-  name: z.string().min(1, { error: () => translate("Name is required") }),
-  description: optionalStringSchema,
-  type: roleConstraintTypeSchema,
-  maxRoles: z.number().int().min(1),
-  enabled: z.boolean().default(true),
-  createdBy: optionalStringSchema,
-  createdAt: timestampSchema.optional(),
-  updatedAt: timestampSchema.optional(),
-  roles: z.array(roleSchema).optional(),
-});
-export type RoleConstraint = z.infer<typeof roleConstraintSchema>;
-
-export const saveRoleConstraintSchema = roleConstraintSchema
-  .pick({
-    id: true,
-    name: true,
-    description: true,
-    type: true,
-    maxRoles: true,
-    enabled: true,
-  })
-  .extend({
-    roleIds: z.array(z.string()).min(2, { error: () => translate("Select at least two roles") }),
-  });
-export type SaveRoleConstraint = z.infer<typeof saveRoleConstraintSchema>;

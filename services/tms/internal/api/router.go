@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/agentrunhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/aiproviderhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/analyticshandler"
-	"github.com/emoss08/trenova/internal/api/handlers/apikeyhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/assignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/assistanthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/authhandler"
@@ -55,7 +54,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/formulatemplatehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/glbalancehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/googlemapshandler"
-	"github.com/emoss08/trenova/internal/api/handlers/iamhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/inboundhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/inboxpresencehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/insighthandler"
@@ -74,7 +72,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/palettehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permithandler"
 	"github.com/emoss08/trenova/internal/api/handlers/publicconfighandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pushhandler"
@@ -89,7 +86,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/realtimehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/recurringshipmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/reporthandler"
-	"github.com/emoss08/trenova/internal/api/handlers/rolehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/routingguidehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/searchhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/sequenceconfighandler"
@@ -153,7 +149,6 @@ type RouterParams struct {
 	EditionRoutes                   routegroup.Registrars
 	OrganizationHandler             *organizationhandler.Handler
 	DataRetentionHandler            *dataretentionhandler.Handler
-	IAMHandler                      *iamhandler.Handler
 	UserHandler                     *userhandler.Handler
 	AuthHandler                     *authhandler.Handler
 	PublicConfigHandler             *publicconfighandler.Handler
@@ -171,10 +166,8 @@ type RouterParams struct {
 	TrailerHandler                  *trailerhandler.Handler
 	GraphQLHandler                  *graphqlapi.Handler
 	WorkerHandler                   *workerhandler.Handler
-	PermissionHandler               *permissionhandler.Handler
 	RealtimeHandler                 *realtimehandler.Handler
 	InboxPresenceHandler            *inboxpresencehandler.Handler
-	RoleHandler                     *rolehandler.Handler
 	SearchHandler                   *searchhandler.Handler
 	CustomFieldHandler              *customfieldhandler.Handler
 	DocumentHandler                 *documenthandler.Handler
@@ -256,7 +249,6 @@ type RouterParams struct {
 	DistanceProfileHandler          *distanceprofilehandler.Handler
 	StoredMileageHandler            *storedmileagehandler.Handler
 	AnalyticsHandler                *analyticshandler.Handler
-	ApiKeyHandler                   *apikeyhandler.Handler //nolint:revive // field name follows existing router wiring
 	TableChangeAlertHandler         *tablechangealerthandler.Handler
 	DocumentPacketRuleHandler       *documentpacketrulehandler.Handler
 	DocumentTemplateHandler         *documenttemplatehandler.Handler
@@ -282,7 +274,6 @@ type Router struct {
 	editionRoutes                   routegroup.Registrars
 	organizationHandler             *organizationhandler.Handler
 	dataRetentionHandler            *dataretentionhandler.Handler
-	iamHandler                      *iamhandler.Handler
 	userHandler                     *userhandler.Handler
 	authHandler                     *authhandler.Handler
 	publicConfigHandler             *publicconfighandler.Handler
@@ -309,10 +300,8 @@ type Router struct {
 	trailerHandler                  *trailerhandler.Handler
 	graphQLHandler                  *graphqlapi.Handler
 	workerHandler                   *workerhandler.Handler
-	permissionHandler               *permissionhandler.Handler
 	realtimeHandler                 *realtimehandler.Handler
 	inboxPresenceHandler            *inboxpresencehandler.Handler
-	roleHandler                     *rolehandler.Handler
 	searchHandler                   *searchhandler.Handler
 	customFieldHandler              *customfieldhandler.Handler
 	documentHandler                 *documenthandler.Handler
@@ -385,7 +374,6 @@ type Router struct {
 	distanceProfileHandler          *distanceprofilehandler.Handler
 	storedMileageHandler            *storedmileagehandler.Handler
 	analyticsHandler                *analyticshandler.Handler
-	apiKeyHandler                   *apikeyhandler.Handler
 	tableChangeAlertHandler         *tablechangealerthandler.Handler
 	documentPacketRuleHandler       *documentpacketrulehandler.Handler
 	documentTemplateHandler         *documenttemplatehandler.Handler
@@ -413,7 +401,6 @@ func NewRouter(p RouterParams) *Router {
 		editionRoutes:                   p.EditionRoutes,
 		organizationHandler:             p.OrganizationHandler,
 		dataRetentionHandler:            p.DataRetentionHandler,
-		iamHandler:                      p.IAMHandler,
 		userHandler:                     p.UserHandler,
 		authHandler:                     p.AuthHandler,
 		publicConfigHandler:             p.PublicConfigHandler,
@@ -440,10 +427,8 @@ func NewRouter(p RouterParams) *Router {
 		trailerHandler:                  p.TrailerHandler,
 		graphQLHandler:                  p.GraphQLHandler,
 		workerHandler:                   p.WorkerHandler,
-		permissionHandler:               p.PermissionHandler,
 		realtimeHandler:                 p.RealtimeHandler,
 		inboxPresenceHandler:            p.InboxPresenceHandler,
-		roleHandler:                     p.RoleHandler,
 		searchHandler:                   p.SearchHandler,
 		customFieldHandler:              p.CustomFieldHandler,
 		documentHandler:                 p.DocumentHandler,
@@ -516,7 +501,6 @@ func NewRouter(p RouterParams) *Router {
 		distanceProfileHandler:          p.DistanceProfileHandler,
 		storedMileageHandler:            p.StoredMileageHandler,
 		analyticsHandler:                p.AnalyticsHandler,
-		apiKeyHandler:                   p.ApiKeyHandler,
 		tableChangeAlertHandler:         p.TableChangeAlertHandler,
 		documentPacketRuleHandler:       p.DocumentPacketRuleHandler,
 		documentTemplateHandler:         p.DocumentTemplateHandler,
@@ -620,7 +604,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.organizationHandler.RegisterRoutes(protected)
 	r.onboardingHandler.RegisterRoutes(protected)
 	r.dataRetentionHandler.RegisterRoutes(protected)
-	r.iamHandler.RegisterRoutes(protected)
 	r.userHandler.RegisterRoutes(protected)
 	r.bankReceiptBatchHandler.RegisterRoutes(protected)
 	r.bankReceiptHandler.RegisterRoutes(protected)
@@ -631,10 +614,8 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.tractorHandler.RegisterRoutes(protected)
 	r.trailerHandler.RegisterRoutes(protected)
 	r.workerHandler.RegisterRoutes(protected)
-	r.permissionHandler.RegisterRoutes(protected)
 	r.realtimeHandler.RegisterRoutes(protected)
 	r.inboxPresenceHandler.RegisterRoutes(protected)
-	r.roleHandler.RegisterRoutes(protected)
 	r.searchHandler.RegisterRoutes(protected)
 	r.customFieldHandler.RegisterRoutes(protected)
 	r.documentHandler.RegisterRoutes(protected)
@@ -707,7 +688,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.storedMileageHandler.RegisterRoutes(protected)
 	r.exchangeRateHandler.RegisterRoutes(protected)
 	r.analyticsHandler.RegisterRoutes(protected)
-	r.apiKeyHandler.RegisterRoutes(protected)
 	r.tableChangeAlertHandler.RegisterRoutes(protected)
 	r.documentPacketRuleHandler.RegisterRoutes(protected)
 	r.documentTemplateHandler.RegisterRoutes(protected)

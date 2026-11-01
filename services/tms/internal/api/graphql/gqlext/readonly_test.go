@@ -98,3 +98,53 @@ func TestReadOnlyExtensionIsInertOutsideCloudMode(t *testing.T) {
 	assert.Equal(t, readOnlyExtensionName, ext.ExtensionName())
 	require.NoError(t, ext.Validate(nil))
 }
+
+func readOnlyMutation(fields ...string) *gqlgen.OperationContext {
+	selections := make(ast.SelectionSet, 0, len(fields))
+	for _, name := range fields {
+		selections = append(selections, &ast.Field{Name: name, Alias: name})
+	}
+
+	return &gqlgen.OperationContext{
+		OperationName: "TestOperation",
+		Operation: &ast.OperationDefinition{
+			Operation:    ast.Mutation,
+			SelectionSet: selections,
+		},
+	}
+}
+
+func TestReadOnlyExtensionLetsAPersonChangeTheirOwnSettingsOnAReadOnlyPlan(t *testing.T) {
+	t.Parallel()
+
+	tenant := plantest.Tenant()
+	ext := NewReadOnlyExtension(ReadOnlyParams{
+		Plans:  plantest.Cloud(t, tenant, plantest.FreeDemo(t, tenant, subscription.StatusReadOnly)),
+		Logger: zap.NewNop(),
+	})
+
+	assert.Nil(t, ext.MutateOperationContext(
+		readOnlyContext(tenant, gqlctx.NewResponseStatus()),
+		readOnlyMutation("updateMySettings"),
+	))
+}
+
+func TestReadOnlyExtensionRefusesAnAllowedMutationBesideAWrite(t *testing.T) {
+	t.Parallel()
+
+	tenant := plantest.Tenant()
+	ext := NewReadOnlyExtension(ReadOnlyParams{
+		Plans:  plantest.Cloud(t, tenant, plantest.FreeDemo(t, tenant, subscription.StatusReadOnly)),
+		Logger: zap.NewNop(),
+	})
+
+	gqlErr := ext.MutateOperationContext(
+		readOnlyContext(tenant, gqlctx.NewResponseStatus()),
+		readOnlyMutation("updateMySettings", "updateMyProfile"),
+	)
+
+	require.NotNil(t, gqlErr)
+	restriction, ok := errors.AsType[*errortypes.PlanRestrictionError](gqlErr)
+	require.True(t, ok)
+	assert.Equal(t, platformplan.ReasonSubscriptionReadOnly, restriction.Reason)
+}

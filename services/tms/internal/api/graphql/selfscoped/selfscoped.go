@@ -85,6 +85,31 @@ var Resolvers = map[string][]string{
 	"reports what capture the calling user may use, from their own session": {
 		"QueryResolver.MyCaptureAccess",
 	},
+	"the account settings act on the calling user's own row (userservice keys every read and " +
+		"write by the session's user), and a session is revoked only when it belongs to them": {
+		"MutationResolver.RevokeMyOtherSessions",
+		"MutationResolver.RevokeMySession",
+		"MutationResolver.SetMyAssistantHidden",
+		"MutationResolver.UpdateMyAvailability",
+		"MutationResolver.UpdateMyProfile",
+		"MutationResolver.UpdateMySettings",
+		"QueryResolver.MySessions",
+		"QueryResolver.MySignIns",
+	},
+	"two-factor sign-in is read and changed only for the calling user (mfaservice keys every " +
+		"request by the session's user), and enrolling or removing a factor needs the user's " +
+		"own password or a code from the factor itself": {
+		"MutationResolver.BeginMyTotpEnrollment",
+		"MutationResolver.ConfirmMyTotpEnrollment",
+		"MutationResolver.DisableMyTotp",
+		"MutationResolver.RegenerateMyRecoveryCodes",
+		"QueryResolver.MyMfaStatus",
+	},
+	"the permission manifest is the calling user's own grants in their current organization, " +
+		"read from the permission engine for the session's user": {
+		"QueryResolver.MyPermissionVersion",
+		"QueryResolver.MyPermissions",
+	},
 }
 
 var roots = func() map[string]struct{} {

@@ -3,9 +3,8 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { listRoles } from "@/lib/role-api";
+import { listRoles, type RoleOption } from "@/lib/role-api";
 import { cn } from "@trenova/shared/lib/utils";
-import type { Role } from "@trenova/shared/types/role";
 import { useQuery } from "@tanstack/react-query";
 import { SearchLgIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
@@ -22,10 +21,10 @@ export function UserRolesSection({ selectedRoleIds, onRoleIdsChange }: UserRoles
 
   const { data: rolesResponse, isLoading } = useQuery({
     queryKey: ["roles-for-user"],
-    queryFn: () => listRoles({ limit: 100, includeSystem: true }),
+    queryFn: ({ signal }) => listRoles({ signal }),
   });
 
-  const roles = useMemo(() => rolesResponse?.results ?? [], [rolesResponse]);
+  const roles = useMemo(() => rolesResponse ?? [], [rolesResponse]);
 
   const filteredRoles = useMemo(() => {
     if (!searchQuery.trim()) return roles;
@@ -107,8 +106,8 @@ export function UserRolesSection({ selectedRoleIds, onRoleIdsChange }: UserRoles
               <RoleRow
                 key={role.id}
                 role={role}
-                isSelected={selectedRoleIds.includes(role.id!)}
-                onToggle={() => handleToggleRole(role.id!)}
+                isSelected={selectedRoleIds.includes(role.id)}
+                onToggle={() => handleToggleRole(role.id)}
               />
             ))}
           </div>
@@ -119,7 +118,7 @@ export function UserRolesSection({ selectedRoleIds, onRoleIdsChange }: UserRoles
 }
 
 type RoleRowProps = {
-  role: Role;
+  role: RoleOption;
   isSelected: boolean;
   onToggle: () => void;
 };

@@ -123,7 +123,6 @@ export function SCIMGroupMappingCreatePanel({
       formComponent={<SCIMGroupMappingForm />}
       mutationFn={async (values) => {
         const saved = await apiService.organizationService.createSCIMGroupRoleMapping(
-          organizationId,
           directoryId,
           toSCIMGroupMapping(values, directoryId),
         );
@@ -164,8 +163,6 @@ function SCIMGroupMappingEditPanel({
       formComponent={<SCIMGroupMappingForm />}
       mutationFn={async (values) => {
         const saved = await apiService.organizationService.updateSCIMGroupRoleMapping(
-          organizationId,
-          directoryId,
           toSCIMGroupMapping(values, directoryId),
         );
         return toSCIMGroupMappingFormValues(saved);

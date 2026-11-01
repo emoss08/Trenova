@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -19,7 +20,10 @@ var Shard = &gqlexec.Shard{
 	Objects: []*gqlexec.Object{
 		{Name: "ApiKey", Implementors: []string{"ApiKey"}},
 		{Name: "ApiKeyConnection", Implementors: []string{"ApiKeyConnection"}},
+		{Name: "ApiKeyDetail", Implementors: []string{"ApiKeyDetail"}},
 		{Name: "ApiKeyEdge", Implementors: []string{"ApiKeyEdge"}},
+		{Name: "ApiKeyPermission", Implementors: []string{"ApiKeyPermission"}},
+		{Name: "IssuedApiKey", Implementors: []string{"IssuedApiKey"}},
 	},
 	Fields: []gqlexec.Fields{
 		{Object: "ApiKey", Fields: []*gqlexec.Field{
@@ -241,6 +245,139 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 		}},
+		{Object: "ApiKeyDetail", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*apikeyports.APIKeyResponse)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "businessUnitId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*apikeyports.APIKeyResponse)
+					return obj.BusinessUnitID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "organizationId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*apikeyports.APIKeyResponse)
+					return obj.OrganizationID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*apikeyports.APIKeyResponse)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "description",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*apikeyports.APIKeyResponse)
+					return obj.Description, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "keyPrefix",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*apikeyports.APIKeyResponse)
+					return obj.KeyPrefix, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "status",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*apikeyports.APIKeyResponse)
+					return obj.Status, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "expiresAt",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*apikeyports.APIKeyResponse)
+					return obj.ExpiresAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "lastUsedAt",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*apikeyports.APIKeyResponse)
+					return obj.LastUsedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*apikeyports.APIKeyResponse)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "updatedAt",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*apikeyports.APIKeyResponse)
+					return obj.UpdatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "permissionScope",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*apikeyports.APIKeyResponse)
+					return obj.PermissionScope, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:      "permissions",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ApiKeyPermission",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*apikeyports.APIKeyResponse)
+					return obj.Permissions, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNApiKeyPermission2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋapikeyportsᚐAPIKeyPermissionInputᚄ),
+			},
+		}},
 		{Object: "ApiKeyEdge", Fields: []*gqlexec.Field{
 			{
 				Name:      "node",
@@ -262,6 +399,119 @@ var Shard = &gqlexec.Shard{
 					return obj.Cursor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "ApiKeyPermission", Fields: []*gqlexec.Field{
+			{
+				Name:     "resource",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*apikeyports.APIKeyPermissionInput)
+					return obj.Resource, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:       "operations",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*apikeyports.APIKeyPermissionInput)
+					return gqlexec.Resolver[resolverApiKeyPermission](ec, "ApiKeyPermission").Operations(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
+				Name:       "dataScope",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*apikeyports.APIKeyPermissionInput)
+					return gqlexec.Resolver[resolverApiKeyPermission](ec, "ApiKeyPermission").DataScope(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "IssuedApiKey", Fields: []*gqlexec.Field{
+			{
+				Name:      "apiKey",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ApiKeyDetail",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.IssuedAPIKey)
+					return obj.APIKey, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNApiKeyDetail2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋapikeyportsᚐAPIKeyResponse),
+			},
+			{
+				Name:     "token",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.IssuedAPIKey)
+					return obj.Token, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createApiKey",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "IssuedApiKey",
+				Args:       field_Mutation_createApiKey_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateAPIKey(ctx, fc.Args["input"].(gqlmodel.APIKeyInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNIssuedApiKey2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐIssuedAPIKey),
+			},
+			{
+				Name:       "updateApiKey",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "ApiKeyDetail",
+				Args:       field_Mutation_updateApiKey_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateAPIKey(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.APIKeyInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNApiKeyDetail2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋapikeyportsᚐAPIKeyResponse),
+			},
+			{
+				Name:       "rotateApiKey",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "IssuedApiKey",
+				Args:       field_Mutation_rotateApiKey_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RotateAPIKey(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNIssuedApiKey2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐIssuedAPIKey),
+			},
+			{
+				Name:       "revokeApiKey",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "ApiKeyDetail",
+				Args:       field_Mutation_revokeApiKey_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RevokeAPIKey(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNApiKeyDetail2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋapikeyportsᚐAPIKeyResponse),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -292,10 +542,30 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOApiKey2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋapikeyᚐKey),
 			},
+			{
+				Name:       "apiKeyDetail",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "ApiKeyDetail",
+				Args:       field_Query_apiKeyDetail_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").APIKeyDetail(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNApiKeyDetail2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋapikeyportsᚐAPIKeyResponse),
+			},
 		}},
+	},
+	Inputs: []gqlexec.Input{
+		{Name: "ApiKeyInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputApiKeyInput)},
+		{Name: "ApiKeyPermissionInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputApiKeyPermissionInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "ApiKey", Check: func(r any) bool { _, ok := r.(resolverApiKey); return ok }},
+		{Root: "ApiKeyPermission", Check: func(r any) bool { _, ok := r.(resolverApiKeyPermission); return ok }},
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
 }
@@ -305,9 +575,22 @@ type resolverApiKey interface {
 	PermissionScope(ctx context.Context, obj *apikey.Key) (string, error)
 }
 
+type resolverApiKeyPermission interface {
+	Operations(ctx context.Context, obj *apikeyports.APIKeyPermissionInput) ([]string, error)
+	DataScope(ctx context.Context, obj *apikeyports.APIKeyPermissionInput) (string, error)
+}
+
+type resolverMutation interface {
+	CreateAPIKey(ctx context.Context, input gqlmodel.APIKeyInput) (*gqlmodel.IssuedAPIKey, error)
+	UpdateAPIKey(ctx context.Context, id string, input gqlmodel.APIKeyInput) (*apikeyports.APIKeyResponse, error)
+	RotateAPIKey(ctx context.Context, id string) (*gqlmodel.IssuedAPIKey, error)
+	RevokeAPIKey(ctx context.Context, id string) (*apikeyports.APIKeyResponse, error)
+}
+
 type resolverQuery interface {
 	APIKeys(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.APIKeyConnection, error)
 	APIKey(ctx context.Context, id string) (*apikey.Key, error)
+	APIKeyDetail(ctx context.Context, id string) (*apikeyports.APIKeyResponse, error)
 }
 
 var (
@@ -317,6 +600,66 @@ var (
 	errNoChild3 = errors.New("field of type Int does not have child fields")
 	errNoChild4 = errors.New("field of type Boolean does not have child fields")
 )
+
+func field_Mutation_createApiKey_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.APIKeyInput, error) {
+			return unmarshalNApiKeyInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAPIKeyInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateApiKey_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.APIKeyInput, error) {
+			return unmarshalNApiKeyInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAPIKeyInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_rotateApiKey_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Mutation_revokeApiKey_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
 
 func field_Query_apiKeys_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -344,8 +687,130 @@ func field_Query_apiKey_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[
 	return args, nil
 }
 
+func field_Query_apiKeyDetail_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func unmarshalInputApiKeyInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.APIKeyInput, error) {
+	var it gqlmodel.APIKeyInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "description", "expiresAt", "permissions"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "expiresAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("expiresAt"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExpiresAt = data
+		case "permissions":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("permissions"))
+			data, err := unmarshalNApiKeyPermissionInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAPIKeyPermissionInputᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Permissions = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputApiKeyPermissionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.APIKeyPermissionInput, error) {
+	var it gqlmodel.APIKeyPermissionInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"resource", "operations", "dataScope"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "resource":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resource"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Resource = data
+		case "operations":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("operations"))
+			data, err := unmarshalNString2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Operations = data
+		case "dataScope":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataScope"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataScope = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
+}
+
+func unmarshalNApiKeyInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAPIKeyInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.APIKeyInput, error) {
+	res, err := unmarshalInputApiKeyInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNApiKeyPermissionInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAPIKeyPermissionInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.APIKeyPermissionInput, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNApiKeyPermissionInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAPIKeyPermissionInput)
+}
+
+func unmarshalNApiKeyPermissionInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAPIKeyPermissionInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.APIKeyPermissionInput, error) {
+	res, err := unmarshalInputApiKeyPermissionInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
@@ -356,6 +821,31 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNString2string)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func marshalNApiKey2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋapikeyᚐKey(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *apikey.Key) graphql.Marshaler {
@@ -374,6 +864,14 @@ func marshalNApiKeyConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋa
 	return ec.MarshalType(ctx, sel, "ApiKeyConnection", v)
 }
 
+func marshalNApiKeyDetail2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋapikeyportsᚐAPIKeyResponse(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *apikeyports.APIKeyResponse) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ApiKeyDetail", v)
+}
+
 func marshalNApiKeyEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAPIKeyEdgeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.APIKeyEdge) graphql.Marshaler {
 	return gqlexec.List[*gqlmodel.APIKeyEdge]{
 		Elem:        marshalNApiKeyEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAPIKeyEdge,
@@ -388,6 +886,18 @@ func marshalNApiKeyEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋg
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "ApiKeyEdge", v)
+}
+
+func marshalNApiKeyPermission2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋapikeyportsᚐAPIKeyPermissionInput(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v apikeyports.APIKeyPermissionInput) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "ApiKeyPermission", &v)
+}
+
+func marshalNApiKeyPermission2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋapikeyportsᚐAPIKeyPermissionInputᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []apikeyports.APIKeyPermissionInput) graphql.Marshaler {
+	return gqlexec.List[apikeyports.APIKeyPermissionInput]{
+		Elem:        marshalNApiKeyPermission2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋapikeyportsᚐAPIKeyPermissionInput,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
@@ -406,6 +916,22 @@ func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx conte
 	return res
 }
 
+func marshalNID2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalID(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNIssuedApiKey2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐIssuedAPIKey(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.IssuedAPIKey) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "IssuedApiKey", v)
+}
+
 func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -420,6 +946,15 @@ func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	return gqlexec.List[string]{
+		Elem:        marshalNString2string,
+		NonNull:     true,
+		NonNullElem: true,
+		Scalar:      true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {

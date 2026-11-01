@@ -11,7 +11,6 @@ import {
   versionSchema,
 } from "./helpers";
 import { roleSchema, roleSummaryArraySchema } from "./role";
-import { createLimitOffsetResponse } from "./server";
 import { translate } from "@trenova/shared/i18n/runtime";
 export { apiErrorResponseSchema, type ApiErrorResponse } from "./errors";
 
@@ -153,10 +152,6 @@ export const userEditSchema = userSchema.pick({
 
 export type UserEditFormValues = z.infer<typeof userEditSchema>;
 
-export const userResponseSchema = createLimitOffsetResponse(userSchema);
-
-export type UserResponse = z.infer<typeof userResponseSchema>;
-
 export const loginRequestSchema = z.object({
   emailAddress: z.email({
     error: () => translate("Please enter a valid email address"),
@@ -212,10 +207,6 @@ export const bulkUpdateUserStatusRequestSchema = z.object({
 
 export type BulkUpdateUserStatusRequest = z.infer<typeof bulkUpdateUserStatusRequestSchema>;
 
-export const bulkUpdateUserStatusResponseSchema = z.array(userSchema);
-
-export type BulkUpdateUserStatusResponse = z.infer<typeof bulkUpdateUserStatusResponseSchema>;
-
 export const updateMyProfileSchema = z.object({
   jobTitle: z.string().max(100).optional(),
   phoneNumber: z.string().max(30).optional(),
@@ -260,8 +251,6 @@ export const sessionSummarySchema = z.object({
 export type SessionSummary = z.infer<typeof sessionSummarySchema>;
 
 export const sessionSummariesSchema = z.array(sessionSummarySchema);
-
-export const revokeSessionsResponseSchema = z.object({ revoked: z.number() });
 
 export const signInSummarySchema = z.object({
   id: z.string(),

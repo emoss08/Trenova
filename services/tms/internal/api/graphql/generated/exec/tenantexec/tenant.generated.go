@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,6 +21,8 @@ var Shard = &gqlexec.Shard{
 	Name: "tenant",
 	Objects: []*gqlexec.Object{
 		{Name: "BusinessUnit", Implementors: []string{"BusinessUnit"}},
+		{Name: "MicrosoftSSOConfig", Implementors: []string{"MicrosoftSSOConfig"}},
+		{Name: "OktaSSOConfig", Implementors: []string{"OktaSSOConfig"}},
 		{Name: "Organization", Implementors: []string{"Organization"}},
 		{Name: "User", Implementors: []string{"User"}},
 	},
@@ -86,7 +89,115 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
 		}},
+		{Object: "MicrosoftSSOConfig", Fields: []*gqlexec.Field{
+			{
+				Name:     "organizationId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenantports.MicrosoftSSOConfig)
+					return obj.OrganizationID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "enabled",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenantports.MicrosoftSSOConfig)
+					return obj.Enabled, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "enforceSso",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenantports.MicrosoftSSOConfig)
+					return obj.EnforceSSO, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "tenantId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenantports.MicrosoftSSOConfig)
+					return obj.TenantID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "clientId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenantports.MicrosoftSSOConfig)
+					return obj.ClientID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "redirectUrl",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenantports.MicrosoftSSOConfig)
+					return obj.RedirectURL, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "allowedDomains",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenantports.MicrosoftSSOConfig)
+					return obj.AllowedDomains, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
+				Name:     "secretConfigured",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenantports.MicrosoftSSOConfig)
+					return obj.SecretConfigured, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "upsertMicrosoftSsoConfig",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "MicrosoftSSOConfig",
+				Args:       field_Mutation_upsertMicrosoftSsoConfig_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpsertMicrosoftSsoConfig(ctx, fc.Args["input"].(gqlmodel.MicrosoftSSOConfigInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNMicrosoftSSOConfig2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋtenantportsᚐMicrosoftSSOConfig),
+			},
+			{
+				Name:       "upsertOktaSsoConfig",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "OktaSSOConfig",
+				Args:       field_Mutation_upsertOktaSsoConfig_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpsertOktaSsoConfig(ctx, fc.Args["input"].(gqlmodel.OktaSSOConfigInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNOktaSSOConfig2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋtenantportsᚐOktaSSOConfig),
+			},
 			{
 				Name:       "updateOrganization",
 				NonNull:    true,
@@ -99,6 +210,98 @@ var Shard = &gqlexec.Shard{
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateOrganization(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.OrganizationInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization),
+			},
+		}},
+		{Object: "OktaSSOConfig", Fields: []*gqlexec.Field{
+			{
+				Name:     "organizationId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenantports.OktaSSOConfig)
+					return obj.OrganizationID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "enabled",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenantports.OktaSSOConfig)
+					return obj.Enabled, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "enforceSso",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenantports.OktaSSOConfig)
+					return obj.EnforceSSO, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "issuerUrl",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenantports.OktaSSOConfig)
+					return obj.IssuerURL, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "clientId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenantports.OktaSSOConfig)
+					return obj.ClientID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "redirectUrl",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenantports.OktaSSOConfig)
+					return obj.RedirectURL, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "scopes",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenantports.OktaSSOConfig)
+					return obj.Scopes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
+				Name:     "allowedDomains",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenantports.OktaSSOConfig)
+					return obj.AllowedDomains, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
+				Name:     "secretConfigured",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenantports.OktaSSOConfig)
+					return obj.SecretConfigured, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 		}},
 		{Object: "Organization", Fields: []*gqlexec.Field{
@@ -324,6 +527,30 @@ var Shard = &gqlexec.Shard{
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
+			{
+				Name:       "microsoftSsoConfig",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "MicrosoftSSOConfig",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					return gqlexec.Resolver[resolverQuery](ec, "Query").MicrosoftSsoConfig(ctx)
+				},
+				Marshal: gqlexec.Marshal(marshalNMicrosoftSSOConfig2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋtenantportsᚐMicrosoftSSOConfig),
+			},
+			{
+				Name:       "oktaSsoConfig",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "OktaSSOConfig",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					return gqlexec.Resolver[resolverQuery](ec, "Query").OktaSsoConfig(ctx)
+				},
+				Marshal: gqlexec.Marshal(marshalNOktaSSOConfig2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋtenantportsᚐOktaSSOConfig),
+			},
 			{
 				Name:       "organization",
 				NonNull:    true,
@@ -570,6 +797,53 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
 			},
 			{
+				Name:     "focusUntil",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenant.User)
+					return obj.FocusUntil, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "awayBackOn",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenant.User)
+					return obj.AwayBackOn, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "awayDelegateUserId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenant.User)
+					return obj.AwayDelegateUserID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "awayNote",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenant.User)
+					return obj.AwayNote, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "assistantHidden",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenant.User)
+					return obj.AssistantHidden, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
 				Name:       "businessUnit",
 				IsResolver: true,
 				Concurrent: true,
@@ -596,6 +870,8 @@ var Shard = &gqlexec.Shard{
 		}},
 	},
 	Inputs: []gqlexec.Input{
+		{Name: "MicrosoftSSOConfigInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputMicrosoftSSOConfigInput)},
+		{Name: "OktaSSOConfigInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputOktaSSOConfigInput)},
 		{Name: "OrganizationInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputOrganizationInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
@@ -606,10 +882,14 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverMutation interface {
+	UpsertMicrosoftSsoConfig(ctx context.Context, input gqlmodel.MicrosoftSSOConfigInput) (*tenantports.MicrosoftSSOConfig, error)
+	UpsertOktaSsoConfig(ctx context.Context, input gqlmodel.OktaSSOConfigInput) (*tenantports.OktaSSOConfig, error)
 	UpdateOrganization(ctx context.Context, id string, input gqlmodel.OrganizationInput) (*tenant.Organization, error)
 }
 
 type resolverQuery interface {
+	MicrosoftSsoConfig(ctx context.Context) (*tenantports.MicrosoftSSOConfig, error)
+	OktaSsoConfig(ctx context.Context) (*tenantports.OktaSSOConfig, error)
 	Organization(ctx context.Context, id string, includeState *bool, includeBu *bool) (*tenant.Organization, error)
 }
 
@@ -630,6 +910,32 @@ var (
 	errNoChild7 = errors.New("field of type AvatarStyle does not have child fields")
 	errNoChild8 = errors.New("field of type AvailabilityStatus does not have child fields")
 )
+
+func field_Mutation_upsertMicrosoftSsoConfig_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.MicrosoftSSOConfigInput, error) {
+			return unmarshalNMicrosoftSSOConfigInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMicrosoftSSOConfigInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_upsertOktaSsoConfig_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.OktaSSOConfigInput, error) {
+			return unmarshalNOktaSSOConfigInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐOktaSSOConfigInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
 
 func field_Mutation_updateOrganization_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 2)
@@ -679,6 +985,157 @@ func field_Query_organization_args(ctx context.Context, ec *gqlexec.Exec, rawArg
 	}
 	args["includeBu"] = arg2
 	return args, nil
+}
+
+func unmarshalInputMicrosoftSSOConfigInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.MicrosoftSSOConfigInput, error) {
+	var it gqlmodel.MicrosoftSSOConfigInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"enabled", "enforceSso", "tenantId", "clientId", "clientSecret", "redirectUrl", "allowedDomains"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "enabled":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Enabled = data
+		case "enforceSso":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enforceSso"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EnforceSso = data
+		case "tenantId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tenantId"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.TenantID = data
+		case "clientId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientId"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClientID = data
+		case "clientSecret":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientSecret"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClientSecret = data
+		case "redirectUrl":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("redirectUrl"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RedirectURL = data
+		case "allowedDomains":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allowedDomains"))
+			data, err := unmarshalOString2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AllowedDomains = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputOktaSSOConfigInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.OktaSSOConfigInput, error) {
+	var it gqlmodel.OktaSSOConfigInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"enabled", "enforceSso", "issuerUrl", "clientId", "clientSecret", "redirectUrl", "scopes", "allowedDomains"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "enabled":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Enabled = data
+		case "enforceSso":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enforceSso"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EnforceSso = data
+		case "issuerUrl":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("issuerUrl"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.IssuerURL = data
+		case "clientId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientId"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClientID = data
+		case "clientSecret":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientSecret"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClientSecret = data
+		case "redirectUrl":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("redirectUrl"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RedirectURL = data
+		case "scopes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scopes"))
+			data, err := unmarshalOString2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Scopes = data
+		case "allowedDomains":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allowedDomains"))
+			data, err := unmarshalOString2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AllowedDomains = data
+		}
+	}
+	return it, nil
 }
 
 func unmarshalInputOrganizationInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.OrganizationInput, error) {
@@ -816,6 +1273,11 @@ func unmarshalInputOrganizationInput(ctx context.Context, ec *gqlexec.Exec, obj 
 	return it, nil
 }
 
+func unmarshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool, error) {
+	res, err := graphql.UnmarshalBoolean(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -823,6 +1285,16 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 
 func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNMicrosoftSSOConfigInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMicrosoftSSOConfigInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.MicrosoftSSOConfigInput, error) {
+	res, err := unmarshalInputMicrosoftSSOConfigInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNOktaSSOConfigInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐOktaSSOConfigInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.OktaSSOConfigInput, error) {
+	res, err := unmarshalInputOktaSSOConfigInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -842,6 +1314,13 @@ func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*b
 	}
 	res, err := graphql.UnmarshalBoolean(v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNString2string)
 }
 
 func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
@@ -892,12 +1371,36 @@ func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx conte
 	return res
 }
 
+func marshalNID2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalID(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
 	res := graphql.MarshalInt64(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNMicrosoftSSOConfig2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋtenantportsᚐMicrosoftSSOConfig(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenantports.MicrosoftSSOConfig) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "MicrosoftSSOConfig", v)
+}
+
+func marshalNOktaSSOConfig2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋtenantportsᚐOktaSSOConfig(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenantports.OktaSSOConfig) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "OktaSSOConfig", v)
 }
 
 func marshalNOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
@@ -914,6 +1417,15 @@ func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	return gqlexec.List[string]{
+		Elem:        marshalNString2string,
+		NonNull:     true,
+		NonNullElem: true,
+		Scalar:      true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNTimeFormat2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTimeFormat(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.TimeFormat) graphql.Marshaler {
@@ -933,6 +1445,14 @@ func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "BusinessUnit", v)
+}
+
+func marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
+	return res
 }
 
 func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {

@@ -10,11 +10,18 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/usermapping"
+	"github.com/emoss08/trenova/internal/modules/identity/app/passwordresetservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -92,4 +99,386 @@ func (r *MutationResolver) PatchUser(ctx context.Context, id string, input gqlmo
 			return applyUserPatch(user, &input)
 		},
 	})
+}
+
+func (r *MutationResolver) BulkUpdateUserStatus(ctx context.Context, input gqlmodel.BulkUpdateUserStatusInput) ([]*tenant.User, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceUser, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	userIDs, err := gqlid.ParsePulids("userIds", input.UserIds)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.UserService.BulkUpdateStatus(ctx, &tenantports.BulkUpdateUserStatusRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		UserIDs:    userIDs,
+		Status:     input.Status,
+	})
+}
+
+func (r *MutationResolver) ResetUserPassword(ctx context.Context, userID string) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceUser, permission.OpUpdate)
+	if err != nil {
+		return false, err
+	}
+
+	targetUserID, err := gqlid.ParseIDField("userId", userID)
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.PasswordResetService.RequestResetForUser(
+		ctx,
+		passwordresetservice.AdminResetRequest{
+			TargetUserID: targetUserID,
+			Actor:        resolvercore.TenantInfo(authCtx),
+		},
+	); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *MutationResolver) ReplaceUserOrganizationMemberships(ctx context.Context, userID string, organizationIds []string) ([]*tenant.OrganizationMembership, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceUser, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	targetUserID, err := gqlid.ParseIDField("userId", userID)
+	if err != nil {
+		return nil, err
+	}
+
+	orgIDs, err := gqlid.ParsePulids("organizationIds", organizationIds)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.UserService.ReplaceOrganizationMemberships(
+		ctx,
+		authCtx.UserID,
+		targetUserID,
+		authCtx.OrganizationID,
+		authCtx.BusinessUnitID,
+		orgIDs,
+	)
+}
+
+func (r *MutationResolver) ResetUserMfa(ctx context.Context, userID string) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceUser, permission.OpUpdate)
+	if err != nil {
+		return false, err
+	}
+
+	targetUserID, err := gqlid.ParseIDField("userId", userID)
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.MFAService.ResetUserMFA(ctx, &sessionports.ResetUserMFARequest{
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
+		TargetUserID: targetUserID,
+	}); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *MutationResolver) UpdateMySettings(ctx context.Context, input gqlmodel.UpdateMySettingsInput) (*tenant.User, error) {
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	timeFormat, err := usermapping.TimeFormatToDomain(input.TimeFormat)
+	if err != nil {
+		return nil, err
+	}
+
+	updated, err := r.UserService.UpdateMySettings(
+		ctx,
+		resolvercore.TenantInfo(authCtx),
+		userservice.UpdateMySettingsRequest{
+			Timezone:   input.Timezone,
+			TimeFormat: timeFormat,
+			Locale:     input.Locale,
+			SessionID:  authCtx.SessionID,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selfUser(authCtx, updated), nil
+}
+
+func (r *MutationResolver) UpdateMyProfile(ctx context.Context, input gqlmodel.UpdateMyProfileInput) (*tenant.User, error) {
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	updated, err := r.UserService.UpdateMyProfile(
+		ctx,
+		resolvercore.TenantInfo(authCtx),
+		tenant.ProfileUpdate{
+			JobTitle:    input.JobTitle,
+			PhoneNumber: input.PhoneNumber,
+			AvatarStyle: input.AvatarStyle,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selfUser(authCtx, updated), nil
+}
+
+func (r *MutationResolver) UpdateMyAvailability(ctx context.Context, input gqlmodel.UpdateMyAvailabilityInput) (*tenant.User, error) {
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	update, err := availabilityUpdateFromInput(&input)
+	if err != nil {
+		return nil, err
+	}
+
+	updated, err := r.UserService.UpdateMyAvailability(
+		ctx,
+		resolvercore.TenantInfo(authCtx),
+		update,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selfUser(authCtx, updated), nil
+}
+
+func (r *MutationResolver) SetMyAssistantHidden(ctx context.Context, hidden bool) (*tenant.User, error) {
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	updated, err := r.UserService.SetMyAssistantHidden(ctx, resolvercore.TenantInfo(authCtx), hidden)
+	if err != nil {
+		return nil, err
+	}
+
+	return selfUser(authCtx, updated), nil
+}
+
+func (r *MutationResolver) RevokeMySession(ctx context.Context, sessionID string) (bool, error) {
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	id, err := pulid.MustParse(sessionID)
+	if err != nil {
+		return false, errortypes.NewNotFoundError("Session not found")
+	}
+
+	if err = r.UserService.RevokeMySession(ctx, sessionScope(authCtx), id); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *MutationResolver) RevokeMyOtherSessions(ctx context.Context) (int, error) {
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return r.UserService.RevokeMyOtherSessions(ctx, sessionScope(authCtx))
+}
+
+func (r *MutationResolver) BeginMyTotpEnrollment(ctx context.Context, password string) (*sessionports.TOTPEnrollment, error) {
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.MFAService.BeginTOTPEnrollment(ctx, &sessionports.BeginTOTPEnrollmentRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Password:   password,
+	})
+}
+
+func (r *MutationResolver) ConfirmMyTotpEnrollment(ctx context.Context, code string, name *string) (*sessionports.RecoveryCodesResponse, error) {
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.MFAService.ConfirmTOTPEnrollment(ctx, &sessionports.ConfirmTOTPEnrollmentRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		SessionID:  authCtx.SessionID,
+		Code:       code,
+		Name:       gqlscalar.StringValue(name),
+	})
+}
+
+func (r *MutationResolver) DisableMyTotp(ctx context.Context, input gqlmodel.DisableMyTotpInput) (bool, error) {
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.MFAService.DisableTOTP(ctx, &sessionports.DisableTOTPRequest{
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
+		Password:     input.Password,
+		Code:         gqlscalar.StringValue(input.Code),
+		RecoveryCode: gqlscalar.StringValue(input.RecoveryCode),
+	}); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *MutationResolver) RegenerateMyRecoveryCodes(ctx context.Context, code string) (*sessionports.RecoveryCodesResponse, error) {
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.MFAService.RegenerateRecoveryCodes(ctx, &sessionports.RegenerateRecoveryCodesRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Code:       code,
+	})
+}
+
+func (r *QueryResolver) UserRoleAssignments(ctx context.Context, userID string) ([]*rbac.UserRoleAssignment, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceUser, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	targetUserID, err := gqlid.ParseIDField("userId", userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.RoleService.GetUserRoleAssignments(ctx, targetUserID, authCtx.OrganizationID)
+}
+
+func (r *QueryResolver) UserOrganizationMemberships(ctx context.Context, userID string) ([]*tenant.OrganizationMembership, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceUser, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	targetUserID, err := gqlid.ParseIDField("userId", userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.UserService.ListOrganizationMemberships(ctx, targetUserID, authCtx.BusinessUnitID)
+}
+
+func (r *QueryResolver) UserAvatars(ctx context.Context, ids []string) ([]*userservice.AvatarSummary, error) {
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	userIDs, err := avatarIDsFromInput(ids)
+	if err != nil {
+		return nil, err
+	}
+
+	avatars, err := r.UserService.ListAvatars(ctx, resolvercore.TenantInfo(authCtx), userIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]*userservice.AvatarSummary, len(avatars))
+	for i := range avatars {
+		out[i] = &avatars[i]
+	}
+
+	return out, nil
+}
+
+func (r *QueryResolver) MyMfaStatus(ctx context.Context) (*sessionports.MFAStatus, error) {
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.MFAService.Status(ctx, resolvercore.TenantInfo(authCtx), authCtx.AuthenticatorAAL)
+}
+
+func (r *QueryResolver) MySessions(ctx context.Context) ([]*userservice.SessionSummary, error) {
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	sessions, err := r.UserService.ListMySessions(ctx, sessionScope(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]*userservice.SessionSummary, len(sessions))
+	for i := range sessions {
+		out[i] = &sessions[i]
+	}
+
+	return out, nil
+}
+
+func (r *QueryResolver) MySignIns(ctx context.Context, limit *int) ([]*userservice.SignInSummary, error) {
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if limit != nil && *limit < 1 {
+		return nil, errortypes.NewValidationError(
+			"limit",
+			errortypes.ErrInvalid,
+			"Limit must be a positive number",
+		)
+	}
+
+	signIns, err := r.UserService.ListMySignIns(
+		ctx,
+		resolvercore.TenantInfo(authCtx),
+		gqlscalar.IntValue(limit),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]*userservice.SignInSummary, len(signIns))
+	for i := range signIns {
+		out[i] = &signIns[i]
+	}
+
+	return out, nil
+}
+
+func (r *SessionSummaryResolver) Device(ctx context.Context, obj *userservice.SessionSummary) (string, error) {
+	return string(obj.Device), nil
+}
+
+func (r *SignInSummaryResolver) Outcome(ctx context.Context, obj *userservice.SignInSummary) (string, error) {
+	return string(obj.Outcome), nil
+}
+
+func (r *SignInSummaryResolver) Device(ctx context.Context, obj *userservice.SignInSummary) (string, error) {
+	return string(obj.Device), nil
 }

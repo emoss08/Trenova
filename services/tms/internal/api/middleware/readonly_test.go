@@ -198,7 +198,7 @@ func TestReadOnlyGuardLetsATrialOrganizationWrite(t *testing.T) {
 func TestReadOnlyWriteAllowedMatchesExactRoutesOnly(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, ReadOnlyWriteAllowed("/api/v1/users/me/settings/"))
+	assert.True(t, ReadOnlyWriteAllowed("/api/v1/users/me/change-password/"))
 	assert.True(t, ReadOnlyWriteAllowed("/api/v1/rate-quotes/shipment/:shipmentID/explain/"))
 	assert.True(t, ReadOnlyWriteAllowed("/graphql"))
 	assert.False(t, ReadOnlyWriteAllowed("/api/v1/shipments/"))

@@ -7127,6 +7127,64 @@ extend type Query {
   apiKeys(input: DataTableConnectionInput!): ApiKeyConnection!
   apiKey(id: ID!): ApiKey
 }
+
+"One grant of an API key."
+type ApiKeyPermission {
+  resource: String!
+  operations: [String!]!
+  dataScope: String!
+}
+
+"An API key with its grants. The secret is never readable after it is issued."
+type ApiKeyDetail {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  name: String!
+  description: String!
+  keyPrefix: String!
+  status: String!
+  expiresAt: Timestamp!
+  lastUsedAt: Timestamp!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  permissionScope: String!
+  permissions: [ApiKeyPermission!]!
+}
+
+"An API key with its secret, shown this once."
+type IssuedApiKey {
+  apiKey: ApiKeyDetail!
+  token: String!
+}
+
+input ApiKeyPermissionInput {
+  resource: String!
+  operations: [String!]!
+  dataScope: String!
+}
+
+input ApiKeyInput {
+  name: String!
+  description: String
+  "Zero or omitted for a key that never expires."
+  expiresAt: Timestamp
+  permissions: [ApiKeyPermissionInput!]!
+}
+
+extend type Query {
+  "An API key with its grants."
+  apiKeyDetail(id: ID!): ApiKeyDetail!
+}
+
+extend type Mutation {
+  "Issues an API key. Its secret is returned this once; every grant is checked against the caller's own access."
+  createApiKey(input: ApiKeyInput!): IssuedApiKey!
+  updateApiKey(id: ID!, input: ApiKeyInput!): ApiKeyDetail!
+  "Replaces an API key's secret. The new secret is returned this once and the old one stops working."
+  rotateApiKey(id: ID!): IssuedApiKey!
+  revokeApiKey(id: ID!): ApiKeyDetail!
+}
 `, BuiltIn: false},
 	{Name: "../schema/attention.graphqls", Input: `type AttentionSummary {
   billingQueue: Int
@@ -21268,6 +21326,271 @@ extend type Mutation {
   deleteHomeLayoutPreset(id: ID!): Boolean!
 }
 `, BuiltIn: false},
+	{Name: "../schema/iam.graphqls", Input: `"A federated sign-in provider of the organization. Its client secret never leaves the server."
+type IdentityProvider {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  name: String!
+  slug: String!
+  "OIDC or SAML."
+  protocol: String!
+  enabled: Boolean!
+  enforceSso: Boolean!
+  autoProvision: Boolean!
+  allowFederatedMfa: Boolean!
+  federatedMfaAcrValues: [String!]!
+  allowedDomains: [String!]!
+  "Claim names keyed by the user field they fill."
+  attributeMap: JSON!
+  oidcIssuerUrl: String!
+  oidcClientId: String!
+  oidcRedirectUrl: String!
+  oidcScopes: [String!]!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input IdentityProviderInput {
+  name: String!
+  slug: String
+  "OIDC; SAML is not configurable yet."
+  protocol: String!
+  enabled: Boolean!
+  enforceSso: Boolean!
+  autoProvision: Boolean!
+  allowFederatedMfa: Boolean!
+  federatedMfaAcrValues: [String!]
+  allowedDomains: [String!]
+  attributeMap: JSON
+  oidcIssuerUrl: String!
+  oidcClientId: String!
+  "Required when the provider is created; leave empty on update to keep the stored secret."
+  oidcClientSecret: String
+  oidcRedirectUrl: String!
+  oidcScopes: [String!]
+  "The version read; required on update."
+  version: Int
+}
+
+"An attribute-based rule that allows or denies an operation when its conditions match."
+type AccessPolicy {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  name: String!
+  resource: String!
+  operation: String!
+  "allow or deny."
+  effect: String!
+  priority: Int!
+  conditions: JSON!
+  enabled: Boolean!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input AccessPolicyInput {
+  name: String!
+  resource: String!
+  operation: String!
+  effect: String!
+  priority: Int!
+  conditions: JSON
+  enabled: Boolean!
+}
+
+"Organization-wide access settings."
+type AccessSettings {
+  organizationId: ID!
+  businessUnitId: ID!
+  "Whether people choose the roles they work under at sign-in."
+  requireRoleActivation: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input UpdateAccessSettingsInput {
+  requireRoleActivation: Boolean!
+  version: Int!
+}
+
+input SCIMDirectoryInput {
+  tenantSlug: String!
+  enabled: Boolean!
+}
+
+"A bearer credential a SCIM client provisions with. Only its prefix is kept readable."
+type SCIMToken {
+  id: ID!
+  organizationId: ID!
+  directoryId: ID!
+  name: String!
+  prefix: String!
+  "active or revoked."
+  status: String!
+  lastUsedAt: Timestamp!
+  expiresAt: Timestamp!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"A new SCIM token with its secret, shown this once."
+type IssuedSCIMToken {
+  token: String!
+  scimToken: SCIMToken!
+}
+
+input CreateSCIMTokenInput {
+  name: String!
+  "Zero or omitted for a token that never expires."
+  expiresAt: Timestamp
+}
+
+input SCIMGroupRoleMappingInput {
+  externalGroupId: String!
+  displayName: String
+  roleId: ID!
+  "The version read; required on update."
+  version: Int
+}
+
+"One change a SCIM client made, and how it went."
+type ProvisioningAuditRecord {
+  id: ID!
+  organizationId: ID!
+  directoryId: ID!
+  "create, update, deactivate or delete."
+  action: String!
+  resourceType: String!
+  externalId: String!
+  "Null when the action failed before it created anything to point at."
+  resourceId: ID
+  status: String!
+  errorMessage: String!
+  createdAt: Timestamp!
+}
+
+type SecurityFinding {
+  code: String!
+  "critical, warning, notice or pass."
+  severity: String!
+  count: Int!
+  total: Int!
+}
+
+type SecuritySessionPolicy {
+  maxAgeSeconds: Int!
+  idleTimeoutSeconds: Int!
+  idleWarningSeconds: Int!
+}
+
+type SecurityMemberCounts {
+  active: Int!
+  locked: Int!
+  neverSignedIn: Int!
+  dormant: Int!
+  mustChangePassword: Int!
+}
+
+type SecurityUnenrolledMember {
+  userId: ID!
+  name: String!
+  emailAddress: String!
+  lastLoginAt: Timestamp
+}
+
+type SecurityMFACoverage {
+  enrolled: Int!
+  total: Int!
+  "Null for a reader who may not read users."
+  unenrolled: [SecurityUnenrolledMember!]
+}
+
+type SecuritySignInCounts {
+  succeeded: Int!
+  failed: Int!
+  denied: Int!
+  throttled: Int!
+  "Null for a reader who may not read risk decisions."
+  riskDenied: Int
+}
+
+type SecurityAPIKeyCounts {
+  active: Int!
+  withoutExpiry: Int!
+  unused: Int!
+  expiringSoon: Int!
+}
+
+type SecuritySSOState {
+  enabledProviders: Int!
+  enforced: Boolean!
+  enforcedProviderName: String!
+  trustsFederatedMfa: Boolean!
+}
+
+type SecurityProvisioningState {
+  activeDirectories: Int!
+}
+
+type SecurityPolicyState {
+  enabled: Int!
+  requiringMfa: Int!
+  roleActivationRequired: Boolean!
+}
+
+"The organization's security posture. A section is null for a reader who may not read what it is drawn from."
+type SecurityBriefing {
+  generatedAt: Timestamp!
+  signInWindowDays: Int!
+  dormantAfterDays: Int!
+  apiKeyUnusedAfterDays: Int!
+  apiKeyExpiringWithinDays: Int!
+  findings: [SecurityFinding!]!
+  session: SecuritySessionPolicy!
+  members: SecurityMemberCounts
+  mfa: SecurityMFACoverage
+  signIns: SecuritySignInCounts
+  apiKeys: SecurityAPIKeyCounts
+  sso: SecuritySSOState
+  provisioning: SecurityProvisioningState
+  policies: SecurityPolicyState
+}
+
+extend type Query {
+  identityProviders: [IdentityProvider!]!
+  accessPolicies: [AccessPolicy!]!
+  accessSettings: AccessSettings!
+  "The SCIM tokens of a directory, without their secrets."
+  scimTokens(directoryId: ID!): [SCIMToken!]!
+  "The most recent provisioning changes, newest first; 100 by default."
+  provisioningAuditRecords(directoryId: ID, limit: Int): [ProvisioningAuditRecord!]!
+  securityBriefing: SecurityBriefing!
+}
+
+extend type Mutation {
+  createIdentityProvider(input: IdentityProviderInput!): IdentityProvider!
+  updateIdentityProvider(id: ID!, input: IdentityProviderInput!): IdentityProvider!
+  deleteIdentityProvider(id: ID!): Boolean!
+  createAccessPolicy(input: AccessPolicyInput!): AccessPolicy!
+  updateAccessPolicy(id: ID!, input: AccessPolicyInput!): AccessPolicy!
+  deleteAccessPolicy(id: ID!): Boolean!
+  "Turns role activation on or off. Cannot be turned off while a dynamic separation of duty constraint exists."
+  updateAccessSettings(input: UpdateAccessSettingsInput!): AccessSettings!
+  createSCIMDirectory(input: SCIMDirectoryInput!): SCIMDirectory!
+  updateSCIMDirectory(id: ID!, input: SCIMDirectoryInput!): SCIMDirectory!
+  deleteSCIMDirectory(id: ID!): Boolean!
+  "Issues a SCIM token. Its secret is returned this once."
+  createSCIMToken(directoryId: ID!, input: CreateSCIMTokenInput!): IssuedSCIMToken!
+  revokeSCIMToken(id: ID!): SCIMToken!
+  createSCIMGroupRoleMapping(directoryId: ID!, input: SCIMGroupRoleMappingInput!): SCIMGroupRoleMapping!
+  updateSCIMGroupRoleMapping(id: ID!, input: SCIMGroupRoleMappingInput!): SCIMGroupRoleMapping!
+  deleteSCIMGroupRoleMapping(id: ID!): Boolean!
+}
+`, BuiltIn: false},
 	{Name: "../schema/ifta.graphqls", Input: `enum IFTAJurisdictionStatus {
   Active
   Inactive
@@ -25052,6 +25375,129 @@ extend type Mutation {
   acknowledgeMyReview(id: ID!, comment: String): PerformanceReview!
 }
 `, BuiltIn: false},
+	{Name: "../schema/permission.graphqls", Input: `"An operation a grant can allow, worded in the caller's language."
+type PermissionOperation {
+  operation: String!
+  displayName: String!
+  description: String!
+  "The operations this one brings with it."
+  implies: [String!]!
+}
+
+"A kind of record or feature access is granted on, worded in the caller's language."
+type PermissionResource {
+  resource: String!
+  displayName: String!
+  description: String!
+  category: String!
+  operations: [PermissionOperation!]!
+  "A grant on the parent reaches this resource too."
+  parentResource: String
+  defaultSensitivity: String!
+  "The data scopes a grant of this resource can carry in this deployment."
+  enforceableScopes: [String!]!
+}
+
+type PermissionResourceCategory {
+  category: String!
+  resources: [PermissionResource!]!
+}
+
+"One grant of a capability bundle or job template, with the scope it applies here."
+type PermissionBundleGrant {
+  resource: String!
+  displayName: String!
+  operations: [String!]!
+  dataScope: String!
+}
+
+"A named set of grants for one job to be done."
+type PermissionBundle {
+  id: String!
+  module: String!
+  label: String!
+  description: String!
+  grants: [PermissionBundleGrant!]!
+}
+
+"A starting point for a role: bundles composed into grants, with a sensitivity ceiling."
+type PermissionJobTemplate {
+  id: String!
+  label: String!
+  description: String!
+  bundles: [String!]!
+  maxSensitivity: String!
+  grants: [PermissionBundleGrant!]!
+}
+
+type PermissionBundleCatalog {
+  bundles: [PermissionBundle!]!
+  templates: [PermissionJobTemplate!]!
+}
+
+"A role named in the caller's permission manifest."
+type PermissionRoleSummary {
+  id: ID!
+  name: String!
+  description: String!
+  isSystem: Boolean!
+  permissionCount: Int!
+}
+
+"The operations the caller holds on one resource, as a bit mask."
+type PermissionGrantMask {
+  resource: String!
+  operations: Int!
+}
+
+"Whether the caller may open one screen."
+type PermissionRouteAccess {
+  route: String!
+  allowed: Boolean!
+}
+
+type PermissionOrganizationSummary {
+  id: ID!
+  name: String!
+}
+
+"What the caller may do in their current organization, for the interface to gate on."
+type PermissionManifest {
+  version: String!
+  userId: ID!
+  organizationId: ID!
+  activeRoleIds: [ID!]!
+  authorizedRoleIds: [ID!]!
+  activeRoles: [PermissionRoleSummary!]!
+  authorizedRoles: [PermissionRoleSummary!]!
+  requiresRoleActivation: Boolean!
+  maxSensitivity: String!
+  permissions: [PermissionGrantMask!]!
+  routeAccess: [PermissionRouteAccess!]!
+  availableOrgs: [PermissionOrganizationSummary!]!
+  checksum: String!
+  expiresAt: Timestamp!
+}
+
+"The caller's manifest checksum, for telling whether a cached manifest is still current."
+type PermissionManifestVersion {
+  checksum: String!
+  expiresAt: Timestamp!
+}
+
+extend type Query {
+  "Every resource access can be granted on, by category."
+  permissionResources: [PermissionResourceCategory!]!
+  "Every operation a grant can allow."
+  permissionOperations: [PermissionOperation!]!
+  "The capability bundles roles are composed from and the job templates built from them."
+  permissionBundles: PermissionBundleCatalog!
+  "The resources an API key may be granted, by category, with only the operations a key may hold."
+  apiKeyAllowedResources: [PermissionResourceCategory!]!
+  myPermissions: PermissionManifest!
+  myPermissionVersion: PermissionManifestVersion!
+}
+`, BuiltIn: false},
 	{Name: "../schema/pto_policy.graphqls", Input: `enum PTOPolicyStatus {
   Active
   Inactive
@@ -26678,6 +27124,71 @@ type RoleConnection {
 extend type Query {
   roles(input: DataTableConnectionInput!): RoleConnection!
   role(id: ID!): Role
+}
+
+"One grant of a role: the operations it allows on a resource, and how far they reach."
+type ResourcePermission {
+  id: ID!
+  roleId: ID!
+  resource: String!
+  operations: [String!]!
+  "organization, own or team."
+  dataScope: String!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"A person who holds a role, directly or through a role that inherits it."
+type RoleImpactedUser {
+  userId: ID!
+  userName: String!
+  organizationId: ID!
+  orgName: String!
+  assignmentType: String!
+}
+
+input ResourcePermissionInput {
+  resource: String!
+  operations: [String!]!
+  dataScope: String!
+}
+
+input RoleInput {
+  name: String!
+  description: String
+  coreResponsibility: String
+  "public, internal, restricted or confidential."
+  maxSensitivity: String!
+  "Roles this one inherits; set when the role is created. Inheritance is not changed on update."
+  parentRoleIds: [ID!]
+  "Replaces every grant of the role. Omit to leave the grants as they are."
+  permissions: [ResourcePermissionInput!]
+}
+
+input AssignRoleInput {
+  userId: ID!
+  "Null for a role that never lapses."
+  expiresAt: Timestamp
+}
+
+extend type Query {
+  "Every grant of a role."
+  rolePermissions(roleId: ID!): [ResourcePermission!]!
+  "Who would lose access if the role were deleted."
+  roleImpact(roleId: ID!): [RoleImpactedUser!]!
+}
+
+extend type Mutation {
+  "Creates a role with its grants. Every grant is checked against the caller's own access."
+  createRole(input: RoleInput!): Role!
+  "Changes a role's name, description, responsibility, ceiling and, when sent, its grants."
+  updateRole(id: ID!, input: RoleInput!): Role!
+  "Deletes a role. A role someone holds needs force, which also needs user unassign."
+  deleteRole(id: ID!, force: Boolean): Boolean!
+  "Gives a person a role. Every grant it carries is checked against the caller's own access."
+  assignRole(roleId: ID!, input: AssignRoleInput!): UserRoleAssignment!
+  "Takes a role from a person."
+  unassignRole(assignmentId: ID!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "../schema/routing_guide.graphqls", Input: `type RoutingGuideEntry {
@@ -31127,15 +31638,76 @@ type User {
   updatedAt: Timestamp!
   lastLoginAt: Timestamp
   passwordChangedAt: Timestamp
+  "Until when a person focusing asked not to be disturbed."
+  focusUntil: Timestamp
+  "When an away person is back, if they said."
+  awayBackOn: Timestamp
+  "Who covers while the person is away."
+  awayDelegateUserId: ID
+  awayNote: String!
+  "Whether the person chose to hide the assistant."
+  assistantHidden: Boolean!
   businessUnit: BusinessUnit
   currentOrganization: Organization
 }
 
+"Microsoft Entra ID sign-in for the organization. The client secret is write-only."
+type MicrosoftSSOConfig {
+  organizationId: ID!
+  enabled: Boolean!
+  enforceSso: Boolean!
+  tenantId: String!
+  clientId: String!
+  redirectUrl: String!
+  allowedDomains: [String!]!
+  secretConfigured: Boolean!
+}
+
+input MicrosoftSSOConfigInput {
+  enabled: Boolean!
+  enforceSso: Boolean!
+  tenantId: String!
+  clientId: String!
+  "Leave empty to keep the stored secret."
+  clientSecret: String
+  redirectUrl: String!
+  allowedDomains: [String!]
+}
+
+"Okta sign-in for the organization. The client secret is write-only."
+type OktaSSOConfig {
+  organizationId: ID!
+  enabled: Boolean!
+  enforceSso: Boolean!
+  issuerUrl: String!
+  clientId: String!
+  redirectUrl: String!
+  scopes: [String!]!
+  allowedDomains: [String!]!
+  secretConfigured: Boolean!
+}
+
+input OktaSSOConfigInput {
+  enabled: Boolean!
+  enforceSso: Boolean!
+  issuerUrl: String!
+  clientId: String!
+  "Leave empty to keep the stored secret."
+  clientSecret: String
+  redirectUrl: String!
+  scopes: [String!]
+  allowedDomains: [String!]
+}
+
 extend type Query {
+  microsoftSsoConfig: MicrosoftSSOConfig!
+  oktaSsoConfig: OktaSSOConfig!
   organization(id: ID!, includeState: Boolean = true, includeBu: Boolean = false): Organization!
 }
 
 extend type Mutation {
+  upsertMicrosoftSsoConfig(input: MicrosoftSSOConfigInput!): MicrosoftSSOConfig!
+  upsertOktaSsoConfig(input: OktaSSOConfigInput!): OktaSSOConfig!
   updateOrganization(id: ID!, input: OrganizationInput!): Organization!
 }
 `, BuiltIn: false},
@@ -32275,6 +32847,176 @@ extend type Mutation {
   "Creates a user in the current organization and emails them an invitation to choose their own password."
   createUser(input: CreateUserInput!): User!
   patchUser(id: ID!, input: UserPatchInput!): User!
+}
+
+"A role a person holds in the current organization."
+type UserRoleAssignment {
+  id: ID!
+  userId: ID!
+  organizationId: ID!
+  roleId: ID!
+  "Null when the role never lapses."
+  expiresAt: Timestamp
+  assignedBy: ID!
+  assignedAt: Timestamp!
+  role: Role
+}
+
+"An organization of the business unit a person may sign in to."
+type UserOrganizationMembership {
+  id: ID!
+  userId: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  isDefault: Boolean!
+  joinedAt: Timestamp!
+  "Null when the membership never lapses."
+  expiresAt: Timestamp
+}
+
+"How a teammate is drawn next to their name: their avatar style and whether they are around."
+type UserAvatar {
+  id: ID!
+  name: String!
+  username: String!
+  avatarStyle: AvatarStyle!
+  availability: AvailabilityStatus!
+  "When an away person is back, if they said."
+  awayBackOn: Timestamp
+  awayNote: String!
+}
+
+"A browser or device signed in as the caller."
+type SessionSummary {
+  id: ID!
+  label: String!
+  browser: String!
+  os: String!
+  "desktop, mobile, tablet or unknown."
+  device: String!
+  ipAddress: String!
+  authProvider: String!
+  createdAt: Timestamp!
+  lastAccessedAt: Timestamp!
+  expiresAt: Timestamp!
+  "Whether this is the session making the request."
+  current: Boolean!
+}
+
+"One of the caller's own recent sign-in attempts."
+type SignInSummary {
+  id: ID!
+  provider: String!
+  "success, challenge, denied or failed."
+  outcome: String!
+  mfaState: String!
+  errorCode: String!
+  ipAddress: String!
+  label: String!
+  "desktop, mobile, tablet or unknown."
+  device: String!
+  occurredAt: Timestamp!
+}
+
+"The caller's own two-factor sign-in."
+type MFAStatus {
+  totpEnabled: Boolean!
+  enrollmentPending: Boolean!
+  "Zero until an authenticator is confirmed."
+  enabledAt: Timestamp!
+  lastUsedAt: Timestamp!
+  recoveryCodesRemaining: Int!
+  recoveryCodesNeedReplacing: Boolean!
+  "Whether this session proved a second factor."
+  sessionVerified: Boolean!
+}
+
+"A pending authenticator. The secret is shown once, to the person enrolling it."
+type TOTPEnrollment {
+  authenticatorId: ID!
+  secret: String!
+  uri: String!
+  qrCode: String!
+}
+
+"One-time recovery codes, shown once to the person who generated them."
+type MFARecoveryCodes {
+  recoveryCodes: [String!]!
+}
+
+input BulkUpdateUserStatusInput {
+  userIds: [ID!]!
+  status: EntityStatus!
+}
+
+input UpdateMySettingsInput {
+  timezone: String!
+  timeFormat: TimeFormat!
+  locale: String!
+}
+
+input UpdateMyProfileInput {
+  "Omit to leave unchanged."
+  jobTitle: String
+  "Omit to leave unchanged."
+  phoneNumber: String
+  "Omit to leave unchanged."
+  avatarStyle: AvatarStyle
+}
+
+input UpdateMyAvailabilityInput {
+  status: AvailabilityStatus!
+  focusUntil: Timestamp
+  backOn: Timestamp
+  "Who covers while the caller is away; a person in the caller's organization."
+  delegateUserId: ID
+  awayNote: String
+}
+
+input DisableMyTotpInput {
+  password: String!
+  code: String
+  recoveryCode: String
+}
+
+extend type Query {
+  "The roles a person holds in the current organization."
+  userRoleAssignments(userId: ID!): [UserRoleAssignment!]!
+  "The organizations of the business unit a person may sign in to."
+  userOrganizationMemberships(userId: ID!): [UserOrganizationMembership!]!
+  "Avatar style and availability for up to 100 people of the caller's organization."
+  userAvatars(ids: [ID!]!): [UserAvatar!]!
+  myMfaStatus: MFAStatus!
+  mySessions: [SessionSummary!]!
+  "The caller's most recent sign-ins; 5 by default, at most 50."
+  mySignIns(limit: Int): [SignInSummary!]!
+}
+
+extend type Mutation {
+  "Sets the status of several people at once. A person cannot deactivate their own account."
+  bulkUpdateUserStatus(input: BulkUpdateUserStatusInput!): [User!]!
+  "Mails a person a link to choose a new password. Their current password keeps working until they use it."
+  resetUserPassword(userId: ID!): Boolean!
+  "Replaces the organizations of the business unit a person may sign in to."
+  replaceUserOrganizationMemberships(userId: ID!, organizationIds: [ID!]!): [UserOrganizationMembership!]!
+  "Removes a person's second sign-in factor so they enrol again."
+  resetUserMfa(userId: ID!): Boolean!
+  updateMySettings(input: UpdateMySettingsInput!): User!
+  updateMyProfile(input: UpdateMyProfileInput!): User!
+  updateMyAvailability(input: UpdateMyAvailabilityInput!): User!
+  setMyAssistantHidden(hidden: Boolean!): User!
+  "Signs out one of the caller's other sessions."
+  revokeMySession(sessionId: ID!): Boolean!
+  "Signs out every session of the caller but this one, and says how many."
+  revokeMyOtherSessions: Int!
+  "Starts enrolling an authenticator app. Needs the caller's password."
+  beginMyTotpEnrollment(password: String!): TOTPEnrollment!
+  "Confirms the pending authenticator with a code from it."
+  confirmMyTotpEnrollment(code: String!, name: String): MFARecoveryCodes!
+  "Turns off the caller's authenticator. Needs their password and a code or a recovery code."
+  disableMyTotp(input: DisableMyTotpInput!): Boolean!
+  "Replaces the caller's recovery codes. Needs a code from their authenticator."
+  regenerateMyRecoveryCodes(code: String!): MFARecoveryCodes!
 }
 `, BuiltIn: false},
 	{Name: "../schema/watchtower.graphqls", Input: `"""

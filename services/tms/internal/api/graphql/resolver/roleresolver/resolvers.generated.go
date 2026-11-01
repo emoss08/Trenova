@@ -12,6 +12,10 @@ type Deps struct {
 	RoleService *roleservice.Service
 }
 
+type MutationResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }
+
+type ResourcePermissionResolver struct{ *Deps }
 
 type RoleResolver struct{ *Deps }

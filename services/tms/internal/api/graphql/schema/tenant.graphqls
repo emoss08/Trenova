@@ -80,14 +80,75 @@ type User {
   updatedAt: Timestamp!
   lastLoginAt: Timestamp
   passwordChangedAt: Timestamp
+  "Until when a person focusing asked not to be disturbed."
+  focusUntil: Timestamp
+  "When an away person is back, if they said."
+  awayBackOn: Timestamp
+  "Who covers while the person is away."
+  awayDelegateUserId: ID
+  awayNote: String!
+  "Whether the person chose to hide the assistant."
+  assistantHidden: Boolean!
   businessUnit: BusinessUnit
   currentOrganization: Organization
 }
 
+"Microsoft Entra ID sign-in for the organization. The client secret is write-only."
+type MicrosoftSSOConfig {
+  organizationId: ID!
+  enabled: Boolean!
+  enforceSso: Boolean!
+  tenantId: String!
+  clientId: String!
+  redirectUrl: String!
+  allowedDomains: [String!]!
+  secretConfigured: Boolean!
+}
+
+input MicrosoftSSOConfigInput {
+  enabled: Boolean!
+  enforceSso: Boolean!
+  tenantId: String!
+  clientId: String!
+  "Leave empty to keep the stored secret."
+  clientSecret: String
+  redirectUrl: String!
+  allowedDomains: [String!]
+}
+
+"Okta sign-in for the organization. The client secret is write-only."
+type OktaSSOConfig {
+  organizationId: ID!
+  enabled: Boolean!
+  enforceSso: Boolean!
+  issuerUrl: String!
+  clientId: String!
+  redirectUrl: String!
+  scopes: [String!]!
+  allowedDomains: [String!]!
+  secretConfigured: Boolean!
+}
+
+input OktaSSOConfigInput {
+  enabled: Boolean!
+  enforceSso: Boolean!
+  issuerUrl: String!
+  clientId: String!
+  "Leave empty to keep the stored secret."
+  clientSecret: String
+  redirectUrl: String!
+  scopes: [String!]
+  allowedDomains: [String!]
+}
+
 extend type Query {
+  microsoftSsoConfig: MicrosoftSSOConfig!
+  oktaSsoConfig: OktaSSOConfig!
   organization(id: ID!, includeState: Boolean = true, includeBu: Boolean = false): Organization!
 }
 
 extend type Mutation {
+  upsertMicrosoftSsoConfig(input: MicrosoftSSOConfigInput!): MicrosoftSSOConfig!
+  upsertOktaSsoConfig(input: OktaSSOConfigInput!): OktaSSOConfig!
   updateOrganization(id: ID!, input: OrganizationInput!): Organization!
 }

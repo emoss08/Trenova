@@ -3,17 +3,9 @@ package userhandler
 import (
 	"net/http"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/responseguard"
-	"github.com/emoss08/trenova/internal/modules/identity/app/passwordresetservice"
-	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -26,209 +18,33 @@ import (
 type Params struct {
 	fx.In
 
-	Service              *userservice.Service
-	RoleService          *roleservice.Service
-	PasswordReset        *passwordresetservice.Service
-	PermissionEngine     permissionports.PermissionEngine
-	MFA                  sessionports.MFAService
-	ErrorHandler         *helpers.ErrorHandler
-	PermissionMiddleware *middleware.PermissionMiddleware
+	Service      *userservice.Service
+	ErrorHandler *helpers.ErrorHandler
 }
 
 type Handler struct {
-	service       *userservice.Service
-	roleService   *roleservice.Service
-	passwordReset *passwordresetservice.Service
-	permEngine    permissionports.PermissionEngine
-	mfa           sessionports.MFAService
-	eh            *helpers.ErrorHandler
-	pm            *middleware.PermissionMiddleware
+	service *userservice.Service
+	eh      *helpers.ErrorHandler
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service:       p.Service,
-		roleService:   p.RoleService,
-		passwordReset: p.PasswordReset,
-		permEngine:    p.PermissionEngine,
-		mfa:           p.MFA,
-		eh:            p.ErrorHandler,
-		pm:            p.PermissionMiddleware,
+		service: p.Service,
+		eh:      p.ErrorHandler,
 	}
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/users")
-	api.GET(
-		"/",
-		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpRead),
-		h.list,
-	)
-	api.GET(
-		"/:userID/",
-		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpRead),
-		h.get,
-	)
-	api.GET(
-		"/:userID/role-assignments/",
-		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpRead),
-		h.getRoleAssignments,
-	)
-	api.POST(
-		"/bulk-update-status/",
-		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpUpdate),
-		h.bulkUpdateStatus,
-	)
-	api.POST(
-		"/:userID/reset-password/",
-		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpUpdate),
-		h.sendPasswordReset,
-	)
-	api.GET(
-		"/:userID/organization-memberships/",
-		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpRead),
-		h.listOrganizationMemberships,
-	)
-	api.PUT(
-		"/:userID/organization-memberships/",
-		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpUpdate),
-		h.replaceOrganizationMemberships,
-	)
-	api.DELETE(
-		"/:userID/mfa/",
-		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpUpdate),
-		h.resetUserMFA,
-	)
 
 	meAPI := api.Group("/me", responseguard.SelfScoped())
 	meAPI.GET("/", h.me)
 	meAPI.POST("/switch-organization/", h.switchOrganization)
 	meAPI.GET("/organizations/", h.getOrganizations)
-	meAPI.PATCH("/settings/", h.updateMySettings)
 	meAPI.POST("/profile-picture/", h.uploadProfilePicture)
 	meAPI.DELETE("/profile-picture/", h.deleteProfilePicture)
 	meAPI.POST("/change-password/", h.changeMyPassword)
-	meAPI.PATCH("/profile/", h.updateMyProfile)
-	meAPI.PUT("/availability/", h.updateMyAvailability)
-	meAPI.PUT("/assistant-visibility/", h.updateMyAssistantVisibility)
-	meAPI.GET("/sessions/", h.listMySessions)
-	meAPI.POST("/sessions/revoke-others/", h.revokeMyOtherSessions)
-	meAPI.DELETE("/sessions/:sessionID/", h.revokeMySession)
-	meAPI.GET("/sign-ins/", h.listMySignIns)
-	meAPI.GET("/mfa/", h.getMyMFA)
-	meAPI.POST("/mfa/totp/enroll/", h.beginTOTPEnrollment)
-	meAPI.POST("/mfa/totp/confirm/", h.confirmTOTPEnrollment)
-	meAPI.POST("/mfa/totp/disable/", h.disableTOTP)
-	meAPI.POST("/mfa/recovery-codes/", h.regenerateRecoveryCodes)
 	api.GET("/:userID/profile-picture/", h.getProfilePictureURL)
-	api.GET("/avatars/", h.listAvatars)
-}
-
-// @Summary List users
-// @ID listUsers
-// @Tags Users
-// @Accept json
-// @Produce json
-// @Param query query string false "Search query"
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Param includeMemberships query bool false "Include organization memberships"
-// @Success 200 {object} pagination.Response[[]tenant.User]
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /users/ [get]
-func (h *Handler) list(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewQueryOptions(c, authCtx)
-
-	pagination.List(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*tenant.User], error) {
-			return h.service.List(
-				c.Request.Context(),
-				&tenantports.ListUsersRequest{
-					Filter:             req,
-					IncludeMemberships: helpers.QueryBool(c, "includeMemberships", false),
-				},
-			)
-		},
-	)
-}
-
-// @Summary Bulk update user statuses
-// @ID bulkUpdateUserStatus
-// @Tags Users
-// @Accept json
-// @Produce json
-// @Param request body repositories.BulkUpdateUserStatusRequest true "Bulk status update request"
-// @Success 200 {array} tenant.User
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /users/bulk-update-status/ [post]
-func (h *Handler) bulkUpdateStatus(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	req := new(tenantports.BulkUpdateUserStatusRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	req.TenantInfo = pagination.TenantInfo{
-		OrgID:  authCtx.OrganizationID,
-		BuID:   authCtx.BusinessUnitID,
-		UserID: authCtx.UserID,
-	}
-
-	results, err := h.service.BulkUpdateStatus(c.Request.Context(), req)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, results)
-}
-
-// @Summary Get a user
-// @ID getUser
-// @Tags Users
-// @Produce json
-// @Param userID path string true "User ID"
-// @Param includeMemberships query bool false "Include organization memberships"
-// @Success 200 {object} tenant.User
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /users/{userID}/ [get]
-func (h *Handler) get(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	userID, err := pulid.MustParse(c.Param("userID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.service.GetByID(c.Request.Context(), tenantports.GetUserByIDRequest{
-		TenantInfo:         pagination.FromAuthAsUser(authCtx),
-		LookupUserID:       userID,
-		IncludeMemberships: helpers.QueryBool(c, "includeMemberships", false),
-	})
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Get current user
@@ -255,39 +71,6 @@ func (h *Handler) me(c *gin.Context) {
 	respondWithSelf(c, entity)
 }
 
-// @Summary Get user role assignments
-// @ID getUserRoleAssignments
-// @Tags Users
-// @Produce json
-// @Param userID path string true "User ID"
-// @Success 200 {array} rbac.UserRoleAssignment
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /users/{userID}/role-assignments/ [get]
-func (h *Handler) getRoleAssignments(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	userID, err := pulid.MustParse(c.Param("userID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	assignments, err := h.roleService.GetUserRoleAssignments(
-		c.Request.Context(),
-		userID,
-		authCtx.OrganizationID,
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, assignments)
-}
-
 // @Summary List current user organizations
 // @ID listCurrentUserOrganizations
 // @Tags Users
@@ -311,66 +94,6 @@ func (h *Handler) getOrganizations(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusOK, orgs)
-}
-
-// @Summary Update current user settings
-// @ID updateCurrentUserSettings
-// @Tags Users
-// @Accept json
-// @Produce json
-// @Param request body UpdateMySettingsRequest true "Current user settings payload"
-// @Success 200 {object} tenant.User
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /users/me/settings/ [patch]
-func (h *Handler) updateMySettings(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	var raw map[string]any
-	if err := c.ShouldBindJSON(&raw); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	if err := validateMySettingsFields(raw); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	body, err := sonic.Marshal(raw)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	var req UpdateMySettingsRequest
-	if err = sonic.Unmarshal(body, &req); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	updated, err := h.service.UpdateMySettings(
-		c.Request.Context(),
-		pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
-		userservice.UpdateMySettingsRequest{
-			Timezone:   req.Timezone,
-			TimeFormat: req.TimeFormat,
-			Locale:     req.Locale,
-			SessionID:  authCtx.SessionID,
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	respondWithSelf(c, updated)
 }
 
 // @Summary Upload current user profile picture
@@ -512,115 +235,6 @@ func (h *Handler) changeMyPassword(c *gin.Context) {
 	}
 
 	respondWithSelf(c, updated)
-}
-
-func validateMySettingsFields(raw map[string]any) error {
-	me := errortypes.NewMultiError()
-
-	for _, field := range []string{"name", "username", "emailAddress"} {
-		if _, ok := raw[field]; ok {
-			me.Add(
-				field,
-				errortypes.ErrInvalidOperation,
-				"This field can only be changed by an administrator",
-			)
-		}
-	}
-
-	if me.HasErrors() {
-		return me
-	}
-
-	return nil
-}
-
-// @Summary List user organization memberships
-// @ID listUserOrganizationMemberships
-// @Tags Users
-// @Produce json
-// @Param userID path string true "User ID"
-// @Success 200 {array} tenant.OrganizationMembership
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /users/{userID}/organization-memberships/ [get]
-func (h *Handler) listOrganizationMemberships(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	userID, err := pulid.MustParse(c.Param("userID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	memberships, err := h.service.ListOrganizationMemberships(
-		c.Request.Context(),
-		userID,
-		authCtx.BusinessUnitID,
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, memberships)
-}
-
-// @Summary Replace user organization memberships
-// @ID replaceUserOrganizationMemberships
-// @Tags Users
-// @Accept json
-// @Produce json
-// @Param userID path string true "User ID"
-// @Param request body ReplaceOrganizationMembershipsRequest true "Organization membership replacement request"
-// @Success 200 {array} tenant.OrganizationMembership
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /users/{userID}/organization-memberships/ [put]
-func (h *Handler) replaceOrganizationMemberships(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	userID, err := pulid.MustParse(c.Param("userID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	var req ReplaceOrganizationMembershipsRequest
-	if err = c.ShouldBindJSON(&req); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	organizationIDs := make([]pulid.ID, 0, len(req.OrganizationIDs))
-	for _, id := range req.OrganizationIDs {
-		orgID, parseErr := pulid.MustParse(id)
-		if parseErr != nil {
-			h.eh.HandleError(c, parseErr)
-			return
-		}
-		organizationIDs = append(organizationIDs, orgID)
-	}
-
-	updatedMemberships, err := h.service.ReplaceOrganizationMemberships(
-		c.Request.Context(),
-		authCtx.UserID,
-		userID,
-		authCtx.OrganizationID,
-		authCtx.BusinessUnitID,
-		organizationIDs,
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, updatedMemberships)
 }
 
 // @Summary Switch current organization

@@ -1,0 +1,307 @@
+fragment IdentityProviderFields on IdentityProvider {
+  id
+  organizationId
+  businessUnitId
+  name
+  slug
+  protocol
+  enabled
+  enforceSso
+  autoProvision
+  allowFederatedMfa
+  federatedMfaAcrValues
+  allowedDomains
+  attributeMap
+  oidcIssuerUrl
+  oidcClientId
+  oidcRedirectUrl
+  oidcScopes
+  version
+  createdAt
+  updatedAt
+}
+
+query IdentityProviders {
+  identityProviders {
+    ...IdentityProviderFields
+  }
+}
+
+mutation CreateIdentityProvider($input: IdentityProviderInput!) {
+  createIdentityProvider(input: $input) {
+    ...IdentityProviderFields
+  }
+}
+
+mutation UpdateIdentityProvider($id: ID!, $input: IdentityProviderInput!) {
+  updateIdentityProvider(id: $id, input: $input) {
+    ...IdentityProviderFields
+  }
+}
+
+mutation DeleteIdentityProvider($id: ID!) {
+  deleteIdentityProvider(id: $id)
+}
+
+fragment AccessPolicyFields on AccessPolicy {
+  id
+  organizationId
+  businessUnitId
+  name
+  resource
+  operation
+  effect
+  priority
+  conditions
+  enabled
+  createdAt
+  updatedAt
+}
+
+query AccessPolicies {
+  accessPolicies {
+    ...AccessPolicyFields
+  }
+}
+
+mutation CreateAccessPolicy($input: AccessPolicyInput!) {
+  createAccessPolicy(input: $input) {
+    ...AccessPolicyFields
+  }
+}
+
+mutation UpdateAccessPolicy($id: ID!, $input: AccessPolicyInput!) {
+  updateAccessPolicy(id: $id, input: $input) {
+    ...AccessPolicyFields
+  }
+}
+
+mutation DeleteAccessPolicy($id: ID!) {
+  deleteAccessPolicy(id: $id)
+}
+
+query AccessSettings {
+  accessSettings {
+    organizationId
+    businessUnitId
+    requireRoleActivation
+    version
+  }
+}
+
+mutation UpdateAccessSettings($input: UpdateAccessSettingsInput!) {
+  updateAccessSettings(input: $input) {
+    organizationId
+    businessUnitId
+    requireRoleActivation
+    version
+  }
+}
+
+fragment SCIMDirectoryMutationFields on SCIMDirectory {
+  id
+  organizationId
+  businessUnitId
+  tenantSlug
+  enabled
+  createdAt
+  updatedAt
+}
+
+mutation CreateSCIMDirectory($input: SCIMDirectoryInput!) {
+  createSCIMDirectory(input: $input) {
+    ...SCIMDirectoryMutationFields
+  }
+}
+
+mutation UpdateSCIMDirectory($id: ID!, $input: SCIMDirectoryInput!) {
+  updateSCIMDirectory(id: $id, input: $input) {
+    ...SCIMDirectoryMutationFields
+  }
+}
+
+mutation DeleteSCIMDirectory($id: ID!) {
+  deleteSCIMDirectory(id: $id)
+}
+
+fragment SCIMTokenFields on SCIMToken {
+  id
+  organizationId
+  directoryId
+  name
+  prefix
+  status
+  lastUsedAt
+  expiresAt
+  createdAt
+  updatedAt
+}
+
+query SCIMTokens($directoryId: ID!) {
+  scimTokens(directoryId: $directoryId) {
+    ...SCIMTokenFields
+  }
+}
+
+mutation CreateSCIMToken($directoryId: ID!, $input: CreateSCIMTokenInput!) {
+  createSCIMToken(directoryId: $directoryId, input: $input) {
+    token
+    scimToken {
+      ...SCIMTokenFields
+    }
+  }
+}
+
+mutation RevokeSCIMToken($id: ID!) {
+  revokeSCIMToken(id: $id) {
+    ...SCIMTokenFields
+  }
+}
+
+fragment SCIMGroupRoleMappingMutationFields on SCIMGroupRoleMapping {
+  id
+  organizationId
+  businessUnitId
+  directoryId
+  externalGroupId
+  displayName
+  roleId
+  version
+  createdAt
+  updatedAt
+}
+
+mutation CreateSCIMGroupRoleMapping($directoryId: ID!, $input: SCIMGroupRoleMappingInput!) {
+  createSCIMGroupRoleMapping(directoryId: $directoryId, input: $input) {
+    ...SCIMGroupRoleMappingMutationFields
+  }
+}
+
+mutation UpdateSCIMGroupRoleMapping($id: ID!, $input: SCIMGroupRoleMappingInput!) {
+  updateSCIMGroupRoleMapping(id: $id, input: $input) {
+    ...SCIMGroupRoleMappingMutationFields
+  }
+}
+
+mutation DeleteSCIMGroupRoleMapping($id: ID!) {
+  deleteSCIMGroupRoleMapping(id: $id)
+}
+
+query ProvisioningAuditRecords($directoryId: ID, $limit: Int) {
+  provisioningAuditRecords(directoryId: $directoryId, limit: $limit) {
+    id
+    organizationId
+    directoryId
+    action
+    resourceType
+    externalId
+    resourceId
+    status
+    errorMessage
+    createdAt
+  }
+}
+
+query SecurityBriefing {
+  securityBriefing {
+    generatedAt
+    signInWindowDays
+    dormantAfterDays
+    apiKeyUnusedAfterDays
+    apiKeyExpiringWithinDays
+    findings {
+      code
+      severity
+      count
+      total
+    }
+    session {
+      maxAgeSeconds
+      idleTimeoutSeconds
+      idleWarningSeconds
+    }
+    members {
+      active
+      locked
+      neverSignedIn
+      dormant
+      mustChangePassword
+    }
+    mfa {
+      enrolled
+      total
+      unenrolled {
+        userId
+        name
+        emailAddress
+        lastLoginAt
+      }
+    }
+    signIns {
+      succeeded
+      failed
+      denied
+      throttled
+      riskDenied
+    }
+    apiKeys {
+      active
+      withoutExpiry
+      unused
+      expiringSoon
+    }
+    sso {
+      enabledProviders
+      enforced
+      enforcedProviderName
+      trustsFederatedMfa
+    }
+    provisioning {
+      activeDirectories
+    }
+    policies {
+      enabled
+      requiringMfa
+      roleActivationRequired
+    }
+  }
+}
+
+query RecentAuthEvents($first: Int!) {
+  authEvents(input: { first: $first, sort: [{ field: "occurredAt", direction: "desc" }] }) {
+    edges {
+      node {
+        id
+        userId
+        identityProviderId
+        provider
+        outcome
+        ipAddress
+        userAgent
+        authenticatorAal
+        federationFal
+        mfaState
+        riskOutcome
+        riskSignals
+        errorCode
+        occurredAt
+        createdAt
+      }
+    }
+  }
+}
+
+query RecentRiskDecisions($first: Int!) {
+  riskDecisions(input: { first: $first, sort: [{ field: "createdAt", direction: "desc" }] }) {
+    edges {
+      node {
+        id
+        userId
+        outcome
+        signals
+        reason
+        createdAt
+      }
+    }
+  }
+}

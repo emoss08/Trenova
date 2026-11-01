@@ -1,0 +1,55 @@
+fragment ApiKeyDetailFields on ApiKeyDetail {
+  id
+  businessUnitId
+  organizationId
+  name
+  description
+  keyPrefix
+  status
+  expiresAt
+  lastUsedAt
+  createdAt
+  updatedAt
+  permissionScope
+  permissions {
+    resource
+    operations
+    dataScope
+  }
+}
+
+query ApiKeyDetail($id: ID!) {
+  apiKeyDetail(id: $id) {
+    ...ApiKeyDetailFields
+  }
+}
+
+mutation CreateApiKey($input: ApiKeyInput!) {
+  createApiKey(input: $input) {
+    token
+    apiKey {
+      ...ApiKeyDetailFields
+    }
+  }
+}
+
+mutation UpdateApiKey($id: ID!, $input: ApiKeyInput!) {
+  updateApiKey(id: $id, input: $input) {
+    ...ApiKeyDetailFields
+  }
+}
+
+mutation RotateApiKey($id: ID!) {
+  rotateApiKey(id: $id) {
+    token
+    apiKey {
+      ...ApiKeyDetailFields
+    }
+  }
+}
+
+mutation RevokeApiKey($id: ID!) {
+  revokeApiKey(id: $id) {
+    ...ApiKeyDetailFields
+  }
+}

@@ -85,35 +85,35 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 85 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 79 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 247 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 48 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 112 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
-| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 48 |
+| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 47 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 53 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 10 |
 
 ## Totals
 
-1123 writes: 671 GraphQL mutations and 452 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1116 writes: 711 GraphQL mutations and 405 REST writes, after merging 26 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 443 |
-| Exempt | 678 |
-| — Security | 85 |
+| Exempt | 671 |
+| — Security | 79 |
 | — Configuration | 247 |
 | — User preference | 40 |
 | — Infrastructure | 48 |
 | — Agent administration | 112 |
 | — Counterparty | 35 |
-| — Read-only | 48 |
+| — Read-only | 47 |
 | — Attestation | 53 |
 | — Duplicate | 10 |
 | **Pending** | **2** |
-| Total | 1123 |
+| Total | 1116 |
 
 Of the 445 writes an agent should be able to make, 443 have a tool (99%).
 
@@ -246,13 +246,12 @@ The writes no tool performs yet, and what the tool would do.
 | notificationpreference | 1 | 0 | 1 | 0 |
 | onboarding | 1 | 0 | 1 | 0 |
 | order | 10 | 10 | 0 | 0 |
-| organization | 4 | 0 | 4 | 0 |
+| organization | 2 | 0 | 2 | 0 |
 | orgholiday | 3 | 0 | 3 | 0 |
 | orgstructure | 6 | 0 | 6 | 0 |
 | pagefavorite | 1 | 0 | 1 | 0 |
 | palette | 3 | 0 | 3 | 0 |
 | performancereview | 11 | 3 | 8 | 0 |
-| permission | 1 | 0 | 1 | 0 |
 | permit | 3 | 2 | 1 | 0 |
 | ptopolicy | 8 | 1 | 7 | 0 |
 | push | 2 | 0 | 2 | 0 |
@@ -267,7 +266,7 @@ The writes no tool performs yet, and what the tool would do.
 | realtime | 4 | 0 | 4 | 0 |
 | recurringshipment | 5 | 4 | 1 | 0 |
 | report | 19 | 13 | 6 | 0 |
-| role | 11 | 0 | 11 | 0 |
+| role | 5 | 0 | 5 | 0 |
 | routingguide | 3 | 0 | 3 | 0 |
 | scheduling | 7 | 5 | 2 | 0 |
 | selfservice | 3 | 0 | 3 | 0 |
@@ -287,7 +286,7 @@ The writes no tool performs yet, and what the tool would do.
 | tablelayout | 2 | 0 | 2 | 0 |
 | tablequery | 1 | 0 | 1 | 0 |
 | telematics | 4 | 0 | 4 | 0 |
-| tenant | 1 | 0 | 1 | 0 |
+| tenant | 3 | 0 | 3 | 0 |
 | tender | 5 | 5 | 0 | 0 |
 | tenderpublic | 3 | 0 | 3 | 0 |
 | timesheet | 7 | 2 | 5 | 0 |
@@ -546,10 +545,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/api-keys/`<br>apikeyhandler.create | Exempt, security: API keys grant programmatic access to the organization; only a person issues, rotates or revokes one. |
-| `POST /api/v1/api-keys/:apiKeyID/revoke/`<br>apikeyhandler.revoke | Exempt, security: API keys grant programmatic access to the organization; only a person issues, rotates or revokes one. |
-| `POST /api/v1/api-keys/:apiKeyID/rotate/`<br>apikeyhandler.rotate | Exempt, security: API keys grant programmatic access to the organization; only a person issues, rotates or revokes one. |
-| `PUT /api/v1/api-keys/:apiKeyID/`<br>apikeyhandler.update | Exempt, security: API keys grant programmatic access to the organization; only a person issues, rotates or revokes one. |
+| `mutation createApiKey` | Exempt, security: API keys grant programmatic access to the organization; only a person issues, rotates or revokes one. |
+| `mutation revokeApiKey` | Exempt, security: API keys grant programmatic access to the organization; only a person issues, rotates or revokes one. |
+| `mutation rotateApiKey` | Exempt, security: API keys grant programmatic access to the organization; only a person issues, rotates or revokes one. |
+| `mutation updateApiKey` | Exempt, security: API keys grant programmatic access to the organization; only a person issues, rotates or revokes one. |
 
 ### assignment
 
@@ -1413,21 +1412,21 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/organizations/:id/iam/access-policies/:policyId`<br>iamhandler.deleteAccessPolicy | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
-| `DELETE /api/v1/organizations/:id/iam/identity-providers/:providerId`<br>iamhandler.deleteIdentityProvider | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
-| `DELETE /api/v1/organizations/:id/iam/scim/directories/:directoryId`<br>iamhandler.deleteSCIMDirectory | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
-| `DELETE /api/v1/organizations/:id/iam/scim/directories/:directoryId/group-role-mappings/:mappingId`<br>iamhandler.deleteSCIMGroupRoleMapping | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
-| `POST /api/v1/organizations/:id/iam/access-policies`<br>iamhandler.createAccessPolicy | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
-| `POST /api/v1/organizations/:id/iam/identity-providers`<br>iamhandler.createIdentityProvider | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
-| `POST /api/v1/organizations/:id/iam/scim/directories`<br>iamhandler.createSCIMDirectory | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
-| `POST /api/v1/organizations/:id/iam/scim/directories/:directoryId/group-role-mappings`<br>iamhandler.createSCIMGroupRoleMapping | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
-| `POST /api/v1/organizations/:id/iam/scim/directories/:directoryId/tokens`<br>iamhandler.createSCIMToken | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
-| `POST /api/v1/organizations/:id/iam/scim/tokens/:tokenId/revoke`<br>iamhandler.revokeSCIMToken | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
-| `PUT /api/v1/organizations/:id/iam/access-policies/:policyId`<br>iamhandler.updateAccessPolicy | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
-| `PUT /api/v1/organizations/:id/iam/access-settings`<br>iamhandler.updateAccessSettings | Exempt, security: Decides whether people choose the roles they work under; it changes what everyone may do. |
-| `PUT /api/v1/organizations/:id/iam/identity-providers/:providerId`<br>iamhandler.updateIdentityProvider | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
-| `PUT /api/v1/organizations/:id/iam/scim/directories/:directoryId`<br>iamhandler.updateSCIMDirectory | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
-| `PUT /api/v1/organizations/:id/iam/scim/directories/:directoryId/group-role-mappings/:mappingId`<br>iamhandler.updateSCIMGroupRoleMapping | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
+| `mutation createAccessPolicy` | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
+| `mutation createIdentityProvider` | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
+| `mutation createSCIMDirectory` | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
+| `mutation createSCIMGroupRoleMapping` | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
+| `mutation createSCIMToken` | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
+| `mutation deleteAccessPolicy` | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
+| `mutation deleteIdentityProvider` | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
+| `mutation deleteSCIMDirectory` | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
+| `mutation deleteSCIMGroupRoleMapping` | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
+| `mutation revokeSCIMToken` | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
+| `mutation updateAccessPolicy` | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
+| `mutation updateAccessSettings` | Exempt, security: Decides whether people choose the roles they work under; it changes what everyone may do. |
+| `mutation updateIdentityProvider` | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
+| `mutation updateSCIMDirectory` | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
+| `mutation updateSCIMGroupRoleMapping` | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
 
 ### ifta
 
@@ -1687,8 +1686,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `DELETE /api/v1/organizations/:id/logo`<br>organizationhandler.deleteLogo | Exempt, configuration: The organization's logo on every document it sends. |
 | `POST /api/v1/organizations/:id/logo`<br>organizationhandler.uploadLogo | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
-| `PUT /api/v1/organizations/:id/microsoft-sso`<br>organizationhandler.upsertMicrosoftSSOConfig | Exempt, security: Single sign-on decides who can sign in to the organization. |
-| `PUT /api/v1/organizations/:id/okta-sso`<br>organizationhandler.upsertOktaSSOConfig | Exempt, security: Single sign-on decides who can sign in to the organization. |
 
 ### orgholiday
 
@@ -1738,12 +1735,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation submitPerformanceReview` | Exempt, attestation: Submitting is the reviewer signing the assessment and sending it to the worker to acknowledge; an agent drafts, it does not sign. |
 | `mutation updatePerformanceReview` | Tool: `worker_update_performance_review` |
 | `mutation updatePerformanceReviewTemplate` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-
-### permission
-
-| Write | Decision |
-| --- | --- |
-| `POST /api/v1/me/permissions/check`<br>permissionhandler.checkBatch | Exempt, read-only: Checks which permissions the caller holds. |
 
 ### permit
 
@@ -1893,17 +1884,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/roles/:roleID`<br>rolehandler.delete | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
-| `DELETE /api/v1/roles/:roleID/permissions/:permID`<br>rolehandler.deletePermission | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
-| `DELETE /api/v1/roles/assignments/:assignmentID`<br>rolehandler.unassignRole | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
-| `DELETE /api/v1/roles/constraints/:constraintID`<br>rolehandler.deleteConstraint | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
-| `DELETE /api/v1/roles/hierarchy/:edgeID`<br>rolehandler.deleteHierarchy | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
-| `POST /api/v1/roles/`<br>rolehandler.create | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
-| `POST /api/v1/roles/:roleID/assignments`<br>rolehandler.assignRole | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
-| `POST /api/v1/roles/constraints`<br>rolehandler.saveConstraint<br>also `PUT /api/v1/roles/constraints/:constraintID` | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
-| `POST /api/v1/roles/hierarchy`<br>rolehandler.upsertHierarchy | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
-| `PUT /api/v1/roles/:roleID`<br>rolehandler.update | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
-| `PUT /api/v1/roles/:roleID/permissions/:permID`<br>rolehandler.updatePermission | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
+| `mutation assignRole` | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
+| `mutation createRole` | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
+| `mutation deleteRole` | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
+| `mutation unassignRole` | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
+| `mutation updateRole` | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
 
 ### routingguide
 
@@ -2092,7 +2077,9 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation updateOrganization`<br>twin `PUT /api/v1/organizations/:id` | Exempt, configuration: The organization's own profile and settings. |
+| `mutation updateOrganization` | Exempt, configuration: The organization's own profile and settings. |
+| `mutation upsertMicrosoftSsoConfig` | Exempt, security: Single sign-on decides who can sign in to the organization. |
+| `mutation upsertOktaSsoConfig` | Exempt, security: Single sign-on decides who can sign in to the organization. |
 
 ### tender
 
@@ -2161,26 +2148,26 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `mutation beginMyTotpEnrollment` | Exempt, security: A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one. |
+| `mutation bulkUpdateUserStatus` | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
+| `mutation confirmMyTotpEnrollment` | Exempt, security: A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one. |
 | `mutation createUser` | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
+| `mutation disableMyTotp` | Exempt, security: A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one. |
 | `mutation patchUser` | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
-| `DELETE /api/v1/users/:userID/mfa/`<br>userhandler.resetUserMFA | Exempt, security: Resetting a person's second sign-in factor decides who can sign in as them. |
+| `mutation regenerateMyRecoveryCodes` | Exempt, security: A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one. |
+| `mutation replaceUserOrganizationMemberships` | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
+| `mutation resetUserMfa` | Exempt, security: Resetting a person's second sign-in factor decides who can sign in as them. |
+| `mutation resetUserPassword` | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
+| `mutation revokeMyOtherSessions` | Exempt, security: Signing a device out decides who can act as the person; an agent never ends someone's sessions. |
+| `mutation revokeMySession` | Exempt, security: Signing a device out decides who can act as the person; an agent never ends someone's sessions. |
+| `mutation setMyAssistantHidden` | Exempt, user-preference: Whether a person sees the assistant at all is theirs to choose; an agent never turns itself on or off for someone. |
+| `mutation updateMyAvailability` | Exempt, user-preference: Whether a person is available, focusing or away, and who covers for them, is theirs alone to say. |
+| `mutation updateMyProfile` | Exempt, user-preference: A person's own job title, phone and avatar; they describe themselves and no agent speaks for them. |
+| `mutation updateMySettings` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `DELETE /api/v1/users/me/profile-picture/`<br>userhandler.deleteProfilePicture | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
-| `DELETE /api/v1/users/me/sessions/:sessionID/`<br>userhandler.revokeMySession | Exempt, security: Signing a device out decides who can act as the person; an agent never ends someone's sessions. |
-| `PATCH /api/v1/users/me/profile/`<br>userhandler.updateMyProfile | Exempt, user-preference: A person's own job title, phone and avatar; they describe themselves and no agent speaks for them. |
-| `PATCH /api/v1/users/me/settings/`<br>userhandler.updateMySettings | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
-| `POST /api/v1/users/:userID/reset-password/`<br>userhandler.sendPasswordReset | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
-| `POST /api/v1/users/bulk-update-status/`<br>userhandler.bulkUpdateStatus | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
 | `POST /api/v1/users/me/change-password/`<br>userhandler.changeMyPassword | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
-| `POST /api/v1/users/me/mfa/recovery-codes/`<br>userhandler.regenerateRecoveryCodes | Exempt, security: A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one. |
-| `POST /api/v1/users/me/mfa/totp/confirm/`<br>userhandler.confirmTOTPEnrollment | Exempt, security: A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one. |
-| `POST /api/v1/users/me/mfa/totp/disable/`<br>userhandler.disableTOTP | Exempt, security: A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one. |
-| `POST /api/v1/users/me/mfa/totp/enroll/`<br>userhandler.beginTOTPEnrollment | Exempt, security: A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one. |
 | `POST /api/v1/users/me/profile-picture/`<br>userhandler.uploadProfilePicture | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
-| `POST /api/v1/users/me/sessions/revoke-others/`<br>userhandler.revokeMyOtherSessions | Exempt, security: Signing a device out decides who can act as the person; an agent never ends someone's sessions. |
 | `POST /api/v1/users/me/switch-organization/`<br>userhandler.switchOrganization | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
-| `PUT /api/v1/users/:userID/organization-memberships/`<br>userhandler.replaceOrganizationMemberships | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
-| `PUT /api/v1/users/me/assistant-visibility/`<br>userhandler.updateMyAssistantVisibility | Exempt, user-preference: Whether a person sees the assistant at all is theirs to choose; an agent never turns itself on or off for someone. |
-| `PUT /api/v1/users/me/availability/`<br>userhandler.updateMyAvailability | Exempt, user-preference: Whether a person is available, focusing or away, and who covers for them, is theirs alone to say. |
 
 ### version
 

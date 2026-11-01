@@ -76,3 +76,173 @@ extend type Mutation {
   createUser(input: CreateUserInput!): User!
   patchUser(id: ID!, input: UserPatchInput!): User!
 }
+
+"A role a person holds in the current organization."
+type UserRoleAssignment {
+  id: ID!
+  userId: ID!
+  organizationId: ID!
+  roleId: ID!
+  "Null when the role never lapses."
+  expiresAt: Timestamp
+  assignedBy: ID!
+  assignedAt: Timestamp!
+  role: Role
+}
+
+"An organization of the business unit a person may sign in to."
+type UserOrganizationMembership {
+  id: ID!
+  userId: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  isDefault: Boolean!
+  joinedAt: Timestamp!
+  "Null when the membership never lapses."
+  expiresAt: Timestamp
+}
+
+"How a teammate is drawn next to their name: their avatar style and whether they are around."
+type UserAvatar {
+  id: ID!
+  name: String!
+  username: String!
+  avatarStyle: AvatarStyle!
+  availability: AvailabilityStatus!
+  "When an away person is back, if they said."
+  awayBackOn: Timestamp
+  awayNote: String!
+}
+
+"A browser or device signed in as the caller."
+type SessionSummary {
+  id: ID!
+  label: String!
+  browser: String!
+  os: String!
+  "desktop, mobile, tablet or unknown."
+  device: String!
+  ipAddress: String!
+  authProvider: String!
+  createdAt: Timestamp!
+  lastAccessedAt: Timestamp!
+  expiresAt: Timestamp!
+  "Whether this is the session making the request."
+  current: Boolean!
+}
+
+"One of the caller's own recent sign-in attempts."
+type SignInSummary {
+  id: ID!
+  provider: String!
+  "success, challenge, denied or failed."
+  outcome: String!
+  mfaState: String!
+  errorCode: String!
+  ipAddress: String!
+  label: String!
+  "desktop, mobile, tablet or unknown."
+  device: String!
+  occurredAt: Timestamp!
+}
+
+"The caller's own two-factor sign-in."
+type MFAStatus {
+  totpEnabled: Boolean!
+  enrollmentPending: Boolean!
+  "Zero until an authenticator is confirmed."
+  enabledAt: Timestamp!
+  lastUsedAt: Timestamp!
+  recoveryCodesRemaining: Int!
+  recoveryCodesNeedReplacing: Boolean!
+  "Whether this session proved a second factor."
+  sessionVerified: Boolean!
+}
+
+"A pending authenticator. The secret is shown once, to the person enrolling it."
+type TOTPEnrollment {
+  authenticatorId: ID!
+  secret: String!
+  uri: String!
+  qrCode: String!
+}
+
+"One-time recovery codes, shown once to the person who generated them."
+type MFARecoveryCodes {
+  recoveryCodes: [String!]!
+}
+
+input BulkUpdateUserStatusInput {
+  userIds: [ID!]!
+  status: EntityStatus!
+}
+
+input UpdateMySettingsInput {
+  timezone: String!
+  timeFormat: TimeFormat!
+  locale: String!
+}
+
+input UpdateMyProfileInput {
+  "Omit to leave unchanged."
+  jobTitle: String
+  "Omit to leave unchanged."
+  phoneNumber: String
+  "Omit to leave unchanged."
+  avatarStyle: AvatarStyle
+}
+
+input UpdateMyAvailabilityInput {
+  status: AvailabilityStatus!
+  focusUntil: Timestamp
+  backOn: Timestamp
+  "Who covers while the caller is away; a person in the caller's organization."
+  delegateUserId: ID
+  awayNote: String
+}
+
+input DisableMyTotpInput {
+  password: String!
+  code: String
+  recoveryCode: String
+}
+
+extend type Query {
+  "The roles a person holds in the current organization."
+  userRoleAssignments(userId: ID!): [UserRoleAssignment!]!
+  "The organizations of the business unit a person may sign in to."
+  userOrganizationMemberships(userId: ID!): [UserOrganizationMembership!]!
+  "Avatar style and availability for up to 100 people of the caller's organization."
+  userAvatars(ids: [ID!]!): [UserAvatar!]!
+  myMfaStatus: MFAStatus!
+  mySessions: [SessionSummary!]!
+  "The caller's most recent sign-ins; 5 by default, at most 50."
+  mySignIns(limit: Int): [SignInSummary!]!
+}
+
+extend type Mutation {
+  "Sets the status of several people at once. A person cannot deactivate their own account."
+  bulkUpdateUserStatus(input: BulkUpdateUserStatusInput!): [User!]!
+  "Mails a person a link to choose a new password. Their current password keeps working until they use it."
+  resetUserPassword(userId: ID!): Boolean!
+  "Replaces the organizations of the business unit a person may sign in to."
+  replaceUserOrganizationMemberships(userId: ID!, organizationIds: [ID!]!): [UserOrganizationMembership!]!
+  "Removes a person's second sign-in factor so they enrol again."
+  resetUserMfa(userId: ID!): Boolean!
+  updateMySettings(input: UpdateMySettingsInput!): User!
+  updateMyProfile(input: UpdateMyProfileInput!): User!
+  updateMyAvailability(input: UpdateMyAvailabilityInput!): User!
+  setMyAssistantHidden(hidden: Boolean!): User!
+  "Signs out one of the caller's other sessions."
+  revokeMySession(sessionId: ID!): Boolean!
+  "Signs out every session of the caller but this one, and says how many."
+  revokeMyOtherSessions: Int!
+  "Starts enrolling an authenticator app. Needs the caller's password."
+  beginMyTotpEnrollment(password: String!): TOTPEnrollment!
+  "Confirms the pending authenticator with a code from it."
+  confirmMyTotpEnrollment(code: String!, name: String): MFARecoveryCodes!
+  "Turns off the caller's authenticator. Needs their password and a code or a recovery code."
+  disableMyTotp(input: DisableMyTotpInput!): Boolean!
+  "Replaces the caller's recovery codes. Needs a code from their authenticator."
+  regenerateMyRecoveryCodes(code: String!): MFARecoveryCodes!
+}

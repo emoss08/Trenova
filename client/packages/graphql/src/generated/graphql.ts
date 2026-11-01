@@ -484,6 +484,16 @@ export type AiWorkSource =
   /** A call a feature made on its own, such as reading a document. */
   | 'Call';
 
+export type AccessPolicyInput = {
+  conditions?: unknown;
+  effect: string;
+  enabled: boolean;
+  name: string;
+  operation: string;
+  priority: number;
+  resource: string;
+};
+
 export type AccessorialChargeInput = {
   amount: string;
   code: string;
@@ -1675,6 +1685,20 @@ export type AmendWorkerEmploymentEventInput = {
   version?: number | null | undefined;
 };
 
+export type ApiKeyInput = {
+  description?: string | null | undefined;
+  /** Zero or omitted for a key that never expires. */
+  expiresAt?: number | null | undefined;
+  name: string;
+  permissions: Array<ApiKeyPermissionInput>;
+};
+
+export type ApiKeyPermissionInput = {
+  dataScope: string;
+  operations: Array<string>;
+  resource: string;
+};
+
 export type ApplyCarrierIntelSuggestionsInput = {
   carrierId: string | number;
   fields?: Array<CarrierIntelSyncField> | null | undefined;
@@ -1744,6 +1768,12 @@ export type AssignPayProfileInput = {
   /** Defaults to 100. Use 50 for an even team split. */
   splitPercent?: string | null | undefined;
   workerId: string | number;
+};
+
+export type AssignRoleInput = {
+  /** Null for a role that never lapses. */
+  expiresAt?: number | null | undefined;
+  userId: string | number;
 };
 
 export type AssignShiftInput = {
@@ -2076,6 +2106,11 @@ export type BulkUpdateFleetCodeStatusInput = {
 export type BulkUpdateHazardousMaterialStatusInput = {
   hazardousMaterialIds: Array<string | number>;
   status: EntityStatus;
+};
+
+export type BulkUpdateUserStatusInput = {
+  status: EntityStatus;
+  userIds: Array<string | number>;
 };
 
 export type BulkWorkerPtoActionInput = {
@@ -3095,6 +3130,12 @@ export type CreateReportViewInput = {
   shared?: boolean | null | undefined;
 };
 
+export type CreateScimTokenInput = {
+  /** Zero or omitted for a token that never expires. */
+  expiresAt?: number | null | undefined;
+  name: string;
+};
+
 export type CreateSettlementDisputeInput = {
   category: SettlementDisputeCategory;
   description: string;
@@ -3859,6 +3900,12 @@ export type DetentionWaiverReason =
   | 'ForceMajeure'
   | 'Other'
   | 'Weather';
+
+export type DisableMyTotpInput = {
+  code?: string | null | undefined;
+  password: string;
+  recoveryCode?: string | null | undefined;
+};
 
 export type DiscardFactoringRemittanceInput = {
   id: string | number;
@@ -5470,6 +5517,28 @@ export type IftaTaxRatesInput = {
   sort?: Array<SortFieldInput> | null | undefined;
 };
 
+export type IdentityProviderInput = {
+  allowFederatedMfa: boolean;
+  allowedDomains?: Array<string> | null | undefined;
+  attributeMap?: unknown;
+  autoProvision: boolean;
+  enabled: boolean;
+  enforceSso: boolean;
+  federatedMfaAcrValues?: Array<string> | null | undefined;
+  name: string;
+  oidcClientId: string;
+  /** Required when the provider is created; leave empty on update to keep the stored secret. */
+  oidcClientSecret?: string | null | undefined;
+  oidcIssuerUrl: string;
+  oidcRedirectUrl: string;
+  oidcScopes?: Array<string> | null | undefined;
+  /** OIDC; SAML is not configurable yet. */
+  protocol: string;
+  slug?: string | null | undefined;
+  /** The version read; required on update. */
+  version?: number | null | undefined;
+};
+
 export type IgnoreAccountingInboundChangeInput = {
   id: string | number;
   /** Why it is not applied, for example that it was entered in Trenova by hand. */
@@ -6097,6 +6166,17 @@ export type MemoLineInput = {
   quantity?: string | null | undefined;
 };
 
+export type MicrosoftSsoConfigInput = {
+  allowedDomains?: Array<string> | null | undefined;
+  clientId: string;
+  /** Leave empty to keep the stored secret. */
+  clientSecret?: string | null | undefined;
+  enabled: boolean;
+  enforceSso: boolean;
+  redirectUrl: string;
+  tenantId: string;
+};
+
 export type MoveCoverageType =
   | 'carrier'
   | 'driver'
@@ -6205,6 +6285,18 @@ export type OshaIllnessType =
 export type OshaSummaryStatus =
   | 'Certified'
   | 'Draft';
+
+export type OktaSsoConfigInput = {
+  allowedDomains?: Array<string> | null | undefined;
+  clientId: string;
+  /** Leave empty to keep the stored secret. */
+  clientSecret?: string | null | undefined;
+  enabled: boolean;
+  enforceSso: boolean;
+  issuerUrl: string;
+  redirectUrl: string;
+  scopes?: Array<string> | null | undefined;
+};
 
 export type OpenEscrowAccountInput = {
   annualInterestRate?: string | null | undefined;
@@ -7221,6 +7313,12 @@ export type ResolveWatchtowerItemInput = {
   note?: string | null | undefined;
 };
 
+export type ResourcePermissionInput = {
+  dataScope: string;
+  operations: Array<string>;
+  resource: string;
+};
+
 export type RespondToMyAssignmentInput = {
   accept: boolean;
   assignmentId: string | number;
@@ -7303,6 +7401,18 @@ export type ReviseDeskMemoryInput = {
   version: number;
 };
 
+export type RoleInput = {
+  coreResponsibility?: string | null | undefined;
+  description?: string | null | undefined;
+  /** public, internal, restricted or confidential. */
+  maxSensitivity: string;
+  name: string;
+  /** Roles this one inherits; set when the role is created. Inheritance is not changed on update. */
+  parentRoleIds?: Array<string | number> | null | undefined;
+  /** Replaces every grant of the role. Omit to leave the grants as they are. */
+  permissions?: Array<ResourcePermissionInput> | null | undefined;
+};
+
 export type RoleResourceGuideInput = {
   maxSensitivity: string;
   /** At most 64 resources, such as one category of the role editor. */
@@ -7356,6 +7466,19 @@ export type RunReportInput = {
   format: string;
   params?: unknown;
   viewId?: string | number | null | undefined;
+};
+
+export type ScimDirectoryInput = {
+  enabled: boolean;
+  tenantSlug: string;
+};
+
+export type ScimGroupRoleMappingInput = {
+  displayName?: string | null | undefined;
+  externalGroupId: string;
+  roleId: string | number;
+  /** The version read; required on update. */
+  version?: number | null | undefined;
 };
 
 export type SafetyEventKind =
@@ -8753,6 +8876,11 @@ export type UpcomingWorkerPtoInput = {
   workerId?: string | number | null | undefined;
 };
 
+export type UpdateAccessSettingsInput = {
+  requireRoleActivation: boolean;
+  version: number;
+};
+
 export type UpdateAccountingSyncSettingsInput = {
   /** Send posted documents on their own. When off, each waits for a person to release it; records already held stay held. */
   autoSync: boolean;
@@ -9035,6 +9163,15 @@ export type UpdateLeaveControlInput = {
   workweekHours?: string | null | undefined;
 };
 
+export type UpdateMyAvailabilityInput = {
+  awayNote?: string | null | undefined;
+  backOn?: number | null | undefined;
+  /** Who covers while the caller is away; a person in the caller's organization. */
+  delegateUserId?: string | number | null | undefined;
+  focusUntil?: number | null | undefined;
+  status: AvailabilityStatus;
+};
+
 export type UpdateMyContactInfoInput = {
   addressLine1: string;
   addressLine2?: string | null | undefined;
@@ -9043,6 +9180,21 @@ export type UpdateMyContactInfoInput = {
   emergencyContactPhone?: string | null | undefined;
   phoneNumber: string;
   postalCode: string;
+};
+
+export type UpdateMyProfileInput = {
+  /** Omit to leave unchanged. */
+  avatarStyle?: AvatarStyle | null | undefined;
+  /** Omit to leave unchanged. */
+  jobTitle?: string | null | undefined;
+  /** Omit to leave unchanged. */
+  phoneNumber?: string | null | undefined;
+};
+
+export type UpdateMySettingsInput = {
+  locale: string;
+  timeFormat: TimeFormat;
+  timezone: string;
 };
 
 export type UpdateOrderChargeInput = {
@@ -11732,6 +11884,44 @@ export type AiUsageSummaryQueryVariables = Exact<{
 
 
 export type AiUsageSummaryQuery = { aiUsageSummary: { since: number, calls: number, failed: number, inputTokens: number, outputTokens: number, reasoningTokens: number, costUsd: string, pricedCalls: number, latencyP50Ms: number, latencyP95Ms: number, byProvider: Array<{ providerId: string, providerName: string, model: string, calls: number, failed: number, inputTokens: number, outputTokens: number, reasoningTokens: number, costUsd: string, pricedCalls: number, latencyP50Ms: number, latencyP95Ms: number }>, byFeature: Array<{ feature: AiUsageFeature | null, calls: number, failed: number, inputTokens: number, outputTokens: number, reasoningTokens: number, costUsd: string, pricedCalls: number, latencyP50Ms: number, latencyP95Ms: number }>, recentFailures: Array<{ providerId: string, providerName: string, model: string, task: string, errorClass: string, message: string, at: number }> } };
+
+export type ApiKeyDetailFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, keyPrefix: string, status: string, expiresAt: number, lastUsedAt: number, createdAt: number, updatedAt: number, permissionScope: string, permissions: Array<{ resource: string, operations: Array<string>, dataScope: string }> } & { ' $fragmentName'?: 'ApiKeyDetailFieldsFragment' };
+
+export type ApiKeyDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ApiKeyDetailQuery = { apiKeyDetail: { ' $fragmentRefs'?: { 'ApiKeyDetailFieldsFragment': ApiKeyDetailFieldsFragment } } };
+
+export type CreateApiKeyMutationVariables = Exact<{
+  input: ApiKeyInput;
+}>;
+
+
+export type CreateApiKeyMutation = { createApiKey: { token: string, apiKey: { ' $fragmentRefs'?: { 'ApiKeyDetailFieldsFragment': ApiKeyDetailFieldsFragment } } } };
+
+export type UpdateApiKeyMutationVariables = Exact<{
+  id: string | number;
+  input: ApiKeyInput;
+}>;
+
+
+export type UpdateApiKeyMutation = { updateApiKey: { ' $fragmentRefs'?: { 'ApiKeyDetailFieldsFragment': ApiKeyDetailFieldsFragment } } };
+
+export type RotateApiKeyMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type RotateApiKeyMutation = { rotateApiKey: { token: string, apiKey: { ' $fragmentRefs'?: { 'ApiKeyDetailFieldsFragment': ApiKeyDetailFieldsFragment } } } };
+
+export type RevokeApiKeyMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type RevokeApiKeyMutation = { revokeApiKey: { ' $fragmentRefs'?: { 'ApiKeyDetailFieldsFragment': ApiKeyDetailFieldsFragment } } };
 
 export type ApiKeyTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, keyPrefix: string, status: string, expiresAt: number, lastUsedAt: number, permissionScope: string, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ApiKeyTableRowFieldsFragment' };
 
@@ -15937,6 +16127,176 @@ export type HomeLayoutPreviewQueryVariables = Exact<{
 
 export type HomeLayoutPreviewQuery = { homeLayoutPreview: { ' $fragmentRefs'?: { 'HomeLayoutFieldsFragment': HomeLayoutFieldsFragment } } };
 
+export type IdentityProviderFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, slug: string, protocol: string, enabled: boolean, enforceSso: boolean, autoProvision: boolean, allowFederatedMfa: boolean, federatedMfaAcrValues: Array<string>, allowedDomains: Array<string>, attributeMap: unknown, oidcIssuerUrl: string, oidcClientId: string, oidcRedirectUrl: string, oidcScopes: Array<string>, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'IdentityProviderFieldsFragment' };
+
+export type IdentityProvidersQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type IdentityProvidersQuery = { identityProviders: Array<{ ' $fragmentRefs'?: { 'IdentityProviderFieldsFragment': IdentityProviderFieldsFragment } }> };
+
+export type CreateIdentityProviderMutationVariables = Exact<{
+  input: IdentityProviderInput;
+}>;
+
+
+export type CreateIdentityProviderMutation = { createIdentityProvider: { ' $fragmentRefs'?: { 'IdentityProviderFieldsFragment': IdentityProviderFieldsFragment } } };
+
+export type UpdateIdentityProviderMutationVariables = Exact<{
+  id: string | number;
+  input: IdentityProviderInput;
+}>;
+
+
+export type UpdateIdentityProviderMutation = { updateIdentityProvider: { ' $fragmentRefs'?: { 'IdentityProviderFieldsFragment': IdentityProviderFieldsFragment } } };
+
+export type DeleteIdentityProviderMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteIdentityProviderMutation = { deleteIdentityProvider: boolean };
+
+export type AccessPolicyFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, resource: string, operation: string, effect: string, priority: number, conditions: unknown, enabled: boolean, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AccessPolicyFieldsFragment' };
+
+export type AccessPoliciesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AccessPoliciesQuery = { accessPolicies: Array<{ ' $fragmentRefs'?: { 'AccessPolicyFieldsFragment': AccessPolicyFieldsFragment } }> };
+
+export type CreateAccessPolicyMutationVariables = Exact<{
+  input: AccessPolicyInput;
+}>;
+
+
+export type CreateAccessPolicyMutation = { createAccessPolicy: { ' $fragmentRefs'?: { 'AccessPolicyFieldsFragment': AccessPolicyFieldsFragment } } };
+
+export type UpdateAccessPolicyMutationVariables = Exact<{
+  id: string | number;
+  input: AccessPolicyInput;
+}>;
+
+
+export type UpdateAccessPolicyMutation = { updateAccessPolicy: { ' $fragmentRefs'?: { 'AccessPolicyFieldsFragment': AccessPolicyFieldsFragment } } };
+
+export type DeleteAccessPolicyMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteAccessPolicyMutation = { deleteAccessPolicy: boolean };
+
+export type AccessSettingsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AccessSettingsQuery = { accessSettings: { organizationId: string, businessUnitId: string, requireRoleActivation: boolean, version: number } };
+
+export type UpdateAccessSettingsMutationVariables = Exact<{
+  input: UpdateAccessSettingsInput;
+}>;
+
+
+export type UpdateAccessSettingsMutation = { updateAccessSettings: { organizationId: string, businessUnitId: string, requireRoleActivation: boolean, version: number } };
+
+export type ScimDirectoryMutationFieldsFragment = { id: string, organizationId: string, businessUnitId: string, tenantSlug: string, enabled: boolean, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ScimDirectoryMutationFieldsFragment' };
+
+export type CreateScimDirectoryMutationVariables = Exact<{
+  input: ScimDirectoryInput;
+}>;
+
+
+export type CreateScimDirectoryMutation = { createSCIMDirectory: { ' $fragmentRefs'?: { 'ScimDirectoryMutationFieldsFragment': ScimDirectoryMutationFieldsFragment } } };
+
+export type UpdateScimDirectoryMutationVariables = Exact<{
+  id: string | number;
+  input: ScimDirectoryInput;
+}>;
+
+
+export type UpdateScimDirectoryMutation = { updateSCIMDirectory: { ' $fragmentRefs'?: { 'ScimDirectoryMutationFieldsFragment': ScimDirectoryMutationFieldsFragment } } };
+
+export type DeleteScimDirectoryMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteScimDirectoryMutation = { deleteSCIMDirectory: boolean };
+
+export type ScimTokenFieldsFragment = { id: string, organizationId: string, directoryId: string, name: string, prefix: string, status: string, lastUsedAt: number, expiresAt: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ScimTokenFieldsFragment' };
+
+export type ScimTokensQueryVariables = Exact<{
+  directoryId: string | number;
+}>;
+
+
+export type ScimTokensQuery = { scimTokens: Array<{ ' $fragmentRefs'?: { 'ScimTokenFieldsFragment': ScimTokenFieldsFragment } }> };
+
+export type CreateScimTokenMutationVariables = Exact<{
+  directoryId: string | number;
+  input: CreateScimTokenInput;
+}>;
+
+
+export type CreateScimTokenMutation = { createSCIMToken: { token: string, scimToken: { ' $fragmentRefs'?: { 'ScimTokenFieldsFragment': ScimTokenFieldsFragment } } } };
+
+export type RevokeScimTokenMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type RevokeScimTokenMutation = { revokeSCIMToken: { ' $fragmentRefs'?: { 'ScimTokenFieldsFragment': ScimTokenFieldsFragment } } };
+
+export type ScimGroupRoleMappingMutationFieldsFragment = { id: string, organizationId: string, businessUnitId: string, directoryId: string, externalGroupId: string, displayName: string, roleId: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ScimGroupRoleMappingMutationFieldsFragment' };
+
+export type CreateScimGroupRoleMappingMutationVariables = Exact<{
+  directoryId: string | number;
+  input: ScimGroupRoleMappingInput;
+}>;
+
+
+export type CreateScimGroupRoleMappingMutation = { createSCIMGroupRoleMapping: { ' $fragmentRefs'?: { 'ScimGroupRoleMappingMutationFieldsFragment': ScimGroupRoleMappingMutationFieldsFragment } } };
+
+export type UpdateScimGroupRoleMappingMutationVariables = Exact<{
+  id: string | number;
+  input: ScimGroupRoleMappingInput;
+}>;
+
+
+export type UpdateScimGroupRoleMappingMutation = { updateSCIMGroupRoleMapping: { ' $fragmentRefs'?: { 'ScimGroupRoleMappingMutationFieldsFragment': ScimGroupRoleMappingMutationFieldsFragment } } };
+
+export type DeleteScimGroupRoleMappingMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteScimGroupRoleMappingMutation = { deleteSCIMGroupRoleMapping: boolean };
+
+export type ProvisioningAuditRecordsQueryVariables = Exact<{
+  directoryId?: string | number | null | undefined;
+  limit?: number | null | undefined;
+}>;
+
+
+export type ProvisioningAuditRecordsQuery = { provisioningAuditRecords: Array<{ id: string, organizationId: string, directoryId: string, action: string, resourceType: string, externalId: string, resourceId: string | null, status: string, errorMessage: string, createdAt: number }> };
+
+export type SecurityBriefingQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type SecurityBriefingQuery = { securityBriefing: { generatedAt: number, signInWindowDays: number, dormantAfterDays: number, apiKeyUnusedAfterDays: number, apiKeyExpiringWithinDays: number, findings: Array<{ code: string, severity: string, count: number, total: number }>, session: { maxAgeSeconds: number, idleTimeoutSeconds: number, idleWarningSeconds: number }, members: { active: number, locked: number, neverSignedIn: number, dormant: number, mustChangePassword: number } | null, mfa: { enrolled: number, total: number, unenrolled: Array<{ userId: string, name: string, emailAddress: string, lastLoginAt: number | null }> | null } | null, signIns: { succeeded: number, failed: number, denied: number, throttled: number, riskDenied: number | null } | null, apiKeys: { active: number, withoutExpiry: number, unused: number, expiringSoon: number } | null, sso: { enabledProviders: number, enforced: boolean, enforcedProviderName: string, trustsFederatedMfa: boolean } | null, provisioning: { activeDirectories: number } | null, policies: { enabled: number, requiringMfa: number, roleActivationRequired: boolean } | null } };
+
+export type RecentAuthEventsQueryVariables = Exact<{
+  first: number;
+}>;
+
+
+export type RecentAuthEventsQuery = { authEvents: { edges: Array<{ node: { id: string, userId: string | null, identityProviderId: string | null, provider: string, outcome: string, ipAddress: string, userAgent: string, authenticatorAal: number, federationFal: number, mfaState: string, riskOutcome: string, riskSignals: Array<string>, errorCode: string, occurredAt: number, createdAt: number } }> } };
+
+export type RecentRiskDecisionsQueryVariables = Exact<{
+  first: number;
+}>;
+
+
+export type RecentRiskDecisionsQuery = { riskDecisions: { edges: Array<{ node: { id: string, userId: string | null, outcome: string, signals: Array<string>, reason: string, createdAt: number } }> } };
+
 export type DeskIftaMileageEntriesQueryVariables = Exact<{
   input: IftaMileageEntriesInput;
   includeTotalCount?: boolean | null | undefined;
@@ -17453,6 +17813,34 @@ export type UpdateOrganizationSettingsMutationVariables = Exact<{
 
 export type UpdateOrganizationSettingsMutation = { updateOrganization: { ' $fragmentRefs'?: { 'OrganizationSettingsFieldsFragment': OrganizationSettingsFieldsFragment } } };
 
+export type MicrosoftSsoConfigFieldsFragment = { organizationId: string, enabled: boolean, enforceSso: boolean, tenantId: string, clientId: string, redirectUrl: string, allowedDomains: Array<string>, secretConfigured: boolean } & { ' $fragmentName'?: 'MicrosoftSsoConfigFieldsFragment' };
+
+export type MicrosoftSsoConfigQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MicrosoftSsoConfigQuery = { microsoftSsoConfig: { ' $fragmentRefs'?: { 'MicrosoftSsoConfigFieldsFragment': MicrosoftSsoConfigFieldsFragment } } };
+
+export type UpsertMicrosoftSsoConfigMutationVariables = Exact<{
+  input: MicrosoftSsoConfigInput;
+}>;
+
+
+export type UpsertMicrosoftSsoConfigMutation = { upsertMicrosoftSsoConfig: { ' $fragmentRefs'?: { 'MicrosoftSsoConfigFieldsFragment': MicrosoftSsoConfigFieldsFragment } } };
+
+export type OktaSsoConfigFieldsFragment = { organizationId: string, enabled: boolean, enforceSso: boolean, issuerUrl: string, clientId: string, redirectUrl: string, scopes: Array<string>, allowedDomains: Array<string>, secretConfigured: boolean } & { ' $fragmentName'?: 'OktaSsoConfigFieldsFragment' };
+
+export type OktaSsoConfigQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type OktaSsoConfigQuery = { oktaSsoConfig: { ' $fragmentRefs'?: { 'OktaSsoConfigFieldsFragment': OktaSsoConfigFieldsFragment } } };
+
+export type UpsertOktaSsoConfigMutationVariables = Exact<{
+  input: OktaSsoConfigInput;
+}>;
+
+
+export type UpsertOktaSsoConfigMutation = { upsertOktaSsoConfig: { ' $fragmentRefs'?: { 'OktaSsoConfigFieldsFragment': OktaSsoConfigFieldsFragment } } };
+
 export type PageAccessRequirementFieldsFragment = { resource: string, resourceName: string, operation: string, operationName: string, allowed: boolean } & { ' $fragmentName'?: 'PageAccessRequirementFieldsFragment' };
 
 export type PageAccessFieldsFragment = { path: string, name: string, operations: Array<string>, withheld: number, blocked: boolean, requires: Array<{ ' $fragmentRefs'?: { 'PageAccessRequirementFieldsFragment': PageAccessRequirementFieldsFragment } }>, endpoints: Array<{ method: string, path: string, requires: Array<{ ' $fragmentRefs'?: { 'PageAccessRequirementFieldsFragment': PageAccessRequirementFieldsFragment } }> }>, kinds: Array<{ resource: string, resourceName: string, use: PageAccessUse, canRead: boolean, withheld: number, fields: Array<{ name: string, inView: boolean, decision: PageAccessDecision }> }> } & { ' $fragmentName'?: 'PageAccessFieldsFragment' };
@@ -17593,6 +17981,40 @@ export type DeletePerformanceReviewMutationVariables = Exact<{
 
 
 export type DeletePerformanceReviewMutation = { deletePerformanceReview: boolean };
+
+export type PermissionResourceCategoryFieldsFragment = { category: string, resources: Array<{ resource: string, displayName: string, description: string, category: string, parentResource: string | null, defaultSensitivity: string, enforceableScopes: Array<string>, operations: Array<{ operation: string, displayName: string, description: string, implies: Array<string> }> }> } & { ' $fragmentName'?: 'PermissionResourceCategoryFieldsFragment' };
+
+export type PermissionResourcesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type PermissionResourcesQuery = { permissionResources: Array<{ ' $fragmentRefs'?: { 'PermissionResourceCategoryFieldsFragment': PermissionResourceCategoryFieldsFragment } }> };
+
+export type ApiKeyAllowedResourcesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ApiKeyAllowedResourcesQuery = { apiKeyAllowedResources: Array<{ ' $fragmentRefs'?: { 'PermissionResourceCategoryFieldsFragment': PermissionResourceCategoryFieldsFragment } }> };
+
+export type PermissionOperationsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type PermissionOperationsQuery = { permissionOperations: Array<{ operation: string, displayName: string, description: string, implies: Array<string> }> };
+
+export type PermissionBundleGrantFieldsFragment = { resource: string, displayName: string, operations: Array<string>, dataScope: string } & { ' $fragmentName'?: 'PermissionBundleGrantFieldsFragment' };
+
+export type PermissionBundlesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type PermissionBundlesQuery = { permissionBundles: { bundles: Array<{ id: string, module: string, label: string, description: string, grants: Array<{ ' $fragmentRefs'?: { 'PermissionBundleGrantFieldsFragment': PermissionBundleGrantFieldsFragment } }> }>, templates: Array<{ id: string, label: string, description: string, bundles: Array<string>, maxSensitivity: string, grants: Array<{ ' $fragmentRefs'?: { 'PermissionBundleGrantFieldsFragment': PermissionBundleGrantFieldsFragment } }> }> } };
+
+export type MyPermissionsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyPermissionsQuery = { myPermissions: { version: string, userId: string, organizationId: string, activeRoleIds: Array<string>, authorizedRoleIds: Array<string>, requiresRoleActivation: boolean, maxSensitivity: string, checksum: string, expiresAt: number, activeRoles: Array<{ id: string, name: string, description: string, isSystem: boolean, permissionCount: number }>, authorizedRoles: Array<{ id: string, name: string, description: string, isSystem: boolean, permissionCount: number }>, permissions: Array<{ resource: string, operations: number }>, routeAccess: Array<{ route: string, allowed: boolean }>, availableOrgs: Array<{ id: string, name: string }> } };
+
+export type MyPermissionVersionQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyPermissionVersionQuery = { myPermissionVersion: { checksum: string, expiresAt: number } };
 
 export type PtoPolicyRuleFieldsFragment = { id: string, ptoPolicyId: string, ptoType: PtoType, accrualMethod: PtoAccrualMethod, accrualAmountDays: string, maxBalanceDays: string | null, carryoverCapDays: string | null, carryoverExpiryDays: number, onTermination: PtoTerminationAction, sortOrder: number, tiers: Array<{ minMonths: number, accrualAmountDays: string, maxBalanceDays: string | null }> } & { ' $fragmentName'?: 'PtoPolicyRuleFieldsFragment' };
 
@@ -18273,6 +18695,67 @@ export type DeleteReportViewMutationVariables = Exact<{
 
 
 export type DeleteReportViewMutation = { deleteReportView: boolean };
+
+export type RoleEditorFieldsFragment = { id: string, organizationId: string, name: string, description: string, coreResponsibility: string | null, parentRoleIds: Array<string> | null, maxSensitivity: string, isSystem: boolean, createdBy: string, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RoleEditorFieldsFragment' };
+
+export type RoleEditorQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type RoleEditorQuery = { role: { ' $fragmentRefs'?: { 'RoleEditorFieldsFragment': RoleEditorFieldsFragment } } | null, rolePermissions: Array<{ id: string, roleId: string, resource: string, operations: Array<string>, dataScope: string, createdAt: number, updatedAt: number }> };
+
+export type RoleImpactQueryVariables = Exact<{
+  roleId: string | number;
+}>;
+
+
+export type RoleImpactQuery = { roleImpact: Array<{ userId: string, userName: string, organizationId: string, orgName: string, assignmentType: string }> };
+
+export type CreateRoleMutationVariables = Exact<{
+  input: RoleInput;
+}>;
+
+
+export type CreateRoleMutation = { createRole: { ' $fragmentRefs'?: { 'RoleEditorFieldsFragment': RoleEditorFieldsFragment } } };
+
+export type UpdateRoleMutationVariables = Exact<{
+  id: string | number;
+  input: RoleInput;
+}>;
+
+
+export type UpdateRoleMutation = { updateRole: { ' $fragmentRefs'?: { 'RoleEditorFieldsFragment': RoleEditorFieldsFragment } } };
+
+export type DeleteRoleMutationVariables = Exact<{
+  id: string | number;
+  force?: boolean | null | undefined;
+}>;
+
+
+export type DeleteRoleMutation = { deleteRole: boolean };
+
+export type AssignRoleMutationVariables = Exact<{
+  roleId: string | number;
+  input: AssignRoleInput;
+}>;
+
+
+export type AssignRoleMutation = { assignRole: { id: string, userId: string, organizationId: string, roleId: string, expiresAt: number | null, assignedBy: string, assignedAt: number } };
+
+export type UnassignRoleMutationVariables = Exact<{
+  assignmentId: string | number;
+}>;
+
+
+export type UnassignRoleMutation = { unassignRole: boolean };
+
+export type RoleOptionsQueryVariables = Exact<{
+  first: number;
+}>;
+
+
+export type RoleOptionsQuery = { roles: { edges: Array<{ node: { id: string, name: string, description: string, maxSensitivity: string, isSystem: boolean } }> } };
 
 export type RoleTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, coreResponsibility: string | null, parentRoleIds: Array<string> | null, maxSensitivity: string, isSystem: boolean, createdBy: string, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RoleTableRowFieldsFragment' };
 
@@ -19544,6 +20027,150 @@ export type DeskTrailerCardQueryVariables = Exact<{
 
 export type DeskTrailerCardQuery = { trailer: { id: string, code: string, status: EquipmentStatus, make: string, model: string, year: number | null, vin: string, licensePlateNumber: string, registrationNumber: string, registrationExpiry: number | null, lastInspectionDate: number | null, maxLoadWeight: number | null, externalId: string, ownershipType: EquipmentOwnershipType, lessorName: string, leaseReference: string, leaseEndDate: number | null, createdAt: number, registrationState: { abbreviation: string } | null, equipmentType: { id: string, code: string, description: string } | null, equipmentManufacturer: { id: string, name: string } | null, fleetCode: { id: string, code: string } | null, ownerWorker: { id: string, firstName: string, lastName: string } | null, lastKnownLocation: { id: string, name: string, latitude: number | null, longitude: number | null } | null } | null };
 
+export type CurrentUserFieldsFragment = { id: string, businessUnitId: string, currentOrganizationId: string, status: EntityStatus, name: string, username: string, emailAddress: string | null, profilePicUrl: string, thumbnailUrl: string, timezone: string, timeFormat: TimeFormat, locale: string, isLocked: boolean, mustChangePassword: boolean, jobTitle: string, phoneNumber: string, avatarStyle: AvatarStyle, availabilityStatus: AvailabilityStatus, focusUntil: number | null, awayBackOn: number | null, awayDelegateUserId: string | null, awayNote: string, assistantHidden: boolean, version: number, createdAt: number, updatedAt: number, lastLoginAt: number | null, passwordChangedAt: number | null } & { ' $fragmentName'?: 'CurrentUserFieldsFragment' };
+
+export type UserSummaryQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type UserSummaryQuery = { user: { id: string, name: string, username: string, emailAddress: string | null } | null };
+
+export type UserRoleAssignmentsQueryVariables = Exact<{
+  userId: string | number;
+}>;
+
+
+export type UserRoleAssignmentsQuery = { userRoleAssignments: Array<{ id: string, userId: string, organizationId: string, roleId: string, expiresAt: number | null, assignedBy: string, assignedAt: number, role: { id: string, name: string, isSystem: boolean } | null }> };
+
+export type UserOrganizationMembershipsQueryVariables = Exact<{
+  userId: string | number;
+}>;
+
+
+export type UserOrganizationMembershipsQuery = { userOrganizationMemberships: Array<{ id: string, userId: string, businessUnitId: string, organizationId: string, isDefault: boolean, joinedAt: number }> };
+
+export type ReplaceUserOrganizationMembershipsMutationVariables = Exact<{
+  userId: string | number;
+  organizationIds: Array<string | number> | string | number;
+}>;
+
+
+export type ReplaceUserOrganizationMembershipsMutation = { replaceUserOrganizationMemberships: Array<{ id: string, userId: string, businessUnitId: string, organizationId: string, isDefault: boolean, joinedAt: number }> };
+
+export type UserAvatarsQueryVariables = Exact<{
+  ids: Array<string | number> | string | number;
+}>;
+
+
+export type UserAvatarsQuery = { userAvatars: Array<{ id: string, name: string, username: string, avatarStyle: AvatarStyle, availability: AvailabilityStatus, awayBackOn: number | null, awayNote: string }> };
+
+export type BulkUpdateUserStatusMutationVariables = Exact<{
+  input: BulkUpdateUserStatusInput;
+}>;
+
+
+export type BulkUpdateUserStatusMutation = { bulkUpdateUserStatus: Array<{ id: string, status: EntityStatus }> };
+
+export type ResetUserPasswordMutationVariables = Exact<{
+  userId: string | number;
+}>;
+
+
+export type ResetUserPasswordMutation = { resetUserPassword: boolean };
+
+export type ResetUserMfaMutationVariables = Exact<{
+  userId: string | number;
+}>;
+
+
+export type ResetUserMfaMutation = { resetUserMfa: boolean };
+
+export type UpdateMySettingsMutationVariables = Exact<{
+  input: UpdateMySettingsInput;
+}>;
+
+
+export type UpdateMySettingsMutation = { updateMySettings: { ' $fragmentRefs'?: { 'CurrentUserFieldsFragment': CurrentUserFieldsFragment } } };
+
+export type UpdateMyProfileMutationVariables = Exact<{
+  input: UpdateMyProfileInput;
+}>;
+
+
+export type UpdateMyProfileMutation = { updateMyProfile: { ' $fragmentRefs'?: { 'CurrentUserFieldsFragment': CurrentUserFieldsFragment } } };
+
+export type UpdateMyAvailabilityMutationVariables = Exact<{
+  input: UpdateMyAvailabilityInput;
+}>;
+
+
+export type UpdateMyAvailabilityMutation = { updateMyAvailability: { ' $fragmentRefs'?: { 'CurrentUserFieldsFragment': CurrentUserFieldsFragment } } };
+
+export type SetMyAssistantHiddenMutationVariables = Exact<{
+  hidden: boolean;
+}>;
+
+
+export type SetMyAssistantHiddenMutation = { setMyAssistantHidden: { ' $fragmentRefs'?: { 'CurrentUserFieldsFragment': CurrentUserFieldsFragment } } };
+
+export type MySessionsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MySessionsQuery = { mySessions: Array<{ id: string, label: string, browser: string, os: string, device: string, ipAddress: string, authProvider: string, createdAt: number, lastAccessedAt: number, expiresAt: number, current: boolean }> };
+
+export type RevokeMySessionMutationVariables = Exact<{
+  sessionId: string | number;
+}>;
+
+
+export type RevokeMySessionMutation = { revokeMySession: boolean };
+
+export type RevokeMyOtherSessionsMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type RevokeMyOtherSessionsMutation = { revokeMyOtherSessions: number };
+
+export type MySignInsQueryVariables = Exact<{
+  limit?: number | null | undefined;
+}>;
+
+
+export type MySignInsQuery = { mySignIns: Array<{ id: string, provider: string, outcome: string, mfaState: string, errorCode: string, ipAddress: string, label: string, device: string, occurredAt: number }> };
+
+export type MyMfaStatusQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyMfaStatusQuery = { myMfaStatus: { totpEnabled: boolean, enrollmentPending: boolean, enabledAt: number, lastUsedAt: number, recoveryCodesRemaining: number, recoveryCodesNeedReplacing: boolean, sessionVerified: boolean } };
+
+export type BeginMyTotpEnrollmentMutationVariables = Exact<{
+  password: string;
+}>;
+
+
+export type BeginMyTotpEnrollmentMutation = { beginMyTotpEnrollment: { authenticatorId: string, secret: string, uri: string, qrCode: string } };
+
+export type ConfirmMyTotpEnrollmentMutationVariables = Exact<{
+  code: string;
+}>;
+
+
+export type ConfirmMyTotpEnrollmentMutation = { confirmMyTotpEnrollment: { recoveryCodes: Array<string> } };
+
+export type DisableMyTotpMutationVariables = Exact<{
+  input: DisableMyTotpInput;
+}>;
+
+
+export type DisableMyTotpMutation = { disableMyTotp: boolean };
+
+export type RegenerateMyRecoveryCodesMutationVariables = Exact<{
+  code: string;
+}>;
+
+
+export type RegenerateMyRecoveryCodesMutation = { regenerateMyRecoveryCodes: { recoveryCodes: Array<string> } };
+
 export type UserDetailQueryVariables = Exact<{
   id: string | number;
 }>;
@@ -20752,6 +21379,7 @@ export { AgentToolRuleImpactFieldsFragmentDoc, AgentSafetyHeaderFieldsFragmentDo
 export { MyAiFeedbackFieldsFragmentDoc, AiFeedbackTableRowFieldsFragmentDoc, MyAiFeedbackDocument, SetMyAiFeedbackDocument, ClearMyAiFeedbackDocument, AiFeedbackTableDocument, AgentFeedbackSummaryDocument } from "./documents/ai-feedback/ai-feedback";
 export { AiProviderCardFieldsFragmentDoc, AiProviderLimitFieldsFragmentDoc, AiProviderCardsDocument, AiProviderDetailDocument, AiProviderLimitsDocument, AiRoutePreviewDocument, AiProviderModelsDocument, AiProviderUsageDailyDocument, TestAiProviderDraftDocument, ReorderAiProvidersDocument, PatchAiProviderDocument } from "./documents/ai-provider/providers";
 export { AiUsageSummaryDocument } from "./documents/ai-provider/usage-summary";
+export { ApiKeyDetailFieldsFragmentDoc, ApiKeyDetailDocument, CreateApiKeyDocument, UpdateApiKeyDocument, RotateApiKeyDocument, RevokeApiKeyDocument } from "./documents/api-key/detail";
 export { ApiKeyTableRowFieldsFragmentDoc, ApiKeyTableDocument } from "./documents/api-key/table";
 export { AttentionSummaryDocument } from "./documents/attention/summary";
 export { RecentActivityDocument } from "./documents/audit-log/recent-activity";
@@ -20851,6 +21479,7 @@ export { HoldReasonTableRowFieldsFragmentDoc, HoldReasonTableDocument } from "./
 export { HomeWidgetFieldsFragmentDoc, HomeLayoutFieldsFragmentDoc, HomeLayoutPresetFieldsFragmentDoc } from "./documents/home-layout/fragments";
 export { UpdateHomeLayoutDocument, ResetHomeLayoutDocument, CreateHomeLayoutPresetDocument, UpdateHomeLayoutPresetDocument, DeleteHomeLayoutPresetDocument } from "./documents/home-layout/mutations";
 export { HomeLayoutDocument, HomeWidgetCatalogDocument, HomeLayoutPresetsDocument, HomeLayoutPresetDocument, HomeLayoutPreviewDocument } from "./documents/home-layout/queries";
+export { IdentityProviderFieldsFragmentDoc, AccessPolicyFieldsFragmentDoc, ScimDirectoryMutationFieldsFragmentDoc, ScimTokenFieldsFragmentDoc, ScimGroupRoleMappingMutationFieldsFragmentDoc, IdentityProvidersDocument, CreateIdentityProviderDocument, UpdateIdentityProviderDocument, DeleteIdentityProviderDocument, AccessPoliciesDocument, CreateAccessPolicyDocument, UpdateAccessPolicyDocument, DeleteAccessPolicyDocument, AccessSettingsDocument, UpdateAccessSettingsDocument, CreateScimDirectoryDocument, UpdateScimDirectoryDocument, DeleteScimDirectoryDocument, ScimTokensDocument, CreateScimTokenDocument, RevokeScimTokenDocument, CreateScimGroupRoleMappingDocument, UpdateScimGroupRoleMappingDocument, DeleteScimGroupRoleMappingDocument, ProvisioningAuditRecordsDocument, SecurityBriefingDocument, RecentAuthEventsDocument, RecentRiskDecisionsDocument } from "./documents/iam/settings";
 export { DeskIftaMileageEntriesDocument } from "./documents/ifta-jurisdiction-mileage/desk";
 export { IftaMileageEntryFieldsFragmentDoc, IftaMileageEntryTableDocument, IftaMileageEntryDocument, CreateIftaMileageEntryDocument, UpdateIftaMileageEntryDocument, DeleteIftaMileageEntryDocument } from "./documents/ifta-jurisdiction-mileage/operations";
 export { DeskIftaJurisdictionsDocument } from "./documents/ifta-jurisdiction/desk";
@@ -20889,9 +21518,11 @@ export { OrderTableRowFieldsFragmentDoc, OrderTableDocument } from "./documents/
 export { OrgHolidayFieldsFragmentDoc, OrgHolidaysDocument, CreateOrgHolidayDocument, UpdateOrgHolidayDocument, DeleteOrgHolidayDocument } from "./documents/org-holiday/operations";
 export { JobPositionsDocument, HeadcountDocument, JobPositionHoldersDocument, MyTeamDocument, ApprovalDelegationsDocument, AssignWorkerPositionDocument, AssignUserPositionDocument, CreateJobPositionDocument, UpdateJobPositionDocument, DelegateApprovalDocument, RevokeApprovalDelegationDocument } from "./documents/org-structure/operations";
 export { OrganizationSettingsStateFieldsFragmentDoc, OrganizationSettingsFieldsFragmentDoc, OrganizationSettingsDocument, UpdateOrganizationSettingsDocument } from "./documents/organization/page";
+export { MicrosoftSsoConfigFieldsFragmentDoc, OktaSsoConfigFieldsFragmentDoc, MicrosoftSsoConfigDocument, UpsertMicrosoftSsoConfigDocument, OktaSsoConfigDocument, UpsertOktaSsoConfigDocument } from "./documents/organization/sso";
 export { PageAccessRequirementFieldsFragmentDoc, PageAccessFieldsFragmentDoc, PageAccessDocument, PageAccessPreviewDocument, PageAccessScreensDocument, RoleResourceGuidesDocument } from "./documents/page-access/page-access";
 export { DeskWorkerPerformanceReviewsDocument, DeskPerformanceReviewTemplatesDocument } from "./documents/performance-review/desk";
 export { PerformanceReviewTemplateFieldsFragmentDoc, PerformanceReviewFieldsFragmentDoc, PerformanceReviewTemplateTableDocument, ActivePerformanceReviewTemplatesDocument, WorkerPerformanceReviewsDocument, CreatePerformanceReviewTemplateDocument, UpdatePerformanceReviewTemplateDocument, ArchivePerformanceReviewTemplateDocument, RestorePerformanceReviewTemplateDocument, CreatePerformanceReviewDocument, UpdatePerformanceReviewDocument, SubmitPerformanceReviewDocument, ReopenPerformanceReviewDocument, ClosePerformanceReviewDocument, DeletePerformanceReviewDocument } from "./documents/performance-review/operations";
+export { PermissionResourceCategoryFieldsFragmentDoc, PermissionBundleGrantFieldsFragmentDoc, PermissionResourcesDocument, ApiKeyAllowedResourcesDocument, PermissionOperationsDocument, PermissionBundlesDocument, MyPermissionsDocument, MyPermissionVersionDocument } from "./documents/permission/catalog";
 export { PtoPolicyRuleFieldsFragmentDoc, PtoPolicyFieldsFragmentDoc, PtoPolicyAssignmentFieldsFragmentDoc, PlannedPtoAccrualFieldsFragmentDoc, WorkerPtoBalanceFieldsFragmentDoc, WorkerPtoLedgerEntryFieldsFragmentDoc, PtoPolicyTableDocument, PtoPolicyDocument, WorkerPtoPolicyAssignmentsDocument, WorkerPtoBalancesDocument, WorkerPtoLedgerDocument, WorkerPtoAvailabilityDocument, PreviewWorkerPtoAccrualDocument, PtoBalanceSummaryDocument, PtoLiabilityReportDocument, CreatePtoPolicyDocument, UpdatePtoPolicyDocument, ArchivePtoPolicyDocument, RestorePtoPolicyDocument, AssignWorkerPtoPolicyDocument, EndWorkerPtoPolicyAssignmentDocument, AdjustWorkerPtoBalanceDocument, RunPtoAccrualDocument } from "./documents/pto-policy/operations";
 export { DeskRateAgreementPricingDocument, DeskRateAgreementsDocument, DeskRateAgreementCardDocument, DeskRateMatrixCardDocument } from "./documents/rate/desk";
 export { RateMatrixRecordDocument, RateMatrixVersionAxesDocument } from "./documents/rate/matrix-record";
@@ -20910,6 +21541,7 @@ export { ReportRunFieldsFragmentDoc, ReportRunsTableDocument, ReportRunByIdDocum
 export { ReportScheduleFieldsFragmentDoc, ReportSchedulesDocument, CreateReportScheduleDocument, UpdateReportScheduleDocument, DeleteReportScheduleDocument } from "./documents/reports/schedules";
 export { ExportTableViewDocument, ScheduleTableViewDocument } from "./documents/reports/table-export";
 export { ReportViewFieldsFragmentDoc, ReportViewsDocument, CreateReportViewDocument, UpdateReportViewDocument, DeleteReportViewDocument } from "./documents/reports/views";
+export { RoleEditorFieldsFragmentDoc, RoleEditorDocument, RoleImpactDocument, CreateRoleDocument, UpdateRoleDocument, DeleteRoleDocument, AssignRoleDocument, UnassignRoleDocument, RoleOptionsDocument } from "./documents/role/editor";
 export { RoleTableRowFieldsFragmentDoc, RoleTableDocument } from "./documents/role/table";
 export { RoutingGuideEntryFieldsFragmentDoc, RoutingGuideRowFieldsFragmentDoc, RoutingGuideTableDocument, RoutingGuideOptionsDocument, MatchRoutingGuideDocument } from "./documents/routing-guide/table";
 export { ShiftTemplatesDocument, RotaDocument, WorkerShiftAssignmentsDocument, WorkerAvailabilityPreferencesDocument, ShiftSwapRequestsDocument, CreateShiftTemplateDocument, UpdateShiftTemplateDocument, AssignWorkerShiftDocument, EndWorkerShiftAssignmentDocument, SetWorkerAvailabilityPreferenceDocument, ProposeShiftSwapDocument, TransitionShiftSwapDocument } from "./documents/scheduling/operations";
@@ -20941,6 +21573,7 @@ export { TendersByShipmentDocument, LiveTenderByMoveDocument } from "./documents
 export { TimesheetsDocument, TimesheetDocument, OpenTimeClockEntryDocument, OpenTimeClockEntriesDocument, TimeClockEntriesDocument, PayrollExportsDocument, PayrollExportRowsDocument, ClockInDocument, ClockOutDocument, RecordTimeEntryDocument, DeleteTimeEntryDocument, TransitionTimesheetDocument, GeneratePayrollExportDocument, VoidPayrollExportDocument } from "./documents/timesheet/operations";
 export { DeskTractorCardDocument, DeskTractorPositionDocument, DeskVehiclePositionsDocument, DeskTractorInspectionsDocument } from "./documents/tractor/desk";
 export { DeskTrailerCardDocument } from "./documents/trailer/desk";
+export { CurrentUserFieldsFragmentDoc, UserSummaryDocument, UserRoleAssignmentsDocument, UserOrganizationMembershipsDocument, ReplaceUserOrganizationMembershipsDocument, UserAvatarsDocument, BulkUpdateUserStatusDocument, ResetUserPasswordDocument, ResetUserMfaDocument, UpdateMySettingsDocument, UpdateMyProfileDocument, UpdateMyAvailabilityDocument, SetMyAssistantHiddenDocument, MySessionsDocument, RevokeMySessionDocument, RevokeMyOtherSessionsDocument, MySignInsDocument, MyMfaStatusDocument, BeginMyTotpEnrollmentDocument, ConfirmMyTotpEnrollmentDocument, DisableMyTotpDocument, RegenerateMyRecoveryCodesDocument } from "./documents/user/account";
 export { UserDetailDocument, CreateUserDocument, PatchUserDocument } from "./documents/user/detail";
 export { UserTableRowFieldsFragmentDoc, UserTableDocument } from "./documents/user/table";
 export { WatchtowerItemFieldsFragmentDoc, WatchtowerAgentFieldsFragmentDoc, WatchtowerCountsFieldsFragmentDoc, WatchtowerFeedDocument, WatchtowerCountsDocument, HandOffWatchtowerItemDocument, WatchtowerItemDetailDocument, SnoozeWatchtowerItemDocument, ResolveWatchtowerItemDocument, WatchtowerClearedDocument, WatchtowerHandOffAgentsDocument, MarkWatchtowerItemSeenDocument } from "./documents/watchtower/watchtower";

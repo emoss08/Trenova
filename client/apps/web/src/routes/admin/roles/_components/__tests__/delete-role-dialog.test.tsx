@@ -53,8 +53,20 @@ describe("DeleteRoleDialog", () => {
 
   it("says who holds the role and takes it from them when confirmed", async () => {
     getRoleImpact.mockResolvedValue([
-      { userId: "usr_a", userName: "Ada", email: "ada@example.com" },
-      { userId: "usr_b", userName: "Bo", email: "bo@example.com" },
+      {
+        userId: "usr_a",
+        userName: "Ada",
+        organizationId: "org_1",
+        orgName: "Acme",
+        assignmentType: "direct",
+      },
+      {
+        userId: "usr_b",
+        userName: "Bo",
+        organizationId: "org_1",
+        orgName: "Acme",
+        assignmentType: "direct",
+      },
     ]);
     deleteRole.mockResolvedValue(undefined);
     renderDialog();

@@ -56,7 +56,7 @@ user_role_assignments ──▶ permission engine ──▶ Check(resource, oper
    A module's own settings resource (Billing control, Dispatch control) sits in that
    module, not in Organization settings, so a role author finds everything that opens or
    hides a module in one place. Names, descriptions, categories and operation labels are
-   translated by `GET /permissions/resources` and `GET /permissions/bundles` from the
+   translated by the `permissionResources` and `permissionBundles` queries from the
    request's locale; the client renders them as they arrive.
 2. Do not write a migration to grant it to administrators. The `administrator_permissions`
    reference seed (`internal/seeds/reference`) is fingerprinted by the registry's grants
@@ -130,7 +130,7 @@ grants it. `TestJobTemplates_KindsGrantedOnTheirOwn` holds every stock template'
 operations and scope on each of these kinds; a new template fails it until it has a row.
 
 `GetResourcePermissions`, which the report policy (`reportaccess`, in one batch), the agent dataset
-tools and `GET /me/permissions/:resource` read, reports a kind's own grant together with the
+tools read, reports a kind's own grant together with the
 operations its parent's grant implies, with the scope the engine applies to a read
 (`resourcedetail.go`). `TestGetResourcePermissions_AgreesWithCheckOnEveryKind` holds it to
 `Check` on every operation of every kind.
@@ -152,7 +152,7 @@ time. A bundle (one of the `<area>bundles` packages, such as `dispatchbundles`, 
 `permissioncatalog/bundles.go`; job templates are in `permissioncatalog/jobtemplates.go`) is a named set of grants for one job to be
 done, such as "Dispatch board" or "Post invoices", and a **job template** (Dispatcher,
 Billing clerk, Accountant, Driver manager, Read-only and others) is a list of bundles with
-a field sensitivity ceiling. `GET /permissions/bundles` returns both, each grant with the
+a field sensitivity ceiling. The `permissionBundles` query returns both, each grant with the
 scope it will actually apply in this deployment (a scope the deployment does not enforce
 comes back as organization), and each template already composed (`Registry.TemplateGrants`:
 operations merged, the widest scope kept). The Read-only template reads every readable
@@ -183,8 +183,8 @@ migration gives each role and API key the new resource with the operations it al
 held through the old one (`20261231009780_detention_work_permission`), so nobody loses
 access on upgrade.
 
-A role and all its grants are saved in one request and one transaction: `POST /roles/`
-creates both, and `PUT /roles/:id` replaces the grant set with the role's columns.
+A role and all its grants are saved in one request and one transaction: `createRole`
+creates both, and `updateRole` replaces the grant set with the role's columns.
 
 ## Data scopes
 
@@ -297,7 +297,7 @@ create and update refuse a narrow scope the kind does not enforce in this deploy
 (`permissionports.ScopePolicy`). A role edit that leaves an existing grant's scope as it
 was is accepted, so a deployment that turns RLS off can still rename its roles; the
 editor shows such a grant with a warning that it reaches the whole organization.
-`GET /permissions/resources` sends each kind's `enforceableScopes`, and the editors offer
+The `permissionResources` query sends each kind's `enforceableScopes`, and the editors offer
 only those (`components/permissions/data-scope-select.tsx`).
 
 Adding a scope to a kind: declare it in the registry; for the database, add the
@@ -332,7 +332,7 @@ By default every role a person holds is in force from the moment they sign in, a
 assigned during a session takes effect on its next request (the session carries no
 activation, so the engine reads every unexpired assignment). An organization that turns on
 **role activation** (`organization_access_settings.require_role_activation`, the Policies
-tab, `GET`/`PUT /organizations/:id/iam/access-settings`, `access_policy` read/update) has
+tab, the `accessSettings` query and `updateAccessSettings`, `access_policy` read/update) has
 its people choose the roles they work under at sign-in and after switching organization;
 only those roles count, which is what dynamic separation of duty checks.
 
@@ -350,8 +350,8 @@ trail.
 ## Security briefing
 
 The Security tab of organization settings opens on a briefing:
-`GET /organizations/:id/iam/security-briefing` (`iamhandler.getSecurityBriefing`,
-`securitybriefingservice`). The route needs only `organization` read, because the briefing is
+the `securityBriefing` query (`iamresolver`,
+`securitybriefingservice`). The query needs only `organization` read, because the briefing is
 part of the settings page; each section is then gated by the read permission of the records
 it summarizes, checked in one `CheckBatch`, and a section the caller may not read is `null`
 rather than an empty count:
@@ -576,12 +576,12 @@ A refused grant is recorded in the security audit trail ("Refused a grant beyond
 actor's own permissions") with what was refused. An API key is also held, at request
 time, to what its creator holds now; see [security-audit.md](security-audit.md).
 
-`PUT /roles/:id` writes only the editable columns (name, description, core responsibility,
+`updateRole` writes only the editable columns (name, description, core responsibility,
 max sensitivity) and replaces the role's permission set in the same transaction when the
-request carries one. Inheritance is changed only through the hierarchy endpoints.
+request carries one. Inheritance is set when a role is created and is not changed by an update.
 
-Deleting a role (`DELETE /roles/:id`, `role:delete`) refuses a system role and a role
-someone holds, unless `force=true`, which also needs `user:unassign` and records an
+Deleting a role (`deleteRole`, `role:delete`) refuses a system role and a role
+someone holds, unless `force: true`, which also needs `user:unassign` and records an
 unassignment for each holder. Roles that inherited the deleted role lose it.
 
 ## When a grant changes

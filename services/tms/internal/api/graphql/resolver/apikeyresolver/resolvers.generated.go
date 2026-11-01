@@ -12,6 +12,10 @@ type Deps struct {
 	APIKeyService *apikeyservice.Service
 }
 
+type ApiKeyPermissionResolver struct{ *Deps }
+
 type ApiKeyResolver struct{ *Deps }
+
+type MutationResolver struct{ *Deps }
 
 type QueryResolver struct{ *Deps }

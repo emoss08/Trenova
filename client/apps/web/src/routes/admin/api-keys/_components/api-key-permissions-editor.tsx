@@ -44,7 +44,7 @@ export function APIKeyPermissionsEditor() {
 
   const { data: resourceCategories = [], isLoading } = useQuery({
     queryKey: ["api-key-allowed-resources"],
-    queryFn: () => apiService.apiKeyService.getAllowedResources(),
+    queryFn: ({ signal }) => apiService.apiKeyService.getAllowedResources({ signal }),
     staleTime: 1000 * 60 * 30,
   });
 

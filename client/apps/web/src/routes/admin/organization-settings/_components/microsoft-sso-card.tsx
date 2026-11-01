@@ -132,7 +132,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
 
   const mutation = useApiMutation({
     mutationFn: (values: MicrosoftSSOFormValues) =>
-      apiService.organizationService.upsertMicrosoftSSOConfig(organizationId, {
+      apiService.organizationService.upsertMicrosoftSSOConfig({
         ...values,
         allowedDomains: parseAllowedDomains(values.allowedDomainsText),
         redirectUrl,

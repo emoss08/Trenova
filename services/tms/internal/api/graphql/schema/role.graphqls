@@ -35,3 +35,68 @@ extend type Query {
   roles(input: DataTableConnectionInput!): RoleConnection!
   role(id: ID!): Role
 }
+
+"One grant of a role: the operations it allows on a resource, and how far they reach."
+type ResourcePermission {
+  id: ID!
+  roleId: ID!
+  resource: String!
+  operations: [String!]!
+  "organization, own or team."
+  dataScope: String!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"A person who holds a role, directly or through a role that inherits it."
+type RoleImpactedUser {
+  userId: ID!
+  userName: String!
+  organizationId: ID!
+  orgName: String!
+  assignmentType: String!
+}
+
+input ResourcePermissionInput {
+  resource: String!
+  operations: [String!]!
+  dataScope: String!
+}
+
+input RoleInput {
+  name: String!
+  description: String
+  coreResponsibility: String
+  "public, internal, restricted or confidential."
+  maxSensitivity: String!
+  "Roles this one inherits; set when the role is created. Inheritance is not changed on update."
+  parentRoleIds: [ID!]
+  "Replaces every grant of the role. Omit to leave the grants as they are."
+  permissions: [ResourcePermissionInput!]
+}
+
+input AssignRoleInput {
+  userId: ID!
+  "Null for a role that never lapses."
+  expiresAt: Timestamp
+}
+
+extend type Query {
+  "Every grant of a role."
+  rolePermissions(roleId: ID!): [ResourcePermission!]!
+  "Who would lose access if the role were deleted."
+  roleImpact(roleId: ID!): [RoleImpactedUser!]!
+}
+
+extend type Mutation {
+  "Creates a role with its grants. Every grant is checked against the caller's own access."
+  createRole(input: RoleInput!): Role!
+  "Changes a role's name, description, responsibility, ceiling and, when sent, its grants."
+  updateRole(id: ID!, input: RoleInput!): Role!
+  "Deletes a role. A role someone holds needs force, which also needs user unassign."
+  deleteRole(id: ID!, force: Boolean): Boolean!
+  "Gives a person a role. Every grant it carries is checked against the caller's own access."
+  assignRole(roleId: ID!, input: AssignRoleInput!): UserRoleAssignment!
+  "Takes a role from a person."
+  unassignRole(assignmentId: ID!): Boolean!
+}

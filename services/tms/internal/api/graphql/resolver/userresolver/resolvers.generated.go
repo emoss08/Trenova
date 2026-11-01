@@ -4,14 +4,24 @@ package userresolver
 
 import (
 	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	passwordresetservice "github.com/emoss08/trenova/internal/modules/identity/app/passwordresetservice"
+	roleservice "github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	userservice "github.com/emoss08/trenova/internal/modules/identity/app/userservice"
+	sessionports "github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 )
 
 type Deps struct {
 	*resolvercore.Core
-	UserService *userservice.Service
+	RoleService          *roleservice.Service
+	UserService          *userservice.Service
+	MFAService           sessionports.MFAService
+	PasswordResetService *passwordresetservice.Service
 }
 
 type MutationResolver struct{ *Deps }
 
 type QueryResolver struct{ *Deps }
+
+type SessionSummaryResolver struct{ *Deps }
+
+type SignInSummaryResolver struct{ *Deps }

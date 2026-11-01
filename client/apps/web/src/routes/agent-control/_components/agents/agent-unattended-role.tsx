@@ -33,18 +33,18 @@ export function AgentUnattendedRole({
 
   const rolesQuery = useQuery({
     queryKey: ["role-list", "unattended-role-options"],
-    queryFn: () => listRoles({ limit: 200, includeSystem: true }),
+    queryFn: ({ signal }) => listRoles({ signal }),
     enabled: canChange || Boolean(agent.unattendedRoleId),
     staleTime: 60_000,
   });
-  const roles = useMemo(() => rolesQuery.data?.results ?? [], [rolesQuery.data?.results]);
+  const roles = useMemo(() => rolesQuery.data ?? [], [rolesQuery.data]);
   const current = agent.unattendedRoleId || CEILING_ONLY;
   const currentName = roles.find((role) => role.id === agent.unattendedRoleId)?.name;
 
   const items = useMemo(
     () => [
       { value: CEILING_ONLY, label: t("The agent ceiling alone") },
-      ...roles.map((role) => ({ value: role.id ?? "", label: role.name })),
+      ...roles.map((role) => ({ value: role.id, label: role.name })),
     ],
     [roles, t],
   );

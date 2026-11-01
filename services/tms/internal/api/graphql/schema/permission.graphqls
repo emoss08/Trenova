@@ -1,0 +1,122 @@
+"An operation a grant can allow, worded in the caller's language."
+type PermissionOperation {
+  operation: String!
+  displayName: String!
+  description: String!
+  "The operations this one brings with it."
+  implies: [String!]!
+}
+
+"A kind of record or feature access is granted on, worded in the caller's language."
+type PermissionResource {
+  resource: String!
+  displayName: String!
+  description: String!
+  category: String!
+  operations: [PermissionOperation!]!
+  "A grant on the parent reaches this resource too."
+  parentResource: String
+  defaultSensitivity: String!
+  "The data scopes a grant of this resource can carry in this deployment."
+  enforceableScopes: [String!]!
+}
+
+type PermissionResourceCategory {
+  category: String!
+  resources: [PermissionResource!]!
+}
+
+"One grant of a capability bundle or job template, with the scope it applies here."
+type PermissionBundleGrant {
+  resource: String!
+  displayName: String!
+  operations: [String!]!
+  dataScope: String!
+}
+
+"A named set of grants for one job to be done."
+type PermissionBundle {
+  id: String!
+  module: String!
+  label: String!
+  description: String!
+  grants: [PermissionBundleGrant!]!
+}
+
+"A starting point for a role: bundles composed into grants, with a sensitivity ceiling."
+type PermissionJobTemplate {
+  id: String!
+  label: String!
+  description: String!
+  bundles: [String!]!
+  maxSensitivity: String!
+  grants: [PermissionBundleGrant!]!
+}
+
+type PermissionBundleCatalog {
+  bundles: [PermissionBundle!]!
+  templates: [PermissionJobTemplate!]!
+}
+
+"A role named in the caller's permission manifest."
+type PermissionRoleSummary {
+  id: ID!
+  name: String!
+  description: String!
+  isSystem: Boolean!
+  permissionCount: Int!
+}
+
+"The operations the caller holds on one resource, as a bit mask."
+type PermissionGrantMask {
+  resource: String!
+  operations: Int!
+}
+
+"Whether the caller may open one screen."
+type PermissionRouteAccess {
+  route: String!
+  allowed: Boolean!
+}
+
+type PermissionOrganizationSummary {
+  id: ID!
+  name: String!
+}
+
+"What the caller may do in their current organization, for the interface to gate on."
+type PermissionManifest {
+  version: String!
+  userId: ID!
+  organizationId: ID!
+  activeRoleIds: [ID!]!
+  authorizedRoleIds: [ID!]!
+  activeRoles: [PermissionRoleSummary!]!
+  authorizedRoles: [PermissionRoleSummary!]!
+  requiresRoleActivation: Boolean!
+  maxSensitivity: String!
+  permissions: [PermissionGrantMask!]!
+  routeAccess: [PermissionRouteAccess!]!
+  availableOrgs: [PermissionOrganizationSummary!]!
+  checksum: String!
+  expiresAt: Timestamp!
+}
+
+"The caller's manifest checksum, for telling whether a cached manifest is still current."
+type PermissionManifestVersion {
+  checksum: String!
+  expiresAt: Timestamp!
+}
+
+extend type Query {
+  "Every resource access can be granted on, by category."
+  permissionResources: [PermissionResourceCategory!]!
+  "Every operation a grant can allow."
+  permissionOperations: [PermissionOperation!]!
+  "The capability bundles roles are composed from and the job templates built from them."
+  permissionBundles: PermissionBundleCatalog!
+  "The resources an API key may be granted, by category, with only the operations a key may hold."
+  apiKeyAllowedResources: [PermissionResourceCategory!]!
+  myPermissions: PermissionManifest!
+  myPermissionVersion: PermissionManifestVersion!
+}

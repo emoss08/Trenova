@@ -403,13 +403,6 @@ func compactPermissions(
 	return compacted
 }
 
-func (s *Service) ListRoles(
-	ctx context.Context,
-	req *permissionports.ListRolesRequest,
-) (*pagination.ListResult[*rbac.Role], error) {
-	return s.roleRepo.List(ctx, req)
-}
-
 func (s *Service) ListConnection(
 	ctx context.Context,
 	req *permissionports.ListRoleConnectionRequest,
@@ -811,13 +804,6 @@ func (s *Service) DeleteRoleConstraint(
 	})
 	s.notifier.OrganizationChanged(ctx, tenant)
 	return nil
-}
-
-func (s *Service) RunRBACPreflight(
-	ctx context.Context,
-	orgID pulid.ID,
-) (*permissionports.RBACPreflightReport, error) {
-	return s.rbacRepo.RunPreflight(ctx, orgID)
 }
 
 func separationOfDutyError(message string) error {

@@ -34,7 +34,7 @@ export function DeleteRoleDialog({
 
   const { data: holders, isLoading } = useQuery({
     queryKey: ["role-impact", roleId],
-    queryFn: () => getRoleImpact(roleId),
+    queryFn: ({ signal }) => getRoleImpact(roleId, { signal }),
     enabled: open,
   });
   const holderCount = holders?.length ?? 0;

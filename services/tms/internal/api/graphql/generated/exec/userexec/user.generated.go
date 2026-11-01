@@ -9,18 +9,114 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
 var Shard = &gqlexec.Shard{
 	Name: "user",
 	Objects: []*gqlexec.Object{
+		{Name: "MFARecoveryCodes", Implementors: []string{"MFARecoveryCodes"}},
+		{Name: "MFAStatus", Implementors: []string{"MFAStatus"}},
+		{Name: "SessionSummary", Implementors: []string{"SessionSummary"}},
+		{Name: "SignInSummary", Implementors: []string{"SignInSummary"}},
+		{Name: "TOTPEnrollment", Implementors: []string{"TOTPEnrollment"}},
+		{Name: "UserAvatar", Implementors: []string{"UserAvatar"}},
 		{Name: "UserConnection", Implementors: []string{"UserConnection"}},
 		{Name: "UserEdge", Implementors: []string{"UserEdge"}},
+		{Name: "UserOrganizationMembership", Implementors: []string{"UserOrganizationMembership"}},
+		{Name: "UserRoleAssignment", Implementors: []string{"UserRoleAssignment"}},
 	},
 	Fields: []gqlexec.Fields{
+		{Object: "MFARecoveryCodes", Fields: []*gqlexec.Field{
+			{
+				Name:     "recoveryCodes",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*sessionports.RecoveryCodesResponse)
+					return obj.RecoveryCodes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+		}},
+		{Object: "MFAStatus", Fields: []*gqlexec.Field{
+			{
+				Name:     "totpEnabled",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*sessionports.MFAStatus)
+					return obj.TOTPEnabled, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "enrollmentPending",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*sessionports.MFAStatus)
+					return obj.EnrollmentPending, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "enabledAt",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*sessionports.MFAStatus)
+					return obj.EnabledAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "lastUsedAt",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*sessionports.MFAStatus)
+					return obj.LastUsedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "recoveryCodesRemaining",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*sessionports.MFAStatus)
+					return obj.RecoveryCodesRemaining, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "recoveryCodesNeedReplacing",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*sessionports.MFAStatus)
+					return obj.RecoveryCodesNeedReplacing, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "sessionVerified",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*sessionports.MFAStatus)
+					return obj.SessionVerified, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
 			{
 				Name:       "createUser",
@@ -47,6 +143,181 @@ var Shard = &gqlexec.Shard{
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchUser(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.UserPatchInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:       "bulkUpdateUserStatus",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "User",
+				Args:       field_Mutation_bulkUpdateUserStatus_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkUpdateUserStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateUserStatusInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNUser2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUserᚄ),
+			},
+			{
+				Name:       "resetUserPassword",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild1,
+				Args:       field_Mutation_resetUserPassword_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ResetUserPassword(ctx, fc.Args["userId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:       "replaceUserOrganizationMemberships",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "UserOrganizationMembership",
+				Args:       field_Mutation_replaceUserOrganizationMemberships_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReplaceUserOrganizationMemberships(ctx, fc.Args["userId"].(string), fc.Args["organizationIds"].([]string))
+				},
+				Marshal: gqlexec.Marshal(marshalNUserOrganizationMembership2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganizationMembershipᚄ),
+			},
+			{
+				Name:       "resetUserMfa",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild1,
+				Args:       field_Mutation_resetUserMfa_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ResetUserMfa(ctx, fc.Args["userId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:       "updateMySettings",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "User",
+				Args:       field_Mutation_updateMySettings_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateMySettings(ctx, fc.Args["input"].(gqlmodel.UpdateMySettingsInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:       "updateMyProfile",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "User",
+				Args:       field_Mutation_updateMyProfile_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateMyProfile(ctx, fc.Args["input"].(gqlmodel.UpdateMyProfileInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:       "updateMyAvailability",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "User",
+				Args:       field_Mutation_updateMyAvailability_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateMyAvailability(ctx, fc.Args["input"].(gqlmodel.UpdateMyAvailabilityInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:       "setMyAssistantHidden",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "User",
+				Args:       field_Mutation_setMyAssistantHidden_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetMyAssistantHidden(ctx, fc.Args["hidden"].(bool))
+				},
+				Marshal: gqlexec.Marshal(marshalNUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:       "revokeMySession",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild1,
+				Args:       field_Mutation_revokeMySession_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RevokeMySession(ctx, fc.Args["sessionId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:       "revokeMyOtherSessions",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RevokeMyOtherSessions(ctx)
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:       "beginMyTotpEnrollment",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "TOTPEnrollment",
+				Args:       field_Mutation_beginMyTotpEnrollment_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BeginMyTotpEnrollment(ctx, fc.Args["password"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNTOTPEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋsessionportsᚐTOTPEnrollment),
+			},
+			{
+				Name:       "confirmMyTotpEnrollment",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "MFARecoveryCodes",
+				Args:       field_Mutation_confirmMyTotpEnrollment_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ConfirmMyTotpEnrollment(ctx, fc.Args["code"].(string), fc.Args["name"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNMFARecoveryCodes2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋsessionportsᚐRecoveryCodesResponse),
+			},
+			{
+				Name:       "disableMyTotp",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild1,
+				Args:       field_Mutation_disableMyTotp_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DisableMyTotp(ctx, fc.Args["input"].(gqlmodel.DisableMyTotpInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:       "regenerateMyRecoveryCodes",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "MFARecoveryCodes",
+				Args:       field_Mutation_regenerateMyRecoveryCodes_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RegenerateMyRecoveryCodes(ctx, fc.Args["code"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNMFARecoveryCodes2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋsessionportsᚐRecoveryCodesResponse),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -77,6 +348,409 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
+			{
+				Name:       "userRoleAssignments",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "UserRoleAssignment",
+				Args:       field_Query_userRoleAssignments_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").UserRoleAssignments(ctx, fc.Args["userId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNUserRoleAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋrbacᚐUserRoleAssignmentᚄ),
+			},
+			{
+				Name:       "userOrganizationMemberships",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "UserOrganizationMembership",
+				Args:       field_Query_userOrganizationMemberships_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").UserOrganizationMemberships(ctx, fc.Args["userId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNUserOrganizationMembership2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganizationMembershipᚄ),
+			},
+			{
+				Name:       "userAvatars",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "UserAvatar",
+				Args:       field_Query_userAvatars_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").UserAvatars(ctx, fc.Args["ids"].([]string))
+				},
+				Marshal: gqlexec.Marshal(marshalNUserAvatar2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋuserserviceᚐAvatarSummaryᚄ),
+			},
+			{
+				Name:       "myMfaStatus",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "MFAStatus",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					return gqlexec.Resolver[resolverQuery](ec, "Query").MyMfaStatus(ctx)
+				},
+				Marshal: gqlexec.Marshal(marshalNMFAStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋsessionportsᚐMFAStatus),
+			},
+			{
+				Name:       "mySessions",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "SessionSummary",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					return gqlexec.Resolver[resolverQuery](ec, "Query").MySessions(ctx)
+				},
+				Marshal: gqlexec.Marshal(marshalNSessionSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋuserserviceᚐSessionSummaryᚄ),
+			},
+			{
+				Name:       "mySignIns",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "SignInSummary",
+				Args:       field_Query_mySignIns_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").MySignIns(ctx, fc.Args["limit"].(*int))
+				},
+				Marshal: gqlexec.Marshal(marshalNSignInSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋuserserviceᚐSignInSummaryᚄ),
+			},
+		}},
+		{Object: "SessionSummary", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.SessionSummary)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.SessionSummary)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "browser",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.SessionSummary)
+					return obj.Browser, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "os",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.SessionSummary)
+					return obj.OS, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:       "device",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.SessionSummary)
+					return gqlexec.Resolver[resolverSessionSummary](ec, "SessionSummary").Device(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "ipAddress",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.SessionSummary)
+					return obj.IPAddress, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "authProvider",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.SessionSummary)
+					return obj.AuthProvider, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.SessionSummary)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "lastAccessedAt",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.SessionSummary)
+					return obj.LastAccessedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "expiresAt",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.SessionSummary)
+					return obj.ExpiresAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "current",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.SessionSummary)
+					return obj.Current, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "SignInSummary", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.SignInSummary)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "provider",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.SignInSummary)
+					return obj.Provider, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:       "outcome",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.SignInSummary)
+					return gqlexec.Resolver[resolverSignInSummary](ec, "SignInSummary").Outcome(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "mfaState",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.SignInSummary)
+					return obj.MFAState, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "errorCode",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.SignInSummary)
+					return obj.ErrorCode, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "ipAddress",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.SignInSummary)
+					return obj.IPAddress, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.SignInSummary)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:       "device",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.SignInSummary)
+					return gqlexec.Resolver[resolverSignInSummary](ec, "SignInSummary").Device(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "occurredAt",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.SignInSummary)
+					return obj.OccurredAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
+		{Object: "TOTPEnrollment", Fields: []*gqlexec.Field{
+			{
+				Name:     "authenticatorId",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*sessionports.TOTPEnrollment)
+					return obj.AuthenticatorID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "secret",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*sessionports.TOTPEnrollment)
+					return obj.Secret, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "uri",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*sessionports.TOTPEnrollment)
+					return obj.URI, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "qrCode",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*sessionports.TOTPEnrollment)
+					return obj.QRCode, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "UserAvatar", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.AvatarSummary)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.AvatarSummary)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "username",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.AvatarSummary)
+					return obj.Username, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "avatarStyle",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.AvatarSummary)
+					return obj.AvatarStyle, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAvatarStyle2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐAvatarStyle),
+			},
+			{
+				Name:     "availability",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.AvatarSummary)
+					return obj.Availability, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAvailabilityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐAvailabilityStatus),
+			},
+			{
+				Name:     "awayBackOn",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.AvatarSummary)
+					return obj.AwayBackOn, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "awayNote",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*userservice.AvatarSummary)
+					return obj.AwayNote, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
 		}},
 		{Object: "UserConnection", Fields: []*gqlexec.Field{
 			{
@@ -103,7 +777,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.UserConnection)
 					return obj.TotalCount, nil
@@ -136,7 +810,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.UserEdge)
 					return obj.Cursor, nil
@@ -144,31 +818,223 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "UserOrganizationMembership", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenant.OrganizationMembership)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "userId",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenant.OrganizationMembership)
+					return obj.UserID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "businessUnitId",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenant.OrganizationMembership)
+					return obj.BusinessUnitID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "organizationId",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenant.OrganizationMembership)
+					return obj.OrganizationID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "isDefault",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenant.OrganizationMembership)
+					return obj.IsDefault, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "joinedAt",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenant.OrganizationMembership)
+					return obj.JoinedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "expiresAt",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenant.OrganizationMembership)
+					return obj.ExpiresAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+		}},
+		{Object: "UserRoleAssignment", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*rbac.UserRoleAssignment)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "userId",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*rbac.UserRoleAssignment)
+					return obj.UserID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "organizationId",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*rbac.UserRoleAssignment)
+					return obj.OrganizationID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "roleId",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*rbac.UserRoleAssignment)
+					return obj.RoleID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "expiresAt",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*rbac.UserRoleAssignment)
+					return obj.ExpiresAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "assignedBy",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*rbac.UserRoleAssignment)
+					return obj.AssignedBy, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "assignedAt",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*rbac.UserRoleAssignment)
+					return obj.AssignedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:      "role",
+				HasChild:  true,
+				ChildType: "Role",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*rbac.UserRoleAssignment)
+					return obj.Role, nil
+				},
+				Marshal: gqlexec.Marshal(marshalORole2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋrbacᚐRole),
+			},
+		}},
 	},
 	Inputs: []gqlexec.Input{
+		{Name: "BulkUpdateUserStatusInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputBulkUpdateUserStatusInput)},
 		{Name: "CreateUserInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCreateUserInput)},
+		{Name: "DisableMyTotpInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputDisableMyTotpInput)},
+		{Name: "UpdateMyAvailabilityInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateMyAvailabilityInput)},
+		{Name: "UpdateMyProfileInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateMyProfileInput)},
+		{Name: "UpdateMySettingsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateMySettingsInput)},
 		{Name: "UserPatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUserPatchInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "SessionSummary", Check: func(r any) bool { _, ok := r.(resolverSessionSummary); return ok }},
+		{Root: "SignInSummary", Check: func(r any) bool { _, ok := r.(resolverSignInSummary); return ok }},
 	},
 }
 
 type resolverMutation interface {
 	CreateUser(ctx context.Context, input gqlmodel.CreateUserInput) (*tenant.User, error)
 	PatchUser(ctx context.Context, id string, input gqlmodel.UserPatchInput) (*tenant.User, error)
+	BulkUpdateUserStatus(ctx context.Context, input gqlmodel.BulkUpdateUserStatusInput) ([]*tenant.User, error)
+	ResetUserPassword(ctx context.Context, userID string) (bool, error)
+	ReplaceUserOrganizationMemberships(ctx context.Context, userID string, organizationIds []string) ([]*tenant.OrganizationMembership, error)
+	ResetUserMfa(ctx context.Context, userID string) (bool, error)
+	UpdateMySettings(ctx context.Context, input gqlmodel.UpdateMySettingsInput) (*tenant.User, error)
+	UpdateMyProfile(ctx context.Context, input gqlmodel.UpdateMyProfileInput) (*tenant.User, error)
+	UpdateMyAvailability(ctx context.Context, input gqlmodel.UpdateMyAvailabilityInput) (*tenant.User, error)
+	SetMyAssistantHidden(ctx context.Context, hidden bool) (*tenant.User, error)
+	RevokeMySession(ctx context.Context, sessionID string) (bool, error)
+	RevokeMyOtherSessions(ctx context.Context) (int, error)
+	BeginMyTotpEnrollment(ctx context.Context, password string) (*sessionports.TOTPEnrollment, error)
+	ConfirmMyTotpEnrollment(ctx context.Context, code string, name *string) (*sessionports.RecoveryCodesResponse, error)
+	DisableMyTotp(ctx context.Context, input gqlmodel.DisableMyTotpInput) (bool, error)
+	RegenerateMyRecoveryCodes(ctx context.Context, code string) (*sessionports.RecoveryCodesResponse, error)
 }
 
 type resolverQuery interface {
 	Users(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.UserConnection, error)
 	User(ctx context.Context, id string) (*tenant.User, error)
+	UserRoleAssignments(ctx context.Context, userID string) ([]*rbac.UserRoleAssignment, error)
+	UserOrganizationMemberships(ctx context.Context, userID string) ([]*tenant.OrganizationMembership, error)
+	UserAvatars(ctx context.Context, ids []string) ([]*userservice.AvatarSummary, error)
+	MyMfaStatus(ctx context.Context) (*sessionports.MFAStatus, error)
+	MySessions(ctx context.Context) ([]*userservice.SessionSummary, error)
+	MySignIns(ctx context.Context, limit *int) ([]*userservice.SignInSummary, error)
+}
+
+type resolverSessionSummary interface {
+	Device(ctx context.Context, obj *userservice.SessionSummary) (string, error)
+}
+
+type resolverSignInSummary interface {
+	Outcome(ctx context.Context, obj *userservice.SignInSummary) (string, error)
+	Device(ctx context.Context, obj *userservice.SignInSummary) (string, error)
 }
 
 var (
-	errNoChild0 = errors.New("field of type Int does not have child fields")
+	errNoChild0 = errors.New("field of type String does not have child fields")
 	errNoChild1 = errors.New("field of type Boolean does not have child fields")
-	errNoChild2 = errors.New("field of type String does not have child fields")
+	errNoChild2 = errors.New("field of type Timestamp does not have child fields")
+	errNoChild3 = errors.New("field of type Int does not have child fields")
+	errNoChild4 = errors.New("field of type ID does not have child fields")
+	errNoChild5 = errors.New("field of type AvatarStyle does not have child fields")
+	errNoChild6 = errors.New("field of type AvailabilityStatus does not have child fields")
 )
 
 func field_Mutation_createUser_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -205,6 +1071,191 @@ func field_Mutation_patchUser_args(ctx context.Context, ec *gqlexec.Exec, rawArg
 	return args, nil
 }
 
+func field_Mutation_bulkUpdateUserStatus_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.BulkUpdateUserStatusInput, error) {
+			return unmarshalNBulkUpdateUserStatusInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkUpdateUserStatusInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_resetUserPassword_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "userId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg0
+	return args, nil
+}
+
+func field_Mutation_replaceUserOrganizationMemberships_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "userId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "organizationIds",
+		func(ctx context.Context, v any) ([]string, error) {
+			return unmarshalNID2ᚕstringᚄ(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["organizationIds"] = arg1
+	return args, nil
+}
+
+func field_Mutation_resetUserMfa_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "userId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateMySettings_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.UpdateMySettingsInput, error) {
+			return unmarshalNUpdateMySettingsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateMySettingsInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateMyProfile_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.UpdateMyProfileInput, error) {
+			return unmarshalNUpdateMyProfileInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateMyProfileInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateMyAvailability_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.UpdateMyAvailabilityInput, error) {
+			return unmarshalNUpdateMyAvailabilityInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateMyAvailabilityInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_setMyAssistantHidden_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "hidden",
+		func(ctx context.Context, v any) (bool, error) {
+			return unmarshalNBoolean2bool(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["hidden"] = arg0
+	return args, nil
+}
+
+func field_Mutation_revokeMySession_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "sessionId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["sessionId"] = arg0
+	return args, nil
+}
+
+func field_Mutation_beginMyTotpEnrollment_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "password",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNString2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["password"] = arg0
+	return args, nil
+}
+
+func field_Mutation_confirmMyTotpEnrollment_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "code",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNString2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["code"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "name",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg1
+	return args, nil
+}
+
+func field_Mutation_disableMyTotp_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DisableMyTotpInput, error) {
+			return unmarshalNDisableMyTotpInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDisableMyTotpInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_regenerateMyRecoveryCodes_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "code",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNString2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["code"] = arg0
+	return args, nil
+}
+
 func field_Query_users_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
@@ -229,6 +1280,95 @@ func field_Query_user_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[st
 	}
 	args["id"] = arg0
 	return args, nil
+}
+
+func field_Query_userRoleAssignments_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "userId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg0
+	return args, nil
+}
+
+func field_Query_userOrganizationMemberships_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "userId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg0
+	return args, nil
+}
+
+func field_Query_userAvatars_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "ids",
+		func(ctx context.Context, v any) ([]string, error) {
+			return unmarshalNID2ᚕstringᚄ(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["ids"] = arg0
+	return args, nil
+}
+
+func field_Query_mySignIns_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg0
+	return args, nil
+}
+
+func unmarshalInputBulkUpdateUserStatusInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.BulkUpdateUserStatusInput, error) {
+	var it gqlmodel.BulkUpdateUserStatusInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"userIds", "status"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "userIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userIds"))
+			data, err := unmarshalNID2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.UserIds = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		}
+	}
+	return it, nil
 }
 
 func unmarshalInputCreateUserInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CreateUserInput, error) {
@@ -315,6 +1455,196 @@ func unmarshalInputCreateUserInput(ctx context.Context, ec *gqlexec.Exec, obj an
 				return it, err
 			}
 			it.RoleIds = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputDisableMyTotpInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DisableMyTotpInput, error) {
+	var it gqlmodel.DisableMyTotpInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"password", "code", "recoveryCode"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "password":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Password = data
+		case "code":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Code = data
+		case "recoveryCode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recoveryCode"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RecoveryCode = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputUpdateMyAvailabilityInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.UpdateMyAvailabilityInput, error) {
+	var it gqlmodel.UpdateMyAvailabilityInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"status", "focusUntil", "backOn", "delegateUserId", "awayNote"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalNAvailabilityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐAvailabilityStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "focusUntil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("focusUntil"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.FocusUntil = data
+		case "backOn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("backOn"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.BackOn = data
+		case "delegateUserId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("delegateUserId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DelegateUserID = data
+		case "awayNote":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("awayNote"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AwayNote = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputUpdateMyProfileInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.UpdateMyProfileInput, error) {
+	var it gqlmodel.UpdateMyProfileInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"jobTitle", "phoneNumber", "avatarStyle"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "jobTitle":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("jobTitle"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.JobTitle = data
+		case "phoneNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phoneNumber"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PhoneNumber = data
+		case "avatarStyle":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("avatarStyle"))
+			data, err := unmarshalOAvatarStyle2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐAvatarStyle(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AvatarStyle = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputUpdateMySettingsInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.UpdateMySettingsInput, error) {
+	var it gqlmodel.UpdateMySettingsInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"timezone", "timeFormat", "locale"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "timezone":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("timezone"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Timezone = data
+		case "timeFormat":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("timeFormat"))
+			data, err := unmarshalNTimeFormat2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTimeFormat(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.TimeFormat = data
+		case "locale":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locale"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Locale = data
 		}
 	}
 	return it, nil
@@ -417,6 +1747,22 @@ func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exe
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
 
+func unmarshalNAvailabilityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐAvailabilityStatus(ctx context.Context, ec *gqlexec.Exec, v any) (tenant.AvailabilityStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := tenant.AvailabilityStatus(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool, error) {
+	res, err := graphql.UnmarshalBoolean(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNBulkUpdateUserStatusInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkUpdateUserStatusInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.BulkUpdateUserStatusInput, error) {
+	res, err := unmarshalInputBulkUpdateUserStatusInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNCreateUserInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreateUserInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.CreateUserInput, error) {
 	res, err := unmarshalInputCreateUserInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -424,6 +1770,11 @@ func unmarshalNCreateUserInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi
 
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
 	res, err := unmarshalInputDataTableConnectionInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNDisableMyTotpInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDisableMyTotpInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DisableMyTotpInput, error) {
+	res, err := unmarshalInputDisableMyTotpInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -438,14 +1789,48 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
+}
+
 func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNTimeFormat2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTimeFormat(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.TimeFormat, error) {
+	var res gqlmodel.TimeFormat
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNUpdateMyAvailabilityInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateMyAvailabilityInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.UpdateMyAvailabilityInput, error) {
+	res, err := unmarshalInputUpdateMyAvailabilityInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNUpdateMyProfileInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateMyProfileInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.UpdateMyProfileInput, error) {
+	res, err := unmarshalInputUpdateMyProfileInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNUpdateMySettingsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateMySettingsInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.UpdateMySettingsInput, error) {
+	res, err := unmarshalInputUpdateMySettingsInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalNUserPatchInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUserPatchInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.UserPatchInput, error) {
 	res, err := unmarshalInputUserPatchInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOAvatarStyle2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐAvatarStyle(ctx context.Context, ec *gqlexec.Exec, v any) (*tenant.AvatarStyle, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := tenant.AvatarStyle(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
@@ -472,6 +1857,22 @@ func unmarshalOID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
 }
 
+func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
 	if v == nil {
 		return nil, nil
@@ -489,12 +1890,68 @@ func unmarshalOTimeFormat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func marshalNAvailabilityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐAvailabilityStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tenant.AvailabilityStatus) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNAvatarStyle2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐAvatarStyle(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tenant.AvatarStyle) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
 	res := graphql.MarshalBoolean(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNInt2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNMFARecoveryCodes2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋsessionportsᚐRecoveryCodesResponse(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *sessionports.RecoveryCodesResponse) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "MFARecoveryCodes", v)
+}
+
+func marshalNMFAStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋsessionportsᚐMFAStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *sessionports.MFAStatus) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "MFAStatus", v)
 }
 
 func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
@@ -505,6 +1962,38 @@ func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgra
 	return ec.MarshalType(ctx, sel, "PageInfo", v)
 }
 
+func marshalNSessionSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋuserserviceᚐSessionSummaryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*userservice.SessionSummary) graphql.Marshaler {
+	return gqlexec.List[*userservice.SessionSummary]{
+		Elem:        marshalNSessionSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋuserserviceᚐSessionSummary,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNSessionSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋuserserviceᚐSessionSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *userservice.SessionSummary) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "SessionSummary", v)
+}
+
+func marshalNSignInSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋuserserviceᚐSignInSummaryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*userservice.SignInSummary) graphql.Marshaler {
+	return gqlexec.List[*userservice.SignInSummary]{
+		Elem:        marshalNSignInSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋuserserviceᚐSignInSummary,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNSignInSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋuserserviceᚐSignInSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *userservice.SignInSummary) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "SignInSummary", v)
+}
+
 func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
@@ -513,12 +2002,61 @@ func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
+func marshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	return gqlexec.List[string]{
+		Elem:        marshalNString2string,
+		NonNull:     true,
+		NonNullElem: true,
+		Scalar:      true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNTOTPEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋsessionportsᚐTOTPEnrollment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *sessionports.TOTPEnrollment) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "TOTPEnrollment", v)
+}
+
+func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNUser2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUserᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*tenant.User) graphql.Marshaler {
+	return gqlexec.List[*tenant.User]{
+		Elem:        marshalNUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
 func marshalNUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "User", v)
+}
+
+func marshalNUserAvatar2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋuserserviceᚐAvatarSummaryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*userservice.AvatarSummary) graphql.Marshaler {
+	return gqlexec.List[*userservice.AvatarSummary]{
+		Elem:        marshalNUserAvatar2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋuserserviceᚐAvatarSummary,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNUserAvatar2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋuserserviceᚐAvatarSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *userservice.AvatarSummary) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "UserAvatar", v)
 }
 
 func marshalNUserConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUserConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.UserConnection) graphql.Marshaler {
@@ -545,11 +2083,58 @@ func marshalNUserEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgra
 	return ec.MarshalType(ctx, sel, "UserEdge", v)
 }
 
+func marshalNUserOrganizationMembership2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganizationMembershipᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*tenant.OrganizationMembership) graphql.Marshaler {
+	return gqlexec.List[*tenant.OrganizationMembership]{
+		Elem:        marshalNUserOrganizationMembership2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganizationMembership,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNUserOrganizationMembership2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganizationMembership(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.OrganizationMembership) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "UserOrganizationMembership", v)
+}
+
+func marshalNUserRoleAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋrbacᚐUserRoleAssignmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*rbac.UserRoleAssignment) graphql.Marshaler {
+	return gqlexec.List[*rbac.UserRoleAssignment]{
+		Elem:        marshalNUserRoleAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋrbacᚐUserRoleAssignment,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNUserRoleAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋrbacᚐUserRoleAssignment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *rbac.UserRoleAssignment) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "UserRoleAssignment", v)
+}
+
 func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	res := graphql.MarshalInt(*v)
+	return res
+}
+
+func marshalORole2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋrbacᚐRole(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *rbac.Role) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "Role", v)
+}
+
+func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt64(*v)
 	return res
 }
 

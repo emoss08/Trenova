@@ -18,6 +18,10 @@ var AIProviderSpec TypeSpec
 
 var AITuneUpSpec TypeSpec
 
+var AccessPolicySpec TypeSpec
+
+var AccessSettingsSpec TypeSpec
+
 var AccessorialChargeSpec TypeSpec
 
 var AccountTypeSpec TypeSpec
@@ -374,6 +378,8 @@ var IFTAReturnLineSpec TypeSpec
 
 var IFTATaxRateSpec TypeSpec
 
+var IdentityProviderSpec TypeSpec
+
 var InboundActivitySpec TypeSpec
 
 var InboundAttachmentSpec TypeSpec
@@ -464,6 +470,8 @@ var PortalInvitationSpec TypeSpec
 
 var PortalPtoSpec TypeSpec
 
+var ProvisioningAuditRecordSpec TypeSpec
+
 var RateAgreementSpec TypeSpec
 
 var RateAgreementAccessorialSpec TypeSpec
@@ -506,6 +514,8 @@ var ReportScheduleSpec TypeSpec
 
 var ReportViewSpec TypeSpec
 
+var ResourcePermissionSpec TypeSpec
+
 var RiskDecisionSpec TypeSpec
 
 var RoleSpec TypeSpec
@@ -517,6 +527,8 @@ var RoutingGuideEntrySpec TypeSpec
 var SCIMDirectorySpec TypeSpec
 
 var SCIMGroupRoleMappingSpec TypeSpec
+
+var SCIMTokenSpec TypeSpec
 
 var ServiceFailureSpec TypeSpec
 
@@ -625,6 +637,10 @@ var TriageViewSpec TypeSpec
 var UsStateSpec TypeSpec
 
 var UserSpec TypeSpec
+
+var UserOrganizationMembershipSpec TypeSpec
+
+var UserRoleAssignmentSpec TypeSpec
 
 var VehicleInspectionSpec TypeSpec
 
@@ -1677,6 +1693,97 @@ func init() {
 			{
 				Name:   "version",
 				Column: "version",
+			},
+		},
+	}
+
+	AccessPolicySpec = TypeSpec{
+		TypeName: "AccessPolicy",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "name",
+				Column: "name",
+			},
+			{
+				Name:   "resource",
+				Column: "resource",
+			},
+			{
+				Name:   "operation",
+				Column: "operation",
+			},
+			{
+				Name:   "effect",
+				Column: "effect",
+			},
+			{
+				Name:   "priority",
+				Column: "priority",
+			},
+			{
+				Name:   "conditions",
+				Column: "conditions",
+			},
+			{
+				Name:   "enabled",
+				Column: "enabled",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
+	AccessSettingsSpec = TypeSpec{
+		TypeName: "AccessSettings",
+		AlwaysColumns: []string{
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "requireRoleActivation",
+				Column: "require_role_activation",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
@@ -17876,6 +17983,96 @@ func init() {
 		},
 	}
 
+	IdentityProviderSpec = TypeSpec{
+		TypeName: "IdentityProvider",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "name",
+				Column: "name",
+			},
+			{
+				Name:   "slug",
+				Column: "slug",
+			},
+			{
+				Name:   "protocol",
+				Column: "protocol",
+			},
+			{
+				Name:   "enabled",
+				Column: "enabled",
+			},
+			{
+				Name:   "enforceSso",
+				Column: "enforce_sso",
+			},
+			{
+				Name:   "autoProvision",
+				Column: "auto_provision",
+			},
+			{
+				Name:   "allowFederatedMfa",
+				Column: "allow_federated_mfa",
+			},
+			{
+				Name:   "federatedMfaAcrValues",
+				Column: "federated_mfa_acr_values",
+			},
+			{
+				Name:   "allowedDomains",
+				Column: "allowed_domains",
+			},
+			{
+				Name:   "attributeMap",
+				Column: "attribute_map",
+			},
+			{
+				Name:   "oidcIssuerUrl",
+				Column: "oidc_issuer_url",
+			},
+			{
+				Name:   "oidcClientId",
+				Column: "oidc_client_id",
+			},
+			{
+				Name:   "oidcRedirectUrl",
+				Column: "oidc_redirect_url",
+			},
+			{
+				Name:   "oidcScopes",
+				Column: "oidc_scopes",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
 	InboundActivitySpec = TypeSpec{
 		TypeName: "InboundActivity",
 		AlwaysColumns: []string{
@@ -21729,6 +21926,56 @@ func init() {
 		},
 	}
 
+	ProvisioningAuditRecordSpec = TypeSpec{
+		TypeName: "ProvisioningAuditRecord",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "directoryId",
+				Column: "directory_id",
+			},
+			{
+				Name:   "action",
+				Column: "action",
+			},
+			{
+				Name:   "resourceType",
+				Column: "resource_type",
+			},
+			{
+				Name:   "externalId",
+				Column: "external_id",
+			},
+			{
+				Name:   "resourceId",
+				Column: "resource_id",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "errorMessage",
+				Column: "error_message",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+		},
+	}
+
 	RateAgreementSpec = TypeSpec{
 		TypeName: "RateAgreement",
 		AlwaysColumns: []string{
@@ -23402,6 +23649,44 @@ func init() {
 		},
 	}
 
+	ResourcePermissionSpec = TypeSpec{
+		TypeName: "ResourcePermission",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "roleId",
+				Column: "role_id",
+			},
+			{
+				Name:   "resource",
+				Column: "resource",
+			},
+			{
+				Name:   "operations",
+				Column: "operations",
+			},
+			{
+				Name:   "dataScope",
+				Column: "data_scope",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
 	RiskDecisionSpec = TypeSpec{
 		TypeName: "RiskDecision",
 		AlwaysColumns: []string{
@@ -23746,6 +24031,56 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &RoleSpec,
 				},
+			},
+		},
+	}
+
+	SCIMTokenSpec = TypeSpec{
+		TypeName: "SCIMToken",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "directoryId",
+				Column: "directory_id",
+			},
+			{
+				Name:   "name",
+				Column: "name",
+			},
+			{
+				Name:   "prefix",
+				Column: "prefix",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "lastUsedAt",
+				Column: "last_used_at",
+			},
+			{
+				Name:   "expiresAt",
+				Column: "expires_at",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
@@ -28667,6 +29002,26 @@ func init() {
 				Column: "password_changed_at",
 			},
 			{
+				Name:   "focusUntil",
+				Column: "focus_until",
+			},
+			{
+				Name:   "awayBackOn",
+				Column: "away_back_on",
+			},
+			{
+				Name:   "awayDelegateUserId",
+				Column: "away_delegate_user_id",
+			},
+			{
+				Name:   "awayNote",
+				Column: "away_note",
+			},
+			{
+				Name:   "assistantHidden",
+				Column: "assistant_hidden",
+			},
+			{
 				Name:   "businessUnit",
 				Column: "business_unit_id",
 				Relation: &RelationSpec{
@@ -28678,6 +29033,87 @@ func init() {
 				Column: "current_organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
+				},
+			},
+		},
+	}
+
+	UserOrganizationMembershipSpec = TypeSpec{
+		TypeName: "UserOrganizationMembership",
+		AlwaysColumns: []string{
+			"id",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "userId",
+				Column: "user_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "isDefault",
+				Column: "is_default",
+			},
+			{
+				Name:   "joinedAt",
+				Column: "joined_at",
+			},
+			{
+				Name:   "expiresAt",
+				Column: "expires_at",
+			},
+		},
+	}
+
+	UserRoleAssignmentSpec = TypeSpec{
+		TypeName: "UserRoleAssignment",
+		AlwaysColumns: []string{
+			"id",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "userId",
+				Column: "user_id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "roleId",
+				Column: "role_id",
+			},
+			{
+				Name:   "expiresAt",
+				Column: "expires_at",
+			},
+			{
+				Name:   "assignedBy",
+				Column: "assigned_by",
+			},
+			{
+				Name:   "assignedAt",
+				Column: "assigned_at",
+			},
+			{
+				Name:   "role",
+				Column: "role_id",
+				Relation: &RelationSpec{
+					Target: &RoleSpec,
 				},
 			},
 		},

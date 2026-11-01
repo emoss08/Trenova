@@ -17,6 +17,10 @@ import (
 
 const readOnlyExtensionName = "PlanReadOnlyGuard"
 
+var readOnlyAllowedMutations = map[string]struct{}{
+	"updateMySettings": {},
+}
+
 type ReadOnlyParams struct {
 	fx.In
 
@@ -71,7 +75,7 @@ func (e *ReadOnlyExtension) MutateOperationContext(
 			BuID:   authCtx.BusinessUnitID,
 			UserID: authCtx.UserID,
 		},
-		Write:  true,
+		Write:  !onlyReadOnlyAllowedFields(opCtx.Operation.SelectionSet),
 		APIKey: authCtx.IsAPIKey(),
 	})
 	if err == nil {
@@ -88,4 +92,20 @@ func (e *ReadOnlyExtension) MutateOperationContext(
 	}
 
 	return gqlerror.WrapIfUnwrapped(err)
+}
+
+func onlyReadOnlyAllowedFields(selections ast.SelectionSet) bool {
+	if len(selections) == 0 {
+		return false
+	}
+	for _, selection := range selections {
+		field, ok := selection.(*ast.Field)
+		if !ok {
+			return false
+		}
+		if _, allowed := readOnlyAllowedMutations[field.Name]; !allowed {
+			return false
+		}
+	}
+	return true
 }

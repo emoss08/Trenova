@@ -20,7 +20,6 @@ var readOnlyWriteAllowedPaths = map[string]struct{}{
 	graphQLPath:                                                        {},
 	"/api/v1/users/me/change-password":                                 {},
 	"/api/v1/users/me/switch-organization":                             {},
-	"/api/v1/users/me/settings":                                        {},
 	"/api/v1/assistant/turns/:turnID/stop":                             {},
 	"/api/v1/realtime/presence/:resource":                              {},
 	"/api/v1/realtime/presence/:resource/:recordID":                    {},

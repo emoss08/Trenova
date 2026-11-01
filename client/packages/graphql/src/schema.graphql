@@ -2185,6 +2185,46 @@ type ARTopOverdueCustomer {
   totalOpenMinor: Int!
 }
 
+"""
+An attribute-based rule that allows or denies an operation when its conditions match.
+"""
+type AccessPolicy {
+  businessUnitId: ID!
+  conditions: JSON!
+  createdAt: Timestamp!
+  """allow or deny."""
+  effect: String!
+  enabled: Boolean!
+  id: ID!
+  name: String!
+  operation: String!
+  organizationId: ID!
+  priority: Int!
+  resource: String!
+  updatedAt: Timestamp!
+}
+
+input AccessPolicyInput {
+  conditions: JSON
+  effect: String!
+  enabled: Boolean!
+  name: String!
+  operation: String!
+  priority: Int!
+  resource: String!
+}
+
+"""Organization-wide access settings."""
+type AccessSettings {
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  organizationId: ID!
+  """Whether people choose the roles they work under at sign-in."""
+  requireRoleActivation: Boolean!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
 type AccessorialCharge {
   amount: Float!
   businessUnit: BusinessUnit
@@ -7027,9 +7067,49 @@ type ApiKeyConnection {
   totalCountExact: Boolean!
 }
 
+"""
+An API key with its grants. The secret is never readable after it is issued.
+"""
+type ApiKeyDetail {
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  description: String!
+  expiresAt: Timestamp!
+  id: ID!
+  keyPrefix: String!
+  lastUsedAt: Timestamp!
+  name: String!
+  organizationId: ID!
+  permissionScope: String!
+  permissions: [ApiKeyPermission!]!
+  status: String!
+  updatedAt: Timestamp!
+}
+
 type ApiKeyEdge {
   cursor: String!
   node: ApiKey!
+}
+
+input ApiKeyInput {
+  description: String
+  """Zero or omitted for a key that never expires."""
+  expiresAt: Timestamp
+  name: String!
+  permissions: [ApiKeyPermissionInput!]!
+}
+
+"""One grant of an API key."""
+type ApiKeyPermission {
+  dataScope: String!
+  operations: [String!]!
+  resource: String!
+}
+
+input ApiKeyPermissionInput {
+  dataScope: String!
+  operations: [String!]!
+  resource: String!
 }
 
 input ApplyCarrierIntelSuggestionsInput {
@@ -7138,6 +7218,12 @@ input AssignPayProfileInput {
   """Defaults to 100. Use 50 for an even team split."""
   splitPercent: Decimal
   workerId: ID!
+}
+
+input AssignRoleInput {
+  """Null for a role that never lapses."""
+  expiresAt: Timestamp
+  userId: ID!
 }
 
 input AssignShiftInput {
@@ -8033,6 +8119,11 @@ input BulkUpdateTractorStatusInput {
 input BulkUpdateTrailerStatusInput {
   status: EquipmentStatus!
   trailerIds: [ID!]!
+}
+
+input BulkUpdateUserStatusInput {
+  status: EntityStatus!
+  userIds: [ID!]!
 }
 
 input BulkWorkerPTOActionInput {
@@ -11074,6 +11165,12 @@ input CreateReportViewInput {
   shared: Boolean
 }
 
+input CreateSCIMTokenInput {
+  """Zero or omitted for a token that never expires."""
+  expiresAt: Timestamp
+  name: String!
+}
+
 input CreateSettlementDisputeInput {
   category: SettlementDisputeCategory!
   description: String!
@@ -13273,6 +13370,12 @@ enum DetentionWaiverReason {
   ForceMajeure
   Other
   Weather
+}
+
+input DisableMyTotpInput {
+  code: String
+  password: String!
+  recoveryCode: String
 }
 
 input DiscardFactoringRemittanceInput {
@@ -20083,6 +20186,58 @@ input IFTATaxRatesInput {
   sort: [SortFieldInput!]
 }
 
+"""
+A federated sign-in provider of the organization. Its client secret never leaves the server.
+"""
+type IdentityProvider {
+  allowFederatedMfa: Boolean!
+  allowedDomains: [String!]!
+  """Claim names keyed by the user field they fill."""
+  attributeMap: JSON!
+  autoProvision: Boolean!
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  enabled: Boolean!
+  enforceSso: Boolean!
+  federatedMfaAcrValues: [String!]!
+  id: ID!
+  name: String!
+  oidcClientId: String!
+  oidcIssuerUrl: String!
+  oidcRedirectUrl: String!
+  oidcScopes: [String!]!
+  organizationId: ID!
+  """OIDC or SAML."""
+  protocol: String!
+  slug: String!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+input IdentityProviderInput {
+  allowFederatedMfa: Boolean!
+  allowedDomains: [String!]
+  attributeMap: JSON
+  autoProvision: Boolean!
+  enabled: Boolean!
+  enforceSso: Boolean!
+  federatedMfaAcrValues: [String!]
+  name: String!
+  oidcClientId: String!
+  """
+  Required when the provider is created; leave empty on update to keep the stored secret.
+  """
+  oidcClientSecret: String
+  oidcIssuerUrl: String!
+  oidcRedirectUrl: String!
+  oidcScopes: [String!]
+  """OIDC; SAML is not configurable yet."""
+  protocol: String!
+  slug: String
+  """The version read; required on update."""
+  version: Int
+}
+
 input IgnoreAccountingInboundChangeInput {
   id: ID!
   """
@@ -21481,6 +21636,18 @@ input IssuePayAdvanceInput {
   workerId: ID!
 }
 
+"""An API key with its secret, shown this once."""
+type IssuedApiKey {
+  apiKey: ApiKeyDetail!
+  token: String!
+}
+
+"""A new SCIM token with its secret, shown this once."""
+type IssuedSCIMToken {
+  scimToken: SCIMToken!
+  token: String!
+}
+
 """
 A structured JSON value (object or array). Serialized as-is in the response body.
 """
@@ -22300,6 +22467,24 @@ type MFAAuthenticatorEdge {
   node: MFAAuthenticator!
 }
 
+"""One-time recovery codes, shown once to the person who generated them."""
+type MFARecoveryCodes {
+  recoveryCodes: [String!]!
+}
+
+"""The caller's own two-factor sign-in."""
+type MFAStatus {
+  """Zero until an authenticator is confirmed."""
+  enabledAt: Timestamp!
+  enrollmentPending: Boolean!
+  lastUsedAt: Timestamp!
+  recoveryCodesNeedReplacing: Boolean!
+  recoveryCodesRemaining: Int!
+  """Whether this session proved a second factor."""
+  sessionVerified: Boolean!
+  totpEnabled: Boolean!
+}
+
 type ManualJournal {
   accountingDate: Timestamp!
   approvedAt: Timestamp
@@ -22412,6 +22597,31 @@ input MemoLineInput {
   description: String!
   """Defaults to 1."""
   quantity: Decimal
+}
+
+"""
+Microsoft Entra ID sign-in for the organization. The client secret is write-only.
+"""
+type MicrosoftSSOConfig {
+  allowedDomains: [String!]!
+  clientId: String!
+  enabled: Boolean!
+  enforceSso: Boolean!
+  organizationId: ID!
+  redirectUrl: String!
+  secretConfigured: Boolean!
+  tenantId: String!
+}
+
+input MicrosoftSSOConfigInput {
+  allowedDomains: [String!]
+  clientId: String!
+  """Leave empty to keep the stored secret."""
+  clientSecret: String
+  enabled: Boolean!
+  enforceSso: Boolean!
+  redirectUrl: String!
+  tenantId: String!
 }
 
 enum MoveCoverageType {
@@ -22537,6 +22747,10 @@ type Mutation {
   """
   assignRequiredWorkerTraining(workerId: ID!): [WorkerTrainingRecord!]!
   """
+  Gives a person a role. Every grant it carries is checked against the caller's own access.
+  """
+  assignRole(input: AssignRoleInput!, roleId: ID!): UserRoleAssignment!
+  """
   Puts a user on a front-office position through their membership in the
   organisation, or takes them off one. A driving title is refused.
   """
@@ -22567,6 +22781,8 @@ type Mutation {
   to size the job first.
   """
   backfillJurisdictionMiles(input: BackfillJurisdictionMilesInput!): JurisdictionMilesBackfillResult!
+  """Starts enrolling an authenticator app. Needs the caller's password."""
+  beginMyTotpEnrollment(password: String!): TOTPEnrollment!
   """
   Sends the sender's future mail on this source straight to Ignored, and ignores this message.
   """
@@ -22586,6 +22802,10 @@ type Mutation {
   bulkUpdateHazardousMaterialStatus(input: BulkUpdateHazardousMaterialStatusInput!): [HazardousMaterial!]!
   bulkUpdateTractorStatus(input: BulkUpdateTractorStatusInput!): [Tractor!]!
   bulkUpdateTrailerStatus(input: BulkUpdateTrailerStatusInput!): [Trailer!]!
+  """
+  Sets the status of several people at once. A person cannot deactivate their own account.
+  """
+  bulkUpdateUserStatus(input: BulkUpdateUserStatusInput!): [User!]!
   bulkWorkerPTOAction(input: BulkWorkerPTOActionInput!): BulkWorkerPTOActionPayload!
   calculateShipmentDistance(input: ShipmentInput!): ShipmentDistanceResponse!
   calculateShipmentLoadingOptimization(input: ShipmentLoadingOptimizationInput!): ShipmentLoadingOptimizationResponse!
@@ -22669,6 +22889,8 @@ type Mutation {
   confirmAccountingMappings(input: [ConfirmAccountingMappingInput!]!): [AccountingMapping!]!
   """Accepts a memory an agent offered in the person's conversation."""
   confirmDeskMemory(id: ID!, input: ConfirmDeskMemoryInput!): DeskMemory!
+  """Confirms the pending authenticator with a code from it."""
+  confirmMyTotpEnrollment(code: String!, name: String): MFARecoveryCodes!
   """
   Connects with the uploaded certificate, or offers the companies to choose between when the account has several.
   """
@@ -22677,6 +22899,7 @@ type Mutation {
   Says what kind of message it really is. Nova reads mail from the sender that way from now on.
   """
   correctInboundClassification(classification: InboundClassification!, id: ID!): InboundMessage!
+  createAccessPolicy(input: AccessPolicyInput!): AccessPolicy!
   createAccessorialCharge(input: AccessorialChargeInput!): AccessorialCharge!
   createAccountType(input: AccountTypeInput!): AccountType!
   """
@@ -22685,6 +22908,10 @@ type Mutation {
   createAccountingReferenceRecord(input: CreateAccountingReferenceRecordInput!): AccountingMapping!
   createAgentEvalCase(input: CreateAgentEvalCaseInput!): AgentEvalCaseCapture!
   createAgentMemory(input: AgentMemoryInput!): AgentMemory!
+  """
+  Issues an API key. Its secret is returned this once; every grant is checked against the caller's own access.
+  """
+  createApiKey(input: ApiKeyInput!): IssuedApiKey!
   createBenefitPlan(input: BenefitPlanInput!): BenefitPlan!
   """Issues cover sheets to print. Each payload is returned once."""
   createCaptureCoverSheets(sheets: [CaptureCoverSheetInput!]!): [CaptureCoverSheet!]!
@@ -22719,6 +22946,7 @@ type Mutation {
   createHazmatSegregationRule(input: HazmatSegregationRuleInput!): HazmatSegregationRule!
   createHoldReason(input: HoldReasonInput!): HoldReason!
   createHomeLayoutPreset(input: SaveHomeLayoutPresetInput!): HomeLayoutPreset!
+  createIdentityProvider(input: IdentityProviderInput!): IdentityProvider!
   createIftaMileageEntry(input: IFTAMileageEntryInput!): IFTAJurisdictionMileageEntry!
   """Creates the load from the checked draft, as a new shipment."""
   createInboundLoad(fields: [TriageLoadFieldInput!]!, messageId: ID!): InboundMessage!
@@ -22756,6 +22984,14 @@ type Mutation {
   createReportDefinition(input: SaveReportDefinitionInput!): ReportDefinition!
   createReportSchedule(input: CreateReportScheduleInput!): ReportSchedule!
   createReportView(input: CreateReportViewInput!): ReportView!
+  """
+  Creates a role with its grants. Every grant is checked against the caller's own access.
+  """
+  createRole(input: RoleInput!): Role!
+  createSCIMDirectory(input: SCIMDirectoryInput!): SCIMDirectory!
+  createSCIMGroupRoleMapping(directoryId: ID!, input: SCIMGroupRoleMappingInput!): SCIMGroupRoleMapping!
+  """Issues a SCIM token. Its secret is returned this once."""
+  createSCIMToken(directoryId: ID!, input: CreateSCIMTokenInput!): IssuedSCIMToken!
   """
   Files a dispute against one of the signed-in driver's issued settlements.
   """
@@ -22832,6 +23068,7 @@ type Mutation {
   decideProfileChange(input: DecideProfileChangeInput!): WorkerProfileChangeRequest!
   decideShipmentSuggestion(input: DecideShipmentSuggestionInput!): Boolean!
   delegateApproval(input: DelegateApprovalInput!): ApprovalDelegation!
+  deleteAccessPolicy(id: ID!): Boolean!
   """Removes a kept prompt."""
   deleteAgentTestPrompt(agentId: ID!, id: ID!): Boolean!
   deleteCaptureProfile(id: ID!): Boolean!
@@ -22850,6 +23087,7 @@ type Mutation {
   deleteFuelPurchase(id: ID!, version: Int!): Boolean!
   deleteFuelSurchargeProgram(id: ID!): Boolean!
   deleteHomeLayoutPreset(id: ID!): Boolean!
+  deleteIdentityProvider(id: ID!): Boolean!
   deleteIftaMileageEntry(id: ID!, version: Int!): Boolean!
   deleteIftaReturn(id: ID!, version: Int!): Boolean!
   deleteIftaTaxRate(id: ID!, version: Int!): Boolean!
@@ -22861,6 +23099,12 @@ type Mutation {
   deleteReportDefinition(id: ID!): Boolean!
   deleteReportSchedule(id: ID!): Boolean!
   deleteReportView(id: ID!): Boolean!
+  """
+  Deletes a role. A role someone holds needs force, which also needs user unassign.
+  """
+  deleteRole(force: Boolean, id: ID!): Boolean!
+  deleteSCIMDirectory(id: ID!): Boolean!
+  deleteSCIMGroupRoleMapping(id: ID!): Boolean!
   deleteSafetyViolation(id: ID!): Boolean!
   deleteShipmentComment(commentId: ID!, shipmentId: ID!): Boolean!
   deleteTableConfiguration(id: ID!): Boolean!
@@ -22879,6 +23123,10 @@ type Mutation {
   """
   detachPayEventFromSettlement(input: DetachPayEventInput!): DriverSettlement!
   detentionBacktest(input: DetentionBacktestInput!): DetentionBacktestResult!
+  """
+  Turns off the caller's authenticator. Needs their password and a code or a recovery code.
+  """
+  disableMyTotp(input: DisableMyTotpInput!): Boolean!
   """Throws away everything in a stack that is not already filed."""
   discardCaptureBatch(id: ID!, version: Int!): CaptureBatch!
   """
@@ -23176,6 +23424,10 @@ type Mutation {
   """Write the signed-in person's own profile again now."""
   regenerateMyAgentProfile: Boolean!
   """
+  Replaces the caller's recovery codes. Needs a code from their authenticator.
+  """
+  regenerateMyRecoveryCodes(code: String!): MFARecoveryCodes!
+  """
   Marks every source of one type stale; only chunks whose text changed are embedded again.
   """
   reindexAIRetrievalSource(sourceType: AIRetrievalSourceType!): AIRetrievalStatus!
@@ -23234,6 +23486,10 @@ type Mutation {
   """
   reorderAIProviders(ids: [ID!]!): [AIProvider!]!
   """
+  Replaces the organizations of the business unit a person may sign in to.
+  """
+  replaceUserOrganizationMemberships(organizationIds: [ID!]!, userId: ID!): [UserOrganizationMembership!]!
+  """
   Replays a case against its agent as it is now, writes simulated, and scores it.
   """
   replayAgentEvalCase(id: ID!): AgentEvaluation!
@@ -23256,6 +23512,12 @@ type Mutation {
   Forgets the caller's arrangement of a table, so it opens as its default view.
   """
   resetMyTableLayout(resource: String!): Boolean!
+  """Removes a person's second sign-in factor so they enrol again."""
+  resetUserMfa(userId: ID!): Boolean!
+  """
+  Mails a person a link to choose a new password. Their current password keeps working until they use it.
+  """
+  resetUserPassword(userId: ID!): Boolean!
   """
   Fixes a difference with the accounting system: sends Trenova's document again, or changes Trenova to match.
   """
@@ -23337,6 +23599,7 @@ type Mutation {
   reviewInboundMessages(input: BulkReviewInboundMessagesInput!, selection: TriageSelectionInput!): TriageBulkResult!
   reviewWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
   reviseDeskMemory(id: ID!, input: ReviseDeskMemoryInput!): DeskMemory!
+  revokeApiKey(id: ID!): ApiKeyDetail!
   revokeApprovalDelegation(id: ID!): ApprovalDelegation!
   """Revokes anybody's companion."""
   revokeCaptureDevice(id: ID!, reason: String): CaptureDevice!
@@ -23348,6 +23611,11 @@ type Mutation {
   revokeCustomerTrackingLink(linkId: ID, shipmentId: ID!): Int!
   """Revokes one of the caller's own companions. It stops working at once."""
   revokeMyCaptureDevice(id: ID!, reason: String): CaptureDevice!
+  """Signs out every session of the caller but this one, and says how many."""
+  revokeMyOtherSessions: Int!
+  """Signs out one of the caller's other sessions."""
+  revokeMySession(sessionId: ID!): Boolean!
+  revokeSCIMToken(id: ID!): SCIMToken!
   """
   Revokes portal access: deactivates the linked login and voids pending invitations.
   """
@@ -23358,6 +23626,10 @@ type Mutation {
   live at two different times under two different approvals.
   """
   rollbackDocumentTemplate(notes: String, versionId: ID!): DocumentTemplateVersion!
+  """
+  Replaces an API key's secret. The new secret is returned this once and the old one stops working.
+  """
+  rotateApiKey(id: ID!): IssuedApiKey!
   """Replaces the webhook token. The old URL stops working at once."""
   rotateInboundMailboxToken(id: ID!): InboundMailboxCredentials!
   """
@@ -23445,6 +23717,7 @@ type Mutation {
   Rates something an AI wrote for the caller, replacing their earlier rating of it.
   """
   setMyAIFeedback(input: SetMyAIFeedbackInput!): AIFeedback!
+  setMyAssistantHidden(hidden: Boolean!): User!
   """
   The signed-in driver stating what they would rather work on one weekday.
   """
@@ -23536,6 +23809,8 @@ type Mutation {
   """Takes one credit memo application back."""
   unapplyCreditMemoApplication(input: UnapplyCreditMemoApplicationInput!): CreditMemoApplication!
   unassignDocumentTemplate(input: UnassignDocumentTemplateInput!): Boolean!
+  """Takes a role from a person."""
+  unassignRole(assignmentId: ID!): Boolean!
   unblockInboundSender(mailboxId: ID!, sender: String!): InboundMailbox!
   uncancelShipment(id: ID!): Shipment!
   uncertifyOshaSummary(year: Int!): OSHAAnnualSummary!
@@ -23561,6 +23836,11 @@ type Mutation {
   unpinShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   unresolveShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   updateAIRetrievalSettings(input: AIRetrievalSettingsPatchInput!): AIRetrievalStatus!
+  updateAccessPolicy(id: ID!, input: AccessPolicyInput!): AccessPolicy!
+  """
+  Turns role activation on or off. Cannot be turned off while a dynamic separation of duty constraint exists.
+  """
+  updateAccessSettings(input: UpdateAccessSettingsInput!): AccessSettings!
   updateAccessorialCharge(id: ID!, input: AccessorialChargeInput!): AccessorialCharge!
   updateAccountType(id: ID!, input: AccountTypeInput!): AccountType!
   """Change how documents are sent once setup is complete."""
@@ -23571,6 +23851,7 @@ type Mutation {
   updateAgentEvalCase(id: ID!, input: UpdateAgentEvalCaseInput!): AgentEvalCase!
   updateAgentMemory(id: ID!, input: AgentMemoryInput!): AgentMemory!
   updateAgentQualityControl(input: UpdateAgentQualityControlInput!): AgentQualityControl!
+  updateApiKey(id: ID!, input: ApiKeyInput!): ApiKeyDetail!
   updateBenefitPlan(input: UpdateBenefitPlanInput!): BenefitPlan!
   updateBillingQueueStatus(id: ID!, input: BillingQueueUpdateStatusInput!): BillingQueueItem!
   """
@@ -23625,6 +23906,7 @@ type Mutation {
   updateHoldReason(id: ID!, input: HoldReasonInput!): HoldReason!
   updateHomeLayout(input: HomeLayoutInput!): HomeLayout!
   updateHomeLayoutPreset(input: UpdateHomeLayoutPresetInput!): HomeLayoutPreset!
+  updateIdentityProvider(id: ID!, input: IdentityProviderInput!): IdentityProvider!
   updateIftaMileageEntry(id: ID!, input: IFTAMileageEntryInput!, version: Int!): IFTAJurisdictionMileageEntry!
   """
   Changes a mailbox's settings. Changing its provider clears the signing secret and the API key.
@@ -23635,11 +23917,14 @@ type Mutation {
   updateLeaveControl(input: UpdateLeaveControlInput!): LeaveControl!
   updateLeaveDay(input: UpdateLeaveDayInput!): WorkerLeaveEntry!
   updateLocationCategory(id: ID!, input: LocationCategoryInput!): LocationCategory!
+  updateMyAvailability(input: UpdateMyAvailabilityInput!): User!
   """
   Updates the signed-in driver's own contact details (phone, address,
   emergency contact). Compliance fields are carrier-controlled.
   """
   updateMyContactInfo(input: UpdateMyContactInfoInput!): PortalComplianceProfile!
+  updateMyProfile(input: UpdateMyProfileInput!): User!
+  updateMySettings(input: UpdateMySettingsInput!): User!
   updateOrder(id: ID!, input: OrderInput!): Order!
   updateOrderCharge(input: UpdateOrderChargeInput!): Order!
   updateOrgHoliday(id: ID!, input: OrgHolidayInput!): OrgHoliday!
@@ -23655,6 +23940,12 @@ type Mutation {
   updateReportDefinition(input: UpdateReportDefinitionInput!): ReportDefinition!
   updateReportSchedule(input: UpdateReportScheduleInput!): ReportSchedule!
   updateReportView(input: UpdateReportViewInput!): ReportView!
+  """
+  Changes a role's name, description, responsibility, ceiling and, when sent, its grants.
+  """
+  updateRole(id: ID!, input: RoleInput!): Role!
+  updateSCIMDirectory(id: ID!, input: SCIMDirectoryInput!): SCIMDirectory!
+  updateSCIMGroupRoleMapping(id: ID!, input: SCIMGroupRoleMappingInput!): SCIMGroupRoleMapping!
   updateSafetyViolation(input: UpdateSafetyViolationInput!): WorkerSafetyViolation!
   updateSettlementControl(input: UpdateSettlementControlInput!): SettlementControl!
   updateShiftTemplate(id: ID!, input: ShiftTemplateInput!): ShiftTemplate!
@@ -23682,6 +23973,8 @@ type Mutation {
   Rates are global, so this changes what every organization's return owes.
   """
   upsertIftaTaxRates(input: [IFTATaxRateInput!]!): [IFTATaxRate!]!
+  upsertMicrosoftSsoConfig(input: MicrosoftSSOConfigInput!): MicrosoftSSOConfig!
+  upsertOktaSsoConfig(input: OktaSSOConfigInput!): OktaSSOConfig!
   verifyAIAuditChain: AIAuditChainStatus!
   verifyCarrierEquipment(input: VerifyCarrierEquipmentInput!): CarrierEquipmentVerification!
   verifyWorkerCredential(id: ID!, version: Int): WorkerCredential!
@@ -24029,6 +24322,31 @@ type OSHASummaryTotals {
   totalDaysAway: Int!
   totalDaysRestricted: Int!
   totalRecordableCases: Int!
+}
+
+"""Okta sign-in for the organization. The client secret is write-only."""
+type OktaSSOConfig {
+  allowedDomains: [String!]!
+  clientId: String!
+  enabled: Boolean!
+  enforceSso: Boolean!
+  issuerUrl: String!
+  organizationId: ID!
+  redirectUrl: String!
+  scopes: [String!]!
+  secretConfigured: Boolean!
+}
+
+input OktaSSOConfigInput {
+  allowedDomains: [String!]
+  clientId: String!
+  """Leave empty to keep the stored secret."""
+  clientSecret: String
+  enabled: Boolean!
+  enforceSso: Boolean!
+  issuerUrl: String!
+  redirectUrl: String!
+  scopes: [String!]
 }
 
 input OpenEscrowAccountInput {
@@ -25134,6 +25452,126 @@ enum PeriodType {
   Week
 }
 
+"""A named set of grants for one job to be done."""
+type PermissionBundle {
+  description: String!
+  grants: [PermissionBundleGrant!]!
+  id: String!
+  label: String!
+  module: String!
+}
+
+type PermissionBundleCatalog {
+  bundles: [PermissionBundle!]!
+  templates: [PermissionJobTemplate!]!
+}
+
+"""
+One grant of a capability bundle or job template, with the scope it applies here.
+"""
+type PermissionBundleGrant {
+  dataScope: String!
+  displayName: String!
+  operations: [String!]!
+  resource: String!
+}
+
+"""The operations the caller holds on one resource, as a bit mask."""
+type PermissionGrantMask {
+  operations: Int!
+  resource: String!
+}
+
+"""
+A starting point for a role: bundles composed into grants, with a sensitivity ceiling.
+"""
+type PermissionJobTemplate {
+  bundles: [String!]!
+  description: String!
+  grants: [PermissionBundleGrant!]!
+  id: String!
+  label: String!
+  maxSensitivity: String!
+}
+
+"""
+What the caller may do in their current organization, for the interface to gate on.
+"""
+type PermissionManifest {
+  activeRoleIds: [ID!]!
+  activeRoles: [PermissionRoleSummary!]!
+  authorizedRoleIds: [ID!]!
+  authorizedRoles: [PermissionRoleSummary!]!
+  availableOrgs: [PermissionOrganizationSummary!]!
+  checksum: String!
+  expiresAt: Timestamp!
+  maxSensitivity: String!
+  organizationId: ID!
+  permissions: [PermissionGrantMask!]!
+  requiresRoleActivation: Boolean!
+  routeAccess: [PermissionRouteAccess!]!
+  userId: ID!
+  version: String!
+}
+
+"""
+The caller's manifest checksum, for telling whether a cached manifest is still current.
+"""
+type PermissionManifestVersion {
+  checksum: String!
+  expiresAt: Timestamp!
+}
+
+"""An operation a grant can allow, worded in the caller's language."""
+type PermissionOperation {
+  description: String!
+  displayName: String!
+  """The operations this one brings with it."""
+  implies: [String!]!
+  operation: String!
+}
+
+type PermissionOrganizationSummary {
+  id: ID!
+  name: String!
+}
+
+"""
+A kind of record or feature access is granted on, worded in the caller's language.
+"""
+type PermissionResource {
+  category: String!
+  defaultSensitivity: String!
+  description: String!
+  displayName: String!
+  """The data scopes a grant of this resource can carry in this deployment."""
+  enforceableScopes: [String!]!
+  operations: [PermissionOperation!]!
+  """A grant on the parent reaches this resource too."""
+  parentResource: String
+  resource: String!
+}
+
+type PermissionResourceCategory {
+  category: String!
+  resources: [PermissionResource!]!
+}
+
+"""A role named in the caller's permission manifest."""
+type PermissionRoleSummary {
+  description: String!
+  id: ID!
+  isSystem: Boolean!
+  name: String!
+  permissionCount: Int!
+}
+
+"""Whether the caller may open one screen."""
+type PermissionRouteAccess {
+  allowed: Boolean!
+  route: String!
+}
+
 type PlannedPTOAccrual {
   deferred: Boolean!
   effectiveAt: Timestamp!
@@ -25657,7 +26095,25 @@ enum ProtectedFieldGroup {
   Personal
 }
 
+"""One change a SCIM client made, and how it went."""
+type ProvisioningAuditRecord {
+  """create, update, deactivate or delete."""
+  action: String!
+  createdAt: Timestamp!
+  directoryId: ID!
+  errorMessage: String!
+  externalId: String!
+  id: ID!
+  organizationId: ID!
+  """Null when the action failed before it created anything to point at."""
+  resourceId: ID
+  resourceType: String!
+  status: String!
+}
+
 type Query {
+  accessPolicies: [AccessPolicy!]!
+  accessSettings: AccessSettings!
   accessorialCharge(id: ID!): AccessorialCharge
   accessorialCharges(input: DataTableConnectionInput!): AccessorialChargeConnection!
   accountType(id: ID!): AccountType
@@ -25978,6 +26434,12 @@ type Query {
   """
   aiUsageSummary(since: Timestamp): AIUsageSummary!
   apiKey(id: ID!): ApiKey
+  """
+  The resources an API key may be granted, by category, with only the operations a key may hold.
+  """
+  apiKeyAllowedResources: [PermissionResourceCategory!]!
+  """An API key with its grants."""
+  apiKeyDetail(id: ID!): ApiKeyDetail!
   apiKeys(input: DataTableConnectionInput!): ApiKeyConnection!
   """
   Delegations. Left unfiltered it is what the signed-in user has been handed;
@@ -26390,6 +26852,7 @@ type Query {
   homeLayoutPreview(presetId: ID, roleId: ID): HomeLayout!
   homeWidgetCatalog: HomeWidgetCatalog!
   hosCertificationSummary(endDate: String!, startDate: String!): [HosCertificationSummary!]!
+  identityProviders: [IdentityProvider!]!
   """The most recently completed quarter in the organization's timezone."""
   iftaCurrentPeriod: IFTAPeriod!
   """
@@ -26489,6 +26952,7 @@ type Query {
   manualJournals(input: DataTableConnectionInput!): ManualJournalConnection!
   matchRoutingGuide(input: MatchRoutingGuideInput!): RoutingGuide
   mfaAuthenticators(input: DataTableConnectionInput!): MFAAuthenticatorConnection!
+  microsoftSsoConfig: MicrosoftSSOConfig!
   """The caller's own ratings of the targets named."""
   myAIFeedback(input: MyAIFeedbackInput!): [AIFeedback!]!
   """
@@ -26542,6 +27006,7 @@ type Query {
   """Estimated driver pay for one of the signed-in driver's own moves."""
   myLoadPayEstimate(moveId: ID!, shipmentId: ID!): PortalPayEstimate!
   myLoads(limit: Int, scope: PortalLoadScope!): [PortalLoad!]!
+  myMfaStatus: MFAStatus!
   """
   Count of the signed-in driver's unread, personally targeted notifications.
   """
@@ -26553,6 +27018,8 @@ type Query {
   """
   myNotifications(filter: NotificationFilterInput, input: DataTableConnectionInput!): NotificationConnection!
   myPeriodSummary: PortalPeriodSummary!
+  myPermissionVersion: PermissionManifestVersion!
+  myPermissions: PermissionManifest!
   """
   agentPlanPreview for a plan raised in one of the caller's own conversations, by an agent they may still use.
   """
@@ -26585,10 +27052,13 @@ type Query {
   mySafetyScorecard: SafetyScorecard!
   """The signed-in driver's own rota."""
   mySchedule(at: Timestamp, weeks: Int): PortalSchedule!
+  mySessions: [SessionSummary!]!
   mySettlement(id: ID!): DriverSettlement!
   mySettlements(limit: Int, offset: Int): MySettlementList!
   """Every swap the signed-in driver is on either side of."""
   myShiftSwaps: [PortalShiftSwap!]!
+  """The caller's most recent sign-ins; 5 by default, at most 50."""
+  mySignIns(limit: Int): [SignInSummary!]!
   """
   The caller's own layout for a table, or null when they have not changed it.
   """
@@ -26610,6 +27080,7 @@ type Query {
   myYtdPay(year: Int!): WorkerYTDPaySummary!
   notificationUnreadCount: Int!
   notifications(filter: NotificationFilterInput, input: DataTableConnectionInput!): NotificationConnection!
+  oktaSsoConfig: OktaSSOConfig!
   """
   Open collections across the organisation: what the office is waiting on.
   """
@@ -26678,6 +27149,14 @@ type Query {
   performanceReview(id: ID!): PerformanceReview!
   performanceReviewTemplate(id: ID!): PerformanceReviewTemplate!
   performanceReviewTemplates(input: PerformanceReviewTemplatesInput!): PerformanceReviewTemplateConnection!
+  """
+  The capability bundles roles are composed from and the job templates built from them.
+  """
+  permissionBundles: PermissionBundleCatalog!
+  """Every operation a grant can allow."""
+  permissionOperations: [PermissionOperation!]!
+  """Every resource access can be granted on, by category."""
+  permissionResources: [PermissionResourceCategory!]!
   previewBulkEdit(input: BulkEditInput!): BulkEditPreview!
   previewDriverSettlement(periodEnd: Timestamp, periodStart: Timestamp, workerId: ID!): DriverSettlement!
   previewReport(
@@ -26692,6 +27171,8 @@ type Query {
   ): ReportPreview!
   previewWorkerPtoAccrual(asOf: Timestamp, workerId: ID!): [PlannedPTOAccrual!]!
   profileChangeRequests(filter: ProfileChangeFilterInput): [WorkerProfileChangeRequest!]!
+  """The most recent provisioning changes, newest first; 100 by default."""
+  provisioningAuditRecords(directoryId: ID, limit: Int): [ProvisioningAuditRecord!]!
   ptoBalanceSummary: PTOBalanceSummary!
   ptoLiabilityReport(asOf: Timestamp): PTOLiabilityReport!
   ptoPolicies(input: PTOPoliciesInput!): PTOPolicyConnection!
@@ -26767,6 +27248,10 @@ type Query {
   resolvedCostProfile(asOfDate: String): ResolvedCostProfile!
   riskDecisions(input: DataTableConnectionInput!): RiskDecisionConnection!
   role(id: ID!): Role
+  """Who would lose access if the role were deleted."""
+  roleImpact(roleId: ID!): [RoleImpactedUser!]!
+  """Every grant of a role."""
+  rolePermissions(roleId: ID!): [ResourcePermission!]!
   """
   The role editor's sentences for each resource, with the screens it affects.
   """
@@ -26777,6 +27262,9 @@ type Query {
   routingGuides(input: DataTableConnectionInput!): RoutingGuideConnection!
   scimDirectories(input: DataTableConnectionInput!): SCIMDirectoryConnection!
   scimGroupRoleMappings(directoryId: ID!, input: DataTableConnectionInput!): SCIMGroupRoleMappingConnection!
+  """The SCIM tokens of a directory, without their secrets."""
+  scimTokens(directoryId: ID!): [SCIMToken!]!
+  securityBriefing: SecurityBriefing!
   selectOptions(input: SelectOptionsInput!): SelectOptionConnection!
   serviceFailure(id: ID!): ServiceFailure
   serviceFailureReasonCode(id: ID!): ServiceFailureReasonCode
@@ -26924,6 +27412,14 @@ type Query {
   unsettledWorkerSummaries(periodEnd: Timestamp, periodStart: Timestamp): [UnsettledWorkerSummary!]!
   upcomingWorkerPTO(input: UpcomingWorkerPTOInput!): WorkerPTOConnection!
   user(id: ID!): User
+  """
+  Avatar style and availability for up to 100 people of the caller's organization.
+  """
+  userAvatars(ids: [ID!]!): [UserAvatar!]!
+  """The organizations of the business unit a person may sign in to."""
+  userOrganizationMemberships(userId: ID!): [UserOrganizationMembership!]!
+  """The roles a person holds in the current organization."""
+  userRoleAssignments(userId: ID!): [UserRoleAssignment!]!
   users(input: DataTableConnectionInput!): UserConnection!
   """
   Inspections newest first. Pass the startedAt and id of the last one seen as
@@ -28733,6 +29229,26 @@ type ResolvedCostProfile {
   variableCpm: Decimal!
 }
 
+"""
+One grant of a role: the operations it allows on a resource, and how far they reach.
+"""
+type ResourcePermission {
+  createdAt: Timestamp!
+  """organization, own or team."""
+  dataScope: String!
+  id: ID!
+  operations: [String!]!
+  resource: String!
+  roleId: ID!
+  updatedAt: Timestamp!
+}
+
+input ResourcePermissionInput {
+  dataScope: String!
+  operations: [String!]!
+  resource: String!
+}
+
 input RespondToMyAssignmentInput {
   accept: Boolean!
   assignmentId: ID!
@@ -28907,6 +29423,33 @@ type RoleConnection {
 type RoleEdge {
   cursor: String!
   node: Role!
+}
+
+"""
+A person who holds a role, directly or through a role that inherits it.
+"""
+type RoleImpactedUser {
+  assignmentType: String!
+  orgName: String!
+  organizationId: ID!
+  userId: ID!
+  userName: String!
+}
+
+input RoleInput {
+  coreResponsibility: String
+  description: String
+  """public, internal, restricted or confidential."""
+  maxSensitivity: String!
+  name: String!
+  """
+  Roles this one inherits; set when the role is created. Inheritance is not changed on update.
+  """
+  parentRoleIds: [ID!]
+  """
+  Replaces every grant of the role. Omit to leave the grants as they are.
+  """
+  permissions: [ResourcePermissionInput!]
 }
 
 """
@@ -29126,6 +29669,11 @@ type SCIMDirectoryEdge {
   node: SCIMDirectory!
 }
 
+input SCIMDirectoryInput {
+  enabled: Boolean!
+  tenantSlug: String!
+}
+
 type SCIMGroupRoleMapping {
   businessUnitId: ID!
   createdAt: Timestamp!
@@ -29153,6 +29701,31 @@ type SCIMGroupRoleMappingConnection {
 type SCIMGroupRoleMappingEdge {
   cursor: String!
   node: SCIMGroupRoleMapping!
+}
+
+input SCIMGroupRoleMappingInput {
+  displayName: String
+  externalGroupId: String!
+  roleId: ID!
+  """The version read; required on update."""
+  version: Int
+}
+
+"""
+A bearer credential a SCIM client provisions with. Only its prefix is kept readable.
+"""
+type SCIMToken {
+  createdAt: Timestamp!
+  directoryId: ID!
+  expiresAt: Timestamp!
+  id: ID!
+  lastUsedAt: Timestamp!
+  name: String!
+  organizationId: ID!
+  prefix: String!
+  """active or revoked."""
+  status: String!
+  updatedAt: Timestamp!
 }
 
 enum SafetyEventKind {
@@ -29319,6 +29892,95 @@ input ScheduleTableViewInput {
   name: String!
   timezone: String
   view: TableExportViewInput!
+}
+
+type SecurityAPIKeyCounts {
+  active: Int!
+  expiringSoon: Int!
+  unused: Int!
+  withoutExpiry: Int!
+}
+
+"""
+The organization's security posture. A section is null for a reader who may not read what it is drawn from.
+"""
+type SecurityBriefing {
+  apiKeyExpiringWithinDays: Int!
+  apiKeyUnusedAfterDays: Int!
+  apiKeys: SecurityAPIKeyCounts
+  dormantAfterDays: Int!
+  findings: [SecurityFinding!]!
+  generatedAt: Timestamp!
+  members: SecurityMemberCounts
+  mfa: SecurityMFACoverage
+  policies: SecurityPolicyState
+  provisioning: SecurityProvisioningState
+  session: SecuritySessionPolicy!
+  signInWindowDays: Int!
+  signIns: SecuritySignInCounts
+  sso: SecuritySSOState
+}
+
+type SecurityFinding {
+  code: String!
+  count: Int!
+  """critical, warning, notice or pass."""
+  severity: String!
+  total: Int!
+}
+
+type SecurityMFACoverage {
+  enrolled: Int!
+  total: Int!
+  """Null for a reader who may not read users."""
+  unenrolled: [SecurityUnenrolledMember!]
+}
+
+type SecurityMemberCounts {
+  active: Int!
+  dormant: Int!
+  locked: Int!
+  mustChangePassword: Int!
+  neverSignedIn: Int!
+}
+
+type SecurityPolicyState {
+  enabled: Int!
+  requiringMfa: Int!
+  roleActivationRequired: Boolean!
+}
+
+type SecurityProvisioningState {
+  activeDirectories: Int!
+}
+
+type SecuritySSOState {
+  enabledProviders: Int!
+  enforced: Boolean!
+  enforcedProviderName: String!
+  trustsFederatedMfa: Boolean!
+}
+
+type SecuritySessionPolicy {
+  idleTimeoutSeconds: Int!
+  idleWarningSeconds: Int!
+  maxAgeSeconds: Int!
+}
+
+type SecuritySignInCounts {
+  denied: Int!
+  failed: Int!
+  """Null for a reader who may not read risk decisions."""
+  riskDenied: Int
+  succeeded: Int!
+  throttled: Int!
+}
+
+type SecurityUnenrolledMember {
+  emailAddress: String!
+  lastLoginAt: Timestamp
+  name: String!
+  userId: ID!
 }
 
 enum SegregationType {
@@ -29640,6 +30302,23 @@ type ServiceTypeConnection {
 type ServiceTypeEdge {
   cursor: String!
   node: ServiceType!
+}
+
+"""A browser or device signed in as the caller."""
+type SessionSummary {
+  authProvider: String!
+  browser: String!
+  createdAt: Timestamp!
+  """Whether this is the session making the request."""
+  current: Boolean!
+  """desktop, mobile, tablet or unknown."""
+  device: String!
+  expiresAt: Timestamp!
+  id: ID!
+  ipAddress: String!
+  label: String!
+  lastAccessedAt: Timestamp!
+  os: String!
 }
 
 """Chooses an accounting system record for a mapping and confirms it."""
@@ -32242,6 +32921,21 @@ input SidebarSectionPreferenceInput {
   key: String!
 }
 
+"""One of the caller's own recent sign-in attempts."""
+type SignInSummary {
+  """desktop, mobile, tablet or unknown."""
+  device: String!
+  errorCode: String!
+  id: ID!
+  ipAddress: String!
+  label: String!
+  mfaState: String!
+  occurredAt: Timestamp!
+  """success, challenge, denied or failed."""
+  outcome: String!
+  provider: String!
+}
+
 input SkipAccountingSyncInput {
   id: ID!
   """Why the document is not sent. Required."""
@@ -32510,6 +33204,16 @@ type TCASubscriptionConnection {
 type TCASubscriptionEdge {
   cursor: String!
   node: TCASubscription!
+}
+
+"""
+A pending authenticator. The secret is shown once, to the person enrolling it.
+"""
+type TOTPEnrollment {
+  authenticatorId: ID!
+  qrCode: String!
+  secret: String!
+  uri: String!
 }
 
 type TableConfiguration {
@@ -34173,6 +34877,11 @@ input UpcomingWorkerPTOInput {
   workerId: ID
 }
 
+input UpdateAccessSettingsInput {
+  requireRoleActivation: Boolean!
+  version: Int!
+}
+
 input UpdateAccountingSyncSettingsInput {
   """
   Send posted documents on their own. When off, each waits for a person to release it; records already held stay held.
@@ -34473,6 +35182,17 @@ input UpdateLeaveDayInput {
   ptoId: ID
 }
 
+input UpdateMyAvailabilityInput {
+  awayNote: String
+  backOn: Timestamp
+  """
+  Who covers while the caller is away; a person in the caller's organization.
+  """
+  delegateUserId: ID
+  focusUntil: Timestamp
+  status: AvailabilityStatus!
+}
+
 input UpdateMyContactInfoInput {
   addressLine1: String!
   addressLine2: String
@@ -34481,6 +35201,21 @@ input UpdateMyContactInfoInput {
   emergencyContactPhone: String
   phoneNumber: String!
   postalCode: String!
+}
+
+input UpdateMyProfileInput {
+  """Omit to leave unchanged."""
+  avatarStyle: AvatarStyle
+  """Omit to leave unchanged."""
+  jobTitle: String
+  """Omit to leave unchanged."""
+  phoneNumber: String
+}
+
+input UpdateMySettingsInput {
+  locale: String!
+  timeFormat: TimeFormat!
+  timezone: String!
 }
 
 input UpdateOrderChargeInput {
@@ -34721,14 +35456,23 @@ type UsState {
 }
 
 type User {
+  """Whether the person chose to hide the assistant."""
+  assistantHidden: Boolean!
   availabilityStatus: AvailabilityStatus!
   avatarStyle: AvatarStyle!
+  """When an away person is back, if they said."""
+  awayBackOn: Timestamp
+  """Who covers while the person is away."""
+  awayDelegateUserId: ID
+  awayNote: String!
   businessUnit: BusinessUnit
   businessUnitId: ID!
   createdAt: Timestamp!
   currentOrganization: Organization
   currentOrganizationId: ID!
   emailAddress: String
+  """Until when a person focusing asked not to be disturbed."""
+  focusUntil: Timestamp
   id: ID!
   isLocked: Boolean!
   jobTitle: String!
@@ -34748,6 +35492,20 @@ type User {
   version: Int!
 }
 
+"""
+How a teammate is drawn next to their name: their avatar style and whether they are around.
+"""
+type UserAvatar {
+  availability: AvailabilityStatus!
+  avatarStyle: AvatarStyle!
+  """When an away person is back, if they said."""
+  awayBackOn: Timestamp
+  awayNote: String!
+  id: ID!
+  name: String!
+  username: String!
+}
+
 type UserConnection {
   edges: [UserEdge!]!
   pageInfo: PageInfo!
@@ -34761,6 +35519,18 @@ type UserConnection {
 type UserEdge {
   cursor: String!
   node: User!
+}
+
+"""An organization of the business unit a person may sign in to."""
+type UserOrganizationMembership {
+  businessUnitId: ID!
+  """Null when the membership never lapses."""
+  expiresAt: Timestamp
+  id: ID!
+  isDefault: Boolean!
+  joinedAt: Timestamp!
+  organizationId: ID!
+  userId: ID!
 }
 
 input UserPatchInput {
@@ -34784,6 +35554,19 @@ input UserPatchInput {
   timeFormat: TimeFormat @goField(omittable: true)
   """Omit to leave unchanged; null is rejected."""
   timezone: String @goField(omittable: true)
+}
+
+"""A role a person holds in the current organization."""
+type UserRoleAssignment {
+  assignedAt: Timestamp!
+  assignedBy: ID!
+  """Null when the role never lapses."""
+  expiresAt: Timestamp
+  id: ID!
+  organizationId: ID!
+  role: Role
+  roleId: ID!
+  userId: ID!
 }
 
 type VehicleInspection {

@@ -134,7 +134,7 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
 
   const mutation = useApiMutation({
     mutationFn: (values: OktaSSOFormValues) =>
-      apiService.organizationService.upsertOktaSSOConfig(organizationId, {
+      apiService.organizationService.upsertOktaSSOConfig({
         ...values,
         allowedDomains: parseCommaSeparated(values.allowedDomainsText),
         scopes: parseCommaSeparated(values.scopesText),

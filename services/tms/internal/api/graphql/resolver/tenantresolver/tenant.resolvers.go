@@ -9,6 +9,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/usermapping"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -23,7 +25,7 @@ func (r *MutationResolver) UpdateOrganization(ctx context.Context, id string, in
 		return nil, err
 	}
 
-	orgID, err := pulid.MustParse(id)
+	orgID, err := callerOrganizationID(authCtx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +82,7 @@ func (r *QueryResolver) Organization(ctx context.Context, id string, includeStat
 		return nil, err
 	}
 
-	orgID, err := pulid.MustParse(id)
+	orgID, err := callerOrganizationID(authCtx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -128,4 +130,67 @@ func (r *UserResolver) CurrentOrganization(ctx context.Context, obj *tenant.User
 	}
 
 	return r.currentOrganization(ctx, obj)
+}
+
+func (r *MutationResolver) UpsertMicrosoftSsoConfig(ctx context.Context, input gqlmodel.MicrosoftSSOConfigInput) (*tenantports.MicrosoftSSOConfig, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceOrganization, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.OrganizationService.UpsertMicrosoftSSOConfig(
+		ctx,
+		resolvercore.TenantInfo(authCtx),
+		&tenantports.MicrosoftSSOConfig{
+			OrganizationID: authCtx.OrganizationID.String(),
+			Enabled:        input.Enabled,
+			EnforceSSO:     input.EnforceSso,
+			TenantID:       input.TenantID,
+			ClientID:       input.ClientID,
+			ClientSecret:   gqlscalar.StringValue(input.ClientSecret),
+			RedirectURL:    input.RedirectURL,
+			AllowedDomains: input.AllowedDomains,
+		},
+	)
+}
+
+func (r *MutationResolver) UpsertOktaSsoConfig(ctx context.Context, input gqlmodel.OktaSSOConfigInput) (*tenantports.OktaSSOConfig, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceOrganization, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.OrganizationService.UpsertOktaSSOConfig(
+		ctx,
+		resolvercore.TenantInfo(authCtx),
+		&tenantports.OktaSSOConfig{
+			OrganizationID: authCtx.OrganizationID.String(),
+			Enabled:        input.Enabled,
+			EnforceSSO:     input.EnforceSso,
+			IssuerURL:      input.IssuerURL,
+			ClientID:       input.ClientID,
+			ClientSecret:   gqlscalar.StringValue(input.ClientSecret),
+			RedirectURL:    input.RedirectURL,
+			Scopes:         input.Scopes,
+			AllowedDomains: input.AllowedDomains,
+		},
+	)
+}
+
+func (r *QueryResolver) MicrosoftSsoConfig(ctx context.Context) (*tenantports.MicrosoftSSOConfig, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceOrganization, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.OrganizationService.GetMicrosoftSSOConfig(ctx, authCtx.OrganizationID)
+}
+
+func (r *QueryResolver) OktaSsoConfig(ctx context.Context) (*tenantports.OktaSSOConfig, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceOrganization, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.OrganizationService.GetOktaSSOConfig(ctx, authCtx.OrganizationID)
 }

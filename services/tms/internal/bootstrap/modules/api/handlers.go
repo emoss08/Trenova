@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/agentrunhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/aiproviderhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/analyticshandler"
-	"github.com/emoss08/trenova/internal/api/handlers/apikeyhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/assignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/assistanthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/authhandler"
@@ -52,7 +51,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/formulatemplatehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/glbalancehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/googlemapshandler"
-	"github.com/emoss08/trenova/internal/api/handlers/iamhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/inboundhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/inboxpresencehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/insighthandler"
@@ -71,7 +69,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/palettehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permithandler"
 	"github.com/emoss08/trenova/internal/api/handlers/publicconfighandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pushhandler"
@@ -86,7 +83,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/realtimehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/recurringshipmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/reporthandler"
-	"github.com/emoss08/trenova/internal/api/handlers/rolehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/routingguidehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/searchhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/sequenceconfighandler"
@@ -117,7 +113,6 @@ import (
 var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	dataretentionhandler.New,
 	organizationhandler.New,
-	iamhandler.New,
 	userhandler.New,
 	authhandler.New,
 	publicconfighandler.New,
@@ -135,11 +130,9 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	invoicerunhandler.New,
 	invoicesharehandler.New,
 	workerhandler.New,
-	permissionhandler.New,
 	sessionwatch.New,
 	realtimehandler.New,
 	inboxpresencehandler.New,
-	rolehandler.New,
 	searchhandler.New,
 	customfieldhandler.New,
 	documenthandler.New,
@@ -222,6 +215,5 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	storedmileagehandler.New,
 	exchangeratehandler.New,
 	analyticshandler.New,
-	apikeyhandler.New,
 	tablechangealerthandler.New,
 ))

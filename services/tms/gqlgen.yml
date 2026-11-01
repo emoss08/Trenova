@@ -5967,3 +5967,136 @@ models:
   StopEtaDriveMethod:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/stopeta.DriveMethod
+  UserRoleAssignment:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/rbac.UserRoleAssignment
+  UserOrganizationMembership:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.OrganizationMembership
+  UserAvatar:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/app/userservice.AvatarSummary
+  SessionSummary:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/app/userservice.SessionSummary
+    fields:
+      device:
+        resolver: true
+  SignInSummary:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/app/userservice.SignInSummary
+    fields:
+      outcome:
+        resolver: true
+      device:
+        resolver: true
+  MFAStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/ports/sessionports.MFAStatus
+  TOTPEnrollment:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/ports/sessionports.TOTPEnrollment
+  MFARecoveryCodes:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/ports/sessionports.RecoveryCodesResponse
+  ResourcePermission:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/rbac.ResourcePermission
+    fields:
+      operations:
+        resolver: true
+      dataScope:
+        resolver: true
+  RoleImpactedUser:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/ports/permissionports.ImpactedUser
+  IdentityProvider:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/iam.IdentityProvider
+    fields:
+      protocol:
+        resolver: true
+      attributeMap:
+        resolver: true
+      federatedMfaAcrValues:
+        fieldName: FederatedMFAACRs
+  AccessPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/iam.AccessPolicy
+    fields:
+      effect:
+        resolver: true
+      conditions:
+        resolver: true
+  AccessSettings:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/iam.AccessSettings
+  SCIMToken:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/iam.SCIMToken
+    fields:
+      status:
+        resolver: true
+  ProvisioningAuditRecord:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/iam.ProvisioningAuditRecord
+    fields:
+      action:
+        resolver: true
+      resourceId:
+        resolver: true
+  SecurityBriefing:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/iam.SecurityBriefing
+  SecurityFinding:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/iam.SecurityFinding
+    fields:
+      code:
+        resolver: true
+      severity:
+        resolver: true
+  SecuritySessionPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/iam.SecuritySessionPolicy
+  SecurityMemberCounts:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/iam.SecurityMemberSummary
+  SecurityUnenrolledMember:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/iam.SecurityMemberRef
+  SecurityMFACoverage:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/iam.SecurityMFACoverage
+  SecuritySignInCounts:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/iam.SecuritySignInSummary
+  SecurityAPIKeyCounts:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/iam.SecurityAPIKeySummary
+  SecuritySSOState:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/iam.SecuritySSOSummary
+  SecurityProvisioningState:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/iam.SecurityProvisioningSummary
+  SecurityPolicyState:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/iam.SecurityPolicySummary
+  ApiKeyPermission:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports.APIKeyPermissionInput
+    fields:
+      operations:
+        resolver: true
+      dataScope:
+        resolver: true
+  ApiKeyDetail:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports.APIKeyResponse
+  MicrosoftSSOConfig:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/ports/tenantports.MicrosoftSSOConfig
+  OktaSSOConfig:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/ports/tenantports.OktaSSOConfig

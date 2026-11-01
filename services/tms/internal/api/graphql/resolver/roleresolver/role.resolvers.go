@@ -10,8 +10,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	roleservice "github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -75,4 +78,198 @@ func (r *RoleResolver) MaxSensitivity(ctx context.Context, obj *rbac.Role) (stri
 
 func (r *RoleResolver) Agents(ctx context.Context, obj *rbac.Role) ([]*agentdefinition.Definition, error) {
 	return r.RoleAgents(ctx, obj)
+}
+
+func (r *MutationResolver) CreateRole(ctx context.Context, input gqlmodel.RoleInput) (*rbac.Role, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRole, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	role, err := roleFromInput(&input)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = r.RoleService.CreateRole(ctx, roleservice.CreateRoleRequest{
+		ActorID:        authCtx.UserID,
+		OrganizationID: authCtx.OrganizationID,
+		BusinessUnitID: authCtx.BusinessUnitID,
+		Role:           role,
+	}); err != nil {
+		return nil, err
+	}
+
+	return role, nil
+}
+
+func (r *MutationResolver) UpdateRole(ctx context.Context, id string, input gqlmodel.RoleInput) (*rbac.Role, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRole, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	roleID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	role, err := roleFromInput(&input)
+	if err != nil {
+		return nil, err
+	}
+	role.ID = roleID
+
+	if err = r.RoleService.UpdateRole(ctx, roleservice.UpdateRoleRequest{
+		ActorID:        authCtx.UserID,
+		OrganizationID: authCtx.OrganizationID,
+		Role:           role,
+	}); err != nil {
+		return nil, err
+	}
+
+	return role, nil
+}
+
+func (r *MutationResolver) DeleteRole(ctx context.Context, id string, force *bool) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRole, permission.OpDelete)
+	if err != nil {
+		return false, err
+	}
+
+	roleID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.RoleService.DeleteRole(ctx, roleservice.DeleteRoleRequest{
+		Tenant: resolvercore.TenantInfo(authCtx),
+		RoleID: roleID,
+		Force:  gqlscalar.BoolValue(force),
+	}); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *MutationResolver) AssignRole(ctx context.Context, roleID string, input gqlmodel.AssignRoleInput) (*rbac.UserRoleAssignment, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceUser, permission.OpAssign)
+	if err != nil {
+		return nil, err
+	}
+
+	parsedRoleID, err := gqlid.ParseIDField("roleId", roleID)
+	if err != nil {
+		return nil, err
+	}
+
+	userID, err := gqlid.ParseIDField("userId", input.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	assignment := &rbac.UserRoleAssignment{
+		UserID:    userID,
+		RoleID:    parsedRoleID,
+		ExpiresAt: gqlscalar.Int64Ptr(input.ExpiresAt),
+	}
+
+	if err = r.RoleService.AssignRole(ctx, roleservice.AssignRoleRequest{
+		ActorID:        authCtx.UserID,
+		OrganizationID: authCtx.OrganizationID,
+		Assignment:     assignment,
+	}); err != nil {
+		return nil, err
+	}
+
+	return assignment, nil
+}
+
+func (r *MutationResolver) UnassignRole(ctx context.Context, assignmentID string) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceUser, permission.OpUnassign)
+	if err != nil {
+		return false, err
+	}
+
+	id, err := gqlid.ParseIDField("assignmentId", assignmentID)
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.RoleService.UnassignRole(ctx, roleservice.UnassignRoleRequest{
+		ActorID:        authCtx.UserID,
+		OrganizationID: authCtx.OrganizationID,
+		BusinessUnitID: authCtx.BusinessUnitID,
+		AssignmentID:   id,
+	}); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *QueryResolver) RolePermissions(ctx context.Context, roleID string) ([]*rbac.ResourcePermission, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRole, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := gqlid.ParseIDField("roleId", roleID)
+	if err != nil {
+		return nil, err
+	}
+
+	role, err := r.RoleService.GetRoleByID(ctx, permissionports.GetRoleByIDRequest{
+		ID:         id,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if role.Permissions == nil {
+		return []*rbac.ResourcePermission{}, nil
+	}
+
+	return role.Permissions, nil
+}
+
+func (r *QueryResolver) RoleImpact(ctx context.Context, roleID string) ([]*permissionports.ImpactedUser, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRole, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := gqlid.ParseIDField("roleId", roleID)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err = r.RoleService.GetRoleByID(ctx, permissionports.GetRoleByIDRequest{
+		ID:         id,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	}); err != nil {
+		return nil, err
+	}
+
+	users, err := r.RoleService.GetImpactedUsers(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]*permissionports.ImpactedUser, len(users))
+	for i := range users {
+		out[i] = &users[i]
+	}
+
+	return out, nil
+}
+
+func (r *ResourcePermissionResolver) Operations(ctx context.Context, obj *rbac.ResourcePermission) ([]string, error) {
+	return operationStrings(obj.Operations), nil
+}
+
+func (r *ResourcePermissionResolver) DataScope(ctx context.Context, obj *rbac.ResourcePermission) (string, error) {
+	return string(obj.DataScope), nil
 }

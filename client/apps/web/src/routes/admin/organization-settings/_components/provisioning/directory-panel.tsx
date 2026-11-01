@@ -68,7 +68,6 @@ export function SCIMDirectoryPanel({
         formComponent={<SCIMDirectoryForm />}
         mutationFn={async (values) => {
           const saved = await apiService.organizationService.updateSCIMDirectory(
-            organizationId,
             toSCIMDirectory(values),
           );
           await onSaved(saved);
@@ -90,7 +89,6 @@ export function SCIMDirectoryPanel({
       formComponent={<SCIMDirectoryForm />}
       mutationFn={async (values) => {
         const saved = await apiService.organizationService.createSCIMDirectory(
-          organizationId,
           toSCIMDirectory(values),
         );
         await onSaved(saved);

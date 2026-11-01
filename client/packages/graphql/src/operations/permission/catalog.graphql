@@ -1,0 +1,117 @@
+fragment PermissionResourceCategoryFields on PermissionResourceCategory {
+  category
+  resources {
+    resource
+    displayName
+    description
+    category
+    operations {
+      operation
+      displayName
+      description
+      implies
+    }
+    parentResource
+    defaultSensitivity
+    enforceableScopes
+  }
+}
+
+query PermissionResources {
+  permissionResources {
+    ...PermissionResourceCategoryFields
+  }
+}
+
+query ApiKeyAllowedResources {
+  apiKeyAllowedResources {
+    ...PermissionResourceCategoryFields
+  }
+}
+
+query PermissionOperations {
+  permissionOperations {
+    operation
+    displayName
+    description
+    implies
+  }
+}
+
+fragment PermissionBundleGrantFields on PermissionBundleGrant {
+  resource
+  displayName
+  operations
+  dataScope
+}
+
+query PermissionBundles {
+  permissionBundles {
+    bundles {
+      id
+      module
+      label
+      description
+      grants {
+        ...PermissionBundleGrantFields
+      }
+    }
+    templates {
+      id
+      label
+      description
+      bundles
+      maxSensitivity
+      grants {
+        ...PermissionBundleGrantFields
+      }
+    }
+  }
+}
+
+query MyPermissions {
+  myPermissions {
+    version
+    userId
+    organizationId
+    activeRoleIds
+    authorizedRoleIds
+    activeRoles {
+      id
+      name
+      description
+      isSystem
+      permissionCount
+    }
+    authorizedRoles {
+      id
+      name
+      description
+      isSystem
+      permissionCount
+    }
+    requiresRoleActivation
+    maxSensitivity
+    permissions {
+      resource
+      operations
+    }
+    routeAccess {
+      route
+      allowed
+    }
+    availableOrgs {
+      id
+      name
+    }
+    checksum
+    expiresAt
+  }
+}
+
+query MyPermissionVersion {
+  myPermissionVersion {
+    checksum
+    expiresAt
+  }
+}

@@ -1,0 +1,46 @@
+fragment MicrosoftSSOConfigFields on MicrosoftSSOConfig {
+  organizationId
+  enabled
+  enforceSso
+  tenantId
+  clientId
+  redirectUrl
+  allowedDomains
+  secretConfigured
+}
+
+query MicrosoftSSOConfig {
+  microsoftSsoConfig {
+    ...MicrosoftSSOConfigFields
+  }
+}
+
+mutation UpsertMicrosoftSSOConfig($input: MicrosoftSSOConfigInput!) {
+  upsertMicrosoftSsoConfig(input: $input) {
+    ...MicrosoftSSOConfigFields
+  }
+}
+
+fragment OktaSSOConfigFields on OktaSSOConfig {
+  organizationId
+  enabled
+  enforceSso
+  issuerUrl
+  clientId
+  redirectUrl
+  scopes
+  allowedDomains
+  secretConfigured
+}
+
+query OktaSSOConfig {
+  oktaSsoConfig {
+    ...OktaSSOConfigFields
+  }
+}
+
+mutation UpsertOktaSSOConfig($input: OktaSSOConfigInput!) {
+  upsertOktaSsoConfig(input: $input) {
+    ...OktaSSOConfigFields
+  }
+}

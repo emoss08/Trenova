@@ -84,7 +84,7 @@ export function ProvisioningTab({
 
   const { mutate: deleteDirectory, isPending: isDeletingDirectory } = useMutation({
     mutationFn: async (directoryId: string) =>
-      apiService.organizationService.deleteSCIMDirectory(organizationId, directoryId),
+      apiService.organizationService.deleteSCIMDirectory(directoryId),
     onSuccess: async (_data, deletedDirectoryId) => {
       await handleDirectoryDeleted(deletedDirectoryId);
     },

@@ -83,6 +83,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/hazmatsegregationruleexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/holdreasonexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/homelayoutexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/iamexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/iftaexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/inboundmessageexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/inboundreplyexec"
@@ -102,6 +103,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/orgstructureexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/pageaccessexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/performancereviewexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/permissionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/preludeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/ptopolicyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/rateexec"
@@ -275,6 +277,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
@@ -283,6 +286,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
@@ -412,6 +419,7 @@ type ResolverRoot interface {
 	AIProviderKeyInfo() AIProviderKeyInfoResolver
 	AIRouteChoice() AIRouteChoiceResolver
 	AITuneUpEvidence() AITuneUpEvidenceResolver
+	AccessPolicy() AccessPolicyResolver
 	AccessorialCharge() AccessorialChargeResolver
 	AccountingAppCredential() AccountingAppCredentialResolver
 	AccountingAppSettings() AccountingAppSettingsResolver
@@ -458,6 +466,7 @@ type ResolverRoot interface {
 	AgentToolSafety() AgentToolSafetyResolver
 	AgentWorstRatedAnswer() AgentWorstRatedAnswerResolver
 	ApiKey() ApiKeyResolver
+	ApiKeyPermission() ApiKeyPermissionResolver
 	ApprovalDelegation() ApprovalDelegationResolver
 	AuditEntry() AuditEntryResolver
 	AuthEvent() AuthEventResolver
@@ -574,6 +583,7 @@ type ResolverRoot interface {
 	IFTAReturnLine() IFTAReturnLineResolver
 	IFTAReturnProblem() IFTAReturnProblemResolver
 	IFTATaxRate() IFTATaxRateResolver
+	IdentityProvider() IdentityProviderResolver
 	InboundActivity() InboundActivityResolver
 	InboundAttachment() InboundAttachmentResolver
 	InboundMailbox() InboundMailboxResolver
@@ -627,19 +637,24 @@ type ResolverRoot interface {
 	PlannedPTOAccrual() PlannedPTOAccrualResolver
 	PortalCredential() PortalCredentialResolver
 	PortalTraining() PortalTrainingResolver
+	ProvisioningAuditRecord() ProvisioningAuditRecordResolver
 	Query() QueryResolver
 	RateAgreement() RateAgreementResolver
 	RateMatrix() RateMatrixResolver
 	RateMatrixVersion() RateMatrixVersionResolver
 	ReportSchedule() ReportScheduleResolver
+	ResourcePermission() ResourcePermissionResolver
 	ReviewRating() ReviewRatingResolver
 	RiskDecision() RiskDecisionResolver
 	Role() RoleResolver
 	RoutingGuideEntry() RoutingGuideEntryResolver
+	SCIMToken() SCIMTokenResolver
 	SafetyScorecard() SafetyScorecardResolver
+	SecurityFinding() SecurityFindingResolver
 	ServiceFailure() ServiceFailureResolver
 	ServiceFailureShipment() ServiceFailureShipmentResolver
 	ServiceFailureStop() ServiceFailureStopResolver
+	SessionSummary() SessionSummaryResolver
 	SettlementControl() SettlementControlResolver
 	SettlementException() SettlementExceptionResolver
 	ShiftTemplate() ShiftTemplateResolver
@@ -649,6 +664,7 @@ type ResolverRoot interface {
 	ShipmentMoveJurisdictionMile() ShipmentMoveJurisdictionMileResolver
 	ShipmentRatingDetail() ShipmentRatingDetailResolver
 	ShipmentRatingReviewApproval() ShipmentRatingReviewApprovalResolver
+	SignInSummary() SignInSummaryResolver
 	TCASubscription() TCASubscriptionResolver
 	TableConfiguration() TableConfigurationResolver
 	Tender() TenderResolver
@@ -773,6 +789,11 @@ type AIRouteChoiceResolver interface {
 type AITuneUpEvidenceResolver interface {
 	FromTier(ctx context.Context, obj *aituneup.Evidence) (*agent.AutonomyTier, error)
 	ToTier(ctx context.Context, obj *aituneup.Evidence) (*agent.AutonomyTier, error)
+}
+
+type AccessPolicyResolver interface {
+	Effect(ctx context.Context, obj *iam.AccessPolicy) (string, error)
+	Conditions(ctx context.Context, obj *iam.AccessPolicy) (map[string]any, error)
 }
 
 type AccessorialChargeResolver interface {
@@ -1050,6 +1071,11 @@ type AgentWorstRatedAnswerResolver interface {
 type ApiKeyResolver interface {
 	Status(ctx context.Context, obj *apikey.Key) (string, error)
 	PermissionScope(ctx context.Context, obj *apikey.Key) (string, error)
+}
+
+type ApiKeyPermissionResolver interface {
+	Operations(ctx context.Context, obj *apikeyports.APIKeyPermissionInput) ([]string, error)
+	DataScope(ctx context.Context, obj *apikeyports.APIKeyPermissionInput) (string, error)
 }
 
 type ApprovalDelegationResolver interface {
@@ -1798,6 +1824,11 @@ type IFTATaxRateResolver interface {
 	Jurisdiction(ctx context.Context, obj *ifta.TaxRate) (*ifta.Jurisdiction, error)
 }
 
+type IdentityProviderResolver interface {
+	Protocol(ctx context.Context, obj *iam.IdentityProvider) (string, error)
+	AttributeMap(ctx context.Context, obj *iam.IdentityProvider) (map[string]any, error)
+}
+
 type InboundActivityResolver interface {
 	Actor(ctx context.Context, obj *triage.Activity) (*tenant.User, error)
 	Until(ctx context.Context, obj *triage.Activity) (*int, error)
@@ -2132,6 +2163,10 @@ type MutationResolver interface {
 	PatchAIProvider(ctx context.Context, id string, version int, input gqlmodel.AIProviderPatchInput) (*aiprovider.Provider, error)
 	UpdateAIRetrievalSettings(ctx context.Context, input gqlmodel.AIRetrievalSettingsPatchInput) (*retrievalports.AIRetrievalStatus, error)
 	ReindexAIRetrievalSource(ctx context.Context, sourceType airetrieval.SourceType) (*retrievalports.AIRetrievalStatus, error)
+	CreateAPIKey(ctx context.Context, input gqlmodel.APIKeyInput) (*gqlmodel.IssuedAPIKey, error)
+	UpdateAPIKey(ctx context.Context, id string, input gqlmodel.APIKeyInput) (*apikeyports.APIKeyResponse, error)
+	RotateAPIKey(ctx context.Context, id string) (*gqlmodel.IssuedAPIKey, error)
+	RevokeAPIKey(ctx context.Context, id string) (*apikeyports.APIKeyResponse, error)
 	CreateBenefitPlan(ctx context.Context, input gqlmodel.BenefitPlanInput) (*paybenefit.BenefitPlan, error)
 	UpdateBenefitPlan(ctx context.Context, input gqlmodel.UpdateBenefitPlanInput) (*paybenefit.BenefitPlan, error)
 	EnrollBenefit(ctx context.Context, input gqlmodel.EnrollBenefitInput) (*paybenefit.WorkerBenefitEnrollment, error)
@@ -2398,6 +2433,21 @@ type MutationResolver interface {
 	CreateHomeLayoutPreset(ctx context.Context, input gqlmodel.SaveHomeLayoutPresetInput) (*gqlmodel.HomeLayoutPreset, error)
 	UpdateHomeLayoutPreset(ctx context.Context, input gqlmodel.UpdateHomeLayoutPresetInput) (*gqlmodel.HomeLayoutPreset, error)
 	DeleteHomeLayoutPreset(ctx context.Context, id string) (bool, error)
+	CreateIdentityProvider(ctx context.Context, input gqlmodel.IdentityProviderInput) (*iam.IdentityProvider, error)
+	UpdateIdentityProvider(ctx context.Context, id string, input gqlmodel.IdentityProviderInput) (*iam.IdentityProvider, error)
+	DeleteIdentityProvider(ctx context.Context, id string) (bool, error)
+	CreateAccessPolicy(ctx context.Context, input gqlmodel.AccessPolicyInput) (*iam.AccessPolicy, error)
+	UpdateAccessPolicy(ctx context.Context, id string, input gqlmodel.AccessPolicyInput) (*iam.AccessPolicy, error)
+	DeleteAccessPolicy(ctx context.Context, id string) (bool, error)
+	UpdateAccessSettings(ctx context.Context, input gqlmodel.UpdateAccessSettingsInput) (*iam.AccessSettings, error)
+	CreateSCIMDirectory(ctx context.Context, input gqlmodel.SCIMDirectoryInput) (*iam.SCIMDirectory, error)
+	UpdateSCIMDirectory(ctx context.Context, id string, input gqlmodel.SCIMDirectoryInput) (*iam.SCIMDirectory, error)
+	DeleteSCIMDirectory(ctx context.Context, id string) (bool, error)
+	CreateSCIMToken(ctx context.Context, directoryID string, input gqlmodel.CreateSCIMTokenInput) (*gqlmodel.IssuedSCIMToken, error)
+	RevokeSCIMToken(ctx context.Context, id string) (*iam.SCIMToken, error)
+	CreateSCIMGroupRoleMapping(ctx context.Context, directoryID string, input gqlmodel.SCIMGroupRoleMappingInput) (*iam.SCIMGroupRoleMapping, error)
+	UpdateSCIMGroupRoleMapping(ctx context.Context, id string, input gqlmodel.SCIMGroupRoleMappingInput) (*iam.SCIMGroupRoleMapping, error)
+	DeleteSCIMGroupRoleMapping(ctx context.Context, id string) (bool, error)
 	UpsertIFTATaxRates(ctx context.Context, input []*gqlmodel.IFTATaxRateInput) ([]*ifta.TaxRate, error)
 	DeleteIFTATaxRate(ctx context.Context, id string, version int) (bool, error)
 	CreateIFTAMileageEntry(ctx context.Context, input gqlmodel.IFTAMileageEntryInput) (*ifta.JurisdictionMileageEntry, error)
@@ -2529,6 +2579,11 @@ type MutationResolver interface {
 	CreateReportDashboard(ctx context.Context, input gqlmodel.SaveReportDashboardInput) (*gqlmodel.ReportDashboard, error)
 	UpdateReportDashboard(ctx context.Context, input gqlmodel.UpdateReportDashboardInput) (*gqlmodel.ReportDashboard, error)
 	DeleteReportDashboard(ctx context.Context, id string) (bool, error)
+	CreateRole(ctx context.Context, input gqlmodel.RoleInput) (*rbac.Role, error)
+	UpdateRole(ctx context.Context, id string, input gqlmodel.RoleInput) (*rbac.Role, error)
+	DeleteRole(ctx context.Context, id string, force *bool) (bool, error)
+	AssignRole(ctx context.Context, roleID string, input gqlmodel.AssignRoleInput) (*rbac.UserRoleAssignment, error)
+	UnassignRole(ctx context.Context, assignmentID string) (bool, error)
 	CreateShiftTemplate(ctx context.Context, input gqlmodel.ShiftTemplateInput) (*workerschedule.ShiftTemplate, error)
 	UpdateShiftTemplate(ctx context.Context, id string, input gqlmodel.ShiftTemplateInput) (*workerschedule.ShiftTemplate, error)
 	AssignWorkerShift(ctx context.Context, input gqlmodel.AssignShiftInput) (*workerschedule.WorkerShiftAssignment, error)
@@ -2579,6 +2634,8 @@ type MutationResolver interface {
 	ResetMyTableLayout(ctx context.Context, resource string) (bool, error)
 	SaveTelematicsFormMapping(ctx context.Context, input gqlmodel.SaveTelematicsFormMappingInput) (*gqlmodel.TelematicsFormMapping, error)
 	DeleteTelematicsFormMapping(ctx context.Context, id string) (bool, error)
+	UpsertMicrosoftSsoConfig(ctx context.Context, input gqlmodel.MicrosoftSSOConfigInput) (*tenantports.MicrosoftSSOConfig, error)
+	UpsertOktaSsoConfig(ctx context.Context, input gqlmodel.OktaSSOConfigInput) (*tenantports.OktaSSOConfig, error)
 	UpdateOrganization(ctx context.Context, id string, input gqlmodel.OrganizationInput) (*tenant.Organization, error)
 	ClockIn(ctx context.Context, input gqlmodel.ClockInput) (*timesheet.TimeClockEntry, error)
 	ClockOut(ctx context.Context, input gqlmodel.ClockInput) (*timesheet.TimeClockEntry, error)
@@ -2602,6 +2659,20 @@ type MutationResolver interface {
 	ReopenInboundConflict(ctx context.Context, id string, conflictID string) (*inboundmessage.InboundMessage, error)
 	CreateUser(ctx context.Context, input gqlmodel.CreateUserInput) (*tenant.User, error)
 	PatchUser(ctx context.Context, id string, input gqlmodel.UserPatchInput) (*tenant.User, error)
+	BulkUpdateUserStatus(ctx context.Context, input gqlmodel.BulkUpdateUserStatusInput) ([]*tenant.User, error)
+	ResetUserPassword(ctx context.Context, userID string) (bool, error)
+	ReplaceUserOrganizationMemberships(ctx context.Context, userID string, organizationIds []string) ([]*tenant.OrganizationMembership, error)
+	ResetUserMfa(ctx context.Context, userID string) (bool, error)
+	UpdateMySettings(ctx context.Context, input gqlmodel.UpdateMySettingsInput) (*tenant.User, error)
+	UpdateMyProfile(ctx context.Context, input gqlmodel.UpdateMyProfileInput) (*tenant.User, error)
+	UpdateMyAvailability(ctx context.Context, input gqlmodel.UpdateMyAvailabilityInput) (*tenant.User, error)
+	SetMyAssistantHidden(ctx context.Context, hidden bool) (*tenant.User, error)
+	RevokeMySession(ctx context.Context, sessionID string) (bool, error)
+	RevokeMyOtherSessions(ctx context.Context) (int, error)
+	BeginMyTotpEnrollment(ctx context.Context, password string) (*sessionports.TOTPEnrollment, error)
+	ConfirmMyTotpEnrollment(ctx context.Context, code string, name *string) (*sessionports.RecoveryCodesResponse, error)
+	DisableMyTotp(ctx context.Context, input gqlmodel.DisableMyTotpInput) (bool, error)
+	RegenerateMyRecoveryCodes(ctx context.Context, code string) (*sessionports.RecoveryCodesResponse, error)
 	MarkWatchtowerSeen(ctx context.Context, seenAt *int) (*gqlmodel.WatchtowerCounts, error)
 	DismissWatchtowerItem(ctx context.Context, id string) (*watchtower.Item, error)
 	HandOffWatchtowerItem(ctx context.Context, id string, input gqlmodel.HandOffWatchtowerItemInput) (*gqlmodel.WatchtowerHandOffResult, error)
@@ -2835,6 +2906,11 @@ type PortalTrainingResolver interface {
 	Score(ctx context.Context, obj *driverportalrecordsservice.PortalTraining) (*string, error)
 }
 
+type ProvisioningAuditRecordResolver interface {
+	Action(ctx context.Context, obj *iam.ProvisioningAuditRecord) (string, error)
+	ResourceID(ctx context.Context, obj *iam.ProvisioningAuditRecord) (*string, error)
+}
+
 type QueryResolver interface {
 	Trailers(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool) (*gqlmodel.TrailerConnection, error)
 	Trailer(ctx context.Context, id string) (*trailer.Trailer, error)
@@ -2956,6 +3032,7 @@ type QueryResolver interface {
 	AiUsageDaily(ctx context.Context, days *int, timezone *string, providerID *string) ([]*aiusageports.AIUsageDay, error)
 	APIKeys(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.APIKeyConnection, error)
 	APIKey(ctx context.Context, id string) (*apikey.Key, error)
+	APIKeyDetail(ctx context.Context, id string) (*apikeyports.APIKeyResponse, error)
 	AttentionSummary(ctx context.Context) (*gqlmodel.AttentionSummary, error)
 	AuditEntries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AuditEntryConnection, error)
 	AuditEntriesByResourceID(ctx context.Context, input gqlmodel.DataTableConnectionInput, resourceID string) (*gqlmodel.AuditEntryConnection, error)
@@ -3259,6 +3336,12 @@ type QueryResolver interface {
 	HomeLayoutPresets(ctx context.Context) ([]*gqlmodel.HomeLayoutPreset, error)
 	HomeLayoutPreset(ctx context.Context, id string) (*gqlmodel.HomeLayoutPreset, error)
 	HomeLayoutPreview(ctx context.Context, presetID *string, roleID *string) (*gqlmodel.HomeLayout, error)
+	IdentityProviders(ctx context.Context) ([]*iam.IdentityProvider, error)
+	AccessPolicies(ctx context.Context) ([]*iam.AccessPolicy, error)
+	AccessSettings(ctx context.Context) (*iam.AccessSettings, error)
+	ScimTokens(ctx context.Context, directoryID string) ([]*iam.SCIMToken, error)
+	ProvisioningAuditRecords(ctx context.Context, directoryID *string, limit *int) ([]*iam.ProvisioningAuditRecord, error)
+	SecurityBriefing(ctx context.Context) (*iam.SecurityBriefing, error)
 	IFTAJurisdictions(ctx context.Context, membersOnly *bool, countryCode *string, activeOnly *bool) ([]*ifta.Jurisdiction, error)
 	IFTATaxRates(ctx context.Context, input gqlmodel.IFTATaxRatesInput) (*gqlmodel.IFTATaxRateConnection, error)
 	IFTAMileageEntries(ctx context.Context, input gqlmodel.IFTAMileageEntriesInput) (*gqlmodel.IFTAJurisdictionMileageEntryConnection, error)
@@ -3331,6 +3414,12 @@ type QueryResolver interface {
 	WorkerPerformanceReviews(ctx context.Context, workerID string) ([]*workerreview.PerformanceReview, error)
 	PerformanceReview(ctx context.Context, id string) (*workerreview.PerformanceReview, error)
 	MyReviews(ctx context.Context) ([]*workerreview.PerformanceReview, error)
+	PermissionResources(ctx context.Context) ([]*gqlmodel.PermissionResourceCategory, error)
+	PermissionOperations(ctx context.Context) ([]*gqlmodel.PermissionOperation, error)
+	PermissionBundles(ctx context.Context) (*gqlmodel.PermissionBundleCatalog, error)
+	APIKeyAllowedResources(ctx context.Context) ([]*gqlmodel.PermissionResourceCategory, error)
+	MyPermissions(ctx context.Context) (*gqlmodel.PermissionManifest, error)
+	MyPermissionVersion(ctx context.Context) (*gqlmodel.PermissionManifestVersion, error)
 	PTOPolicies(ctx context.Context, input gqlmodel.PTOPoliciesInput) (*gqlmodel.PTOPolicyConnection, error)
 	PTOPolicy(ctx context.Context, id string) (*pto.PTOPolicy, error)
 	WorkerPTOPolicyAssignments(ctx context.Context, workerID string) ([]*pto.WorkerPTOPolicyAssignment, error)
@@ -3369,6 +3458,8 @@ type QueryResolver interface {
 	ReportDashboard(ctx context.Context, id string) (*gqlmodel.ReportDashboard, error)
 	Roles(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RoleConnection, error)
 	Role(ctx context.Context, id string) (*rbac.Role, error)
+	RolePermissions(ctx context.Context, roleID string) ([]*rbac.ResourcePermission, error)
+	RoleImpact(ctx context.Context, roleID string) ([]*permissionports.ImpactedUser, error)
 	RoutingGuides(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RoutingGuideConnection, error)
 	RoutingGuide(ctx context.Context, id string) (*tender.RoutingGuide, error)
 	MatchRoutingGuide(ctx context.Context, input gqlmodel.MatchRoutingGuideInput) (*tender.RoutingGuide, error)
@@ -3447,6 +3538,8 @@ type QueryResolver interface {
 	WorkerFormSubmissions(ctx context.Context, workerID string, startTime int, endTime int) ([]*gqlmodel.WorkerFormSubmission, error)
 	HosCertificationSummary(ctx context.Context, startDate string, endDate string) ([]*gqlmodel.HosCertificationSummary, error)
 	TelematicsStatus(ctx context.Context) (*gqlmodel.TelematicsStatus, error)
+	MicrosoftSsoConfig(ctx context.Context) (*tenantports.MicrosoftSSOConfig, error)
+	OktaSsoConfig(ctx context.Context) (*tenantports.OktaSSOConfig, error)
 	Organization(ctx context.Context, id string, includeState *bool, includeBu *bool) (*tenant.Organization, error)
 	Tender(ctx context.Context, id string) (*tender.Tender, error)
 	TendersByShipment(ctx context.Context, shipmentID string, shipmentMoveID *string) ([]*tender.Tender, error)
@@ -3469,6 +3562,12 @@ type QueryResolver interface {
 	InboundSenderProfile(ctx context.Context, messageID string) (*inboundmessageports.SenderProfile, error)
 	Users(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.UserConnection, error)
 	User(ctx context.Context, id string) (*tenant.User, error)
+	UserRoleAssignments(ctx context.Context, userID string) ([]*rbac.UserRoleAssignment, error)
+	UserOrganizationMemberships(ctx context.Context, userID string) ([]*tenant.OrganizationMembership, error)
+	UserAvatars(ctx context.Context, ids []string) ([]*userservice.AvatarSummary, error)
+	MyMfaStatus(ctx context.Context) (*sessionports.MFAStatus, error)
+	MySessions(ctx context.Context) ([]*userservice.SessionSummary, error)
+	MySignIns(ctx context.Context, limit *int) ([]*userservice.SignInSummary, error)
 	WatchtowerItems(ctx context.Context, input gqlmodel.WatchtowerItemsInput) (*gqlmodel.WatchtowerItemConnection, error)
 	WatchtowerCounts(ctx context.Context) (*gqlmodel.WatchtowerCounts, error)
 	WatchtowerItem(ctx context.Context, id string) (*watchtower.Item, error)
@@ -3559,6 +3658,11 @@ type ReportScheduleResolver interface {
 	Mine(ctx context.Context, obj *gqlmodel.ReportSchedule) (bool, error)
 }
 
+type ResourcePermissionResolver interface {
+	Operations(ctx context.Context, obj *rbac.ResourcePermission) ([]string, error)
+	DataScope(ctx context.Context, obj *rbac.ResourcePermission) (string, error)
+}
+
 type ReviewRatingResolver interface {
 	Score(ctx context.Context, obj *workerreview.ReviewRating) (*int, error)
 }
@@ -3579,9 +3683,18 @@ type RoutingGuideEntryResolver interface {
 	Rate(ctx context.Context, obj *tender.RoutingGuideEntry) (string, error)
 }
 
+type SCIMTokenResolver interface {
+	Status(ctx context.Context, obj *iam.SCIMToken) (string, error)
+}
+
 type SafetyScorecardResolver interface {
 	HighestDiscipline(ctx context.Context, obj *safetyscorecard.SafetyScorecard) (*workerdiscipline.DisciplinaryLevel, error)
 	DaysSinceLastEvent(ctx context.Context, obj *safetyscorecard.SafetyScorecard) (*int, error)
+}
+
+type SecurityFindingResolver interface {
+	Code(ctx context.Context, obj *iam.SecurityFinding) (string, error)
+	Severity(ctx context.Context, obj *iam.SecurityFinding) (string, error)
 }
 
 type ServiceFailureResolver interface {
@@ -3598,6 +3711,10 @@ type ServiceFailureShipmentResolver interface {
 
 type ServiceFailureStopResolver interface {
 	Type(ctx context.Context, obj *shipment.Stop) (gqlmodel.StopType, error)
+}
+
+type SessionSummaryResolver interface {
+	Device(ctx context.Context, obj *userservice.SessionSummary) (string, error)
 }
 
 type SettlementControlResolver interface {
@@ -3642,6 +3759,11 @@ type ShipmentRatingDetailResolver interface {
 
 type ShipmentRatingReviewApprovalResolver interface {
 	ApprovedBy(ctx context.Context, obj *gqlmodel.ShipmentRatingReviewApproval) (*tenant.User, error)
+}
+
+type SignInSummaryResolver interface {
+	Outcome(ctx context.Context, obj *userservice.SignInSummary) (string, error)
+	Device(ctx context.Context, obj *userservice.SignInSummary) (string, error)
 }
 
 type TCASubscriptionResolver interface {
@@ -4111,6 +4233,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		hazmatsegregationruleexec.Shard,
 		holdreasonexec.Shard,
 		homelayoutexec.Shard,
+		iamexec.Shard,
 		iftaexec.Shard,
 		inboundmessageexec.Shard,
 		inboundreplyexec.Shard,
@@ -4130,6 +4253,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		orgstructureexec.Shard,
 		pageaccessexec.Shard,
 		performancereviewexec.Shard,
+		permissionexec.Shard,
 		preludeexec.Shard,
 		ptopolicyexec.Shard,
 		rateexec.Shard,
@@ -4198,6 +4322,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AIProviderKeyInfo":                  func() any { return r.AIProviderKeyInfo() },
 			"AIRouteChoice":                      func() any { return r.AIRouteChoice() },
 			"AITuneUpEvidence":                   func() any { return r.AITuneUpEvidence() },
+			"AccessPolicy":                       func() any { return r.AccessPolicy() },
 			"AccessorialCharge":                  func() any { return r.AccessorialCharge() },
 			"AccountingAppCredential":            func() any { return r.AccountingAppCredential() },
 			"AccountingAppSettings":              func() any { return r.AccountingAppSettings() },
@@ -4244,6 +4369,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AgentToolSafety":                    func() any { return r.AgentToolSafety() },
 			"AgentWorstRatedAnswer":              func() any { return r.AgentWorstRatedAnswer() },
 			"ApiKey":                             func() any { return r.ApiKey() },
+			"ApiKeyPermission":                   func() any { return r.ApiKeyPermission() },
 			"ApprovalDelegation":                 func() any { return r.ApprovalDelegation() },
 			"AuditEntry":                         func() any { return r.AuditEntry() },
 			"AuthEvent":                          func() any { return r.AuthEvent() },
@@ -4360,6 +4486,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"IFTAReturnLine":                     func() any { return r.IFTAReturnLine() },
 			"IFTAReturnProblem":                  func() any { return r.IFTAReturnProblem() },
 			"IFTATaxRate":                        func() any { return r.IFTATaxRate() },
+			"IdentityProvider":                   func() any { return r.IdentityProvider() },
 			"InboundActivity":                    func() any { return r.InboundActivity() },
 			"InboundAttachment":                  func() any { return r.InboundAttachment() },
 			"InboundMailbox":                     func() any { return r.InboundMailbox() },
@@ -4413,19 +4540,24 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"PlannedPTOAccrual":                  func() any { return r.PlannedPTOAccrual() },
 			"PortalCredential":                   func() any { return r.PortalCredential() },
 			"PortalTraining":                     func() any { return r.PortalTraining() },
+			"ProvisioningAuditRecord":            func() any { return r.ProvisioningAuditRecord() },
 			"Query":                              func() any { return r.Query() },
 			"RateAgreement":                      func() any { return r.RateAgreement() },
 			"RateMatrix":                         func() any { return r.RateMatrix() },
 			"RateMatrixVersion":                  func() any { return r.RateMatrixVersion() },
 			"ReportSchedule":                     func() any { return r.ReportSchedule() },
+			"ResourcePermission":                 func() any { return r.ResourcePermission() },
 			"ReviewRating":                       func() any { return r.ReviewRating() },
 			"RiskDecision":                       func() any { return r.RiskDecision() },
 			"Role":                               func() any { return r.Role() },
 			"RoutingGuideEntry":                  func() any { return r.RoutingGuideEntry() },
+			"SCIMToken":                          func() any { return r.SCIMToken() },
 			"SafetyScorecard":                    func() any { return r.SafetyScorecard() },
+			"SecurityFinding":                    func() any { return r.SecurityFinding() },
 			"ServiceFailure":                     func() any { return r.ServiceFailure() },
 			"ServiceFailureShipment":             func() any { return r.ServiceFailureShipment() },
 			"ServiceFailureStop":                 func() any { return r.ServiceFailureStop() },
+			"SessionSummary":                     func() any { return r.SessionSummary() },
 			"SettlementControl":                  func() any { return r.SettlementControl() },
 			"SettlementException":                func() any { return r.SettlementException() },
 			"ShiftTemplate":                      func() any { return r.ShiftTemplate() },
@@ -4435,6 +4567,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"ShipmentMoveJurisdictionMile":       func() any { return r.ShipmentMoveJurisdictionMile() },
 			"ShipmentRatingDetail":               func() any { return r.ShipmentRatingDetail() },
 			"ShipmentRatingReviewApproval":       func() any { return r.ShipmentRatingReviewApproval() },
+			"SignInSummary":                      func() any { return r.SignInSummary() },
 			"TCASubscription":                    func() any { return r.TCASubscription() },
 			"TableConfiguration":                 func() any { return r.TableConfiguration() },
 			"Tender":                             func() any { return r.Tender() },

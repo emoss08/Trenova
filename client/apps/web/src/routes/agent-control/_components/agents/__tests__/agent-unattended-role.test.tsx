@@ -36,12 +36,15 @@ describe("AgentUnattendedRole", () => {
   });
 
   it("names the role an agent runs as", async () => {
-    listRoles.mockResolvedValue({
-      results: [{ id: "rol_intake", name: "Intake clerk" }],
-      count: 1,
-      next: "",
-      previous: "",
-    });
+    listRoles.mockResolvedValue([
+      {
+        id: "rol_intake",
+        name: "Intake clerk",
+        description: "",
+        maxSensitivity: "internal",
+        isSystem: false,
+      },
+    ]);
     renderFor("rol_intake");
 
     expect(await screen.findByText("Intake clerk")).toBeTruthy();

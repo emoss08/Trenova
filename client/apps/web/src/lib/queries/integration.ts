@@ -14,13 +14,9 @@ export const integration = createQueryKeys("integration", {
     queryKey: ["runtime-config", type],
     queryFn: () => apiService.integrationService.getRuntimeConfig(type),
   }),
-  apiKeys: () => ({
-    queryKey: ["api-keys"],
-    queryFn: () => apiService.apiKeyService.list(),
-  }),
   apiKey: (id: string) => ({
     queryKey: ["api-key", id],
-    queryFn: () => apiService.apiKeyService.get(id),
+    queryFn: ({ signal }) => apiService.apiKeyService.get(id, { signal }),
   }),
   samsaraWorkerSyncReadiness: () => ({
     queryKey: ["samsara-worker-sync-readiness"],

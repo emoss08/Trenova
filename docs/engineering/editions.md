@@ -183,7 +183,7 @@ exactly as before.
 | Root `fx.Decorate` of `tenantports.AuthService` | edition `APIOptions` | undecorated | ending a staff member's support sessions when they sign out |
 
 Two-factor sign-in (TOTP authenticator apps and recovery codes, `mfaservice`,
-`POST /auth/mfa/verify`, `/users/me/mfa/…`) is a public feature, not a seam: support
+`POST /auth/mfa/verify`, the `myMfaStatus` query and `…MyTotp…` mutations) is a public feature, not a seam: support
 access requires that the staff member's session was signed in at assurance level 2,
 which only the public flow produces.
 

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -18,11 +19,78 @@ import (
 var Shard = &gqlexec.Shard{
 	Name: "role",
 	Objects: []*gqlexec.Object{
+		{Name: "ResourcePermission", Implementors: []string{"ResourcePermission"}},
 		{Name: "Role", Implementors: []string{"Role"}},
 		{Name: "RoleConnection", Implementors: []string{"RoleConnection"}},
 		{Name: "RoleEdge", Implementors: []string{"RoleEdge"}},
+		{Name: "RoleImpactedUser", Implementors: []string{"RoleImpactedUser"}},
 	},
 	Fields: []gqlexec.Fields{
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createRole",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "Role",
+				Args:       field_Mutation_createRole_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateRole(ctx, fc.Args["input"].(gqlmodel.RoleInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNRole2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋrbacᚐRole),
+			},
+			{
+				Name:       "updateRole",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "Role",
+				Args:       field_Mutation_updateRole_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateRole(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.RoleInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNRole2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋrbacᚐRole),
+			},
+			{
+				Name:       "deleteRole",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild0,
+				Args:       field_Mutation_deleteRole_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteRole(ctx, fc.Args["id"].(string), fc.Args["force"].(*bool))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:       "assignRole",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "UserRoleAssignment",
+				Args:       field_Mutation_assignRole_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AssignRole(ctx, fc.Args["roleId"].(string), fc.Args["input"].(gqlmodel.AssignRoleInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNUserRoleAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋrbacᚐUserRoleAssignment),
+			},
+			{
+				Name:       "unassignRole",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild0,
+				Args:       field_Mutation_unassignRole_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UnassignRole(ctx, fc.Args["assignmentId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "roles",
@@ -51,12 +119,116 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalORole2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋrbacᚐRole),
 			},
+			{
+				Name:       "rolePermissions",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "ResourcePermission",
+				Args:       field_Query_rolePermissions_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").RolePermissions(ctx, fc.Args["roleId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNResourcePermission2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋrbacᚐResourcePermissionᚄ),
+			},
+			{
+				Name:       "roleImpact",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "RoleImpactedUser",
+				Args:       field_Query_roleImpact_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").RoleImpact(ctx, fc.Args["roleId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNRoleImpactedUser2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋpermissionportsᚐImpactedUserᚄ),
+			},
+		}},
+		{Object: "ResourcePermission", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*rbac.ResourcePermission)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "roleId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*rbac.ResourcePermission)
+					return obj.RoleID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "resource",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*rbac.ResourcePermission)
+					return obj.Resource, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:       "operations",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*rbac.ResourcePermission)
+					return gqlexec.Resolver[resolverResourcePermission](ec, "ResourcePermission").Operations(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
+				Name:       "dataScope",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*rbac.ResourcePermission)
+					return gqlexec.Resolver[resolverResourcePermission](ec, "ResourcePermission").DataScope(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*rbac.ResourcePermission)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "updatedAt",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*rbac.ResourcePermission)
+					return obj.UpdatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
 		}},
 		{Object: "Role", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*rbac.Role)
 					return obj.ID, nil
@@ -66,7 +238,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*rbac.Role)
 					return obj.BusinessUnitID, nil
@@ -76,7 +248,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*rbac.Role)
 					return obj.OrganizationID, nil
@@ -86,7 +258,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*rbac.Role)
 					return obj.Name, nil
@@ -96,7 +268,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "description",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*rbac.Role)
 					return obj.Description, nil
@@ -107,7 +279,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "coreResponsibility",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*rbac.Role)
 					return gqlexec.Resolver[resolverRole](ec, "Role").CoreResponsibility(ctx, obj)
@@ -116,7 +288,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "parentRoleIds",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*rbac.Role)
 					return obj.ParentRoleIDs, nil
@@ -128,7 +300,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*rbac.Role)
 					return gqlexec.Resolver[resolverRole](ec, "Role").MaxSensitivity(ctx, obj)
@@ -138,7 +310,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isSystem",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*rbac.Role)
 					return obj.IsSystem, nil
@@ -148,7 +320,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdBy",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*rbac.Role)
 					return obj.CreatedBy, nil
@@ -224,7 +396,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RoleConnection)
 					return obj.TotalCountExact, nil
@@ -247,7 +419,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RoleEdge)
 					return obj.Cursor, nil
@@ -255,16 +427,90 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "RoleImpactedUser", Fields: []*gqlexec.Field{
+			{
+				Name:     "userId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*permissionports.ImpactedUser)
+					return obj.UserID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "userName",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*permissionports.ImpactedUser)
+					return obj.UserName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "organizationId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*permissionports.ImpactedUser)
+					return obj.OrganizationID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "orgName",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*permissionports.ImpactedUser)
+					return obj.OrgName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "assignmentType",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*permissionports.ImpactedUser)
+					return obj.AssignmentType, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+	},
+	Inputs: []gqlexec.Input{
+		{Name: "AssignRoleInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAssignRoleInput)},
+		{Name: "ResourcePermissionInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputResourcePermissionInput)},
+		{Name: "RoleInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRoleInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "ResourcePermission", Check: func(r any) bool { _, ok := r.(resolverResourcePermission); return ok }},
 		{Root: "Role", Check: func(r any) bool { _, ok := r.(resolverRole); return ok }},
 	},
+}
+
+type resolverMutation interface {
+	CreateRole(ctx context.Context, input gqlmodel.RoleInput) (*rbac.Role, error)
+	UpdateRole(ctx context.Context, id string, input gqlmodel.RoleInput) (*rbac.Role, error)
+	DeleteRole(ctx context.Context, id string, force *bool) (bool, error)
+	AssignRole(ctx context.Context, roleID string, input gqlmodel.AssignRoleInput) (*rbac.UserRoleAssignment, error)
+	UnassignRole(ctx context.Context, assignmentID string) (bool, error)
 }
 
 type resolverQuery interface {
 	Roles(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RoleConnection, error)
 	Role(ctx context.Context, id string) (*rbac.Role, error)
+	RolePermissions(ctx context.Context, roleID string) ([]*rbac.ResourcePermission, error)
+	RoleImpact(ctx context.Context, roleID string) ([]*permissionports.ImpactedUser, error)
+}
+
+type resolverResourcePermission interface {
+	Operations(ctx context.Context, obj *rbac.ResourcePermission) ([]string, error)
+	DataScope(ctx context.Context, obj *rbac.ResourcePermission) (string, error)
 }
 
 type resolverRole interface {
@@ -274,12 +520,101 @@ type resolverRole interface {
 }
 
 var (
-	errNoChild0 = errors.New("field of type ID does not have child fields")
-	errNoChild1 = errors.New("field of type String does not have child fields")
-	errNoChild2 = errors.New("field of type Boolean does not have child fields")
+	errNoChild0 = errors.New("field of type Boolean does not have child fields")
+	errNoChild1 = errors.New("field of type ID does not have child fields")
+	errNoChild2 = errors.New("field of type String does not have child fields")
 	errNoChild3 = errors.New("field of type Timestamp does not have child fields")
 	errNoChild4 = errors.New("field of type Int does not have child fields")
 )
+
+func field_Mutation_createRole_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.RoleInput, error) {
+			return unmarshalNRoleInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRoleInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateRole_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.RoleInput, error) {
+			return unmarshalNRoleInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRoleInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_deleteRole_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "force",
+		func(ctx context.Context, v any) (*bool, error) {
+			return unmarshalOBoolean2ᚖbool(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["force"] = arg1
+	return args, nil
+}
+
+func field_Mutation_assignRole_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "roleId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["roleId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.AssignRoleInput, error) {
+			return unmarshalNAssignRoleInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAssignRoleInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_unassignRole_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "assignmentId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["assignmentId"] = arg0
+	return args, nil
+}
 
 func field_Query_roles_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -307,8 +642,185 @@ func field_Query_role_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[st
 	return args, nil
 }
 
+func field_Query_rolePermissions_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "roleId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["roleId"] = arg0
+	return args, nil
+}
+
+func field_Query_roleImpact_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "roleId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["roleId"] = arg0
+	return args, nil
+}
+
+func unmarshalInputAssignRoleInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.AssignRoleInput, error) {
+	var it gqlmodel.AssignRoleInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"userId", "expiresAt"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "userId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.UserID = data
+		case "expiresAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("expiresAt"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExpiresAt = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputResourcePermissionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ResourcePermissionInput, error) {
+	var it gqlmodel.ResourcePermissionInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"resource", "operations", "dataScope"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "resource":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resource"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Resource = data
+		case "operations":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("operations"))
+			data, err := unmarshalNString2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Operations = data
+		case "dataScope":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataScope"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataScope = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputRoleInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.RoleInput, error) {
+	var it gqlmodel.RoleInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "description", "coreResponsibility", "maxSensitivity", "parentRoleIds", "permissions"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "coreResponsibility":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("coreResponsibility"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CoreResponsibility = data
+		case "maxSensitivity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxSensitivity"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxSensitivity = data
+		case "parentRoleIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentRoleIds"))
+			data, err := unmarshalOID2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ParentRoleIds = data
+		case "permissions":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("permissions"))
+			data, err := unmarshalOResourcePermissionInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐResourcePermissionInputᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Permissions = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
+}
+
+func unmarshalNAssignRoleInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAssignRoleInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.AssignRoleInput, error) {
+	res, err := unmarshalInputAssignRoleInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
@@ -319,6 +831,63 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNResourcePermissionInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐResourcePermissionInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ResourcePermissionInput, error) {
+	res, err := unmarshalInputResourcePermissionInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNRoleInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRoleInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.RoleInput, error) {
+	res, err := unmarshalInputRoleInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNString2string)
+}
+
+func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalBoolean(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
+}
+
+func unmarshalOResourcePermissionInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐResourcePermissionInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.ResourcePermissionInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNResourcePermissionInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐResourcePermissionInput)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func marshalNAgentDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinitionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*agentdefinition.Definition) graphql.Marshaler {
@@ -361,6 +930,22 @@ func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgra
 	return ec.MarshalType(ctx, sel, "PageInfo", v)
 }
 
+func marshalNResourcePermission2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋrbacᚐResourcePermissionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*rbac.ResourcePermission) graphql.Marshaler {
+	return gqlexec.List[*rbac.ResourcePermission]{
+		Elem:        marshalNResourcePermission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋrbacᚐResourcePermission,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNResourcePermission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋrbacᚐResourcePermission(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *rbac.ResourcePermission) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ResourcePermission", v)
+}
+
 func marshalNRole2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋrbacᚐRole(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *rbac.Role) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -393,6 +978,22 @@ func marshalNRoleEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgra
 	return ec.MarshalType(ctx, sel, "RoleEdge", v)
 }
 
+func marshalNRoleImpactedUser2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋpermissionportsᚐImpactedUserᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*permissionports.ImpactedUser) graphql.Marshaler {
+	return gqlexec.List[*permissionports.ImpactedUser]{
+		Elem:        marshalNRoleImpactedUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋpermissionportsᚐImpactedUser,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNRoleImpactedUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋportsᚋpermissionportsᚐImpactedUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *permissionports.ImpactedUser) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "RoleImpactedUser", v)
+}
+
 func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
@@ -401,12 +1002,29 @@ func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
+func marshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	return gqlexec.List[string]{
+		Elem:        marshalNString2string,
+		NonNull:     true,
+		NonNullElem: true,
+		Scalar:      true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
 func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
 	res := graphql.MarshalInt64(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNUserRoleAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋrbacᚐUserRoleAssignment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *rbac.UserRoleAssignment) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "UserRoleAssignment", v)
 }
 
 func marshalOID2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐIDᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []pulid.ID) graphql.Marshaler {

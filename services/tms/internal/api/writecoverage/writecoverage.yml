@@ -372,16 +372,16 @@ writes:
     reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
 
   # apikey
-  "POST /api/v1/api-keys/":
+  "mutation createApiKey":
     exempt: security
     reason: "API keys grant programmatic access to the organization; only a person issues, rotates or revokes one."
-  "POST /api/v1/api-keys/:apiKeyID/revoke/":
+  "mutation revokeApiKey":
     exempt: security
     reason: "API keys grant programmatic access to the organization; only a person issues, rotates or revokes one."
-  "POST /api/v1/api-keys/:apiKeyID/rotate/":
+  "mutation rotateApiKey":
     exempt: security
     reason: "API keys grant programmatic access to the organization; only a person issues, rotates or revokes one."
-  "PUT /api/v1/api-keys/:apiKeyID/":
+  "mutation updateApiKey":
     exempt: security
     reason: "API keys grant programmatic access to the organization; only a person issues, rotates or revokes one."
 
@@ -1828,49 +1828,49 @@ writes:
     reason: "A person's own interface state; it changes nothing anyone else sees."
 
   # iam
-  "DELETE /api/v1/organizations/:id/iam/access-policies/:policyId":
+  "mutation createAccessPolicy":
     exempt: security
     reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
-  "DELETE /api/v1/organizations/:id/iam/identity-providers/:providerId":
+  "mutation createIdentityProvider":
     exempt: security
     reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
-  "DELETE /api/v1/organizations/:id/iam/scim/directories/:directoryId":
+  "mutation createSCIMDirectory":
     exempt: security
     reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
-  "DELETE /api/v1/organizations/:id/iam/scim/directories/:directoryId/group-role-mappings/:mappingId":
+  "mutation createSCIMGroupRoleMapping":
     exempt: security
     reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
-  "POST /api/v1/organizations/:id/iam/access-policies":
+  "mutation createSCIMToken":
     exempt: security
     reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
-  "POST /api/v1/organizations/:id/iam/identity-providers":
+  "mutation deleteAccessPolicy":
     exempt: security
     reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
-  "POST /api/v1/organizations/:id/iam/scim/directories":
+  "mutation deleteIdentityProvider":
     exempt: security
     reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
-  "POST /api/v1/organizations/:id/iam/scim/directories/:directoryId/group-role-mappings":
+  "mutation deleteSCIMDirectory":
     exempt: security
     reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
-  "POST /api/v1/organizations/:id/iam/scim/directories/:directoryId/tokens":
+  "mutation deleteSCIMGroupRoleMapping":
     exempt: security
     reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
-  "POST /api/v1/organizations/:id/iam/scim/tokens/:tokenId/revoke":
+  "mutation revokeSCIMToken":
     exempt: security
     reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
-  "PUT /api/v1/organizations/:id/iam/access-settings":
+  "mutation updateAccessPolicy":
+    exempt: security
+    reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
+  "mutation updateAccessSettings":
     exempt: security
     reason: "Decides whether people choose the roles they work under; it changes what everyone may do."
-  "PUT /api/v1/organizations/:id/iam/access-policies/:policyId":
+  "mutation updateIdentityProvider":
     exempt: security
     reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
-  "PUT /api/v1/organizations/:id/iam/identity-providers/:providerId":
+  "mutation updateSCIMDirectory":
     exempt: security
     reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
-  "PUT /api/v1/organizations/:id/iam/scim/directories/:directoryId":
-    exempt: security
-    reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
-  "PUT /api/v1/organizations/:id/iam/scim/directories/:directoryId/group-role-mappings/:mappingId":
+  "mutation updateSCIMGroupRoleMapping":
     exempt: security
     reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
 
@@ -2237,18 +2237,18 @@ writes:
     tools: [order_update_charge]
 
   # organization
+  "mutation upsertMicrosoftSsoConfig":
+    exempt: security
+    reason: "Single sign-on decides who can sign in to the organization."
+  "mutation upsertOktaSsoConfig":
+    exempt: security
+    reason: "Single sign-on decides who can sign in to the organization."
   "DELETE /api/v1/organizations/:id/logo":
     exempt: configuration
     reason: "The organization's logo on every document it sends."
   "POST /api/v1/organizations/:id/logo":
     exempt: infrastructure
     reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
-  "PUT /api/v1/organizations/:id/microsoft-sso":
-    exempt: security
-    reason: "Single sign-on decides who can sign in to the organization."
-  "PUT /api/v1/organizations/:id/okta-sso":
-    exempt: security
-    reason: "Single sign-on decides who can sign in to the organization."
 
   # orgholiday
   "mutation createOrgHoliday":
@@ -2317,11 +2317,6 @@ writes:
   "mutation updatePerformanceReviewTemplate":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
-
-  # permission
-  "POST /api/v1/me/permissions/check":
-    exempt: read-only
-    reason: "Checks which permissions the caller holds."
 
   # permit
   "POST /api/v1/shipments/:shipmentID/permit-requirements/:requirementID/waive/":
@@ -2531,37 +2526,19 @@ writes:
     reason: "A saved view is one person's own columns and filters on a report page."
 
   # role
-  "DELETE /api/v1/roles/:roleID":
+  "mutation assignRole":
     exempt: security
     reason: "Grants or removes access. An agent that could change access could widen its own."
-  "DELETE /api/v1/roles/:roleID/permissions/:permID":
+  "mutation createRole":
     exempt: security
     reason: "Grants or removes access. An agent that could change access could widen its own."
-  "DELETE /api/v1/roles/assignments/:assignmentID":
+  "mutation deleteRole":
     exempt: security
     reason: "Grants or removes access. An agent that could change access could widen its own."
-  "DELETE /api/v1/roles/constraints/:constraintID":
+  "mutation unassignRole":
     exempt: security
     reason: "Grants or removes access. An agent that could change access could widen its own."
-  "DELETE /api/v1/roles/hierarchy/:edgeID":
-    exempt: security
-    reason: "Grants or removes access. An agent that could change access could widen its own."
-  "POST /api/v1/roles/":
-    exempt: security
-    reason: "Grants or removes access. An agent that could change access could widen its own."
-  "POST /api/v1/roles/:roleID/assignments":
-    exempt: security
-    reason: "Grants or removes access. An agent that could change access could widen its own."
-  "POST /api/v1/roles/constraints":
-    exempt: security
-    reason: "Grants or removes access. An agent that could change access could widen its own."
-  "POST /api/v1/roles/hierarchy":
-    exempt: security
-    reason: "Grants or removes access. An agent that could change access could widen its own."
-  "PUT /api/v1/roles/:roleID":
-    exempt: security
-    reason: "Grants or removes access. An agent that could change access could widen its own."
-  "PUT /api/v1/roles/:roleID/permissions/:permID":
+  "mutation updateRole":
     exempt: security
     reason: "Grants or removes access. An agent that could change access could widen its own."
 
@@ -2941,6 +2918,48 @@ writes:
     reason: "Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent."
 
   # user
+  "mutation beginMyTotpEnrollment":
+    exempt: security
+    reason: "A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one."
+  "mutation bulkUpdateUserStatus":
+    exempt: security
+    reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
+  "mutation confirmMyTotpEnrollment":
+    exempt: security
+    reason: "A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one."
+  "mutation disableMyTotp":
+    exempt: security
+    reason: "A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one."
+  "mutation regenerateMyRecoveryCodes":
+    exempt: security
+    reason: "A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one."
+  "mutation replaceUserOrganizationMemberships":
+    exempt: security
+    reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
+  "mutation resetUserMfa":
+    exempt: security
+    reason: "Resetting a person's second sign-in factor decides who can sign in as them."
+  "mutation resetUserPassword":
+    exempt: security
+    reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
+  "mutation revokeMyOtherSessions":
+    exempt: security
+    reason: "Signing a device out decides who can act as the person; an agent never ends someone's sessions."
+  "mutation revokeMySession":
+    exempt: security
+    reason: "Signing a device out decides who can act as the person; an agent never ends someone's sessions."
+  "mutation setMyAssistantHidden":
+    exempt: user-preference
+    reason: "Whether a person sees the assistant at all is theirs to choose; an agent never turns itself on or off for someone."
+  "mutation updateMyAvailability":
+    exempt: user-preference
+    reason: "Whether a person is available, focusing or away, and who covers for them, is theirs alone to say."
+  "mutation updateMyProfile":
+    exempt: user-preference
+    reason: "A person's own job title, phone and avatar; they describe themselves and no agent speaks for them."
+  "mutation updateMySettings":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
   "mutation createUser":
     exempt: security
     reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
@@ -2950,58 +2969,16 @@ writes:
   "DELETE /api/v1/users/me/profile-picture/":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
-  "DELETE /api/v1/users/:userID/mfa/":
-    exempt: security
-    reason: "Resetting a person's second sign-in factor decides who can sign in as them."
-  "PATCH /api/v1/users/me/settings/":
-    exempt: user-preference
-    reason: "A person's own interface state; it changes nothing anyone else sees."
-  "PATCH /api/v1/users/me/profile/":
-    exempt: user-preference
-    reason: "A person's own job title, phone and avatar; they describe themselves and no agent speaks for them."
-  "PUT /api/v1/users/me/assistant-visibility/":
-    exempt: user-preference
-    reason: "Whether a person sees the assistant at all is theirs to choose; an agent never turns itself on or off for someone."
-  "PUT /api/v1/users/me/availability/":
-    exempt: user-preference
-    reason: "Whether a person is available, focusing or away, and who covers for them, is theirs alone to say."
   "PUT /api/v1/users/me/notification-preferences/":
     exempt: user-preference
     reason: "What reaches a person outside the bell, and when, is their own choice; it changes nothing anyone else sees."
-  "DELETE /api/v1/users/me/sessions/:sessionID/":
-    exempt: security
-    reason: "Signing a device out decides who can act as the person; an agent never ends someone's sessions."
-  "POST /api/v1/users/me/sessions/revoke-others/":
-    exempt: security
-    reason: "Signing a device out decides who can act as the person; an agent never ends someone's sessions."
-  "POST /api/v1/users/:userID/reset-password/":
-    exempt: security
-    reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
-  "POST /api/v1/users/bulk-update-status/":
-    exempt: security
-    reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
   "POST /api/v1/users/me/change-password/":
     exempt: security
     reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
-  "POST /api/v1/users/me/mfa/recovery-codes/":
-    exempt: security
-    reason: "A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one."
-  "POST /api/v1/users/me/mfa/totp/confirm/":
-    exempt: security
-    reason: "A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one."
-  "POST /api/v1/users/me/mfa/totp/disable/":
-    exempt: security
-    reason: "A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one."
-  "POST /api/v1/users/me/mfa/totp/enroll/":
-    exempt: security
-    reason: "A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one."
   "POST /api/v1/users/me/profile-picture/":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
   "POST /api/v1/users/me/switch-organization/":
-    exempt: security
-    reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
-  "PUT /api/v1/users/:userID/organization-memberships/":
     exempt: security
     reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
 

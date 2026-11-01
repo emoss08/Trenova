@@ -61,7 +61,7 @@ func TestAnalyzerFollowsBoundWrappers(t *testing.T) {
 	consts, err := permissionlint.LoadConstants(permissionDir)
 	require.NoError(t, err)
 
-	result, err := permissionlint.Analyze(consts, handlersDir+"/rolehandler")
+	result, err := permissionlint.Analyze(consts, "testdata/boundwrapper")
 	require.NoError(t, err)
 
 	found := make([]string, 0, len(result.Pairs))
@@ -139,7 +139,7 @@ func TestAnalyzerReadsLocalResources(t *testing.T) {
 	consts, err := permissionlint.LoadConstants(permissionDir)
 	require.NoError(t, err)
 
-	result, err := permissionlint.Analyze(consts, handlersDir+"/iamhandler")
+	result, err := permissionlint.Analyze(consts, "testdata/localresource")
 	require.NoError(t, err)
 	require.Empty(t, result.Unresolved)
 

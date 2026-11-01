@@ -13,9 +13,9 @@ import { Form, FormControl, FormGroup, FormSection } from "@trenova/shared/compo
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { describeApiError } from "@/lib/api-error-message";
-import { api } from "@trenova/shared/lib/api";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { assignRole, unassignRole } from "@/lib/role-api";
+import { getUserRoleAssignments } from "@/lib/user-api";
 import type { UserRoleAssignment } from "@trenova/shared/types/role";
 import { TimeFormat } from "@trenova/shared/types/user";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,8 +52,7 @@ export function UserRolesEditor({ userId, isDisabled = false }: UserRolesEditorP
 
   const { data: assignments, isLoading } = useQuery({
     queryKey: ["user-role-assignments", userId],
-    queryFn: () => api.get<UserRoleAssignment[]>(`/users/${userId}/role-assignments/`),
-    select: (response) => response,
+    queryFn: ({ signal }) => getUserRoleAssignments(userId, { signal }),
   });
 
   const handleUnassign = useCallback(

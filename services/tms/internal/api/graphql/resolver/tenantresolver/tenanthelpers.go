@@ -7,8 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func (r *UserResolver) currentOrganization(
@@ -55,4 +57,16 @@ func (r *MutationResolver) applyOrganizationCapabilities(
 	}
 
 	return nil
+}
+
+func callerOrganizationID(authCtx *authctx.AuthContext, id string) (pulid.ID, error) {
+	orgID, err := pulid.MustParse(id)
+	if err != nil {
+		return pulid.Nil, err
+	}
+	if orgID != authCtx.OrganizationID {
+		return pulid.Nil, errortypes.NewNotFoundError("Organization not found")
+	}
+
+	return orgID, nil
 }

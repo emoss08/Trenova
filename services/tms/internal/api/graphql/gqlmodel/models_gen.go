@@ -97,6 +97,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
@@ -745,6 +746,16 @@ type AIUsageFeatureConnection struct {
 type AIUsageFeatureEdge struct {
 	Node   *aiusageports.AIUsageFeatureSlice `json:"node"`
 	Cursor string                            `json:"cursor"`
+}
+
+type AccessPolicyInput struct {
+	Name       string         `json:"name"`
+	Resource   string         `json:"resource"`
+	Operation  string         `json:"operation"`
+	Effect     string         `json:"effect"`
+	Priority   int            `json:"priority"`
+	Conditions map[string]any `json:"conditions,omitempty"`
+	Enabled    bool           `json:"enabled"`
 }
 
 type AccessorialChargeConnection struct {
@@ -1635,6 +1646,20 @@ type APIKeyEdge struct {
 	Cursor string      `json:"cursor"`
 }
 
+type APIKeyInput struct {
+	Name        string  `json:"name"`
+	Description *string `json:"description,omitempty"`
+	// Zero or omitted for a key that never expires.
+	ExpiresAt   *int                     `json:"expiresAt,omitempty"`
+	Permissions []*APIKeyPermissionInput `json:"permissions"`
+}
+
+type APIKeyPermissionInput struct {
+	Resource   string   `json:"resource"`
+	Operations []string `json:"operations"`
+	DataScope  string   `json:"dataScope"`
+}
+
 type ApplyCarrierIntelSuggestionsInput struct {
 	CarrierID string                       `json:"carrierId"`
 	Fields    []carrierintelsync.SyncField `json:"fields,omitempty"`
@@ -1695,6 +1720,12 @@ type AssignPayProfileInput struct {
 	// Optional per-component rate overrides for this driver.
 	RateOverrides []*PayRateOverrideInput `json:"rateOverrides,omitempty"`
 	Notes         *string                 `json:"notes,omitempty"`
+}
+
+type AssignRoleInput struct {
+	UserID string `json:"userId"`
+	// Null for a role that never lapses.
+	ExpiresAt *int `json:"expiresAt,omitempty"`
 }
 
 type AssignShiftInput struct {
@@ -2127,6 +2158,11 @@ type BulkUpdateTractorStatusInput struct {
 type BulkUpdateTrailerStatusInput struct {
 	TrailerIds []string                    `json:"trailerIds"`
 	Status     domaintypes.EquipmentStatus `json:"status"`
+}
+
+type BulkUpdateUserStatusInput struct {
+	UserIds []string           `json:"userIds"`
+	Status  domaintypes.Status `json:"status"`
 }
 
 type BulkWorkerPTOActionInput struct {
@@ -3037,6 +3073,12 @@ type CreateReportViewInput struct {
 	Shared       *bool          `json:"shared,omitempty"`
 	Pinned       *bool          `json:"pinned,omitempty"`
 	Format       *string        `json:"format,omitempty"`
+}
+
+type CreateSCIMTokenInput struct {
+	Name string `json:"name"`
+	// Zero or omitted for a token that never expires.
+	ExpiresAt *int `json:"expiresAt,omitempty"`
 }
 
 type CreateSettlementDisputeInput struct {
@@ -4153,6 +4195,12 @@ type DetentionWaiverLeakageStat struct {
 	WaiverCount   int    `json:"waiverCount"`
 	ApproverCount int    `json:"approverCount"`
 	WaivedAmount  string `json:"waivedAmount"`
+}
+
+type DisableMyTotpInput struct {
+	Password     string  `json:"password"`
+	Code         *string `json:"code,omitempty"`
+	RecoveryCode *string `json:"recoveryCode,omitempty"`
 }
 
 type DiscardFactoringRemittanceInput struct {
@@ -6798,6 +6846,28 @@ type IFTATaxRatesInput struct {
 	FuelType       *domaintypes.IFTAFuelType `json:"fuelType,omitempty"`
 }
 
+type IdentityProviderInput struct {
+	Name string  `json:"name"`
+	Slug *string `json:"slug,omitempty"`
+	// OIDC; SAML is not configurable yet.
+	Protocol              string         `json:"protocol"`
+	Enabled               bool           `json:"enabled"`
+	EnforceSso            bool           `json:"enforceSso"`
+	AutoProvision         bool           `json:"autoProvision"`
+	AllowFederatedMfa     bool           `json:"allowFederatedMfa"`
+	FederatedMfaAcrValues []string       `json:"federatedMfaAcrValues,omitempty"`
+	AllowedDomains        []string       `json:"allowedDomains,omitempty"`
+	AttributeMap          map[string]any `json:"attributeMap,omitempty"`
+	OidcIssuerURL         string         `json:"oidcIssuerUrl"`
+	OidcClientID          string         `json:"oidcClientId"`
+	// Required when the provider is created; leave empty on update to keep the stored secret.
+	OidcClientSecret *string  `json:"oidcClientSecret,omitempty"`
+	OidcRedirectURL  string   `json:"oidcRedirectUrl"`
+	OidcScopes       []string `json:"oidcScopes,omitempty"`
+	// The version read; required on update.
+	Version *int `json:"version,omitempty"`
+}
+
 type IgnoreAccountingInboundChangeInput struct {
 	ID string `json:"id"`
 	// Why it is not applied, for example that it was entered in Trenova by hand.
@@ -6959,6 +7029,18 @@ type IssuePayAdvanceInput struct {
 	AmountMinor  int                      `json:"amountMinor"`
 	Notes        *string                  `json:"notes,omitempty"`
 	CurrencyCode *string                  `json:"currencyCode,omitempty"`
+}
+
+// An API key with its secret, shown this once.
+type IssuedAPIKey struct {
+	APIKey *apikeyports.APIKeyResponse `json:"apiKey"`
+	Token  string                      `json:"token"`
+}
+
+// A new SCIM token with its secret, shown this once.
+type IssuedSCIMToken struct {
+	Token     string         `json:"token"`
+	ScimToken *iam.SCIMToken `json:"scimToken"`
 }
 
 type JobPositionInput struct {
@@ -7226,6 +7308,17 @@ type MemoLineInput struct {
 	AccessorialChargeID *string `json:"accessorialChargeId,omitempty"`
 }
 
+type MicrosoftSSOConfigInput struct {
+	Enabled    bool   `json:"enabled"`
+	EnforceSso bool   `json:"enforceSso"`
+	TenantID   string `json:"tenantId"`
+	ClientID   string `json:"clientId"`
+	// Leave empty to keep the stored secret.
+	ClientSecret   *string  `json:"clientSecret,omitempty"`
+	RedirectURL    string   `json:"redirectUrl"`
+	AllowedDomains []string `json:"allowedDomains,omitempty"`
+}
+
 type Mutation struct {
 }
 
@@ -7320,6 +7413,18 @@ type NotificationFilterInput struct {
 type NotifyShipmentDelayInput struct {
 	ShipmentID string `json:"shipmentId"`
 	Message    string `json:"message"`
+}
+
+type OktaSSOConfigInput struct {
+	Enabled    bool   `json:"enabled"`
+	EnforceSso bool   `json:"enforceSso"`
+	IssuerURL  string `json:"issuerUrl"`
+	ClientID   string `json:"clientId"`
+	// Leave empty to keep the stored secret.
+	ClientSecret   *string  `json:"clientSecret,omitempty"`
+	RedirectURL    string   `json:"redirectUrl"`
+	Scopes         []string `json:"scopes,omitempty"`
+	AllowedDomains []string `json:"allowedDomains,omitempty"`
 }
 
 type OpenEscrowAccountInput struct {
@@ -7768,6 +7873,116 @@ type PerformanceReviewTemplatesInput struct {
 	FilterGroups []*FilterGroupInput `json:"filterGroups,omitempty"`
 	Sort         []*SortFieldInput   `json:"sort,omitempty"`
 	Status       *domaintypes.Status `json:"status,omitempty"`
+}
+
+// A named set of grants for one job to be done.
+type PermissionBundle struct {
+	ID          string                   `json:"id"`
+	Module      string                   `json:"module"`
+	Label       string                   `json:"label"`
+	Description string                   `json:"description"`
+	Grants      []*PermissionBundleGrant `json:"grants"`
+}
+
+type PermissionBundleCatalog struct {
+	Bundles   []*PermissionBundle      `json:"bundles"`
+	Templates []*PermissionJobTemplate `json:"templates"`
+}
+
+// One grant of a capability bundle or job template, with the scope it applies here.
+type PermissionBundleGrant struct {
+	Resource    string   `json:"resource"`
+	DisplayName string   `json:"displayName"`
+	Operations  []string `json:"operations"`
+	DataScope   string   `json:"dataScope"`
+}
+
+// The operations the caller holds on one resource, as a bit mask.
+type PermissionGrantMask struct {
+	Resource   string `json:"resource"`
+	Operations int    `json:"operations"`
+}
+
+// A starting point for a role: bundles composed into grants, with a sensitivity ceiling.
+type PermissionJobTemplate struct {
+	ID             string                   `json:"id"`
+	Label          string                   `json:"label"`
+	Description    string                   `json:"description"`
+	Bundles        []string                 `json:"bundles"`
+	MaxSensitivity string                   `json:"maxSensitivity"`
+	Grants         []*PermissionBundleGrant `json:"grants"`
+}
+
+// What the caller may do in their current organization, for the interface to gate on.
+type PermissionManifest struct {
+	Version                string                           `json:"version"`
+	UserID                 string                           `json:"userId"`
+	OrganizationID         string                           `json:"organizationId"`
+	ActiveRoleIds          []string                         `json:"activeRoleIds"`
+	AuthorizedRoleIds      []string                         `json:"authorizedRoleIds"`
+	ActiveRoles            []*PermissionRoleSummary         `json:"activeRoles"`
+	AuthorizedRoles        []*PermissionRoleSummary         `json:"authorizedRoles"`
+	RequiresRoleActivation bool                             `json:"requiresRoleActivation"`
+	MaxSensitivity         string                           `json:"maxSensitivity"`
+	Permissions            []*PermissionGrantMask           `json:"permissions"`
+	RouteAccess            []*PermissionRouteAccess         `json:"routeAccess"`
+	AvailableOrgs          []*PermissionOrganizationSummary `json:"availableOrgs"`
+	Checksum               string                           `json:"checksum"`
+	ExpiresAt              int                              `json:"expiresAt"`
+}
+
+// The caller's manifest checksum, for telling whether a cached manifest is still current.
+type PermissionManifestVersion struct {
+	Checksum  string `json:"checksum"`
+	ExpiresAt int    `json:"expiresAt"`
+}
+
+// An operation a grant can allow, worded in the caller's language.
+type PermissionOperation struct {
+	Operation   string `json:"operation"`
+	DisplayName string `json:"displayName"`
+	Description string `json:"description"`
+	// The operations this one brings with it.
+	Implies []string `json:"implies"`
+}
+
+type PermissionOrganizationSummary struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+// A kind of record or feature access is granted on, worded in the caller's language.
+type PermissionResource struct {
+	Resource    string                 `json:"resource"`
+	DisplayName string                 `json:"displayName"`
+	Description string                 `json:"description"`
+	Category    string                 `json:"category"`
+	Operations  []*PermissionOperation `json:"operations"`
+	// A grant on the parent reaches this resource too.
+	ParentResource     *string `json:"parentResource,omitempty"`
+	DefaultSensitivity string  `json:"defaultSensitivity"`
+	// The data scopes a grant of this resource can carry in this deployment.
+	EnforceableScopes []string `json:"enforceableScopes"`
+}
+
+type PermissionResourceCategory struct {
+	Category  string                `json:"category"`
+	Resources []*PermissionResource `json:"resources"`
+}
+
+// A role named in the caller's permission manifest.
+type PermissionRoleSummary struct {
+	ID              string `json:"id"`
+	Name            string `json:"name"`
+	Description     string `json:"description"`
+	IsSystem        bool   `json:"isSystem"`
+	PermissionCount int    `json:"permissionCount"`
+}
+
+// Whether the caller may open one screen.
+type PermissionRouteAccess struct {
+	Route   string `json:"route"`
+	Allowed bool   `json:"allowed"`
 }
 
 type PolicyCompliance struct {
@@ -9001,6 +9216,12 @@ type ResolvedCostProfile struct {
 	GlWindow             *GLActualsWindow        `json:"glWindow,omitempty"`
 }
 
+type ResourcePermissionInput struct {
+	Resource   string   `json:"resource"`
+	Operations []string `json:"operations"`
+	DataScope  string   `json:"dataScope"`
+}
+
 type RespondToMyAssignmentInput struct {
 	AssignmentID string  `json:"assignmentId"`
 	Accept       bool    `json:"accept"`
@@ -9095,6 +9316,18 @@ type RoleConnection struct {
 type RoleEdge struct {
 	Node   *rbac.Role `json:"node"`
 	Cursor string     `json:"cursor"`
+}
+
+type RoleInput struct {
+	Name               string  `json:"name"`
+	Description        *string `json:"description,omitempty"`
+	CoreResponsibility *string `json:"coreResponsibility,omitempty"`
+	// public, internal, restricted or confidential.
+	MaxSensitivity string `json:"maxSensitivity"`
+	// Roles this one inherits; set when the role is created. Inheritance is not changed on update.
+	ParentRoleIds []string `json:"parentRoleIds,omitempty"`
+	// Replaces every grant of the role. Omit to leave the grants as they are.
+	Permissions []*ResourcePermissionInput `json:"permissions,omitempty"`
 }
 
 // What granting and withholding a resource's read means, in sentences built from
@@ -9229,6 +9462,11 @@ type SCIMDirectoryEdge struct {
 	Cursor string             `json:"cursor"`
 }
 
+type SCIMDirectoryInput struct {
+	TenantSlug string `json:"tenantSlug"`
+	Enabled    bool   `json:"enabled"`
+}
+
 type SCIMGroupRoleMappingConnection struct {
 	Edges      []*SCIMGroupRoleMappingEdge `json:"edges"`
 	PageInfo   *PageInfo                   `json:"pageInfo"`
@@ -9240,6 +9478,14 @@ type SCIMGroupRoleMappingConnection struct {
 type SCIMGroupRoleMappingEdge struct {
 	Node   *iam.SCIMGroupRoleMapping `json:"node"`
 	Cursor string                    `json:"cursor"`
+}
+
+type SCIMGroupRoleMappingInput struct {
+	ExternalGroupID string  `json:"externalGroupId"`
+	DisplayName     *string `json:"displayName,omitempty"`
+	RoleID          string  `json:"roleId"`
+	// The version read; required on update.
+	Version *int `json:"version,omitempty"`
 }
 
 type SafetyEventStatusInput struct {
@@ -12146,6 +12392,11 @@ type UpcomingWorkerPTOInput struct {
 	Timezone    *string           `json:"timezone,omitempty"`
 }
 
+type UpdateAccessSettingsInput struct {
+	RequireRoleActivation bool `json:"requireRoleActivation"`
+	Version               int  `json:"version"`
+}
+
 type UpdateAccountingSyncSettingsInput struct {
 	IntegrationType integration.Type `json:"integrationType"`
 	// Send posted documents on their own. When off, each waits for a person to release it; records already held stay held.
@@ -12436,6 +12687,15 @@ type UpdateLeaveDayInput struct {
 	Notes                    *string `json:"notes,omitempty"`
 }
 
+type UpdateMyAvailabilityInput struct {
+	Status     tenant.AvailabilityStatus `json:"status"`
+	FocusUntil *int                      `json:"focusUntil,omitempty"`
+	BackOn     *int                      `json:"backOn,omitempty"`
+	// Who covers while the caller is away; a person in the caller's organization.
+	DelegateUserID *string `json:"delegateUserId,omitempty"`
+	AwayNote       *string `json:"awayNote,omitempty"`
+}
+
 type UpdateMyContactInfoInput struct {
 	PhoneNumber           string  `json:"phoneNumber"`
 	AddressLine1          string  `json:"addressLine1"`
@@ -12444,6 +12704,21 @@ type UpdateMyContactInfoInput struct {
 	PostalCode            string  `json:"postalCode"`
 	EmergencyContactName  *string `json:"emergencyContactName,omitempty"`
 	EmergencyContactPhone *string `json:"emergencyContactPhone,omitempty"`
+}
+
+type UpdateMyProfileInput struct {
+	// Omit to leave unchanged.
+	JobTitle *string `json:"jobTitle,omitempty"`
+	// Omit to leave unchanged.
+	PhoneNumber *string `json:"phoneNumber,omitempty"`
+	// Omit to leave unchanged.
+	AvatarStyle *tenant.AvatarStyle `json:"avatarStyle,omitempty"`
+}
+
+type UpdateMySettingsInput struct {
+	Timezone   string     `json:"timezone"`
+	TimeFormat TimeFormat `json:"timeFormat"`
+	Locale     string     `json:"locale"`
 }
 
 type UpdateOrderChargeInput struct {

@@ -44,6 +44,19 @@ const (
 )
 
 var nonProjectionObjects = map[string]string{
+	"PermissionResourceCategory":      "GraphQL permission registry DTO built from the in-process registry",
+	"PermissionResource":              "GraphQL permission registry DTO built from the in-process registry",
+	"PermissionOperation":             "GraphQL permission registry DTO built from the in-process registry",
+	"PermissionBundleCatalog":         "GraphQL capability bundle DTO built from the in-process catalog",
+	"PermissionBundle":                "GraphQL capability bundle DTO built from the in-process catalog",
+	"PermissionJobTemplate":           "GraphQL job template DTO built from the in-process catalog",
+	"PermissionBundleGrant":           "GraphQL capability bundle grant DTO built from the in-process catalog",
+	"PermissionManifest":              "GraphQL permission manifest DTO built by the permission engine",
+	"PermissionManifestVersion":       "GraphQL permission manifest checksum DTO built by the permission engine",
+	"PermissionGrantMask":             "GraphQL permission manifest entry built by the permission engine",
+	"PermissionRouteAccess":           "GraphQL permission manifest entry built by the permission engine",
+	"IssuedApiKey":                    "GraphQL DTO carrying a new API key's secret beside the key",
+	"IssuedSCIMToken":                 "GraphQL DTO carrying a new SCIM token's secret beside the token",
 	"CarrierIntelRuleSetting":         "GraphQL DTO built by its resolver",
 	"BillingQueueHeadline":            "GraphQL billing queue item headline built from its review issues",
 	"CustomFieldFormField":            "GraphQL form DTO over the active definitions a form draws, read whole",

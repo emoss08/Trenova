@@ -46,12 +46,12 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
 
   const tokensQuery = useQuery({
     queryKey: ["scim-tokens", organizationId, directoryId],
-    queryFn: async () => apiService.organizationService.listSCIMTokens(organizationId, directoryId),
+    queryFn: async ({ signal }) =>
+      apiService.organizationService.listSCIMTokens(directoryId, { signal }),
     enabled: Boolean(directoryId),
   });
   const { mutate: createToken, isPending: isCreatingToken } = useMutation({
-    mutationFn: async () =>
-      apiService.organizationService.createSCIMToken(organizationId, directoryId, tokenName),
+    mutationFn: async () => apiService.organizationService.createSCIMToken(directoryId, tokenName),
     onSuccess: async (response) => {
       setCreatedToken(response.token);
       setTokenName("");
@@ -59,8 +59,7 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
     },
   });
   const { mutate: revokeToken } = useMutation({
-    mutationFn: async (tokenId: string) =>
-      apiService.organizationService.revokeSCIMToken(organizationId, tokenId),
+    mutationFn: async (tokenId: string) => apiService.organizationService.revokeSCIMToken(tokenId),
     onSuccess: async () => {
       await onProvisioningChange();
     },

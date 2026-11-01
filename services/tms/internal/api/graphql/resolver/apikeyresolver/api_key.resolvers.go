@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -62,4 +63,101 @@ func (r *QueryResolver) APIKey(ctx context.Context, id string) (*apikey.Key, err
 	}
 
 	return r.APIKeyService.GetAPIKeyEntity(ctx, resolvercore.TenantInfo(authCtx), apiKeyID)
+}
+
+func (r *ApiKeyPermissionResolver) Operations(ctx context.Context, obj *apikeyports.APIKeyPermissionInput) ([]string, error) {
+	out := make([]string, len(obj.Operations))
+	for i, op := range obj.Operations {
+		out[i] = string(op)
+	}
+	return out, nil
+}
+
+func (r *ApiKeyPermissionResolver) DataScope(ctx context.Context, obj *apikeyports.APIKeyPermissionInput) (string, error) {
+	return string(obj.DataScope), nil
+}
+
+func (r *MutationResolver) CreateAPIKey(ctx context.Context, input gqlmodel.APIKeyInput) (*gqlmodel.IssuedAPIKey, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAPIKey, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	issued, err := r.APIKeyService.CreateAPIKey(
+		ctx,
+		resolvercore.TenantInfo(authCtx),
+		createAPIKeyRequestFromInput(&input),
+		authCtx.UserID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return issuedAPIKeyToModel(issued), nil
+}
+
+func (r *MutationResolver) UpdateAPIKey(ctx context.Context, id string, input gqlmodel.APIKeyInput) (*apikeyports.APIKeyResponse, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAPIKey, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	apiKeyID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.APIKeyService.UpdateAPIKey(
+		ctx,
+		apiKeyTenant(authCtx),
+		apiKeyID,
+		updateAPIKeyRequestFromInput(&input),
+	)
+}
+
+func (r *MutationResolver) RotateAPIKey(ctx context.Context, id string) (*gqlmodel.IssuedAPIKey, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAPIKey, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	apiKeyID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	issued, err := r.APIKeyService.RotateAPIKey(ctx, apiKeyTenant(authCtx), apiKeyID)
+	if err != nil {
+		return nil, err
+	}
+
+	return issuedAPIKeyToModel(issued), nil
+}
+
+func (r *MutationResolver) RevokeAPIKey(ctx context.Context, id string) (*apikeyports.APIKeyResponse, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAPIKey, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	apiKeyID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.APIKeyService.RevokeAPIKey(ctx, apiKeyTenant(authCtx), apiKeyID, authCtx.UserID)
+}
+
+func (r *QueryResolver) APIKeyDetail(ctx context.Context, id string) (*apikeyports.APIKeyResponse, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAPIKey, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	apiKeyID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.APIKeyService.GetAPIKey(ctx, apiKeyTenant(authCtx), apiKeyID)
 }

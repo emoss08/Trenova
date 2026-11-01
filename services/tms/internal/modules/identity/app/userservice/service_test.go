@@ -112,30 +112,6 @@ func newTestUserWithPassword(t *testing.T, rawPassword string) *tenant.User {
 	return user
 }
 
-func TestList_Success(t *testing.T) {
-	t.Parallel()
-	deps := setupTest(t)
-	ctx := t.Context()
-
-	expected := &pagination.ListResult[*tenant.User]{
-		Items:      []*tenant.User{newTestUser()},
-		Total:      1,
-		TotalExact: true,
-	}
-	req := &tenantports.ListUsersRequest{
-		Filter: &pagination.QueryOptions{},
-	}
-
-	deps.repo.On("List", mock.Anything, req).Return(expected, nil)
-
-	result, err := deps.svc.List(ctx, req)
-
-	require.NoError(t, err)
-	assert.Equal(t, 1, result.Total)
-	assert.Len(t, result.Items, 1)
-	deps.repo.AssertExpectations(t)
-}
-
 func TestGetByID_Success(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)

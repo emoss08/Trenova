@@ -103,7 +103,6 @@ export function AccessPolicyPanel({
         formComponent={formComponent}
         mutationFn={async (values) => {
           const saved = await apiService.organizationService.updateAccessPolicy(
-            organizationId,
             toAccessPolicy(values),
           );
           await onSaved();
@@ -124,7 +123,6 @@ export function AccessPolicyPanel({
       formComponent={formComponent}
       mutationFn={async (values) => {
         const saved = await apiService.organizationService.createAccessPolicy(
-          organizationId,
           toAccessPolicy(values),
         );
         await onSaved();

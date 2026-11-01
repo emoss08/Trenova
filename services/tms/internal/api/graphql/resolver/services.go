@@ -109,13 +109,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/dashcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/pageaccessservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/passwordresetservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/settlementcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/tableinsightservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usstateservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -484,6 +487,12 @@ type Params struct {
 	PageAccessService                 *pageaccessservice.Service
 	UserService                       *userservice.Service
 	APIKeyService                     *apikeyservice.Service
+	MFAService                        sessionports.MFAService
+	PasswordResetService              *passwordresetservice.Service
+	AccessSettingsService             iamports.AccessSettingsService
+	SecurityBriefingService           iamports.SecurityBriefingService
+	PermissionRegistry                *permissioncatalog.Registry
+	PermissionScopePolicy             permissionports.ScopePolicy
 	TableChangeAlertService           *tablechangealertservice.Service
 	TableConfigurationService         *tableconfigurationservice.Service
 	SidebarPreferenceService          *sidebarpreferenceservice.Service
@@ -773,6 +782,12 @@ type Services struct {
 	PageAccessService                 *pageaccessservice.Service
 	UserService                       *userservice.Service
 	APIKeyService                     *apikeyservice.Service
+	MFAService                        sessionports.MFAService
+	PasswordResetService              *passwordresetservice.Service
+	AccessSettingsService             iamports.AccessSettingsService
+	SecurityBriefingService           iamports.SecurityBriefingService
+	PermissionRegistry                *permissioncatalog.Registry
+	PermissionScopePolicy             permissionports.ScopePolicy
 	TableChangeAlertService           *tablechangealertservice.Service
 	TableConfigurationService         *tableconfigurationservice.Service
 	SidebarPreferenceService          *sidebarpreferenceservice.Service
@@ -1068,6 +1083,12 @@ func newServices(p *Params) *Services {
 		PageAccessService:                 p.PageAccessService,
 		UserService:                       p.UserService,
 		APIKeyService:                     p.APIKeyService,
+		MFAService:                        p.MFAService,
+		PasswordResetService:              p.PasswordResetService,
+		AccessSettingsService:             p.AccessSettingsService,
+		SecurityBriefingService:           p.SecurityBriefingService,
+		PermissionRegistry:                p.PermissionRegistry,
+		PermissionScopePolicy:             p.PermissionScopePolicy,
 		TableChangeAlertService:           p.TableChangeAlertService,
 		TableConfigurationService:         p.TableConfigurationService,
 		SidebarPreferenceService:          p.SidebarPreferenceService,

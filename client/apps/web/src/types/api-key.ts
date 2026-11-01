@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 
 export const apiKeyStatusSchema = z.enum(["active"]);
 
@@ -29,8 +28,6 @@ export const apiKeySecretSchema = apiKeySchema.extend({
   token: z.string(),
 });
 
-export const apiKeyListSchema = createLimitOffsetResponse(apiKeySchema);
-
 export const createApiKeyRequestSchema = z.object({
   name: z.string().trim().min(1),
   description: z.string().optional().default(""),
@@ -42,7 +39,6 @@ export const updateApiKeyRequestSchema = createApiKeyRequestSchema;
 
 export type ApiKey = z.infer<typeof apiKeySchema>;
 export type ApiKeySecret = z.infer<typeof apiKeySecretSchema>;
-export type ApiKeyList = z.infer<typeof apiKeyListSchema>;
 export type CreateApiKeyRequest = z.infer<typeof createApiKeyRequestSchema>;
 export type UpdateApiKeyRequest = z.infer<typeof updateApiKeyRequestSchema>;
 export type ApiKeyPermissionInput = z.infer<typeof apiKeyPermissionInputSchema>;

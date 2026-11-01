@@ -1,4 +1,21 @@
+import {
+  BulkUpdateUserStatusDocument,
+  MySessionsDocument,
+  MySignInsDocument,
+  ReplaceUserOrganizationMembershipsDocument,
+  RevokeMyOtherSessionsDocument,
+  RevokeMySessionDocument,
+  SetMyAssistantHiddenDocument,
+  UpdateMyAvailabilityDocument,
+  UpdateMyProfileDocument,
+  UpdateMySettingsDocument,
+  UserAvatarsDocument,
+  UserOrganizationMembershipsDocument,
+  type AvatarStyle,
+  type TimeFormat as GraphQLTimeFormat,
+} from "@trenova/graphql/generated/graphql";
 import { ApiRequestError, api } from "@trenova/shared/lib/api";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   switchOrganizationResponseSchema,
@@ -9,7 +26,6 @@ import {
 } from "@trenova/shared/types/organization";
 import {
   avatarSummariesSchema,
-  revokeSessionsResponseSchema,
   sessionSummariesSchema,
   signInSummariesSchema,
   type AvatarSummary,
@@ -18,19 +34,50 @@ import {
   type UpdateMyAssistantVisibility,
   type UpdateMyAvailability,
   type UpdateMyProfile,
-  bulkUpdateUserStatusResponseSchema,
   userOrganizationMembershipsResponseSchema,
   profilePictureUrlResponseSchema,
   userSchema,
   type BulkUpdateUserStatusRequest,
-  type BulkUpdateUserStatusResponse,
   type ChangeMyPassword,
   type ProfilePictureUrlResponse,
   type ReplaceOrganizationMembershipsRequest,
+  type TimeFormatType,
   type UpdateMySettings,
   type User,
   type UserOrganizationMembership,
 } from "@trenova/shared/types/user";
+
+const TIME_FORMAT_TO_GRAPHQL: Record<TimeFormatType, GraphQLTimeFormat> = {
+  "12-hour": "TwelveHour",
+  "24-hour": "TwentyFourHour",
+};
+
+const TIME_FORMAT_FROM_GRAPHQL: Record<GraphQLTimeFormat, TimeFormatType> = {
+  TwelveHour: "12-hour",
+  TwentyFourHour: "24-hour",
+};
+
+function isGraphQLTimeFormat(value: unknown): value is GraphQLTimeFormat {
+  return typeof value === "string" && Object.hasOwn(TIME_FORMAT_FROM_GRAPHQL, value);
+}
+
+/**
+ * A user read through GraphQL carries its time format as the schema's enum; the rest of the
+ * client, and the session cache, keep the spelling the auth endpoints send.
+ */
+export function userFromGraphQL(value: unknown, label: string): Promise<User> {
+  if (value && typeof value === "object" && "timeFormat" in value) {
+    const { timeFormat } = value as { timeFormat: unknown };
+    if (isGraphQLTimeFormat(timeFormat)) {
+      return safeParse(
+        userSchema,
+        { ...value, timeFormat: TIME_FORMAT_FROM_GRAPHQL[timeFormat] },
+        label,
+      );
+    }
+  }
+  return safeParse(userSchema, value, label);
+}
 
 export class UserService {
   private base_url = "/users";
@@ -50,61 +97,47 @@ export class UserService {
     return safeParse(userOrganizationsResponseSchema, response, "User Organizations");
   }
 
-  public async listOrganizationMemberships(userId: User["id"]) {
-    const response = await api.get<UserOrganizationMembership[]>(
-      `${this.base_url}/${userId}/organization-memberships/`,
-    );
+  public async listOrganizationMemberships(
+    userId: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<UserOrganizationMembership[]> {
+    const data = await requestGraphQL<{ userOrganizationMemberships: unknown }>({
+      document: UserOrganizationMembershipsDocument,
+      operationName: "UserOrganizationMemberships",
+      variables: { userId },
+      signal: options?.signal,
+    });
 
     return safeParse(
       userOrganizationMembershipsResponseSchema,
-      response,
+      data.userOrganizationMemberships,
       "User Organization Memberships",
     );
   }
 
   public async replaceOrganizationMemberships(
-    userId: User["id"],
+    userId: string,
     request: ReplaceOrganizationMembershipsRequest,
-  ) {
-    const response = await api.put<UserOrganizationMembership[]>(
-      `${this.base_url}/${userId}/organization-memberships/`,
-      request,
-    );
+  ): Promise<UserOrganizationMembership[]> {
+    const data = await requestGraphQL<{ replaceUserOrganizationMemberships: unknown }>({
+      document: ReplaceUserOrganizationMembershipsDocument,
+      operationName: "ReplaceUserOrganizationMemberships",
+      variables: { userId, organizationIds: request.organizationIds },
+    });
 
     return safeParse(
       userOrganizationMembershipsResponseSchema,
-      response,
+      data.replaceUserOrganizationMemberships,
       "User Organization Memberships",
     );
   }
 
-  public async bulkUpdateStatus(request: BulkUpdateUserStatusRequest) {
-    const response = await api.post<BulkUpdateUserStatusResponse>(
-      `${this.base_url}/bulk-update-status/`,
-      request,
-    );
-
-    return safeParse(bulkUpdateUserStatusResponseSchema, response, "Bulk Update User Status");
-  }
-
-  public async get(id: User["id"]) {
-    const response = await api.get<User>(`${this.base_url}/${id}/`);
-    return safeParse(userSchema, response, "User");
-  }
-
-  public async create(user: User) {
-    const response = await api.post<User>(`${this.base_url}/`, user);
-    return safeParse(userSchema, response, "User");
-  }
-
-  public async update(id: User["id"], user: User) {
-    const response = await api.put<User>(`${this.base_url}/${id}/`, user);
-    return safeParse(userSchema, response, "User");
-  }
-
-  public async patch(id: User["id"], data: Partial<User>) {
-    const response = await api.patch<User>(`${this.base_url}/${id}/`, data);
-    return safeParse(userSchema, response, "User");
+  public async bulkUpdateStatus(request: BulkUpdateUserStatusRequest): Promise<void> {
+    await requestGraphQL({
+      document: BulkUpdateUserStatusDocument,
+      operationName: "BulkUpdateUserStatus",
+      variables: { input: { userIds: request.userIds, status: request.status } },
+    });
   }
 
   public async currentUser() {
@@ -113,8 +146,18 @@ export class UserService {
   }
 
   public async updateMySettings(data: UpdateMySettings) {
-    const response = await api.patch<User>(`${this.base_url}/me/settings/`, data);
-    return safeParse(userSchema, response, "User Settings");
+    const result = await requestGraphQL<{ updateMySettings: unknown }>({
+      document: UpdateMySettingsDocument,
+      operationName: "UpdateMySettings",
+      variables: {
+        input: {
+          timezone: data.timezone,
+          timeFormat: TIME_FORMAT_TO_GRAPHQL[data.timeFormat],
+          locale: data.locale,
+        },
+      },
+    });
+    return userFromGraphQL(result.updateMySettings, "User Settings");
   }
 
   public async changeMyPassword(data: ChangeMyPassword) {
@@ -123,45 +166,98 @@ export class UserService {
   }
 
   public async updateMyProfile(data: UpdateMyProfile) {
-    const response = await api.patch<User>(`${this.base_url}/me/profile/`, data);
-    return safeParse(userSchema, response, "User Profile");
+    const result = await requestGraphQL<{ updateMyProfile: unknown }>({
+      document: UpdateMyProfileDocument,
+      operationName: "UpdateMyProfile",
+      variables: {
+        input: {
+          ...(data.jobTitle !== undefined ? { jobTitle: data.jobTitle } : {}),
+          ...(data.phoneNumber !== undefined ? { phoneNumber: data.phoneNumber } : {}),
+          ...(data.avatarStyle !== undefined
+            ? { avatarStyle: data.avatarStyle as AvatarStyle }
+            : {}),
+        },
+      },
+    });
+    return userFromGraphQL(result.updateMyProfile, "User Profile");
   }
 
   public async updateMyAvailability(data: UpdateMyAvailability) {
-    const response = await api.put<User>(`${this.base_url}/me/availability/`, data);
-    return safeParse(userSchema, response, "User Availability");
+    const delegateUserId = data.delegateUserId?.trim();
+    const result = await requestGraphQL<{ updateMyAvailability: unknown }>({
+      document: UpdateMyAvailabilityDocument,
+      operationName: "UpdateMyAvailability",
+      variables: {
+        input: {
+          status: data.status,
+          focusUntil: data.focusUntil ?? null,
+          backOn: data.backOn ?? null,
+          delegateUserId: delegateUserId ? delegateUserId : null,
+          awayNote: data.awayNote ?? "",
+        },
+      },
+    });
+    return userFromGraphQL(result.updateMyAvailability, "User Availability");
   }
 
   public async updateMyAssistantVisibility(data: UpdateMyAssistantVisibility) {
-    const response = await api.put<User>(`${this.base_url}/me/assistant-visibility/`, data);
-    return safeParse(userSchema, response, "Assistant Visibility");
+    const result = await requestGraphQL<{ setMyAssistantHidden: unknown }>({
+      document: SetMyAssistantHiddenDocument,
+      operationName: "SetMyAssistantHidden",
+      variables: { hidden: data.assistantHidden },
+    });
+    return userFromGraphQL(result.setMyAssistantHidden, "Assistant Visibility");
   }
 
-  public async listMySessions() {
-    const response = await api.get<SessionSummary[]>(`${this.base_url}/me/sessions/`);
-    return safeParse(sessionSummariesSchema, response, "Sessions");
+  public async listMySessions(options?: { signal?: AbortSignal }): Promise<SessionSummary[]> {
+    const data = await requestGraphQL<{ mySessions: unknown }>({
+      document: MySessionsDocument,
+      operationName: "MySessions",
+      signal: options?.signal,
+    });
+    return safeParse(sessionSummariesSchema, data.mySessions, "Sessions");
   }
 
-  public async revokeMySession(sessionId: string) {
-    await api.delete(`${this.base_url}/me/sessions/${encodeURIComponent(sessionId)}/`);
+  public async revokeMySession(sessionId: string): Promise<void> {
+    await requestGraphQL({
+      document: RevokeMySessionDocument,
+      operationName: "RevokeMySession",
+      variables: { sessionId },
+    });
   }
 
-  public async revokeMyOtherSessions() {
-    const response = await api.post<{ revoked: number }>(
-      `${this.base_url}/me/sessions/revoke-others/`,
-    );
-    return safeParse(revokeSessionsResponseSchema, response, "Sessions");
+  public async revokeMyOtherSessions(): Promise<{ revoked: number }> {
+    const data = await requestGraphQL({
+      document: RevokeMyOtherSessionsDocument,
+      operationName: "RevokeMyOtherSessions",
+    });
+    return { revoked: data.revokeMyOtherSessions };
   }
 
-  public async listMySignIns(limit = 5) {
-    const response = await api.get<SignInSummary[]>(`${this.base_url}/me/sign-ins/?limit=${limit}`);
-    return safeParse(signInSummariesSchema, response, "Sign-ins");
+  public async listMySignIns(
+    limit = 5,
+    options?: { signal?: AbortSignal },
+  ): Promise<SignInSummary[]> {
+    const data = await requestGraphQL<{ mySignIns: unknown }>({
+      document: MySignInsDocument,
+      operationName: "MySignIns",
+      variables: { limit },
+      signal: options?.signal,
+    });
+    return safeParse(signInSummariesSchema, data.mySignIns, "Sign-ins");
   }
 
-  public async listAvatars(ids: readonly string[]) {
-    const params = new URLSearchParams({ ids: ids.join(",") });
-    const response = await api.get<AvatarSummary[]>(`${this.base_url}/avatars/?${params}`);
-    return safeParse(avatarSummariesSchema, response, "Avatars");
+  public async listAvatars(
+    ids: readonly string[],
+    options?: { signal?: AbortSignal },
+  ): Promise<AvatarSummary[]> {
+    const data = await requestGraphQL<{ userAvatars: unknown }>({
+      document: UserAvatarsDocument,
+      operationName: "UserAvatars",
+      variables: { ids: [...ids] },
+      signal: options?.signal,
+    });
+    return safeParse(avatarSummariesSchema, data.userAvatars, "Avatars");
   }
 
   public async uploadMyProfilePicture(file: File) {

@@ -62,27 +62,6 @@ func New(p Params) *Service {
 	}
 }
 
-func (s *Service) ListAPIKeys(
-	ctx context.Context,
-	req *apikeyports.ListAPIKeysRequest,
-) (*pagination.ListResult[apikeyports.APIKeyResponse], error) {
-	keys, err := s.repo.List(ctx, req)
-	if err != nil {
-		return nil, errortypes.NewBusinessError("failed to list api keys").WithInternal(err)
-	}
-
-	items := make([]apikeyports.APIKeyResponse, 0, len(keys.Items))
-	for _, key := range keys.Items {
-		items = append(items, s.mapAPIKeyResponse(key))
-	}
-
-	return &pagination.ListResult[apikeyports.APIKeyResponse]{
-		Items:      items,
-		Total:      keys.Total,
-		TotalExact: keys.TotalExact,
-	}, nil
-}
-
 func (s *Service) ListConnection(
 	ctx context.Context,
 	req *apikeyports.ListAPIKeyConnectionRequest,

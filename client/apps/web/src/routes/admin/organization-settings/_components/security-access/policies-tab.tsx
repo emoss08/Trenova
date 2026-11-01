@@ -94,7 +94,7 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
 
   const { mutate: removeAccessPolicy } = useMutation({
     mutationFn: async (policyId: string) =>
-      apiService.organizationService.deleteAccessPolicy(organizationId, policyId),
+      apiService.organizationService.deleteAccessPolicy(policyId),
     onSuccess: async () => {
       await invalidateAccessPolicies();
     },

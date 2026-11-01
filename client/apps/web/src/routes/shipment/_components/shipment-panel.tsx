@@ -40,6 +40,7 @@ import {
 import { parseAsBoolean, useQueryState } from "nuqs";
 import { NEW_SHIPMENT_CUSTOMER_PARAM } from "@/lib/shipment-links";
 import { shipment as shipmentQueries } from "@/lib/queries/shipment";
+import { user } from "@/lib/queries/user";
 import { lazy } from "react";
 import { type Resolver, useForm } from "react-hook-form";
 import { CheckCallsSkeleton } from "./check-calls/check-calls-skeleton";
@@ -59,8 +60,7 @@ function OwnerDisplay({ ownerId }: { ownerId?: string | null }) {
   const t = useT();
 
   const { data: owner, isLoading } = useQuery({
-    queryKey: ["user", ownerId],
-    queryFn: () => apiService.userService.get(ownerId!),
+    ...user.detail(ownerId ?? ""),
     enabled: !!ownerId,
     staleTime: 5 * 60 * 1000,
   });

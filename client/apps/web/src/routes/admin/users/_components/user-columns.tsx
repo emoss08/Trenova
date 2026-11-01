@@ -4,7 +4,7 @@ import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { statusChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { patchUser } from "@/lib/graphql/users";
 import type { UserRow } from "@/lib/graphql/user-table";
 import type { User } from "@trenova/shared/types/user";
 import { useQueryClient } from "@tanstack/react-query";
@@ -17,9 +17,7 @@ function UserStatusCell({ row }: { row: UserRow }) {
   const handleStatusChange = useCallback(
     async (newStatus: User["status"]) => {
       if (!row.id) return;
-      await apiService.userService.patch(row.id, {
-        status: newStatus,
-      });
+      await patchUser(row.id, { status: newStatus });
 
       await queryClient.invalidateQueries({
         queryKey: ["user-list"],
@@ -53,9 +51,7 @@ function UserNameCell({ user, isOnline }: { user: UserRow; isOnline: boolean }) 
         <span className="flex items-center gap-2 font-medium">
           {user.name}
           <span
-            className={`size-2 rounded-full ${
-              isOnline ? "bg-success" : "bg-muted-foreground/40"
-            }`}
+            className={`size-2 rounded-full ${isOnline ? "bg-success" : "bg-muted-foreground/40"}`}
             title={isOnline ? "Online" : "Offline"}
           />
         </span>

@@ -39,6 +39,18 @@ var authOnlyAllowlist = map[string]string{
 
 	"QueryResolver.HomeWidgetCatalog": "static catalog of widgets; carries no resource data",
 
+	"QueryResolver.PermissionResources": "the permission registry the role and policy editors " +
+		"draw: resource and operation names and descriptions, the same in every tenant, no " +
+		"record data and no one's grants",
+	"QueryResolver.PermissionOperations": "the static list of operations a grant can allow; " +
+		"carries no record data",
+	"QueryResolver.PermissionBundles": "the static capability bundles and job templates roles " +
+		"are composed from; carries no record data and no one's grants",
+	"QueryResolver.UserAvatars": "every avatar on a screen draws a teammate's avatar style and " +
+		"availability (an away person's return date and note); at most 100 people of the " +
+		"caller's own organization, named only by the name and username every reader of a " +
+		"linked user already sees",
+
 	"MutationResolver.CreateTableConfiguration": "anyone may keep a private view; the service " +
 		"refuses to publish one to the organization without table_configuration:create",
 	"MutationResolver.UpdateTableConfiguration": "only the owner may change a view, and the " +

@@ -1,0 +1,264 @@
+"A federated sign-in provider of the organization. Its client secret never leaves the server."
+type IdentityProvider {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  name: String!
+  slug: String!
+  "OIDC or SAML."
+  protocol: String!
+  enabled: Boolean!
+  enforceSso: Boolean!
+  autoProvision: Boolean!
+  allowFederatedMfa: Boolean!
+  federatedMfaAcrValues: [String!]!
+  allowedDomains: [String!]!
+  "Claim names keyed by the user field they fill."
+  attributeMap: JSON!
+  oidcIssuerUrl: String!
+  oidcClientId: String!
+  oidcRedirectUrl: String!
+  oidcScopes: [String!]!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input IdentityProviderInput {
+  name: String!
+  slug: String
+  "OIDC; SAML is not configurable yet."
+  protocol: String!
+  enabled: Boolean!
+  enforceSso: Boolean!
+  autoProvision: Boolean!
+  allowFederatedMfa: Boolean!
+  federatedMfaAcrValues: [String!]
+  allowedDomains: [String!]
+  attributeMap: JSON
+  oidcIssuerUrl: String!
+  oidcClientId: String!
+  "Required when the provider is created; leave empty on update to keep the stored secret."
+  oidcClientSecret: String
+  oidcRedirectUrl: String!
+  oidcScopes: [String!]
+  "The version read; required on update."
+  version: Int
+}
+
+"An attribute-based rule that allows or denies an operation when its conditions match."
+type AccessPolicy {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  name: String!
+  resource: String!
+  operation: String!
+  "allow or deny."
+  effect: String!
+  priority: Int!
+  conditions: JSON!
+  enabled: Boolean!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input AccessPolicyInput {
+  name: String!
+  resource: String!
+  operation: String!
+  effect: String!
+  priority: Int!
+  conditions: JSON
+  enabled: Boolean!
+}
+
+"Organization-wide access settings."
+type AccessSettings {
+  organizationId: ID!
+  businessUnitId: ID!
+  "Whether people choose the roles they work under at sign-in."
+  requireRoleActivation: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input UpdateAccessSettingsInput {
+  requireRoleActivation: Boolean!
+  version: Int!
+}
+
+input SCIMDirectoryInput {
+  tenantSlug: String!
+  enabled: Boolean!
+}
+
+"A bearer credential a SCIM client provisions with. Only its prefix is kept readable."
+type SCIMToken {
+  id: ID!
+  organizationId: ID!
+  directoryId: ID!
+  name: String!
+  prefix: String!
+  "active or revoked."
+  status: String!
+  lastUsedAt: Timestamp!
+  expiresAt: Timestamp!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"A new SCIM token with its secret, shown this once."
+type IssuedSCIMToken {
+  token: String!
+  scimToken: SCIMToken!
+}
+
+input CreateSCIMTokenInput {
+  name: String!
+  "Zero or omitted for a token that never expires."
+  expiresAt: Timestamp
+}
+
+input SCIMGroupRoleMappingInput {
+  externalGroupId: String!
+  displayName: String
+  roleId: ID!
+  "The version read; required on update."
+  version: Int
+}
+
+"One change a SCIM client made, and how it went."
+type ProvisioningAuditRecord {
+  id: ID!
+  organizationId: ID!
+  directoryId: ID!
+  "create, update, deactivate or delete."
+  action: String!
+  resourceType: String!
+  externalId: String!
+  "Null when the action failed before it created anything to point at."
+  resourceId: ID
+  status: String!
+  errorMessage: String!
+  createdAt: Timestamp!
+}
+
+type SecurityFinding {
+  code: String!
+  "critical, warning, notice or pass."
+  severity: String!
+  count: Int!
+  total: Int!
+}
+
+type SecuritySessionPolicy {
+  maxAgeSeconds: Int!
+  idleTimeoutSeconds: Int!
+  idleWarningSeconds: Int!
+}
+
+type SecurityMemberCounts {
+  active: Int!
+  locked: Int!
+  neverSignedIn: Int!
+  dormant: Int!
+  mustChangePassword: Int!
+}
+
+type SecurityUnenrolledMember {
+  userId: ID!
+  name: String!
+  emailAddress: String!
+  lastLoginAt: Timestamp
+}
+
+type SecurityMFACoverage {
+  enrolled: Int!
+  total: Int!
+  "Null for a reader who may not read users."
+  unenrolled: [SecurityUnenrolledMember!]
+}
+
+type SecuritySignInCounts {
+  succeeded: Int!
+  failed: Int!
+  denied: Int!
+  throttled: Int!
+  "Null for a reader who may not read risk decisions."
+  riskDenied: Int
+}
+
+type SecurityAPIKeyCounts {
+  active: Int!
+  withoutExpiry: Int!
+  unused: Int!
+  expiringSoon: Int!
+}
+
+type SecuritySSOState {
+  enabledProviders: Int!
+  enforced: Boolean!
+  enforcedProviderName: String!
+  trustsFederatedMfa: Boolean!
+}
+
+type SecurityProvisioningState {
+  activeDirectories: Int!
+}
+
+type SecurityPolicyState {
+  enabled: Int!
+  requiringMfa: Int!
+  roleActivationRequired: Boolean!
+}
+
+"The organization's security posture. A section is null for a reader who may not read what it is drawn from."
+type SecurityBriefing {
+  generatedAt: Timestamp!
+  signInWindowDays: Int!
+  dormantAfterDays: Int!
+  apiKeyUnusedAfterDays: Int!
+  apiKeyExpiringWithinDays: Int!
+  findings: [SecurityFinding!]!
+  session: SecuritySessionPolicy!
+  members: SecurityMemberCounts
+  mfa: SecurityMFACoverage
+  signIns: SecuritySignInCounts
+  apiKeys: SecurityAPIKeyCounts
+  sso: SecuritySSOState
+  provisioning: SecurityProvisioningState
+  policies: SecurityPolicyState
+}
+
+extend type Query {
+  identityProviders: [IdentityProvider!]!
+  accessPolicies: [AccessPolicy!]!
+  accessSettings: AccessSettings!
+  "The SCIM tokens of a directory, without their secrets."
+  scimTokens(directoryId: ID!): [SCIMToken!]!
+  "The most recent provisioning changes, newest first; 100 by default."
+  provisioningAuditRecords(directoryId: ID, limit: Int): [ProvisioningAuditRecord!]!
+  securityBriefing: SecurityBriefing!
+}
+
+extend type Mutation {
+  createIdentityProvider(input: IdentityProviderInput!): IdentityProvider!
+  updateIdentityProvider(id: ID!, input: IdentityProviderInput!): IdentityProvider!
+  deleteIdentityProvider(id: ID!): Boolean!
+  createAccessPolicy(input: AccessPolicyInput!): AccessPolicy!
+  updateAccessPolicy(id: ID!, input: AccessPolicyInput!): AccessPolicy!
+  deleteAccessPolicy(id: ID!): Boolean!
+  "Turns role activation on or off. Cannot be turned off while a dynamic separation of duty constraint exists."
+  updateAccessSettings(input: UpdateAccessSettingsInput!): AccessSettings!
+  createSCIMDirectory(input: SCIMDirectoryInput!): SCIMDirectory!
+  updateSCIMDirectory(id: ID!, input: SCIMDirectoryInput!): SCIMDirectory!
+  deleteSCIMDirectory(id: ID!): Boolean!
+  "Issues a SCIM token. Its secret is returned this once."
+  createSCIMToken(directoryId: ID!, input: CreateSCIMTokenInput!): IssuedSCIMToken!
+  revokeSCIMToken(id: ID!): SCIMToken!
+  createSCIMGroupRoleMapping(directoryId: ID!, input: SCIMGroupRoleMappingInput!): SCIMGroupRoleMapping!
+  updateSCIMGroupRoleMapping(id: ID!, input: SCIMGroupRoleMappingInput!): SCIMGroupRoleMapping!
+  deleteSCIMGroupRoleMapping(id: ID!): Boolean!
+}
