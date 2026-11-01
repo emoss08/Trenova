@@ -7,7 +7,7 @@ import { pageFavorite } from "@/lib/queries/page-favorite";
 import { getPageTitle } from "@/lib/route-utils";
 import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
+import { pageFavoriteService } from "@/services/page-favorite";
 import type { ToggleFavoriteRequest } from "@/types/page-favorite";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -84,7 +84,7 @@ export function FavoriteToggle({ className }: { className?: string }) {
   const { mutateAsync, isPending } = useOptimisticMutation({
     queryKey: pageFavorite.check(pageUrl).queryKey,
     mutationFn: async (values: ToggleFavoriteRequest) =>
-      apiService.pageFavoriteService.togglePageFavorite(values),
+      pageFavoriteService.togglePageFavorite(values),
     resourceName: "Page Favorite",
     invalidateQueries: [pageFavorite.all._def, pageFavorite.check._def],
     optimisticUpdate: (_variables, currentData) => !currentData,

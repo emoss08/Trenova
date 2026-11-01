@@ -1,7 +1,6 @@
 import { threadTouchedAt } from "@/components/desk-chat/rail/desk-threads";
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
-import type { ThreadListFilter } from "@/services/assistant";
+import { assistantService, type ThreadListFilter } from "@/services/assistant";
 import type {
   AssistantThread,
   AssistantThreadPage,
@@ -108,7 +107,7 @@ type ReadOptions = {
  */
 function readAgain(page: AssistantThreadPage, cursor: string, { filter, signal }: ReadOptions) {
   if (page.nextCursor === "") {
-    return apiService.assistantService.listThreads({
+    return assistantService.listThreads({
       cursor,
       limit: Math.min(MAX_PAGE_SIZE, Math.max(THREAD_PAGE_SIZE, page.items.length)),
       filter,
@@ -116,7 +115,7 @@ function readAgain(page: AssistantThreadPage, cursor: string, { filter, signal }
     });
   }
 
-  return apiService.assistantService.listThreads({
+  return assistantService.listThreads({
     cursor,
     until: page.nextCursor,
     filter,
@@ -153,7 +152,7 @@ async function readPage({
     if (pageParam === "") {
       state.stale.clear();
     }
-    return apiService.assistantService.listThreads({
+    return assistantService.listThreads({
       limit: THREAD_PAGE_SIZE,
       cursor: pageParam,
       filter,
@@ -241,7 +240,7 @@ export function threadShelfQuery(filter: ThreadListFilter) {
 export function threadShelfCountsQuery(edges: readonly number[]) {
   return queryOptions({
     ...assistant.threads()._ctx.shelfCounts(edges),
-    queryFn: ({ signal }) => apiService.assistantService.countThreadShelves(edges, { signal }),
+    queryFn: ({ signal }) => assistantService.countThreadShelves(edges, { signal }),
   });
 }
 

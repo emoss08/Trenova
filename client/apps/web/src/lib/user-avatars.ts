@@ -1,4 +1,4 @@
-import { apiService } from "@/services/api";
+import { userService } from "@trenova/shared/services/user";
 import { createBatchLoader } from "@trenova/shared/lib/batch-loader";
 import type { AvatarSummary } from "@trenova/shared/types/user";
 
@@ -8,7 +8,7 @@ import type { AvatarSummary } from "@trenova/shared/types/user";
  */
 const avatarLoader = createBatchLoader<string, AvatarSummary>(
   async (ids) => {
-    const avatars = await apiService.userService.listAvatars(ids);
+    const avatars = await userService.listAvatars(ids);
     return new Map(avatars.map((avatar) => [avatar.id, avatar]));
   },
   { maxBatchSize: 100 },

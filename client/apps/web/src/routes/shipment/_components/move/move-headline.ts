@@ -37,7 +37,7 @@ export function moveHeadline({
   if (status === "Canceled") {
     return { title: t("Canceled"), tone: "muted", focus: null };
   }
-  if (stops.length === 0 || stops.every((stop) => !stop.locationId && !stop.addressLine)) {
+  if (stops.every((stop) => !stop.locationId && !stop.addressLine)) {
     return { title: t("Add the stops to plan this move"), tone: "muted", focus: null };
   }
 

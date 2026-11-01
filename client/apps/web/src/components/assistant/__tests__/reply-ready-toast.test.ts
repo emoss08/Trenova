@@ -31,11 +31,13 @@ vi.mock("@trenova/shared/components/ui/toast", () => ({ toast: toastMock }));
 const markRead = vi.hoisted(() => vi.fn(async (_ids: string[]) => undefined));
 const getThread = vi.hoisted(() => vi.fn<(id: string) => Promise<AssistantThread>>());
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    notificationService: { markRead: (ids: string[]) => markRead(ids) },
-    assistantService: { getThread: (id: string) => getThread(id) },
-  },
+vi.mock("@trenova/shared/services/notification", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@trenova/shared/services/notification")>()),
+  notificationService: { markRead: (ids: string[]) => markRead(ids) },
+}));
+vi.mock("@/services/assistant", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/assistant")>()),
+  assistantService: { getThread: (id: string) => getThread(id) },
 }));
 
 const t = (message: string | null | undefined) => message ?? "";

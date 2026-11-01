@@ -17,13 +17,12 @@ vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: mocks.canCreate, isLoading: false }),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    assistantService: {
-      getThread: mocks.getThread,
-      listArtifacts: mocks.listArtifacts,
-      artifactLineage: mocks.artifactLineage,
-    },
+vi.mock("@/services/assistant", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/assistant")>()),
+  assistantService: {
+    getThread: mocks.getThread,
+    listArtifacts: mocks.listArtifacts,
+    artifactLineage: mocks.artifactLineage,
   },
 }));
 

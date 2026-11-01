@@ -14,8 +14,9 @@ vi.mock("@/lib/locale-switch", () => switching);
 vi.mock("@/hooks/use-api-mutation", () => ({
   useApiMutation: () => ({ mutateAsync: vi.fn() }),
 }));
-vi.mock("@/services/api", () => ({
-  apiService: { userService: { updateMySettings: vi.fn() } },
+vi.mock("@trenova/shared/services/user", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@trenova/shared/services/user")>()),
+  userService: { updateMySettings: vi.fn() },
 }));
 vi.mock("@trenova/shared/i18n/runtime", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@trenova/shared/i18n/runtime")>()),

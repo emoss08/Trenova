@@ -48,7 +48,7 @@ Keywords: unsigned POD, signed proof of delivery, POD not signed, receiver signa
 Keywords: add accessorial, edit charge, re-rate, change formula template, tariff inputs, terms
 1. Open [Billing queue](/billing/queue), select the item and open the **Charges** tab. Each freight line of the shipment's bill is listed with its quantity and rate, and each charge the tariff billed itself under its own label.
 2. Select **Add charge** to add an accessorial: choose the **Accessorial charge**, **Method**, **Unit** and **Amount**, then **Save**. Charges the tariff billed cannot be edited or deleted here; they come back from the tariff on every re-rate.
-3. To re-rate the freight, select **Re-rate** beside the rating, or **Adjust terms** beside **Terms**: choose the **Tariff**, change any of its input values, and select **Re-rate**. The freight lines and the tariff's charges are replaced by the new bill.
+3. To re-rate the freight, select **Re-rate** in the **Charges** header, beside the rating and the tariff's terms: choose the **Tariff**, change any of its input values, and select **Re-rate**. The freight lines and the tariff's charges are replaced by the new bill.
 
 ### Find items with search and filters
 Keywords: search PRO, BOL lookup, filter by biller, filter preset

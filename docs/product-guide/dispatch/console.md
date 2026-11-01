@@ -23,7 +23,7 @@ Keywords: cover a load, dispatch a driver, assign truck, rank drivers
 ### Find work for a driver
 Keywords: what can this driver take, next load for driver, open drivers
 1. Open [Console](/dispatch/console).
-2. In the **Capacity** rail, search with **Search driver, tractor, fleet** or filter by availability, and select a driver.
+2. In the **Capacity** rail, search with **Search drivers** (by name, tractor code or fleet) or filter by availability, and select a driver.
 3. The inspector lists the driver's best-fit open moves. Select one and assign it.
 
 ### Let the console propose assignments

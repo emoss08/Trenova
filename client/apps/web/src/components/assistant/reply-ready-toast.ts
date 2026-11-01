@@ -1,7 +1,7 @@
 import { assistant } from "@/lib/queries/assistant";
 import { notification } from "@trenova/shared/lib/queries/notification";
 import { cachedThreads } from "@/lib/thread-list";
-import { apiService } from "@/services/api";
+import { notificationService } from "@trenova/shared/services/notification";
 import { useAssistantStore } from "@/stores/assistant-store";
 import type { AssistantLiveTurnList, AssistantThread } from "@/types/assistant";
 import type { QueryClient } from "@tanstack/react-query";
@@ -164,7 +164,7 @@ function markSeen({ notificationId, queryClient }: AnnounceReplyReadyOptions): v
   if (notificationId === null || notificationId === "") {
     return;
   }
-  apiService.notificationService
+  notificationService
     .markRead([notificationId])
     .then(() => queryClient.invalidateQueries({ queryKey: notification._def }))
     .catch(() => undefined);

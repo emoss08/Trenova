@@ -5,7 +5,7 @@ import type {
   FormulaTemplate,
   FormulaTemplateFormValues,
 } from "@trenova/shared/types/formula-template";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { FormProvider, useForm, type UseFormReturn } from "react-hook-form";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { StudioProvider, useStudioActions } from "../studio-context";
@@ -76,7 +76,9 @@ function renderStudio({
     const methods = useForm<FormulaTemplateFormValues>({
       defaultValues: { description: "", ...values },
     });
-    form.current = methods;
+    useEffect(() => {
+      form.current = methods;
+    });
     return (
       <QueryClientProvider client={queryClient}>
         <FormProvider {...methods}>

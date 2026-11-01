@@ -46,8 +46,9 @@ vi.mock("@trenova/shared/stores/permission-store", () => ({
   },
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { userService: { switchOrganization: mocks.switchOrganization } },
+vi.mock("@trenova/shared/services/user", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@trenova/shared/services/user")>()),
+  userService: { switchOrganization: mocks.switchOrganization },
 }));
 
 vi.mock("@trenova/shared/components/ui/toast", () => ({

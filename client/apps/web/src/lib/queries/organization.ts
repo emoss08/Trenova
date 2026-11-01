@@ -1,4 +1,4 @@
-import { apiService } from "@/services/api";
+import { organizationService } from "@/services/organization";
 import { getOrganizationSettingsGraphQL } from "@/lib/graphql/organization";
 import { listSCIMDirectoriesGraphQL } from "@/lib/graphql/scim-directory";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
@@ -13,27 +13,27 @@ export const organization = createQueryKeys("organization", {
   }),
   logo: (organizationId: string) => ({
     queryKey: ["logo", organizationId],
-    queryFn: async () => apiService.organizationService.getLogoURL(organizationId),
+    queryFn: async () => organizationService.getLogoURL(organizationId),
   }),
   microsoftSSO: (organizationId: string) => ({
     queryKey: ["microsoft-sso", organizationId],
-    queryFn: async () => apiService.organizationService.getMicrosoftSSOConfig(organizationId),
+    queryFn: async () => organizationService.getMicrosoftSSOConfig(organizationId),
   }),
   oktaSSO: (organizationId: string) => ({
     queryKey: ["okta-sso", organizationId],
-    queryFn: async () => apiService.organizationService.getOktaSSOConfig(organizationId),
+    queryFn: async () => organizationService.getOktaSSOConfig(organizationId),
   }),
   tenantLogin: (organizationSlug: string) => ({
     queryKey: ["tenant-login", organizationSlug],
-    queryFn: async () => apiService.organizationService.getTenantLoginMetadata(organizationSlug),
+    queryFn: async () => organizationService.getTenantLoginMetadata(organizationSlug),
   }),
   accessSettings: (organizationId: string) => ({
     queryKey: ["access-settings", organizationId],
-    queryFn: async () => apiService.organizationService.getAccessSettings(organizationId),
+    queryFn: async () => organizationService.getAccessSettings(organizationId),
   }),
   identityProviders: (organizationId: string) => ({
     queryKey: ["identity-providers", organizationId],
-    queryFn: async () => apiService.organizationService.listIdentityProviders(organizationId),
+    queryFn: async () => organizationService.listIdentityProviders(organizationId),
   }),
   scimDirectories: (organizationId: string) => ({
     queryKey: ["scim-directories", organizationId],
@@ -42,23 +42,23 @@ export const organization = createQueryKeys("organization", {
   }),
   provisioningAudit: (organizationId: string) => ({
     queryKey: ["provisioning-audit", organizationId],
-    queryFn: async () => apiService.organizationService.listProvisioningAudit(organizationId),
+    queryFn: async () => organizationService.listProvisioningAudit(organizationId),
   }),
   accessPolicies: (organizationId: string) => ({
     queryKey: ["access-policies", organizationId],
-    queryFn: async () => apiService.organizationService.listAccessPolicies(organizationId),
+    queryFn: async () => organizationService.listAccessPolicies(organizationId),
   }),
   authEvents: (organizationId: string) => ({
     queryKey: ["auth-events", organizationId],
-    queryFn: async () => apiService.organizationService.listAuthEvents(organizationId),
+    queryFn: async () => organizationService.listAuthEvents(organizationId),
   }),
   riskDecisions: (organizationId: string) => ({
     queryKey: ["risk-decisions", organizationId],
-    queryFn: async () => apiService.organizationService.listRiskDecisions(organizationId),
+    queryFn: async () => organizationService.listRiskDecisions(organizationId),
   }),
   securityBriefing: (organizationId: string) => ({
     queryKey: ["security-briefing", organizationId],
     queryFn: async ({ signal }) =>
-      apiService.organizationService.getSecurityBriefing(organizationId, { signal }),
+      organizationService.getSecurityBriefing(organizationId, { signal }),
   }),
 });

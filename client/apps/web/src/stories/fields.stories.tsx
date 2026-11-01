@@ -13,18 +13,13 @@ import { SensitiveField } from "@/components/fields/sensitive-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { TimePicker } from "@/components/fields/time-picker/time-picker";
+import type { SelectOption } from "@/lib/graphql/select-options";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, userEvent, within } from "storybook/test";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { QuerySeedProvider, StoryForm, StorySection } from "./form-story-utils";
-
-type DriverOption = {
-  id: string;
-  name: string;
-  status: "Available" | "Assigned" | "Inactive";
-};
 
 type FieldStoryValues = {
   inputValue: string;
@@ -56,10 +51,25 @@ const fixedDateTime = Math.floor(new Date("2026-05-25T16:30:00Z").getTime() / 10
 
 const driverSelectOptions = { resource: "WORKER" } as const;
 
-const driverOptions: DriverOption[] = [
-  { id: "drv-001", name: "Ada Lovelace", status: "Available" },
-  { id: "drv-002", name: "Grace Hopper", status: "Assigned" },
-  { id: "drv-003", name: "Katherine Johnson", status: "Inactive" },
+const driverOptions: SelectOption[] = [
+  {
+    id: "drv-001",
+    label: "Ada Lovelace",
+    description: null,
+    meta: { firstName: "Ada", lastName: "Lovelace", wholeName: "Ada Lovelace", fleetCode: "LH" },
+  },
+  {
+    id: "drv-002",
+    label: "Grace Hopper",
+    description: null,
+    meta: { firstName: "Grace", lastName: "Hopper", wholeName: "Grace Hopper", fleetCode: "REG" },
+  },
+  {
+    id: "drv-003",
+    label: "Katherine Johnson",
+    description: null,
+    meta: { firstName: "Katherine", lastName: "Johnson", wholeName: "Katherine Johnson" },
+  },
 ];
 
 const emptyValues: FieldStoryValues = {
@@ -141,22 +151,49 @@ const googleMapsDisabledSeed = [
   },
 ];
 
+type SelectOptionsRequest = {
+  operationName?: string;
+  variables?: { input?: { ids?: string[]; query?: string } };
+};
+
+async function readSelectOptionsRequest(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<SelectOptionsRequest | null> {
+  const raw = input instanceof Request ? await input.clone().text() : init?.body;
+  if (typeof raw !== "string" || !raw.startsWith("{")) return null;
+  const request = JSON.parse(raw) as SelectOptionsRequest;
+  return request.operationName === "SelectOptions" ? request : null;
+}
+
+function driverSelectOptionsResponse({ variables }: SelectOptionsRequest) {
+  const ids = variables?.input?.ids;
+  const query = variables?.input?.query?.toLowerCase();
+  const nodes = driverOptions.filter((driver) =>
+    ids?.length ? ids.includes(driver.id) : !query || driver.label.toLowerCase().includes(query),
+  );
+
+  return {
+    data: {
+      selectOptions: {
+        edges: nodes.map((node) => ({ node, cursor: node.id })),
+        pageInfo: { hasNextPage: false, endCursor: nodes.at(-1)?.id ?? null },
+        totalCount: nodes.length,
+        totalCountExact: true,
+      },
+    },
+  };
+}
+
 function MockDriverOptions({ children }: { children: ReactNode }) {
   useEffect(() => {
     const originalFetch = window.fetch;
 
-    window.fetch = async (input) => {
-      const url = input instanceof Request ? input.url : String(input);
-      const option = driverOptions.find((driver) => url.endsWith(`/${driver.id}`));
-      const body = option
-        ? option
-        : {
-            results: driverOptions,
-            next: null,
-            count: driverOptions.length,
-          };
+    window.fetch = async (input, init) => {
+      const request = await readSelectOptionsRequest(input, init);
+      if (!request) return originalFetch(input, init);
 
-      return new Response(JSON.stringify(body), {
+      return new Response(JSON.stringify(driverSelectOptionsResponse(request)), {
         headers: { "content-type": "application/json" },
       });
     };
@@ -182,11 +219,13 @@ function TimePickerFieldStory() {
   );
 }
 
-function DriverOptionRow(option: DriverOption) {
+function DriverOptionRow(option: SelectOption) {
+  const fleetCode = option.meta?.fleetCode;
+
   return (
     <div className="flex w-full items-center justify-between gap-2">
-      <span>{option.name}</span>
-      <Badge variant={option.status === "Available" ? "success" : "neutral"}>{option.status}</Badge>
+      <span>{option.label}</span>
+      {typeof fleetCode === "string" ? <Badge variant="neutral">{fleetCode}</Badge> : null}
     </div>
   );
 }
@@ -274,7 +313,7 @@ function FieldsCatalog({
                   isReadOnly={disabled}
                   rules={{ required: "Service level is required." }}
                 />
-                <MultiSelectAutocompleteField<DriverOption, FieldStoryValues>
+                <MultiSelectAutocompleteField<SelectOption, FieldStoryValues>
                   control={control}
                   name="multiValues"
                   label="Drivers"
@@ -282,7 +321,7 @@ function FieldsCatalog({
                   graphql={driverSelectOptions}
                   preload
                   placeholder="Select drivers"
-                  getDisplayValue={(option) => option.name}
+                  getDisplayValue={(option) => option.label}
                   getOptionValue={(option) => option.id}
                   renderOption={DriverOptionRow}
                   disabled={disabled}
