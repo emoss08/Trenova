@@ -180,6 +180,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelverification/carrierintelverificationdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile/trackingprofiledb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distancecalculation/distancecalculationdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distancecontrol/distancecontroldb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride/distanceoverridedb"
@@ -427,7 +428,7 @@ func All() []*schema.Table {
 		customerstatementdb.StatementsSchema(),
 		customertrackingdb.NotificationsSchema(),
 		customertrackingdb.LinksSchema(),
-		customertrackingdb.ProfilesSchema(),
+		trackingprofiledb.ProfilesSchema(),
 		customerdb.CustomersSchema(),
 		dashcontroldb.DashControlsSchema(),
 		dataentrycontroldb.DataEntryControlsSchema(),

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/commodityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customerexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customerpaymentexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customertrackingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/detentionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchconsoleexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/documenttypeexec"
@@ -88,6 +89,7 @@ import (
 	commodityresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/commodityresolver"
 	customerpaymentresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/customerpaymentresolver"
 	customerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/customerresolver"
+	customertrackingresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/customertrackingresolver"
 	detentionresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/detentionresolver"
 	dispatchconsoleresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/dispatchconsoleresolver"
 	documenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/documenttyperesolver"
@@ -213,6 +215,7 @@ import (
 	recurringshipmentservice "github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
 	routingguideservice "github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
 	assignmentports "github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	customertrackingports "github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	ratingreviewports "github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
 	servicefailureports "github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	shipmentcommentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
@@ -344,6 +347,7 @@ type ResolverParams struct {
 	CustomerPaymentRepo               customerpaymentports.CustomerPaymentRepository
 	CustomerPaymentService            customerpaymentports.CustomerPaymentService
 	CustomerService                   *customerservice.Service
+	CustomerTrackingService           customertrackingports.CustomerTrackingService
 	DashControlService                *dashcontrolservice.Service
 	DetentionNotices                  *detentionnoticeservice.Service
 	DetentionPolicyService            *detentionpolicyservice.Service
@@ -494,6 +498,7 @@ var shards = []*gqlexec.Shard{
 	commodityexec.Shard,
 	customerexec.Shard,
 	customerpaymentexec.Shard,
+	customertrackingexec.Shard,
 	detentionexec.Shard,
 	dispatchconsoleexec.Shard,
 	documenttypeexec.Shard,
@@ -663,8 +668,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "CustomerTable",
-		Hash:     "sha256:974b5806f950d3ca2b8665065d7df4b1801814d8717b546c29b5317d3131d091",
-		Document: "fragment CustomerBillingProfileFields on CustomerBillingProfile { applyLateCharges arAccountId autoApplyAccessorials autoApprove autoBill autoCreditHold autoMarkReadyToBill autoSendInvoiceOnGeneration autoTransfer billingCurrency billingCycle billingCycleAnchorDay billingCycleTimezone billingNotes businessUnitId countLateOnlyOnAppointmentStops createdAt creditBalance creditHoldAutomatic creditHoldReason creditLimit creditReviewedAt creditStatus customerId customerInvoicePrefix defaultBillerId documentTypes { code color documentCategory documentClassification id name } ediInvoiceEnabled emailInvoiceEnabled enforceCreditLimit enforceCustomerBillingReq factoringCompanyId fuelSurchargeMode fuelSurchargeProgramId gracePeriodDays hasBillingControlOverrides id invoiceCopies invoiceDelivery invoiceDetail invoiceNumberFormat lastBilledPeriodEnd lateChargeRate maxShipmentsPerInvoice minConsolidatedAmount organizationId paymentTerm requireBOLNumber requireDeliveryNumber requirePONumber revenueAccountId sectionBy sendPaymentReminders sendStatements splitBy taxExempt taxExemptNumber updatedAt validateCustomerRates version } fragment CustomerEmailProfileFields on CustomerEmailProfile { attachmentName bccRecipients businessUnitId ccRecipients comment createdAt customerId id includeShipmentDetail organizationId readReceipt subject toRecipients updatedAt version } fragment CustomerTableRowFields on Customer { addressLine1 addressLine2 allowConsolidation billingProfile { ...CustomerBillingProfileFields } brokerVettingEnabled businessUnitId checkCallIntervalHours city code consolidationPriority createdAt dotNumber emailProfile { ...CustomerEmailProfileFields } etaRiskThresholdMinutes exclusiveConsolidation externalId id isGeocoded latitude longitude mcNumber name organizationId placeId postalCode stateId status statusUpdatePreference statusUpdateRecipients updatedAt version } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CustomerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { customers(input: $input) { edges { cursor node { ...CustomerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:e4b29ad13200cecc978b7d0c37d2fdfabef752f77ee6e3aab648b19fcf472b8d",
+		Document: "fragment CustomerBillingProfileFields on CustomerBillingProfile { applyLateCharges arAccountId autoApplyAccessorials autoApprove autoBill autoCreditHold autoMarkReadyToBill autoSendInvoiceOnGeneration autoTransfer billingCurrency billingCycle billingCycleAnchorDay billingCycleTimezone billingNotes businessUnitId countLateOnlyOnAppointmentStops createdAt creditBalance creditHoldAutomatic creditHoldReason creditLimit creditReviewedAt creditStatus customerId customerInvoicePrefix defaultBillerId documentTypes { code color documentCategory documentClassification id name } ediInvoiceEnabled emailInvoiceEnabled enforceCreditLimit enforceCustomerBillingReq factoringCompanyId fuelSurchargeMode fuelSurchargeProgramId gracePeriodDays hasBillingControlOverrides id invoiceCopies invoiceDelivery invoiceDetail invoiceNumberFormat lastBilledPeriodEnd lateChargeRate maxShipmentsPerInvoice minConsolidatedAmount organizationId paymentTerm requireBOLNumber requireDeliveryNumber requirePONumber revenueAccountId sectionBy sendPaymentReminders sendStatements splitBy taxExempt taxExemptNumber updatedAt validateCustomerRates version } fragment CustomerEmailProfileFields on CustomerEmailProfile { attachmentName bccRecipients businessUnitId ccRecipients comment createdAt customerId id includeShipmentDetail organizationId readReceipt subject toRecipients updatedAt version } fragment CustomerTableRowFields on Customer { addressLine1 addressLine2 allowConsolidation billingProfile { ...CustomerBillingProfileFields } brokerVettingEnabled businessUnitId checkCallIntervalHours city code consolidationPriority createdAt dotNumber emailProfile { ...CustomerEmailProfileFields } etaRiskThresholdMinutes exclusiveConsolidation externalId id isGeocoded latitude longitude mcNumber name organizationId placeId postalCode stateId status statusUpdatePreference statusUpdateRecipients trackingProfile { ...CustomerTrackingProfileFields } updatedAt version } fragment CustomerTrackingProfileFields on CustomerTrackingProfile { customerId id includeLink linkEnabled linkTtlDays notificationsEnabledAt notifyDelayed notifyDelivered notifyPickedUp notifyPodReady recipients updatedAt visibleFields } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CustomerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { customers(input: $input) { edges { cursor node { ...CustomerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskDetentionCard",
@@ -1382,6 +1387,10 @@ func NewSchema(p ResolverParams) Schema {
 		CustomerService:        p.CustomerService,
 		InvoiceQueryService:    p.InvoiceQueryService,
 	}
+	customertrackingDeps := &customertrackingresolver.Deps{
+		Core:                    core,
+		CustomerTrackingService: p.CustomerTrackingService,
+	}
 	detentionDeps := &detentionresolver.Deps{
 		Core:                   core,
 		DetentionReview:        p.DetentionReview,
@@ -1733,6 +1742,7 @@ func NewSchema(p ResolverParams) Schema {
 		commodityMutation:             &commodityMutation{Deps: commodityDeps},
 		customerMutation:              &customerMutation{Deps: customerDeps},
 		customerpaymentMutation:       &customerpaymentMutation{Deps: customerpaymentDeps},
+		customertrackingMutation:      &customertrackingMutation{Deps: customertrackingDeps},
 		detentionMutation:             &detentionMutation{Deps: detentionDeps},
 		dispatchconsoleMutation:       &dispatchconsoleMutation{Deps: dispatchconsoleDeps},
 		documenttypeMutation:          &documenttypeMutation{Deps: documenttypeDeps},
@@ -1789,6 +1799,7 @@ func NewSchema(p ResolverParams) Schema {
 		commodityQuery:                &commodityQuery{Deps: commodityDeps},
 		customerQuery:                 &customerQuery{Deps: customerDeps},
 		customerpaymentQuery:          &customerpaymentQuery{Deps: customerpaymentDeps},
+		customertrackingQuery:         &customertrackingQuery{Deps: customertrackingDeps},
 		detentionQuery:                &detentionQuery{Deps: detentionDeps},
 		dispatchconsoleQuery:          &dispatchconsoleQuery{Deps: dispatchconsoleDeps},
 		documenttypeQuery:             &documenttypeQuery{Deps: documenttypeDeps},
@@ -1937,6 +1948,9 @@ func NewSchema(p ResolverParams) Schema {
 		"CustomerPayment":  func() any { return &customerpaymentresolver.CustomerPaymentResolver{Deps: customerpaymentDeps} },
 		"CustomerPaymentApplication": func() any {
 			return &customerpaymentresolver.CustomerPaymentApplicationResolver{Deps: customerpaymentDeps}
+		},
+		"CustomerTrackingProfile": func() any {
+			return &customertrackingresolver.CustomerTrackingProfileResolver{Deps: customertrackingDeps}
 		},
 		"DOTRandomDraw":          func() any { return &workerdrugalcoholresolver.DOTRandomDrawResolver{Deps: workerdrugalcoholDeps} },
 		"DOTRandomDrawEntry":     func() any { return &workerdrugalcoholresolver.DOTRandomDrawEntryResolver{Deps: workerdrugalcoholDeps} },
@@ -2147,6 +2161,7 @@ type mutationResolver struct {
 	*commodityMutation
 	*customerMutation
 	*customerpaymentMutation
+	*customertrackingMutation
 	*detentionMutation
 	*dispatchconsoleMutation
 	*documenttypeMutation
@@ -2204,6 +2219,7 @@ type queryResolver struct {
 	*commodityQuery
 	*customerQuery
 	*customerpaymentQuery
+	*customertrackingQuery
 	*detentionQuery
 	*dispatchconsoleQuery
 	*documenttypeQuery
@@ -2286,6 +2302,7 @@ type (
 	commodityMutation               = commodityresolver.MutationResolver
 	customerMutation                = customerresolver.MutationResolver
 	customerpaymentMutation         = customerpaymentresolver.MutationResolver
+	customertrackingMutation        = customertrackingresolver.MutationResolver
 	detentionMutation               = detentionresolver.MutationResolver
 	dispatchconsoleMutation         = dispatchconsoleresolver.MutationResolver
 	documenttypeMutation            = documenttyperesolver.MutationResolver
@@ -2340,6 +2357,7 @@ type (
 	commodityQuery                  = commodityresolver.QueryResolver
 	customerQuery                   = customerresolver.QueryResolver
 	customerpaymentQuery            = customerpaymentresolver.QueryResolver
+	customertrackingQuery           = customertrackingresolver.QueryResolver
 	detentionQuery                  = detentionresolver.QueryResolver
 	dispatchconsoleQuery            = dispatchconsoleresolver.QueryResolver
 	documenttypeQuery               = documenttyperesolver.QueryResolver

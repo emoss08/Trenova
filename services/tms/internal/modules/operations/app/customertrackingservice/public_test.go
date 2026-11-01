@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -42,7 +43,7 @@ func TestPreview_ShowsOnlyTheFieldsTheCustomerAllows(t *testing.T) {
 	view, err := h.service.PreviewByToken(t.Context(), token)
 	require.NoError(t, err)
 
-	assert.Equal(t, customertracking.DefaultFields(), view.Fields)
+	assert.Equal(t, trackingprofile.DefaultFields(), view.Fields)
 	assert.Equal(t, "PRO-77", view.ShipmentProNumber)
 	assert.Equal(t, "BOL-1", view.BOL)
 	assert.Equal(t, customertrackingports.PublicStatusInTransit, view.Status)
@@ -59,12 +60,12 @@ func TestPreview_ShowsOnlyTheFieldsTheCustomerAllows(t *testing.T) {
 func TestPreview_AddsWhatTheProfileTurnsOn(t *testing.T) {
 	h := newHarness()
 	sh := pickedUpShipment(h)
-	h.notify(sh.CustomerID, func(p *customertracking.Profile) {
-		p.VisibleFields = []customertracking.Field{
-			customertracking.FieldCarrier,
-			customertracking.FieldHolds,
-			customertracking.FieldLocationNames,
-			customertracking.FieldEta,
+	h.notify(sh.CustomerID, func(p *trackingprofile.Profile) {
+		p.VisibleFields = []trackingprofile.Field{
+			trackingprofile.FieldCarrier,
+			trackingprofile.FieldHolds,
+			trackingprofile.FieldLocationNames,
+			trackingprofile.FieldEta,
 		}
 	})
 	h.facts.descriptors = customertrackingports.ShipmentDescriptors{CarrierName: "Redline Freight"}
@@ -116,14 +117,14 @@ func TestPreview_EveryDeadLinkAnswersTheSame(t *testing.T) {
 		},
 		"expired": func(h *harness, _ *shipment.Shipment) {
 			h.now = testNow + int64(
-				customertracking.DefaultLinkTTLDays,
+				trackingprofile.DefaultLinkTTLDays,
 			)*customertracking.SecondsPerDay
 		},
 		"moved to another customer": func(_ *harness, sh *shipment.Shipment) {
 			sh.CustomerID = pulid.MustNew("cus_")
 		},
 		"links turned off": func(h *harness, sh *shipment.Shipment) {
-			h.notify(sh.CustomerID, func(p *customertracking.Profile) { p.LinkEnabled = false })
+			h.notify(sh.CustomerID, func(p *trackingprofile.Profile) { p.LinkEnabled = false })
 		},
 		"shipment gone": func(h *harness, sh *shipment.Shipment) {
 			delete(h.shipments.rows, sh.ID)
@@ -161,8 +162,8 @@ func TestDownloadPod_OnlyWhenTheCustomerSeesProofOfDelivery(t *testing.T) {
 	require.Error(t, err)
 	assert.Empty(t, h.documents.read)
 
-	h.notify(sh.CustomerID, func(p *customertracking.Profile) {
-		p.VisibleFields = []customertracking.Field{customertracking.FieldProofOfDelivery}
+	h.notify(sh.CustomerID, func(p *trackingprofile.Profile) {
+		p.VisibleFields = []trackingprofile.Field{trackingprofile.FieldProofOfDelivery}
 	})
 	view, err := h.service.PreviewByToken(t.Context(), token)
 	require.NoError(t, err)
@@ -186,7 +187,7 @@ func TestIssueLink_RefusesWhatItCannotShare(t *testing.T) {
 	assert.Contains(t, err.Error(), "canceled")
 
 	off := pickedUpShipment(h)
-	h.notify(off.CustomerID, func(p *customertracking.Profile) { p.LinkEnabled = false })
+	h.notify(off.CustomerID, func(p *trackingprofile.Profile) { p.LinkEnabled = false })
 	_, err = h.service.IssueLink(t.Context(), &customertrackingports.IssueLinkRequest{
 		TenantInfo: testTenant,
 		ShipmentID: off.ID,
@@ -260,65 +261,13 @@ func TestRevokeLink_OneOrAll(t *testing.T) {
 	assert.True(t, errortypes.IsNotFoundError(err))
 }
 
-func TestUpdateProfile_CreatesThenGuardsTheVersion(t *testing.T) {
-	h := newHarness()
-	sh := pickedUpShipment(h)
-
-	created, err := h.service.UpdateProfile(
-		t.Context(),
-		&customertrackingports.UpdateProfileRequest{
-			TenantInfo: testTenant,
-			Profile: &customertracking.Profile{
-				CustomerID:    sh.CustomerID,
-				LinkEnabled:   true,
-				VisibleFields: []customertracking.Field{customertracking.FieldEta},
-				NotifyDelayed: true,
-				IncludeLink:   true,
-				Recipients:    "Ops@Halstead.example",
-			},
-		},
-	)
-	require.NoError(t, err)
-	assert.False(t, created.ID.IsNil())
-	assert.Equal(t, "ops@halstead.example", created.Recipients)
-	assert.Equal(t, testNow, *created.NotificationsEnabledAt)
-	assert.Equal(t, customertracking.DefaultLinkTTLDays, created.LinkTTLDays)
-
-	stale := int64(7)
-	_, err = h.service.UpdateProfile(t.Context(), &customertrackingports.UpdateProfileRequest{
-		TenantInfo:      testTenant,
-		ExpectedVersion: &stale,
-		Profile:         &customertracking.Profile{CustomerID: sh.CustomerID},
-	})
-	assert.Contains(t, err.Error(), "changed since you opened them")
-
-	_, err = h.service.UpdateProfile(t.Context(), &customertrackingports.UpdateProfileRequest{
-		TenantInfo: testTenant,
-		Profile:    &customertracking.Profile{CustomerID: pulid.MustNew("cus_")},
-	})
-	assert.True(t, errortypes.IsNotFoundError(err))
-}
-
-func TestGetProfile_DefaultsUntilChanged(t *testing.T) {
-	h := newHarness()
-	sh := pickedUpShipment(h)
-
-	profile, err := h.service.GetProfile(t.Context(), testTenant, sh.CustomerID)
-	require.NoError(t, err)
-
-	assert.True(t, profile.ID.IsNil())
-	assert.True(t, profile.LinkEnabled)
-	assert.Equal(t, customertracking.DefaultFields(), profile.VisibleFields)
-	assert.False(t, profile.NotifiesAny())
-}
-
 func TestPreviewForShipment_ShowsWhatALinkWouldWithoutMintingOne(t *testing.T) {
 	h := newHarness()
 	sh := pickedUpShipment(h)
-	h.notify(sh.CustomerID, func(p *customertracking.Profile) {
-		p.VisibleFields = []customertracking.Field{
-			customertracking.FieldStatus,
-			customertracking.FieldCarrier,
+	h.notify(sh.CustomerID, func(p *trackingprofile.Profile) {
+		p.VisibleFields = []trackingprofile.Field{
+			trackingprofile.FieldStatus,
+			trackingprofile.FieldCarrier,
 		}
 		p.LinkTTLDays = 10
 	})
@@ -351,7 +300,7 @@ func TestPreviewForShipment_ShowsTheDefaultsForACustomerWithoutSettings(t *testi
 	view, err := h.service.PreviewForShipment(t.Context(), testTenant, sh.ID)
 	require.NoError(t, err)
 
-	assert.Equal(t, customertracking.DefaultFields(), view.Fields)
+	assert.Equal(t, trackingprofile.DefaultFields(), view.Fields)
 	assert.Equal(t, "PRO-77", view.ShipmentProNumber)
 	assert.Empty(t, h.links.rows)
 }

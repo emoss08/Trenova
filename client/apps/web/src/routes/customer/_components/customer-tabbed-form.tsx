@@ -13,7 +13,7 @@ import { CustomerBillingProfileForm } from "./customer-billing-profile-form";
 import { CustomerBrokerIntelligence } from "./customer-broker-intelligence";
 import { CustomerEmailProfileForm } from "./customer-email-profile-form";
 import { CustomerForm } from "./customer-form";
-import { CustomerTrackingSettingsTab } from "./customer-tracking-settings";
+import { CustomerTrackingSettingsForm } from "./customer-tracking-settings";
 
 export type CustomerTabbedFormProps = {
   customerId?: string;
@@ -44,12 +44,10 @@ export function CustomerTabbedForm({ customerId }: CustomerTabbedFormProps) {
             <Mail01Icon className="size-4" />
             {t("Email profile")}
           </TabsTab>
-          {customerId ? (
-            <TabsTab value="tracking">
-              <Share07Icon className="size-4" />
-              {t("Tracking")}
-            </TabsTab>
-          ) : null}
+          <TabsTab value="tracking">
+            <Share07Icon className="size-4" />
+            {t("Tracking")}
+          </TabsTab>
           {customerId ? (
             <TabsTab value="broker-vetting">
               <RadarIcon className="size-4" />
@@ -70,11 +68,9 @@ export function CustomerTabbedForm({ customerId }: CustomerTabbedFormProps) {
         <TabsContent value="email" className="p-4">
           <CustomerEmailProfileForm />
         </TabsContent>
-        {customerId ? (
-          <TabsContent value="tracking" className="p-4">
-            <CustomerTrackingSettingsTab customerId={customerId} />
-          </TabsContent>
-        ) : null}
+        <TabsContent value="tracking" className="p-4">
+          <CustomerTrackingSettingsForm />
+        </TabsContent>
         {customerId ? (
           <TabsContent value="broker-vetting" className="p-4">
             <CustomerBrokerIntelligence customerId={customerId} />

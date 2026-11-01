@@ -3,6 +3,7 @@ import {
   useEditPanelActionPreference,
   type EditPanelSaveAction,
 } from "@/hooks/use-panel-action-preference";
+import { withSavedVersion } from "@/lib/saved-version";
 import { Dialog } from "@base-ui/react/dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
@@ -204,12 +205,12 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
       queryClient.setQueryData([queryKey], newValues);
       return { previousRecord, newValues };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       void queryClient.invalidateQueries({ queryKey: [queryKey] });
 
       const action = pendingActionRef.current;
       if (action === "save") {
-        reset(form.getValues());
+        reset(withSavedVersion(form.getValues(), data));
       }
       if (action === "save-close") {
         reset();

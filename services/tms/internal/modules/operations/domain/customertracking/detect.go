@@ -1,6 +1,9 @@
 package customertracking
 
-import "github.com/emoss08/trenova/shared/pulid"
+import (
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
+	"github.com/emoss08/trenova/shared/pulid"
+)
 
 type StopFacts struct {
 	ID              pulid.ID
@@ -51,7 +54,7 @@ type Occurrence struct {
 // Only events a rule asks for are reported, and only those that happened
 // after the rule was switched on and within the lookback, so turning a rule on
 // never mails a customer about yesterday's loads.
-func Detect(facts *ShipmentFacts, profile *Profile, now int64) []Occurrence {
+func Detect(facts *ShipmentFacts, profile *trackingprofile.Profile, now int64) []Occurrence {
 	if facts == nil || facts.Canceled || !profile.NotifiesAny() ||
 		profile.NotificationsEnabledAt == nil {
 		return nil
@@ -59,7 +62,7 @@ func Detect(facts *ShipmentFacts, profile *Profile, now int64) []Occurrence {
 	floor := max(*profile.NotificationsEnabledAt, now-NotificationLookbackHours*3600)
 	occurrences := make([]Occurrence, 0, 2)
 	keep := func(o Occurrence) {
-		if profile.Notifies(o.Event) && o.OccurredAt >= floor && o.OccurredAt <= now {
+		if Notifies(profile, o.Event) && o.OccurredAt >= floor && o.OccurredAt <= now {
 			occurrences = append(occurrences, o)
 		}
 	}

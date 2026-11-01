@@ -5,6 +5,7 @@ import {
   type EditPanelSaveAction,
 } from "@/hooks/use-panel-action-preference";
 import { rememberPristineDefaults } from "@/lib/form-defaults";
+import { withSavedVersion } from "@/lib/saved-version";
 import { useQueryClient } from "@tanstack/react-query";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { Form } from "@trenova/shared/components/ui/form";
@@ -157,7 +158,7 @@ export function FormEditPanel<
       queryClient.setQueryData([queryKey], newValues);
       return { previousRecord, newValues };
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (data, variables) => {
       void queryClient.invalidateQueries({ queryKey: [queryKey] });
 
       if (isPopout) {
@@ -167,7 +168,7 @@ export function FormEditPanel<
 
       const action = variables.action;
       if (action === "save") {
-        reset(form.getValues());
+        reset(withSavedVersion(form.getValues(), data));
       }
       if (action === "save-close") {
         reset();

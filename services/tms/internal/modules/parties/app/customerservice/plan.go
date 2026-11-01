@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 func (s *Service) PlanCreate(
@@ -22,6 +23,10 @@ func (s *Service) PlanCreate(
 
 	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
 		return nil, multiErr
+	}
+
+	if entity.TrackingProfile != nil {
+		entity.TrackingProfile.StampNotifications(nil, timeutils.NowUnix())
 	}
 
 	return entity, nil
@@ -45,9 +50,16 @@ func (s *Service) PlanUpdate(
 			OrgID: entity.GetOrganizationID(),
 			BuID:  entity.GetBusinessUnitID(),
 		},
+		CustomerFilterOptions: customerports.CustomerFilterOptions{
+			IncludeTrackingProfile: entity.TrackingProfile != nil,
+		},
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	if entity.TrackingProfile != nil {
+		entity.TrackingProfile.StampNotifications(original.TrackingProfile, timeutils.NowUnix())
 	}
 
 	return &kernelports.RecordChange[customer.Customer]{Before: original, After: entity}, nil

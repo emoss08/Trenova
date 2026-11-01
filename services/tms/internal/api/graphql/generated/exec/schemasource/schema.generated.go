@@ -11128,6 +11128,8 @@ type Customer {
   state: UsState
   billingProfile: CustomerBillingProfile
   emailProfile: CustomerEmailProfile
+  "What the customer's tracking links show and which status emails it is sent; the defaults until first saved."
+  trackingProfile: CustomerTrackingProfile
 }
 
 type CustomerEdge {
@@ -11227,6 +11229,22 @@ input CustomerEmailProfileInput {
   includeShipmentDetail: Boolean!
 }
 
+input CustomerTrackingProfileInput {
+  "Whether links can be shared for this customer's shipments. Turning it off stops every existing link."
+  linkEnabled: Boolean!
+  visibleFields: [CustomerTrackingField!]!
+  "How long a new link lasts, from 1 to 180 days."
+  linkTtlDays: Int!
+  notifyPickedUp: Boolean!
+  notifyDelayed: Boolean!
+  notifyDelivered: Boolean!
+  notifyPodReady: Boolean!
+  "Whether each status email carries its own tracking link."
+  includeLink: Boolean!
+  "Comma separated. Empty falls back to the status update recipients, then the email profile's To line."
+  recipients: String
+}
+
 input CustomerInput {
   status: EntityStatus!
   code: String!
@@ -11254,6 +11272,8 @@ input CustomerInput {
   billingProfile: CustomerBillingProfileInput
   "Omit to leave the email profile as it is."
   emailProfile: CustomerEmailProfileInput
+  "Omit to leave the tracking settings as they are."
+  trackingProfile: CustomerTrackingProfileInput
   version: Int
 }
 
@@ -11562,8 +11582,8 @@ enum CustomerStatusSkipReason {
 
 """
 What a customer sees through a shipment tracking link, and which status emails
-it is sent. A customer that has never had these changed reads the defaults,
-with no id.
+it is sent. Part of the customer: it is read and saved with it. A customer that
+has never had these changed reads the defaults, with no id.
 """
 type CustomerTrackingProfile {
   "Empty until the settings are first saved."
@@ -11581,13 +11601,12 @@ type CustomerTrackingProfile {
   "Whether each status email carries its own tracking link."
   includeLink: Boolean!
   """
-  Who the status emails go to. Empty falls back to the customer's status update
-  recipients, then to the To line of its email profile.
+  Who the status emails go to, comma separated. Empty falls back to the
+  customer's status update recipients, then to the To line of its email profile.
   """
-  recipients: String
+  recipients: String!
   "When a rule was last switched on. Events before it are never emailed."
   notificationsEnabledAt: Timestamp
-  version: Int!
   updatedAt: Timestamp!
 }
 
@@ -11629,21 +11648,6 @@ type CustomerStatusNotification {
   createdAt: Timestamp!
 }
 
-input UpdateCustomerTrackingProfileInput {
-  customerId: ID!
-  linkEnabled: Boolean!
-  visibleFields: [CustomerTrackingField!]!
-  linkTtlDays: Int!
-  notifyPickedUp: Boolean!
-  notifyDelayed: Boolean!
-  notifyDelivered: Boolean!
-  notifyPodReady: Boolean!
-  includeLink: Boolean!
-  recipients: String
-  "The version the settings were read at. A newer version refuses the change."
-  expectedVersion: Int
-}
-
 input IssueCustomerTrackingLinkInput {
   shipmentId: ID!
   "Where to email the link. Leave empty to copy it instead."
@@ -11660,8 +11664,6 @@ type IssueCustomerTrackingLinkPayload {
 }
 
 extend type Query {
-  "A customer's tracking link and status email settings, or the defaults."
-  customerTrackingProfile(customerId: ID!): CustomerTrackingProfile!
   "Every tracking link shared for a shipment, newest first, live or not."
   customerTrackingLinks(shipmentId: ID!): [CustomerTrackingLink!]!
   "The status emails a shipment has owed its customer, newest first."
@@ -11669,10 +11671,6 @@ extend type Query {
 }
 
 extend type Mutation {
-  "Change what a customer's tracking links show and which status emails it is sent."
-  updateCustomerTrackingProfile(
-    input: UpdateCustomerTrackingProfileInput!
-  ): CustomerTrackingProfile!
   "Share a new tracking link for a shipment, optionally emailing it."
   issueCustomerTrackingLink(
     input: IssueCustomerTrackingLinkInput!

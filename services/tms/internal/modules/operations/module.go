@@ -181,7 +181,6 @@ func SharedOptions() fx.Option {
 			trackingeventrepository.New,
 			checkcallrepository.New,
 			checkcallrepository.NewTrackingLinks,
-			customertrackingrepository.NewProfiles,
 			customertrackingrepository.NewLinks,
 			customertrackingrepository.NewNotifications,
 			customertrackingrepository.NewFacts,

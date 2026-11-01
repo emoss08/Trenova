@@ -1,73 +1,54 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import type { Customer } from "@trenova/shared/types/customer";
+import {
+  defaultCustomerTrackingProfile,
+  type CustomerTrackingProfile,
+} from "@trenova/shared/types/customer-tracking";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { CustomerTrackingSettingsTab } from "../customer-tracking-settings";
+import { FormProvider, useForm, type UseFormReturn } from "react-hook-form";
+import { afterEach, describe, expect, it } from "vitest";
+import { CustomerTrackingSettingsForm } from "../customer-tracking-settings";
 
-const mocks = vi.hoisted(() => ({
-  getProfile: vi.fn(),
-  updateProfile: vi.fn(),
-  canEdit: true,
-}));
+afterEach(cleanup);
 
-vi.mock("@/lib/graphql/customer-tracking", () => ({
-  getCustomerTrackingProfile: mocks.getProfile,
-  updateCustomerTrackingProfile: mocks.updateProfile,
-}));
+let current: UseFormReturn<Customer> | null = null;
 
-vi.mock("@/hooks/use-permission", () => ({
-  usePermission: () => ({ allowed: mocks.canEdit, isLoading: false }),
-}));
-
-const defaults = {
-  id: null,
-  customerId: "cus_1",
-  linkEnabled: true,
-  visibleFields: ["Status", "Windows", "Actuals", "Eta", "References"],
-  linkTtlDays: 30,
-  notifyPickedUp: false,
-  notifyDelayed: false,
-  notifyDelivered: false,
-  notifyPodReady: false,
-  includeLink: true,
-  recipients: null,
-  notificationsEnabledAt: null,
-  version: 0,
-  updatedAt: 0,
-};
-
-function renderTab() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  function Wrapper({ children }: { children: ReactNode }) {
-    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
-  }
-  return render(<CustomerTrackingSettingsTab customerId="cus_1" />, { wrapper: Wrapper });
+function Harness({ trackingProfile }: { trackingProfile: CustomerTrackingProfile }) {
+  const form = useForm<Customer>({
+    defaultValues: { name: "Halstead Foods", trackingProfile } as Customer,
+  });
+  current = form;
+  return (
+    <FormProvider {...form}>
+      <CustomerTrackingSettingsForm />
+    </FormProvider>
+  );
 }
 
-describe("CustomerTrackingSettingsTab", () => {
-  beforeEach(() => {
-    mocks.getProfile.mockReset();
-    mocks.updateProfile.mockReset();
-    mocks.canEdit = true;
+function renderSettings(overrides: Partial<CustomerTrackingProfile> = {}) {
+  render(<Harness trackingProfile={{ ...defaultCustomerTrackingProfile(), ...overrides }} />);
+  if (!current) {
+    throw new Error("form not mounted");
+  }
+  return current;
+}
+
+describe("CustomerTrackingSettingsForm", () => {
+  it("has no save of its own: the customer form's save writes it", () => {
+    renderSettings();
+
+    expect(screen.queryByRole("button", { name: /save/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /discard/i })).toBeNull();
   });
 
-  it("saves the defaults as new settings, with no version to check", async () => {
-    mocks.getProfile.mockResolvedValue(defaults);
-    mocks.updateProfile.mockResolvedValue({ ...defaults, id: "ctp_1", notifyDelivered: true });
-    renderTab();
-
-    const save = await screen.findByRole("button", { name: "Save tracking settings" });
-    expect(save).toHaveProperty("disabled", true);
+  it("writes each change into the customer form's tracking settings", async () => {
+    const form = renderSettings();
 
     await userEvent.click(screen.getByRole("switch", { name: /^Delivered/ }));
-    expect(save).toHaveProperty("disabled", false);
-    await userEvent.click(save);
+    await userEvent.click(screen.getByRole("switch", { name: /^Allow tracking links/ }));
 
-    await waitFor(() => expect(mocks.updateProfile).toHaveBeenCalledTimes(1));
-    expect(mocks.updateProfile).toHaveBeenCalledWith({
-      customerId: "cus_1",
-      linkEnabled: true,
+    expect(form.getValues("trackingProfile")).toEqual({
+      linkEnabled: false,
       visibleFields: ["Status", "Windows", "Actuals", "Eta", "References"],
       linkTtlDays: 30,
       notifyPickedUp: false,
@@ -76,31 +57,25 @@ describe("CustomerTrackingSettingsTab", () => {
       notifyPodReady: false,
       includeLink: true,
       recipients: "",
-      expectedVersion: null,
     });
   });
 
-  it("sends the version it read when the settings were saved before", async () => {
-    mocks.getProfile.mockResolvedValue({ ...defaults, id: "ctp_1", version: 4 });
-    mocks.updateProfile.mockResolvedValue({ ...defaults, id: "ctp_1", version: 5 });
-    renderTab();
+  it("turns off the link in each email while links are not allowed", () => {
+    renderSettings({ linkEnabled: false });
 
-    await userEvent.click(await screen.findByRole("switch", { name: /^Picked up/ }));
-    await userEvent.click(screen.getByRole("button", { name: "Save tracking settings" }));
-
-    await waitFor(() => expect(mocks.updateProfile).toHaveBeenCalledTimes(1));
-    expect(mocks.updateProfile.mock.calls[0][0]).toMatchObject({
-      notifyPickedUp: true,
-      expectedVersion: 4,
-    });
+    expect(
+      screen.getByRole("switch", { name: /^Include a tracking link in each email/ }),
+    ).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText("Allow tracking links to include one.")).toBeInTheDocument();
   });
 
-  it("offers no save to someone who cannot change the customer", async () => {
-    mocks.canEdit = false;
-    mocks.getProfile.mockResolvedValue(defaults);
-    renderTab();
+  it("shows the stored settings it was opened with", () => {
+    renderSettings({ notifyPodReady: true, recipients: "ops@halstead.example" });
 
-    expect(await screen.findByText("Status emails")).toBeDefined();
-    expect(screen.queryByRole("button", { name: "Save tracking settings" })).toBeNull();
+    expect(screen.getByRole("switch", { name: /^Proof of delivery ready/ })).toBeChecked();
+    expect(
+      screen.getByRole("switch", { name: /^Include a tracking link in each email/ }),
+    ).not.toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByLabelText("Send to")).toHaveValue("ops@halstead.example");
   });
 });

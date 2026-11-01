@@ -23,7 +23,7 @@ type Params struct {
 	Logger          *zap.Logger
 	AppConfig       *appconfig.Config
 	TenderingConfig *tenderingconfig.Config
-	Profiles        customertrackingports.ProfileRepository
+	Profiles        customerports.TrackingProfileReader
 	Links           customertrackingports.LinkRepository
 	Notifications   customertrackingports.NotificationRepository
 	Facts           customertrackingports.FactRepository
@@ -41,7 +41,7 @@ type Service struct {
 	l               *zap.Logger
 	appConfig       *appconfig.Config
 	tenderingConfig *tenderingconfig.Config
-	profiles        customertrackingports.ProfileRepository
+	profiles        customerports.TrackingProfileReader
 	links           customertrackingports.LinkRepository
 	notifications   customertrackingports.NotificationRepository
 	facts           customertrackingports.FactRepository

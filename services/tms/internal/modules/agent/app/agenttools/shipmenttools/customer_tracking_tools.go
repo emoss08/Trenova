@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
 )
 
 const (
@@ -42,10 +43,10 @@ type customerTrackingLinker interface {
 }
 
 type sharedLinkView struct {
-	Customer       string                   `json:"customer,omitempty"`
-	RecipientEmail string                   `json:"recipientEmail,omitempty"`
-	ExpiresAt      int64                    `json:"expiresAt"`
-	Shows          []customertracking.Field `json:"shows"`
+	Customer       string                  `json:"customer,omitempty"`
+	RecipientEmail string                  `json:"recipientEmail,omitempty"`
+	ExpiresAt      int64                   `json:"expiresAt"`
+	Shows          []trackingprofile.Field `json:"shows"`
 }
 
 // classifyShareLink tells a link that is only shared apart from one emailed to
@@ -94,7 +95,7 @@ func newShareCustomerTrackingLinkTool(tracking customerTrackingLinker) agenttool
 				),
 				paramRecipientEmail: toolparams.StringProperty(
 					"Where to email the link. Leave it out to share the link without emailing it.",
-					customertracking.MaxRecipientEmailLength,
+					trackingprofile.MaxRecipientEmailLength,
 				),
 			},
 			Required: []string{toolparams.ParamShipmentID},

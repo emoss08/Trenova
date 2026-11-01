@@ -21,4 +21,5 @@ func TestSaveProfilesSkipWhenProfileMissing(t *testing.T) {
 
 	require.NoError(t, repo.saveBillingProfile(t.Context(), entity))
 	require.NoError(t, repo.saveEmailProfile(t.Context(), entity))
+	require.NoError(t, repo.saveTrackingProfile(t.Context(), entity))
 }

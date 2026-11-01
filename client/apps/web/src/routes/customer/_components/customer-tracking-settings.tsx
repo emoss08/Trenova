@@ -2,136 +2,49 @@ import { MultiCheckboxField } from "@/components/fields/multi-checkbox-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { SectionPanel } from "@/components/section-panel";
-import { useApiMutation } from "@/hooks/use-api-mutation";
-import { usePermission } from "@/hooks/use-permission";
 import { TRACKING_FIELDS, trackingFieldLabel } from "@/lib/customer-tracking";
-import {
-  updateCustomerTrackingProfile,
-  type CustomerTrackingProfile,
-} from "@/lib/graphql/customer-tracking";
-import { customer } from "@/lib/queries/customer";
-import {
-  customerTrackingSettingsSchema,
-  type CustomerTrackingSettings,
-} from "@/types/customer-tracking";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link01Icon, Mail01Icon } from "@trenova/shared/components/icons";
-import { Button } from "@trenova/shared/components/ui/button";
-import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useMemo } from "react";
-import { useForm } from "react-hook-form";
-
-function settingsOf(profile: CustomerTrackingProfile): CustomerTrackingSettings {
-  return {
-    linkEnabled: profile.linkEnabled,
-    visibleFields: profile.visibleFields,
-    linkTtlDays: profile.linkTtlDays,
-    notifyPickedUp: profile.notifyPickedUp,
-    notifyDelayed: profile.notifyDelayed,
-    notifyDelivered: profile.notifyDelivered,
-    notifyPodReady: profile.notifyPodReady,
-    includeLink: profile.includeLink,
-    recipients: profile.recipients ?? "",
-  };
-}
+import type { Customer } from "@trenova/shared/types/customer";
+import { useFormContext, useWatch } from "react-hook-form";
 
 /**
  * What a customer sees through a shipment tracking link and which status emails
- * it is sent. It saves on its own, apart from the customer record, because it
- * sits inside the customer form and a nested form cannot submit.
+ * it is sent. Part of the customer form: the panel's Save writes it with the
+ * rest of the customer.
  */
-export function CustomerTrackingSettingsTab({ customerId }: { customerId: string }) {
-  const profileQuery = useQuery(customer.trackingProfile(customerId));
-
-  if (profileQuery.isLoading || !profileQuery.data) {
-    return (
-      <div className="flex flex-col gap-3">
-        <Skeleton className="h-40" />
-        <Skeleton className="h-40" />
-      </div>
-    );
-  }
-  return (
-    <CustomerTrackingSettingsForm
-      key={profileQuery.data.version}
-      customerId={customerId}
-      profile={profileQuery.data}
-    />
-  );
-}
-
-function CustomerTrackingSettingsForm({
-  customerId,
-  profile,
-}: {
-  customerId: string;
-  profile: CustomerTrackingProfile;
-}) {
+export function CustomerTrackingSettingsForm() {
   const t = useT();
-  const queryClient = useQueryClient();
-  const { allowed: canEdit } = usePermission(Resource.Customer, Operation.Update);
-  const defaultValues = useMemo(() => settingsOf(profile), [profile]);
-  const form = useForm<CustomerTrackingSettings>({
-    resolver: zodResolver(customerTrackingSettingsSchema),
-    defaultValues,
-  });
-  const {
-    control,
-    handleSubmit,
-    reset,
-    formState: { isDirty, isSubmitting },
-  } = form;
+  const { control } = useFormContext<Customer>();
+  const linkEnabled = useWatch({ control, name: "trackingProfile.linkEnabled" });
 
-  const fieldOptions = useMemo(
-    () => TRACKING_FIELDS.map((field) => ({ value: field, label: trackingFieldLabel(t, field) })),
-    [t],
-  );
-
-  const { mutateAsync } = useApiMutation({
-    mutationFn: (values: CustomerTrackingSettings) =>
-      updateCustomerTrackingProfile({
-        customerId,
-        ...values,
-        expectedVersion: profile.id ? profile.version : null,
-      }),
-    resourceName: "Customer tracking settings",
-    form,
-    onSuccess: (saved) => {
-      queryClient.setQueryData(customer.trackingProfile(customerId).queryKey, saved);
-      reset(settingsOf(saved));
-    },
-  });
-
-  const save = handleSubmit((values) => mutateAsync(values));
+  const fieldOptions = TRACKING_FIELDS.map((field) => ({
+    value: field,
+    label: trackingFieldLabel(t, field),
+  }));
 
   return (
-    <div className="flex flex-col">
-      <SectionPanel
+    <div className="flex flex-col gap-6">
+      <FormSection
         title={t("Tracking link")}
-        icon={<Link01Icon />}
-        className="bg-transparent border-none"
+        description={t("What this customer sees when you share a shipment's tracking page.")}
       >
-        <FormGroup cols={1} className="p-3">
+        <FormGroup cols={1}>
           <FormControl>
             <SwitchField
               control={control}
-              name="linkEnabled"
+              name="trackingProfile.linkEnabled"
               label={t("Allow tracking links")}
               description={t(
                 "Turning this off stops every link already shared for this customer's shipments.",
               )}
-              readOnly={!canEdit}
+              outlined
             />
           </FormControl>
           <FormControl>
             <MultiCheckboxField
               control={control}
-              name="visibleFields"
+              name="trackingProfile.visibleFields"
               label={t("The page shows")}
               description={t(
                 "Every stop's city and state, and the load number, are always shown. Holds and comments appear only when marked for the customer.",
@@ -140,10 +53,10 @@ function CustomerTrackingSettingsForm({
               emptyAs="array"
             />
           </FormControl>
-          <FormControl cols="full">
+          <FormControl>
             <NumberField
               control={control}
-              name="linkTtlDays"
+              name="trackingProfile.linkTtlDays"
               label={t("A link lasts")}
               sideText="days"
               min={1}
@@ -151,104 +64,77 @@ function CustomerTrackingSettingsForm({
             />
           </FormControl>
         </FormGroup>
-      </SectionPanel>
-      <SectionPanel
+      </FormSection>
+      <FormSection
         title={t("Status emails")}
-        icon={<Mail01Icon />}
-        className="bg-transparent border-none"
+        description={t(
+          "Each event is emailed once per shipment, or once per stop for a delay. Turning a rule on never sends emails about events that already happened.",
+        )}
       >
-        <FormGroup cols={1} className="p-3">
-          <p className="text-muted-foreground text-xs">
-            {t(
-              "Each event is emailed once per shipment, or once per stop for a delay. Turning a rule on never sends emails about events that already happened.",
-            )}
-          </p>
+        <FormGroup cols={1}>
           <FormControl>
             <SwitchField
               control={control}
-              name="notifyPickedUp"
+              name="trackingProfile.notifyPickedUp"
               label={t("Picked up")}
               description={t("When the load leaves its first pickup.")}
               outlined
-              readOnly={!canEdit}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
-              name="notifyDelayed"
+              name="trackingProfile.notifyDelayed"
               label={t("Delayed")}
-              outlined
               description={t(
                 "When a stop's projected arrival falls behind its appointment, with the new arrival time.",
               )}
-              readOnly={!canEdit}
+              outlined
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
-              name="notifyDelivered"
+              name="trackingProfile.notifyDelivered"
               label={t("Delivered")}
-              outlined
               description={t("When the load leaves its last delivery.")}
-              readOnly={!canEdit}
+              outlined
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
-              name="notifyPodReady"
+              name="trackingProfile.notifyPodReady"
               label={t("Proof of delivery ready")}
-              outlined
               description={t("When the proof of delivery is filed on the shipment.")}
-              readOnly={!canEdit}
+              outlined
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
-              name="includeLink"
+              name="trackingProfile.includeLink"
               label={t("Include a tracking link in each email")}
+              description={
+                linkEnabled === false ? t("Allow tracking links to include one.") : undefined
+              }
+              disabled={linkEnabled === false}
               outlined
-              readOnly={!canEdit}
             />
           </FormControl>
           <FormControl>
             <TextareaField
               control={control}
-              name="recipients"
+              name="trackingProfile.recipients"
               label={t("Send to")}
               description={t(
                 "Separate addresses with commas. Leave empty to use the customer's status update recipients, then the To line of its email profile.",
               )}
               placeholder={t("shipping@customer.com, logistics@customer.com")}
-              disabled={!canEdit}
             />
           </FormControl>
         </FormGroup>
-      </SectionPanel>
-      {canEdit && (
-        <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={!isDirty || isSubmitting}
-            onClick={() => reset(defaultValues)}
-          >
-            {t("Discard")}
-          </Button>
-          <Button
-            type="button"
-            disabled={!isDirty}
-            isLoading={isSubmitting}
-            loadingText={t("Saving...")}
-            onClick={() => void save()}
-          >
-            {t("Save tracking settings")}
-          </Button>
-        </div>
-      )}
+      </FormSection>
     </div>
   );
 }

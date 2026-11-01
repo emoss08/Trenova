@@ -11,18 +11,14 @@ fragment CustomerTrackingProfileFields on CustomerTrackingProfile {
   includeLink
   recipients
   notificationsEnabledAt
-  version
   updatedAt
 }
 
 query CustomerTrackingProfile($customerId: ID!) {
-  customerTrackingProfile(customerId: $customerId) {
-    ...CustomerTrackingProfileFields
-  }
-}
-
-mutation UpdateCustomerTrackingProfile($input: UpdateCustomerTrackingProfileInput!) {
-  updateCustomerTrackingProfile(input: $input) {
-    ...CustomerTrackingProfileFields
+  customer(id: $customerId) {
+    id
+    trackingProfile {
+      ...CustomerTrackingProfileFields
+    }
   }
 }

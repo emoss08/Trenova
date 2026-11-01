@@ -1,20 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { customerTrackingSettingsSchema, splitRecipients } from "../customer-tracking";
-
-const valid = {
-  linkEnabled: true,
-  visibleFields: ["Status", "Eta"],
-  linkTtlDays: 30,
-  notifyPickedUp: false,
-  notifyDelayed: true,
-  notifyDelivered: true,
-  notifyPodReady: false,
-  includeLink: true,
-  recipients: "",
-};
+import {
+  customerTrackingProfileSchema,
+  defaultCustomerTrackingProfile,
+  splitRecipients,
+} from "../customer-tracking";
 
 const issues = (value: Record<string, unknown>) => {
-  const result = customerTrackingSettingsSchema.safeParse({ ...valid, ...value });
+  const result = customerTrackingProfileSchema.safeParse({
+    ...defaultCustomerTrackingProfile(),
+    ...value,
+  });
   return result.success ? [] : result.error.issues.map((issue) => issue.path.join("."));
 };
 
@@ -28,9 +23,13 @@ describe("splitRecipients", () => {
   });
 });
 
-describe("customerTrackingSettingsSchema", () => {
+describe("customerTrackingProfileSchema", () => {
   it("accepts the settings a customer starts with", () => {
     expect(issues({})).toEqual([]);
+  });
+
+  it("accepts the null id and start time the server sends for settings never saved", () => {
+    expect(issues({ id: null, notificationsEnabledAt: null })).toEqual([]);
   });
 
   it("holds a link's life between one and 180 days", () => {

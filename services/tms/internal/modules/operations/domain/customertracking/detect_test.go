@@ -3,6 +3,7 @@ package customertracking
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,9 +16,9 @@ func at(offset int64) *int64 {
 	return &v
 }
 
-func notifyingProfile() *Profile {
+func notifyingProfile() *trackingprofile.Profile {
 	enabled := now - 24*3600
-	return &Profile{
+	return &trackingprofile.Profile{
 		NotifyPickedUp:         true,
 		NotifyDelayed:          true,
 		NotifyDelivered:        true,
@@ -164,6 +165,6 @@ func TestDetect_NothingForACanceledShipmentOrWithoutRules(t *testing.T) {
 
 	assert.Empty(t, Detect(&ShipmentFacts{Canceled: true, Stops: facts.Stops},
 		notifyingProfile(), now))
-	assert.Empty(t, Detect(facts, &Profile{}, now))
+	assert.Empty(t, Detect(facts, &trackingprofile.Profile{}, now))
 	assert.Empty(t, Detect(facts, nil, now))
 }

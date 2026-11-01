@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -41,7 +42,7 @@ type shipmentContext struct {
 	tenant   pagination.TenantInfo
 	shipment *shipment.Shipment
 	customer *customer.Customer
-	profile  *customertracking.Profile
+	profile  *trackingprofile.Profile
 	stops    []routeStop
 }
 
@@ -115,9 +116,6 @@ func (s *Service) shipmentContext(
 	profile, err := s.profiles.GetByCustomer(ctx, tenantInfo, sh.CustomerID)
 	if err != nil {
 		return nil, err
-	}
-	if profile == nil {
-		profile = customertracking.DefaultProfile(tenantInfo.OrgID, tenantInfo.BuID, sh.CustomerID)
 	}
 	cus, err := s.loadCustomer(ctx, tenantInfo, sh.CustomerID)
 	if err != nil && !errortypes.IsNotFoundError(err) {
@@ -238,7 +236,7 @@ func (s *Service) deliver(
 	case sc.shipment.IsCanceled():
 		outcome.Status, outcome.SkipReason = customertracking.NotificationStatusSkipped,
 			customertracking.SkipReasonShipmentGone
-	case !sc.profile.Notifies(row.Event):
+	case !customertracking.Notifies(sc.profile, row.Event):
 		outcome.Status, outcome.SkipReason = customertracking.NotificationStatusSkipped,
 			customertracking.SkipReasonRuleOff
 	default:

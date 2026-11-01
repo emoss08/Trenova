@@ -108,6 +108,7 @@ var customerRecord = &masterdatakit.Record[customer.Customer]{
 	Detach: func(entity *customer.Customer) {
 		entity.BillingProfile = nil
 		entity.EmailProfile = nil
+		entity.TrackingProfile = nil
 		entity.State = nil
 		entity.BusinessUnit = nil
 		entity.Organization = nil

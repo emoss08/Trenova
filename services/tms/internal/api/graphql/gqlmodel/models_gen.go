@@ -126,6 +126,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
 	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
@@ -3210,7 +3211,9 @@ type CustomerInput struct {
 	BillingProfile *CustomerBillingProfileInput `json:"billingProfile,omitempty"`
 	// Omit to leave the email profile as it is.
 	EmailProfile *CustomerEmailProfileInput `json:"emailProfile,omitempty"`
-	Version      *int                       `json:"version,omitempty"`
+	// Omit to leave the tracking settings as they are.
+	TrackingProfile *CustomerTrackingProfileInput `json:"trackingProfile,omitempty"`
+	Version         *int                          `json:"version,omitempty"`
 }
 
 type CustomerPatchInput struct {
@@ -3279,6 +3282,22 @@ type CustomerPaymentConnection struct {
 type CustomerPaymentEdge struct {
 	Node   *customerpayment.Payment `json:"node"`
 	Cursor string                   `json:"cursor"`
+}
+
+type CustomerTrackingProfileInput struct {
+	// Whether links can be shared for this customer's shipments. Turning it off stops every existing link.
+	LinkEnabled   bool                    `json:"linkEnabled"`
+	VisibleFields []trackingprofile.Field `json:"visibleFields"`
+	// How long a new link lasts, from 1 to 180 days.
+	LinkTTLDays     int  `json:"linkTtlDays"`
+	NotifyPickedUp  bool `json:"notifyPickedUp"`
+	NotifyDelayed   bool `json:"notifyDelayed"`
+	NotifyDelivered bool `json:"notifyDelivered"`
+	NotifyPodReady  bool `json:"notifyPodReady"`
+	// Whether each status email carries its own tracking link.
+	IncludeLink bool `json:"includeLink"`
+	// Comma separated. Empty falls back to the status update recipients, then the email profile's To line.
+	Recipients *string `json:"recipients,omitempty"`
 }
 
 type DOTRandomPoolConnection struct {
@@ -12233,21 +12252,6 @@ type UpdateCarrierSettlementControlInput struct {
 	HoldUntilInvoiceMatched                 *bool   `json:"holdUntilInvoiceMatched,omitempty"`
 	DefaultApAccountID                      *string `json:"defaultApAccountId,omitempty"`
 	DefaultPurchasedTransportationAccountID *string `json:"defaultPurchasedTransportationAccountId,omitempty"`
-}
-
-type UpdateCustomerTrackingProfileInput struct {
-	CustomerID      string                   `json:"customerId"`
-	LinkEnabled     bool                     `json:"linkEnabled"`
-	VisibleFields   []customertracking.Field `json:"visibleFields"`
-	LinkTTLDays     int                      `json:"linkTtlDays"`
-	NotifyPickedUp  bool                     `json:"notifyPickedUp"`
-	NotifyDelayed   bool                     `json:"notifyDelayed"`
-	NotifyDelivered bool                     `json:"notifyDelivered"`
-	NotifyPodReady  bool                     `json:"notifyPodReady"`
-	IncludeLink     bool                     `json:"includeLink"`
-	Recipients      *string                  `json:"recipients,omitempty"`
-	// The version the settings were read at. A newer version refuses the change.
-	ExpectedVersion *int `json:"expectedVersion,omitempty"`
 }
 
 type UpdateDOTRandomDrawEntryInput struct {

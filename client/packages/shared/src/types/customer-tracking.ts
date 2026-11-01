@@ -1,6 +1,6 @@
 import { translate } from "@trenova/shared/i18n/runtime";
-import { customerTrackingFieldSchema } from "@trenova/shared/types/shipment-tracking";
 import { z } from "zod";
+import { customerTrackingFieldSchema } from "./shipment-tracking";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -17,10 +17,12 @@ export function splitRecipients(raw: string): string[] {
 }
 
 /**
- * The customer's tracking settings as a person edits them, holding the limits
- * the server enforces so a mistake is caught before the save.
+ * The customer's tracking settings as the customer form edits them, holding
+ * the limits the server enforces so a mistake is caught before the save.
  */
-export const customerTrackingSettingsSchema = z.object({
+export const customerTrackingProfileSchema = z.object({
+  id: z.string().nullish(),
+  customerId: z.string().optional(),
   linkEnabled: z.boolean(),
   visibleFields: z.array(customerTrackingFieldSchema),
   linkTtlDays: z
@@ -42,6 +44,22 @@ export const customerTrackingSettingsSchema = z.object({
     .refine((value) => splitRecipients(value).every((address) => EMAIL_PATTERN.test(address)), {
       error: () => translate("Each recipient must be a valid email address"),
     }),
+  notificationsEnabledAt: z.number().nullish(),
+  updatedAt: z.number().optional(),
 });
 
-export type CustomerTrackingSettings = z.infer<typeof customerTrackingSettingsSchema>;
+export type CustomerTrackingProfile = z.infer<typeof customerTrackingProfileSchema>;
+
+export function defaultCustomerTrackingProfile(): CustomerTrackingProfile {
+  return {
+    linkEnabled: true,
+    visibleFields: ["Status", "Windows", "Actuals", "Eta", "References"],
+    linkTtlDays: 30,
+    notifyPickedUp: false,
+    notifyDelayed: false,
+    notifyDelivered: false,
+    notifyPodReady: false,
+    includeLink: true,
+    recipients: "",
+  };
+}

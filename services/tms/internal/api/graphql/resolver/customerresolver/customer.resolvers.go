@@ -59,6 +59,10 @@ func (r *QueryResolver) Customers(ctx context.Context, input gqlmodel.DataTableC
 				IncludeState:          graphql.FieldRequested(ctx, "edges.node.state"),
 				IncludeBillingProfile: graphql.FieldRequested(ctx, "edges.node.billingProfile"),
 				IncludeEmailProfile:   graphql.FieldRequested(ctx, "edges.node.emailProfile"),
+				IncludeTrackingProfile: graphql.FieldRequested(
+					ctx,
+					"edges.node.trackingProfile",
+				),
 			},
 		},
 	)
@@ -84,9 +88,10 @@ func (r *QueryResolver) Customer(ctx context.Context, id string) (*customer.Cust
 		ID:         customerID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		CustomerFilterOptions: customerports.CustomerFilterOptions{
-			IncludeState:          true,
-			IncludeBillingProfile: true,
-			IncludeEmailProfile:   true,
+			IncludeState:           true,
+			IncludeBillingProfile:  graphql.FieldRequested(ctx, "billingProfile"),
+			IncludeEmailProfile:    graphql.FieldRequested(ctx, "emailProfile"),
+			IncludeTrackingProfile: graphql.FieldRequested(ctx, "trackingProfile"),
 		},
 	})
 }
@@ -140,8 +145,9 @@ func (r *MutationResolver) UpdateCustomer(ctx context.Context, id string, input 
 		ID:         customerID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		CustomerFilterOptions: customerports.CustomerFilterOptions{
-			IncludeBillingProfile: input.BillingProfile != nil,
-			IncludeEmailProfile:   input.EmailProfile != nil,
+			IncludeBillingProfile:  input.BillingProfile != nil,
+			IncludeEmailProfile:    input.EmailProfile != nil,
+			IncludeTrackingProfile: input.TrackingProfile != nil,
 		},
 	})
 	if err != nil {

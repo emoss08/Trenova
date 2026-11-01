@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -38,37 +39,19 @@ var testTenant = pagination.TenantInfo{
 }
 
 type memoryProfiles struct {
-	customertrackingports.ProfileRepository
-	rows map[pulid.ID]*customertracking.Profile
+	rows map[pulid.ID]*trackingprofile.Profile
 }
 
 func (r *memoryProfiles) GetByCustomer(
 	_ context.Context,
-	_ pagination.TenantInfo,
+	tenantInfo pagination.TenantInfo,
 	customerID pulid.ID,
-) (*customertracking.Profile, error) {
+) (*trackingprofile.Profile, error) {
 	if row := r.rows[customerID]; row != nil {
 		copied := *row
 		return &copied, nil
 	}
-	return nil, nil
-}
-
-func (r *memoryProfiles) Create(_ context.Context, entity *customertracking.Profile) error {
-	copied := *entity
-	r.rows[entity.CustomerID] = &copied
-	return nil
-}
-
-func (r *memoryProfiles) Update(_ context.Context, entity *customertracking.Profile) error {
-	current := r.rows[entity.CustomerID]
-	if current == nil || current.Version != entity.Version {
-		return errortypes.NewBusinessError("version mismatch")
-	}
-	entity.Version++
-	copied := *entity
-	r.rows[entity.CustomerID] = &copied
-	return nil
+	return trackingprofile.NewDefault(tenantInfo.OrgID, tenantInfo.BuID, customerID), nil
 }
 
 type memoryLinks struct {
@@ -378,7 +361,7 @@ type harness struct {
 
 func newHarness() *harness {
 	h := &harness{
-		profiles:      &memoryProfiles{rows: map[pulid.ID]*customertracking.Profile{}},
+		profiles:      &memoryProfiles{rows: map[pulid.ID]*trackingprofile.Profile{}},
 		links:         &memoryLinks{},
 		notifications: &memoryNotifications{},
 		facts:         &fakeFacts{},
@@ -463,10 +446,10 @@ func (h *harness) addShipment(status shipmentvocab.Status, stops ...stopSpec) *s
 	return sh
 }
 
-func (h *harness) notify(customerID pulid.ID, configure func(*customertracking.Profile)) {
+func (h *harness) notify(customerID pulid.ID, configure func(*trackingprofile.Profile)) {
 	enabled := testNow - 24*3600
-	profile := customertracking.DefaultProfile(testTenant.OrgID, testTenant.BuID, customerID)
-	profile.ID = customertracking.NewProfileID()
+	profile := trackingprofile.NewDefault(testTenant.OrgID, testTenant.BuID, customerID)
+	profile.ID = pulid.MustNew("ctp_")
 	profile.Recipients = "ops@halstead.example"
 	profile.NotificationsEnabledAt = &enabled
 	configure(profile)

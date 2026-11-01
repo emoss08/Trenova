@@ -5,7 +5,7 @@ only the fields the customer's settings allow, and **status emails** (picked up,
 delivered, proof of delivery ready) sent by per-customer rules, exactly once per event. This page
 covers the profile that configures both, the links and the public page, the notification ledger
 that makes delivery exactly-once, the triggers and sweeps, the GraphQL operations, the agent
-tools and the web screens. Read it before changing `customertracking`,
+tools and the web screens. Read it before changing `trackingprofile`, `customertracking`,
 `customertrackingservice`, `customertrackingrepository`, `customerstatustrigger`,
 `customertrackingjobs`, `shipmenttrackingpublichandler`, the two `customertracking.*.email`
 template kinds, or the public page at `/shipment-tracking/:token`.
@@ -30,10 +30,12 @@ customer-tracking-link-retention (24 h) ─▶ delete links dead for 30 days
 
 | Piece | Where |
 |---|---|
-| Domain (profile, link, notification, `Detect`) | `operations/domain/customertracking` |
+| Profile (part of the customer aggregate) | `parties/domain/trackingprofile` |
+| Domain (link, notification, `Detect`) | `operations/domain/customertracking` |
 | Migration | `20261231009240_customer_tracking` |
 | Ports | `operations/ports/customertrackingports` |
-| Repository (profiles, links, ledger, facts) | `operations/adapters/postgres/customertrackingrepository` |
+| Profile writes and reads | `parties/adapters/postgres/customerrepository` (saved with the customer; `TrackingProfileReader` for operations) |
+| Repository (links, ledger, facts) | `operations/adapters/postgres/customertrackingrepository` |
 | Service | `operations/app/customertrackingservice` |
 | Triggers | `operations/app/customerstatustrigger` |
 | Workflows and schedules | `operations/jobs/customertrackingjobs` |
@@ -45,8 +47,13 @@ customer-tracking-link-retention (24 h) ─▶ delete links dead for 30 days
 
 ## The profile
 
-One row per customer in `customer_tracking_profiles`; a customer without one reads as
-`DefaultProfile` (links on, default fields, no rules, 30-day links).
+The profile is part of the customer: `Customer.TrackingProfile`, saved by `createCustomer` and
+`updateCustomer` (`CustomerInput.trackingProfile`) in the same transaction as the customer, under
+the customer's version, and audited in the customer's entry. Omitting `trackingProfile` leaves
+it as it is. One row per customer in `customer_tracking_profiles`; a customer without one reads
+as `trackingprofile.NewDefault` (links on, default fields, no rules, 30-day links), both through
+`Customer.trackingProfile` and through `customerports.TrackingProfileReader`, which the link and
+email paths use so they read the one row and nothing else of the customer.
 
 | Setting | Means |
 |---|---|
@@ -61,10 +68,11 @@ Recipients fall back in order: the profile's list, the customer's status update 
 the To line of the customer's email profile. With nobody to send to, the event is recorded as
 skipped (`NoRecipients`) rather than sent later to someone added afterwards.
 
-`notificationsEnabledAt` is stamped by `Normalize` when the first rule goes on and cleared when
-the last goes off, and a CHECK keeps the two in step. Detection ignores everything before it, so
-switching a rule on never mails the customer about loads that already moved. Updates take the
-profile's `version`; a stale one is refused.
+`notificationsEnabledAt` is stamped by `StampNotifications` in the customer service's
+`PlanCreate`/`PlanUpdate` (against the stored profile) when a rule goes on and cleared when the
+last goes off, and a CHECK keeps the two in step. Detection ignores everything before it, so
+switching a rule on never mails the customer about loads that already moved. `Normalize` (run by
+`Validate`) orders and deduplicates the fields and cleans the recipients.
 
 ### Visible fields
 
@@ -152,12 +160,13 @@ whose retry is due. The tenant list is a system-scope read listed in the RLS all
 
 ## GraphQL
 
-Queries: `customerTrackingProfile(customerId)` (customer read), `customerTrackingLinks` and
-`customerStatusNotifications(shipmentId)` (shipment read). Mutations:
-`updateCustomerTrackingProfile` (customer update), `issueCustomerTrackingLink` and
-`revokeCustomerTrackingLink(shipmentId, linkId)` (shipment update). Every change writes an audit
-entry. In write coverage, issuing and revoking map to the agent tools; the profile is exempt as
-customer configuration.
+The profile is read as `Customer.trackingProfile` and written through `CustomerInput.trackingProfile`
+(customer read and update). Queries: `customerTrackingLinks` and
+`customerStatusNotifications(shipmentId)` (shipment read). Mutations: `issueCustomerTrackingLink`
+and `revokeCustomerTrackingLink(shipmentId, linkId)` (shipment update). Every change writes an
+audit entry. In write coverage, issuing and revoking map to the agent tools. The customer agent
+tools detach the profile, so `customer_update` never changes what a customer's tracking page
+shows: that is a commercial agreement a person sets on the customer record.
 
 ## Agent tools
 
@@ -173,7 +182,9 @@ to the unattended customer update desk.
 
 ## Web
 
-The customer form's **Tracking** tab edits the profile.
+The customer panel's **Tracking** tab (`customer-tracking-settings.tsx`) is part of the customer
+form: its fields are `trackingProfile.*` and the panel's one Save writes them with the rest of
+the customer. It shows on create as well as edit.
 
 The shipment panel's **Customer Tracking** tab (`shipment-customer-tracking.tsx`) is sections
 split by hairlines, not cards:

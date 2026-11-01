@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -71,6 +72,12 @@ func applyCustomerInput(entity *customer.Customer, input *gqlmodel.CustomerInput
 			entity.EmailProfile = &customer.CustomerEmailProfile{}
 		}
 		applyEmailProfileInput(entity.EmailProfile, input.EmailProfile)
+	}
+	if input.TrackingProfile != nil {
+		if entity.TrackingProfile == nil {
+			entity.TrackingProfile = &trackingprofile.Profile{}
+		}
+		applyTrackingProfileInput(entity.TrackingProfile, input.TrackingProfile)
 	}
 
 	return nil
@@ -233,6 +240,32 @@ func applyEmailProfileInput(
 	profile.AttachmentName = gqlscalar.StringValue(input.AttachmentName)
 	profile.ReadReceipt = input.ReadReceipt
 	profile.IncludeShipmentDetail = input.IncludeShipmentDetail
+}
+
+func applyTrackingProfileInput(
+	profile *trackingprofile.Profile,
+	input *gqlmodel.CustomerTrackingProfileInput,
+) {
+	profile.LinkEnabled = input.LinkEnabled
+	profile.VisibleFields = input.VisibleFields
+	profile.LinkTTLDays = clampLinkTTLDays(input.LinkTTLDays)
+	profile.NotifyPickedUp = input.NotifyPickedUp
+	profile.NotifyDelayed = input.NotifyDelayed
+	profile.NotifyDelivered = input.NotifyDelivered
+	profile.NotifyPodReady = input.NotifyPodReady
+	profile.IncludeLink = input.IncludeLink
+	profile.Recipients = gqlscalar.StringValue(input.Recipients)
+}
+
+func clampLinkTTLDays(days int) int16 {
+	switch {
+	case days < 0:
+		return 0
+	case days > int(trackingprofile.MaxLinkTTLDays)+1:
+		return trackingprofile.MaxLinkTTLDays + 1
+	default:
+		return int16(days)
+	}
 }
 
 func applyCustomerPatch(entity *customer.Customer, input *gqlmodel.CustomerPatchInput) error {

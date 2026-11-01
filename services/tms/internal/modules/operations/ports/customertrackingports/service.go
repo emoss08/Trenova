@@ -5,16 +5,10 @@ import (
 	"io"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
-
-type UpdateProfileRequest struct {
-	TenantInfo      pagination.TenantInfo
-	Profile         *customertracking.Profile
-	ExpectedVersion *int64
-	UpdatedByID     pulid.ID
-}
 
 type IssueLinkRequest struct {
 	TenantInfo     pagination.TenantInfo
@@ -39,7 +33,7 @@ type LinkPreview struct {
 	CustomerName      string
 	RecipientEmail    string
 	ExpiresAt         int64
-	VisibleFields     []customertracking.Field
+	VisibleFields     []trackingprofile.Field
 }
 
 type RevokeLinkRequest struct {
@@ -103,23 +97,23 @@ type PublicPod struct {
 // Every optional part is filled only when the customer's profile shows that
 // field; Fields lists them so the page draws only what it was given.
 type PublicTrackingView struct {
-	CompanyName       string                   `json:"companyName"`
-	ShipmentProNumber string                   `json:"shipmentProNumber"`
-	Fields            []customertracking.Field `json:"fields"`
-	ExpiresAt         int64                    `json:"expiresAt"`
-	Closed            bool                     `json:"closed"`
-	Status            PublicStatus             `json:"status,omitempty"`
-	BOL               string                   `json:"bol,omitempty"`
-	CustomerReference string                   `json:"customerReference,omitempty"`
-	CarrierName       string                   `json:"carrierName,omitempty"`
-	Equipment         string                   `json:"equipment,omitempty"`
-	Pieces            *int64                   `json:"pieces,omitempty"`
-	Weight            *int64                   `json:"weight,omitempty"`
-	LastLocation      *PublicLocation          `json:"lastLocation,omitempty"`
-	Stops             []PublicStop             `json:"stops"`
-	Holds             []PublicHold             `json:"holds,omitempty"`
-	Notes             []PublicNote             `json:"notes,omitempty"`
-	ProofOfDelivery   *PublicPod               `json:"proofOfDelivery,omitempty"`
+	CompanyName       string                  `json:"companyName"`
+	ShipmentProNumber string                  `json:"shipmentProNumber"`
+	Fields            []trackingprofile.Field `json:"fields"`
+	ExpiresAt         int64                   `json:"expiresAt"`
+	Closed            bool                    `json:"closed"`
+	Status            PublicStatus            `json:"status,omitempty"`
+	BOL               string                  `json:"bol,omitempty"`
+	CustomerReference string                  `json:"customerReference,omitempty"`
+	CarrierName       string                  `json:"carrierName,omitempty"`
+	Equipment         string                  `json:"equipment,omitempty"`
+	Pieces            *int64                  `json:"pieces,omitempty"`
+	Weight            *int64                  `json:"weight,omitempty"`
+	LastLocation      *PublicLocation         `json:"lastLocation,omitempty"`
+	Stops             []PublicStop            `json:"stops"`
+	Holds             []PublicHold            `json:"holds,omitempty"`
+	Notes             []PublicNote            `json:"notes,omitempty"`
+	ProofOfDelivery   *PublicPod              `json:"proofOfDelivery,omitempty"`
 }
 
 type DownloadResult struct {
@@ -144,15 +138,6 @@ type SweepResult struct {
 }
 
 type CustomerTrackingService interface {
-	GetProfile(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		customerID pulid.ID,
-	) (*customertracking.Profile, error)
-	UpdateProfile(
-		ctx context.Context,
-		req *UpdateProfileRequest,
-	) (*customertracking.Profile, error)
 	IssueLink(ctx context.Context, req *IssueLinkRequest) (*IssuedLink, error)
 	PreviewIssueLink(ctx context.Context, req *IssueLinkRequest) (*LinkPreview, error)
 	RevokeLink(ctx context.Context, req *RevokeLinkRequest) (int, error)

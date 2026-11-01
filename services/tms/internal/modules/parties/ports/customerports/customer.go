@@ -11,9 +11,10 @@ import (
 )
 
 type CustomerFilterOptions struct {
-	IncludeState          bool `form:"includeState"`
-	IncludeBillingProfile bool `form:"includeBillingProfile"`
-	IncludeEmailProfile   bool `form:"includeEmailProfile"`
+	IncludeState           bool `form:"includeState"`
+	IncludeBillingProfile  bool `form:"includeBillingProfile"`
+	IncludeEmailProfile    bool `form:"includeEmailProfile"`
+	IncludeTrackingProfile bool `form:"includeTrackingProfile"`
 }
 
 type ListCustomerRequest struct {

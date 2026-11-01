@@ -122,6 +122,9 @@ fragment CustomerTableRowFields on Customer {
   emailProfile {
     ...CustomerEmailProfileFields
   }
+  trackingProfile {
+    ...CustomerTrackingProfileFields
+  }
 }
 
 query CustomerTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {

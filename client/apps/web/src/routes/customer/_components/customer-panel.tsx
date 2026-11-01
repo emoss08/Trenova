@@ -9,6 +9,7 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { CustomerRow } from "@/lib/graphql/customer-table";
 import { apiService } from "@/services/api";
 import { customerSchema, type Customer } from "@trenova/shared/types/customer";
+import { defaultCustomerTrackingProfile } from "@trenova/shared/types/customer-tracking";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -100,6 +101,7 @@ const DEFAULT_VALUES: Customer = {
     readReceipt: false,
     includeShipmentDetail: false,
   },
+  trackingProfile: defaultCustomerTrackingProfile(),
 };
 
 export function CustomerPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<CustomerRow>) {
