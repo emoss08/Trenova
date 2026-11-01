@@ -3,6 +3,10 @@
 Delete this file when the migration is finished, after moving the lasting rule (what stays REST and why) into
 [backend/api.md](backend/api.md).
 
+**Status: paused after batch 1.** The "Open issues to check first" below were resolved on 2026-11-01
+(i18n, page-access manifests, client tests, lint and bundle budget). Batches 2–14 have not started; the
+routes they list still serve the client over REST. Resume at batch 2 with the per-batch loop.
+
 ## Goal
 
 Every REST route the web app, driver portal or shared client calls moves to GraphQL (queries for reads and
