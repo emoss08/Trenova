@@ -47,8 +47,13 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/customfielddefinitionresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/datatableinsightresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/decisionsresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/deskartifactresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/deskboardresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/deskcaseresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/deskmemoryresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/deskqueueresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/deskscheduleresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/deskthreadresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/detentionresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/dispatchconsoleresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/distanceoverrideresolver"
@@ -694,13 +699,39 @@ func FromServices(s *Services) *Resolver {
 		Core:                      s.Core,
 		AgentDecisionQueueService: s.AgentDecisionQueueService,
 	}
+	deskartifactDeps := &deskartifactresolver.Deps{
+		Core:                     s.Core,
+		AssistantArtifactService: s.AssistantArtifactService,
+	}
 	deskboardDeps := &deskboardresolver.Deps{
 		Core:       s.Core,
 		BoardCards: s.BoardCards,
 	}
+	deskcaseDeps := &deskcaseresolver.Deps{
+		Core:                 s.Core,
+		AssistantCaseService: s.AssistantCaseService,
+		AgentWaitService:     s.AgentWaitService,
+	}
 	deskmemoryDeps := &deskmemoryresolver.Deps{
 		Core:               s.Core,
 		AgentMemoryService: s.AgentMemoryService,
+	}
+	deskqueueDeps := &deskqueueresolver.Deps{
+		Core:                  s.Core,
+		AssistantQueueService: s.AssistantQueueService,
+	}
+	deskscheduleDeps := &deskscheduleresolver.Deps{
+		Core:                        s.Core,
+		ConversationScheduleService: s.ConversationScheduleService,
+	}
+	deskthreadDeps := &deskthreadresolver.Deps{
+		Core:                     s.Core,
+		WorkflowStarter:          s.WorkflowStarter,
+		AssistantService:         s.AssistantService,
+		AssistantProposalService: s.AssistantProposalService,
+		AssistantHandoffService:  s.AssistantHandoffService,
+		AssistantTurnService:     s.AssistantTurnService,
+		AssistantChapterService:  s.AssistantChapterService,
 	}
 	detentionDeps := &detentionresolver.Deps{
 		Core:                   s.Core,
@@ -1488,7 +1519,12 @@ func FromServices(s *Services) *Resolver {
 			customerpaymentMutation:       &customerpaymentMutation{Deps: customerpaymentDeps},
 			customertrackingMutation:      &customertrackingMutation{Deps: customertrackingDeps},
 			decisionsMutation:             &decisionsMutation{Deps: decisionsDeps},
+			deskartifactMutation:          &deskartifactMutation{Deps: deskartifactDeps},
+			deskcaseMutation:              &deskcaseMutation{Deps: deskcaseDeps},
 			deskmemoryMutation:            &deskmemoryMutation{Deps: deskmemoryDeps},
+			deskqueueMutation:             &deskqueueMutation{Deps: deskqueueDeps},
+			deskscheduleMutation:          &deskscheduleMutation{Deps: deskscheduleDeps},
+			deskthreadMutation:            &deskthreadMutation{Deps: deskthreadDeps},
 			detentionMutation:             &detentionMutation{Deps: detentionDeps},
 			dispatchconsoleMutation:       &dispatchconsoleMutation{Deps: dispatchconsoleDeps},
 			documenttemplateMutation:      &documenttemplateMutation{Deps: documenttemplateDeps},
@@ -1618,8 +1654,13 @@ func FromServices(s *Services) *Resolver {
 			customfielddefinitionQuery:    &customfielddefinitionQuery{Deps: customfielddefinitionDeps},
 			datatableinsightQuery:         &datatableinsightQuery{Deps: datatableinsightDeps},
 			decisionsQuery:                &decisionsQuery{Deps: decisionsDeps},
+			deskartifactQuery:             &deskartifactQuery{Deps: deskartifactDeps},
 			deskboardQuery:                &deskboardQuery{Deps: deskboardDeps},
+			deskcaseQuery:                 &deskcaseQuery{Deps: deskcaseDeps},
 			deskmemoryQuery:               &deskmemoryQuery{Deps: deskmemoryDeps},
+			deskqueueQuery:                &deskqueueQuery{Deps: deskqueueDeps},
+			deskscheduleQuery:             &deskscheduleQuery{Deps: deskscheduleDeps},
+			deskthreadQuery:               &deskthreadQuery{Deps: deskthreadDeps},
 			detentionQuery:                &detentionQuery{Deps: detentionDeps},
 			dispatchconsoleQuery:          &dispatchconsoleQuery{Deps: dispatchconsoleDeps},
 			distanceoverrideQuery:         &distanceoverrideQuery{Deps: distanceoverrideDeps},
@@ -2675,7 +2716,12 @@ type mutationResolver struct {
 	*customerpaymentMutation
 	*customertrackingMutation
 	*decisionsMutation
+	*deskartifactMutation
+	*deskcaseMutation
 	*deskmemoryMutation
+	*deskqueueMutation
+	*deskscheduleMutation
+	*deskthreadMutation
 	*detentionMutation
 	*dispatchconsoleMutation
 	*documenttemplateMutation
@@ -2879,8 +2925,13 @@ type queryResolver struct {
 	*customfielddefinitionQuery
 	*datatableinsightQuery
 	*decisionsQuery
+	*deskartifactQuery
 	*deskboardQuery
+	*deskcaseQuery
 	*deskmemoryQuery
+	*deskqueueQuery
+	*deskscheduleQuery
+	*deskthreadQuery
 	*detentionQuery
 	*dispatchconsoleQuery
 	*distanceoverrideQuery
@@ -3320,7 +3371,12 @@ type (
 	customerpaymentMutation         = customerpaymentresolver.MutationResolver
 	customertrackingMutation        = customertrackingresolver.MutationResolver
 	decisionsMutation               = decisionsresolver.MutationResolver
+	deskartifactMutation            = deskartifactresolver.MutationResolver
+	deskcaseMutation                = deskcaseresolver.MutationResolver
 	deskmemoryMutation              = deskmemoryresolver.MutationResolver
+	deskqueueMutation               = deskqueueresolver.MutationResolver
+	deskscheduleMutation            = deskscheduleresolver.MutationResolver
+	deskthreadMutation              = deskthreadresolver.MutationResolver
 	detentionMutation               = detentionresolver.MutationResolver
 	dispatchconsoleMutation         = dispatchconsoleresolver.MutationResolver
 	documenttemplateMutation        = documenttemplateresolver.MutationResolver
@@ -3425,8 +3481,13 @@ type (
 	customfielddefinitionQuery      = customfielddefinitionresolver.QueryResolver
 	datatableinsightQuery           = datatableinsightresolver.QueryResolver
 	decisionsQuery                  = decisionsresolver.QueryResolver
+	deskartifactQuery               = deskartifactresolver.QueryResolver
 	deskboardQuery                  = deskboardresolver.QueryResolver
+	deskcaseQuery                   = deskcaseresolver.QueryResolver
 	deskmemoryQuery                 = deskmemoryresolver.QueryResolver
+	deskqueueQuery                  = deskqueueresolver.QueryResolver
+	deskscheduleQuery               = deskscheduleresolver.QueryResolver
+	deskthreadQuery                 = deskthreadresolver.QueryResolver
 	detentionQuery                  = detentionresolver.QueryResolver
 	dispatchconsoleQuery            = dispatchconsoleresolver.QueryResolver
 	distanceoverrideQuery           = distanceoverrideresolver.QueryResolver

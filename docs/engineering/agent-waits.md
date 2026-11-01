@@ -159,7 +159,7 @@ closed and picks up only what it has not) and then:
 ## Cancelling
 
 `agent_cancel_wait` (the agent; only a wait its own conversation or, for a background
-run, its own agent set) and `POST /assistant/threads/:threadID/waits/:waitID/cancel/`
+run, its own agent set) and the `cancelAssistantWait` mutation
 (the owner) close the wait as `Cancelled` and cancel its workflow. Nothing is
 picked up. A `WebWatch` wait is refused: stopping its watch closes it.
 
@@ -185,7 +185,7 @@ web read they are capped at Propose like every other write.
 
 ## The Desk
 
-`GET /assistant/threads/:threadID/waits/` lists a conversation's waits; the
+The `assistantWaits` query lists a conversation's waits; the
 composer shows the open ones ("Waiting on …", when each comes due or gives up,
 cancel), moved by the `agent_waits` realtime event addressed to the owner.
 

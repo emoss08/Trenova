@@ -1325,8 +1325,6 @@ export const artifactRowsSchema = z.object({
     .transform((keys) => keys ?? []),
 });
 
-export const documentRewriteSchema = z.object({ text: z.string() });
-
 /** An artifact as a streamed turn announces it, before the pane reads it whole. */
 export const assistantArtifactEventSchema = z.object({
   id: z.string(),

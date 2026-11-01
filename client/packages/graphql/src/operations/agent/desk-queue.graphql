@@ -1,0 +1,53 @@
+query AssistantQueue($threadId: ID!) {
+  assistantQueue(threadId: $threadId)
+}
+
+mutation EnqueueAssistantMessage($threadId: ID!, $input: EnqueueAssistantMessageInput!) {
+  enqueueAssistantMessage(threadId: $threadId, input: $input) {
+    item
+    steering
+    held
+    turn {
+      turnId
+      threadId
+      streamUrl
+      status
+    }
+  }
+}
+
+mutation EditAssistantQueuedMessage(
+  $threadId: ID!
+  $itemId: ID!
+  $content: String!
+  $version: Int!
+) {
+  editAssistantQueuedMessage(
+    threadId: $threadId
+    itemId: $itemId
+    content: $content
+    version: $version
+  )
+}
+
+mutation RemoveAssistantQueuedMessage($threadId: ID!, $itemId: ID!) {
+  removeAssistantQueuedMessage(threadId: $threadId, itemId: $itemId)
+}
+
+mutation ReorderAssistantQueue($threadId: ID!, $ids: [ID!]!) {
+  reorderAssistantQueue(threadId: $threadId, ids: $ids)
+}
+
+mutation SendAssistantQueuedMessage($threadId: ID!, $itemId: ID!) {
+  sendAssistantQueuedMessage(threadId: $threadId, itemId: $itemId) {
+    item
+    steering
+    held
+    turn {
+      turnId
+      threadId
+      streamUrl
+      status
+    }
+  }
+}

@@ -1,0 +1,30 @@
+extend type Query {
+  """
+  Where a conversation's case stands: its summary, who can take each step, the
+  checklist between its record and what comes next, and the parties it may
+  wait on.
+  """
+  assistantCase(threadId: ID!): Any!
+  "What a conversation's agent is waiting on, newest first: { items }."
+  assistantWaits(threadId: ID!): Any!
+}
+
+extend type Mutation {
+  "Makes the conversation a case about a Shipment, Invoice or InvoiceDispute; answers the binding."
+  bindAssistantCase(threadId: ID!, subjectType: String!, subjectId: ID!): Any!
+  "Makes the case an ordinary conversation again."
+  unbindAssistantCase(threadId: ID!): Any!
+  """
+  Puts the case out of the way until a Time, the shipment's next Appointment or
+  its ETA. until is the time, or the fallback for an ETA the shipment does not
+  have yet.
+  """
+  snoozeAssistantCase(threadId: ID!, anchor: String!, until: Timestamp): Any!
+  wakeAssistantCase(threadId: ID!): Any!
+  "Parks the case until the Customer or one of the Carriers replies; answers the wait."
+  awaitAssistantCaseReply(threadId: ID!, party: String!, partyId: ID!, giveUpAfterHours: Int): Any!
+  "Ticks, or unticks, a step the organization added for a person to tick; answers the case."
+  tickAssistantCaseItem(threadId: ID!, itemKey: String!, ticked: Boolean!): Any!
+  "Ends a wait without the agent picking the work up."
+  cancelAssistantWait(threadId: ID!, waitId: ID!): Any!
+}

@@ -1,0 +1,150 @@
+query AssistantProviders {
+  assistantProviders
+}
+
+query AssistantMentions($query: String!, $type: String!) {
+  assistantMentions(query: $query, type: $type)
+}
+
+query AssistantMentionPage($query: String!, $kind: String!, $offset: Int!, $limit: Int!) {
+  assistantMentionPage(query: $query, kind: $kind, offset: $offset, limit: $limit)
+}
+
+query DeskSearch($query: String!, $kind: String!) {
+  deskSearch(query: $query, kind: $kind)
+}
+
+query AssistantCommandAvailability($agentId: ID!) {
+  assistantCommandAvailability(agentId: $agentId)
+}
+
+query AssistantThreads(
+  $limit: Int
+  $cursor: String
+  $until: String
+  $pinned: Boolean
+  $touchedFrom: Timestamp
+  $touchedBefore: Timestamp
+) {
+  assistantThreads(
+    limit: $limit
+    cursor: $cursor
+    until: $until
+    pinned: $pinned
+    touchedFrom: $touchedFrom
+    touchedBefore: $touchedBefore
+  )
+}
+
+query AssistantThreadShelves($edges: [Timestamp!]!) {
+  assistantThreadShelves(edges: $edges)
+}
+
+query AssistantThread($id: ID!) {
+  assistantThread(id: $id)
+}
+
+query AssistantThreadBudget($threadId: ID!) {
+  assistantThreadBudget(threadId: $threadId)
+}
+
+query AssistantMessages($threadId: ID!, $limit: Int, $before: Int) {
+  assistantMessages(threadId: $threadId, limit: $limit, before: $before)
+}
+
+query AssistantActiveTurn($threadId: ID!) {
+  assistantActiveTurn(threadId: $threadId)
+}
+
+query AssistantLiveTurns {
+  assistantLiveTurns {
+    turnId
+    threadId
+    threadTitle
+    origin
+    startedAt
+  }
+}
+
+query AssistantThreadProposals($threadId: ID!) {
+  assistantThreadProposals(threadId: $threadId)
+}
+
+query AssistantThreadPlans($threadId: ID!) {
+  assistantThreadPlans(threadId: $threadId)
+}
+
+query AssistantChapters($threadId: ID!) {
+  assistantChapters(threadId: $threadId)
+}
+
+mutation StartAssistantThread($input: StartAssistantThreadInput!) {
+  startAssistantThread(input: $input)
+}
+
+mutation UpdateAssistantThread($id: ID!, $input: UpdateAssistantThreadInput!) {
+  updateAssistantThread(id: $id, input: $input)
+}
+
+mutation DeleteAssistantThread($id: ID!) {
+  deleteAssistantThread(id: $id)
+}
+
+mutation MarkAssistantThreadRead($id: ID!) {
+  markAssistantThreadRead(id: $id)
+}
+
+mutation HandOffAssistantThread($id: ID!, $input: HandOffAssistantThreadInput!) {
+  handOffAssistantThread(id: $id, input: $input)
+}
+
+mutation RequestAssistantAllowance($threadId: ID!, $kind: String!) {
+  requestAssistantAllowance(threadId: $threadId, kind: $kind)
+}
+
+mutation StartAssistantTurn($threadId: ID!, $input: AssistantMessageInput!) {
+  startAssistantTurn(threadId: $threadId, input: $input) {
+    turnId
+    threadId
+    streamUrl
+    status
+  }
+}
+
+mutation CompactAssistantThread($id: ID!) {
+  compactAssistantThread(id: $id) {
+    turnId
+    threadId
+    streamUrl
+    status
+  }
+}
+
+mutation StopAssistantTurn($turnId: ID!) {
+  stopAssistantTurn(turnId: $turnId)
+}
+
+mutation SaveAssistantProposalEdits($threadId: ID!, $proposalId: ID!, $modifications: JSON) {
+  saveAssistantProposalEdits(
+    threadId: $threadId
+    proposalId: $proposalId
+    modifications: $modifications
+  )
+}
+
+mutation OpenAssistantChapter($threadId: ID!, $messageId: ID!) {
+  openAssistantChapter(threadId: $threadId, messageId: $messageId)
+}
+
+mutation RenameAssistantChapter($threadId: ID!, $chapterId: ID!, $title: String!, $version: Int) {
+  renameAssistantChapter(
+    threadId: $threadId
+    chapterId: $chapterId
+    title: $title
+    version: $version
+  )
+}
+
+mutation RemoveAssistantChapter($threadId: ID!, $chapterId: ID!) {
+  removeAssistantChapter(threadId: $threadId, chapterId: $chapterId)
+}

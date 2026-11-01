@@ -85,7 +85,7 @@ registry, and nothing on either side names a particular command outside it.
   `ParseCommand` reads a message the same way for every command: the command alone or
   followed by whitespace, in any case, at the start of the message.
 - **Offered only where it can be honoured.** The composer asks
-  `GET /assistant/agents/:agentID/commands/` (assistant read), which answers
+  the `assistantCommandAvailability` query (assistant read), which answers
   `{"commands": [...]}`: the commands whose extension is active, whose required tool the agent
   holds (or the extension gives every agent), and which the person may use.
   `agentruntime.Service.AvailableCommands` decides it from the same held tools, grants and

@@ -566,8 +566,8 @@ the agent read. `tableArtifact` keeps the agent's rows with where the list goes 
 - **A paged table is always kept.** `ShownArtifact.Paged` makes it `MustBeLinked`, and `shownNote`
   tells the model the person pages through every row beside the conversation, so it reads another
   page only when its answer needs one.
-- **The person's pages are read again with their own access.** `GET
-  /assistant/threads/:id/artifacts/:artifactId/rows/` (`ArtifactRows`) runs the tool the table came
+- **The person's pages are read again with their own access.** The
+  `assistantArtifactRows` query (`ArtifactRows`) runs the tool the table came
   from with the arguments it ran with, as `UserActor` under the conversation agent's data
   access ceiling, exactly as the CSV export does (`listOf` serves both): `after` or `offset`,
   `limit` (at most 100), `q` when the list takes a free-text search the agent's call did not

@@ -1204,9 +1204,9 @@ together.
 
 Every assistant question is answered by `AssistantTurnWorkflow`, ID
 `assistant-turn:<turnID>`. The API records the turn, starts the workflow and
-returns the turn to watch. `POST /threads/:id/messages/` starts the same
-workflow and waits for its result; `POST /ask/` opens the hidden thread and
-starts a turn on it.
+returns the turn to watch (`startAssistantTurn`). The desk bench starts the same
+workflow and waits for its result (`Awaited`); `POST /ask/` opens the hidden
+thread and starts a turn on it.
 
 1. **Prepare** runs as a local activity on the worker running the workflow,
    so the turn's first workflow task prepares
@@ -1322,16 +1322,16 @@ One that ends **Completed, Refused or Failed with nobody drained** runs
 person who asked (`kind: assistant_reply_ready`, with `threadId`, `turnId`,
 `status` and a `link` to the conversation from the record-link registry). It is
 keyed on the turn, so a retry never notifies twice. A stopped turn, one started
-by `POST /threads/:id/messages/` (whose caller waits on the result), and one in
+with `Awaited` set (the desk bench, which waits on the result), and one in
 a conversation answered in place (an import or formula page) never notify; the last are also left out of
-`GET /assistant/turns/active/`.
+the `assistantLiveTurns` query.
 
 A turn starting (once its workflow is recorded) and its record closing, on
 every path, are announced as the `assistant_turns` realtime resource,
 `started` or `finished`, carrying `turnId`, `threadId`, `userId`, `status` and
 `origin` and nothing the conversation said: the channel is the tenant's, not
 the person's. A tab reads the person's live turns from
-`GET /assistant/turns/active/`, scoped to them.
+the `assistantLiveTurns` query, scoped to them.
 
 Each publish is a signal in the turn's history and each read a poll update, so a
 streamed reply adds a few hundred history events. That is why chat is one
@@ -1496,7 +1496,8 @@ The bench scores the matching against labelled questions with `trenova desk rout
 A person can talk to a conversation while its agent is still working. What they
 type goes to `assistant_queued_messages` (`conversationqueue.QueuedMessage`), one row
 per message in send order, through `assistantqueueservice` and the
-`/assistant/threads/:threadID/queue/` routes. The queue lives in the database so
+queue operations (`assistantQueue`, `enqueueAssistantMessage` and the rest in
+`desk_queue.graphqls`). The queue lives in the database so
 it survives a reload, another tab, and a restart of anything working on the
 reply.
 
@@ -2804,7 +2805,7 @@ the answer is on the page the person is looking at. A document thread opens
 tainted by the document, so every write it proposes waits for a person.
 
 **The draft rides on the page context.** Turns go through the ordinary
-`/assistant/threads/:id/turns/` route with `pageContext.draft`, a bounded copy
+`startAssistantTurn` mutation with `context.draft`, a bounded copy
 of what the page holds (`pagedraft.Draft`): the fields read from the document
 with their confidence and status, the four required records and the stops, or
 the Tariff source in the formula template or library editor (`formula`,

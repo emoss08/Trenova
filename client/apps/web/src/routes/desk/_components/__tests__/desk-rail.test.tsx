@@ -30,32 +30,27 @@ const state = vi.hoisted(() => ({ live: new Set<string>() }));
 /** How many requests are scheduled in each conversation, as the server lists them. */
 const scheduled = vi.hoisted(() => ({ byThread: new Map<string, number>() }));
 
-vi.mock("@trenova/shared/lib/api", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@trenova/shared/lib/api")>();
-  return {
-    ...actual,
-    api: {
-      ...actual.api,
-      get: vi.fn(async (url: string) => {
-        const threadId = /^\/assistant\/threads\/([^/]+)\/schedules\//.exec(url)?.[1];
-        if (threadId === undefined) {
-          throw new Error(`unexpected read of ${url}`);
-        }
-        const items = Array.from({ length: scheduled.byThread.get(threadId) ?? 0 }, (_, index) => ({
-          id: `csch_${index}`,
-          threadId,
-          userId: "usr_1",
-          prompt: `Request ${index + 1}`,
-          cadence: "stored",
-          cronExpression: "0 8 * * 1",
-          enabled: true,
-          createdAt: 0,
-        }));
-        return { items, total: items.length };
-      }),
+vi.mock("@trenova/shared/lib/graphql", () => ({
+  requestGraphQL: vi.fn(
+    async (params: { operationName: string; variables?: { threadId?: string } }) => {
+      if (params.operationName !== "AssistantThreadSchedules") {
+        throw new Error(`unexpected operation ${params.operationName}`);
+      }
+      const threadId = params.variables?.threadId ?? "";
+      const items = Array.from({ length: scheduled.byThread.get(threadId) ?? 0 }, (_, index) => ({
+        id: `csch_${index}`,
+        threadId,
+        userId: "usr_1",
+        prompt: `Request ${index + 1}`,
+        cadence: "stored",
+        cronExpression: "0 8 * * 1",
+        enabled: true,
+        createdAt: 0,
+      }));
+      return { assistantThreadSchedules: { items, total: items.length } };
     },
-  };
-});
+  ),
+}));
 
 vi.mock("@/components/assistant/use-active-turns", () => ({
   useLiveThreadIds: () => state.live,
@@ -126,10 +121,7 @@ function RailHarness({
   ...props
 }: RailOptions & {
   onLoadMore: DeskRailProps["onLoadMore"];
-  handlers: Pick<
-    DeskRailProps,
-    "onSearch" | "onSettings" | "onSetPinned" | "onDelete" | "onFold"
-  >;
+  handlers: Pick<DeskRailProps, "onSearch" | "onSettings" | "onSetPinned" | "onDelete" | "onFold">;
 }) {
   const collapsed = useDeskSettingsStore((store) => store.collapsedShelves);
   const edges = deskShelfEdges(HARNESS_NOW, "UTC");

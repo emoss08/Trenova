@@ -17,32 +17,29 @@ import { forgetThreadSchedules } from "../thread-schedules";
 import { useDeleteConversation } from "../use-delete-conversation";
 
 /**
- * The requests scheduled in each conversation, as GET
- * /assistant/threads/:id/schedules/ lists them; a conversation named in
- * `failing` cannot be read.
+ * The requests scheduled in each conversation, as the assistantThreadSchedules
+ * query lists them; a conversation named in `failing` cannot be read.
  */
 const server = vi.hoisted(() => ({
   byThread: new Map<string, unknown[]>(),
   failing: new Set<string>(),
 }));
 
-vi.mock("@trenova/shared/lib/api", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@trenova/shared/lib/api")>();
-  return {
-    ...actual,
-    api: {
-      ...actual.api,
-      get: vi.fn(async (url: string) => {
-        const threadId = /^\/assistant\/threads\/([^/]+)\/schedules\//.exec(url)?.[1] ?? "";
-        if (server.failing.has(threadId)) {
-          throw new Error("unavailable");
-        }
-        const items = server.byThread.get(threadId) ?? [];
-        return { items, total: items.length };
-      }),
+vi.mock("@trenova/shared/lib/graphql", () => ({
+  requestGraphQL: vi.fn(
+    async (params: { operationName: string; variables?: { threadId?: string } }) => {
+      if (params.operationName !== "AssistantThreadSchedules") {
+        throw new Error(`unexpected operation ${params.operationName}`);
+      }
+      const threadId = params.variables?.threadId ?? "";
+      if (server.failing.has(threadId)) {
+        throw new Error("unavailable");
+      }
+      const items = server.byThread.get(threadId) ?? [];
+      return { assistantThreadSchedules: { items, total: items.length } };
     },
-  };
-});
+  ),
+}));
 
 function scheduled(id: string, threadId: string, prompt: string, cronExpression: string) {
   return {

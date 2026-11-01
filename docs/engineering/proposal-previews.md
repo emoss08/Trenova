@@ -322,7 +322,7 @@ array-of-ids parameter as a subset of one permission resource's records with
 - **Labels.** GraphQL reads them through the `SubsetLabels` loader: each subset field asks
   once for all of its ids, and a request's fields are labelled together, one query per
   resource for each `agentruntimeports.MaxRecordLabelsPerResource` (5000) records. The chat's
-  `/assistant/threads/{id}/proposals/` labels every pending proposal in a thread in one
+  `assistantThreadProposals` query labels every pending proposal in a thread in one
   `Labels` read. Both check the reader's read permission on the resource first and read
   nothing without it.
 - **The rule.** `CheckModifications` (and `admit`, where the write runs) refuses a

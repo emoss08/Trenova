@@ -1,0 +1,45 @@
+query AssistantCase($threadId: ID!) {
+  assistantCase(threadId: $threadId)
+}
+
+query AssistantWaits($threadId: ID!) {
+  assistantWaits(threadId: $threadId)
+}
+
+mutation BindAssistantCase($threadId: ID!, $subjectType: String!, $subjectId: ID!) {
+  bindAssistantCase(threadId: $threadId, subjectType: $subjectType, subjectId: $subjectId)
+}
+
+mutation UnbindAssistantCase($threadId: ID!) {
+  unbindAssistantCase(threadId: $threadId)
+}
+
+mutation SnoozeAssistantCase($threadId: ID!, $anchor: String!, $until: Timestamp) {
+  snoozeAssistantCase(threadId: $threadId, anchor: $anchor, until: $until)
+}
+
+mutation WakeAssistantCase($threadId: ID!) {
+  wakeAssistantCase(threadId: $threadId)
+}
+
+mutation AwaitAssistantCaseReply(
+  $threadId: ID!
+  $party: String!
+  $partyId: ID!
+  $giveUpAfterHours: Int
+) {
+  awaitAssistantCaseReply(
+    threadId: $threadId
+    party: $party
+    partyId: $partyId
+    giveUpAfterHours: $giveUpAfterHours
+  )
+}
+
+mutation TickAssistantCaseItem($threadId: ID!, $itemKey: String!, $ticked: Boolean!) {
+  tickAssistantCaseItem(threadId: $threadId, itemKey: $itemKey, ticked: $ticked)
+}
+
+mutation CancelAssistantWait($threadId: ID!, $waitId: ID!) {
+  cancelAssistantWait(threadId: $threadId, waitId: $waitId)
+}

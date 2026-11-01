@@ -441,8 +441,8 @@ the conversation's (see "Who can take a step" in
 [desk-cases.md](desk-cases.md)). The person stays in the conversation, and
 the agent they chose takes the task inside it.
 
-- **Request.** `POST /assistant/threads/:threadID/turns/` (and `…/messages/`,
-  and `…/queue/`) take `directedAgentId`. The content is the task, at most
+- **Request.** `startAssistantTurn` (and `enqueueAssistantMessage`) take
+  `directedAgentId`. The content is the task, at most
   `delegation.MaxTaskRunes`. It travels as
   `SendMessageRequest.DirectedAgentID` → `AssistantTurnRequest.DirectedAgentID`
   → `QueuedRequest.DirectedAgentID`. A directed message never steers a reply

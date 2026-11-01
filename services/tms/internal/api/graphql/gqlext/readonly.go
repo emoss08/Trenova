@@ -17,6 +17,10 @@ import (
 
 const readOnlyExtensionName = "PlanReadOnlyGuard"
 
+var readOnlyAllowedMutations = map[string]struct{}{
+	"stopAssistantTurn": {},
+}
+
 type ReadOnlyParams struct {
 	fx.In
 
@@ -59,6 +63,9 @@ func (e *ReadOnlyExtension) MutateOperationContext(
 	if opCtx == nil || opCtx.Operation == nil || opCtx.Operation.Operation != ast.Mutation {
 		return nil
 	}
+	if allowedWhileReadOnly(opCtx.Operation.SelectionSet) {
+		return nil
+	}
 
 	authCtx, ok := gqlctx.AuthContext(ctx)
 	if !ok || authCtx == nil || authCtx.OrganizationID.IsNil() || authCtx.BusinessUnitID.IsNil() {
@@ -88,4 +95,24 @@ func (e *ReadOnlyExtension) MutateOperationContext(
 	}
 
 	return gqlerror.WrapIfUnwrapped(err)
+}
+
+func allowedWhileReadOnly(selections ast.SelectionSet) bool {
+	if len(selections) == 0 {
+		return false
+	}
+	for _, selection := range selections {
+		field, ok := selection.(*ast.Field)
+		if !ok {
+			return false
+		}
+		if field.Name == "__typename" {
+			continue
+		}
+		if _, allowed := readOnlyAllowedMutations[field.Name]; !allowed {
+			return false
+		}
+	}
+
+	return true
 }

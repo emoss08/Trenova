@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { DeskComposer } from "../desk-composer";
 
 /**
- * GET /assistant/agents/:agentId/commands/ as the server answers it: the
+ * The assistantCommandAvailability query as the server answers it: the
  * extension commands the person can send that agent.
  */
 const server = vi.hoisted(() => ({
@@ -18,23 +18,18 @@ const server = vi.hoisted(() => ({
   asked: [] as string[],
 }));
 
-vi.mock("@trenova/shared/lib/api", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@trenova/shared/lib/api")>();
-  return {
-    ...actual,
-    api: {
-      ...actual.api,
-      get: vi.fn(async (url: string) => {
-        server.asked.push(url);
-        const agentId = /^\/assistant\/agents\/([^/]+)\/commands\/$/.exec(url)?.[1];
-        if (agentId === undefined) {
-          throw new Error(`unexpected request ${url}`);
-        }
-        return { commands: server.commands.get(decodeURIComponent(agentId)) ?? [] };
-      }),
+vi.mock("@trenova/shared/lib/graphql", () => ({
+  requestGraphQL: vi.fn(
+    async (params: { operationName: string; variables?: { agentId?: string } }) => {
+      if (params.operationName !== "AssistantCommandAvailability") {
+        throw new Error(`unexpected operation ${params.operationName}`);
+      }
+      const agentId = params.variables?.agentId ?? "";
+      server.asked.push(agentId);
+      return { assistantCommandAvailability: { commands: server.commands.get(agentId) ?? [] } };
     },
-  };
-});
+  ),
+}));
 
 afterEach(() => {
   cleanup();
@@ -118,7 +113,7 @@ describe.each(CASES)("DeskComposer /$name", ({ name, prefix, ask, description })
     renderComposer({ agentId: "agdef_ready", initial: prefix, onSend: vi.fn() });
 
     expect(await screen.findByRole("option", { name: option })).toBeInTheDocument();
-    expect(server.asked).toEqual(["/assistant/agents/agdef_ready/commands/"]);
+    expect(server.asked).toEqual(["agdef_ready"]);
   });
 
   it("is hidden when the server says the agent cannot", async () => {
@@ -137,7 +132,7 @@ describe.each(CASES)("DeskComposer /$name", ({ name, prefix, ask, description })
       screen.getByText(`No command called “${prefix}”. Press Esc to send it as text.`),
     ).toBeInTheDocument();
     expect(screen.queryByRole("option", { name: option })).toBeNull();
-    expect(server.asked).toEqual(["/assistant/agents/agdef_plain/commands/"]);
+    expect(server.asked).toEqual(["agdef_plain"]);
   });
 
   it("sends the command with the person's words once the slot is filled", async () => {

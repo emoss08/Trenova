@@ -1776,6 +1776,55 @@ export type AssignmentStatus =
   | 'InProgress'
   | 'New';
 
+/** Which page of a table artifact's list to read, and how it is searched and sorted. */
+export type AssistantArtifactRowsInput = {
+  /** The cursor the previous page ended at. */
+  after?: string | null | undefined;
+  limit: number;
+  offset?: number | null | undefined;
+  q?: string | null | undefined;
+  /** A column of the table, which the server maps to the field the list sorts by. */
+  sortBy?: string | null | undefined;
+  /** asc or desc. */
+  sortDirection?: string | null | undefined;
+  /** Also count how many rows the list holds in all. */
+  total?: boolean | null | undefined;
+};
+
+/** A record named from the composer with @. */
+export type AssistantEntityRefInput = {
+  id: string | number;
+  label: string;
+  type: string;
+};
+
+/** A question for a conversation's agent, and what rides with it. */
+export type AssistantMessageInput = {
+  /** Documents uploaded to the conversation for this message. */
+  attachmentDocumentIds?: Array<string | number> | null | undefined;
+  content: string;
+  context?: AssistantPageContextInput | null | undefined;
+  /** Hands the message to another agent the person may use, run from this conversation in place of its own agent's reply. */
+  directedAgentId?: string | number | null | undefined;
+  mentions?: Array<AssistantEntityRefInput> | null | undefined;
+  /** The model the person picked. Absent leaves it to the organization's order; an id the organization has not assigned to the assistant is dropped. */
+  providerId?: string | number | null | undefined;
+  /** Desk or Assistant; empty for neither. */
+  surface?: string | null | undefined;
+};
+
+/** The page a message was written on, so the agent reads it with the message. */
+export type AssistantPageContextInput = {
+  /** The unsaved work of the page a page-bound conversation belongs to: an import's fields and stops, or a formula's source. */
+  draft?: unknown;
+  entityId: string;
+  entityType: string;
+  path: string;
+  title: string;
+  /** The table the page was showing, when it was one: its resource, search, filters, sort, selection, figures and columns. */
+  view?: unknown;
+};
+
 export type AttachPayEventsInput = {
   payEventIds: Array<string | number>;
   settlementId: string | number;
@@ -4239,6 +4288,19 @@ export type EndorsementType =
   | 'T'
   | 'X';
 
+export type EnqueueAssistantMessageInput = {
+  attachmentDocumentIds?: Array<string | number> | null | undefined;
+  content: string;
+  context?: AssistantPageContextInput | null | undefined;
+  /** Hands the message to another agent the person may use, once the conversation is free. */
+  directedAgentId?: string | number | null | undefined;
+  mentions?: Array<AssistantEntityRefInput> | null | undefined;
+  providerId?: string | number | null | undefined;
+  /** Reads the message into the reply under way at its next step, rather than sending it once the reply ends. */
+  steer?: boolean | null | undefined;
+  surface?: string | null | undefined;
+};
+
 export type EnrollBenefitInput = {
   benefitPlanId: string | number;
   coverageTier?: CoverageTier | null | undefined;
@@ -5148,6 +5210,14 @@ export type GrantCarrierIntelOverrideInput = {
   expiresAt?: number | null | undefined;
   reason: string;
   ruleCode: string;
+};
+
+export type HandOffAssistantThreadInput = {
+  agentDefinitionId: string | number;
+  /** Hands off one chapter of the conversation instead of all of it. */
+  chapterId?: string | number | null | undefined;
+  /** The conversation's pinned facts, as the person sees them. */
+  facts?: Array<string> | null | undefined;
 };
 
 export type HandOffWatchtowerItemInput = {
@@ -8311,6 +8381,16 @@ export type StageFuelPurchaseImportInput = {
   mapping?: unknown;
 };
 
+export type StartAssistantThreadInput = {
+  agentDefinitionId: string | number;
+  /** Where the conversation begins; absent means the panel. */
+  origin?: string | null | undefined;
+  subjectId?: string | number | null | undefined;
+  /** The record the conversation is about, when it was opened from one. */
+  subjectType?: string | null | undefined;
+  title?: string | null | undefined;
+};
+
 export type StartBillingTransferRunInput = {
   billType?: BillType | null | undefined;
   /** Mark Completed shipments Ready to Invoice before transferring them, when their readiness allows it. */
@@ -8806,6 +8886,28 @@ export type UpdateAgentQualityControlInput = {
   timezone?: string | null | undefined;
   /** The version read; a save over a newer one is refused. */
   version: number;
+};
+
+/**
+ * Pauses or resumes a scheduled request (enabled), edits it (prompt, repeat and
+ * time together), or both. repeat is day, weekday or a day of the week; time a
+ * 24-hour HH:MM on the schedule's own clock.
+ */
+export type UpdateAssistantScheduleInput = {
+  enabled?: boolean | null | undefined;
+  prompt?: string | null | undefined;
+  repeat?: string | null | undefined;
+  time?: string | null | undefined;
+};
+
+/** What a person changes about their own conversation; an absent or null field is left as it is. */
+export type UpdateAssistantThreadInput = {
+  /** Whether the conversation compacts itself on nearing a full context. */
+  autoCompact?: boolean | null | undefined;
+  pinned?: boolean | null | undefined;
+  /** Replaces the facts the agents keep in mind for the whole conversation; an empty list unpins them all. */
+  pinnedFacts?: Array<string> | null | undefined;
+  title?: string | null | undefined;
 };
 
 export type UpdateBenefitPlanInput = {
@@ -10967,6 +11069,90 @@ export type AgentProposalCountQueryVariables = Exact<{
 
 export type AgentProposalCountQuery = { agentProposals: { totalCount: number | null, totalCountExact: boolean } };
 
+export type AssistantArtifactsQueryVariables = Exact<{
+  threadId: string | number;
+  limit?: number | null | undefined;
+  cursor?: string | null | undefined;
+  q?: string | null | undefined;
+  kind?: string | null | undefined;
+  pinned?: boolean | null | undefined;
+  summary?: boolean | null | undefined;
+}>;
+
+
+export type AssistantArtifactsQuery = { assistantArtifacts: unknown };
+
+export type AssistantArtifactLineageQueryVariables = Exact<{
+  threadId: string | number;
+  artifactId: string | number;
+}>;
+
+
+export type AssistantArtifactLineageQuery = { assistantArtifactLineage: unknown };
+
+export type AssistantArtifactBySlugQueryVariables = Exact<{
+  threadId: string | number;
+  slug: string;
+}>;
+
+
+export type AssistantArtifactBySlugQuery = { assistantArtifactBySlug: unknown };
+
+export type AssistantArtifactRowsQueryVariables = Exact<{
+  threadId: string | number;
+  artifactId: string | number;
+  input: AssistantArtifactRowsInput;
+}>;
+
+
+export type AssistantArtifactRowsQuery = { assistantArtifactRows: unknown };
+
+export type PinAssistantArtifactMutationVariables = Exact<{
+  threadId: string | number;
+  artifactId: string | number;
+  pinned: boolean;
+}>;
+
+
+export type PinAssistantArtifactMutation = { pinAssistantArtifact: unknown };
+
+export type SaveAssistantDocumentVersionMutationVariables = Exact<{
+  threadId: string | number;
+  artifactId: string | number;
+  body: string;
+  note: string;
+}>;
+
+
+export type SaveAssistantDocumentVersionMutation = { saveAssistantDocumentVersion: unknown };
+
+export type RestoreAssistantDocumentVersionMutationVariables = Exact<{
+  threadId: string | number;
+  artifactId: string | number;
+}>;
+
+
+export type RestoreAssistantDocumentVersionMutation = { restoreAssistantDocumentVersion: unknown };
+
+export type RewriteAssistantDocumentMutationVariables = Exact<{
+  threadId: string | number;
+  artifactId: string | number;
+  text: string;
+  mode: string;
+  prompt: string;
+}>;
+
+
+export type RewriteAssistantDocumentMutation = { rewriteAssistantDocument: string };
+
+export type RunAssistantArtifactReportMutationVariables = Exact<{
+  threadId: string | number;
+  artifactId: string | number;
+}>;
+
+
+export type RunAssistantArtifactReportMutation = { runAssistantArtifactReport: unknown };
+
 export type DeskBoardCardQueryVariables = Exact<{
   threadId: string | number;
   artifactId: string | number;
@@ -10974,6 +11160,79 @@ export type DeskBoardCardQueryVariables = Exact<{
 
 
 export type DeskBoardCardQuery = { deskBoardCard: { artifactId: string, threadId: string, title: string, author: string, question: string, answeredAt: number, readAt: number, markdown: string, verdict: Array<{ text: string, numeral: number, tone: string, struck: boolean }>, blocks: Array<{ type: string, title: string, half: boolean, numeral: number, state: string, tone: string, measure: string, chart: unknown, noteTone: string, source: { kind: string, resource: string, count: number, readable: number, title: string }, figures: Array<{ label: string, tone: string, value: { kind: string, number: string, currency: string, text: string } | null, was: { kind: string, number: string, currency: string, text: string } | null }>, rows: Array<{ resource: string, id: string, readable: boolean, label: string, subtitle: string, status: string, measure: { measure: string, state: string, place: string, at: number | null, tone: string, value: { kind: string, number: string, currency: string, text: string } } | null }>, compare: { wins: Array<number>, columns: Array<{ resource: string, id: string, readable: boolean, label: string, subtitle: string, status: string, measure: { measure: string, state: string, place: string, at: number | null, tone: string, value: { kind: string, number: string, currency: string, text: string } } | null }>, lines: Array<{ label: string, better: string, wins: Array<boolean>, cells: Array<{ kind: string, number: string, currency: string, text: string } | null> }> } | null, table: { table: unknown, total: number, artifactId: string | null } | null, events: Array<{ at: number, operation: string, actor: string, principalType: string, comment: string, changes: unknown }>, checks: Array<{ title: string, tone: string, detail: string, hidden: number, count: { kind: string, number: string, currency: string, text: string } | null, was: { kind: string, number: string, currency: string, text: string } | null, records: Array<{ resource: string, id: string, readable: boolean, label: string, subtitle: string, status: string, measure: { measure: string, state: string, place: string, at: number | null, tone: string, value: { kind: string, number: string, currency: string, text: string } } | null }> }>, meter: { clear: number, total: number, tones: Array<string>, percent: { kind: string, number: string, currency: string, text: string } | null } | null, text: Array<{ text: string, numeral: number, tone: string, struck: boolean }>, chips: Array<{ resource: string, id: string, readable: boolean, label: string, subtitle: string, status: string, measure: { measure: string, state: string, place: string, at: number | null, tone: string, value: { kind: string, number: string, currency: string, text: string } } | null }> }> } };
+
+export type AssistantCaseQueryVariables = Exact<{
+  threadId: string | number;
+}>;
+
+
+export type AssistantCaseQuery = { assistantCase: unknown };
+
+export type AssistantWaitsQueryVariables = Exact<{
+  threadId: string | number;
+}>;
+
+
+export type AssistantWaitsQuery = { assistantWaits: unknown };
+
+export type BindAssistantCaseMutationVariables = Exact<{
+  threadId: string | number;
+  subjectType: string;
+  subjectId: string | number;
+}>;
+
+
+export type BindAssistantCaseMutation = { bindAssistantCase: unknown };
+
+export type UnbindAssistantCaseMutationVariables = Exact<{
+  threadId: string | number;
+}>;
+
+
+export type UnbindAssistantCaseMutation = { unbindAssistantCase: unknown };
+
+export type SnoozeAssistantCaseMutationVariables = Exact<{
+  threadId: string | number;
+  anchor: string;
+  until?: number | null | undefined;
+}>;
+
+
+export type SnoozeAssistantCaseMutation = { snoozeAssistantCase: unknown };
+
+export type WakeAssistantCaseMutationVariables = Exact<{
+  threadId: string | number;
+}>;
+
+
+export type WakeAssistantCaseMutation = { wakeAssistantCase: unknown };
+
+export type AwaitAssistantCaseReplyMutationVariables = Exact<{
+  threadId: string | number;
+  party: string;
+  partyId: string | number;
+  giveUpAfterHours?: number | null | undefined;
+}>;
+
+
+export type AwaitAssistantCaseReplyMutation = { awaitAssistantCaseReply: unknown };
+
+export type TickAssistantCaseItemMutationVariables = Exact<{
+  threadId: string | number;
+  itemKey: string;
+  ticked: boolean;
+}>;
+
+
+export type TickAssistantCaseItemMutation = { tickAssistantCaseItem: unknown };
+
+export type CancelAssistantWaitMutationVariables = Exact<{
+  threadId: string | number;
+  waitId: string | number;
+}>;
+
+
+export type CancelAssistantWaitMutation = { cancelAssistantWait: unknown };
 
 export type DeskMemoryFieldsFragment = { id: string, content: string, kind: AgentMemoryKind, scope: AgentMemoryScope, roleId: string | null, roleName: string, status: AgentMemoryStatus, source: AgentMemorySource, sourceTitle: string, useCount: number, lastUsedAt: number | null, createdAt: number, version: number, editable: boolean, reason: string, quotes: Array<string>, replaces: { id: string, content: string, status: AgentMemoryStatus } | null, replacedBy: { id: string, content: string, status: AgentMemoryStatus } | null } & { ' $fragmentName'?: 'DeskMemoryFieldsFragment' };
 
@@ -11042,6 +11301,317 @@ export type SetMemorySavingModeMutationVariables = Exact<{
 
 
 export type SetMemorySavingModeMutation = { setMemorySavingMode: { ' $fragmentRefs'?: { 'DeskMemorySettingsFieldsFragment': DeskMemorySettingsFieldsFragment } } };
+
+export type AssistantQueueQueryVariables = Exact<{
+  threadId: string | number;
+}>;
+
+
+export type AssistantQueueQuery = { assistantQueue: unknown };
+
+export type EnqueueAssistantMessageMutationVariables = Exact<{
+  threadId: string | number;
+  input: EnqueueAssistantMessageInput;
+}>;
+
+
+export type EnqueueAssistantMessageMutation = { enqueueAssistantMessage: { item: unknown, steering: boolean, held: string, turn: { turnId: string, threadId: string, streamUrl: string, status: string } | null } };
+
+export type EditAssistantQueuedMessageMutationVariables = Exact<{
+  threadId: string | number;
+  itemId: string | number;
+  content: string;
+  version: number;
+}>;
+
+
+export type EditAssistantQueuedMessageMutation = { editAssistantQueuedMessage: unknown };
+
+export type RemoveAssistantQueuedMessageMutationVariables = Exact<{
+  threadId: string | number;
+  itemId: string | number;
+}>;
+
+
+export type RemoveAssistantQueuedMessageMutation = { removeAssistantQueuedMessage: boolean };
+
+export type ReorderAssistantQueueMutationVariables = Exact<{
+  threadId: string | number;
+  ids: Array<string | number> | string | number;
+}>;
+
+
+export type ReorderAssistantQueueMutation = { reorderAssistantQueue: unknown };
+
+export type SendAssistantQueuedMessageMutationVariables = Exact<{
+  threadId: string | number;
+  itemId: string | number;
+}>;
+
+
+export type SendAssistantQueuedMessageMutation = { sendAssistantQueuedMessage: { item: unknown, steering: boolean, held: string, turn: { turnId: string, threadId: string, streamUrl: string, status: string } | null } };
+
+export type AssistantSchedulesQueryVariables = Exact<{
+  limit?: number | null | undefined;
+  offset?: number | null | undefined;
+}>;
+
+
+export type AssistantSchedulesQuery = { assistantSchedules: unknown };
+
+export type AssistantThreadSchedulesQueryVariables = Exact<{
+  threadId: string | number;
+  limit?: number | null | undefined;
+  offset?: number | null | undefined;
+}>;
+
+
+export type AssistantThreadSchedulesQuery = { assistantThreadSchedules: unknown };
+
+export type CreateAssistantScheduleMutationVariables = Exact<{
+  threadId: string | number;
+  content: string;
+}>;
+
+
+export type CreateAssistantScheduleMutation = { createAssistantSchedule: unknown };
+
+export type UpdateAssistantScheduleMutationVariables = Exact<{
+  id: string | number;
+  input: UpdateAssistantScheduleInput;
+}>;
+
+
+export type UpdateAssistantScheduleMutation = { updateAssistantSchedule: unknown };
+
+export type DeleteAssistantScheduleMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteAssistantScheduleMutation = { deleteAssistantSchedule: boolean };
+
+export type RunAssistantScheduleMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type RunAssistantScheduleMutation = { runAssistantSchedule: { turnId: string, threadId: string, streamUrl: string, status: string } };
+
+export type AssistantProvidersQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AssistantProvidersQuery = { assistantProviders: unknown };
+
+export type AssistantMentionsQueryVariables = Exact<{
+  query: string;
+  type: string;
+}>;
+
+
+export type AssistantMentionsQuery = { assistantMentions: unknown };
+
+export type AssistantMentionPageQueryVariables = Exact<{
+  query: string;
+  kind: string;
+  offset: number;
+  limit: number;
+}>;
+
+
+export type AssistantMentionPageQuery = { assistantMentionPage: unknown };
+
+export type DeskSearchQueryVariables = Exact<{
+  query: string;
+  kind: string;
+}>;
+
+
+export type DeskSearchQuery = { deskSearch: unknown };
+
+export type AssistantCommandAvailabilityQueryVariables = Exact<{
+  agentId: string | number;
+}>;
+
+
+export type AssistantCommandAvailabilityQuery = { assistantCommandAvailability: unknown };
+
+export type AssistantThreadsQueryVariables = Exact<{
+  limit?: number | null | undefined;
+  cursor?: string | null | undefined;
+  until?: string | null | undefined;
+  pinned?: boolean | null | undefined;
+  touchedFrom?: number | null | undefined;
+  touchedBefore?: number | null | undefined;
+}>;
+
+
+export type AssistantThreadsQuery = { assistantThreads: unknown };
+
+export type AssistantThreadShelvesQueryVariables = Exact<{
+  edges: Array<number> | number;
+}>;
+
+
+export type AssistantThreadShelvesQuery = { assistantThreadShelves: unknown };
+
+export type AssistantThreadQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AssistantThreadQuery = { assistantThread: unknown };
+
+export type AssistantThreadBudgetQueryVariables = Exact<{
+  threadId: string | number;
+}>;
+
+
+export type AssistantThreadBudgetQuery = { assistantThreadBudget: unknown };
+
+export type AssistantMessagesQueryVariables = Exact<{
+  threadId: string | number;
+  limit?: number | null | undefined;
+  before?: number | null | undefined;
+}>;
+
+
+export type AssistantMessagesQuery = { assistantMessages: unknown };
+
+export type AssistantActiveTurnQueryVariables = Exact<{
+  threadId: string | number;
+}>;
+
+
+export type AssistantActiveTurnQuery = { assistantActiveTurn: unknown };
+
+export type AssistantLiveTurnsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AssistantLiveTurnsQuery = { assistantLiveTurns: Array<{ turnId: string, threadId: string, threadTitle: string, origin: string, startedAt: number }> };
+
+export type AssistantThreadProposalsQueryVariables = Exact<{
+  threadId: string | number;
+}>;
+
+
+export type AssistantThreadProposalsQuery = { assistantThreadProposals: unknown };
+
+export type AssistantThreadPlansQueryVariables = Exact<{
+  threadId: string | number;
+}>;
+
+
+export type AssistantThreadPlansQuery = { assistantThreadPlans: unknown };
+
+export type AssistantChaptersQueryVariables = Exact<{
+  threadId: string | number;
+}>;
+
+
+export type AssistantChaptersQuery = { assistantChapters: unknown };
+
+export type StartAssistantThreadMutationVariables = Exact<{
+  input: StartAssistantThreadInput;
+}>;
+
+
+export type StartAssistantThreadMutation = { startAssistantThread: unknown };
+
+export type UpdateAssistantThreadMutationVariables = Exact<{
+  id: string | number;
+  input: UpdateAssistantThreadInput;
+}>;
+
+
+export type UpdateAssistantThreadMutation = { updateAssistantThread: unknown };
+
+export type DeleteAssistantThreadMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteAssistantThreadMutation = { deleteAssistantThread: boolean };
+
+export type MarkAssistantThreadReadMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type MarkAssistantThreadReadMutation = { markAssistantThreadRead: boolean };
+
+export type HandOffAssistantThreadMutationVariables = Exact<{
+  id: string | number;
+  input: HandOffAssistantThreadInput;
+}>;
+
+
+export type HandOffAssistantThreadMutation = { handOffAssistantThread: unknown };
+
+export type RequestAssistantAllowanceMutationVariables = Exact<{
+  threadId: string | number;
+  kind: string;
+}>;
+
+
+export type RequestAssistantAllowanceMutation = { requestAssistantAllowance: number };
+
+export type StartAssistantTurnMutationVariables = Exact<{
+  threadId: string | number;
+  input: AssistantMessageInput;
+}>;
+
+
+export type StartAssistantTurnMutation = { startAssistantTurn: { turnId: string, threadId: string, streamUrl: string, status: string } };
+
+export type CompactAssistantThreadMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CompactAssistantThreadMutation = { compactAssistantThread: { turnId: string, threadId: string, streamUrl: string, status: string } };
+
+export type StopAssistantTurnMutationVariables = Exact<{
+  turnId: string | number;
+}>;
+
+
+export type StopAssistantTurnMutation = { stopAssistantTurn: boolean };
+
+export type SaveAssistantProposalEditsMutationVariables = Exact<{
+  threadId: string | number;
+  proposalId: string | number;
+  modifications?: unknown;
+}>;
+
+
+export type SaveAssistantProposalEditsMutation = { saveAssistantProposalEdits: unknown };
+
+export type OpenAssistantChapterMutationVariables = Exact<{
+  threadId: string | number;
+  messageId: string | number;
+}>;
+
+
+export type OpenAssistantChapterMutation = { openAssistantChapter: unknown };
+
+export type RenameAssistantChapterMutationVariables = Exact<{
+  threadId: string | number;
+  chapterId: string | number;
+  title: string;
+  version?: number | null | undefined;
+}>;
+
+
+export type RenameAssistantChapterMutation = { renameAssistantChapter: unknown };
+
+export type RemoveAssistantChapterMutationVariables = Exact<{
+  threadId: string | number;
+  chapterId: string | number;
+}>;
+
+
+export type RemoveAssistantChapterMutation = { removeAssistantChapter: boolean };
 
 export type AgentEvalCaseTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, agentDefinitionId: string, title: string, source: AgentEvalCaseSource, status: AgentEvalCaseStatus, trigger: AgentRunTrigger, input: string, sourceThreadId: string | null, sourceProposalId: string | null, heldTools: Array<string>, expected: unknown, weight: number, expiresAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentEvalCaseTableRowFieldsFragment' };
 
@@ -20735,8 +21305,13 @@ export { AgentCapabilityToolFieldsFragmentDoc, AgentCapabilitiesFieldsFragmentDo
 export { AgentControlFieldsFragmentDoc, AgentControlSettingsDocument, UpdateAgentControlDocument, AiTrainingExportHistoryDocument } from "./documents/agent/control";
 export { PendingProposalFieldsFragmentDoc, PendingPlanFieldsFragmentDoc, PendingDecisionsDocument, PendingDecisionSummaryDocument, PlanStepsDocument, DecideAgentProposalsDocument, RecentDecisionsDocument } from "./documents/agent/decisions";
 export { AgentDefinitionCardFieldsFragmentDoc, AgentChoiceFieldsFragmentDoc, AgentDefinitionCardsDocument, AgentChoicesDocument, AgentDefinitionCountDocument, AgentRunCountDocument, AgentProposalCountDocument } from "./documents/agent/definitions";
+export { AssistantArtifactsDocument, AssistantArtifactLineageDocument, AssistantArtifactBySlugDocument, AssistantArtifactRowsDocument, PinAssistantArtifactDocument, SaveAssistantDocumentVersionDocument, RestoreAssistantDocumentVersionDocument, RewriteAssistantDocumentDocument, RunAssistantArtifactReportDocument } from "./documents/agent/desk-artifacts";
 export { DeskBoardCardDocument } from "./documents/agent/desk-board";
+export { AssistantCaseDocument, AssistantWaitsDocument, BindAssistantCaseDocument, UnbindAssistantCaseDocument, SnoozeAssistantCaseDocument, WakeAssistantCaseDocument, AwaitAssistantCaseReplyDocument, TickAssistantCaseItemDocument, CancelAssistantWaitDocument } from "./documents/agent/desk-cases";
 export { DeskMemoryFieldsFragmentDoc, DeskMemorySettingsFieldsFragmentDoc, DeskMemoriesDocument, DeskMemoriesByIdsDocument, DeskMemorySettingsDocument, CreateDeskMemoryDocument, ReviseDeskMemoryDocument, SetDeskMemoryStatusDocument, ConfirmDeskMemoryDocument, DismissDeskMemoryDocument, SetMemorySavingModeDocument } from "./documents/agent/desk-memory";
+export { AssistantQueueDocument, EnqueueAssistantMessageDocument, EditAssistantQueuedMessageDocument, RemoveAssistantQueuedMessageDocument, ReorderAssistantQueueDocument, SendAssistantQueuedMessageDocument } from "./documents/agent/desk-queue";
+export { AssistantSchedulesDocument, AssistantThreadSchedulesDocument, CreateAssistantScheduleDocument, UpdateAssistantScheduleDocument, DeleteAssistantScheduleDocument, RunAssistantScheduleDocument } from "./documents/agent/desk-schedules";
+export { AssistantProvidersDocument, AssistantMentionsDocument, AssistantMentionPageDocument, DeskSearchDocument, AssistantCommandAvailabilityDocument, AssistantThreadsDocument, AssistantThreadShelvesDocument, AssistantThreadDocument, AssistantThreadBudgetDocument, AssistantMessagesDocument, AssistantActiveTurnDocument, AssistantLiveTurnsDocument, AssistantThreadProposalsDocument, AssistantThreadPlansDocument, AssistantChaptersDocument, StartAssistantThreadDocument, UpdateAssistantThreadDocument, DeleteAssistantThreadDocument, MarkAssistantThreadReadDocument, HandOffAssistantThreadDocument, RequestAssistantAllowanceDocument, StartAssistantTurnDocument, CompactAssistantThreadDocument, StopAssistantTurnDocument, SaveAssistantProposalEditsDocument, OpenAssistantChapterDocument, RenameAssistantChapterDocument, RemoveAssistantChapterDocument } from "./documents/agent/desk-threads";
 export { AgentEvalCaseTableRowFieldsFragmentDoc, AgentEvalCaseDetailFieldsFragmentDoc, AgentEvalCaseTableDocument, AgentEvalCaseDetailDocument, CreateAgentEvalCaseDocument, UpdateAgentEvalCaseDocument, SetAgentEvalCaseStatusDocument, ReplayAgentEvalCaseDocument } from "./documents/agent/eval-cases";
 export { AgentEvaluationTableRowFieldsFragmentDoc, AgentEvaluationTableDocument, AgentEvaluationDetailDocument, ReplayAgentRunDocument } from "./documents/agent/evaluations";
 export { AgentExceptionTableRowFieldsFragmentDoc, AgentExceptionDetailFieldsFragmentDoc, AgentExceptionTableDocument, AgentExceptionDetailDocument, ResolveAgentExceptionDocument } from "./documents/agent/exceptions";

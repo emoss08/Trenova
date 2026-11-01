@@ -1,0 +1,27 @@
+"""
+Pauses or resumes a scheduled request (enabled), edits it (prompt, repeat and
+time together), or both. repeat is day, weekday or a day of the week; time a
+24-hour HH:MM on the schedule's own clock.
+"""
+input UpdateAssistantScheduleInput {
+  enabled: Boolean
+  prompt: String
+  repeat: String
+  time: String
+}
+
+extend type Query {
+  "Every request the person scheduled, across their conversations, the soonest first and paused ones after."
+  assistantSchedules(limit: Int, offset: Int): Any!
+  "The requests scheduled in one conversation, newest first."
+  assistantThreadSchedules(threadId: ID!, limit: Int, offset: Int): Any!
+}
+
+extend type Mutation {
+  "Schedules a message such as \"every weekday at 7:30am, ...\"; answers the schedule and its card."
+  createAssistantSchedule(threadId: ID!, content: String!): Any!
+  updateAssistantSchedule(id: ID!, input: UpdateAssistantScheduleInput!): Any!
+  deleteAssistantSchedule(id: ID!): Boolean!
+  "Asks a schedule's request now; answers the turn to follow."
+  runAssistantSchedule(id: ID!): AssistantStartedTurn!
+}

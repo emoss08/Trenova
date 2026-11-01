@@ -271,7 +271,7 @@ func assistantResource() *permissionspec.ResourceDefinition {
 			{
 				Operation:   permission.OpRead,
 				DisplayName: "View",
-				Description: "View own conversations and pin artifacts in them",
+				Description: "View and arrange own conversations: pin artifacts, keep and restore document versions, stop replies and cancel the waits their agents set",
 			},
 			{
 				Operation:   permission.OpCreate,

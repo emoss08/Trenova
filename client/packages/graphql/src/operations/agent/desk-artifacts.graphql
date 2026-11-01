@@ -1,0 +1,73 @@
+query AssistantArtifacts(
+  $threadId: ID!
+  $limit: Int
+  $cursor: String
+  $q: String
+  $kind: String
+  $pinned: Boolean
+  $summary: Boolean
+) {
+  assistantArtifacts(
+    threadId: $threadId
+    limit: $limit
+    cursor: $cursor
+    q: $q
+    kind: $kind
+    pinned: $pinned
+    summary: $summary
+  )
+}
+
+query AssistantArtifactLineage($threadId: ID!, $artifactId: ID!) {
+  assistantArtifactLineage(threadId: $threadId, artifactId: $artifactId)
+}
+
+query AssistantArtifactBySlug($threadId: ID!, $slug: String!) {
+  assistantArtifactBySlug(threadId: $threadId, slug: $slug)
+}
+
+query AssistantArtifactRows($threadId: ID!, $artifactId: ID!, $input: AssistantArtifactRowsInput!) {
+  assistantArtifactRows(threadId: $threadId, artifactId: $artifactId, input: $input)
+}
+
+mutation PinAssistantArtifact($threadId: ID!, $artifactId: ID!, $pinned: Boolean!) {
+  pinAssistantArtifact(threadId: $threadId, artifactId: $artifactId, pinned: $pinned)
+}
+
+mutation SaveAssistantDocumentVersion(
+  $threadId: ID!
+  $artifactId: ID!
+  $body: String!
+  $note: String!
+) {
+  saveAssistantDocumentVersion(
+    threadId: $threadId
+    artifactId: $artifactId
+    body: $body
+    note: $note
+  )
+}
+
+mutation RestoreAssistantDocumentVersion($threadId: ID!, $artifactId: ID!) {
+  restoreAssistantDocumentVersion(threadId: $threadId, artifactId: $artifactId)
+}
+
+mutation RewriteAssistantDocument(
+  $threadId: ID!
+  $artifactId: ID!
+  $text: String!
+  $mode: String!
+  $prompt: String!
+) {
+  rewriteAssistantDocument(
+    threadId: $threadId
+    artifactId: $artifactId
+    text: $text
+    mode: $mode
+    prompt: $prompt
+  )
+}
+
+mutation RunAssistantArtifactReport($threadId: ID!, $artifactId: ID!) {
+  runAssistantArtifactReport(threadId: $threadId, artifactId: $artifactId)
+}

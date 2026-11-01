@@ -5,7 +5,7 @@ A Desk conversation about a shipment, an invoice or an invoice dispute is a
 a carrier, and shows what stands between its record and what comes next.
 
 Read this before changing `domain/deskcase`, `assistantcaseservice`,
-`assistantcaserepository`, the `/assistant/threads/:threadID/case/` routes, or
+`assistantcaserepository`, the case operations in `desk_case.graphqls`, or
 the Desk's `routes/desk/_components/case/`.
 
 ## Binding
@@ -146,7 +146,7 @@ customer), read in one query (`TemplateFor`).
   `/billing/configuration-files/case-checklists` path redirects to
   `/desk?settings=checklists`, which the Desk layout reads to open settings on
   that section.
-- Ticks: `POST /assistant/threads/:threadID/case/ticks/`, only for a
+- Ticks: `tickAssistantCaseItem`, only for a
   `Manual` added step of the template that applies.
 
 ## Realtime
@@ -164,7 +164,7 @@ customer), read in one query (`TemplateFor`).
 
 The top bar's case button is the shared popover. It binds a conversation to a
 shipment, invoice or dispute from a picker that pages through every matching
-record (`GET /assistant/mentions/?kind=&offset=&limit=`, one kind at a time,
+record (the `assistantMentionPage` query, one kind at a time,
 one row past the page saying whether more follow), loads the next page as the
 list nears its end, and draws only the rows in view (TanStack Virtual; the
 file opts out of the React Compiler like the other virtualized lists). Nothing

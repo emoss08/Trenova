@@ -391,33 +391,6 @@ writes:
     reason: "Checks a worker against compliance rules before an assignment and saves nothing."
 
   # assistant
-  "DELETE /api/v1/assistant/schedules/:scheduleID/":
-    exempt: agent-administration
-    reason: "Editing, pausing, deleting or running a schedule now is the person arranging what they asked an agent to repeat; an agent only proposes a new schedule, through agent_create_schedule, and a person approves it, so it never sets its own workload."
-  "DELETE /api/v1/assistant/threads/:threadID/":
-    exempt: agent-administration
-    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
-  "DELETE /api/v1/assistant/threads/:threadID/case/":
-    exempt: agent-administration
-    reason: "A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on."
-  "DELETE /api/v1/assistant/threads/:threadID/chapters/:chapterID/":
-    exempt: agent-administration
-    reason: "Chapters arrange the person's own conversation: where one subject ends and what it is called. The runtime marks and names them on its own, and no record an agent acts on changes."
-  "DELETE /api/v1/assistant/threads/:threadID/queue/:itemID/":
-    exempt: agent-administration
-    reason: "Arranging the messages a person queued for their own conversation; an agent never writes to a person's queue, and the messages reach it as the person's own words."
-  "PATCH /api/v1/assistant/schedules/:scheduleID/":
-    exempt: agent-administration
-    reason: "Editing, pausing, deleting or running a schedule now is the person arranging what they asked an agent to repeat; an agent only proposes a new schedule, through agent_create_schedule, and a person approves it, so it never sets its own workload."
-  "PATCH /api/v1/assistant/threads/:threadID/":
-    exempt: agent-administration
-    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
-  "PATCH /api/v1/assistant/threads/:threadID/chapters/:chapterID/":
-    exempt: agent-administration
-    reason: "Chapters arrange the person's own conversation: where one subject ends and what it is called. The runtime marks and names them on its own, and no record an agent acts on changes."
-  "PATCH /api/v1/assistant/threads/:threadID/queue/:itemID/":
-    exempt: agent-administration
-    reason: "Arranging the messages a person queued for their own conversation; an agent never writes to a person's queue, and the messages reach it as the person's own words."
   "POST /api/v1/assistant/ask/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
@@ -427,80 +400,104 @@ writes:
   "POST /api/v1/assistant/ask/:askID/keep/":
     exempt: agent-administration
     reason: "Keeps a palette answer as a Desk conversation for the person who asked; an agent has no palette question of its own to keep."
-  "POST /api/v1/assistant/schedules/:scheduleID/run/":
-    exempt: agent-administration
-    reason: "Editing, pausing, deleting or running a schedule now is the person arranging what they asked an agent to repeat; an agent only proposes a new schedule, through agent_create_schedule, and a person approves it, so it never sets its own workload."
-  "POST /api/v1/assistant/threads/":
-    exempt: agent-administration
-    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
-  "POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/pin/":
-    exempt: agent-administration
-    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
-  "POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/restore/":
-    exempt: agent-administration
-    reason: "A person keeping or restoring their own version of a document an agent drafted in their conversation; the agent drafts through the conversation itself."
-  "POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/rewrite/":
-    exempt: agent-administration
-    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
-  "POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/run/":
-    tools: [report_run]
-  "POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/versions/":
-    exempt: agent-administration
-    reason: "A person keeping or restoring their own version of a document an agent drafted in their conversation; the agent drafts through the conversation itself."
-  "POST /api/v1/assistant/threads/:threadID/case/await-reply/":
+  "mutation awaitAssistantCaseReply":
     tools: [agent_create_wait]
-  "POST /api/v1/assistant/threads/:threadID/case/snooze/":
+  "mutation bindAssistantCase":
     exempt: agent-administration
     reason: "A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on."
-  "POST /api/v1/assistant/threads/:threadID/case/ticks/":
-    exempt: agent-administration
-    reason: "A tick on a step the organization added for a person to tick is that person's word that it was done; an agent ticking it would vouch for itself."
-  "POST /api/v1/assistant/threads/:threadID/case/wake/":
-    exempt: agent-administration
-    reason: "A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on."
-  "POST /api/v1/assistant/threads/:threadID/chapters/":
-    exempt: agent-administration
-    reason: "Chapters arrange the person's own conversation: where one subject ends and what it is called. The runtime marks and names them on its own, and no record an agent acts on changes."
-  "POST /api/v1/assistant/threads/:threadID/compact/":
+  "mutation cancelAssistantWait":
+    tools: [agent_cancel_wait]
+  "mutation compactAssistantThread":
     exempt: agent-administration
     reason: "Compacting a conversation manages the agent's own context window; the runtime compacts on its own limits and no record changes."
-  "POST /api/v1/assistant/threads/:threadID/handoff/":
-    exempt: agent-administration
-    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
-  "POST /api/v1/assistant/threads/:threadID/messages/":
-    exempt: agent-administration
-    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
-  "POST /api/v1/assistant/threads/:threadID/queue/":
-    exempt: agent-administration
-    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
-  "POST /api/v1/assistant/threads/:threadID/queue/:itemID/send/":
-    exempt: agent-administration
-    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
-  "POST /api/v1/assistant/threads/:threadID/read/":
-    exempt: agent-administration
-    reason: "Marking a conversation read arranges the person's own Desk; it changes no record an agent acts on."
-  "POST /api/v1/assistant/threads/:threadID/requests/":
-    exempt: agent-administration
-    reason: "Asking an administrator for access to an agent, or for more allowance, budget or daily requests, is a person's request about their own use of the assistant; an agent that could ask for its own limits to be raised would defeat them."
-  "POST /api/v1/assistant/threads/:threadID/schedules/":
+  "mutation createAssistantSchedule":
     tools: [agent_create_schedule]
-  "POST /api/v1/assistant/threads/:threadID/turns/":
+  "mutation deleteAssistantSchedule":
+    exempt: agent-administration
+    reason: "Editing, pausing, deleting or running a schedule now is the person arranging what they asked an agent to repeat; an agent only proposes a new schedule, through agent_create_schedule, and a person approves it, so it never sets its own workload."
+  "mutation deleteAssistantThread":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
-  "POST /api/v1/assistant/threads/:threadID/waits/:waitID/cancel/":
-    tools: [agent_cancel_wait]
-  "POST /api/v1/assistant/turns/:turnID/stop/":
-    exempt: agent-administration
-    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
-  "PUT /api/v1/assistant/threads/:threadID/case/":
-    exempt: agent-administration
-    reason: "A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on."
-  "PUT /api/v1/assistant/threads/:threadID/proposals/:proposalID/edits/":
-    exempt: agent-administration
-    reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
-  "PUT /api/v1/assistant/threads/:threadID/queue/order/":
+  "mutation editAssistantQueuedMessage":
     exempt: agent-administration
     reason: "Arranging the messages a person queued for their own conversation; an agent never writes to a person's queue, and the messages reach it as the person's own words."
+  "mutation enqueueAssistantMessage":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "mutation handOffAssistantThread":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "mutation markAssistantThreadRead":
+    exempt: agent-administration
+    reason: "Marking a conversation read arranges the person's own Desk; it changes no record an agent acts on."
+  "mutation openAssistantChapter":
+    exempt: agent-administration
+    reason: "Chapters arrange the person's own conversation: where one subject ends and what it is called. The runtime marks and names them on its own, and no record an agent acts on changes."
+  "mutation pinAssistantArtifact":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "mutation removeAssistantChapter":
+    exempt: agent-administration
+    reason: "Chapters arrange the person's own conversation: where one subject ends and what it is called. The runtime marks and names them on its own, and no record an agent acts on changes."
+  "mutation removeAssistantQueuedMessage":
+    exempt: agent-administration
+    reason: "Arranging the messages a person queued for their own conversation; an agent never writes to a person's queue, and the messages reach it as the person's own words."
+  "mutation renameAssistantChapter":
+    exempt: agent-administration
+    reason: "Chapters arrange the person's own conversation: where one subject ends and what it is called. The runtime marks and names them on its own, and no record an agent acts on changes."
+  "mutation reorderAssistantQueue":
+    exempt: agent-administration
+    reason: "Arranging the messages a person queued for their own conversation; an agent never writes to a person's queue, and the messages reach it as the person's own words."
+  "mutation requestAssistantAllowance":
+    exempt: agent-administration
+    reason: "Asking an administrator for access to an agent, or for more allowance, budget or daily requests, is a person's request about their own use of the assistant; an agent that could ask for its own limits to be raised would defeat them."
+  "mutation restoreAssistantDocumentVersion":
+    exempt: agent-administration
+    reason: "A person keeping or restoring their own version of a document an agent drafted in their conversation; the agent drafts through the conversation itself."
+  "mutation rewriteAssistantDocument":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "mutation runAssistantArtifactReport":
+    tools: [report_run]
+  "mutation runAssistantSchedule":
+    exempt: agent-administration
+    reason: "Editing, pausing, deleting or running a schedule now is the person arranging what they asked an agent to repeat; an agent only proposes a new schedule, through agent_create_schedule, and a person approves it, so it never sets its own workload."
+  "mutation saveAssistantDocumentVersion":
+    exempt: agent-administration
+    reason: "A person keeping or restoring their own version of a document an agent drafted in their conversation; the agent drafts through the conversation itself."
+  "mutation saveAssistantProposalEdits":
+    exempt: agent-administration
+    reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
+  "mutation sendAssistantQueuedMessage":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "mutation snoozeAssistantCase":
+    exempt: agent-administration
+    reason: "A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on."
+  "mutation startAssistantThread":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "mutation startAssistantTurn":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "mutation stopAssistantTurn":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "mutation tickAssistantCaseItem":
+    exempt: agent-administration
+    reason: "A tick on a step the organization added for a person to tick is that person's word that it was done; an agent ticking it would vouch for itself."
+  "mutation unbindAssistantCase":
+    exempt: agent-administration
+    reason: "A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on."
+  "mutation updateAssistantSchedule":
+    exempt: agent-administration
+    reason: "Editing, pausing, deleting or running a schedule now is the person arranging what they asked an agent to repeat; an agent only proposes a new schedule, through agent_create_schedule, and a person approves it, so it never sets its own workload."
+  "mutation updateAssistantThread":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "mutation wakeAssistantCase":
+    exempt: agent-administration
+    reason: "A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on."
 
   # auth
   "POST /api/v1/auth/forgot-password":

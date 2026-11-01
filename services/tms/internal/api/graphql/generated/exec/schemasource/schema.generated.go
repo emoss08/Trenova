@@ -11931,6 +11931,63 @@ extend type Mutation {
   decideAgentProposals(ids: [ID!]!, input: DecideAgentProposalsInput!): [AgentProposalDecisionResult!]!
 }
 `, BuiltIn: false},
+	{Name: "../schema/desk_artifact.graphqls", Input: `"Which page of a table artifact's list to read, and how it is searched and sorted."
+input AssistantArtifactRowsInput {
+  limit: Int!
+  "The cursor the previous page ended at."
+  after: String
+  offset: Int
+  q: String
+  "A column of the table, which the server maps to the field the list sorts by."
+  sortBy: String
+  "asc or desc."
+  sortDirection: String
+  "Also count how many rows the list holds in all."
+  total: Boolean
+}
+
+extend type Query {
+  """
+  One page of a conversation's artifacts by lineage, every version of each:
+  { results, total, nextCursor, counts }. summary cuts each payload to the keys
+  that name and draw it in a list.
+  """
+  assistantArtifacts(
+    threadId: ID!
+    limit: Int
+    cursor: String
+    q: String
+    kind: String
+    pinned: Boolean
+    summary: Boolean
+  ): Any!
+  "Every version of the lineage an artifact belongs to, oldest first: { results }."
+  assistantArtifactLineage(threadId: ID!, artifactId: ID!): Any!
+  "The lineage a link names by its slug: { results }."
+  assistantArtifactBySlug(threadId: ID!, slug: String!): Any!
+  "One page of a table artifact's list, read again from its source with the person's own access."
+  assistantArtifactRows(threadId: ID!, artifactId: ID!, input: AssistantArtifactRowsInput!): Any!
+}
+
+extend type Mutation {
+  "Pins or unpins an artifact in the person's own pane."
+  pinAssistantArtifact(threadId: ID!, artifactId: ID!, pinned: Boolean!): Any!
+  "Keeps the person's edit of a document as its next version."
+  saveAssistantDocumentVersion(threadId: ID!, artifactId: ID!, body: String!, note: String!): Any!
+  "Keeps an earlier version of a document as its next version."
+  restoreAssistantDocumentVersion(threadId: ID!, artifactId: ID!): Any!
+  "Asks the model for a rewrite of a passage (mode shorter, plain or ask with a prompt); answers the suggested text and keeps nothing."
+  rewriteAssistantDocument(
+    threadId: ID!
+    artifactId: ID!
+    text: String!
+    mode: String!
+    prompt: String!
+  ): String!
+  "Runs the report a report run or preview shows, kept as the artifact's next version."
+  runAssistantArtifactReport(threadId: ID!, artifactId: ID!): Any!
+}
+`, BuiltIn: false},
 	{Name: "../schema/desk_board.graphqls", Input: `"""
 A board an agent laid out in a conversation, read now with the reader's own
 access: its words as the agent wrote them, and each block's figures, rows,
@@ -12116,6 +12173,37 @@ extend type Query {
   deskBoardCard(threadId: ID!, artifactId: ID!): DeskBoardCard!
 }
 `, BuiltIn: false},
+	{Name: "../schema/desk_case.graphqls", Input: `extend type Query {
+  """
+  Where a conversation's case stands: its summary, who can take each step, the
+  checklist between its record and what comes next, and the parties it may
+  wait on.
+  """
+  assistantCase(threadId: ID!): Any!
+  "What a conversation's agent is waiting on, newest first: { items }."
+  assistantWaits(threadId: ID!): Any!
+}
+
+extend type Mutation {
+  "Makes the conversation a case about a Shipment, Invoice or InvoiceDispute; answers the binding."
+  bindAssistantCase(threadId: ID!, subjectType: String!, subjectId: ID!): Any!
+  "Makes the case an ordinary conversation again."
+  unbindAssistantCase(threadId: ID!): Any!
+  """
+  Puts the case out of the way until a Time, the shipment's next Appointment or
+  its ETA. until is the time, or the fallback for an ETA the shipment does not
+  have yet.
+  """
+  snoozeAssistantCase(threadId: ID!, anchor: String!, until: Timestamp): Any!
+  wakeAssistantCase(threadId: ID!): Any!
+  "Parks the case until the Customer or one of the Carriers replies; answers the wait."
+  awaitAssistantCaseReply(threadId: ID!, party: String!, partyId: ID!, giveUpAfterHours: Int): Any!
+  "Ticks, or unticks, a step the organization added for a person to tick; answers the case."
+  tickAssistantCaseItem(threadId: ID!, itemKey: String!, ticked: Boolean!): Any!
+  "Ends a wait without the agent picking the work up."
+  cancelAssistantWait(threadId: ID!, waitId: ID!): Any!
+}
+`, BuiltIn: false},
 	{Name: "../schema/desk_memory.graphqls", Input: `"How a person wants memories an agent picks up in their conversations kept."
 enum AgentMemorySavingMode {
   "Saved as the agent picks them up, and said so in the conversation."
@@ -12258,6 +12346,243 @@ extend type Mutation {
   "Turns down a memory an agent offered; nothing is kept."
   dismissDeskMemory(id: ID!): DeskMemory!
   setMemorySavingMode(mode: AgentMemorySavingMode!): DeskMemorySettings!
+}
+`, BuiltIn: false},
+	{Name: "../schema/desk_queue.graphqls", Input: `"""
+What became of a message handed to a conversation's queue: still waiting (with
+why, when the conversation was free but could not take it), read into the
+reply under way, or sent as a reply of its own.
+"""
+type AssistantQueueOutcome {
+  "The queued message, while it waits."
+  item: Any
+  steering: Boolean!
+  held: String!
+  turn: AssistantStartedTurn
+}
+
+input EnqueueAssistantMessageInput {
+  content: String!
+  context: AssistantPageContextInput
+  surface: String
+  providerId: ID
+  attachmentDocumentIds: [ID!]
+  mentions: [AssistantEntityRefInput!]
+  "Hands the message to another agent the person may use, once the conversation is free."
+  directedAgentId: ID
+  "Reads the message into the reply under way at its next step, rather than sending it once the reply ends."
+  steer: Boolean
+}
+
+extend type Query {
+  "What the person left for a conversation, in the order it will be sent: { items }."
+  assistantQueue(threadId: ID!): Any!
+}
+
+extend type Mutation {
+  """
+  Leaves a message for the conversation. A conversation with nothing under way
+  sends it at once, and the outcome carries the turn to follow.
+  """
+  enqueueAssistantMessage(
+    threadId: ID!
+    input: EnqueueAssistantMessageInput!
+  ): AssistantQueueOutcome!
+  editAssistantQueuedMessage(threadId: ID!, itemId: ID!, content: String!, version: Int!): Any!
+  removeAssistantQueuedMessage(threadId: ID!, itemId: ID!): Boolean!
+  "Puts the waiting messages in this order, every one named once: { items }."
+  reorderAssistantQueue(threadId: ID!, ids: [ID!]!): Any!
+  "Sends a waiting message now: into the reply under way, or as a reply of its own ahead of the rest."
+  sendAssistantQueuedMessage(threadId: ID!, itemId: ID!): AssistantQueueOutcome!
+}
+`, BuiltIn: false},
+	{Name: "../schema/desk_schedule.graphqls", Input: `"""
+Pauses or resumes a scheduled request (enabled), edits it (prompt, repeat and
+time together), or both. repeat is day, weekday or a day of the week; time a
+24-hour HH:MM on the schedule's own clock.
+"""
+input UpdateAssistantScheduleInput {
+  enabled: Boolean
+  prompt: String
+  repeat: String
+  time: String
+}
+
+extend type Query {
+  "Every request the person scheduled, across their conversations, the soonest first and paused ones after."
+  assistantSchedules(limit: Int, offset: Int): Any!
+  "The requests scheduled in one conversation, newest first."
+  assistantThreadSchedules(threadId: ID!, limit: Int, offset: Int): Any!
+}
+
+extend type Mutation {
+  "Schedules a message such as \"every weekday at 7:30am, ...\"; answers the schedule and its card."
+  createAssistantSchedule(threadId: ID!, content: String!): Any!
+  updateAssistantSchedule(id: ID!, input: UpdateAssistantScheduleInput!): Any!
+  deleteAssistantSchedule(id: ID!): Boolean!
+  "Asks a schedule's request now; answers the turn to follow."
+  runAssistantSchedule(id: ID!): AssistantStartedTurn!
+}
+`, BuiltIn: false},
+	{Name: "../schema/desk_thread.graphqls", Input: `"""
+A reply handed to a worker: the turn to follow and the stream it is followed
+on. The reply is not here; it arrives on the stream, so it survives the request
+that asked for it ending.
+"""
+type AssistantStartedTurn {
+  turnId: ID!
+  threadId: ID!
+  "The turn's event stream under the API root: read it as text/event-stream."
+  streamUrl: String!
+  "The turn's status when it was handed over: Pending or Running."
+  status: String!
+}
+
+"A reply the person still has in progress, in any of their conversations."
+type AssistantLiveTurn {
+  turnId: ID!
+  threadId: ID!
+  threadTitle: String!
+  "What started it: Person, DecisionFollowUp, Scheduled, Compaction or WaitResolved."
+  origin: String!
+  startedAt: Timestamp!
+}
+
+"The page a message was written on, so the agent reads it with the message."
+input AssistantPageContextInput {
+  path: String!
+  entityType: String!
+  entityId: String!
+  title: String!
+  "The table the page was showing, when it was one: its resource, search, filters, sort, selection, figures and columns."
+  view: JSON
+  "The unsaved work of the page a page-bound conversation belongs to: an import's fields and stops, or a formula's source."
+  draft: JSON
+}
+
+"A record named from the composer with @."
+input AssistantEntityRefInput {
+  type: String!
+  id: ID!
+  label: String!
+}
+
+"A question for a conversation's agent, and what rides with it."
+input AssistantMessageInput {
+  content: String!
+  context: AssistantPageContextInput
+  "Desk or Assistant; empty for neither."
+  surface: String
+  "The model the person picked. Absent leaves it to the organization's order; an id the organization has not assigned to the assistant is dropped."
+  providerId: ID
+  "Documents uploaded to the conversation for this message."
+  attachmentDocumentIds: [ID!]
+  mentions: [AssistantEntityRefInput!]
+  "Hands the message to another agent the person may use, run from this conversation in place of its own agent's reply."
+  directedAgentId: ID
+}
+
+input StartAssistantThreadInput {
+  agentDefinitionId: ID!
+  title: String
+  "Where the conversation begins; absent means the panel."
+  origin: String
+  "The record the conversation is about, when it was opened from one."
+  subjectType: String
+  subjectId: ID
+}
+
+"What a person changes about their own conversation; an absent or null field is left as it is."
+input UpdateAssistantThreadInput {
+  title: String
+  pinned: Boolean
+  "Replaces the facts the agents keep in mind for the whole conversation; an empty list unpins them all."
+  pinnedFacts: [String!]
+  "Whether the conversation compacts itself on nearing a full context."
+  autoCompact: Boolean
+}
+
+input HandOffAssistantThreadInput {
+  agentDefinitionId: ID!
+  "The conversation's pinned facts, as the person sees them."
+  facts: [String!]
+  "Hands off one chapter of the conversation instead of all of it."
+  chapterId: ID
+}
+
+extend type Query {
+  "The models a person may pick for the assistant, projected so no credential leaves the provider record: { results }."
+  assistantProviders: Any!
+  "Records a person may name with @, of one type or of every type they may read: { results }."
+  assistantMentions(query: String!, type: String!): Any!
+  "One page of the records of one kind, for a list that scrolls through them all."
+  assistantMentionPage(query: String!, kind: String!, offset: Int!, limit: Int!): Any!
+  "The person's own conversations, what was said in them and what they produced: { results }."
+  deskSearch(query: String!, kind: String!): Any!
+  "The extension commands the person can send an agent."
+  assistantCommandAvailability(agentId: ID!): Any!
+  """
+  One page of the person's conversations. cursor is the previous page's
+  nextCursor; until re-reads a page's range. pinned and the touched range
+  narrow it to one shelf.
+  """
+  assistantThreads(
+    limit: Int
+    cursor: String
+    until: String
+    pinned: Boolean
+    touchedFrom: Timestamp
+    touchedBefore: Timestamp
+  ): Any!
+  "How many conversations each shelf holds, banded by the edges given, newest first."
+  assistantThreadShelves(edges: [Timestamp!]!): Any!
+  "One of the person's conversations; another person's is not found."
+  assistantThread(id: ID!): Any!
+  "How close the conversation's agent, and the person asking, are to their caps."
+  assistantThreadBudget(threadId: ID!): Any!
+  "The newest messages of a conversation, or with before the page above the message carrying that sequence."
+  assistantMessages(threadId: ID!, limit: Int, before: Int): Any!
+  "The reply a conversation is still producing; null when there is none."
+  assistantActiveTurn(threadId: ID!): Any
+  "Every reply the person still has in progress, across their conversations."
+  assistantLiveTurns: [AssistantLiveTurn!]!
+  "The proposals a conversation's runs raised: { results }."
+  assistantThreadProposals(threadId: ID!): Any!
+  "The plans a conversation's runs formed: { results }."
+  assistantThreadPlans(threadId: ID!): Any!
+  "A conversation's chapters, oldest first: { items }."
+  assistantChapters(threadId: ID!): Any!
+}
+
+extend type Mutation {
+  startAssistantThread(input: StartAssistantThreadInput!): Any!
+  "Renames, pins, sets the pinned facts of or turns compacting on or off for one of the person's conversations."
+  updateAssistantThread(id: ID!, input: UpdateAssistantThreadInput!): Any!
+  deleteAssistantThread(id: ID!): Boolean!
+  "Marks everything in the conversation as seen by its owner."
+  markAssistantThreadRead(id: ID!): Boolean!
+  """
+  Takes the conversation to another agent: a new conversation with it, opened
+  with a summary, the pinned facts and the pinned artifacts, and a card in this
+  one saying so.
+  """
+  handOffAssistantThread(id: ID!, input: HandOffAssistantThreadInput!): Any!
+  "Asks the people who run AI Control for access, allowance, budget or daily_runs; answers how many were asked."
+  requestAssistantAllowance(threadId: ID!, kind: String!): Int!
+  "Hands a question to a worker and answers with the turn to follow."
+  startAssistantTurn(threadId: ID!, input: AssistantMessageInput!): AssistantStartedTurn!
+  "Starts summarizing the older part of a conversation, as a turn followed and stopped like a reply."
+  compactAssistantThread(id: ID!): AssistantStartedTurn!
+  "Stops one of the person's own replies. Allowed while the plan is read-only."
+  stopAssistantTurn(turnId: ID!): Boolean!
+  "Keeps the values a person changed on a pending proposal, keyed by parameter; an empty set clears them. Saving is not deciding."
+  saveAssistantProposalEdits(threadId: ID!, proposalId: ID!, modifications: JSON): Any!
+  "Starts a chapter at the turn the message belongs to."
+  openAssistantChapter(threadId: ID!, messageId: ID!): Any!
+  "Names a chapter; the title is the person's from then on."
+  renameAssistantChapter(threadId: ID!, chapterId: ID!, title: String!, version: Int): Any!
+  "Ends a chapter where it starts, so what it held reads as part of the one before."
+  removeAssistantChapter(threadId: ID!, chapterId: ID!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "../schema/detention.graphqls", Input: `enum DetentionPolicyStatus {
@@ -27672,7 +27997,9 @@ scalar JSON
 
 """
 A scalar whose runtime type is decided by the field that carries it. Used for
-filter values, where the value may be a string, number, boolean, or null.
+filter values, where the value may be a string, number, boolean, or null, and
+for Desk records (conversations, messages, artifacts, cases), whose JSON shape
+is the one their turn stream already carries and the client validates.
 """
 scalar Any
 

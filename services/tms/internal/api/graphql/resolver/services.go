@@ -19,7 +19,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentwaitservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantqueueservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/boardcardservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/conversationscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentapprovalports"
@@ -52,7 +56,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aitrainingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
@@ -393,6 +400,16 @@ type Params struct {
 	JournalCards                      *journalcardservice.Service
 	FuelDeskCards                     *fueldeskcardservice.Service
 	BoardCards                        *boardcardservice.Service
+	AssistantService                  assistantports.AssistantService
+	AssistantArtifactService          assistantports.AssistantArtifactService
+	AssistantProposalService          assistantports.AssistantProposalService
+	AssistantHandoffService           assistantports.AssistantHandoffService `optional:"true"`
+	AssistantTurnService              *assistantturnservice.Service
+	AssistantQueueService             *assistantqueueservice.Service
+	AssistantCaseService              deskcaseports.AssistantCaseService
+	AssistantChapterService           assistantchapterports.AssistantChapterService
+	AgentWaitService                  *agentwaitservice.Service
+	ConversationScheduleService       *conversationscheduleservice.Service
 	JournalReview                     journalentryports.JournalReviewService
 	JournalReversalService            *journalreversalservice.Service
 	AuditService                      auditports.AuditService
@@ -682,6 +699,16 @@ type Services struct {
 	JournalCards                      *journalcardservice.Service
 	FuelDeskCards                     *fueldeskcardservice.Service
 	BoardCards                        *boardcardservice.Service
+	AssistantService                  assistantports.AssistantService
+	AssistantArtifactService          assistantports.AssistantArtifactService
+	AssistantProposalService          assistantports.AssistantProposalService
+	AssistantHandoffService           assistantports.AssistantHandoffService
+	AssistantTurnService              *assistantturnservice.Service
+	AssistantQueueService             *assistantqueueservice.Service
+	AssistantCaseService              deskcaseports.AssistantCaseService
+	AssistantChapterService           assistantchapterports.AssistantChapterService
+	AgentWaitService                  *agentwaitservice.Service
+	ConversationScheduleService       *conversationscheduleservice.Service
 	JournalReview                     journalentryports.JournalReviewService
 	JournalReversalService            *journalreversalservice.Service
 	AuditService                      auditports.AuditService
@@ -977,6 +1004,16 @@ func newServices(p *Params) *Services {
 		JournalCards:                      p.JournalCards,
 		FuelDeskCards:                     p.FuelDeskCards,
 		BoardCards:                        p.BoardCards,
+		AssistantService:                  p.AssistantService,
+		AssistantArtifactService:          p.AssistantArtifactService,
+		AssistantProposalService:          p.AssistantProposalService,
+		AssistantHandoffService:           p.AssistantHandoffService,
+		AssistantTurnService:              p.AssistantTurnService,
+		AssistantQueueService:             p.AssistantQueueService,
+		AssistantCaseService:              p.AssistantCaseService,
+		AssistantChapterService:           p.AssistantChapterService,
+		AgentWaitService:                  p.AgentWaitService,
+		ConversationScheduleService:       p.ConversationScheduleService,
 		JournalReview:                     p.JournalReview,
 		JournalReversalService:            p.JournalReversalService,
 		AuditService:                      p.AuditService,

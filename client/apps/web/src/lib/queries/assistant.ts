@@ -37,7 +37,8 @@ export const assistant = createQueryKeys("assistant", {
   }),
   thread: (id: string) => ({
     queryKey: ["assistant-thread", id],
-    queryFn: () => apiService.assistantService.getThread(id),
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.getThread(id, { signal }),
   }),
   // Paged newest-first: the page param is the sequence to read above, and
   // nothing for the newest page. useThreadHistory drives it as an infinite
@@ -125,15 +126,18 @@ export const assistant = createQueryKeys("assistant", {
   }),
   providers: () => ({
     queryKey: ["assistant-providers"],
-    queryFn: () => apiService.assistantService.listProviders(),
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.listProviders({ signal }),
   }),
   proposals: (threadId: string) => ({
     queryKey: ["assistant-proposals", threadId],
-    queryFn: () => apiService.assistantService.listProposals(threadId),
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.listProposals(threadId, { signal }),
   }),
   plans: (threadId: string) => ({
     queryKey: ["assistant-plans", threadId],
-    queryFn: () => apiService.assistantService.listPlans(threadId),
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.listPlans(threadId, { signal }),
   }),
   // The first page of a conversation's artifacts by lineage, pinned and
   // newest first, every version with its payload. Every artifact query of a

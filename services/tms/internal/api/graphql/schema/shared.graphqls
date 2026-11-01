@@ -5,7 +5,9 @@ scalar JSON
 
 """
 A scalar whose runtime type is decided by the field that carries it. Used for
-filter values, where the value may be a string, number, boolean, or null.
+filter values, where the value may be a string, number, boolean, or null, and
+for Desk records (conversations, messages, artifacts, cases), whose JSON shape
+is the one their turn stream already carries and the client validates.
 """
 scalar Any
 

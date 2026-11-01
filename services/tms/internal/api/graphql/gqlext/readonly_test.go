@@ -8,9 +8,9 @@ import (
 
 	gqlgen "github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/subscription"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -44,12 +44,19 @@ func TestReadOnlyExtensionRefusesMutationsFromAReadOnlyOrganization(t *testing.T
 
 	tenant := plantest.Tenant()
 	ext := NewReadOnlyExtension(ReadOnlyParams{
-		Plans:  plantest.Cloud(t, tenant, plantest.FreeDemo(t, tenant, subscription.StatusReadOnly)),
+		Plans: plantest.Cloud(
+			t,
+			tenant,
+			plantest.FreeDemo(t, tenant, subscription.StatusReadOnly),
+		),
 		Logger: zap.NewNop(),
 	})
 	status := gqlctx.NewResponseStatus()
 
-	gqlErr := ext.MutateOperationContext(readOnlyContext(tenant, status), readOnlyOperation(ast.Mutation))
+	gqlErr := ext.MutateOperationContext(
+		readOnlyContext(tenant, status),
+		readOnlyOperation(ast.Mutation),
+	)
 
 	require.NotNil(t, gqlErr)
 	restriction, ok := errors.AsType[*errortypes.PlanRestrictionError](gqlErr)
@@ -65,7 +72,11 @@ func TestReadOnlyExtensionLetsQueriesAndWritableOrganizationsThrough(t *testing.
 
 	tenant := plantest.Tenant()
 	readOnly := NewReadOnlyExtension(ReadOnlyParams{
-		Plans:  plantest.Cloud(t, tenant, plantest.FreeDemo(t, tenant, subscription.StatusReadOnly)),
+		Plans: plantest.Cloud(
+			t,
+			tenant,
+			plantest.FreeDemo(t, tenant, subscription.StatusReadOnly),
+		),
 		Logger: zap.NewNop(),
 	})
 	assert.Nil(t, readOnly.MutateOperationContext(
@@ -74,7 +85,11 @@ func TestReadOnlyExtensionLetsQueriesAndWritableOrganizationsThrough(t *testing.
 	))
 
 	trialing := NewReadOnlyExtension(ReadOnlyParams{
-		Plans:  plantest.Cloud(t, tenant, plantest.FreeDemo(t, tenant, subscription.StatusTrialing)),
+		Plans: plantest.Cloud(
+			t,
+			tenant,
+			plantest.FreeDemo(t, tenant, subscription.StatusTrialing),
+		),
 		Logger: zap.NewNop(),
 	})
 	assert.Nil(t, trialing.MutateOperationContext(
@@ -97,4 +112,33 @@ func TestReadOnlyExtensionIsInertOutsideCloudMode(t *testing.T) {
 	))
 	assert.Equal(t, readOnlyExtensionName, ext.ExtensionName())
 	require.NoError(t, ext.Validate(nil))
+}
+
+func TestReadOnlyExtensionLetsAPersonStopTheirOwnDeskTurn(t *testing.T) {
+	t.Parallel()
+
+	tenant := plantest.Tenant()
+	ext := NewReadOnlyExtension(ReadOnlyParams{
+		Plans: plantest.Cloud(
+			t,
+			tenant,
+			plantest.FreeDemo(t, tenant, subscription.StatusReadOnly),
+		),
+		Logger: zap.NewNop(),
+	})
+	stop := readOnlyOperation(ast.Mutation)
+	stop.Operation.SelectionSet = ast.SelectionSet{&ast.Field{Name: "stopAssistantTurn"}}
+
+	assert.Nil(
+		t,
+		ext.MutateOperationContext(readOnlyContext(tenant, gqlctx.NewResponseStatus()), stop),
+	)
+
+	mixed := readOnlyOperation(ast.Mutation)
+	mixed.Operation.SelectionSet = ast.SelectionSet{
+		&ast.Field{Name: "stopAssistantTurn"},
+		&ast.Field{Name: "startAssistantTurn"},
+	}
+	gqlErr := ext.MutateOperationContext(readOnlyContext(tenant, gqlctx.NewResponseStatus()), mixed)
+	require.NotNil(t, gqlErr, "an allowed field does not carry another write past the plan")
 }

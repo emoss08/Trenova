@@ -1,0 +1,56 @@
+"Which page of a table artifact's list to read, and how it is searched and sorted."
+input AssistantArtifactRowsInput {
+  limit: Int!
+  "The cursor the previous page ended at."
+  after: String
+  offset: Int
+  q: String
+  "A column of the table, which the server maps to the field the list sorts by."
+  sortBy: String
+  "asc or desc."
+  sortDirection: String
+  "Also count how many rows the list holds in all."
+  total: Boolean
+}
+
+extend type Query {
+  """
+  One page of a conversation's artifacts by lineage, every version of each:
+  { results, total, nextCursor, counts }. summary cuts each payload to the keys
+  that name and draw it in a list.
+  """
+  assistantArtifacts(
+    threadId: ID!
+    limit: Int
+    cursor: String
+    q: String
+    kind: String
+    pinned: Boolean
+    summary: Boolean
+  ): Any!
+  "Every version of the lineage an artifact belongs to, oldest first: { results }."
+  assistantArtifactLineage(threadId: ID!, artifactId: ID!): Any!
+  "The lineage a link names by its slug: { results }."
+  assistantArtifactBySlug(threadId: ID!, slug: String!): Any!
+  "One page of a table artifact's list, read again from its source with the person's own access."
+  assistantArtifactRows(threadId: ID!, artifactId: ID!, input: AssistantArtifactRowsInput!): Any!
+}
+
+extend type Mutation {
+  "Pins or unpins an artifact in the person's own pane."
+  pinAssistantArtifact(threadId: ID!, artifactId: ID!, pinned: Boolean!): Any!
+  "Keeps the person's edit of a document as its next version."
+  saveAssistantDocumentVersion(threadId: ID!, artifactId: ID!, body: String!, note: String!): Any!
+  "Keeps an earlier version of a document as its next version."
+  restoreAssistantDocumentVersion(threadId: ID!, artifactId: ID!): Any!
+  "Asks the model for a rewrite of a passage (mode shorter, plain or ask with a prompt); answers the suggested text and keeps nothing."
+  rewriteAssistantDocument(
+    threadId: ID!
+    artifactId: ID!
+    text: String!
+    mode: String!
+    prompt: String!
+  ): String!
+  "Runs the report a report run or preview shows, kept as the artifact's next version."
+  runAssistantArtifactReport(threadId: ID!, artifactId: ID!): Any!
+}

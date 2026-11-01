@@ -50,8 +50,13 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customfielddefinitionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/datatableinsightexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/decisionsexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskartifactexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskboardexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskcaseexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskmemoryexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskqueueexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskscheduleexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskthreadexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/detentionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchconsoleexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/distanceoverrideexec"
@@ -2220,12 +2225,46 @@ type MutationResolver interface {
 	IssueCustomerTrackingLink(ctx context.Context, input gqlmodel.IssueCustomerTrackingLinkInput) (*gqlmodel.IssueCustomerTrackingLinkPayload, error)
 	RevokeCustomerTrackingLink(ctx context.Context, shipmentID string, linkID *string) (int, error)
 	DecideAgentProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error)
+	PinAssistantArtifact(ctx context.Context, threadID string, artifactID string, pinned bool) (any, error)
+	SaveAssistantDocumentVersion(ctx context.Context, threadID string, artifactID string, body string, note string) (any, error)
+	RestoreAssistantDocumentVersion(ctx context.Context, threadID string, artifactID string) (any, error)
+	RewriteAssistantDocument(ctx context.Context, threadID string, artifactID string, text string, mode string, prompt string) (string, error)
+	RunAssistantArtifactReport(ctx context.Context, threadID string, artifactID string) (any, error)
+	BindAssistantCase(ctx context.Context, threadID string, subjectType string, subjectID string) (any, error)
+	UnbindAssistantCase(ctx context.Context, threadID string) (any, error)
+	SnoozeAssistantCase(ctx context.Context, threadID string, anchor string, until *int) (any, error)
+	WakeAssistantCase(ctx context.Context, threadID string) (any, error)
+	AwaitAssistantCaseReply(ctx context.Context, threadID string, party string, partyID string, giveUpAfterHours *int) (any, error)
+	TickAssistantCaseItem(ctx context.Context, threadID string, itemKey string, ticked bool) (any, error)
+	CancelAssistantWait(ctx context.Context, threadID string, waitID string) (any, error)
 	CreateDeskMemory(ctx context.Context, input gqlmodel.CreateDeskMemoryInput) (*gqlmodel.DeskMemory, error)
 	ReviseDeskMemory(ctx context.Context, id string, input gqlmodel.ReviseDeskMemoryInput) (*gqlmodel.DeskMemory, error)
 	SetDeskMemoryStatus(ctx context.Context, id string, status agentmemory.MemoryStatus) (*gqlmodel.DeskMemory, error)
 	ConfirmDeskMemory(ctx context.Context, id string, input gqlmodel.ConfirmDeskMemoryInput) (*gqlmodel.DeskMemory, error)
 	DismissDeskMemory(ctx context.Context, id string) (*gqlmodel.DeskMemory, error)
 	SetMemorySavingMode(ctx context.Context, mode agentmemory.MemorySavingMode) (*gqlmodel.DeskMemorySettings, error)
+	EnqueueAssistantMessage(ctx context.Context, threadID string, input gqlmodel.EnqueueAssistantMessageInput) (*gqlmodel.AssistantQueueOutcome, error)
+	EditAssistantQueuedMessage(ctx context.Context, threadID string, itemID string, content string, version int) (any, error)
+	RemoveAssistantQueuedMessage(ctx context.Context, threadID string, itemID string) (bool, error)
+	ReorderAssistantQueue(ctx context.Context, threadID string, ids []string) (any, error)
+	SendAssistantQueuedMessage(ctx context.Context, threadID string, itemID string) (*gqlmodel.AssistantQueueOutcome, error)
+	CreateAssistantSchedule(ctx context.Context, threadID string, content string) (any, error)
+	UpdateAssistantSchedule(ctx context.Context, id string, input gqlmodel.UpdateAssistantScheduleInput) (any, error)
+	DeleteAssistantSchedule(ctx context.Context, id string) (bool, error)
+	RunAssistantSchedule(ctx context.Context, id string) (*gqlmodel.AssistantStartedTurn, error)
+	StartAssistantThread(ctx context.Context, input gqlmodel.StartAssistantThreadInput) (any, error)
+	UpdateAssistantThread(ctx context.Context, id string, input gqlmodel.UpdateAssistantThreadInput) (any, error)
+	DeleteAssistantThread(ctx context.Context, id string) (bool, error)
+	MarkAssistantThreadRead(ctx context.Context, id string) (bool, error)
+	HandOffAssistantThread(ctx context.Context, id string, input gqlmodel.HandOffAssistantThreadInput) (any, error)
+	RequestAssistantAllowance(ctx context.Context, threadID string, kind string) (int, error)
+	StartAssistantTurn(ctx context.Context, threadID string, input gqlmodel.AssistantMessageInput) (*gqlmodel.AssistantStartedTurn, error)
+	CompactAssistantThread(ctx context.Context, id string) (*gqlmodel.AssistantStartedTurn, error)
+	StopAssistantTurn(ctx context.Context, turnID string) (bool, error)
+	SaveAssistantProposalEdits(ctx context.Context, threadID string, proposalID string, modifications map[string]any) (any, error)
+	OpenAssistantChapter(ctx context.Context, threadID string, messageID string) (any, error)
+	RenameAssistantChapter(ctx context.Context, threadID string, chapterID string, title string, version *int) (any, error)
+	RemoveAssistantChapter(ctx context.Context, threadID string, chapterID string) (bool, error)
 	CreateDetentionPolicy(ctx context.Context, input gqlmodel.DetentionPolicyInput) (*gqlmodel.DetentionPolicy, error)
 	UpdateDetentionPolicy(ctx context.Context, id string, input gqlmodel.DetentionPolicyInput) (*gqlmodel.DetentionPolicy, error)
 	DeleteDetentionPolicy(ctx context.Context, id string) (bool, error)
@@ -3052,10 +3091,34 @@ type QueryResolver interface {
 	PendingDecisions(ctx context.Context, input gqlmodel.PendingDecisionsInput) (*gqlmodel.PendingDecisionConnection, error)
 	PendingDecisionSummary(ctx context.Context) (*gqlmodel.PendingDecisionSummary, error)
 	RecentDecisions(ctx context.Context, since int, first *int) ([]*gqlmodel.RecentDecision, error)
+	AssistantArtifacts(ctx context.Context, threadID string, limit *int, cursor *string, q *string, kind *string, pinned *bool, summary *bool) (any, error)
+	AssistantArtifactLineage(ctx context.Context, threadID string, artifactID string) (any, error)
+	AssistantArtifactBySlug(ctx context.Context, threadID string, slug string) (any, error)
+	AssistantArtifactRows(ctx context.Context, threadID string, artifactID string, input gqlmodel.AssistantArtifactRowsInput) (any, error)
 	DeskBoardCard(ctx context.Context, threadID string, artifactID string) (*gqlmodel.DeskBoardCard, error)
+	AssistantCase(ctx context.Context, threadID string) (any, error)
+	AssistantWaits(ctx context.Context, threadID string) (any, error)
 	DeskMemories(ctx context.Context, input gqlmodel.DeskMemoriesInput) (*gqlmodel.DeskMemoryPage, error)
 	DeskMemoriesByIds(ctx context.Context, ids []string) ([]*gqlmodel.DeskMemory, error)
 	DeskMemorySettings(ctx context.Context) (*gqlmodel.DeskMemorySettings, error)
+	AssistantQueue(ctx context.Context, threadID string) (any, error)
+	AssistantSchedules(ctx context.Context, limit *int, offset *int) (any, error)
+	AssistantThreadSchedules(ctx context.Context, threadID string, limit *int, offset *int) (any, error)
+	AssistantProviders(ctx context.Context) (any, error)
+	AssistantMentions(ctx context.Context, query string, typeArg string) (any, error)
+	AssistantMentionPage(ctx context.Context, query string, kind string, offset int, limit int) (any, error)
+	DeskSearch(ctx context.Context, query string, kind string) (any, error)
+	AssistantCommandAvailability(ctx context.Context, agentID string) (any, error)
+	AssistantThreads(ctx context.Context, limit *int, cursor *string, until *string, pinned *bool, touchedFrom *int, touchedBefore *int) (any, error)
+	AssistantThreadShelves(ctx context.Context, edges []int) (any, error)
+	AssistantThread(ctx context.Context, id string) (any, error)
+	AssistantThreadBudget(ctx context.Context, threadID string) (any, error)
+	AssistantMessages(ctx context.Context, threadID string, limit *int, before *int) (any, error)
+	AssistantActiveTurn(ctx context.Context, threadID string) (any, error)
+	AssistantLiveTurns(ctx context.Context) ([]*gqlmodel.AssistantLiveTurn, error)
+	AssistantThreadProposals(ctx context.Context, threadID string) (any, error)
+	AssistantThreadPlans(ctx context.Context, threadID string) (any, error)
+	AssistantChapters(ctx context.Context, threadID string) (any, error)
 	DetentionPolicies(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DetentionPolicyConnection, error)
 	DetentionPolicy(ctx context.Context, id string) (*gqlmodel.DetentionPolicy, error)
 	DetentionDesk(ctx context.Context, includeAwaitingApproval *bool, urgency *gqlmodel.DetentionDeskUrgency, shipmentID *string, proNumber *string) ([]*gqlmodel.DetentionDeskEntry, error)
@@ -4078,8 +4141,13 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		customfielddefinitionexec.Shard,
 		datatableinsightexec.Shard,
 		decisionsexec.Shard,
+		deskartifactexec.Shard,
 		deskboardexec.Shard,
+		deskcaseexec.Shard,
 		deskmemoryexec.Shard,
+		deskqueueexec.Shard,
+		deskscheduleexec.Shard,
+		deskthreadexec.Shard,
 		detentionexec.Shard,
 		dispatchconsoleexec.Shard,
 		distanceoverrideexec.Shard,

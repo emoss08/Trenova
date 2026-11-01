@@ -1729,6 +1729,88 @@ type AssignWorkerTrainingInput struct {
 	Notes *string `json:"notes,omitempty"`
 }
 
+// Which page of a table artifact's list to read, and how it is searched and sorted.
+type AssistantArtifactRowsInput struct {
+	Limit int `json:"limit"`
+	// The cursor the previous page ended at.
+	After  *string `json:"after,omitempty"`
+	Offset *int    `json:"offset,omitempty"`
+	Q      *string `json:"q,omitempty"`
+	// A column of the table, which the server maps to the field the list sorts by.
+	SortBy *string `json:"sortBy,omitempty"`
+	// asc or desc.
+	SortDirection *string `json:"sortDirection,omitempty"`
+	// Also count how many rows the list holds in all.
+	Total *bool `json:"total,omitempty"`
+}
+
+// A record named from the composer with @.
+type AssistantEntityRefInput struct {
+	Type  string `json:"type"`
+	ID    string `json:"id"`
+	Label string `json:"label"`
+}
+
+// A reply the person still has in progress, in any of their conversations.
+type AssistantLiveTurn struct {
+	TurnID      string `json:"turnId"`
+	ThreadID    string `json:"threadId"`
+	ThreadTitle string `json:"threadTitle"`
+	// What started it: Person, DecisionFollowUp, Scheduled, Compaction or WaitResolved.
+	Origin    string `json:"origin"`
+	StartedAt int    `json:"startedAt"`
+}
+
+// A question for a conversation's agent, and what rides with it.
+type AssistantMessageInput struct {
+	Content string                     `json:"content"`
+	Context *AssistantPageContextInput `json:"context,omitempty"`
+	// Desk or Assistant; empty for neither.
+	Surface *string `json:"surface,omitempty"`
+	// The model the person picked. Absent leaves it to the organization's order; an id the organization has not assigned to the assistant is dropped.
+	ProviderID *string `json:"providerId,omitempty"`
+	// Documents uploaded to the conversation for this message.
+	AttachmentDocumentIds []string                   `json:"attachmentDocumentIds,omitempty"`
+	Mentions              []*AssistantEntityRefInput `json:"mentions,omitempty"`
+	// Hands the message to another agent the person may use, run from this conversation in place of its own agent's reply.
+	DirectedAgentID *string `json:"directedAgentId,omitempty"`
+}
+
+// The page a message was written on, so the agent reads it with the message.
+type AssistantPageContextInput struct {
+	Path       string `json:"path"`
+	EntityType string `json:"entityType"`
+	EntityID   string `json:"entityId"`
+	Title      string `json:"title"`
+	// The table the page was showing, when it was one: its resource, search, filters, sort, selection, figures and columns.
+	View map[string]any `json:"view,omitempty"`
+	// The unsaved work of the page a page-bound conversation belongs to: an import's fields and stops, or a formula's source.
+	Draft map[string]any `json:"draft,omitempty"`
+}
+
+// What became of a message handed to a conversation's queue: still waiting (with
+// why, when the conversation was free but could not take it), read into the
+// reply under way, or sent as a reply of its own.
+type AssistantQueueOutcome struct {
+	// The queued message, while it waits.
+	Item     any                   `json:"item,omitempty"`
+	Steering bool                  `json:"steering"`
+	Held     string                `json:"held"`
+	Turn     *AssistantStartedTurn `json:"turn,omitempty"`
+}
+
+// A reply handed to a worker: the turn to follow and the stream it is followed
+// on. The reply is not here; it arrives on the stream, so it survives the request
+// that asked for it ending.
+type AssistantStartedTurn struct {
+	TurnID   string `json:"turnId"`
+	ThreadID string `json:"threadId"`
+	// The turn's event stream under the API root: read it as text/event-stream.
+	StreamURL string `json:"streamUrl"`
+	// The turn's status when it was handed over: Pending or Running.
+	Status string `json:"status"`
+}
+
 type AttachPayEventsInput struct {
 	SettlementID string   `json:"settlementId"`
 	PayEventIds  []string `json:"payEventIds"`
@@ -5353,6 +5435,19 @@ type EndWorkerPayAssignmentInput struct {
 	EndDate      int    `json:"endDate"`
 }
 
+type EnqueueAssistantMessageInput struct {
+	Content               string                     `json:"content"`
+	Context               *AssistantPageContextInput `json:"context,omitempty"`
+	Surface               *string                    `json:"surface,omitempty"`
+	ProviderID            *string                    `json:"providerId,omitempty"`
+	AttachmentDocumentIds []string                   `json:"attachmentDocumentIds,omitempty"`
+	Mentions              []*AssistantEntityRefInput `json:"mentions,omitempty"`
+	// Hands the message to another agent the person may use, once the conversation is free.
+	DirectedAgentID *string `json:"directedAgentId,omitempty"`
+	// Reads the message into the reply under way at its next step, rather than sending it once the reply ends.
+	Steer *bool `json:"steer,omitempty"`
+}
+
 type EnrollBenefitInput struct {
 	WorkerID      string                   `json:"workerId"`
 	BenefitPlanID string                   `json:"benefitPlanId"`
@@ -6405,6 +6500,14 @@ type GrantCarrierIntelOverrideInput struct {
 	RuleCode  string `json:"ruleCode"`
 	Reason    string `json:"reason"`
 	ExpiresAt *int   `json:"expiresAt,omitempty"`
+}
+
+type HandOffAssistantThreadInput struct {
+	AgentDefinitionID string `json:"agentDefinitionId"`
+	// The conversation's pinned facts, as the person sees them.
+	Facts []string `json:"facts,omitempty"`
+	// Hands off one chapter of the conversation instead of all of it.
+	ChapterID *string `json:"chapterId,omitempty"`
 }
 
 type HandOffWatchtowerItemInput struct {
@@ -11535,6 +11638,16 @@ type StageFuelPurchaseImportInput struct {
 	Mapping    map[string]any `json:"mapping,omitempty"`
 }
 
+type StartAssistantThreadInput struct {
+	AgentDefinitionID string  `json:"agentDefinitionId"`
+	Title             *string `json:"title,omitempty"`
+	// Where the conversation begins; absent means the panel.
+	Origin *string `json:"origin,omitempty"`
+	// The record the conversation is about, when it was opened from one.
+	SubjectType *string `json:"subjectType,omitempty"`
+	SubjectID   *string `json:"subjectId,omitempty"`
+}
+
 type StartBillingTransferRunInput struct {
 	Scope billingtransfer.RunScope `json:"scope"`
 	// Required when scope is Selected.
@@ -12199,6 +12312,26 @@ type UpdateAgentQualityControlInput struct {
 	RegressionThreshold float64 `json:"regressionThreshold"`
 	MinCases            int     `json:"minCases"`
 	ForceRerunDays      int     `json:"forceRerunDays"`
+}
+
+// Pauses or resumes a scheduled request (enabled), edits it (prompt, repeat and
+// time together), or both. repeat is day, weekday or a day of the week; time a
+// 24-hour HH:MM on the schedule's own clock.
+type UpdateAssistantScheduleInput struct {
+	Enabled *bool   `json:"enabled,omitempty"`
+	Prompt  *string `json:"prompt,omitempty"`
+	Repeat  *string `json:"repeat,omitempty"`
+	Time    *string `json:"time,omitempty"`
+}
+
+// What a person changes about their own conversation; an absent or null field is left as it is.
+type UpdateAssistantThreadInput struct {
+	Title  *string `json:"title,omitempty"`
+	Pinned *bool   `json:"pinned,omitempty"`
+	// Replaces the facts the agents keep in mind for the whole conversation; an empty list unpins them all.
+	PinnedFacts []string `json:"pinnedFacts,omitempty"`
+	// Whether the conversation compacts itself on nearing a full context.
+	AutoCompact *bool `json:"autoCompact,omitempty"`
 }
 
 type UpdateBenefitPlanInput struct {

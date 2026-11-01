@@ -1,0 +1,28 @@
+query AssistantSchedules($limit: Int, $offset: Int) {
+  assistantSchedules(limit: $limit, offset: $offset)
+}
+
+query AssistantThreadSchedules($threadId: ID!, $limit: Int, $offset: Int) {
+  assistantThreadSchedules(threadId: $threadId, limit: $limit, offset: $offset)
+}
+
+mutation CreateAssistantSchedule($threadId: ID!, $content: String!) {
+  createAssistantSchedule(threadId: $threadId, content: $content)
+}
+
+mutation UpdateAssistantSchedule($id: ID!, $input: UpdateAssistantScheduleInput!) {
+  updateAssistantSchedule(id: $id, input: $input)
+}
+
+mutation DeleteAssistantSchedule($id: ID!) {
+  deleteAssistantSchedule(id: $id)
+}
+
+mutation RunAssistantSchedule($id: ID!) {
+  runAssistantSchedule(id: $id) {
+    turnId
+    threadId
+    streamUrl
+    status
+  }
+}

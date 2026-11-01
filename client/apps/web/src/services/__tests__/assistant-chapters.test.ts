@@ -1,28 +1,23 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AssistantService } from "../assistant";
 
-const server = vi.hoisted(() => ({ body: undefined as unknown, urls: [] as string[] }));
+const server = vi.hoisted(() => ({ body: undefined as unknown, asked: [] as unknown[] }));
 
-vi.mock("@trenova/shared/lib/api", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@trenova/shared/lib/api")>();
-  return {
-    ...actual,
-    api: {
-      ...actual.api,
-      get: vi.fn(async (url: string) => {
-        server.urls.push(url);
-        return server.body;
-      }),
+vi.mock("@trenova/shared/lib/graphql", () => ({
+  requestGraphQL: vi.fn(
+    async (params: { operationName: string; variables?: Record<string, unknown> }) => {
+      server.asked.push([params.operationName, params.variables]);
+      return { assistantChapters: server.body };
     },
-  };
-});
+  ),
+}));
 
 afterEach(() => {
   server.body = undefined;
-  server.urls = [];
+  server.asked = [];
 });
 
-/* A chapter as GET /assistant/threads/:id/chapters/ serves it (conversation.Chapter). */
+/* A chapter as the assistantChapters query serves it (conversation.Chapter). */
 const served = {
   id: "achp_1",
   businessUnitId: "bu_1",
@@ -40,11 +35,13 @@ const served = {
 
 describe("AssistantService.listChapters", () => {
   it("resolves to the conversation's chapters, never undefined", async () => {
-    server.body = { items: [served, { ...served, id: "achp_2", turnId: "atrn_2", startSequence: null }] };
+    server.body = {
+      items: [served, { ...served, id: "achp_2", turnId: "atrn_2", startSequence: null }],
+    };
 
     const chapters = await new AssistantService().listChapters("athr_1");
 
-    expect(server.urls).toEqual(["/assistant/threads/athr_1/chapters/"]);
+    expect(server.asked).toEqual([["AssistantChapters", { threadId: "athr_1" }]]);
     expect(chapters.map((chapter) => [chapter.id, chapter.startSequence])).toEqual([
       ["achp_1", 4],
       ["achp_2", null],

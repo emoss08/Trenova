@@ -1,7 +1,71 @@
+import {
+  AssistantActiveTurnDocument,
+  AssistantArtifactBySlugDocument,
+  AssistantArtifactLineageDocument,
+  AssistantArtifactRowsDocument,
+  AssistantArtifactsDocument,
+  AssistantCaseDocument,
+  AssistantChaptersDocument,
+  AssistantCommandAvailabilityDocument,
+  AssistantLiveTurnsDocument,
+  AssistantMentionPageDocument,
+  AssistantMentionsDocument,
+  AssistantMessagesDocument,
+  AssistantProvidersDocument,
+  AssistantQueueDocument,
+  AssistantSchedulesDocument,
+  AssistantThreadBudgetDocument,
+  AssistantThreadDocument,
+  AssistantThreadPlansDocument,
+  AssistantThreadProposalsDocument,
+  AssistantThreadSchedulesDocument,
+  AssistantThreadShelvesDocument,
+  AssistantThreadsDocument,
+  AssistantWaitsDocument,
+  AwaitAssistantCaseReplyDocument,
+  BindAssistantCaseDocument,
+  CancelAssistantWaitDocument,
+  CompactAssistantThreadDocument,
+  CreateAssistantScheduleDocument,
+  DeleteAssistantScheduleDocument,
+  DeleteAssistantThreadDocument,
+  DeskSearchDocument,
+  EditAssistantQueuedMessageDocument,
+  EnqueueAssistantMessageDocument,
+  HandOffAssistantThreadDocument,
+  MarkAssistantThreadReadDocument,
+  OpenAssistantChapterDocument,
+  PinAssistantArtifactDocument,
+  RemoveAssistantChapterDocument,
+  RemoveAssistantQueuedMessageDocument,
+  RenameAssistantChapterDocument,
+  ReorderAssistantQueueDocument,
+  RequestAssistantAllowanceDocument,
+  RestoreAssistantDocumentVersionDocument,
+  RewriteAssistantDocumentDocument,
+  RunAssistantArtifactReportDocument,
+  RunAssistantScheduleDocument,
+  SaveAssistantDocumentVersionDocument,
+  SaveAssistantProposalEditsDocument,
+  SendAssistantQueuedMessageDocument,
+  SnoozeAssistantCaseDocument,
+  StartAssistantThreadDocument,
+  StartAssistantTurnDocument,
+  StopAssistantTurnDocument,
+  TickAssistantCaseItemDocument,
+  UnbindAssistantCaseDocument,
+  UpdateAssistantScheduleDocument,
+  UpdateAssistantThreadDocument,
+  WakeAssistantCaseDocument,
+  type AssistantMessageInput,
+  type AssistantPageContextInput,
+  type UpdateAssistantScheduleInput,
+} from "@trenova/graphql/generated/graphql";
 import { api, withSessionHeaders } from "@trenova/shared/lib/api";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { safeParse } from "@trenova/shared/lib/parse";
 import { readEventStream } from "@trenova/shared/lib/sse";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { downloadFromUrl } from "@trenova/shared/lib/utils";
 import { z } from "zod";
 import {
@@ -26,7 +90,6 @@ import {
   assistantArtifactPageSchema,
   artifactRowsSchema,
   assistantArtifactSchema,
-  documentRewriteSchema,
   assistantLiveTurnListSchema,
   agentBudgetStatusSchema,
   assistantPlanListSchema,
@@ -49,7 +112,6 @@ import {
   parseAskStreamEvent,
   parseAssistantStreamEvent,
   saveAgentDefinitionRequestSchema,
-  sendMessageResultSchema,
   type AgentDefinition,
   type AssistantArtifact,
   type AssistantEntityRef,
@@ -284,28 +346,20 @@ export class AssistantService {
     filter?: ThreadListFilter;
     signal?: AbortSignal;
   } = {}) {
-    const params = new URLSearchParams();
-    if (limit !== undefined) {
-      params.set("limit", String(limit));
-    }
-    if (cursor) {
-      params.set("cursor", cursor);
-    }
-    if (until) {
-      params.set("until", until);
-    }
-    if (filter?.pinned !== undefined) {
-      params.set("pinned", String(filter.pinned));
-    }
-    if (filter?.touchedFrom !== undefined) {
-      params.set("touchedFrom", String(filter.touchedFrom));
-    }
-    if (filter?.touchedBefore !== undefined) {
-      params.set("touchedBefore", String(filter.touchedBefore));
-    }
-    const query = params.size > 0 ? `?${params.toString()}` : "";
-    const response = await api.get(`/assistant/threads/${query}`, { signal });
-    return safeParse(assistantThreadPageSchema, response, "Assistant Thread");
+    const response = await requestGraphQL({
+      document: AssistantThreadsDocument,
+      operationName: "AssistantThreads",
+      variables: {
+        limit: limit ?? null,
+        cursor: cursor || null,
+        until: until || null,
+        pinned: filter?.pinned ?? null,
+        touchedFrom: filter?.touchedFrom ?? null,
+        touchedBefore: filter?.touchedBefore ?? null,
+      },
+      signal,
+    });
+    return safeParse(assistantThreadPageSchema, response.assistantThreads, "Assistant Thread");
   }
 
   /** How many conversations each shelf holds, banded by the edges given, newest first. */
@@ -313,33 +367,51 @@ export class AssistantService {
     edges: readonly number[],
     { signal }: { signal?: AbortSignal } = {},
   ) {
-    const params = new URLSearchParams();
-    for (const edge of edges) {
-      params.append("edge", String(edge));
-    }
-    const response = await api.get(`/assistant/threads/shelves/?${params.toString()}`, { signal });
-    return safeParse(assistantThreadShelfCountsSchema, response, "Assistant Thread Shelves");
+    const response = await requestGraphQL({
+      document: AssistantThreadShelvesDocument,
+      operationName: "AssistantThreadShelves",
+      variables: { edges: [...edges] },
+      signal,
+    });
+    return safeParse(
+      assistantThreadShelfCountsSchema,
+      response.assistantThreadShelves,
+      "Assistant Thread Shelves",
+    );
   }
 
   public async startThread(agentDefinitionId: string, options: StartThreadOptions = {}) {
-    const response = await api.post("/assistant/threads/", {
-      agentDefinitionId,
-      title: options.title ?? "",
-      origin: options.origin ?? "Panel",
-      subjectType: options.subjectType ?? "",
-      subjectId: options.subjectId || null,
+    const response = await requestGraphQL({
+      document: StartAssistantThreadDocument,
+      operationName: "StartAssistantThread",
+      variables: {
+        input: {
+          agentDefinitionId,
+          title: options.title ?? "",
+          origin: options.origin ?? "Panel",
+          subjectType: options.subjectType ?? "",
+          subjectId: options.subjectId || null,
+        },
+      },
     });
-    return safeParse(assistantThreadSchema, response, "Assistant Thread");
+    return safeParse(assistantThreadSchema, response.startAssistantThread, "Assistant Thread");
   }
 
   public async updateThread(id: AssistantThread["id"], options: UpdateThreadOptions) {
-    const response = await api.patch(`/assistant/threads/${id}/`, {
-      title: options.title ?? null,
-      pinned: options.pinned ?? null,
-      pinnedFacts: options.pinnedFacts ?? null,
-      autoCompact: options.autoCompact ?? null,
+    const response = await requestGraphQL({
+      document: UpdateAssistantThreadDocument,
+      operationName: "UpdateAssistantThread",
+      variables: {
+        id,
+        input: {
+          title: options.title ?? null,
+          pinned: options.pinned ?? null,
+          pinnedFacts: options.pinnedFacts ? [...options.pinnedFacts] : null,
+          autoCompact: options.autoCompact ?? null,
+        },
+      },
     });
-    return safeParse(assistantThreadSchema, response, "Assistant Thread");
+    return safeParse(assistantThreadSchema, response.updateAssistantThread, "Assistant Thread");
   }
 
   /**
@@ -348,8 +420,12 @@ export class AssistantService {
    * like a reply.
    */
   public async compactThread(threadId: AssistantThread["id"]): Promise<StartedTurn> {
-    const response = await api.post(`/assistant/threads/${threadId}/compact/`, {});
-    return safeParse(startedTurnSchema, response, "Assistant Turn");
+    const response = await requestGraphQL({
+      document: CompactAssistantThreadDocument,
+      operationName: "CompactAssistantThread",
+      variables: { id: threadId },
+    });
+    return response.compactAssistantThread;
   }
 
   /**
@@ -361,19 +437,25 @@ export class AssistantService {
     threadId: AssistantThread["id"],
     options?: { signal?: AbortSignal } & ArtifactListParams,
   ) {
-    const params = new URLSearchParams();
-    if (options?.cursor) params.set("cursor", options.cursor);
-    if (options?.limit) params.set("limit", String(options.limit));
-    if (options?.q) params.set("q", options.q);
-    if (options?.kind) params.set("kind", options.kind);
-    if (options?.pinned) params.set("pinned", "true");
-    if (options?.summary) params.set("summary", "true");
-    const query = params.toString();
-    const response = await api.get(
-      `/assistant/threads/${threadId}/artifacts/${query ? `?${query}` : ""}`,
-      { signal: options?.signal },
+    const response = await requestGraphQL({
+      document: AssistantArtifactsDocument,
+      operationName: "AssistantArtifacts",
+      variables: {
+        threadId,
+        limit: options?.limit || null,
+        cursor: options?.cursor || null,
+        q: options?.q || null,
+        kind: options?.kind || null,
+        pinned: options?.pinned ? true : null,
+        summary: options?.summary ? true : null,
+      },
+      signal: options?.signal,
+    });
+    return safeParse(
+      assistantArtifactPageSchema,
+      response.assistantArtifacts,
+      "Assistant Artifact",
     );
-    return safeParse(assistantArtifactPageSchema, response, "Assistant Artifact");
   }
 
   /**
@@ -386,20 +468,25 @@ export class AssistantService {
     read: ArtifactRowsRequest,
     options?: { signal?: AbortSignal },
   ) {
-    const params = new URLSearchParams({ limit: String(read.limit) });
-    if (read.after) params.set("after", read.after);
-    if (read.offset) params.set("offset", String(read.offset));
-    if (read.q) params.set("q", read.q);
-    if (read.sortBy) {
-      params.set("sortBy", read.sortBy);
-      params.set("sortDirection", read.sortDirection ?? "asc");
-    }
-    if (read.total) params.set("total", "true");
-    const response = await api.get(
-      `/assistant/threads/${threadId}/artifacts/${artifactId}/rows/?${params.toString()}`,
-      { signal: options?.signal },
-    );
-    return safeParse(artifactRowsSchema, response, "Artifact Rows");
+    const response = await requestGraphQL({
+      document: AssistantArtifactRowsDocument,
+      operationName: "AssistantArtifactRows",
+      variables: {
+        threadId,
+        artifactId,
+        input: {
+          limit: read.limit,
+          after: read.after || null,
+          offset: read.offset || null,
+          q: read.q || null,
+          sortBy: read.sortBy || null,
+          sortDirection: read.sortBy ? (read.sortDirection ?? "asc") : null,
+          total: read.total ? true : null,
+        },
+      },
+      signal: options?.signal,
+    });
+    return safeParse(artifactRowsSchema, response.assistantArtifactRows, "Artifact Rows");
   }
 
   /** Every version of the lineage an artifact belongs to, oldest first. */
@@ -408,10 +495,17 @@ export class AssistantService {
     artifactId: string,
     options?: { signal?: AbortSignal },
   ) {
-    const response = await api.get(`/assistant/threads/${threadId}/artifacts/${artifactId}/`, {
+    const response = await requestGraphQL({
+      document: AssistantArtifactLineageDocument,
+      operationName: "AssistantArtifactLineage",
+      variables: { threadId, artifactId },
       signal: options?.signal,
     });
-    return safeParse(assistantArtifactListSchema, response, "Assistant Artifact");
+    return safeParse(
+      assistantArtifactListSchema,
+      response.assistantArtifactLineage,
+      "Assistant Artifact",
+    );
   }
 
   /** The lineage a link names by its slug. */
@@ -420,11 +514,17 @@ export class AssistantService {
     slug: string,
     options?: { signal?: AbortSignal },
   ) {
-    const response = await api.get(
-      `/assistant/threads/${threadId}/artifacts/by-slug/${encodeURIComponent(slug)}/`,
-      { signal: options?.signal },
+    const response = await requestGraphQL({
+      document: AssistantArtifactBySlugDocument,
+      operationName: "AssistantArtifactBySlug",
+      variables: { threadId, slug },
+      signal: options?.signal,
+    });
+    return safeParse(
+      assistantArtifactListSchema,
+      response.assistantArtifactBySlug,
+      "Assistant Artifact",
     );
-    return safeParse(assistantArtifactListSchema, response, "Assistant Artifact");
   }
 
   public async saveDocumentVersion(
@@ -432,28 +532,43 @@ export class AssistantService {
     artifactId: string,
     body: { body: string; note: string },
   ) {
-    const response = await api.post(
-      `/assistant/threads/${threadId}/artifacts/${artifactId}/versions/`,
-      body,
+    const response = await requestGraphQL({
+      document: SaveAssistantDocumentVersionDocument,
+      operationName: "SaveAssistantDocumentVersion",
+      variables: { threadId, artifactId, body: body.body, note: body.note },
+    });
+    return safeParse(
+      assistantArtifactSchema,
+      response.saveAssistantDocumentVersion,
+      "Assistant Artifact",
     );
-    return safeParse(assistantArtifactSchema, response, "Assistant Artifact");
   }
 
   public async restoreDocumentVersion(threadId: AssistantThread["id"], artifactId: string) {
-    const response = await api.post(
-      `/assistant/threads/${threadId}/artifacts/${artifactId}/restore/`,
-      {},
+    const response = await requestGraphQL({
+      document: RestoreAssistantDocumentVersionDocument,
+      operationName: "RestoreAssistantDocumentVersion",
+      variables: { threadId, artifactId },
+    });
+    return safeParse(
+      assistantArtifactSchema,
+      response.restoreAssistantDocumentVersion,
+      "Assistant Artifact",
     );
-    return safeParse(assistantArtifactSchema, response, "Assistant Artifact");
   }
 
   /** Runs the report a report run or preview shows, kept as the artifact's next version. */
   public async runArtifactReport(threadId: AssistantThread["id"], artifactId: string) {
-    const response = await api.post(
-      `/assistant/threads/${threadId}/artifacts/${artifactId}/run/`,
-      {},
+    const response = await requestGraphQL({
+      document: RunAssistantArtifactReportDocument,
+      operationName: "RunAssistantArtifactReport",
+      variables: { threadId, artifactId },
+    });
+    return safeParse(
+      assistantArtifactSchema,
+      response.runAssistantArtifactReport,
+      "Assistant Artifact",
     );
-    return safeParse(assistantArtifactSchema, response, "Assistant Artifact");
   }
 
   public async rewriteDocument(
@@ -461,11 +576,12 @@ export class AssistantService {
     artifactId: string,
     body: { text: string; mode: "shorter" | "plain" | "ask"; prompt: string },
   ) {
-    const response = await api.post(
-      `/assistant/threads/${threadId}/artifacts/${artifactId}/rewrite/`,
-      body,
-    );
-    return safeParse(documentRewriteSchema, response, "Document Rewrite");
+    const response = await requestGraphQL({
+      document: RewriteAssistantDocumentDocument,
+      operationName: "RewriteAssistantDocument",
+      variables: { threadId, artifactId, ...body },
+    });
+    return { text: response.rewriteAssistantDocument };
   }
 
   public async pinArtifact(
@@ -473,10 +589,12 @@ export class AssistantService {
     artifactId: AssistantArtifact["id"],
     pinned: boolean,
   ) {
-    const response = await api.post(`/assistant/threads/${threadId}/artifacts/${artifactId}/pin/`, {
-      pinned,
+    const response = await requestGraphQL({
+      document: PinAssistantArtifactDocument,
+      operationName: "PinAssistantArtifact",
+      variables: { threadId, artifactId, pinned },
     });
-    return safeParse(assistantArtifactSchema, response, "Assistant Artifact");
+    return safeParse(assistantArtifactSchema, response.pinAssistantArtifact, "Assistant Artifact");
   }
 
   /**
@@ -487,11 +605,17 @@ export class AssistantService {
     threadId: AssistantThread["id"],
     options?: { signal?: AbortSignal; limit?: number; offset?: number },
   ) {
-    const response = await api.get(
-      `/assistant/threads/${threadId}/schedules/?limit=${options?.limit ?? 25}&offset=${options?.offset ?? 0}`,
-      { signal: options?.signal },
+    const response = await requestGraphQL({
+      document: AssistantThreadSchedulesDocument,
+      operationName: "AssistantThreadSchedules",
+      variables: { threadId, limit: options?.limit ?? 25, offset: options?.offset ?? 0 },
+      signal: options?.signal,
+    });
+    return safeParse(
+      conversationScheduleListSchema,
+      response.assistantThreadSchedules,
+      "Conversation Schedule",
     );
-    return safeParse(conversationScheduleListSchema, response, "Conversation Schedule");
   }
 
   /**
@@ -499,11 +623,17 @@ export class AssistantService {
    * one's conversation title: the ones that run soonest first, paused ones after.
    */
   public async listSchedules(options?: { signal?: AbortSignal; limit?: number; offset?: number }) {
-    const response = await api.get(
-      `/assistant/schedules/?limit=${options?.limit ?? 25}&offset=${options?.offset ?? 0}`,
-      { signal: options?.signal },
+    const response = await requestGraphQL({
+      document: AssistantSchedulesDocument,
+      operationName: "AssistantSchedules",
+      variables: { limit: options?.limit ?? 25, offset: options?.offset ?? 0 },
+      signal: options?.signal,
+    });
+    return safeParse(
+      conversationScheduleListSchema,
+      response.assistantSchedules,
+      "Conversation Schedule",
     );
-    return safeParse(conversationScheduleListSchema, response, "Conversation Schedule");
   }
 
   /**
@@ -511,8 +641,16 @@ export class AssistantService {
    * server reads the cadence and answers with the schedule and its card.
    */
   public async createSchedule(threadId: AssistantThread["id"], content: string) {
-    const response = await api.post(`/assistant/threads/${threadId}/schedules/`, { content });
-    return safeParse(createdScheduleSchema, response, "Conversation Schedule");
+    const response = await requestGraphQL({
+      document: CreateAssistantScheduleDocument,
+      operationName: "CreateAssistantSchedule",
+      variables: { threadId, content },
+    });
+    return safeParse(
+      createdScheduleSchema,
+      response.createAssistantSchedule,
+      "Conversation Schedule",
+    );
   }
 
   /**
@@ -524,24 +662,30 @@ export class AssistantService {
     id: ConversationSchedule["id"],
     edit: { prompt: string; repeat: string; time: string },
   ) {
-    const response = await api.patch(`/assistant/schedules/${id}/`, edit);
-    return safeParse(conversationScheduleSchema, response, "Conversation Schedule");
+    return this.updateSchedule(id, edit);
   }
 
   /** Pauses or resumes a schedule. */
   public async setScheduleEnabled(id: ConversationSchedule["id"], enabled: boolean) {
-    const response = await api.patch(`/assistant/schedules/${id}/`, { enabled });
-    return safeParse(conversationScheduleSchema, response, "Conversation Schedule");
+    return this.updateSchedule(id, { enabled });
   }
 
   public async deleteSchedule(id: ConversationSchedule["id"]) {
-    await api.delete(`/assistant/schedules/${id}/`);
+    await requestGraphQL({
+      document: DeleteAssistantScheduleDocument,
+      operationName: "DeleteAssistantSchedule",
+      variables: { id },
+    });
   }
 
   /** Asks a schedule's request now; answers with the turn to watch. */
-  public async runSchedule(id: ConversationSchedule["id"]) {
-    const response = await api.post(`/assistant/schedules/${id}/run/`, {});
-    return safeParse(startedTurnSchema, response, "Assistant Turn");
+  public async runSchedule(id: ConversationSchedule["id"]): Promise<StartedTurn> {
+    const response = await requestGraphQL({
+      document: RunAssistantScheduleDocument,
+      operationName: "RunAssistantSchedule",
+      variables: { id },
+    });
+    return response.runAssistantSchedule;
   }
 
   /** What the person left for the conversation, in the order it will be sent. */
@@ -549,8 +693,13 @@ export class AssistantService {
     threadId: AssistantThread["id"],
     { signal }: { signal?: AbortSignal } = {},
   ) {
-    const response = await api.get(`/assistant/threads/${threadId}/queue/`, { signal });
-    return safeParse(queuedMessageListSchema, response, "Queued Message");
+    const response = await requestGraphQL({
+      document: AssistantQueueDocument,
+      operationName: "AssistantQueue",
+      variables: { threadId },
+      signal,
+    });
+    return safeParse(queuedMessageListSchema, response.assistantQueue, "Queued Message");
   }
 
   /**
@@ -564,11 +713,15 @@ export class AssistantService {
     content: string,
     options: EnqueueOptions = {},
   ): Promise<QueueOutcome> {
-    const response = await api.post(`/assistant/threads/${threadId}/queue/`, {
-      ...messageBody(content, options),
-      steer: options.steer ?? false,
+    const response = await requestGraphQL({
+      document: EnqueueAssistantMessageDocument,
+      operationName: "EnqueueAssistantMessage",
+      variables: {
+        threadId,
+        input: { ...messageInput(content, options), steer: options.steer ?? false },
+      },
     });
-    return safeParse(queueOutcomeSchema, response, "Queued Message");
+    return safeParse(queueOutcomeSchema, response.enqueueAssistantMessage, "Queued Message");
   }
 
   public async editQueued(
@@ -576,21 +729,30 @@ export class AssistantService {
     item: Pick<QueuedMessage, "id" | "version">,
     content: string,
   ) {
-    const response = await api.patch(`/assistant/threads/${threadId}/queue/${item.id}/`, {
-      content,
-      version: item.version,
+    const response = await requestGraphQL({
+      document: EditAssistantQueuedMessageDocument,
+      operationName: "EditAssistantQueuedMessage",
+      variables: { threadId, itemId: item.id, content, version: item.version },
     });
-    return safeParse(queuedMessageSchema, response, "Queued Message");
+    return safeParse(queuedMessageSchema, response.editAssistantQueuedMessage, "Queued Message");
   }
 
   public async removeQueued(threadId: AssistantThread["id"], id: QueuedMessage["id"]) {
-    await api.delete(`/assistant/threads/${threadId}/queue/${id}/`);
+    await requestGraphQL({
+      document: RemoveAssistantQueuedMessageDocument,
+      operationName: "RemoveAssistantQueuedMessage",
+      variables: { threadId, itemId: id },
+    });
   }
 
   /** Puts the waiting messages in this order; every one of them is named once. */
   public async reorderQueue(threadId: AssistantThread["id"], ids: readonly string[]) {
-    const response = await api.put(`/assistant/threads/${threadId}/queue/order/`, { ids });
-    return safeParse(queuedMessageListSchema, response, "Queued Message");
+    const response = await requestGraphQL({
+      document: ReorderAssistantQueueDocument,
+      operationName: "ReorderAssistantQueue",
+      variables: { threadId, ids: [...ids] },
+    });
+    return safeParse(queuedMessageListSchema, response.reorderAssistantQueue, "Queued Message");
   }
 
   /**
@@ -598,8 +760,12 @@ export class AssistantService {
    * or as a reply of its own ahead of the rest of the queue.
    */
   public async sendQueued(threadId: AssistantThread["id"], id: QueuedMessage["id"]) {
-    const response = await api.post(`/assistant/threads/${threadId}/queue/${id}/send/`, {});
-    return safeParse(queueOutcomeSchema, response, "Queued Message");
+    const response = await requestGraphQL({
+      document: SendAssistantQueuedMessageDocument,
+      operationName: "SendAssistantQueuedMessage",
+      variables: { threadId, itemId: id },
+    });
+    return safeParse(queueOutcomeSchema, response.sendAssistantQueuedMessage, "Queued Message");
   }
 
   /** What the conversation's agent is waiting on, newest first. */
@@ -607,14 +773,23 @@ export class AssistantService {
     threadId: AssistantThread["id"],
     { signal }: { signal?: AbortSignal } = {},
   ) {
-    const response = await api.get(`/assistant/threads/${threadId}/waits/`, { signal });
-    return safeParse(agentWaitListSchema, response, "Agent Wait");
+    const response = await requestGraphQL({
+      document: AssistantWaitsDocument,
+      operationName: "AssistantWaits",
+      variables: { threadId },
+      signal,
+    });
+    return safeParse(agentWaitListSchema, response.assistantWaits, "Agent Wait");
   }
 
   /** Ends a wait without the agent picking the work up. */
   public async cancelWait(threadId: AssistantThread["id"], waitId: string) {
-    const response = await api.post(`/assistant/threads/${threadId}/waits/${waitId}/cancel/`, {});
-    return safeParse(agentWaitSchema, response, "Agent Wait");
+    const response = await requestGraphQL({
+      document: CancelAssistantWaitDocument,
+      operationName: "CancelAssistantWait",
+      variables: { threadId, waitId },
+    });
+    return safeParse(agentWaitSchema, response.cancelAssistantWait, "Agent Wait");
   }
 
   /** The conversation's chapters, oldest first. */
@@ -622,15 +797,28 @@ export class AssistantService {
     threadId: AssistantThread["id"],
     { signal }: { signal?: AbortSignal } = {},
   ) {
-    const response = await api.get(`/assistant/threads/${threadId}/chapters/`, { signal });
-    const list = await safeParse(assistantChapterListSchema, response, "Assistant Chapter");
+    const response = await requestGraphQL({
+      document: AssistantChaptersDocument,
+      operationName: "AssistantChapters",
+      variables: { threadId },
+      signal,
+    });
+    const list = await safeParse(
+      assistantChapterListSchema,
+      response.assistantChapters,
+      "Assistant Chapter",
+    );
     return list.items;
   }
 
   /** Starts a chapter at the turn the message belongs to. */
   public async openChapter(threadId: AssistantThread["id"], messageId: string) {
-    const response = await api.post(`/assistant/threads/${threadId}/chapters/`, { messageId });
-    return safeParse(assistantChapterSchema, response, "Assistant Chapter");
+    const response = await requestGraphQL({
+      document: OpenAssistantChapterDocument,
+      operationName: "OpenAssistantChapter",
+      variables: { threadId, messageId },
+    });
+    return safeParse(assistantChapterSchema, response.openAssistantChapter, "Assistant Chapter");
   }
 
   /** Names a chapter; the title is the person's from then on. */
@@ -640,22 +828,32 @@ export class AssistantService {
     title: string,
     version: number,
   ) {
-    const response = await api.patch(`/assistant/threads/${threadId}/chapters/${chapterId}/`, {
-      title,
-      version,
+    const response = await requestGraphQL({
+      document: RenameAssistantChapterDocument,
+      operationName: "RenameAssistantChapter",
+      variables: { threadId, chapterId, title, version },
     });
-    return safeParse(assistantChapterSchema, response, "Assistant Chapter");
+    return safeParse(assistantChapterSchema, response.renameAssistantChapter, "Assistant Chapter");
   }
 
   /** Ends a chapter where it starts, so what it held reads as part of the one before. */
   public async removeChapter(threadId: AssistantThread["id"], chapterId: string) {
-    await api.delete(`/assistant/threads/${threadId}/chapters/${chapterId}/`);
+    await requestGraphQL({
+      document: RemoveAssistantChapterDocument,
+      operationName: "RemoveAssistantChapter",
+      variables: { threadId, chapterId },
+    });
   }
 
   /** Where the conversation's case stands, what stands between its record and what comes next. */
   public async getCase(threadId: AssistantThread["id"], { signal }: { signal?: AbortSignal } = {}) {
-    const response = await api.get(`/assistant/threads/${threadId}/case/`, { signal });
-    return safeParse(caseViewSchema, response, "Case");
+    const response = await requestGraphQL({
+      document: AssistantCaseDocument,
+      operationName: "AssistantCase",
+      variables: { threadId },
+      signal,
+    });
+    return safeParse(caseViewSchema, response.assistantCase, "Case");
   }
 
   /** Makes the conversation a case about a shipment, invoice or dispute. */
@@ -663,14 +861,22 @@ export class AssistantService {
     threadId: AssistantThread["id"],
     subject: { subjectType: CaseSubjectType; subjectId: string },
   ) {
-    const response = await api.put(`/assistant/threads/${threadId}/case/`, subject);
-    return safeParse(caseBindingSchema, response, "Case");
+    const response = await requestGraphQL({
+      document: BindAssistantCaseDocument,
+      operationName: "BindAssistantCase",
+      variables: { threadId, subjectType: subject.subjectType, subjectId: subject.subjectId },
+    });
+    return safeParse(caseBindingSchema, response.bindAssistantCase, "Case");
   }
 
   /** Makes the case an ordinary conversation again. */
   public async unbindCase(threadId: AssistantThread["id"]) {
-    const response = await api.delete(`/assistant/threads/${threadId}/case/`);
-    return safeParse(caseBindingSchema, response, "Case");
+    const response = await requestGraphQL({
+      document: UnbindAssistantCaseDocument,
+      operationName: "UnbindAssistantCase",
+      variables: { threadId },
+    });
+    return safeParse(caseBindingSchema, response.unbindAssistantCase, "Case");
   }
 
   /**
@@ -682,22 +888,31 @@ export class AssistantService {
     threadId: AssistantThread["id"],
     snooze: { anchor: SnoozeAnchor; until?: number },
   ) {
-    const response = await api.post(`/assistant/threads/${threadId}/case/snooze/`, snooze);
-    return safeParse(caseBindingSchema, response, "Case");
+    const response = await requestGraphQL({
+      document: SnoozeAssistantCaseDocument,
+      operationName: "SnoozeAssistantCase",
+      variables: { threadId, anchor: snooze.anchor, until: snooze.until ?? null },
+    });
+    return safeParse(caseBindingSchema, response.snoozeAssistantCase, "Case");
   }
 
   public async wakeCase(threadId: AssistantThread["id"]) {
-    const response = await api.post(`/assistant/threads/${threadId}/case/wake/`, {});
-    return safeParse(caseBindingSchema, response, "Case");
+    const response = await requestGraphQL({
+      document: WakeAssistantCaseDocument,
+      operationName: "WakeAssistantCase",
+      variables: { threadId },
+    });
+    return safeParse(caseBindingSchema, response.wakeAssistantCase, "Case");
   }
 
   /** Ticks, or unticks, a step the organization added for a person to tick. */
   public async tickCaseItem(threadId: AssistantThread["id"], itemKey: string, ticked: boolean) {
-    const response = await api.post(`/assistant/threads/${threadId}/case/ticks/`, {
-      itemKey,
-      ticked,
+    const response = await requestGraphQL({
+      document: TickAssistantCaseItemDocument,
+      operationName: "TickAssistantCaseItem",
+      variables: { threadId, itemKey, ticked },
     });
-    return safeParse(caseViewSchema, response, "Case");
+    return safeParse(caseViewSchema, response.tickAssistantCaseItem, "Case");
   }
 
   /** Parks the case until the customer or one of the carriers replies. */
@@ -705,27 +920,53 @@ export class AssistantService {
     threadId: AssistantThread["id"],
     party: { party: CaseParty["kind"]; partyId: string; giveUpAfterHours?: number },
   ) {
-    const response = await api.post(`/assistant/threads/${threadId}/case/await-reply/`, party);
-    return safeParse(agentWaitSchema, response, "Agent Wait");
+    const response = await requestGraphQL({
+      document: AwaitAssistantCaseReplyDocument,
+      operationName: "AwaitAssistantCaseReply",
+      variables: {
+        threadId,
+        party: party.party,
+        partyId: party.partyId,
+        giveUpAfterHours: party.giveUpAfterHours ?? null,
+      },
+    });
+    return safeParse(agentWaitSchema, response.awaitAssistantCaseReply, "Agent Wait");
   }
 
-  public async getThread(id: AssistantThread["id"]) {
-    const response = await api.get(`/assistant/threads/${id}/`);
-    return safeParse(assistantThreadSchema, response, "Assistant Thread");
+  public async getThread(id: AssistantThread["id"], { signal }: { signal?: AbortSignal } = {}) {
+    const response = await requestGraphQL({
+      document: AssistantThreadDocument,
+      operationName: "AssistantThread",
+      variables: { id },
+      signal,
+    });
+    return safeParse(assistantThreadSchema, response.assistantThread, "Assistant Thread");
   }
 
   /** How close the thread's agent, and the person asking, are to their caps. */
   public async threadBudget(id: AssistantThread["id"], { signal }: { signal?: AbortSignal } = {}) {
-    const response = await api.get(`/assistant/threads/${id}/budget/`, { signal });
-    return safeParse(threadBudgetSchema, response, "Assistant Thread Budget");
+    const response = await requestGraphQL({
+      document: AssistantThreadBudgetDocument,
+      operationName: "AssistantThreadBudget",
+      variables: { threadId: id },
+      signal,
+    });
+    return safeParse(threadBudgetSchema, response.assistantThreadBudget, "Assistant Thread Budget");
   }
 
   /** The extension commands (/browser, /search) the person can send this agent. */
   public async commandAvailability(agentId: string, { signal }: { signal?: AbortSignal } = {}) {
-    const response = await api.get(`/assistant/agents/${encodeURIComponent(agentId)}/commands/`, {
+    const response = await requestGraphQL({
+      document: AssistantCommandAvailabilityDocument,
+      operationName: "AssistantCommandAvailability",
+      variables: { agentId },
       signal,
     });
-    return safeParse(commandAvailabilitySchema, response, "Command Availability");
+    return safeParse(
+      commandAvailabilitySchema,
+      response.assistantCommandAvailability,
+      "Command Availability",
+    );
   }
 
   /** Asks the people who run AI Control for what the person ran out of. */
@@ -733,8 +974,12 @@ export class AssistantService {
     id: AssistantThread["id"],
     kind: "access" | "allowance" | "budget" | "daily_runs",
   ) {
-    const response = await api.post(`/assistant/threads/${id}/requests/`, { kind });
-    return response as { sent: number };
+    const response = await requestGraphQL({
+      document: RequestAssistantAllowanceDocument,
+      operationName: "RequestAssistantAllowance",
+      variables: { threadId: id, kind },
+    });
+    return { sent: response.requestAssistantAllowance };
   }
 
   /**
@@ -748,21 +993,32 @@ export class AssistantService {
     facts: readonly string[] = [],
     chapterId?: string,
   ) {
-    const response = await api.post(`/assistant/threads/${id}/handoff/`, {
-      agentDefinitionId,
-      facts,
-      ...(chapterId ? { chapterId } : {}),
+    const response = await requestGraphQL({
+      document: HandOffAssistantThreadDocument,
+      operationName: "HandOffAssistantThread",
+      variables: {
+        id,
+        input: { agentDefinitionId, facts: [...facts], chapterId: chapterId || null },
+      },
     });
-    return safeParse(handoffResultSchema, response, "Assistant Handoff");
+    return safeParse(handoffResultSchema, response.handOffAssistantThread, "Assistant Handoff");
   }
 
   public async deleteThread(id: AssistantThread["id"]) {
-    await api.delete(`/assistant/threads/${id}/`);
+    await requestGraphQL({
+      document: DeleteAssistantThreadDocument,
+      operationName: "DeleteAssistantThread",
+      variables: { id },
+    });
   }
 
   /** Marks everything in the conversation as seen by its owner. */
   public async markThreadRead(id: AssistantThread["id"]) {
-    await api.post(`/assistant/threads/${id}/read/`);
+    await requestGraphQL({
+      document: MarkAssistantThreadReadDocument,
+      operationName: "MarkAssistantThreadRead",
+      variables: { id },
+    });
   }
 
   /**
@@ -773,22 +1029,15 @@ export class AssistantService {
     threadId: AssistantThread["id"],
     { limit, before, signal }: { limit?: number; before?: number; signal?: AbortSignal } = {},
   ) {
-    const params = new URLSearchParams();
-    if (limit !== undefined) {
-      params.set("limit", String(limit));
-    }
-    if (before !== undefined) {
-      params.set("before", String(before));
-    }
-    const query = params.size > 0 ? `?${params.toString()}` : "";
-    const response = await api.get(`/assistant/threads/${threadId}/messages/${query}`, { signal });
-    return safeParse(assistantMessagePageSchema, response, "Assistant Message");
+    const response = await requestGraphQL({
+      document: AssistantMessagesDocument,
+      operationName: "AssistantMessages",
+      variables: { threadId, limit: limit ?? null, before: before ?? null },
+      signal,
+    });
+    return safeParse(assistantMessagePageSchema, response.assistantMessages, "Assistant Message");
   }
 
-  /**
-   * A refused turn comes back as a normal result with `refused` set, not as an
-   * error: the turn was processed, recorded, and explained.
-   */
   /**
    * Records a person can name with @ from the composer, of one kind or of
    * every kind they may read, matched on what the record is called.
@@ -798,9 +1047,17 @@ export class AssistantService {
     type: MentionSearchType,
     { signal }: { signal?: AbortSignal } = {},
   ) {
-    const params = new URLSearchParams({ query, type });
-    const response = await api.get(`/assistant/mentions/?${params.toString()}`, { signal });
-    const parsed = await safeParse(mentionCandidateListSchema, response, "Assistant Mentions");
+    const response = await requestGraphQL({
+      document: AssistantMentionsDocument,
+      operationName: "AssistantMentions",
+      variables: { query, type },
+      signal,
+    });
+    const parsed = await safeParse(
+      mentionCandidateListSchema,
+      response.assistantMentions,
+      "Assistant Mentions",
+    );
 
     return parsed.results;
   }
@@ -811,15 +1068,14 @@ export class AssistantService {
     kind: MentionPageKind,
     { offset, limit, signal }: { offset: number; limit: number; signal?: AbortSignal },
   ) {
-    const params = new URLSearchParams({
-      query,
-      kind,
-      offset: String(offset),
-      limit: String(limit),
+    const response = await requestGraphQL({
+      document: AssistantMentionPageDocument,
+      operationName: "AssistantMentionPage",
+      variables: { query, kind, offset, limit },
+      signal,
     });
-    const response = await api.get(`/assistant/mentions/?${params.toString()}`, { signal });
 
-    return safeParse(mentionPageSchema, response, "Assistant Mentions");
+    return safeParse(mentionPageSchema, response.assistantMentionPage, "Assistant Mentions");
   }
 
   /**
@@ -832,34 +1088,34 @@ export class AssistantService {
     kind: DeskSearchKind,
     { signal }: { signal?: AbortSignal } = {},
   ) {
-    const params = new URLSearchParams({ query, kind });
-    const response = await api.get(`/assistant/search/?${params.toString()}`, { signal });
-    const parsed = await safeParse(deskSearchResultListSchema, response, "Desk Search");
+    const response = await requestGraphQL({
+      document: DeskSearchDocument,
+      operationName: "DeskSearch",
+      variables: { query, kind },
+      signal,
+    });
+    const parsed = await safeParse(deskSearchResultListSchema, response.deskSearch, "Desk Search");
 
     return parsed.results;
   }
 
   /** The models this organization has made available to the assistant. */
-  public async listProviders() {
-    const response = await api.get("/assistant/providers/");
+  public async listProviders({ signal }: { signal?: AbortSignal } = {}) {
+    const response = await requestGraphQL({
+      document: AssistantProvidersDocument,
+      operationName: "AssistantProviders",
+      signal,
+    });
     // safeParse resolves a promise, so the await belongs here rather than on
     // the caller: reading .results off the promise itself yields undefined, the
     // query stores undefined, and the picker quietly renders nothing.
-    const parsed = await safeParse(assistantProviderListSchema, response, "Assistant Providers");
+    const parsed = await safeParse(
+      assistantProviderListSchema,
+      response.assistantProviders,
+      "Assistant Providers",
+    );
 
     return parsed.results;
-  }
-
-  public async sendMessage(
-    threadId: AssistantThread["id"],
-    content: string,
-    options: SendMessageOptions = {},
-  ) {
-    const response = await api.post(
-      `/assistant/threads/${threadId}/messages/`,
-      messageBody(content, options),
-    );
-    return safeParse(sendMessageResultSchema, response, "Assistant Reply");
   }
 
   /**
@@ -878,13 +1134,14 @@ export class AssistantService {
     options: SendMessageOptions = {},
     { signal }: { signal?: AbortSignal } = {},
   ): Promise<StartedTurn> {
-    const response = await api.post(
-      `/assistant/threads/${threadId}/turns/`,
-      messageBody(content, options),
-      { signal },
-    );
+    const response = await requestGraphQL({
+      document: StartAssistantTurnDocument,
+      operationName: "StartAssistantTurn",
+      variables: { threadId, input: messageInput(content, options) },
+      signal,
+    });
 
-    return safeParse(startedTurnSchema, response, "Assistant Turn");
+    return response.startAssistantTurn;
   }
 
   /**
@@ -998,7 +1255,11 @@ export class AssistantService {
    * on a worker it stops nothing and the turn keeps billing.
    */
   public async stopTurn(turnId: string): Promise<void> {
-    await api.post(`/assistant/turns/${turnId}/stop/`, {});
+    await requestGraphQL({
+      document: StopAssistantTurnDocument,
+      operationName: "StopAssistantTurn",
+      variables: { turnId },
+    });
   }
 
   /**
@@ -1008,27 +1269,56 @@ export class AssistantService {
    * the panel is closed or the conversation was left.
    */
   public async listActiveTurns(options?: { signal?: AbortSignal }) {
-    const response = await api.get("/assistant/turns/active/", { signal: options?.signal });
-    return safeParse(assistantLiveTurnListSchema, response, "Assistant Turns");
+    const response = await requestGraphQL({
+      document: AssistantLiveTurnsDocument,
+      operationName: "AssistantLiveTurns",
+      signal: options?.signal,
+    });
+    return safeParse(
+      assistantLiveTurnListSchema,
+      { items: response.assistantLiveTurns },
+      "Assistant Turns",
+    );
   }
 
   /** The reply a conversation is still producing, if it is producing one. */
-  public async activeTurn(threadId: AssistantThread["id"]): Promise<ActiveTurn | null> {
-    const response = await api.get(`/assistant/threads/${threadId}/turns/active/`);
-    if (typeof response !== "object" || response === null || !("turn" in response)) {
+  public async activeTurn(
+    threadId: AssistantThread["id"],
+    { signal }: { signal?: AbortSignal } = {},
+  ): Promise<ActiveTurn | null> {
+    const response = await requestGraphQL({
+      document: AssistantActiveTurnDocument,
+      operationName: "AssistantActiveTurn",
+      variables: { threadId },
+      signal,
+    });
+    const turn = response.assistantActiveTurn;
+    if (typeof turn !== "object" || turn === null) {
       return null;
     }
 
-    return ((response as { turn: ActiveTurn | null }).turn as ActiveTurn) ?? null;
+    return turn as ActiveTurn;
   }
 
   /**
    * Proposals outlive the turn that raised them, so reopening a thread has to
    * fetch them rather than rely on the send response.
    */
-  public async listProposals(threadId: AssistantThread["id"]) {
-    const response = await api.get(`/assistant/threads/${threadId}/proposals/`);
-    return safeParse(assistantProposalListSchema, response, "Assistant Proposal");
+  public async listProposals(
+    threadId: AssistantThread["id"],
+    { signal }: { signal?: AbortSignal } = {},
+  ) {
+    const response = await requestGraphQL({
+      document: AssistantThreadProposalsDocument,
+      operationName: "AssistantThreadProposals",
+      variables: { threadId },
+      signal,
+    });
+    return safeParse(
+      assistantProposalListSchema,
+      response.assistantThreadProposals,
+      "Assistant Proposal",
+    );
   }
 
   /**
@@ -1041,39 +1331,79 @@ export class AssistantService {
     proposalId: string,
     modifications: Record<string, unknown>,
   ) {
-    const response = await api.put(
-      `/assistant/threads/${threadId}/proposals/${proposalId}/edits/`,
-      { modifications },
-    );
-    return safeParse(proposalEditsSchema, response, "Proposal Edits");
+    const response = await requestGraphQL({
+      document: SaveAssistantProposalEditsDocument,
+      operationName: "SaveAssistantProposalEdits",
+      variables: { threadId, proposalId, modifications },
+    });
+    return safeParse(proposalEditsSchema, response.saveAssistantProposalEdits, "Proposal Edits");
   }
 
-  /**
-   * Deciding goes through the agent proposal endpoint rather than a chat-specific
-   * one: a proposal raised in conversation is the same kind of record as one
-   * raised by the billing agent, and it is checked, executed and audited the same
-   * way. Accepting runs the tool as the approver, so this can fail on their own
-   * permissions even though the message was theirs.
-   */
   /**
    * The plans a thread's runs formed: several writes decided as one. Steps are
    * the proposals carrying the plan's id, so both lists are read together.
    */
-  public async listPlans(threadId: AssistantThread["id"]) {
-    const response = await api.get(`/assistant/threads/${threadId}/plans/`);
-    return safeParse(assistantPlanListSchema, response, "Assistant Plan");
+  public async listPlans(
+    threadId: AssistantThread["id"],
+    { signal }: { signal?: AbortSignal } = {},
+  ) {
+    const response = await requestGraphQL({
+      document: AssistantThreadPlansDocument,
+      operationName: "AssistantThreadPlans",
+      variables: { threadId },
+      signal,
+    });
+    return safeParse(assistantPlanListSchema, response.assistantThreadPlans, "Assistant Plan");
+  }
+
+  private async updateSchedule(
+    id: ConversationSchedule["id"],
+    input: UpdateAssistantScheduleInput,
+  ) {
+    const response = await requestGraphQL({
+      document: UpdateAssistantScheduleDocument,
+      operationName: "UpdateAssistantSchedule",
+      variables: { id, input },
+    });
+    return safeParse(
+      conversationScheduleSchema,
+      response.updateAssistantSchedule,
+      "Conversation Schedule",
+    );
   }
 }
 
-function messageBody(content: string, options: SendMessageOptions): Record<string, unknown> {
+function messageInput(content: string, options: SendMessageOptions): AssistantMessageInput {
   return {
     content,
-    context: options.context ?? null,
+    context: pageContextInput(options.context),
     surface: options.surface ?? "",
     providerId: options.providerId ?? "",
-    attachmentDocumentIds: options.attachmentDocumentIds ?? [],
-    mentions: options.mentions ?? [],
-    ...(options.directedAgentId ? { directedAgentId: options.directedAgentId } : {}),
+    attachmentDocumentIds: [...(options.attachmentDocumentIds ?? [])],
+    mentions: (options.mentions ?? []).map((mention) => ({
+      type: mention.type,
+      id: mention.id,
+      label: mention.label ?? "",
+    })),
+    directedAgentId: options.directedAgentId || null,
+  };
+}
+
+/** The page under a message, and the unsaved work of a page-bound conversation's page. */
+function pageContextInput(
+  context: AssistantPageContext | null | undefined,
+): AssistantPageContextInput | null {
+  if (!context) {
+    return null;
+  }
+
+  return {
+    path: context.path,
+    entityType: context.entityType ?? "",
+    entityId: context.entityId ?? "",
+    title: context.title ?? "",
+    view: context.view ?? null,
+    draft: context.draft ?? null,
   };
 }
 

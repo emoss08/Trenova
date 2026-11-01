@@ -19,10 +19,16 @@ import {
 
 const server = vi.hoisted(() => ({ post: vi.fn() }));
 
-vi.mock("@trenova/shared/lib/api", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@trenova/shared/lib/api")>();
-  return { ...actual, api: { ...actual.api, post: server.post } };
-});
+vi.mock("@trenova/shared/lib/graphql", () => ({
+  requestGraphQL: vi.fn(
+    async (params: { operationName: string; variables?: Record<string, unknown> }) => {
+      if (params.operationName !== "CreateAssistantSchedule") {
+        throw new Error(`unexpected operation ${params.operationName}`);
+      }
+      return { createAssistantSchedule: await server.post(params.variables) };
+    },
+  ),
+}));
 
 const t: TranslateFn = (message, ...args) =>
   (message ?? "").replace(/\{(\d)\}/g, (_, index: string) => String(args[Number(index)]));
@@ -446,7 +452,8 @@ describe("useCreateSchedule", () => {
     result.current.create("/schedule every Friday at 10:15, send me a list of delivered shipments");
 
     await waitFor(() => expect(client.getQueryState(threadKey)?.isInvalidated).toBe(true));
-    expect(server.post).toHaveBeenCalledWith("/assistant/threads/athr_1/schedules/", {
+    expect(server.post).toHaveBeenCalledWith({
+      threadId: "athr_1",
       content: "/schedule every Friday at 10:15, send me a list of delivered shipments",
     });
   });

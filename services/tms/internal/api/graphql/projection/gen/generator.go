@@ -37,6 +37,7 @@ const (
 	deskMemoryDTO       = "GraphQL Desk memory DTO built by its resolver"
 	reportRunDeskDTO    = "GraphQL Desk report run card DTO built by reporting.GetRunCard"
 	deskBoardDTO        = "GraphQL Desk board DTO built by boardcardservice.Card"
+	deskTurnDTO         = "GraphQL Desk turn DTO built from an assistant turn by its resolver"
 	shipmentWorkflowDTO = "GraphQL shipment workflow DTO"
 	journalDTO          = "GraphQL journal DTO without column projection metadata"
 	costingDTO          = "GraphQL costing DTO without column projection metadata"
@@ -94,6 +95,9 @@ var nonProjectionObjects = map[string]string{
 	"DispatchFinding":                 "GraphQL dispatch console DTO",
 	"PendingDecisionAgentCount":       "GraphQL decision queue summary DTO",
 	"RecentDecision":                  "GraphQL recent-decisions DTO built by its resolver",
+	"AssistantLiveTurn":               deskTurnDTO,
+	"AssistantQueueOutcome":           deskTurnDTO,
+	"AssistantStartedTurn":            deskTurnDTO,
 	"DeskBoardBlock":                  deskBoardDTO,
 	"DeskBoardCard":                   deskBoardDTO,
 	"DeskBoardCheck":                  deskBoardDTO,

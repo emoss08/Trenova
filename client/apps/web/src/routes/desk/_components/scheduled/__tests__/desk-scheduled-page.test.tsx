@@ -18,10 +18,30 @@ const server = vi.hoisted(() => ({
 const access = vi.hoisted(() => ({ canRun: true }));
 const toasts = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), info: vi.fn() }));
 
-vi.mock("@trenova/shared/lib/api", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@trenova/shared/lib/api")>();
-  return { ...actual, api: { ...actual.api, ...server } };
-});
+vi.mock("@trenova/shared/lib/graphql", () => ({
+  requestGraphQL: vi.fn(
+    async (params: {
+      operationName: string;
+      variables?: Record<string, unknown>;
+      signal?: AbortSignal;
+    }) => {
+      const variables = params.variables ?? {};
+      switch (params.operationName) {
+        case "AssistantSchedules":
+          return { assistantSchedules: await server.get(variables, { signal: params.signal }) };
+        case "UpdateAssistantSchedule":
+          return { updateAssistantSchedule: await server.patch(variables.id, variables.input) };
+        case "DeleteAssistantSchedule":
+          await server.delete(variables.id);
+          return { deleteAssistantSchedule: true };
+        case "RunAssistantSchedule":
+          return { runAssistantSchedule: await server.post(variables.id) };
+        default:
+          throw new Error(`unexpected operation ${params.operationName}`);
+      }
+    },
+  ),
+}));
 
 vi.mock("@/hooks/use-permission", async () => {
   const { Operation } = await import("@trenova/shared/types/permission");
@@ -45,7 +65,7 @@ vi.mock("@trenova/shared/stores/auth-store", () => ({
 // Saturday 3 October 2026, noon in Chicago.
 const saturdayNoon = 1791046800;
 
-/** A schedule as GET /assistant/schedules/ lists it (conversationscheduleports.ListedConversationSchedule). */
+/** A schedule as the assistantSchedules query lists it (conversationscheduleports.ListedConversationSchedule). */
 function listed(overrides: Record<string, unknown> & { id: string }) {
   return {
     businessUnitId: "bu_1",
@@ -92,8 +112,8 @@ const permits = listed({
 });
 
 function respondWith(...pages: { items: unknown[]; total: number }[]) {
-  server.get.mockImplementation(async (url: string) => {
-    const offset = Number(new URL(url, "http://desk").searchParams.get("offset"));
+  server.get.mockImplementation(async (variables: { offset?: number }) => {
+    const offset = variables.offset ?? 0;
     let start = 0;
     for (const page of pages) {
       if (start === offset) {
@@ -141,7 +161,7 @@ function group(name: string): HTMLElement {
 
 /*
 The Scheduled page is the one place a person sees every request they asked
-the Desk to repeat. It lists them from GET /assistant/schedules/, which reads
+the Desk to repeat. It lists them from the assistantSchedules query, which reads
 the soonest first and the paused ones after, each with the title of the
 conversation its answers post into.
 */
@@ -175,7 +195,7 @@ describe("DeskScheduledPage", () => {
         .map((item) => item.querySelector("b")?.textContent),
     ).toEqual(["Permits expiring this month"]);
     expect(server.get).toHaveBeenCalledWith(
-      `/assistant/schedules/?limit=${SCHEDULE_PAGE_SIZE}&offset=0`,
+      { limit: SCHEDULE_PAGE_SIZE, offset: 0 },
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
   });
@@ -248,7 +268,7 @@ describe("DeskScheduledPage", () => {
       ),
     ).toBeInTheDocument();
     await waitFor(() =>
-      expect(server.patch).toHaveBeenCalledWith("/assistant/schedules/csch_invoices/", {
+      expect(server.patch).toHaveBeenCalledWith("csch_invoices", {
         enabled: false,
       }),
     );
@@ -297,7 +317,7 @@ describe("DeskScheduledPage", () => {
     await waitFor(() =>
       expect(screen.queryByText("Send me invoices more than 60 days past due")).toBeNull(),
     );
-    expect(server.delete).toHaveBeenCalledWith("/assistant/schedules/csch_invoices/");
+    expect(server.delete).toHaveBeenCalledWith("csch_invoices");
     expect(screen.getByText("List shipments not yet dispatched")).toBeInTheDocument();
   });
 
@@ -337,7 +357,7 @@ describe("DeskScheduledPage", () => {
     fireEvent.click(dialog.getByRole("button", { name: "Save" }));
 
     await waitFor(() =>
-      expect(server.patch).toHaveBeenCalledWith("/assistant/schedules/csch_invoices/", {
+      expect(server.patch).toHaveBeenCalledWith("csch_invoices", {
         prompt: "Send me delivered shipments",
         repeat: "friday",
         time: "08:00",
@@ -363,7 +383,7 @@ describe("DeskScheduledPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Run now" }));
 
     await waitFor(() => expect(toasts.success).toHaveBeenCalledTimes(1));
-    expect(server.post).toHaveBeenCalledWith("/assistant/schedules/csch_invoices/run/", {});
+    expect(server.post).toHaveBeenCalledWith("csch_invoices");
     const [title, options] = toasts.success.mock.calls[0];
     expect(title).toBe("Running now");
     expect(options.description).toBe("The answer will post in AR follow-ups");
@@ -401,7 +421,7 @@ describe("DeskScheduledPage", () => {
 
     expect(await screen.findByText("Permits expiring this month")).toBeInTheDocument();
     expect(server.get).toHaveBeenLastCalledWith(
-      `/assistant/schedules/?limit=${SCHEDULE_PAGE_SIZE}&offset=2`,
+      { limit: SCHEDULE_PAGE_SIZE, offset: 2 },
       expect.anything(),
     );
   });

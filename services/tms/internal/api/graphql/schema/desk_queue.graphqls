@@ -1,0 +1,47 @@
+"""
+What became of a message handed to a conversation's queue: still waiting (with
+why, when the conversation was free but could not take it), read into the
+reply under way, or sent as a reply of its own.
+"""
+type AssistantQueueOutcome {
+  "The queued message, while it waits."
+  item: Any
+  steering: Boolean!
+  held: String!
+  turn: AssistantStartedTurn
+}
+
+input EnqueueAssistantMessageInput {
+  content: String!
+  context: AssistantPageContextInput
+  surface: String
+  providerId: ID
+  attachmentDocumentIds: [ID!]
+  mentions: [AssistantEntityRefInput!]
+  "Hands the message to another agent the person may use, once the conversation is free."
+  directedAgentId: ID
+  "Reads the message into the reply under way at its next step, rather than sending it once the reply ends."
+  steer: Boolean
+}
+
+extend type Query {
+  "What the person left for a conversation, in the order it will be sent: { items }."
+  assistantQueue(threadId: ID!): Any!
+}
+
+extend type Mutation {
+  """
+  Leaves a message for the conversation. A conversation with nothing under way
+  sends it at once, and the outcome carries the turn to follow.
+  """
+  enqueueAssistantMessage(
+    threadId: ID!
+    input: EnqueueAssistantMessageInput!
+  ): AssistantQueueOutcome!
+  editAssistantQueuedMessage(threadId: ID!, itemId: ID!, content: String!, version: Int!): Any!
+  removeAssistantQueuedMessage(threadId: ID!, itemId: ID!): Boolean!
+  "Puts the waiting messages in this order, every one named once: { items }."
+  reorderAssistantQueue(threadId: ID!, ids: [ID!]!): Any!
+  "Sends a waiting message now: into the reply under way, or as a reply of its own ahead of the rest."
+  sendAssistantQueuedMessage(threadId: ID!, itemId: ID!): AssistantQueueOutcome!
+}
