@@ -12,9 +12,8 @@ import {
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { edi } from "@/lib/queries/edi";
 import { apiService } from "@/services/api";
-import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
-import type { EDIConnection } from "@trenova/shared/types/edi";
+import type { PendingEdiConnectionsQuery } from "@trenova/graphql/generated/graphql";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, XCloseIcon } from "@trenova/shared/components/icons";
@@ -24,21 +23,18 @@ import { formatUnix } from "../edi-display-utils";
 import { invalidateEDIConnections } from "./edi-panel-invalidation";
 import { EDIReasonDialog } from "./edi-reason-dialog";
 
+type PendingEdiConnection = PendingEdiConnectionsQuery["pendingEdiConnections"][number];
+
 export function PendingConnectionsPanel() {
   const t = useT();
 
   const queryClient = useQueryClient();
-  const currentOrganizationId = useAuthStore((state) => state.user?.currentOrganizationId) ?? "";
   const canUpdate = usePermissionStore((state) =>
     state.hasPermission(Resource.EDI, Operation.Update),
   );
-  const [rejecting, setRejecting] = useState<EDIConnection | null>(null);
-  const { data, isLoading } = useQuery(edi.connections("?limit=25"));
-  const pending = (data?.results ?? []).filter(
-    (connection) =>
-      connection.status === "PendingAcceptance" &&
-      connection.targetOrganizationId === currentOrganizationId,
-  );
+  const [rejecting, setRejecting] = useState<PendingEdiConnection | null>(null);
+  const { data, isLoading } = useQuery(edi.pendingConnections());
+  const pending = data ?? [];
   const acceptMutation = useApiMutation({
     mutationFn: (connectionId: string) => apiService.ediService.acceptConnection(connectionId),
     onSuccess: async () => {
@@ -47,7 +43,7 @@ export function PendingConnectionsPanel() {
     onError: () => toast.error(t("Failed to accept EDI connection")),
   });
   const rejectMutation = useApiMutation({
-    mutationFn: ({ connection, reason }: { connection: EDIConnection; reason: string }) =>
+    mutationFn: ({ connection, reason }: { connection: PendingEdiConnection; reason: string }) =>
       apiService.ediService.rejectConnection(connection.id, { reason }),
     onSuccess: async () => {
       setRejecting(null);

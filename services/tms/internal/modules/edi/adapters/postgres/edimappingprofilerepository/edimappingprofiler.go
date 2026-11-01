@@ -74,22 +74,6 @@ func (r *repository) getPartnerByID(
 	return entity, nil
 }
 
-func (r *repository) ListMappingProfiles(
-	ctx context.Context,
-	req *edipartnerports.ListEDIMappingProfilesRequest,
-) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
-	return dbtx.Read(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
-			mp := edidb.EDIMappingProfiles
-			q := withPartnerAndEntries(mp.Query()).Order(mp.CreatedAt.Desc())
-
-			return listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
-		},
-	)
-}
-
 func (r *repository) ListMappingProfilesCursor(
 	ctx context.Context,
 	req *edipartnerports.ListEDIMappingProfilesRequest,

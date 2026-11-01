@@ -276,7 +276,11 @@ var EdiTenderCommoditySpec TypeSpec
 
 var EdiTransferSpec TypeSpec
 
+var EmailLogSpec TypeSpec
+
 var EmailProfileSpec TypeSpec
+
+var EmailProfileAssignmentSpec TypeSpec
 
 var EquipmentContinuitySpec TypeSpec
 
@@ -12255,6 +12259,14 @@ func init() {
 				Column: "id",
 			},
 			{
+				Name:   "sourceOrganizationId",
+				Column: "source_organization_id",
+			},
+			{
+				Name:   "targetOrganizationId",
+				Column: "target_organization_id",
+			},
+			{
 				Name:   "method",
 				Column: "method",
 			},
@@ -12289,6 +12301,20 @@ func init() {
 			{
 				Name:   "revokedAt",
 				Column: "revoked_at",
+			},
+			{
+				Name:   "sourceOrganization",
+				Column: "source_organization_id",
+				Relation: &RelationSpec{
+					Target: &OrganizationSpec,
+				},
+			},
+			{
+				Name:   "targetOrganization",
+				Column: "target_organization_id",
+				Relation: &RelationSpec{
+					Target: &OrganizationSpec,
+				},
 			},
 		},
 	}
@@ -12483,6 +12509,10 @@ func init() {
 			{
 				Name:   "rawPurgedAt",
 				Column: "raw_purged_at",
+			},
+			{
+				Name:   "rawContent",
+				Column: "raw_content",
 			},
 		},
 	}
@@ -12878,6 +12908,14 @@ func init() {
 				Name:   "rawPurgedAt",
 				Column: "raw_purged_at",
 			},
+			{
+				Name:   "rawX12",
+				Column: "raw_x12",
+			},
+			{
+				Name:   "payloadSnapshot",
+				Column: "payload_snapshot",
+			},
 		},
 	}
 
@@ -13176,8 +13214,24 @@ func init() {
 				Column: "submitted_at",
 			},
 			{
+				Name:   "approvedAt",
+				Column: "approved_at",
+			},
+			{
+				Name:   "processingStartedAt",
+				Column: "processing_started_at",
+			},
+			{
 				Name:   "processedAt",
 				Column: "processed_at",
+			},
+			{
+				Name:   "rejectedAt",
+				Column: "rejected_at",
+			},
+			{
+				Name:   "canceledAt",
+				Column: "canceled_at",
 			},
 			{
 				Name:   "version",
@@ -13268,6 +13322,103 @@ func init() {
 		},
 	}
 
+	EmailLogSpec = TypeSpec{
+		TypeName: "EmailLog",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "profileId",
+				Column: "profile_id",
+			},
+			{
+				Name:   "purpose",
+				Column: "purpose",
+			},
+			{
+				Name:   "provider",
+				Column: "provider",
+			},
+			{
+				Name:   "providerMessageId",
+				Column: "provider_message_id",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "attempts",
+				Column: "attempts",
+			},
+			{
+				Name:   "fromEmail",
+				Column: "from_email",
+			},
+			{
+				Name:   "fromName",
+				Column: "from_name",
+			},
+			{
+				Name:   "replyToEmail",
+				Column: "reply_to_email",
+			},
+			{
+				Name:   "toRecipients",
+				Column: "to_recipients",
+			},
+			{
+				Name:   "ccRecipients",
+				Column: "cc_recipients",
+			},
+			{
+				Name:   "bccRecipients",
+				Column: "bcc_recipients",
+			},
+			{
+				Name:   "subject",
+				Column: "subject",
+			},
+			{
+				Name:   "lastError",
+				Column: "last_error",
+			},
+			{
+				Name:   "sentAt",
+				Column: "sent_at",
+			},
+			{
+				Name:   "deliveredAt",
+				Column: "delivered_at",
+			},
+			{
+				Name:   "failedAt",
+				Column: "failed_at",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+			{
+				Name:   "profile",
+				Column: "profile_id",
+				Relation: &RelationSpec{
+					Target: &EmailProfileSpec,
+				},
+			},
+		},
+	}
+
 	EmailProfileSpec = TypeSpec{
 		TypeName: "EmailProfile",
 		AlwaysColumns: []string{
@@ -13339,6 +13490,35 @@ func init() {
 				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
+				},
+			},
+		},
+	}
+
+	EmailProfileAssignmentSpec = TypeSpec{
+		TypeName: "EmailProfileAssignment",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "purpose",
+				Column: "purpose",
+			},
+			{
+				Name:   "profileId",
+				Column: "profile_id",
+			},
+			{
+				Name:   "profile",
+				Column: "profile_id",
+				Relation: &RelationSpec{
+					Target: &EmailProfileSpec,
 				},
 			},
 		},

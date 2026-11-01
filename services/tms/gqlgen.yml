@@ -4471,6 +4471,18 @@ models:
   EmailProfile:
     model:
       - github.com/emoss08/trenova/internal/modules/workspace/domain/email.Profile
+  EmailPurpose:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/email.Purpose
+  EmailMessageStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/email.MessageStatus
+  EmailLog:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/email.Message
+  EmailProfileAssignment:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/email.ProfileAssignment
   DocumentPacketRule:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule.DocumentPacketRule
@@ -4617,6 +4629,33 @@ models:
   EdiFlowInstance:
     model:
       - github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject.FlowInstance
+  EdiBulkActionResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/edi/app/edibulk.Result
+  EdiBulkActionFailure:
+    model:
+      - github.com/emoss08/trenova/internal/modules/edi/app/edibulk.Failure
+  EdiInspectionProvenance:
+    model:
+      - github.com/emoss08/trenova/internal/modules/edi/app/edimessageview.EDIInspectionProvenance
+  EdiConnectionTestResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/edi/app/edisetup.TestCommunicationProfileConnectionResult
+  EdiConnectionCheck:
+    model:
+      - github.com/emoss08/trenova/internal/modules/edi/ports/editransportports.EDIConnectionCheck
+  EdiPollResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/edi/app/ediinboundpoll.PollMailboxResult
+  EdiCertificateSummary:
+    model:
+      - github.com/emoss08/trenova/shared/smime.CertificateSummary
+  EdiMappingResolution:
+    model:
+      - github.com/emoss08/trenova/internal/modules/edi/domain/editransfer.MappingResolution
+  EdiMappingPreview:
+    model:
+      - github.com/emoss08/trenova/internal/modules/edi/app/editendermapping.MappingPreview
   EquipmentManufacturer:
     model:
       - github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer.EquipmentManufacturer

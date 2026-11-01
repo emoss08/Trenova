@@ -5,12 +5,12 @@
 package editenderportsmock
 
 import (
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
 	"context"
+
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
 
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 
-	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -241,74 +241,6 @@ func (_c *MockEDIShipmentLinkRepository_GetShipmentLinksByShipmentID_Call) Retur
 }
 
 func (_c *MockEDIShipmentLinkRepository_GetShipmentLinksByShipmentID_Call) RunAndReturn(run func(ctx context.Context, req editenderports.GetEDIShipmentLinksByShipmentIDRequest) ([]*edisync.ShipmentLink, error)) *MockEDIShipmentLinkRepository_GetShipmentLinksByShipmentID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListShipmentLinks provides a mock function for the type MockEDIShipmentLinkRepository
-func (_mock *MockEDIShipmentLinkRepository) ListShipmentLinks(ctx context.Context, req *editenderports.ListEDIShipmentLinksRequest) (*pagination.ListResult[*edisync.ShipmentLink], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListShipmentLinks")
-	}
-
-	var r0 *pagination.ListResult[*edisync.ShipmentLink]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDIShipmentLinksRequest) (*pagination.ListResult[*edisync.ShipmentLink], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *editenderports.ListEDIShipmentLinksRequest) *pagination.ListResult[*edisync.ShipmentLink]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*edisync.ShipmentLink])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *editenderports.ListEDIShipmentLinksRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockEDIShipmentLinkRepository_ListShipmentLinks_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListShipmentLinks'
-type MockEDIShipmentLinkRepository_ListShipmentLinks_Call struct {
-	*mock.Call
-}
-
-// ListShipmentLinks is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ListEDIShipmentLinksRequest
-func (_e *MockEDIShipmentLinkRepository_Expecter) ListShipmentLinks(ctx any, req any) *MockEDIShipmentLinkRepository_ListShipmentLinks_Call {
-	return &MockEDIShipmentLinkRepository_ListShipmentLinks_Call{Call: _e.mock.On("ListShipmentLinks", ctx, req)}
-}
-
-func (_c *MockEDIShipmentLinkRepository_ListShipmentLinks_Call) Run(run func(ctx context.Context, req *editenderports.ListEDIShipmentLinksRequest)) *MockEDIShipmentLinkRepository_ListShipmentLinks_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *editenderports.ListEDIShipmentLinksRequest
-		if args[1] != nil {
-			arg1 = args[1].(*editenderports.ListEDIShipmentLinksRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockEDIShipmentLinkRepository_ListShipmentLinks_Call) Return(listResult *pagination.ListResult[*edisync.ShipmentLink], err error) *MockEDIShipmentLinkRepository_ListShipmentLinks_Call {
-	_c.Call.Return(listResult, err)
-	return _c
-}
-
-func (_c *MockEDIShipmentLinkRepository_ListShipmentLinks_Call) RunAndReturn(run func(ctx context.Context, req *editenderports.ListEDIShipmentLinksRequest) (*pagination.ListResult[*edisync.ShipmentLink], error)) *MockEDIShipmentLinkRepository_ListShipmentLinks_Call {
 	_c.Call.Return(run)
 	return _c
 }

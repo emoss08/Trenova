@@ -2975,6 +2975,36 @@ export type CreateDeskMemoryInput = {
   scope: AgentMemoryScope;
 };
 
+export type CreateEdiConnectionInput = {
+  capabilities: EdiConnectionCapabilitiesInput;
+  method: EdiConnectionMethod;
+  sourcePartnerConfig: EdiConnectionPartnerConfigInput;
+  targetOrganizationId: string | number;
+  targetPartnerConfig: EdiConnectionPartnerConfigInput;
+};
+
+export type CreateEdiLadingProjectInput = {
+  /** Seconds the flow waits for the partner's acknowledgment. */
+  ackWithin?: number | null | undefined;
+  /** The acknowledgment Trenova sends back: 997, 999 or none. */
+  acknowledge?: string | null | undefined;
+  /** The partner's and Trenova's GS application codes. */
+  group?: Array<string> | null | undefined;
+  partnerId: string | number;
+  /** carrier or broker: which starter the project begins from. */
+  role: string;
+  /** Element, segment, component and repetition separators, in that order. */
+  separators?: Array<string> | null | undefined;
+  /** The transaction sets the partner exchanges. */
+  sets: Array<string>;
+  /** The partner's ISA qualifier and id. */
+  them?: Array<string> | null | undefined;
+  /** Trenova's ISA qualifier and id. */
+  us?: Array<string> | null | undefined;
+  /** test or production. */
+  usage?: string | null | undefined;
+};
+
 export type CreateFactoringRemittanceInput = {
   /** Funding unless the report is of reserve releases, rejections or chargebacks. */
   defaultKind?: FactoringRemittanceLineKind | null | undefined;
@@ -4065,11 +4095,45 @@ export type DrugAlcoholStatus =
   | 'Prohibited'
   | 'Unknown';
 
+export type EdiCommunicationProfileInput = {
+  /** Transport settings for the method: endpoints, identifiers, paths and certificates. Never secret values. */
+  config: unknown;
+  description?: string | null | undefined;
+  ediConnectionId?: string | number | null | undefined;
+  ediPartnerId?: string | number | null | undefined;
+  method: EdiConnectionMethod;
+  name: string;
+  /** Secret values by key, such as passwords and private keys. A key left out keeps the value on file; an empty value clears it. Stored encrypted and never returned. */
+  secrets?: unknown;
+  status?: EntityStatus | null | undefined;
+  version?: number | null | undefined;
+};
+
+export type EdiConnectionCapabilitiesInput = {
+  invoice: boolean;
+  loadTenderInbound: boolean;
+  loadTenderOutbound: boolean;
+  shipmentStatus: boolean;
+};
+
 export type EdiConnectionMethod =
   | 'AS2'
   | 'Internal'
   | 'SFTP'
   | 'VAN';
+
+/** The partner a connection creates on one side, as that side will know the other. */
+export type EdiConnectionPartnerConfigInput = {
+  code: string;
+  contactEmail?: string | null | undefined;
+  contactName?: string | null | undefined;
+  contactPhone?: string | null | undefined;
+  description?: string | null | undefined;
+  enabledForInbound: boolean;
+  enabledForOutbound: boolean;
+  name: string;
+  settings?: unknown;
+};
 
 export type EdiConnectionStatus =
   | 'Active'
@@ -4096,6 +4160,13 @@ export type EdiInboundFileStatus =
   | 'Quarantined'
   | 'Received';
 
+export type EdiLadingRunInput = {
+  csv?: string | null | undefined;
+  document?: unknown;
+  json?: unknown;
+  x12?: string | null | undefined;
+};
+
 export type EdiLadingVersionStatus =
   | 'Active'
   | 'Archived'
@@ -4113,6 +4184,17 @@ export type EdiMappingEntityType =
   | 'ServiceFailureReasonCode'
   | 'ServiceType'
   | 'ShipmentType';
+
+export type EdiMappingProfileItemInput = {
+  entityType: EdiMappingEntityType;
+  id?: string | number | null | undefined;
+  /** The partner's identifier for the record. */
+  sourceId: string | number;
+  sourceLabel?: string | null | undefined;
+  /** The organization's record the partner's code maps to. */
+  targetId: string | number;
+  targetLabel?: string | null | undefined;
+};
 
 export type EdiMessageAckStatus =
   | 'Accepted'
@@ -4132,6 +4214,34 @@ export type EdiMessageDeliveryStatus =
 export type EdiMessageStatus =
   | 'Failed'
   | 'Generated';
+
+export type EdiPartnerInput = {
+  code: string;
+  contactEmail?: string | null | undefined;
+  contactName?: string | null | undefined;
+  contactPhone?: string | null | undefined;
+  /** US unless given. */
+  country?: string | null | undefined;
+  customerId?: string | number | null | undefined;
+  defaultMappingProfileId?: string | number | null | undefined;
+  defaultTransportId?: string | number | null | undefined;
+  description?: string | null | undefined;
+  ediConnectionId?: string | number | null | undefined;
+  /** On a new partner, true unless given; on an update, false unless given. */
+  enabledForInbound?: boolean | null | undefined;
+  /** On a new partner, true unless given; on an update, false unless given. */
+  enabledForOutbound?: boolean | null | undefined;
+  internalOrganizationId?: string | number | null | undefined;
+  /** External unless given. */
+  kind?: EdiPartnerKind | null | undefined;
+  name: string;
+  /** The partner's settings, by name. */
+  settings?: unknown;
+  /** Active unless given. */
+  status?: EntityStatus | null | undefined;
+  timezone?: string | null | undefined;
+  version?: number | null | undefined;
+};
 
 export type EdiPartnerKind =
   | 'External'
@@ -4175,6 +4285,35 @@ export type EffectiveRateSource =
   | 'LiveIndex'
   | 'Override';
 
+export type EmailMessageStatus =
+  | 'Bounced'
+  | 'Clicked'
+  | 'Complained'
+  | 'Delivered'
+  | 'Failed'
+  | 'Opened'
+  | 'Queued'
+  | 'Sending'
+  | 'Sent'
+  | 'Suppressed';
+
+export type EmailProfileAssignmentInput = {
+  profileId: string | number;
+  purpose: EmailPurpose;
+};
+
+export type EmailProfileInput = {
+  description?: string | null | undefined;
+  name: string;
+  /** Resend unless given. */
+  provider?: EmailProvider | null | undefined;
+  replyToEmail?: string | null | undefined;
+  senderEmail: string;
+  senderName: string;
+  /** Active unless given. */
+  status?: EmailProfileStatus | null | undefined;
+};
+
 export type EmailProfileStatus =
   | 'Active'
   | 'Inactive';
@@ -4182,6 +4321,14 @@ export type EmailProfileStatus =
 export type EmailProvider =
   | 'Postmark'
   | 'Resend';
+
+export type EmailPurpose =
+  | 'Authentication'
+  | 'Billing'
+  | 'General'
+  | 'Notifications'
+  | 'Operations'
+  | 'Reporting';
 
 export type EmploymentVerificationMethod =
   | 'Email'
@@ -8324,6 +8471,16 @@ export type StartBillingTransferRunInput = {
   status?: ShipmentStatus | null | undefined;
 };
 
+export type StartEdiLadingReplayInput = {
+  /** The version to compare with; the active version unless given. */
+  againstVersionId?: string | number | null | undefined;
+  /** Start of the period whose messages are replayed. */
+  from: number;
+  map: string;
+  /** End of the period whose messages are replayed. */
+  to: number;
+};
+
 export type StartExtractionEvalRunInput = {
   /** How many active cases to run, newest first; 50 by default, at most 500. */
   caseLimit?: number | null | undefined;
@@ -8351,6 +8508,12 @@ export type StopType =
   | 'Pickup'
   | 'SplitDelivery'
   | 'SplitPickup';
+
+export type SubmitEdiLoadTenderInput = {
+  /** The partner to tender to; the shipment customer's partner unless given. */
+  ediPartnerId?: string | number | null | undefined;
+  sourceShipmentId: string | number;
+};
 
 export type SubmitMyExpenseInput = {
   amountMinor: number;
@@ -8441,6 +8604,13 @@ export type TenderStatus =
   | 'Canceled'
   | 'Exhausted'
   | 'NeedsReview';
+
+export type TestEmailProfileInput = {
+  html?: string | null | undefined;
+  subject: string;
+  text?: string | null | undefined;
+  to: string;
+};
 
 /**
  * Where a punch came from. It is kept because a manual entry and a clock punch
@@ -14229,6 +14399,93 @@ export type PayWorkerNowMutationVariables = Exact<{
 
 export type PayWorkerNowMutation = { payWorkerNow: { id: string, settlementNumber: string, status: DriverSettlementStatus, netPayMinor: number | null, currencyCode: string | null, paidAt: number | null, paymentMethod: string, paymentReference: string } };
 
+export type ReprocessEdiInboundFileMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ReprocessEdiInboundFileMutation = { reprocessEdiInboundFile: { id: string, status: EdiInboundFileStatus } };
+
+export type BulkReprocessEdiInboundFilesMutationVariables = Exact<{
+  ids: Array<string | number> | string | number;
+}>;
+
+
+export type BulkReprocessEdiInboundFilesMutation = { bulkReprocessEdiInboundFiles: { succeeded: Array<string>, failed: Array<{ id: string, error: string }> } };
+
+export type RetryEdiMessageDeliveryMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type RetryEdiMessageDeliveryMutation = { retryEdiMessageDelivery: { id: string, deliveryStatus: EdiMessageDeliveryStatus | null } };
+
+export type ReplayEdiMessageMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ReplayEdiMessageMutation = { replayEdiMessage: { id: string, deliveryStatus: EdiMessageDeliveryStatus | null } };
+
+export type BulkRetryEdiMessageDeliveryMutationVariables = Exact<{
+  ids: Array<string | number> | string | number;
+}>;
+
+
+export type BulkRetryEdiMessageDeliveryMutation = { bulkRetryEdiMessageDelivery: { succeeded: Array<string>, failed: Array<{ id: string, error: string }> } };
+
+export type ReleaseEdiFlowInstanceMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ReleaseEdiFlowInstanceMutation = { releaseEdiFlowInstance: { id: string, status: EdiFlowInstanceStatus } };
+
+export type SubmitEdiLoadTenderMutationVariables = Exact<{
+  input: SubmitEdiLoadTenderInput;
+}>;
+
+
+export type SubmitEdiLoadTenderMutation = { submitEdiLoadTender: { id: string, status: EdiTransferStatus } };
+
+export type ApproveEdiTransferMutationVariables = Exact<{
+  id: string | number;
+  mappings?: Array<EdiMappingProfileItemInput> | EdiMappingProfileItemInput | null | undefined;
+}>;
+
+
+export type ApproveEdiTransferMutation = { approveEdiTransfer: { id: string, status: EdiTransferStatus } };
+
+export type RejectEdiTransferMutationVariables = Exact<{
+  id: string | number;
+  reason: string;
+}>;
+
+
+export type RejectEdiTransferMutation = { rejectEdiTransfer: { id: string, status: EdiTransferStatus } };
+
+export type CancelEdiTransferMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CancelEdiTransferMutation = { cancelEdiTransfer: { id: string, status: EdiTransferStatus } };
+
+export type BulkApproveEdiTransfersMutationVariables = Exact<{
+  ids: Array<string | number> | string | number;
+}>;
+
+
+export type BulkApproveEdiTransfersMutation = { bulkApproveEdiTransfers: { succeeded: Array<string>, failed: Array<{ id: string, error: string }> } };
+
+export type BulkRejectEdiTransfersMutationVariables = Exact<{
+  ids: Array<string | number> | string | number;
+  reason: string;
+}>;
+
+
+export type BulkRejectEdiTransfersMutation = { bulkRejectEdiTransfers: { succeeded: Array<string>, failed: Array<{ id: string, error: string }> } };
+
 export type EdiPartnerScorecardsQueryVariables = Exact<{
   sinceHours?: number | null | undefined;
 }>;
@@ -14329,6 +14586,127 @@ export type DeskEdiCarrierInvoicesQueryVariables = Exact<{
 
 export type DeskEdiCarrierInvoicesQuery = { ediCarrierInvoices: { items: Array<{ id: string, invoiceNumber: string, carrierId: string | null, reconciliationStatus: string, proNumber: string, shipmentId: string | null, shipmentReference: string, invoiceDate: number | null, currencyCode: string, totalAmount: string | null, varianceAmount: string | null, suggestedCarrier: { id: string, name: string } | null }> } };
 
+export type EdiLadingContextQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type EdiLadingContextQuery = { ediLadingContext: unknown };
+
+export type EdiLadingPartnerProjectQueryVariables = Exact<{
+  partnerId: string | number;
+}>;
+
+
+export type EdiLadingPartnerProjectQuery = { ediLadingPartnerProject: unknown };
+
+export type EdiLadingVersionsQueryVariables = Exact<{
+  projectId: string | number;
+  limit?: number | null | undefined;
+}>;
+
+
+export type EdiLadingVersionsQuery = { ediLadingVersions: unknown };
+
+export type EdiLadingVersionQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type EdiLadingVersionQuery = { ediLadingVersion: unknown };
+
+export type EdiLadingReplaysQueryVariables = Exact<{
+  versionId: string | number;
+  limit?: number | null | undefined;
+}>;
+
+
+export type EdiLadingReplaysQuery = { ediLadingReplays: unknown };
+
+export type EdiLadingShadowResultsQueryVariables = Exact<{
+  versionId: string | number;
+  onlyDiffering?: boolean | null | undefined;
+}>;
+
+
+export type EdiLadingShadowResultsQuery = { ediLadingShadowResults: unknown };
+
+export type RunEdiLadingVersionQueryVariables = Exact<{
+  versionId: string | number;
+  mapName: string;
+  input: EdiLadingRunInput;
+  rules?: boolean | null | undefined;
+}>;
+
+
+export type RunEdiLadingVersionQuery = { runEdiLadingVersion: unknown };
+
+export type CreateEdiLadingProjectMutationVariables = Exact<{
+  input: CreateEdiLadingProjectInput;
+}>;
+
+
+export type CreateEdiLadingProjectMutation = { createEdiLadingProject: { id: string } };
+
+export type CreateEdiLadingDraftMutationVariables = Exact<{
+  projectId: string | number;
+  fromVersionId: string | number;
+}>;
+
+
+export type CreateEdiLadingDraftMutation = { createEdiLadingDraft: { id: string } };
+
+export type UpdateEdiLadingSettingsMutationVariables = Exact<{
+  projectId: string | number;
+  settings: unknown;
+  version: number;
+}>;
+
+
+export type UpdateEdiLadingSettingsMutation = { updateEdiLadingSettings: { id: string, version: number } };
+
+export type CertifyEdiLadingVersionMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CertifyEdiLadingVersionMutation = { certifyEdiLadingVersion: { id: string, status: EdiLadingVersionStatus } };
+
+export type ActivateEdiLadingVersionMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ActivateEdiLadingVersionMutation = { activateEdiLadingVersion: { id: string, status: EdiLadingVersionStatus } };
+
+export type ArchiveEdiLadingVersionMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ArchiveEdiLadingVersionMutation = { archiveEdiLadingVersion: { id: string, status: EdiLadingVersionStatus } };
+
+export type StartEdiLadingShadowMutationVariables = Exact<{
+  id: string | number;
+  days: number;
+}>;
+
+
+export type StartEdiLadingShadowMutation = { startEdiLadingShadow: { id: string, status: EdiLadingVersionStatus } };
+
+export type StopEdiLadingShadowMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type StopEdiLadingShadowMutation = { stopEdiLadingShadow: { id: string, status: EdiLadingVersionStatus } };
+
+export type StartEdiLadingReplayMutationVariables = Exact<{
+  versionId: string | number;
+  input: StartEdiLadingReplayInput;
+}>;
+
+
+export type StartEdiLadingReplayMutation = { startEdiLadingReplay: string };
+
 export type DeskEdiPartnerCardQueryVariables = Exact<{
   id: string | number;
 }>;
@@ -14353,6 +14731,214 @@ export type EdiPartnerReadinessQueryVariables = Exact<{
 
 
 export type EdiPartnerReadinessQuery = { ediPartnerReadiness: Array<{ partnerId: string, ready: boolean, completedCount: number, totalCount: number }> };
+
+export type EdiPartnerRecordFieldsFragment = { id: string, businessUnitId: string, organizationId: string, kind: EdiPartnerKind, status: EntityStatus, code: string, name: string, description: string | null, internalOrganizationId: string | null, customerId: string | null, defaultTransportId: string | null, defaultMappingProfileId: string | null, country: string, timezone: string | null, contactName: string | null, contactEmail: string | null, contactPhone: string | null, enabledForInbound: boolean, enabledForOutbound: boolean, version: number, updatedAt: number, internalOrganization: { id: string, name: string } | null } & { ' $fragmentName'?: 'EdiPartnerRecordFieldsFragment' };
+
+export type EdiMessageRecordFieldsFragment = { id: string, businessUnitId: string, organizationId: string, ediPartnerId: string, documentTypeId: string, ladingVersionId: string | null, flowInstanceId: string | null, shipmentId: string | null, invoiceId: string | null, transferId: string | null, inboundFileId: string | null, direction: EdiDocumentDirection, transactionSet: string, x12Version: string, status: EdiMessageStatus, interchangeControlNumber: string, groupControlNumber: string, transactionControlNumber: string, segmentCount: number, deliveryStatus: EdiMessageDeliveryStatus | null, deliveryRemotePath: string | null, deliveryAttempts: number, deliveryLastAttemptAt: number | null, deliverySentAt: number | null, deliveryLastError: string | null, ackStatus: EdiMessageAckStatus | null, ackMessageId: string | null, ackReceivedAt: number | null, ackLastError: string | null, generatedAt: number, rawPurgedAt: number | null, payloadSnapshot: unknown, partner: { ' $fragmentRefs'?: { 'EdiPartnerRecordFieldsFragment': EdiPartnerRecordFieldsFragment } } | null } & { ' $fragmentName'?: 'EdiMessageRecordFieldsFragment' };
+
+export type EdiMessageDiagnosticRecordFieldsFragment = { severity: string, code: string, segmentId: string | null, elementPosition: number | null, path: string | null, message: string, suggestedFix: string | null } & { ' $fragmentName'?: 'EdiMessageDiagnosticRecordFieldsFragment' };
+
+export type EdiMessageRecordQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type EdiMessageRecordQuery = { ediMessage: { diagnosticCount: number, message: (
+      { rawX12: string | null }
+      & { ' $fragmentRefs'?: { 'EdiMessageRecordFieldsFragment': EdiMessageRecordFieldsFragment } }
+    ), diagnostics: Array<{ ' $fragmentRefs'?: { 'EdiMessageDiagnosticRecordFieldsFragment': EdiMessageDiagnosticRecordFieldsFragment } }> } };
+
+export type EdiMessageInspectionQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type EdiMessageInspectionQuery = { ediMessageInspection: { inspection: unknown, message: (
+      { rawX12: string | null }
+      & { ' $fragmentRefs'?: { 'EdiMessageRecordFieldsFragment': EdiMessageRecordFieldsFragment } }
+    ), provenance: { messageId: string, ladingVersionId: string | null, flowInstanceId: string | null, generatedAt: number, generatedById: string | null } } };
+
+export type EdiInboundFileRecordQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type EdiInboundFileRecordQuery = { ediInboundFile: { communicationProfileName: string | null, messageCount: number, file: { id: string, businessUnitId: string, organizationId: string, communicationProfileId: string, ediPartnerId: string | null, method: EdiConnectionMethod, remotePath: string, fileName: string, checksum: string, sizeBytes: number, rawContent: string | null, interchangeControlNumber: string | null, isaSenderQualifier: string | null, isaSenderId: string | null, isaReceiverQualifier: string | null, isaReceiverId: string | null, status: EdiInboundFileStatus, failureReason: string | null, transactionCount: number, receivedAt: number, processedAt: number | null, rawPurgedAt: number | null, version: number, createdAt: number, updatedAt: number, partner: { ' $fragmentRefs'?: { 'EdiPartnerRecordFieldsFragment': EdiPartnerRecordFieldsFragment } } | null }, messages: Array<{ ' $fragmentRefs'?: { 'EdiMessageRecordFieldsFragment': EdiMessageRecordFieldsFragment } }> } };
+
+export type EdiInboundFileInspectionQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type EdiInboundFileInspectionQuery = { ediInboundFileInspection: unknown };
+
+export type EdiTransferRecordFieldsFragment = { id: string, sourceOrganizationId: string, sourceBusinessUnitId: string, targetOrganizationId: string, targetBusinessUnitId: string, sourcePartnerId: string, targetPartnerId: string, sourceShipmentId: string | null, targetShipmentId: string | null, inboundMessageId: string | null, status: EdiTransferStatus, tenderPayload: unknown, mappingSnapshot: unknown, rejectionReason: string | null, failureReason: string | null, submittedAt: number, approvedAt: number | null, processingStartedAt: number | null, processedAt: number | null, rejectedAt: number | null, canceledAt: number | null, version: number, createdAt: number, updatedAt: number, sourcePartner: { ' $fragmentRefs'?: { 'EdiPartnerRecordFieldsFragment': EdiPartnerRecordFieldsFragment } } | null, targetPartner: { ' $fragmentRefs'?: { 'EdiPartnerRecordFieldsFragment': EdiPartnerRecordFieldsFragment } } | null } & { ' $fragmentName'?: 'EdiTransferRecordFieldsFragment' };
+
+export type EdiTransferRecordQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type EdiTransferRecordQuery = { ediTransfer: { transfer: { ' $fragmentRefs'?: { 'EdiTransferRecordFieldsFragment': EdiTransferRecordFieldsFragment } } } };
+
+export type EdiInboundFileTransfersQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  inboundFileId: string | number;
+}>;
+
+
+export type EdiInboundFileTransfersQuery = { ediTransfers: { edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiTransferRecordFieldsFragment': EdiTransferRecordFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type EdiTransferMappingPreviewQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type EdiTransferMappingPreviewQuery = { ediTransferMappingPreview: { resolved: Array<{ ' $fragmentRefs'?: { 'EdiMappingResolutionFieldsFragment': EdiMappingResolutionFieldsFragment } }>, unresolved: Array<{ ' $fragmentRefs'?: { 'EdiMappingResolutionFieldsFragment': EdiMappingResolutionFieldsFragment } }>, all: Array<{ ' $fragmentRefs'?: { 'EdiMappingResolutionFieldsFragment': EdiMappingResolutionFieldsFragment } }> } };
+
+export type EdiMappingResolutionFieldsFragment = { entityType: EdiMappingEntityType, sourceId: string, sourceLabel: string | null, targetId: string | null, targetLabel: string | null, resolved: boolean } & { ' $fragmentName'?: 'EdiMappingResolutionFieldsFragment' };
+
+export type EdiFlowInstanceDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type EdiFlowInstanceDetailQuery = { ediFlowInstanceDetail: unknown };
+
+export type EdiPartnerRecordQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type EdiPartnerRecordQuery = { ediPartner: { ' $fragmentRefs'?: { 'EdiPartnerRecordFieldsFragment': EdiPartnerRecordFieldsFragment } } };
+
+export type PendingEdiConnectionsQueryVariables = Exact<{
+  limit?: number | null | undefined;
+}>;
+
+
+export type PendingEdiConnectionsQuery = { pendingEdiConnections: Array<{ id: string, sourceOrganizationId: string, targetOrganizationId: string, method: EdiConnectionMethod, status: EdiConnectionStatus, requestedAt: number, sourceOrganization: { id: string, name: string } | null, targetOrganization: { id: string, name: string } | null }> };
+
+export type EdiMappingProfileItemRecordFieldsFragment = { id: string, businessUnitId: string, organizationId: string, ediPartnerId: string, mappingProfileId: string, entityType: EdiMappingEntityType, sourceId: string, sourceLabel: string | null, targetId: string, targetLabel: string | null } & { ' $fragmentName'?: 'EdiMappingProfileItemRecordFieldsFragment' };
+
+export type EdiPartnerMappingProfileQueryVariables = Exact<{
+  partnerId: string | number;
+}>;
+
+
+export type EdiPartnerMappingProfileQuery = { ediPartnerMappingProfile: { id: string, businessUnitId: string, organizationId: string, ediPartnerId: string, name: string, description: string | null, version: number, createdAt: number, updatedAt: number, entries: Array<{ ' $fragmentRefs'?: { 'EdiMappingProfileItemRecordFieldsFragment': EdiMappingProfileItemRecordFieldsFragment } }> | null, partner: { id: string, code: string, name: string } | null } };
+
+export type InspectEdiCertificateQueryVariables = Exact<{
+  certificate: string;
+}>;
+
+
+export type InspectEdiCertificateQuery = { inspectEdiCertificate: { subject: string, issuer: string, serialNumber: string, notBefore: number, notAfter: number, expiresInDays: number, expired: boolean, sha256Fingerprint: string } };
+
+export type EdiPartnerReadinessDetailQueryVariables = Exact<{
+  partnerIds: Array<string | number> | string | number;
+}>;
+
+
+export type EdiPartnerReadinessDetailQuery = { ediPartnerReadiness: Array<{ partnerId: string, ready: boolean, completedCount: number, totalCount: number, items: Array<{ key: string, label: string, complete: boolean }> }> };
+
+export type CreateEdiPartnerMutationVariables = Exact<{
+  input: EdiPartnerInput;
+}>;
+
+
+export type CreateEdiPartnerMutation = { createEdiPartner: { id: string } };
+
+export type UpdateEdiPartnerMutationVariables = Exact<{
+  id: string | number;
+  input: EdiPartnerInput;
+}>;
+
+
+export type UpdateEdiPartnerMutation = { updateEdiPartner: { id: string, version: number } };
+
+export type CreateEdiConnectionMutationVariables = Exact<{
+  input: CreateEdiConnectionInput;
+}>;
+
+
+export type CreateEdiConnectionMutation = { createEdiConnection: { id: string, status: EdiConnectionStatus } };
+
+export type AcceptEdiConnectionMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AcceptEdiConnectionMutation = { acceptEdiConnection: { id: string, status: EdiConnectionStatus } };
+
+export type RejectEdiConnectionMutationVariables = Exact<{
+  id: string | number;
+  reason?: string | null | undefined;
+}>;
+
+
+export type RejectEdiConnectionMutation = { rejectEdiConnection: { id: string, status: EdiConnectionStatus } };
+
+export type CreateEdiCommunicationProfileMutationVariables = Exact<{
+  input: EdiCommunicationProfileInput;
+}>;
+
+
+export type CreateEdiCommunicationProfileMutation = { createEdiCommunicationProfile: { id: string, version: number } };
+
+export type UpdateEdiCommunicationProfileMutationVariables = Exact<{
+  id: string | number;
+  input: EdiCommunicationProfileInput;
+}>;
+
+
+export type UpdateEdiCommunicationProfileMutation = { updateEdiCommunicationProfile: { id: string, version: number } };
+
+export type TestEdiCommunicationProfileConnectionMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type TestEdiCommunicationProfileConnectionMutation = { testEdiCommunicationProfileConnection: { success: boolean, checks: Array<{ name: string, status: string, message: string | null }> } };
+
+export type PollEdiCommunicationProfileMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type PollEdiCommunicationProfileMutation = { pollEdiCommunicationProfile: { profileId: string, stagedFileIds: Array<string>, skippedFiles: number } };
+
+export type SaveEdiMappingProfileItemsMutationVariables = Exact<{
+  profileId: string | number;
+  items: Array<EdiMappingProfileItemInput> | EdiMappingProfileItemInput;
+}>;
+
+
+export type SaveEdiMappingProfileItemsMutation = { saveEdiMappingProfileItems: Array<{ id: string }> };
+
+export type DeleteEdiMappingProfileItemMutationVariables = Exact<{
+  profileId: string | number;
+  itemId: string | number;
+}>;
+
+
+export type DeleteEdiMappingProfileItemMutation = { deleteEdiMappingProfileItem: boolean };
+
+export type SaveEdiPartnerMappingProfileMutationVariables = Exact<{
+  partnerId: string | number;
+  items: Array<EdiMappingProfileItemInput> | EdiMappingProfileItemInput;
+}>;
+
+
+export type SaveEdiPartnerMappingProfileMutation = { saveEdiPartnerMappingProfile: Array<{ id: string }> };
+
+export type DeleteEdiPartnerMappingItemMutationVariables = Exact<{
+  partnerId: string | number;
+  itemId: string | number;
+}>;
+
+
+export type DeleteEdiPartnerMappingItemMutation = { deleteEdiPartnerMappingItem: boolean };
 
 export type EdiSummaryQueryVariables = Exact<{
   sinceHours?: number | null | undefined;
@@ -14441,6 +15027,55 @@ export type DeskEmailProfilesQueryVariables = Exact<{
 
 
 export type DeskEmailProfilesQuery = { emailProfiles: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { id: string, name: string, description: string, senderName: string, senderEmail: string, replyToEmail: string, status: EmailProfileStatus } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
+
+export type EmailLogsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type EmailLogsQuery = { emailLogs: { edges: Array<{ node: { id: string, profileId: string, purpose: EmailPurpose, provider: EmailProvider, providerMessageId: string | null, status: EmailMessageStatus, attempts: number, fromEmail: string, fromName: string, toRecipients: Array<string>, ccRecipients: Array<string> | null, bccRecipients: Array<string> | null, subject: string, lastError: string | null, sentAt: number | null, deliveredAt: number | null, failedAt: number | null, createdAt: number, updatedAt: number } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type EmailProfileAssignmentsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type EmailProfileAssignmentsQuery = { emailProfileAssignments: Array<{ id: string, purpose: EmailPurpose, profileId: string }> };
+
+export type CreateEmailProfileMutationVariables = Exact<{
+  input: EmailProfileInput;
+}>;
+
+
+export type CreateEmailProfileMutation = { createEmailProfile: { id: string, version: number } };
+
+export type UpdateEmailProfileMutationVariables = Exact<{
+  id: string | number;
+  input: EmailProfileInput;
+}>;
+
+
+export type UpdateEmailProfileMutation = { updateEmailProfile: { id: string, version: number } };
+
+export type DeleteEmailProfileMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteEmailProfileMutation = { deleteEmailProfile: boolean };
+
+export type SendEmailProfileTestMutationVariables = Exact<{
+  id: string | number;
+  input: TestEmailProfileInput;
+}>;
+
+
+export type SendEmailProfileTestMutation = { sendEmailProfileTest: { id: string, status: EmailMessageStatus } };
+
+export type UpdateEmailProfileAssignmentsMutationVariables = Exact<{
+  input: Array<EmailProfileAssignmentInput> | EmailProfileAssignmentInput;
+}>;
+
+
+export type UpdateEmailProfileAssignmentsMutation = { updateEmailProfileAssignments: Array<{ id: string, purpose: EmailPurpose, profileId: string }> };
 
 export type EmailProfileTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, senderName: string, senderEmail: string, replyToEmail: string, provider: EmailProvider, status: EmailProfileStatus, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'EmailProfileTableRowFieldsFragment' };
 
@@ -20799,13 +21434,18 @@ export { DocumentTypeTableRowFieldsFragmentDoc, DocumentTypeTableDocument } from
 export { PortalTrainingFieldsFragmentDoc, WorkerPortalStatusDocument, InviteWorkerToPortalDocument, RevokeWorkerPortalAccessDocument, SettlementDisputeTableDocument, SettlementDisputeDetailDocument, OpenSettlementDisputeCountDocument, StartSettlementDisputeReviewDocument, ResolveSettlementDisputeDocument, MyPortalProfileDocument, MyLoadsDocument, MyLoadCommentsDocument, RecordMyStopActionDocument, CreateMyLoadCommentDocument, MyPeriodSummaryDocument, MyRecentPayEventsDocument, MySettlementsDocument, MySettlementDocument, MyEscrowDocument, MyAdvancesDocument, MyDisputesDocument, CreateSettlementDisputeDocument, WithdrawSettlementDisputeDocument, MyComplianceProfileDocument, UpdateMyContactInfoDocument, MyPtoDocument, RequestMyPtoDocument, CancelMyPtoDocument, MyExpensesDocument, SubmitMyExpenseDocument, CancelMyExpenseDocument, RespondToMyAssignmentDocument, MyLoadPayEstimateDocument, MyYtdPayDocument, DriverExpenseTableDocument, DriverExpenseDetailDocument, PendingDriverExpenseCountDocument, ReviewDriverExpenseDocument, DashControlDocument, UpdateDashControlDocument, MyPortalFeaturesDocument, MyPoliciesDocument, MyPolicyDocumentUrlDocument, MyProfileChangeRequestsDocument, AcknowledgeMyPolicyDocument, WithdrawMyProfileChangeDocument, MyScheduleDocument, MyAvailabilityDocument, MyShiftSwapsDocument, SetMyAvailabilityDocument, ProposeMyShiftSwapDocument, RespondToMyShiftSwapDocument, MyHosStateDocument, MyHosDailyLogsDocument, MyHosViolationsDocument, MyCredentialsDocument, MyPtoBalancesDocument, MyTrainingDocument, StartMyTrainingDocument, AcknowledgeMyTrainingDocument, MySafetyScorecardDocument, MyRecognitionsDocument, MyDisciplinaryActionsDocument, AcknowledgeMyDisciplinaryActionDocument, MyReviewsDocument, AcknowledgeMyReviewDocument, MyLeaveDocument } from "./documents/driver-portal/operations";
 export { DeskDriverSettlementCardDocument, DeskDriverSettlementStatementDocument, DeskPayCodeOptionsDocument } from "./documents/driver-settlement/desk";
 export { PayProfileTableDocument, WorkerPayAssignmentsDocument, EffectiveWorkerPayAssignmentDocument, PayProfileAssignmentsDocument, PayProfileDetailDocument, RecurringDeductionTableDocument, RecurringEarningTableDocument, PayCodeTableDocument, PayAdvanceTableDocument, EscrowAccountTableDocument, EscrowAccountDetailDocument, DriverSettlementTableDocument, DriverSettlementDetailDocument, SettlementBatchTableDocument, DriverPayEventTableDocument, WorkerEarningsSummaryDocument, WorkerYtdPaySummariesDocument, SettlementControlDocument, SettlementWorkspaceSummaryDocument, UnsettledWorkerSummariesDocument, CurrentSettlementPeriodDocument, PreviewDriverSettlementDocument, ExportSettlementBatchCsvDocument, CreatePayProfileDocument, UpdatePayProfileDocument, AssignPayProfileToWorkerDocument, EndWorkerPayAssignmentDocument, CreateRecurringDeductionDocument, UpdateRecurringDeductionDocument, CreatePayCodeDocument, UpdatePayCodeDocument, CreateRecurringEarningDocument, UpdateRecurringEarningDocument, IssuePayAdvanceDocument, WriteOffPayAdvanceDocument, OpenEscrowAccountDocument, UpdateEscrowAccountDocument, AdjustEscrowAccountDocument, CloseEscrowAccountDocument, GenerateSettlementBatchDocument, GenerateDriverSettlementDocument, SubmitDriverSettlementDocument, ApproveDriverSettlementDocument, RejectDriverSettlementDocument, PostDriverSettlementDocument, MarkDriverSettlementPaidDocument, VoidDriverSettlementDocument, RecalculateDriverSettlementDocument, AddDriverSettlementAdjustmentDocument, RemoveDriverSettlementAdjustmentDocument, HoldDriverPayEventDocument, ReleaseDriverPayEventDocument, AttachPayEventsToSettlementDocument, DetachPayEventFromSettlementDocument, BulkDriverSettlementActionDocument, UpdateSettlementControlDocument, SettlementBatchDetailDocument, UnsettledPayEventsDocument, PayWorkerNowDocument } from "./documents/driver-settlement/operations";
+export { ReprocessEdiInboundFileDocument, BulkReprocessEdiInboundFilesDocument, RetryEdiMessageDeliveryDocument, ReplayEdiMessageDocument, BulkRetryEdiMessageDeliveryDocument, ReleaseEdiFlowInstanceDocument, SubmitEdiLoadTenderDocument, ApproveEdiTransferDocument, RejectEdiTransferDocument, CancelEdiTransferDocument, BulkApproveEdiTransfersDocument, BulkRejectEdiTransfersDocument } from "./documents/edi/actions";
 export { EdiPartnerScorecardsDocument, EdiVolumeSeriesDocument } from "./documents/edi/analytics";
 export { DeskEdiMessageRowFieldsFragmentDoc, DeskEdiTransferRowFieldsFragmentDoc, DeskEdiPartnersDocument, DeskEdiInboundFilesDocument, DeskEdiInboundFileDocument, DeskEdiMessagesDocument, DeskEdiMessageDocument, DeskEdiTransfersDocument, DeskEdiTransferDocument, DeskEdiAckHealthDocument, DeskEdiCarrierInvoicesDocument } from "./documents/edi/desk";
+export { EdiLadingContextDocument, EdiLadingPartnerProjectDocument, EdiLadingVersionsDocument, EdiLadingVersionDocument, EdiLadingReplaysDocument, EdiLadingShadowResultsDocument, RunEdiLadingVersionDocument, CreateEdiLadingProjectDocument, CreateEdiLadingDraftDocument, UpdateEdiLadingSettingsDocument, CertifyEdiLadingVersionDocument, ActivateEdiLadingVersionDocument, ArchiveEdiLadingVersionDocument, StartEdiLadingShadowDocument, StopEdiLadingShadowDocument, StartEdiLadingReplayDocument } from "./documents/edi/lading";
 export { DeskEdiPartnerMessageFieldsFragmentDoc, DeskEdiPartnerCardDocument, DeskEdiPartnerMessagesDocument } from "./documents/edi/partner-desk";
 export { EdiPartnerReadinessDocument } from "./documents/edi/readiness";
+export { EdiPartnerRecordFieldsFragmentDoc, EdiMessageRecordFieldsFragmentDoc, EdiMessageDiagnosticRecordFieldsFragmentDoc, EdiTransferRecordFieldsFragmentDoc, EdiMappingResolutionFieldsFragmentDoc, EdiMessageRecordDocument, EdiMessageInspectionDocument, EdiInboundFileRecordDocument, EdiInboundFileInspectionDocument, EdiTransferRecordDocument, EdiInboundFileTransfersDocument, EdiTransferMappingPreviewDocument, EdiFlowInstanceDetailDocument } from "./documents/edi/records";
+export { EdiMappingProfileItemRecordFieldsFragmentDoc, EdiPartnerRecordDocument, PendingEdiConnectionsDocument, EdiPartnerMappingProfileDocument, InspectEdiCertificateDocument, EdiPartnerReadinessDetailDocument, CreateEdiPartnerDocument, UpdateEdiPartnerDocument, CreateEdiConnectionDocument, AcceptEdiConnectionDocument, RejectEdiConnectionDocument, CreateEdiCommunicationProfileDocument, UpdateEdiCommunicationProfileDocument, TestEdiCommunicationProfileConnectionDocument, PollEdiCommunicationProfileDocument, SaveEdiMappingProfileItemsDocument, DeleteEdiMappingProfileItemDocument, SaveEdiPartnerMappingProfileDocument, DeleteEdiPartnerMappingItemDocument } from "./documents/edi/setup";
 export { EdiSummaryDocument } from "./documents/edi/summary";
 export { EdiPartnerRowFieldsFragmentDoc, EdiCommunicationProfileRowFieldsFragmentDoc, EdiTransferRowFieldsFragmentDoc, EdiMessageRowFieldsFragmentDoc, EdiInboundFileRowFieldsFragmentDoc, EdiMappingProfileRowFieldsFragmentDoc, EdiFlowInstanceRowFieldsFragmentDoc, EdiPartnerTableDocument, EdiCommunicationProfileTableDocument, EdiTransferTableDocument, EdiMessageTableDocument, EdiInboundFileTableDocument, EdiMappingProfileTableDocument, EdiFlowInstanceTableDocument } from "./documents/edi/table";
 export { DeskEmailProfilesDocument } from "./documents/email-profile/desk";
+export { EmailLogsDocument, EmailProfileAssignmentsDocument, CreateEmailProfileDocument, UpdateEmailProfileDocument, DeleteEmailProfileDocument, SendEmailProfileTestDocument, UpdateEmailProfileAssignmentsDocument } from "./documents/email-profile/profile";
 export { EmailProfileTableRowFieldsFragmentDoc, EmailProfileTableDocument } from "./documents/email-profile/table";
 export { CreateEquipmentManufacturerDocument, UpdateEquipmentManufacturerDocument, PatchEquipmentManufacturerDocument, BulkUpdateEquipmentManufacturerStatusDocument } from "./documents/equipment-manufacturer/mutations";
 export { EquipmentManufacturerTableRowFieldsFragmentDoc, EquipmentManufacturerTableDocument } from "./documents/equipment-manufacturer/table";

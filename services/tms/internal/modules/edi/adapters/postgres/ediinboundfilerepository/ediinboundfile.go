@@ -46,29 +46,6 @@ func New(p Params) edimessageports.EDIInboundFileRepository {
 	}
 }
 
-func (r *repository) ListInboundFiles(
-	ctx context.Context,
-	req *edimessageports.ListEDIInboundFilesRequest,
-) (*pagination.ListResult[*ediinboundfile.EDIInboundFile], error) {
-	return dbtx.Read(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*ediinboundfile.EDIInboundFile], error) {
-			f := ediinboundfiledb.EDIInboundFiles
-			return listquery.List(
-				ctx,
-				r.db.Keel(ctx),
-				listedFiles(req),
-				&listquery.Request[ediinboundfile.EDIInboundFile]{
-					Filter: req.Filter,
-					Shape:  withPartner,
-					Then:   []keel.Order{f.ReceivedAt.Desc()},
-				},
-			)
-		},
-	)
-}
-
 func (r *repository) ListInboundFilesCursor(
 	ctx context.Context,
 	req *edimessageports.ListEDIInboundFilesRequest,

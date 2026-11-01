@@ -141,13 +141,6 @@ func (s *Service) Observe(observers ...emailports.EmailMessageObserver) {
 	s.observers.Store(&next)
 }
 
-func (s *Service) ListProfiles(
-	ctx context.Context,
-	req *emailports.ListEmailProfilesRequest,
-) (*pagination.ListResult[*email.Profile], error) {
-	return s.repo.ListProfiles(ctx, req)
-}
-
 func (s *Service) ListProfilesConnection(
 	ctx context.Context,
 	req *emailports.ListEmailProfileConnectionRequest,
@@ -974,46 +967,8 @@ func unbouncedRecipients(msg *email.Message, bounced []string) []string {
 func (s *Service) ListMessages(
 	ctx context.Context,
 	req *emailports.ListEmailMessagesRequest,
-) (*pagination.ListResult[*email.Message], error) {
+) (*pagination.CursorListResult[*email.Message], error) {
 	return s.repo.ListMessages(ctx, req)
-}
-
-func (s *Service) GetMessage(
-	ctx context.Context,
-	req emailports.GetEmailEntityRequest,
-) (*email.Message, error) {
-	return s.repo.GetMessage(ctx, req)
-}
-
-func (s *Service) ListSuppressions(
-	ctx context.Context,
-	req *emailports.ListEmailSuppressionsRequest,
-) (*pagination.ListResult[*email.Suppression], error) {
-	return s.repo.ListSuppressions(ctx, req)
-}
-
-func (s *Service) CreateSuppression(
-	ctx context.Context,
-	suppression *email.Suppression,
-) (*email.Suppression, error) {
-	if !strings.Contains(suppression.EmailAddress, "@") {
-		return nil, errortypes.NewValidationError(
-			"emailAddress",
-			errortypes.ErrInvalid,
-			"Email address is invalid",
-		)
-	}
-	if suppression.Reason == "" {
-		suppression.Reason = email.SuppressionReasonManual
-	}
-	return s.repo.CreateSuppression(ctx, suppression)
-}
-
-func (s *Service) DeleteSuppression(
-	ctx context.Context,
-	req emailports.GetEmailEntityRequest,
-) error {
-	return s.repo.DeleteSuppression(ctx, req)
 }
 
 func (s *Service) ResolveTenantByWebhookToken(

@@ -1,0 +1,93 @@
+# The Lading studio (docs/engineering/lading.md). Its reads return the Lading
+# runtime's own shapes; the client checks them with the studio's schemas.
+
+query EdiLadingContext {
+  ediLadingContext
+}
+
+query EdiLadingPartnerProject($partnerId: ID!) {
+  ediLadingPartnerProject(partnerId: $partnerId)
+}
+
+query EdiLadingVersions($projectId: ID!, $limit: Int) {
+  ediLadingVersions(projectId: $projectId, limit: $limit)
+}
+
+query EdiLadingVersion($id: ID!) {
+  ediLadingVersion(id: $id)
+}
+
+query EdiLadingReplays($versionId: ID!, $limit: Int) {
+  ediLadingReplays(versionId: $versionId, limit: $limit)
+}
+
+query EdiLadingShadowResults($versionId: ID!, $onlyDiffering: Boolean) {
+  ediLadingShadowResults(versionId: $versionId, onlyDiffering: $onlyDiffering)
+}
+
+query RunEdiLadingVersion(
+  $versionId: ID!
+  $mapName: String!
+  $input: EdiLadingRunInput!
+  $rules: Boolean
+) {
+  runEdiLadingVersion(versionId: $versionId, mapName: $mapName, input: $input, rules: $rules)
+}
+
+mutation CreateEdiLadingProject($input: CreateEdiLadingProjectInput!) {
+  createEdiLadingProject(input: $input) {
+    id
+  }
+}
+
+mutation CreateEdiLadingDraft($projectId: ID!, $fromVersionId: ID!) {
+  createEdiLadingDraft(projectId: $projectId, fromVersionId: $fromVersionId) {
+    id
+  }
+}
+
+mutation UpdateEdiLadingSettings($projectId: ID!, $settings: JSON!, $version: Int!) {
+  updateEdiLadingSettings(projectId: $projectId, settings: $settings, version: $version) {
+    id
+    version
+  }
+}
+
+mutation CertifyEdiLadingVersion($id: ID!) {
+  certifyEdiLadingVersion(id: $id) {
+    id
+    status
+  }
+}
+
+mutation ActivateEdiLadingVersion($id: ID!) {
+  activateEdiLadingVersion(id: $id) {
+    id
+    status
+  }
+}
+
+mutation ArchiveEdiLadingVersion($id: ID!) {
+  archiveEdiLadingVersion(id: $id) {
+    id
+    status
+  }
+}
+
+mutation StartEdiLadingShadow($id: ID!, $days: Int!) {
+  startEdiLadingShadow(id: $id, days: $days) {
+    id
+    status
+  }
+}
+
+mutation StopEdiLadingShadow($id: ID!) {
+  stopEdiLadingShadow(id: $id) {
+    id
+    status
+  }
+}
+
+mutation StartEdiLadingReplay($versionId: ID!, $input: StartEdiLadingReplayInput!) {
+  startEdiLadingReplay(versionId: $versionId, input: $input)
+}

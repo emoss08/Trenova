@@ -18,7 +18,7 @@ export type LadingCustomField = { name: string; type: string; label: string };
 
 /**
  * What a project is checked against: the organisation and its custom fields by the record they
- * are on (`shipment`), as `GET /edi/lading/context/` sends them.
+ * are on (`shipment`), as the `ediLadingContext` query sends them.
  */
 export type LadingContext = {
   org: { name: string; scac: string; zone: string };

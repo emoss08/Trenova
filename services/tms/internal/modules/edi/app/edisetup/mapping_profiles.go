@@ -15,13 +15,6 @@ func (s *Service) GetMappingProfile(
 	return s.mappingProfileRepo.GetMappingProfile(ctx, req)
 }
 
-func (s *Service) ListMappingProfiles(
-	ctx context.Context,
-	req *edipartnerports.ListEDIMappingProfilesRequest,
-) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
-	return s.mappingProfileRepo.ListMappingProfiles(ctx, req)
-}
-
 func (s *Service) SelectMappingProfileOptions(
 	ctx context.Context,
 	req *edipartnerports.EDIMappingProfileSelectOptionsRequest,

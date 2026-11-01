@@ -58,7 +58,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/documenttyperesolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/driverportalresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/driversettlementresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/ediladingresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/ediresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/edisetupresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/editransferresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/emailprofileresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/equipmentcontinuityresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/equipmentmanufacturerresolver"
@@ -771,6 +774,22 @@ func FromServices(s *Services) *Resolver {
 		EdiMessageService:  s.EdiMessageService,
 		EdiOverviewService: s.EdiOverviewService,
 		EdiInboundService:  s.EdiInboundService,
+		EdiDeliveryService: s.EdiDeliveryService,
+	}
+	ediladingDeps := &ediladingresolver.Deps{
+		Core:              s.Core,
+		EdiLadingProjects: s.EdiLadingProjects,
+		EdiLadingRuntime:  s.EdiLadingRuntime,
+	}
+	edisetupDeps := &edisetupresolver.Deps{
+		Core:                  s.Core,
+		EdiSetupService:       s.EdiSetupService,
+		EdiInboundPollService: s.EdiInboundPollService,
+	}
+	editransferDeps := &editransferresolver.Deps{
+		Core:               s.Core,
+		EdiTransferService: s.EdiTransferService,
+		EdiTenderService:   s.EdiTenderService,
 	}
 	emailprofileDeps := &emailprofileresolver.Deps{
 		Core:         s.Core,
@@ -1495,6 +1514,11 @@ func FromServices(s *Services) *Resolver {
 			documenttypeMutation:          &documenttypeMutation{Deps: documenttypeDeps},
 			driverportalMutation:          &driverportalMutation{Deps: driverportalDeps},
 			driversettlementMutation:      &driversettlementMutation{Deps: driversettlementDeps},
+			ediMutation:                   &ediMutation{Deps: ediDeps},
+			ediladingMutation:             &ediladingMutation{Deps: ediladingDeps},
+			edisetupMutation:              &edisetupMutation{Deps: edisetupDeps},
+			editransferMutation:           &editransferMutation{Deps: editransferDeps},
+			emailprofileMutation:          &emailprofileMutation{Deps: emailprofileDeps},
 			equipmentmanufacturerMutation: &equipmentmanufacturerMutation{Deps: equipmentmanufacturerDeps},
 			equipmenttypeMutation:         &equipmenttypeMutation{Deps: equipmenttypeDeps},
 			extractionevalMutation:        &extractionevalMutation{Deps: extractionevalDeps},
@@ -1630,6 +1654,9 @@ func FromServices(s *Services) *Resolver {
 			driverportalQuery:             &driverportalQuery{Deps: driverportalDeps},
 			driversettlementQuery:         &driversettlementQuery{Deps: driversettlementDeps},
 			ediQuery:                      &ediQuery{Deps: ediDeps},
+			ediladingQuery:                &ediladingQuery{Deps: ediladingDeps},
+			edisetupQuery:                 &edisetupQuery{Deps: edisetupDeps},
+			editransferQuery:              &editransferQuery{Deps: editransferDeps},
 			emailprofileQuery:             &emailprofileQuery{Deps: emailprofileDeps},
 			equipmentmanufacturerQuery:    &equipmentmanufacturerQuery{Deps: equipmentmanufacturerDeps},
 			equipmenttypeQuery:            &equipmenttypeQuery{Deps: equipmenttypeDeps},
@@ -2682,6 +2709,11 @@ type mutationResolver struct {
 	*documenttypeMutation
 	*driverportalMutation
 	*driversettlementMutation
+	*ediMutation
+	*ediladingMutation
+	*edisetupMutation
+	*editransferMutation
+	*emailprofileMutation
 	*equipmentmanufacturerMutation
 	*equipmenttypeMutation
 	*extractionevalMutation
@@ -2891,6 +2923,9 @@ type queryResolver struct {
 	*driverportalQuery
 	*driversettlementQuery
 	*ediQuery
+	*ediladingQuery
+	*edisetupQuery
+	*editransferQuery
 	*emailprofileQuery
 	*equipmentmanufacturerQuery
 	*equipmenttypeQuery
@@ -3327,6 +3362,11 @@ type (
 	documenttypeMutation            = documenttyperesolver.MutationResolver
 	driverportalMutation            = driverportalresolver.MutationResolver
 	driversettlementMutation        = driversettlementresolver.MutationResolver
+	ediMutation                     = ediresolver.MutationResolver
+	ediladingMutation               = ediladingresolver.MutationResolver
+	edisetupMutation                = edisetupresolver.MutationResolver
+	editransferMutation             = editransferresolver.MutationResolver
+	emailprofileMutation            = emailprofileresolver.MutationResolver
 	equipmentmanufacturerMutation   = equipmentmanufacturerresolver.MutationResolver
 	equipmenttypeMutation           = equipmenttyperesolver.MutationResolver
 	extractionevalMutation          = extractionevalresolver.MutationResolver
@@ -3437,6 +3477,9 @@ type (
 	driverportalQuery               = driverportalresolver.QueryResolver
 	driversettlementQuery           = driversettlementresolver.QueryResolver
 	ediQuery                        = ediresolver.QueryResolver
+	ediladingQuery                  = ediladingresolver.QueryResolver
+	edisetupQuery                   = edisetupresolver.QueryResolver
+	editransferQuery                = editransferresolver.QueryResolver
 	emailprofileQuery               = emailprofileresolver.QueryResolver
 	equipmentmanufacturerQuery      = equipmentmanufacturerresolver.QueryResolver
 	equipmenttypeQuery              = equipmenttyperesolver.QueryResolver

@@ -83,11 +83,6 @@ func (p *EDIPartner) BeforeCreate(ctx context.Context) error {
 	return nil
 }
 
-type InternalPartnerPair struct {
-	SourcePartner *EDIPartner `json:"sourcePartner"`
-	TargetPartner *EDIPartner `json:"targetPartner"`
-}
-
 func (p *EDIPartner) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		p,

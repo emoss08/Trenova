@@ -5,8 +5,9 @@
 package edimessageportsmock
 
 import (
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"context"
+
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 
@@ -1121,74 +1122,6 @@ func (_c *MockEDIMessageRepository_LinkMessageFlow_Call) Return(eDIMessage *edim
 }
 
 func (_c *MockEDIMessageRepository_LinkMessageFlow_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.LinkEDIMessageFlowRequest) (*edimessage.EDIMessage, error)) *MockEDIMessageRepository_LinkMessageFlow_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListMessages provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) ListMessages(ctx context.Context, req *edimessageports.ListEDIMessagesRequest) (*pagination.ListResult[*edimessage.EDIMessage], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListMessages")
-	}
-
-	var r0 *pagination.ListResult[*edimessage.EDIMessage]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIMessagesRequest) (*pagination.ListResult[*edimessage.EDIMessage], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIMessagesRequest) *pagination.ListResult[*edimessage.EDIMessage]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*edimessage.EDIMessage])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edimessageports.ListEDIMessagesRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockEDIMessageRepository_ListMessages_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListMessages'
-type MockEDIMessageRepository_ListMessages_Call struct {
-	*mock.Call
-}
-
-// ListMessages is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *edimessageports.ListEDIMessagesRequest
-func (_e *MockEDIMessageRepository_Expecter) ListMessages(ctx any, req any) *MockEDIMessageRepository_ListMessages_Call {
-	return &MockEDIMessageRepository_ListMessages_Call{Call: _e.mock.On("ListMessages", ctx, req)}
-}
-
-func (_c *MockEDIMessageRepository_ListMessages_Call) Run(run func(ctx context.Context, req *edimessageports.ListEDIMessagesRequest)) *MockEDIMessageRepository_ListMessages_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *edimessageports.ListEDIMessagesRequest
-		if args[1] != nil {
-			arg1 = args[1].(*edimessageports.ListEDIMessagesRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockEDIMessageRepository_ListMessages_Call) Return(listResult *pagination.ListResult[*edimessage.EDIMessage], err error) *MockEDIMessageRepository_ListMessages_Call {
-	_c.Call.Return(listResult, err)
-	return _c
-}
-
-func (_c *MockEDIMessageRepository_ListMessages_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.ListEDIMessagesRequest) (*pagination.ListResult[*edimessage.EDIMessage], error)) *MockEDIMessageRepository_ListMessages_Call {
 	_c.Call.Return(run)
 	return _c
 }

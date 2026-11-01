@@ -57,10 +57,6 @@ type EDILoadTenderTransferRepository interface {
 		ctx context.Context,
 		req GetEDITransferStatusCountsRequest,
 	) (map[editransfer.TransferStatus]int, error)
-	ListInbound(
-		ctx context.Context,
-		req *ListEDITransfersRequest,
-	) (*pagination.ListResult[*editransfer.EDITransfer], error)
 	ListInboundCursor(
 		ctx context.Context,
 		req *ListEDITransfersRequest,

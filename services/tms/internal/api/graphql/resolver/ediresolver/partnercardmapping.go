@@ -108,21 +108,39 @@ func ediTransportCertificatesToModel(
 func ediPartnerReadinessToModel(
 	readiness *edioverview.EDIPartnerReadiness,
 ) *gqlmodel.EDIPartnerCardReadiness {
-	model := &gqlmodel.EDIPartnerCardReadiness{
+	return &gqlmodel.EDIPartnerCardReadiness{
 		Ready:          readiness.Ready,
 		CompletedCount: readiness.CompletedCount,
 		TotalCount:     readiness.TotalCount,
-		Items:          make([]*gqlmodel.EDIPartnerReadinessItem, 0, len(readiness.Items)),
+		Items:          readinessItemsToModel(readiness.Items),
 	}
-	for _, item := range readiness.Items {
-		model.Items = append(model.Items, &gqlmodel.EDIPartnerReadinessItem{
+}
+
+func partnerReadinessToModel(
+	readiness *edioverview.EDIPartnerReadiness,
+) *gqlmodel.EDIPartnerReadinessState {
+	return &gqlmodel.EDIPartnerReadinessState{
+		PartnerID:      readiness.PartnerID.String(),
+		Ready:          readiness.Ready,
+		CompletedCount: readiness.CompletedCount,
+		TotalCount:     readiness.TotalCount,
+		Items:          readinessItemsToModel(readiness.Items),
+	}
+}
+
+func readinessItemsToModel(
+	items []edioverview.EDIPartnerReadinessItem,
+) []*gqlmodel.EDIPartnerReadinessItem {
+	models := make([]*gqlmodel.EDIPartnerReadinessItem, 0, len(items))
+	for _, item := range items {
+		models = append(models, &gqlmodel.EDIPartnerReadinessItem{
 			Key:      item.Key,
 			Label:    item.Label,
 			Complete: item.Complete,
 		})
 	}
 
-	return model
+	return models
 }
 
 func ediPartnerMappingsToModel(

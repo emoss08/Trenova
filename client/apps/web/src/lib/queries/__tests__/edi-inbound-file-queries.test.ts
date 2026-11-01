@@ -1,19 +1,23 @@
 import { QueryClient } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ediGraphQLResponse } from "@/test/edi-graphql";
 
-const get = vi.hoisted(() => vi.fn());
+const request = vi.hoisted(() => vi.fn());
 
-vi.mock("@trenova/shared/lib/api", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@trenova/shared/lib/api")>();
-  return { ...actual, api: { ...actual.api, get } };
+vi.mock("@trenova/shared/lib/graphql", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@trenova/shared/lib/graphql")>();
+  return { ...actual, requestGraphQL: request };
 });
+
+const answerFile = (wire: unknown) =>
+  request.mockResolvedValue(ediGraphQLResponse("EdiInboundFileRecord", wire));
 
 const { edi } = await import("@/lib/queries/edi");
 const { wireFileInspection, wireInboundFile } =
   await import("@/routes/desk/_components/artifacts/cards/edi-inbound-file/__tests__/fixtures");
 
 beforeEach(() => {
-  get.mockReset();
+  request.mockReset();
 });
 
 type WireMessage = {
@@ -22,12 +26,16 @@ type WireMessage = {
 
 describe("EDI inbound file queries", () => {
   it("reads one file with its signal, keeping when its raw content was purged", async () => {
-    get.mockResolvedValue(wireInboundFile("batch", { rawPurgedAt: 1_791_700_000 }));
+    answerFile(wireInboundFile("batch", { rawPurgedAt: 1_791_700_000 }));
     const file = await new QueryClient().fetchQuery(edi.inboundFile("ediinf_acme"));
 
-    expect(get).toHaveBeenCalledWith("/edi/inbound-files/ediinf_acme/", {
-      signal: expect.any(AbortSignal),
-    });
+    expect(request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operationName: "EdiInboundFileRecord",
+        variables: { id: "ediinf_acme" },
+        signal: expect.any(AbortSignal),
+      }),
+    );
     expect(file.rawPurgedAt).toBe(1_791_700_000);
     expect(file.messages?.map((message) => message.id)).toEqual([
       "edimsg_acme_204a",
@@ -37,7 +45,7 @@ describe("EDI inbound file queries", () => {
   });
 
   it("reads a file that was never read as X12, whose envelope fields are blank", async () => {
-    get.mockResolvedValue(wireInboundFile("quarantined"));
+    answerFile(wireInboundFile("quarantined"));
     const file = await new QueryClient().fetchQuery(edi.inboundFile("ediinf_bad"));
 
     expect(file.interchangeControlNumber).toBe("");
@@ -47,7 +55,7 @@ describe("EDI inbound file queries", () => {
   });
 
   it("reads a file from a mailbox no partner owns", async () => {
-    get.mockResolvedValue(wireInboundFile("quarantined", { ediPartnerId: null, partner: null }));
+    answerFile(wireInboundFile("quarantined", { ediPartnerId: null, partner: null }));
     const file = await new QueryClient().fetchQuery(edi.inboundFile("ediinf_bad"));
 
     expect(file.ediPartnerId).toBeNull();
@@ -59,7 +67,7 @@ describe("EDI inbound file queries", () => {
     const [message] = wire.messages as WireMessage[];
     const [stop] = message!.payloadSnapshot.loadTender.moves[0]!.stops;
     stop!.locationId = null;
-    get.mockResolvedValue(wire);
+    answerFile(wire);
 
     const file = await new QueryClient().fetchQuery(edi.inboundFile("ediinf_sim"));
 
@@ -69,12 +77,18 @@ describe("EDI inbound file queries", () => {
   });
 
   it("inspects one file's interchange with its signal", async () => {
-    get.mockResolvedValue(wireFileInspection("batch"));
+    request.mockResolvedValue(
+      ediGraphQLResponse("EdiInboundFileInspection", wireFileInspection("batch")),
+    );
     const inspection = await new QueryClient().fetchQuery(edi.inboundFileInspection("ediinf_acme"));
 
-    expect(get).toHaveBeenCalledWith("/edi/inbound-files/ediinf_acme/inspect/", {
-      signal: expect.any(AbortSignal),
-    });
+    expect(request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operationName: "EdiInboundFileInspection",
+        variables: { id: "ediinf_acme" },
+        signal: expect.any(AbortSignal),
+      }),
+    );
     expect(inspection.groups.map((group) => group.functionalIdCode)).toEqual(["SM", "FA"]);
     expect(inspection.transactions).toHaveLength(3);
   });

@@ -10,6 +10,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -58,4 +60,123 @@ func (r *QueryResolver) EmailProfile(ctx context.Context, id string) (*email.Pro
 		ID:         profileID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
+}
+
+func (r *QueryResolver) EmailLogs(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.EmailLogConnection, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceEmailLog, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.EmailService.ListMessages(ctx, &emailports.ListEmailMessagesRequest{
+		Filter: tableInput.Filter,
+		Cursor: tableInput.Cursor,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return emailLogConnectionToModel(result)
+}
+
+func (r *QueryResolver) EmailProfileAssignments(ctx context.Context) ([]*email.ProfileAssignment, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceEmailProfile, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.EmailService.ListAssignments(ctx, resolvercore.TenantInfo(authCtx))
+}
+
+func (r *MutationResolver) CreateEmailProfile(ctx context.Context, input gqlmodel.EmailProfileInput) (*email.Profile, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceEmailProfile, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	profile := &email.Profile{
+		OrganizationID: authCtx.OrganizationID,
+		BusinessUnitID: authCtx.BusinessUnitID,
+	}
+	applyEmailProfileInput(profile, &input)
+
+	return r.EmailService.CreateProfile(ctx, profile, authCtx.UserID)
+}
+
+func (r *MutationResolver) UpdateEmailProfile(ctx context.Context, id string, input gqlmodel.EmailProfileInput) (*email.Profile, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceEmailProfile, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	profileID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, err := r.EmailService.GetProfile(ctx, emailports.GetEmailEntityRequest{
+		ID:         profileID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+	applyEmailProfileInput(profile, &input)
+
+	return r.EmailService.UpdateProfile(ctx, profile, authCtx.UserID)
+}
+
+func (r *MutationResolver) DeleteEmailProfile(ctx context.Context, id string) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceEmailProfile, permission.OpDelete)
+	if err != nil {
+		return false, err
+	}
+	profileID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.EmailService.DeleteProfile(ctx, emailports.GetEmailEntityRequest{
+		ID:         profileID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	}, authCtx.UserID); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *MutationResolver) SendEmailProfileTest(ctx context.Context, id string, input gqlmodel.TestEmailProfileInput) (*email.Message, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceEmailProfile, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	profileID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.EmailService.TestSend(ctx, resolvercore.TenantInfo(authCtx), profileID, &emailports.TestEmailProfileRequest{
+		To:      input.To,
+		Subject: input.Subject,
+		HTML:    gqlscalar.StringValue(input.HTML),
+		Text:    gqlscalar.StringValue(input.Text),
+	})
+}
+
+func (r *MutationResolver) UpdateEmailProfileAssignments(ctx context.Context, input []*gqlmodel.EmailProfileAssignmentInput) ([]*email.ProfileAssignment, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceEmailProfile, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	assignments, err := assignmentsFromInput(input)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.EmailService.UpsertAssignments(ctx, resolvercore.TenantInfo(authCtx), assignments, authCtx.UserID)
 }

@@ -384,13 +384,6 @@ func (s *Service) AcknowledgeFlowMessage(
 	return err
 }
 
-func (s *Service) ListFlowInstances(
-	ctx context.Context,
-	req *ladingports.ListFlowInstancesRequest,
-) (*pagination.ListResult[*ladingproject.FlowInstance], error) {
-	return s.flowRepo.ListInstances(ctx, req)
-}
-
 func (s *Service) ListFlowInstancesCursor(
 	ctx context.Context,
 	req *ladingports.ListFlowInstancesRequest,

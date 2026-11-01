@@ -94,11 +94,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edidelivery"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundpoll"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edimessageview"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edioverview"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransferservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
@@ -277,6 +281,11 @@ type Params struct {
 	EDIMessageService                 *edimessageview.Service
 	EDIOverviewService                *edioverview.Service
 	EDIInboundService                 *ediinboundservice.Service
+	EDIDeliveryService                *edidelivery.Service
+	EDIInboundPollService             *ediinboundpoll.Service
+	EDITenderService                  *editenderservice.Service
+	EDILadingProjects                 *edilading.Projects
+	EDILadingRuntime                  *edilading.Runtime
 	EquipmentTypeService              *equipmenttypeservice.Service
 	AccessorialChargeService          *accessorialchargeservice.Service
 	AccountTypeService                *accounttypeservice.Service
@@ -567,6 +576,11 @@ type Services struct {
 	EdiMessageService                 *edimessageview.Service
 	EdiOverviewService                *edioverview.Service
 	EdiInboundService                 *ediinboundservice.Service
+	EdiDeliveryService                *edidelivery.Service
+	EdiInboundPollService             *ediinboundpoll.Service
+	EdiTenderService                  *editenderservice.Service
+	EdiLadingProjects                 *edilading.Projects
+	EdiLadingRuntime                  *edilading.Runtime
 	EquipmentTypeService              *equipmenttypeservice.Service
 	AccessorialChargeService          *accessorialchargeservice.Service
 	AccountTypeService                *accounttypeservice.Service
@@ -862,6 +876,11 @@ func newServices(p *Params) *Services {
 		EdiMessageService:                 p.EDIMessageService,
 		EdiOverviewService:                p.EDIOverviewService,
 		EdiInboundService:                 p.EDIInboundService,
+		EdiDeliveryService:                p.EDIDeliveryService,
+		EdiInboundPollService:             p.EDIInboundPollService,
+		EdiTenderService:                  p.EDITenderService,
+		EdiLadingProjects:                 p.EDILadingProjects,
+		EdiLadingRuntime:                  p.EDILadingRuntime,
 		EquipmentTypeService:              p.EquipmentTypeService,
 		AccessorialChargeService:          p.AccessorialChargeService,
 		AccountTypeService:                p.AccountTypeService,

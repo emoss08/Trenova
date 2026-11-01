@@ -8,7 +8,7 @@ export function EmailLogsPage() {
   const t = useT();
 
   const logsQuery = useQuery(email.logs());
-  const logs = logsQuery.data?.results ?? [];
+  const logs = logsQuery.data ?? [];
 
   return (
     <PageLayout

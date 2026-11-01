@@ -8,10 +8,14 @@ package ediresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edibulk"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edidelivery"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edioverview"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
@@ -32,6 +36,14 @@ import (
 
 func (r *EdiMessageResolver) TransactionSet(ctx context.Context, obj *edimessage.EDIMessage) (string, error) {
 	return string(obj.TransactionSet), nil
+}
+
+func (r *EdiMessageResolver) PayloadSnapshot(ctx context.Context, obj *edimessage.EDIMessage) (any, error) {
+	if obj.PayloadSnapshot.TransactionSet == "" {
+		return nil, nil
+	}
+
+	return obj.PayloadSnapshot, nil
 }
 
 func (r *EdiTransferResolver) TenderPayload(ctx context.Context, obj *editransfer.EDITransfer) (any, error) {
@@ -324,12 +336,7 @@ func (r *QueryResolver) EDIPartnerReadiness(ctx context.Context, partnerIds []st
 	}
 	models := make([]*gqlmodel.EDIPartnerReadinessState, 0, len(states))
 	for _, state := range states {
-		models = append(models, &gqlmodel.EDIPartnerReadinessState{
-			PartnerID:      state.PartnerID.String(),
-			Ready:          state.Ready,
-			CompletedCount: state.CompletedCount,
-			TotalCount:     state.TotalCount,
-		})
+		models = append(models, partnerReadinessToModel(state))
 	}
 	return models, nil
 }
@@ -553,4 +560,159 @@ func (r *EdiLadingVersionResolver) Exchanges(
 	obj *ladingproject.LadingVersion,
 ) ([]*gqlmodel.EDILadingExchange, error) {
 	return ladingExchangesToModel(&obj.Manifest), nil
+}
+
+func (r *QueryResolver) EDIInboundFileInspection(ctx context.Context, id string) (any, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceEDI, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	fileID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.EdiInboundService.InspectInboundFile(ctx, edimessageports.GetEDIInboundFileByIDRequest{
+		ID:         fileID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+}
+
+func (r *QueryResolver) EDIMessageInspection(ctx context.Context, id string) (*gqlmodel.EDIMessageInspection, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceEDI, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	messageID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	inspection, err := r.EdiMessageService.InspectMessage(ctx, edimessageports.GetEDIMessageByIDRequest{
+		ID:         messageID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.EDIMessageInspection{
+		Message:    inspection.Message,
+		Inspection: inspection.Inspection,
+		Provenance: &inspection.Provenance,
+	}, nil
+}
+
+func (r *QueryResolver) EDIFlowInstanceDetail(ctx context.Context, id string) (any, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceEDI, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	instanceID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.EdiOutboundService.GetFlowInstance(ctx, ladingports.GetFlowInstanceRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		ID:         instanceID,
+	})
+}
+
+func (r *MutationResolver) ReprocessEDIInboundFile(ctx context.Context, id string) (*ediinboundfile.EDIInboundFile, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceEDI, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	fileID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.EdiInboundService.ProcessInboundFile(ctx, &ediinboundservice.ProcessInboundFileRequest{
+		FileID:     fileID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Reprocess:  true,
+	})
+}
+
+func (r *MutationResolver) BulkReprocessEDIInboundFiles(ctx context.Context, ids []string) (*edibulk.Result, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceEDI, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	fileIDs, err := gqlid.ParseIDListField("ids", ids)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.EdiInboundService.BulkReprocessInboundFiles(ctx, &ediinboundservice.BulkReprocessInboundFilesRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		FileIDs:    fileIDs,
+	})
+}
+
+func (r *MutationResolver) RetryEDIMessageDelivery(ctx context.Context, id string) (*edimessage.EDIMessage, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceEDI, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	messageID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.EdiDeliveryService.RetryMessageDelivery(ctx, &edidelivery.RetryMessageDeliveryRequest{
+		MessageID:  messageID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+}
+
+func (r *MutationResolver) ReplayEDIMessage(ctx context.Context, id string) (*edimessage.EDIMessage, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceEDI, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	messageID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.EdiDeliveryService.ReplayMessageDelivery(ctx, &edidelivery.RetryMessageDeliveryRequest{
+		MessageID:  messageID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+}
+
+func (r *MutationResolver) BulkRetryEDIMessageDelivery(ctx context.Context, ids []string) (*edibulk.Result, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceEDI, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	messageIDs, err := gqlid.ParseIDListField("ids", ids)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.EdiDeliveryService.BulkRetryMessageDelivery(ctx, &edidelivery.BulkRetryMessageDeliveryRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		MessageIDs: messageIDs,
+	})
+}
+
+func (r *MutationResolver) ReleaseEDIFlowInstance(ctx context.Context, id string) (*ladingproject.FlowInstance, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceEDI, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	instanceID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.EdiOutboundService.ReleaseFlowInstance(
+		ctx,
+		ladingports.GetFlowInstanceRequest{TenantInfo: resolvercore.TenantInfo(authCtx), ID: instanceID},
+		actorutil.FromAuthContext(authCtx),
+	)
 }

@@ -4,14 +4,30 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ediGraphQLKey, ediGraphQLResponse } from "@/test/edi-graphql";
 import { DeskEdiMessage, DeskEdiMessageArtifact } from "../desk-edi-message";
 import { HOUR, NOW, RAW_214, wireInspection, wireMessage } from "./fixtures";
 
 const server = vi.hoisted(() => ({ get: vi.fn() }));
 
-vi.mock("@trenova/shared/lib/api", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@trenova/shared/lib/api")>();
-  return { ...actual, api: { ...actual.api, get: server.get } };
+vi.mock("@trenova/shared/lib/graphql", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@trenova/shared/lib/graphql")>();
+  return {
+    ...actual,
+    requestGraphQL: async ({
+      operationName,
+      variables,
+      signal,
+    }: {
+      operationName: string;
+      variables?: Record<string, unknown>;
+      signal?: AbortSignal;
+    }) =>
+      ediGraphQLResponse(
+        operationName,
+        await server.get(ediGraphQLKey(operationName, variables), { signal }),
+      ),
+  };
 });
 // The shipment card is its own chunk; here it stands in as what it was given, with its way back.
 vi.mock("../../shipment/desk-shipment", () => ({
@@ -72,10 +88,10 @@ let routes: Routes;
 
 function route(overrides: Routes = {}) {
   routes = {
-    "/edi/messages/edimsg_1/": () => wireMessage(),
-    "/edi/messages/edimsg_1/inspect/": () => wireInspection(),
-    "/edi/messages/edimsg_ack/": () => ack,
-    "/edi/messages/edimsg_ack/inspect/": () =>
+    "EdiMessageRecord:edimsg_1": () => wireMessage(),
+    "EdiMessageInspection:edimsg_1": () => wireInspection(),
+    "EdiMessageRecord:edimsg_ack": () => ack,
+    "EdiMessageInspection:edimsg_ack": () =>
       wireInspection({ message: ack as Record<string, unknown> }),
     ...overrides,
   };
@@ -191,7 +207,7 @@ describe("DeskEdiMessage", () => {
     expect(within(tape).getAllByRole("listitem")).toHaveLength(10);
     expect(within(tape).getByText("X1")).toHaveAttribute("title", "Shipment Status Code");
     expect(within(x12).getByText("Nothing flagged")).toHaveClass("dk-ok");
-    expect(server.get).toHaveBeenCalledWith("/edi/messages/edimsg_1/inspect/", {
+    expect(server.get).toHaveBeenCalledWith("EdiMessageInspection:edimsg_1", {
       signal: expect.any(AbortSignal),
     });
 
@@ -208,7 +224,8 @@ describe("DeskEdiMessage", () => {
 
   it("reads a message received before Lading, which names no version or flow", async () => {
     route({
-      "/edi/messages/edimsg_1/": () => wireMessage({ ladingVersionId: null, flowInstanceId: null }),
+      "EdiMessageRecord:edimsg_1": () =>
+        wireMessage({ ladingVersionId: null, flowInstanceId: null }),
     });
     draw();
 
@@ -220,7 +237,7 @@ describe("DeskEdiMessage", () => {
 
   it("draws the X12 of a message no Lading version wrote", async () => {
     route({
-      "/edi/messages/edimsg_1/inspect/": () =>
+      "EdiMessageInspection:edimsg_1": () =>
         wireInspection({
           provenance: { ladingVersionId: null, flowInstanceId: null },
         }),
@@ -234,7 +251,7 @@ describe("DeskEdiMessage", () => {
 
   it("stops the envelope where delivery gave up, says why, and pins each finding to its segment", async () => {
     route({
-      "/edi/messages/edimsg_1/": () =>
+      "EdiMessageRecord:edimsg_1": () =>
         wireMessage({
           deliveryStatus: "DeadLettered",
           deliveryAttempts: 5,
@@ -244,7 +261,7 @@ describe("DeskEdiMessage", () => {
           ackReceivedAt: null,
           diagnosticCount: 2,
         }),
-      "/edi/messages/edimsg_1/inspect/": () =>
+      "EdiMessageInspection:edimsg_1": () =>
         wireInspection({
           inspection: {
             diagnostics: [
@@ -351,7 +368,7 @@ describe("DeskEdiMessage", () => {
 
   it("says the raw X12 was purged, and asks for no inspection of it", async () => {
     route({
-      "/edi/messages/edimsg_1/": () => wireMessage({ rawX12: "", rawPurgedAt: NOW - HOUR }),
+      "EdiMessageRecord:edimsg_1": () => wireMessage({ rawX12: "", rawPurgedAt: NOW - HOUR }),
     });
     draw();
 
@@ -362,12 +379,12 @@ describe("DeskEdiMessage", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Raw X12 purged")).toBeInTheDocument();
     expect(within(section("What it says")).getByText("Arrived at delivery")).toBeInTheDocument();
-    expect(asked("/edi/messages/edimsg_1/inspect/")).toBe(false);
+    expect(asked("EdiMessageInspection:edimsg_1")).toBe(false);
   });
 
   it("says only that the raw X12 was purged when no decoded copy was kept either", async () => {
     route({
-      "/edi/messages/edimsg_1/": () =>
+      "EdiMessageRecord:edimsg_1": () =>
         wireMessage({ rawX12: "", rawPurgedAt: NOW - HOUR, payloadSnapshot: null }),
     });
     draw();
@@ -383,7 +400,7 @@ describe("DeskEdiMessage", () => {
 
   it("says the X12 could not be inspected, and draws the rest", async () => {
     route({
-      "/edi/messages/edimsg_1/inspect/": () => {
+      "EdiMessageInspection:edimsg_1": () => {
         throw new Error("The inspector is unavailable");
       },
     });
@@ -431,7 +448,7 @@ describe("DeskEdiMessage", () => {
     }));
     const base = wireInspection().inspection as { segments: unknown[] };
     route({
-      "/edi/messages/edimsg_1/inspect/": () =>
+      "EdiMessageInspection:edimsg_1": () =>
         wireInspection({ inspection: { segments: [...base.segments, ...extra] } }),
     });
     draw();
@@ -453,7 +470,7 @@ describe("DeskEdiMessage", () => {
 
   it("says the message could not be read, with the way back", async () => {
     route({
-      "/edi/messages/edimsg_1/": () => {
+      "EdiMessageRecord:edimsg_1": () => {
         throw new Error("EDI message not found");
       },
     });

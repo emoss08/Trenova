@@ -37,12 +37,9 @@ var readOnlyWriteAllowedPaths = map[string]struct{}{
 	"/api/v1/reports/dashboards/:dashboardID/export":                   {},
 	"/api/v1/tables/:resource/compose":                                 {},
 	"/api/v1/agent-definitions/preview-prompt":                         {},
-	"/api/v1/edi/documents/preview":                                    {},
 	"/api/v1/edi/test-cases/:testCaseID/preview":                       {},
-	"/api/v1/edi/communication-profiles/inspect-certificate":           {},
 	"/api/v1/edi/templates/:templateID/versions/:versionID/validate":   {},
 	"/api/v1/edi/catalog/partner-settings/validate":                    {},
-	"/api/v1/edi/x12/inspect":                                          {},
 }
 
 var expiredAllowedPaths = map[string]struct{}{

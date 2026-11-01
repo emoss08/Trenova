@@ -9,7 +9,8 @@ import (
 )
 
 type ListEDIConnectionsRequest struct {
-	Filter *pagination.QueryOptions `json:"filter"`
+	Filter             *pagination.QueryOptions `json:"filter"`
+	AwaitingAcceptance bool                     `json:"awaitingAcceptance"`
 }
 
 type GetEDIConnectionByIDRequest struct {

@@ -1,0 +1,74 @@
+# Email profiles, which profile sends each purpose's mail, and the send log.
+
+query EmailLogs($input: DataTableConnectionInput!) {
+  emailLogs(input: $input) {
+    edges {
+      node {
+        id
+        profileId
+        purpose
+        provider
+        providerMessageId
+        status
+        attempts
+        fromEmail
+        fromName
+        toRecipients
+        ccRecipients
+        bccRecipients
+        subject
+        lastError
+        sentAt
+        deliveredAt
+        failedAt
+        createdAt
+        updatedAt
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query EmailProfileAssignments {
+  emailProfileAssignments {
+    id
+    purpose
+    profileId
+  }
+}
+
+mutation CreateEmailProfile($input: EmailProfileInput!) {
+  createEmailProfile(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateEmailProfile($id: ID!, $input: EmailProfileInput!) {
+  updateEmailProfile(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation DeleteEmailProfile($id: ID!) {
+  deleteEmailProfile(id: $id)
+}
+
+mutation SendEmailProfileTest($id: ID!, $input: TestEmailProfileInput!) {
+  sendEmailProfileTest(id: $id, input: $input) {
+    id
+    status
+  }
+}
+
+mutation UpdateEmailProfileAssignments($input: [EmailProfileAssignmentInput!]!) {
+  updateEmailProfileAssignments(input: $input) {
+    id
+    purpose
+    profileId
+  }
+}

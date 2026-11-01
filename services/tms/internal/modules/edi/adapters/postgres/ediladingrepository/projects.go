@@ -12,8 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject/ladingprojectdb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/listquery"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -61,28 +59,6 @@ func (r *projects) GetProject(
 		}
 		return project, nil
 	})
-}
-
-func (r *projects) ListProjects(
-	ctx context.Context,
-	req *ladingports.ListLadingProjectsRequest,
-) (*pagination.ListResult[*ladingproject.LadingProject], error) {
-	return dbtx.Read(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*ladingproject.LadingProject], error) {
-			p := ladingprojectdb.LadingProjects
-			search := ""
-			if req.Filter != nil {
-				search = req.Filter.Query
-			}
-			q := p.Where(keel.When(search != "", keel.Or(
-				p.Partner().Code.ContainsFold(search),
-				p.Partner().Name.ContainsFold(search),
-			))).Load(p.Partner()).Order(p.UpdatedAt.Desc())
-			return listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
-		},
-	)
 }
 
 func (r *projects) CreateProject(

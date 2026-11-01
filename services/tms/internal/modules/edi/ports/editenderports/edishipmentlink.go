@@ -8,10 +8,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type ListEDIShipmentLinksRequest struct {
-	Filter *pagination.QueryOptions `json:"filter"`
-}
-
 type GetEDIShipmentLinkByIDRequest struct {
 	ID         pulid.ID              `json:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
@@ -23,10 +19,6 @@ type GetEDIShipmentLinksByShipmentIDRequest struct {
 }
 
 type EDIShipmentLinkRepository interface {
-	ListShipmentLinks(
-		ctx context.Context,
-		req *ListEDIShipmentLinksRequest,
-	) (*pagination.ListResult[*edisync.ShipmentLink], error)
 	GetShipmentLinkByID(
 		ctx context.Context,
 		req GetEDIShipmentLinkByIDRequest,

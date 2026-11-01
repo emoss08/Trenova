@@ -123,7 +123,6 @@ export function CommunicationProfilePanel({
         onOpenChange={onOpenChange}
         row={editRow}
         form={form}
-        url="/edi/communication-profiles/"
         queryKey="edi-communication-profile-list"
         title={t("Communication profile")}
         fieldKey="name"
@@ -165,7 +164,6 @@ export function CommunicationProfilePanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/edi/communication-profiles/"
       queryKey="edi-communication-profile-list"
       title={t("Communication profile")}
       description={t(

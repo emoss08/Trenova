@@ -40,10 +40,6 @@ type ListRecentQuarantinedEDIInboundFilesRequest struct {
 }
 
 type EDIInboundFileRepository interface {
-	ListInboundFiles(
-		ctx context.Context,
-		req *ListEDIInboundFilesRequest,
-	) (*pagination.ListResult[*ediinboundfile.EDIInboundFile], error)
 	ListInboundFilesCursor(
 		ctx context.Context,
 		req *ListEDIInboundFilesRequest,

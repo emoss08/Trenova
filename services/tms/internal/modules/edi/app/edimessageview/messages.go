@@ -9,15 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 )
-
-func (s *Service) ListMessages(
-	ctx context.Context,
-	req *edimessageports.ListEDIMessagesRequest,
-) (*pagination.ListResult[*edimessage.EDIMessage], error) {
-	return s.messageRepo.ListMessages(ctx, req)
-}
 
 func (s *Service) GetMessage(
 	ctx context.Context,

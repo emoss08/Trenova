@@ -45,8 +45,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/driverportalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/edihandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ediladinghandler"
-	"github.com/emoss08/trenova/internal/api/handlers/edisetuphandler"
-	"github.com/emoss08/trenova/internal/api/handlers/editransferhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/emailhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/exchangeratehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalperiodhandler"
@@ -200,8 +198,6 @@ type RouterParams struct {
 	JurisdictionRuleHandler         *jurisdictionrulehandler.Handler
 	ShipmentTypeHandler             *shipmenttypehandler.Handler
 	EDIHandler                      *edihandler.Handler
-	EDISetupHandler                 *edisetuphandler.Handler
-	EDITransferHandler              *editransferhandler.Handler
 	EDILadingHandler                *ediladinghandler.Handler
 	InboundHandler                  *inboundhandler.Handler
 	CaptureHandler                  *capturehandler.Handler
@@ -329,8 +325,6 @@ type Router struct {
 	weatherAlertHandler             *weatheralerthandler.Handler
 	shipmentTypeHandler             *shipmenttypehandler.Handler
 	ediHandler                      *edihandler.Handler
-	ediSetupHandler                 *edisetuphandler.Handler
-	ediTransferHandler              *editransferhandler.Handler
 	ediLadingHandler                *ediladinghandler.Handler
 	inboundHandler                  *inboundhandler.Handler
 	captureHandler                  *capturehandler.Handler
@@ -460,8 +454,6 @@ func NewRouter(p RouterParams) *Router {
 		weatherAlertHandler:             p.WeatherAlertHandler,
 		shipmentTypeHandler:             p.ShipmentTypeHandler,
 		ediHandler:                      p.EDIHandler,
-		ediSetupHandler:                 p.EDISetupHandler,
-		ediTransferHandler:              p.EDITransferHandler,
 		ediLadingHandler:                p.EDILadingHandler,
 		inboundHandler:                  p.InboundHandler,
 		captureHandler:                  p.CaptureHandler,
@@ -657,11 +649,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.permitHandler.RegisterRoutes(protected)
 	r.jurisdictionRuleHandler.RegisterRoutes(protected)
 	r.shipmentTypeHandler.RegisterRoutes(protected)
-	r.ediHandler.RegisterRoutes(protected)
-	r.ediSetupHandler.RegisterRoutes(protected)
-	r.ediTransferHandler.RegisterRoutes(protected)
 	r.ediLadingHandler.RegisterRoutes(protected)
-	r.emailHandler.RegisterRoutes(protected)
 	r.carrierAssignmentHandler.RegisterRoutes(protected)
 	r.tenderHandler.RegisterRoutes(protected)
 	r.routingGuideHandler.RegisterRoutes(protected)

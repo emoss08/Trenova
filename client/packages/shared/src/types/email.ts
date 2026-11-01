@@ -1,6 +1,5 @@
 import { linkedRecordSchema } from "@trenova/shared/lib/linked-record";
 import { z } from "zod";
-import { createLimitOffsetResponse } from "./server";
 
 export const emailProviderSchema = z.enum(["Resend", "Postmark"]);
 export const emailProfileStatusSchema = z.enum(["Active", "Inactive"]);
@@ -24,13 +23,6 @@ export const emailMessageStatusSchema = z.enum([
   "Clicked",
   "Suppressed",
 ]);
-export const emailSuppressionReasonSchema = z.enum([
-  "HardBounce",
-  "Complaint",
-  "SoftBounceLimit",
-  "Manual",
-]);
-
 export const emailProfileSchema = z.object({
   id: z.string().optional(),
   businessUnitId: z.string().optional(),
@@ -78,16 +70,6 @@ export const emailMessageSchema = z.object({
   profile: linkedRecordSchema("email_profile", emailProfileSchema).optional(),
 });
 
-export const emailSuppressionSchema = z.object({
-  id: z.string().optional(),
-  emailAddress: z.string().email(),
-  reason: emailSuppressionReasonSchema,
-  provider: emailProviderSchema.optional().nullable(),
-  sourceEventId: z.string().optional().nullable(),
-  notes: z.string().optional().nullable(),
-  createdAt: z.number().optional(),
-});
-
 export const testEmailProfileRequestSchema = z.object({
   to: z.string().email(),
   subject: z.string().min(1),
@@ -95,12 +77,7 @@ export const testEmailProfileRequestSchema = z.object({
   text: z.string().optional().default(""),
 });
 
-export const emailProfileListSchema = createLimitOffsetResponse(emailProfileSchema);
-export const emailMessageListSchema = createLimitOffsetResponse(emailMessageSchema);
-export const emailSuppressionListSchema = createLimitOffsetResponse(emailSuppressionSchema);
-
 export type EmailProfile = z.infer<typeof emailProfileSchema>;
 export type EmailProfileAssignment = z.infer<typeof emailProfileAssignmentSchema>;
 export type EmailMessage = z.infer<typeof emailMessageSchema>;
-export type EmailSuppression = z.infer<typeof emailSuppressionSchema>;
 export type TestEmailProfileRequest = z.infer<typeof testEmailProfileRequestSchema>;

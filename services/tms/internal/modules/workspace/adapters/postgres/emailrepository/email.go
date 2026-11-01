@@ -49,28 +49,6 @@ func New(p Params) emailports.EmailRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.email-repository")}
 }
 
-func (r *repository) ListProfiles(
-	ctx context.Context,
-	req *emailports.ListEmailProfilesRequest,
-) (*pagination.ListResult[*email.Profile], error) {
-	return dbtx.Read(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*email.Profile], error) {
-			p := emaildb.Profiles
-			return listquery.List(
-				ctx,
-				r.db.Keel(ctx),
-				p.Query(),
-				&listquery.Request[email.Profile]{
-					Filter: req.Filter,
-					Then:   []keel.Order{p.CreatedAt.Desc()},
-				},
-			)
-		},
-	)
-}
-
 func (r *repository) ListProfilesConnection(
 	ctx context.Context,
 	req *emailports.ListEmailProfileConnectionRequest,
@@ -479,22 +457,22 @@ func (r *repository) GetEmailWebhookConfig(
 func (r *repository) ListMessages(
 	ctx context.Context,
 	req *emailports.ListEmailMessagesRequest,
-) (*pagination.ListResult[*email.Message], error) {
+) (*pagination.CursorListResult[*email.Message], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*email.Message], error) {
+		func(ctx context.Context) (*pagination.CursorListResult[*email.Message], error) {
 			m := emaildb.Messages
-			return listquery.List(
+			return listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
 				m.Query(),
 				&listquery.Request[email.Message]{
 					Filter: req.Filter,
+					Cursor: req.Cursor,
 					Shape: func(q *keel.Query[*email.Message]) *keel.Query[*email.Message] {
 						return q.Load(m.Profile())
 					},
-					Then: []keel.Order{m.CreatedAt.Desc()},
 				},
 			)
 		},
@@ -546,34 +524,6 @@ func (r *repository) ListEventRecipients(
 	})
 }
 
-func (r *repository) ListSuppressions(
-	ctx context.Context,
-	req *emailports.ListEmailSuppressionsRequest,
-) (*pagination.ListResult[*email.Suppression], error) {
-	return dbtx.Read(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*email.Suppression], error) {
-			s := emaildb.Suppressions
-			page := req.Filter.Pagination
-			rows := s.Order(s.CreatedAt.Desc()).Limit(page.SafeLimit()).Offset(page.SafeOffset())
-
-			var items []*email.Suppression
-			var total keel.RowCount
-			if err := keel.Batch(
-				ctx,
-				r.db.Keel(ctx),
-				keel.ListInto(rows, &items),
-				keel.CountEstimateInto(s.Query(), pagination.ExactTotalUpTo, &total),
-			); err != nil {
-				return nil, err
-			}
-
-			return listquery.Result(items, total), nil
-		},
-	)
-}
-
 func (r *repository) CreateSuppression(
 	ctx context.Context,
 	entity *email.Suppression,
@@ -602,21 +552,6 @@ func (r *repository) CreateSuppression(
 		}
 
 		return stored, nil
-	})
-}
-
-func (r *repository) DeleteSuppression(
-	ctx context.Context,
-	req emailports.GetEmailEntityRequest,
-) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		s := emaildb.Suppressions
-		rows, err := s.Where(s.ID.Eq(req.ID)).Delete(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return err
-		}
-
-		return dberror.CheckAffected(rows, "EmailSuppression", req.ID.String())
 	})
 }
 

@@ -91,6 +91,10 @@ type EdiConnectionCapabilities {
 
 type EdiConnection {
   id: ID!
+  "The organization that asked for the connection."
+  sourceOrganizationId: ID!
+  "The organization asked to accept it."
+  targetOrganizationId: ID!
   method: EdiConnectionMethod!
   status: EdiConnectionStatus!
   capabilities: EdiConnectionCapabilities!
@@ -100,6 +104,8 @@ type EdiConnection {
   rejectionReason: String
   suspendedAt: Timestamp
   revokedAt: Timestamp
+  sourceOrganization: Organization
+  targetOrganization: Organization
 }
 
 type EdiPartner @kind(resource: "edi") {
@@ -173,7 +179,11 @@ type EdiTransfer @kind(resource: "edi") {
   rejectionReason: String
   failureReason: String
   submittedAt: Timestamp!
+  approvedAt: Timestamp
+  processingStartedAt: Timestamp
   processedAt: Timestamp
+  rejectedAt: Timestamp
+  canceledAt: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -296,6 +306,10 @@ type EdiMessage @kind(resource: "edi") {
   invoiceId: ID
   "When the raw X12 was purged under the retention policy."
   rawPurgedAt: Timestamp
+  "The raw X12 in full as it was sent or received; empty once purged under the retention policy."
+  rawX12: String
+  "The document the message decoded to; null when none was kept."
+  payloadSnapshot: Any
 }
 
 "The raw X12 of a message or file, cut to its first 16 KB."
@@ -356,6 +370,8 @@ type EdiInboundFile @kind(resource: "edi") {
   partner: EdiPartner
   "When the raw file was purged under the retention policy."
   rawPurgedAt: Timestamp
+  "The raw file in full as it was received; empty once purged under the retention policy."
+  rawContent: String
 }
 
 "One inbound EDI file as its detail reads it, with the transaction sets parsed from it."
@@ -558,6 +574,8 @@ type EdiPartnerReadinessState {
   ready: Boolean!
   completedCount: Int!
   totalCount: Int!
+  "Each step of the partner's setup and whether it is done."
+  items: [EdiPartnerReadinessItem!]!
 }
 
 type EdiPartnerScorecard {
@@ -892,4 +910,55 @@ extend type Query {
   ediPartnerReadiness(partnerIds: [ID!]!): [EdiPartnerReadinessState!]!
   ediVolumeSeries(sinceHours: Int): [EdiVolumePoint!]!
   ediPartnerCard(id: ID!): EdiPartnerCard! @authorizes(resource: "edi")
+}
+
+"What a bulk EDI action did: the records it acted on, and why each of the others failed."
+type EdiBulkActionResult {
+  succeeded: [ID!]!
+  failed: [EdiBulkActionFailure!]!
+}
+
+type EdiBulkActionFailure {
+  id: ID!
+  error: String!
+}
+
+"Where an EDI message came from: the Lading version and flow that wrote it, and when."
+type EdiInspectionProvenance {
+  messageId: ID!
+  ladingVersionId: ID
+  flowInstanceId: ID
+  generatedAt: Timestamp!
+  generatedById: ID
+}
+
+"An EDI message with its X12 read segment by segment, as the message card shows it."
+type EdiMessageInspection @kind(resource: "edi") {
+  message: EdiMessage!
+  "The X12 read segment by segment: separators, envelope, groups, transactions, segments, the formatted copy and every finding."
+  inspection: Any!
+  provenance: EdiInspectionProvenance!
+}
+
+extend type Query {
+  "An inbound file's interchange as the file card reads it: separators, envelope, groups, transactions and findings, and whether the file opened with an ISA."
+  ediInboundFileInspection(id: ID!): Any!
+  ediMessageInspection(id: ID!): EdiMessageInspection! @authorizes(resource: "edi")
+  "One flow conversation as the flow panel reads it: the instance, the state its flow keeps and every event, in the Lading runtime's shape."
+  ediFlowInstanceDetail(id: ID!): Any!
+}
+
+extend type Mutation {
+  "Reads an inbound file's transactions again."
+  reprocessEdiInboundFile(id: ID!): EdiInboundFile!
+  "Reads each inbound file's transactions again, at most 500 files."
+  bulkReprocessEdiInboundFiles(ids: [ID!]!): EdiBulkActionResult!
+  "Queues another delivery attempt for an outbound message whose delivery failed."
+  retryEdiMessageDelivery(id: ID!): EdiMessage!
+  "Sends an outbound message again."
+  replayEdiMessage(id: ID!): EdiMessage!
+  "Queues another delivery attempt for each message, at most 500 messages."
+  bulkRetryEdiMessageDelivery(ids: [ID!]!): EdiBulkActionResult!
+  "Takes a held or escalated flow out of the exception queue once a person has dealt with it."
+  releaseEdiFlowInstance(id: ID!): EdiFlowInstance!
 }

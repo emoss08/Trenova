@@ -6,29 +6,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type CreateInternalPartnerPairRequest struct {
-	TenantInfo            pagination.TenantInfo `json:"-"`
-	TargetOrganizationID  pulid.ID              `json:"targetOrganizationId"`
-	SourceCode            string                `json:"sourceCode"`
-	SourceName            string                `json:"sourceName"`
-	SourceDescription     string                `json:"sourceDescription"`
-	SourceContactName     string                `json:"sourceContactName"`
-	SourceContactEmail    string                `json:"sourceContactEmail"`
-	SourceContactPhone    string                `json:"sourceContactPhone"`
-	SourceEnabledInbound  bool                  `json:"sourceEnabledForInbound"`
-	SourceEnabledOutbound bool                  `json:"sourceEnabledForOutbound"`
-	SourceSettings        map[string]any        `json:"sourceSettings"`
-	TargetCode            string                `json:"targetCode"`
-	TargetName            string                `json:"targetName"`
-	TargetDescription     string                `json:"targetDescription"`
-	TargetContactName     string                `json:"targetContactName"`
-	TargetContactEmail    string                `json:"targetContactEmail"`
-	TargetContactPhone    string                `json:"targetContactPhone"`
-	TargetEnabledInbound  bool                  `json:"targetEnabledForInbound"`
-	TargetEnabledOutbound bool                  `json:"targetEnabledForOutbound"`
-	TargetSettings        map[string]any        `json:"targetSettings"`
-}
-
 type CreateEDIConnectionRequest struct {
 	TenantInfo           pagination.TenantInfo       `json:"-"`
 	TargetOrganizationID pulid.ID                    `json:"targetOrganizationId"`

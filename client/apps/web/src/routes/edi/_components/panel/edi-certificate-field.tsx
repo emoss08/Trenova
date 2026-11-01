@@ -42,7 +42,7 @@ export function EDICertificateField({
 
   const inspection = useQuery({
     queryKey: ["edi-certificate-inspection", debouncedValue],
-    queryFn: () => apiService.ediService.inspectCertificate(debouncedValue),
+    queryFn: ({ signal }) => apiService.ediService.inspectCertificate(debouncedValue, { signal }),
     enabled: debouncedValue.length > 0,
     staleTime: Infinity,
     retry: false,

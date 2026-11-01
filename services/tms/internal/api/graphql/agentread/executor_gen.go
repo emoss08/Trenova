@@ -188,6 +188,7 @@ import (
 	triagepeekservice "github.com/emoss08/trenova/internal/modules/documents/app/triagepeekservice"
 	triageruleservice "github.com/emoss08/trenova/internal/modules/documents/app/triageruleservice"
 	triageworkservice "github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
+	edidelivery "github.com/emoss08/trenova/internal/modules/edi/app/edidelivery"
 	ediinboundservice "github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	edimessageview "github.com/emoss08/trenova/internal/modules/edi/app/edimessageview"
 	edioutbound "github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
@@ -362,6 +363,7 @@ type ResolverParams struct {
 	DriverSettlementService           *driversettlementservice.Service
 	DriverSettlementTransferService   *driversettlementtransferservice.Service
 	DriverSettlementWorkspaceService  *driversettlementworkspaceservice.Service
+	EDIDeliveryService                *edidelivery.Service
 	EDIInboundService                 *ediinboundservice.Service
 	EDIMessageService                 *edimessageview.Service
 	EDIOutboundService                *edioutbound.Service
@@ -663,8 +665,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "CustomerTable",
-		Hash:     "sha256:77fc50a2943abe8cc016f3b69f09896edacab646e68166b8cc4d87a08bd86e99",
-		Document: "fragment CustomerBillingProfileFields on CustomerBillingProfile { applyLateCharges arAccountId autoApplyAccessorials autoApprove autoBill autoCreditHold autoMarkReadyToBill autoSendInvoiceOnGeneration autoTransfer billingCurrency billingCycle billingCycleAnchorDay billingCycleTimezone billingNotes businessUnitId countLateOnlyOnAppointmentStops createdAt creditBalance creditHoldAutomatic creditHoldReason creditLimit creditReviewedAt creditStatus customerId customerInvoicePrefix defaultBillerId documentTypes { code color documentCategory documentClassification id name } ediInvoiceEnabled emailInvoiceEnabled enforceCreditLimit enforceCustomerBillingReq factoringCompanyId fuelSurchargeMode fuelSurchargeProgramId gracePeriodDays hasBillingControlOverrides id invoiceCopies invoiceDelivery invoiceDetail invoiceNumberFormat lastBilledPeriodEnd lateChargeRate maxShipmentsPerInvoice minConsolidatedAmount organizationId paymentTerm requireBOLNumber requireDeliveryNumber requirePONumber revenueAccountId sectionBy sendPaymentReminders sendStatements splitBy taxExempt taxExemptNumber updatedAt validateCustomerRates version } fragment CustomerEmailProfileFields on CustomerEmailProfile { attachmentName bccRecipients businessUnitId ccRecipients comment createdAt customerId id includeShipmentDetail organizationId readReceipt subject toRecipients updatedAt version } fragment CustomerTableRowFields on Customer { addressLine1 addressLine2 allowConsolidation billingProfile { ...CustomerBillingProfileFields } businessUnitId city code consolidationPriority createdAt emailProfile { ...CustomerEmailProfileFields } exclusiveConsolidation externalId id isGeocoded latitude longitude name organizationId placeId postalCode stateId status updatedAt version } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CustomerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { customers(input: $input) { edges { cursor node { ...CustomerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:974b5806f950d3ca2b8665065d7df4b1801814d8717b546c29b5317d3131d091",
+		Document: "fragment CustomerBillingProfileFields on CustomerBillingProfile { applyLateCharges arAccountId autoApplyAccessorials autoApprove autoBill autoCreditHold autoMarkReadyToBill autoSendInvoiceOnGeneration autoTransfer billingCurrency billingCycle billingCycleAnchorDay billingCycleTimezone billingNotes businessUnitId countLateOnlyOnAppointmentStops createdAt creditBalance creditHoldAutomatic creditHoldReason creditLimit creditReviewedAt creditStatus customerId customerInvoicePrefix defaultBillerId documentTypes { code color documentCategory documentClassification id name } ediInvoiceEnabled emailInvoiceEnabled enforceCreditLimit enforceCustomerBillingReq factoringCompanyId fuelSurchargeMode fuelSurchargeProgramId gracePeriodDays hasBillingControlOverrides id invoiceCopies invoiceDelivery invoiceDetail invoiceNumberFormat lastBilledPeriodEnd lateChargeRate maxShipmentsPerInvoice minConsolidatedAmount organizationId paymentTerm requireBOLNumber requireDeliveryNumber requirePONumber revenueAccountId sectionBy sendPaymentReminders sendStatements splitBy taxExempt taxExemptNumber updatedAt validateCustomerRates version } fragment CustomerEmailProfileFields on CustomerEmailProfile { attachmentName bccRecipients businessUnitId ccRecipients comment createdAt customerId id includeShipmentDetail organizationId readReceipt subject toRecipients updatedAt version } fragment CustomerTableRowFields on Customer { addressLine1 addressLine2 allowConsolidation billingProfile { ...CustomerBillingProfileFields } brokerVettingEnabled businessUnitId checkCallIntervalHours city code consolidationPriority createdAt dotNumber emailProfile { ...CustomerEmailProfileFields } etaRiskThresholdMinutes exclusiveConsolidation externalId id isGeocoded latitude longitude mcNumber name organizationId placeId postalCode stateId status statusUpdatePreference statusUpdateRecipients updatedAt version } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CustomerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { customers(input: $input) { edges { cursor node { ...CustomerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskDetentionCard",
@@ -1003,8 +1005,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "CommodityTable",
-		Hash:     "sha256:563bed9f11970bc10ed428708f0673b049b3695462590cf2681fc74729a9593f",
-		Document: "fragment CommodityTableRowFields on Commodity { businessUnitId createdAt description fragile freightClass hazardousMaterialId id linearFeetPerUnit loadingInstructions maxQuantityPerShipment maxTemperature minTemperature name organizationId stackable status updatedAt version weightPerUnit } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CommodityTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { commodities(input: $input) { edges { cursor node { ...CommodityTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:20cdf710d66aeebbbbba36e2128af8c748fa48044d3bb6360b7077b70e892efc",
+		Document: "fragment CommodityTableRowFields on Commodity { businessUnitId createdAt description fragile freightClass hazardousMaterialId heightPerUnit id lengthPerUnit linearFeetPerUnit loadingInstructions maxQuantityPerShipment maxTemperature minTemperature name organizationId stackable status updatedAt version weightPerUnit widthPerUnit } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CommodityTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { commodities(input: $input) { edges { cursor node { ...CommodityTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "FleetCodeTable",
@@ -1018,8 +1020,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "HoldReasonTable",
-		Hash:     "sha256:a90ea543247ade1f06a13a861011a27d0e03255bc5f1d0673d628b66f547893c",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment HoldReasonTableRowFields on HoldReason { active businessUnitId code createdAt defaultBlocksBilling defaultBlocksDelivery defaultBlocksDispatch defaultSeverity defaultVisibleToCustomer description id label organizationId sortOrder type updatedAt version } query HoldReasonTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { holdReasons(input: $input) { edges { cursor node { ...HoldReasonTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:6f82d9070c470b39add2c4acea54155f342a1d4b1ea43b16dbb22f1bdfd5fd0b",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment HoldReasonTableRowFields on HoldReason { active businessUnitId code createdAt defaultBlocksBilling defaultBlocksDelivery defaultBlocksDispatch defaultSeverity defaultVisibleToCustomer description externalMap id label organizationId sortOrder type updatedAt version } query HoldReasonTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { holdReasons(input: $input) { edges { cursor node { ...HoldReasonTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "ServiceTypeTable",
@@ -1434,6 +1436,7 @@ func NewSchema(p ResolverParams) Schema {
 		EdiMessageService:  p.EDIMessageService,
 		EdiOverviewService: p.EDIOverviewService,
 		EdiInboundService:  p.EDIInboundService,
+		EdiDeliveryService: p.EDIDeliveryService,
 	}
 	emailprofileDeps := &emailprofileresolver.Deps{
 		Core:         core,
@@ -1738,6 +1741,8 @@ func NewSchema(p ResolverParams) Schema {
 		documenttypeMutation:          &documenttypeMutation{Deps: documenttypeDeps},
 		driverportalMutation:          &driverportalMutation{Deps: driverportalDeps},
 		driversettlementMutation:      &driversettlementMutation{Deps: driversettlementDeps},
+		ediMutation:                   &ediMutation{Deps: ediDeps},
+		emailprofileMutation:          &emailprofileMutation{Deps: emailprofileDeps},
 		equipmentmanufacturerMutation: &equipmentmanufacturerMutation{Deps: equipmentmanufacturerDeps},
 		equipmenttypeMutation:         &equipmenttypeMutation{Deps: equipmenttypeDeps},
 		factoringMutation:             &factoringMutation{Deps: factoringDeps},
@@ -2152,6 +2157,8 @@ type mutationResolver struct {
 	*documenttypeMutation
 	*driverportalMutation
 	*driversettlementMutation
+	*ediMutation
+	*emailprofileMutation
 	*equipmentmanufacturerMutation
 	*equipmenttypeMutation
 	*factoringMutation
@@ -2291,6 +2298,8 @@ type (
 	documenttypeMutation            = documenttyperesolver.MutationResolver
 	driverportalMutation            = driverportalresolver.MutationResolver
 	driversettlementMutation        = driversettlementresolver.MutationResolver
+	ediMutation                     = ediresolver.MutationResolver
+	emailprofileMutation            = emailprofileresolver.MutationResolver
 	equipmentmanufacturerMutation   = equipmentmanufacturerresolver.MutationResolver
 	equipmenttypeMutation           = equipmenttyperesolver.MutationResolver
 	factoringMutation               = factoringresolver.MutationResolver

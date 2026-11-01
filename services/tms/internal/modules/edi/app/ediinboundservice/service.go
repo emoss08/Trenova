@@ -680,13 +680,6 @@ func acknowledgedSet(interchange *parsedInterchange, group int) edidocument.Tran
 	return ""
 }
 
-func (s *Service) ListInboundFiles(
-	ctx context.Context,
-	req *edimessageports.ListEDIInboundFilesRequest,
-) (*pagination.ListResult[*ediinboundfile.EDIInboundFile], error) {
-	return s.inboundFileRepo.ListInboundFiles(ctx, req)
-}
-
 func (s *Service) GetInboundFile(
 	ctx context.Context,
 	req edimessageports.GetEDIInboundFileByIDRequest,

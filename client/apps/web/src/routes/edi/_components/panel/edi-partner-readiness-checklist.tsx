@@ -39,7 +39,7 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
   const partnerId = partner.id ?? "";
   const { data, isPending, isError } = useQuery({
     queryKey: ["edi-partner-readiness-detail", partnerId],
-    queryFn: () => apiService.ediService.getPartnerReadiness(partnerId),
+    queryFn: ({ signal }) => apiService.ediService.getPartnerReadiness(partnerId, { signal }),
     enabled: partnerId !== "",
   });
 

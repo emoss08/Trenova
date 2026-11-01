@@ -42,8 +42,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/driverportalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/edihandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ediladinghandler"
-	"github.com/emoss08/trenova/internal/api/handlers/edisetuphandler"
-	"github.com/emoss08/trenova/internal/api/handlers/editransferhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/emailhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/exchangeratehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalperiodhandler"
@@ -173,8 +171,6 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	jurisdictionrulehandler.New,
 	shipmenttypehandler.New,
 	edihandler.New,
-	edisetuphandler.New,
-	editransferhandler.New,
 	ediladinghandler.New,
 	inboundhandler.New,
 	capturehandler.New,

@@ -1,0 +1,235 @@
+# The EDI records the EDI screens and Desk cards open by id: a message, an
+# inbound file and a load tender, with the partner each belongs to.
+
+fragment EdiPartnerRecordFields on EdiPartner {
+  id
+  businessUnitId
+  organizationId
+  kind
+  status
+  code
+  name
+  description
+  internalOrganizationId
+  customerId
+  defaultTransportId
+  defaultMappingProfileId
+  country
+  timezone
+  contactName
+  contactEmail
+  contactPhone
+  enabledForInbound
+  enabledForOutbound
+  version
+  updatedAt
+  internalOrganization {
+    id
+    name
+  }
+}
+
+fragment EdiMessageRecordFields on EdiMessage {
+  id
+  businessUnitId
+  organizationId
+  ediPartnerId
+  documentTypeId
+  ladingVersionId
+  flowInstanceId
+  shipmentId
+  invoiceId
+  transferId
+  inboundFileId
+  direction
+  transactionSet
+  x12Version
+  status
+  interchangeControlNumber
+  groupControlNumber
+  transactionControlNumber
+  segmentCount
+  deliveryStatus
+  deliveryRemotePath
+  deliveryAttempts
+  deliveryLastAttemptAt
+  deliverySentAt
+  deliveryLastError
+  ackStatus
+  ackMessageId
+  ackReceivedAt
+  ackLastError
+  generatedAt
+  rawPurgedAt
+  payloadSnapshot
+  partner {
+    ...EdiPartnerRecordFields
+  }
+}
+
+fragment EdiMessageDiagnosticRecordFields on EdiMessageDiagnostic {
+  severity
+  code
+  segmentId
+  elementPosition
+  path
+  message
+  suggestedFix
+}
+
+query EdiMessageRecord($id: ID!) {
+  ediMessage(id: $id) {
+    message {
+      ...EdiMessageRecordFields
+      rawX12
+    }
+    diagnosticCount
+    diagnostics {
+      ...EdiMessageDiagnosticRecordFields
+    }
+  }
+}
+
+query EdiMessageInspection($id: ID!) {
+  ediMessageInspection(id: $id) {
+    message {
+      ...EdiMessageRecordFields
+      rawX12
+    }
+    inspection
+    provenance {
+      messageId
+      ladingVersionId
+      flowInstanceId
+      generatedAt
+      generatedById
+    }
+  }
+}
+
+query EdiInboundFileRecord($id: ID!) {
+  ediInboundFile(id: $id) {
+    file {
+      id
+      businessUnitId
+      organizationId
+      communicationProfileId
+      ediPartnerId
+      method
+      remotePath
+      fileName
+      checksum
+      sizeBytes
+      rawContent
+      interchangeControlNumber
+      isaSenderQualifier
+      isaSenderId
+      isaReceiverQualifier
+      isaReceiverId
+      status
+      failureReason
+      transactionCount
+      receivedAt
+      processedAt
+      rawPurgedAt
+      version
+      createdAt
+      updatedAt
+      partner {
+        ...EdiPartnerRecordFields
+      }
+    }
+    communicationProfileName
+    messageCount
+    messages {
+      ...EdiMessageRecordFields
+    }
+  }
+}
+
+query EdiInboundFileInspection($id: ID!) {
+  ediInboundFileInspection(id: $id)
+}
+
+fragment EdiTransferRecordFields on EdiTransfer {
+  id
+  sourceOrganizationId
+  sourceBusinessUnitId
+  targetOrganizationId
+  targetBusinessUnitId
+  sourcePartnerId
+  targetPartnerId
+  sourceShipmentId
+  targetShipmentId
+  inboundMessageId
+  status
+  tenderPayload
+  mappingSnapshot
+  rejectionReason
+  failureReason
+  submittedAt
+  approvedAt
+  processingStartedAt
+  processedAt
+  rejectedAt
+  canceledAt
+  version
+  createdAt
+  updatedAt
+  sourcePartner {
+    ...EdiPartnerRecordFields
+  }
+  targetPartner {
+    ...EdiPartnerRecordFields
+  }
+}
+
+query EdiTransferRecord($id: ID!) {
+  ediTransfer(id: $id) {
+    transfer {
+      ...EdiTransferRecordFields
+    }
+  }
+}
+
+# Every tender one inbound file's 204s opened, a page at a time.
+query EdiInboundFileTransfers($input: DataTableConnectionInput!, $inboundFileId: ID!) {
+  ediTransfers(input: $input, direction: Inbound, inboundFileId: $inboundFileId) {
+    edges {
+      node {
+        ...EdiTransferRecordFields
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query EdiTransferMappingPreview($id: ID!) {
+  ediTransferMappingPreview(id: $id) {
+    resolved {
+      ...EdiMappingResolutionFields
+    }
+    unresolved {
+      ...EdiMappingResolutionFields
+    }
+    all {
+      ...EdiMappingResolutionFields
+    }
+  }
+}
+
+fragment EdiMappingResolutionFields on EdiMappingResolution {
+  entityType
+  sourceId
+  sourceLabel
+  targetId
+  targetLabel
+  resolved
+}
+
+query EdiFlowInstanceDetail($id: ID!) {
+  ediFlowInstanceDetail(id: $id)
+}

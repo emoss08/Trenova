@@ -90,20 +90,6 @@ func (r *repository) GetInboundStatusCounts(
 	)
 }
 
-func (r *repository) ListInbound(
-	ctx context.Context,
-	req *editenderports.ListEDITransfersRequest,
-) (*pagination.ListResult[*editransfer.EDITransfer], error) {
-	return dbtx.Read(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*editransfer.EDITransfer], error) {
-			q := listedTransfers(req, directionInbound).Order(newestFirst()...)
-			return listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
-		},
-	)
-}
-
 func (r *repository) ListOutbound(
 	ctx context.Context,
 	req *editenderports.ListEDITransfersRequest,

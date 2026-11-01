@@ -11,8 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync/edisyncdb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/listquery"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -37,28 +35,6 @@ func New(p Params) editenderports.EDIShipmentLinkRepository {
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-shipment-link-repository"),
 	}
-}
-
-func (r *repository) ListShipmentLinks(
-	ctx context.Context,
-	req *editenderports.ListEDIShipmentLinksRequest,
-) (*pagination.ListResult[*edisync.ShipmentLink], error) {
-	return dbtx.Read(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*edisync.ShipmentLink], error) {
-			sl := edisyncdb.ShipmentLinks
-			return listquery.List(
-				ctx,
-				r.db.Keel(ctx),
-				sl.Where(involvesOrganization(req.Filter.TenantInfo.OrgID)),
-				&listquery.Request[edisync.ShipmentLink]{
-					Filter: req.Filter,
-					Then:   []keel.Order{sl.CreatedAt.Desc()},
-				},
-			)
-		},
-	)
 }
 
 func (r *repository) GetShipmentLinkByID(

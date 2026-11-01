@@ -1,0 +1,142 @@
+"What a connection test checked and found, one check per step: certificates, credentials and reaching the endpoint."
+type EdiConnectionTestResult {
+  success: Boolean!
+  checks: [EdiConnectionCheck!]!
+}
+
+type EdiConnectionCheck {
+  name: String!
+  status: String!
+  message: String
+}
+
+"What a pickup asked for by hand found: the files it staged and how many it skipped as already read."
+type EdiPollResult {
+  profileId: ID!
+  stagedFileIds: [ID!]!
+  skippedFiles: Int!
+}
+
+"An AS2 certificate as the profile form shows it."
+type EdiCertificateSummary {
+  subject: String!
+  issuer: String!
+  serialNumber: String!
+  notBefore: Timestamp!
+  notAfter: Timestamp!
+  expiresInDays: Int!
+  expired: Boolean!
+  sha256Fingerprint: String!
+}
+
+input EdiPartnerInput {
+  "External unless given."
+  kind: EdiPartnerKind
+  "Active unless given."
+  status: EntityStatus
+  code: String!
+  name: String!
+  description: String
+  internalOrganizationId: ID
+  ediConnectionId: ID
+  customerId: ID
+  defaultTransportId: ID
+  defaultMappingProfileId: ID
+  timezone: String
+  "US unless given."
+  country: String
+  contactName: String
+  contactEmail: String
+  contactPhone: String
+  "On a new partner, true unless given; on an update, false unless given."
+  enabledForInbound: Boolean
+  "On a new partner, true unless given; on an update, false unless given."
+  enabledForOutbound: Boolean
+  "The partner's settings, by name."
+  settings: JSON
+  version: Int
+}
+
+input EdiConnectionCapabilitiesInput {
+  loadTenderOutbound: Boolean!
+  loadTenderInbound: Boolean!
+  shipmentStatus: Boolean!
+  invoice: Boolean!
+}
+
+"The partner a connection creates on one side, as that side will know the other."
+input EdiConnectionPartnerConfigInput {
+  code: String!
+  name: String!
+  description: String
+  contactName: String
+  contactEmail: String
+  contactPhone: String
+  enabledForInbound: Boolean!
+  enabledForOutbound: Boolean!
+  settings: JSON
+}
+
+input CreateEdiConnectionInput {
+  targetOrganizationId: ID!
+  method: EdiConnectionMethod!
+  capabilities: EdiConnectionCapabilitiesInput!
+  sourcePartnerConfig: EdiConnectionPartnerConfigInput!
+  targetPartnerConfig: EdiConnectionPartnerConfigInput!
+}
+
+input EdiCommunicationProfileInput {
+  ediConnectionId: ID
+  ediPartnerId: ID
+  method: EdiConnectionMethod!
+  status: EntityStatus
+  name: String!
+  description: String
+  "Transport settings for the method: endpoints, identifiers, paths and certificates. Never secret values."
+  config: JSON!
+  "Secret values by key, such as passwords and private keys. A key left out keeps the value on file; an empty value clears it. Stored encrypted and never returned."
+  secrets: JSON
+  version: Int
+}
+
+input EdiMappingProfileItemInput {
+  id: ID
+  entityType: EdiMappingEntityType!
+  "The partner's identifier for the record."
+  sourceId: ID!
+  sourceLabel: String
+  "The organization's record the partner's code maps to."
+  targetId: ID!
+  targetLabel: String
+}
+
+extend type Query {
+  ediPartner(id: ID!): EdiPartner!
+  "The connections other organizations asked this one to accept and that still wait on it, newest first; 25 unless given, at most 100."
+  pendingEdiConnections(limit: Int): [EdiConnection!]!
+  "A partner's mapping profile with its entries; a partner without one gets an empty profile on first read."
+  ediPartnerMappingProfile(partnerId: ID!): EdiMappingProfile!
+  "Reads a PEM certificate pasted into an AS2 profile; nothing is saved."
+  inspectEdiCertificate(certificate: String!): EdiCertificateSummary!
+}
+
+extend type Mutation {
+  createEdiPartner(input: EdiPartnerInput!): EdiPartner!
+  updateEdiPartner(id: ID!, input: EdiPartnerInput!): EdiPartner!
+  "Asks another organization on Trenova to trade EDI with this one; it waits for them to accept."
+  createEdiConnection(input: CreateEdiConnectionInput!): EdiConnection!
+  acceptEdiConnection(id: ID!): EdiConnection!
+  rejectEdiConnection(id: ID!, reason: String): EdiConnection!
+  createEdiCommunicationProfile(input: EdiCommunicationProfileInput!): EdiCommunicationProfile!
+  updateEdiCommunicationProfile(id: ID!, input: EdiCommunicationProfileInput!): EdiCommunicationProfile!
+  "Checks a profile's certificates, credentials and endpoint now; nothing is sent to the partner."
+  testEdiCommunicationProfileConnection(id: ID!): EdiConnectionTestResult!
+  "Picks up waiting files from a profile's mailbox now instead of at the next scheduled poll."
+  pollEdiCommunicationProfile(id: ID!): EdiPollResult!
+  "Adds or changes entries of a mapping profile."
+  saveEdiMappingProfileItems(profileId: ID!, items: [EdiMappingProfileItemInput!]!): [EdiMappingProfileItem!]!
+  deleteEdiMappingProfileItem(profileId: ID!, itemId: ID!): Boolean!
+  "Adds or changes entries of a partner's mapping profile, creating the profile when the partner has none."
+  saveEdiPartnerMappingProfile(partnerId: ID!, items: [EdiMappingProfileItemInput!]!): [EdiMappingProfileItem!]!
+  deleteEdiPartnerMappingItem(partnerId: ID!, itemId: ID!): Boolean!
+}

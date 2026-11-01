@@ -60,6 +60,14 @@ func (m *Message) SameRecipientsAs(other *Message) bool {
 		slices.Equal(m.BCCRecipients, other.BCCRecipients)
 }
 
+func (m *Message) GetID() pulid.ID {
+	return m.ID
+}
+
+func (m *Message) GetCreatedAt() int64 {
+	return m.CreatedAt
+}
+
 func (m *Message) GetTableName() string {
 	return "email_messages"
 }

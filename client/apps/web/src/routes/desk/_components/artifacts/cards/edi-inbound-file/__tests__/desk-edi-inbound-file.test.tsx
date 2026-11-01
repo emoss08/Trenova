@@ -4,15 +4,31 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ediGraphQLKey, ediGraphQLResponse } from "@/test/edi-graphql";
 import { DeskEdiInboundFile, DeskEdiInboundFileArtifact } from "../desk-edi-inbound-file";
 import { wireTransfer } from "../../edi-transfer/__tests__/fixtures";
 import { wireFileInspection, wireInboundFile } from "./fixtures";
 
 const server = vi.hoisted(() => ({ get: vi.fn() }));
 
-vi.mock("@trenova/shared/lib/api", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@trenova/shared/lib/api")>();
-  return { ...actual, api: { ...actual.api, get: server.get } };
+vi.mock("@trenova/shared/lib/graphql", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@trenova/shared/lib/graphql")>();
+  return {
+    ...actual,
+    requestGraphQL: async ({
+      operationName,
+      variables,
+      signal,
+    }: {
+      operationName: string;
+      variables?: Record<string, unknown>;
+      signal?: AbortSignal;
+    }) =>
+      ediGraphQLResponse(
+        operationName,
+        await server.get(ediGraphQLKey(operationName, variables), { signal }),
+      ),
+  };
 });
 // The message card is its own chunk; here it stands in as what it was given, with its way back.
 vi.mock("../../edi-message/desk-edi-message", () => ({
@@ -62,15 +78,15 @@ let routes: Routes;
 
 function route(overrides: Routes = {}) {
   routes = {
-    "/edi/inbound-files/ediinf_sim/": () => wireInboundFile("simulator"),
-    "/edi/inbound-files/ediinf_sim/inspect/": () => wireFileInspection("simulator"),
-    "/edi/inbound-files/ediinf_acme/": () => wireInboundFile("batch"),
-    "/edi/inbound-files/ediinf_acme/inspect/": () => wireFileInspection("batch"),
-    "/edi/inbound-files/ediinf_bad/": () => wireInboundFile("quarantined"),
-    "/edi/inbound-files/ediinf_bad/inspect/": () => wireFileInspection("quarantined"),
-    "/edi/inbound-files/ediinf_dup/": () => wireInboundFile("duplicate"),
-    "/edi/inbound-files/ediinf_dup/inspect/": () => wireFileInspection("simulator"),
-    "/edi/transfers/?direction=inbound&inboundFileId=ediinf_acme&limit=100": () => ({
+    "EdiInboundFileRecord:ediinf_sim": () => wireInboundFile("simulator"),
+    "EdiInboundFileInspection:ediinf_sim": () => wireFileInspection("simulator"),
+    "EdiInboundFileRecord:ediinf_acme": () => wireInboundFile("batch"),
+    "EdiInboundFileInspection:ediinf_acme": () => wireFileInspection("batch"),
+    "EdiInboundFileRecord:ediinf_bad": () => wireInboundFile("quarantined"),
+    "EdiInboundFileInspection:ediinf_bad": () => wireFileInspection("quarantined"),
+    "EdiInboundFileRecord:ediinf_dup": () => wireInboundFile("duplicate"),
+    "EdiInboundFileInspection:ediinf_dup": () => wireFileInspection("simulator"),
+    "EdiInboundFileTransfers:ediinf_acme:": () => ({
       results: [wireTransfer("approved"), wireTransfer("mappingRequired")],
       count: 2,
       next: null,
@@ -288,9 +304,9 @@ describe("DeskEdiInboundFile", () => {
     draw({ recordId: "ediinf_bad" });
     await screen.findByRole("heading", { name: "tenders-week-42.txt", level: 2 });
 
-    expect(server.get.mock.calls.some(([url]) => String(url).startsWith("/edi/transfers/"))).toBe(
-      false,
-    );
+    expect(
+      server.get.mock.calls.some(([url]) => String(url).startsWith("EdiInboundFileTransfers:")),
+    ).toBe(false);
   });
 
   it("shows how a file that is not X12 begins, and why it was held", async () => {
@@ -323,7 +339,7 @@ describe("DeskEdiInboundFile", () => {
 
   it("reads a purged file from the messages kept from it, without asking for its interchange", async () => {
     route({
-      "/edi/inbound-files/ediinf_acme/": () =>
+      "EdiInboundFileRecord:ediinf_acme": () =>
         wireInboundFile("batch", { rawContent: "", rawPurgedAt: 1_791_700_000 }),
     });
     draw({ recordId: "ediinf_acme" });
@@ -347,12 +363,12 @@ describe("DeskEdiInboundFile", () => {
         /The raw file was purged .* under the retention policy; the messages kept from it are listed above\./u,
       ),
     ).toBeInTheDocument();
-    expect(asked("/edi/inbound-files/ediinf_acme/inspect/")).toBe(false);
+    expect(asked("EdiInboundFileInspection:ediinf_acme")).toBe(false);
   });
 
   it("keeps the kept messages and says so in place when the interchange cannot be inspected", async () => {
     route({
-      "/edi/inbound-files/ediinf_acme/inspect/": () => {
+      "EdiInboundFileInspection:ediinf_acme": () => {
         throw new Error("inspector down");
       },
     });
@@ -388,7 +404,7 @@ describe("DeskEdiInboundFile", () => {
 
   it("says the file could not be read, and keeps the way back", async () => {
     route({
-      "/edi/inbound-files/ediinf_sim/": () => {
+      "EdiInboundFileRecord:ediinf_sim": () => {
         throw new Error("gone");
       },
     });

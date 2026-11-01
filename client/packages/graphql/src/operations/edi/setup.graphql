@@ -1,0 +1,176 @@
+# Trading partner setup: partners, connections, communication profiles and
+# mapping profiles. Profiles return their secret state, never a secret.
+
+query EdiPartnerRecord($id: ID!) {
+  ediPartner(id: $id) {
+    ...EdiPartnerRecordFields
+  }
+}
+
+query PendingEdiConnections($limit: Int) {
+  pendingEdiConnections(limit: $limit) {
+    id
+    sourceOrganizationId
+    targetOrganizationId
+    method
+    status
+    requestedAt
+    sourceOrganization {
+      id
+      name
+    }
+    targetOrganization {
+      id
+      name
+    }
+  }
+}
+
+fragment EdiMappingProfileItemRecordFields on EdiMappingProfileItem {
+  id
+  businessUnitId
+  organizationId
+  ediPartnerId
+  mappingProfileId
+  entityType
+  sourceId
+  sourceLabel
+  targetId
+  targetLabel
+}
+
+query EdiPartnerMappingProfile($partnerId: ID!) {
+  ediPartnerMappingProfile(partnerId: $partnerId) {
+    id
+    businessUnitId
+    organizationId
+    ediPartnerId
+    name
+    description
+    version
+    createdAt
+    updatedAt
+    entries {
+      ...EdiMappingProfileItemRecordFields
+    }
+    partner {
+      id
+      code
+      name
+    }
+  }
+}
+
+query InspectEdiCertificate($certificate: String!) {
+  inspectEdiCertificate(certificate: $certificate) {
+    subject
+    issuer
+    serialNumber
+    notBefore
+    notAfter
+    expiresInDays
+    expired
+    sha256Fingerprint
+  }
+}
+
+query EdiPartnerReadinessDetail($partnerIds: [ID!]!) {
+  ediPartnerReadiness(partnerIds: $partnerIds) {
+    partnerId
+    ready
+    completedCount
+    totalCount
+    items {
+      key
+      label
+      complete
+    }
+  }
+}
+
+mutation CreateEdiPartner($input: EdiPartnerInput!) {
+  createEdiPartner(input: $input) {
+    id
+  }
+}
+
+mutation UpdateEdiPartner($id: ID!, $input: EdiPartnerInput!) {
+  updateEdiPartner(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation CreateEdiConnection($input: CreateEdiConnectionInput!) {
+  createEdiConnection(input: $input) {
+    id
+    status
+  }
+}
+
+mutation AcceptEdiConnection($id: ID!) {
+  acceptEdiConnection(id: $id) {
+    id
+    status
+  }
+}
+
+mutation RejectEdiConnection($id: ID!, $reason: String) {
+  rejectEdiConnection(id: $id, reason: $reason) {
+    id
+    status
+  }
+}
+
+mutation CreateEdiCommunicationProfile($input: EdiCommunicationProfileInput!) {
+  createEdiCommunicationProfile(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateEdiCommunicationProfile($id: ID!, $input: EdiCommunicationProfileInput!) {
+  updateEdiCommunicationProfile(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation TestEdiCommunicationProfileConnection($id: ID!) {
+  testEdiCommunicationProfileConnection(id: $id) {
+    success
+    checks {
+      name
+      status
+      message
+    }
+  }
+}
+
+mutation PollEdiCommunicationProfile($id: ID!) {
+  pollEdiCommunicationProfile(id: $id) {
+    profileId
+    stagedFileIds
+    skippedFiles
+  }
+}
+
+mutation SaveEdiMappingProfileItems($profileId: ID!, $items: [EdiMappingProfileItemInput!]!) {
+  saveEdiMappingProfileItems(profileId: $profileId, items: $items) {
+    id
+  }
+}
+
+mutation DeleteEdiMappingProfileItem($profileId: ID!, $itemId: ID!) {
+  deleteEdiMappingProfileItem(profileId: $profileId, itemId: $itemId)
+}
+
+mutation SaveEdiPartnerMappingProfile($partnerId: ID!, $items: [EdiMappingProfileItemInput!]!) {
+  saveEdiPartnerMappingProfile(partnerId: $partnerId, items: $items) {
+    id
+  }
+}
+
+mutation DeleteEdiPartnerMappingItem($partnerId: ID!, $itemId: ID!) {
+  deleteEdiPartnerMappingItem(partnerId: $partnerId, itemId: $itemId)
+}

@@ -15,10 +15,6 @@ type GetLadingProjectRequest struct {
 	PartnerID  pulid.ID              `json:"partnerId"`
 }
 
-type ListLadingProjectsRequest struct {
-	Filter *pagination.QueryOptions `json:"filter"`
-}
-
 type CreateLadingProjectRequest struct {
 	Project *ladingproject.LadingProject
 	Draft   *ladingproject.LadingVersion
@@ -70,10 +66,6 @@ type LadingProjectRepository interface {
 		ctx context.Context,
 		req GetLadingProjectRequest,
 	) (*ladingproject.LadingProject, error)
-	ListProjects(
-		ctx context.Context,
-		req *ListLadingProjectsRequest,
-	) (*pagination.ListResult[*ladingproject.LadingProject], error)
 	CreateProject(
 		ctx context.Context,
 		req *CreateLadingProjectRequest,

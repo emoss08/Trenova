@@ -1267,157 +1267,119 @@ writes:
     tools: [settlement_forgive_advance]
 
   # edi
-  "DELETE /api/v1/edi/mapping-profiles/:profileID/items/:mappingItemID/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
-  "DELETE /api/v1/edi/partners/:partnerID/mapping-profile/items/:mappingItemID/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
   "POST /api/v1/edi/as2/inbound/":
     exempt: infrastructure
     reason: "Receives AS2 messages a trading partner sends; no person makes this call."
-  "POST /api/v1/edi/communication-profiles/":
-    tools: [edi_apply_connection_draft]
-  "POST /api/v1/edi/communication-profiles/:profileID/poll/":
-    exempt: infrastructure
-    reason: "Polls a partner mailbox now; the scheduler polls on its own."
-  "POST /api/v1/edi/communication-profiles/:profileID/test-connection/":
-    exempt: read-only
-    reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
-  "POST /api/v1/edi/communication-profiles/inspect-certificate/":
-    exempt: read-only
-    reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
-  "POST /api/v1/edi/connections/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
-  "POST /api/v1/edi/connections/:connectionID/accept/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
-  "POST /api/v1/edi/connections/:connectionID/reject/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
-  "POST /api/v1/edi/connections/:connectionID/revoke/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
-  "POST /api/v1/edi/connections/:connectionID/suspend/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
-  "POST /api/v1/edi/documents/generate/":
-    tools: [edi_send_status_update]
-  "POST /api/v1/edi/documents/preview/":
-    exempt: read-only
-    reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
-  "DELETE /api/v1/edi/lading/versions/:versionID/shadow/":
-    exempt: configuration
-    reason: "Stops comparing a certified Lading version with the active one; the person who started the shadow decides when it has run long enough."
-  "POST /api/v1/edi/flows/instances/:instanceID/release/":
-    pending: "Release a held or escalated EDI flow once the planner has dealt with what held it"
-  "POST /api/v1/edi/lading/projects/":
-    tools: [edi_apply_connection_draft]
-  "POST /api/v1/edi/lading/projects/:projectID/drafts/":
-    exempt: configuration
-    reason: "Lading project files an EDI developer writes, tests and certifies in the Lading studio; an agent drafts them through edi_apply_connection_draft."
-  "POST /api/v1/edi/lading/versions/:versionID/activate/":
-    exempt: attestation
-    reason: "Putting a certified Lading version live for a trading partner is the decision of the person accountable for that partner's EDI."
-  "POST /api/v1/edi/lading/versions/:versionID/archive/":
-    exempt: configuration
-    reason: "Lading project files an EDI developer writes, tests and certifies in the Lading studio; an agent drafts them through edi_apply_connection_draft."
-  "POST /api/v1/edi/lading/versions/:versionID/certify/":
-    exempt: attestation
-    reason: "Certifying a Lading version attests that its tests, coverage and replay were reviewed by a person."
-  "POST /api/v1/edi/lading/versions/:versionID/replays/":
-    exempt: read-only
-    reason: "Replays a Lading version on the partner's past messages and records the differences; nothing is sent or changed."
-  "POST /api/v1/edi/lading/versions/:versionID/run/":
-    exempt: read-only
-    reason: "Runs a map of a Lading version on an input and saves nothing."
-  "POST /api/v1/edi/lading/versions/:versionID/shadow/":
-    exempt: configuration
-    reason: "Compares a certified Lading version with the active one on live traffic, sending nothing; part of putting a version live."
-  "POST /api/v1/edi/lading/versions/:versionID/test/":
-    exempt: read-only
-    reason: "Runs a Lading version's tests and records their result; nothing a partner sees changes."
-  "PUT /api/v1/edi/lading/projects/:projectID/settings/":
-    exempt: configuration
-    reason: "A partner's Lading settings, such as automatic acceptance, are policy an EDI administrator sets for the partner."
   "PUT /api/v1/edi/lading/versions/:versionID/":
     exempt: configuration
     reason: "Lading project files an EDI developer writes, tests and certifies in the Lading studio; an agent drafts them through edi_apply_connection_draft."
-  "POST /api/v1/edi/inbound-files/:fileID/reprocess/":
-    tools: [edi_reprocess_inbound_file]
-  "POST /api/v1/edi/inbound-files/bulk-reprocess/":
-    tools: [edi_reprocess_inbound_file]
-  "POST /api/v1/edi/load-tenders/":
-    tools: [edi_send_tender]
-  "POST /api/v1/edi/messages/:messageID/replay/":
-    tools: [edi_replay_message]
-  "POST /api/v1/edi/messages/:messageID/retry-delivery/":
-    tools: [edi_retry_message]
-  "POST /api/v1/edi/messages/bulk-retry-delivery/":
-    tools: [edi_retry_message]
-  "POST /api/v1/edi/partners/":
-    tools: [edi_apply_connection_draft]
-  "POST /api/v1/edi/partners/internal-pairs/":
+  "mutation acceptEdiConnection":
     exempt: configuration
     reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
-  "POST /api/v1/edi/transfer-changes/:changeID/apply/":
-    tools: [edi_review_transfer_change]
-  "POST /api/v1/edi/transfer-changes/:changeID/reject/":
-    tools: [edi_review_transfer_change]
-  "POST /api/v1/edi/transfers/:transferID/approve/":
+  "mutation activateEdiLadingVersion":
+    exempt: attestation
+    reason: "Putting a certified Lading version live for a trading partner is the decision of the person accountable for that partner's EDI."
+  "mutation approveEdiTransfer":
     tools: [edi_accept_tender]
-  "POST /api/v1/edi/transfers/:transferID/cancel/":
+  "mutation archiveEdiLadingVersion":
+    exempt: configuration
+    reason: "Lading project files an EDI developer writes, tests and certifies in the Lading studio; an agent drafts them through edi_apply_connection_draft."
+  "mutation bulkApproveEdiTransfers":
+    exempt: duplicate
+    reason: "Runs mutation approveEdiTransfer once per selected tender; edi_accept_tender answers one tender per proposal so each is previewed and pinned to its own version."
+  "mutation bulkRejectEdiTransfers":
+    exempt: duplicate
+    reason: "Runs mutation rejectEdiTransfer once per selected tender; edi_decline_tender answers one tender per proposal so each is previewed and pinned to its own version."
+  "mutation bulkReprocessEdiInboundFiles":
+    tools: [edi_reprocess_inbound_file]
+  "mutation bulkRetryEdiMessageDelivery":
+    tools: [edi_retry_message]
+  "mutation cancelEdiTransfer":
     tools: [edi_cancel_tender]
-  "POST /api/v1/edi/transfers/:transferID/expire/":
-    tools: [edi_expire_tender]
-  "POST /api/v1/edi/transfers/:transferID/reject/":
+  "mutation certifyEdiLadingVersion":
+    exempt: attestation
+    reason: "Certifying a Lading version attests that its tests, coverage and replay were reviewed by a person."
+  "mutation createEdiCommunicationProfile":
+    tools: [edi_apply_connection_draft]
+  "mutation createEdiConnection":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
+  "mutation createEdiLadingDraft":
+    exempt: configuration
+    reason: "Lading project files an EDI developer writes, tests and certifies in the Lading studio; an agent drafts them through edi_apply_connection_draft."
+  "mutation createEdiLadingProject":
+    tools: [edi_apply_connection_draft]
+  "mutation createEdiPartner":
+    tools: [edi_apply_connection_draft]
+  "mutation deleteEdiMappingProfileItem":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
+  "mutation deleteEdiPartnerMappingItem":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
+  "mutation pollEdiCommunicationProfile":
+    exempt: infrastructure
+    reason: "Polls a partner mailbox now; the scheduler polls on its own."
+  "mutation rejectEdiConnection":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
+  "mutation rejectEdiTransfer":
     tools: [edi_decline_tender]
-  "POST /api/v1/edi/transfers/bulk-approve/":
-    exempt: duplicate
-    reason: "Runs POST /api/v1/edi/transfers/:transferID/approve/ once per selected tender; edi_accept_tender answers one tender per proposal so each is previewed and pinned to its own version."
-  "POST /api/v1/edi/transfers/bulk-reject/":
-    exempt: duplicate
-    reason: "Runs POST /api/v1/edi/transfers/:transferID/reject/ once per selected tender; edi_decline_tender answers one tender per proposal so each is previewed and pinned to its own version."
-  "POST /api/v1/edi/x12/inspect/":
+  "mutation releaseEdiFlowInstance":
+    pending: "Release a held or escalated EDI flow once the planner has dealt with what held it"
+  "mutation replayEdiMessage":
+    tools: [edi_replay_message]
+  "mutation reprocessEdiInboundFile":
+    tools: [edi_reprocess_inbound_file]
+  "mutation retryEdiMessageDelivery":
+    tools: [edi_retry_message]
+  "mutation saveEdiMappingProfileItems":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
+  "mutation saveEdiPartnerMappingProfile":
+    tools: [edi_apply_connection_draft]
+  "mutation startEdiLadingReplay":
+    exempt: read-only
+    reason: "Replays a Lading version on the partner's past messages and records the differences; nothing is sent or changed."
+  "mutation startEdiLadingShadow":
+    exempt: configuration
+    reason: "Compares a certified Lading version with the active one on live traffic, sending nothing; part of putting a version live."
+  "mutation stopEdiLadingShadow":
+    exempt: configuration
+    reason: "Stops comparing a certified Lading version with the active one; the person who started the shadow decides when it has run long enough."
+  "mutation submitEdiLoadTender":
+    tools: [edi_send_tender]
+  "mutation testEdiCommunicationProfileConnection":
     exempt: read-only
     reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
-  "PUT /api/v1/edi/communication-profiles/:profileID/":
+  "mutation updateEdiCommunicationProfile":
     tools: [edi_apply_connection_draft]
-  "PUT /api/v1/edi/mapping-profiles/:profileID/items/":
+  "mutation updateEdiLadingSettings":
     exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
-  "PUT /api/v1/edi/partners/:partnerID/":
-    tools: [edi_apply_connection_draft]
-  "PUT /api/v1/edi/partners/:partnerID/mapping-profile/":
+    reason: "A partner's Lading settings, such as automatic acceptance, are policy an EDI administrator sets for the partner."
+  "mutation updateEdiPartner":
     tools: [edi_apply_connection_draft]
 
   # email
-  "DELETE /api/v1/email-profiles/:profileID/":
-    exempt: configuration
-    reason: "Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them."
-  "DELETE /api/v1/email-suppressions/:suppressionID/":
-    exempt: configuration
-    reason: "Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them."
-  "POST /api/v1/email-profiles/":
-    exempt: configuration
-    reason: "Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them."
-  "POST /api/v1/email-profiles/:profileID/test-send/":
-    exempt: configuration
-    reason: "Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them."
-  "POST /api/v1/email-suppressions/":
-    exempt: configuration
-    reason: "Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them."
   "POST /api/v1/webhooks/email/postmark/:webhookToken/":
     exempt: infrastructure
     reason: "An inbound webhook a provider calls with a signed token, not a person."
   "POST /api/v1/webhooks/email/resend/:webhookToken/":
     exempt: infrastructure
     reason: "An inbound webhook a provider calls with a signed token, not a person."
-  "PUT /api/v1/email-profiles/:profileID/":
+  "mutation createEmailProfile":
     exempt: configuration
     reason: "Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them."
-  "PUT /api/v1/email-profiles/assignments/":
+  "mutation deleteEmailProfile":
+    exempt: configuration
+    reason: "Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them."
+  "mutation sendEmailProfileTest":
+    exempt: configuration
+    reason: "Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them."
+  "mutation updateEmailProfile":
+    exempt: configuration
+    reason: "Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them."
+  "mutation updateEmailProfileAssignments":
     exempt: configuration
     reason: "Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them."
 

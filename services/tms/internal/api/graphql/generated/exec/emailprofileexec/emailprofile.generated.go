@@ -18,11 +18,285 @@ import (
 var Shard = &gqlexec.Shard{
 	Name: "emailprofile",
 	Objects: []*gqlexec.Object{
+		{Name: "EmailLog", Implementors: []string{"EmailLog"}},
+		{Name: "EmailLogConnection", Implementors: []string{"EmailLogConnection"}},
+		{Name: "EmailLogEdge", Implementors: []string{"EmailLogEdge"}},
 		{Name: "EmailProfile", Implementors: []string{"EmailProfile"}},
+		{Name: "EmailProfileAssignment", Implementors: []string{"EmailProfileAssignment"}},
 		{Name: "EmailProfileConnection", Implementors: []string{"EmailProfileConnection"}},
 		{Name: "EmailProfileEdge", Implementors: []string{"EmailProfileEdge"}},
 	},
 	Fields: []gqlexec.Fields{
+		{Object: "EmailLog", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.Message)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "profileId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.Message)
+					return obj.ProfileID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "purpose",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.Message)
+					return obj.Purpose, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNEmailPurpose2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐPurpose),
+			},
+			{
+				Name:     "provider",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.Message)
+					return obj.Provider, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNEmailProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProvider),
+			},
+			{
+				Name:     "providerMessageId",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.Message)
+					return obj.ProviderMessageID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
+				Name:     "status",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.Message)
+					return obj.Status, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNEmailMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐMessageStatus),
+			},
+			{
+				Name:     "attempts",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.Message)
+					return obj.Attempts, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int32),
+			},
+			{
+				Name:     "fromEmail",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.Message)
+					return obj.FromEmail, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "fromName",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.Message)
+					return obj.FromName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "replyToEmail",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.Message)
+					return obj.ReplyToEmail, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
+				Name:     "toRecipients",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.Message)
+					return obj.ToRecipients, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
+				Name:     "ccRecipients",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.Message)
+					return obj.CCRecipients, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚕstringᚄ),
+			},
+			{
+				Name:     "bccRecipients",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.Message)
+					return obj.BCCRecipients, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚕstringᚄ),
+			},
+			{
+				Name:     "subject",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.Message)
+					return obj.Subject, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "lastError",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.Message)
+					return obj.LastError, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
+				Name:     "sentAt",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.Message)
+					return obj.SentAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2int64),
+			},
+			{
+				Name:     "deliveredAt",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.Message)
+					return obj.DeliveredAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2int64),
+			},
+			{
+				Name:     "failedAt",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.Message)
+					return obj.FailedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2int64),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.Message)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "updatedAt",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.Message)
+					return obj.UpdatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:      "profile",
+				HasChild:  true,
+				ChildType: "EmailProfile",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.Message)
+					return obj.Profile, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOEmailProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProfile),
+			},
+		}},
+		{Object: "EmailLogConnection", Fields: []*gqlexec.Field{
+			{
+				Name:      "edges",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "EmailLogEdge",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.EmailLogConnection)
+					return obj.Edges, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNEmailLogEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEmailLogEdgeᚄ),
+			},
+			{
+				Name:      "pageInfo",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "PageInfo",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.EmailLogConnection)
+					return obj.PageInfo, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo),
+			},
+			{
+				Name:     "totalCount",
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.EmailLogConnection)
+					return obj.TotalCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.EmailLogConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "EmailLogEdge", Fields: []*gqlexec.Field{
+			{
+				Name:      "node",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "EmailLog",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.EmailLogEdge)
+					return obj.Node, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNEmailLog2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐMessage),
+			},
+			{
+				Name:     "cursor",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.EmailLogEdge)
+					return obj.Cursor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
 		{Object: "EmailProfile", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
@@ -57,7 +331,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*email.Profile)
 					return obj.Name, nil
@@ -67,7 +341,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "description",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*email.Profile)
 					return obj.Description, nil
@@ -77,7 +351,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "senderName",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*email.Profile)
 					return obj.SenderName, nil
@@ -87,7 +361,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "senderEmail",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*email.Profile)
 					return obj.SenderEmail, nil
@@ -97,7 +371,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "replyToEmail",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*email.Profile)
 					return obj.ReplyToEmail, nil
@@ -117,7 +391,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*email.Profile)
 					return obj.Status, nil
@@ -127,7 +401,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*email.Profile)
 					return obj.Version, nil
@@ -137,7 +411,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*email.Profile)
 					return obj.CreatedAt, nil
@@ -147,7 +421,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*email.Profile)
 					return obj.UpdatedAt, nil
@@ -175,6 +449,48 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization),
 			},
 		}},
+		{Object: "EmailProfileAssignment", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.ProfileAssignment)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "purpose",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.ProfileAssignment)
+					return obj.Purpose, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNEmailPurpose2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐPurpose),
+			},
+			{
+				Name:     "profileId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.ProfileAssignment)
+					return obj.ProfileID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:      "profile",
+				HasChild:  true,
+				ChildType: "EmailProfile",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*email.ProfileAssignment)
+					return obj.Profile, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOEmailProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProfile),
+			},
+		}},
 		{Object: "EmailProfileConnection", Fields: []*gqlexec.Field{
 			{
 				Name:      "edges",
@@ -200,7 +516,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.EmailProfileConnection)
 					return obj.TotalCount, nil
@@ -210,7 +526,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.EmailProfileConnection)
 					return obj.TotalCountExact, nil
@@ -233,12 +549,78 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.EmailProfileEdge)
 					return obj.Cursor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createEmailProfile",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "EmailProfile",
+				Args:       field_Mutation_createEmailProfile_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateEmailProfile(ctx, fc.Args["input"].(gqlmodel.EmailProfileInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNEmailProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProfile),
+			},
+			{
+				Name:       "updateEmailProfile",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "EmailProfile",
+				Args:       field_Mutation_updateEmailProfile_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateEmailProfile(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.EmailProfileInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNEmailProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProfile),
+			},
+			{
+				Name:       "deleteEmailProfile",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild7,
+				Args:       field_Mutation_deleteEmailProfile_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteEmailProfile(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:       "sendEmailProfileTest",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "EmailLog",
+				Args:       field_Mutation_sendEmailProfileTest_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SendEmailProfileTest(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.TestEmailProfileInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNEmailLog2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐMessage),
+			},
+			{
+				Name:       "updateEmailProfileAssignments",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "EmailProfileAssignment",
+				Args:       field_Mutation_updateEmailProfileAssignments_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateEmailProfileAssignments(ctx, fc.Args["input"].([]*gqlmodel.EmailProfileAssignmentInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNEmailProfileAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProfileAssignmentᚄ),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -269,27 +651,152 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOEmailProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProfile),
 			},
+			{
+				Name:       "emailLogs",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "EmailLogConnection",
+				Args:       field_Query_emailLogs_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").EmailLogs(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNEmailLogConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEmailLogConnection),
+			},
+			{
+				Name:       "emailProfileAssignments",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "EmailProfileAssignment",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					return gqlexec.Resolver[resolverQuery](ec, "Query").EmailProfileAssignments(ctx)
+				},
+				Marshal: gqlexec.Marshal(marshalNEmailProfileAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProfileAssignmentᚄ),
+			},
 		}},
 	},
+	Inputs: []gqlexec.Input{
+		{Name: "EmailProfileAssignmentInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputEmailProfileAssignmentInput)},
+		{Name: "EmailProfileInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputEmailProfileInput)},
+		{Name: "TestEmailProfileInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputTestEmailProfileInput)},
+	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
+}
+
+type resolverMutation interface {
+	CreateEmailProfile(ctx context.Context, input gqlmodel.EmailProfileInput) (*email.Profile, error)
+	UpdateEmailProfile(ctx context.Context, id string, input gqlmodel.EmailProfileInput) (*email.Profile, error)
+	DeleteEmailProfile(ctx context.Context, id string) (bool, error)
+	SendEmailProfileTest(ctx context.Context, id string, input gqlmodel.TestEmailProfileInput) (*email.Message, error)
+	UpdateEmailProfileAssignments(ctx context.Context, input []*gqlmodel.EmailProfileAssignmentInput) ([]*email.ProfileAssignment, error)
 }
 
 type resolverQuery interface {
 	EmailProfiles(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.EmailProfileConnection, error)
 	EmailProfile(ctx context.Context, id string) (*email.Profile, error)
+	EmailLogs(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.EmailLogConnection, error)
+	EmailProfileAssignments(ctx context.Context) ([]*email.ProfileAssignment, error)
 }
 
 var (
 	errNoChild0 = errors.New("field of type ID does not have child fields")
-	errNoChild1 = errors.New("field of type String does not have child fields")
+	errNoChild1 = errors.New("field of type EmailPurpose does not have child fields")
 	errNoChild2 = errors.New("field of type EmailProvider does not have child fields")
-	errNoChild3 = errors.New("field of type EmailProfileStatus does not have child fields")
-	errNoChild4 = errors.New("field of type Int does not have child fields")
-	errNoChild5 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild6 = errors.New("field of type Boolean does not have child fields")
+	errNoChild3 = errors.New("field of type String does not have child fields")
+	errNoChild4 = errors.New("field of type EmailMessageStatus does not have child fields")
+	errNoChild5 = errors.New("field of type Int does not have child fields")
+	errNoChild6 = errors.New("field of type Timestamp does not have child fields")
+	errNoChild7 = errors.New("field of type Boolean does not have child fields")
+	errNoChild8 = errors.New("field of type EmailProfileStatus does not have child fields")
 )
+
+func field_Mutation_createEmailProfile_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.EmailProfileInput, error) {
+			return unmarshalNEmailProfileInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEmailProfileInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateEmailProfile_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.EmailProfileInput, error) {
+			return unmarshalNEmailProfileInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEmailProfileInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_deleteEmailProfile_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Mutation_sendEmailProfileTest_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.TestEmailProfileInput, error) {
+			return unmarshalNTestEmailProfileInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTestEmailProfileInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_updateEmailProfileAssignments_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) ([]*gqlmodel.EmailProfileAssignmentInput, error) {
+			return unmarshalNEmailProfileAssignmentInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEmailProfileAssignmentInputᚄ(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
 
 func field_Query_emailProfiles_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -317,6 +824,179 @@ func field_Query_emailProfile_args(ctx context.Context, ec *gqlexec.Exec, rawArg
 	return args, nil
 }
 
+func field_Query_emailLogs_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func unmarshalInputEmailProfileAssignmentInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.EmailProfileAssignmentInput, error) {
+	var it gqlmodel.EmailProfileAssignmentInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"purpose", "profileId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "purpose":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("purpose"))
+			data, err := unmarshalNEmailPurpose2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐPurpose(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Purpose = data
+		case "profileId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("profileId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ProfileID = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputEmailProfileInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.EmailProfileInput, error) {
+	var it gqlmodel.EmailProfileInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "description", "senderName", "senderEmail", "replyToEmail", "provider", "status"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "senderName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("senderName"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SenderName = data
+		case "senderEmail":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("senderEmail"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SenderEmail = data
+		case "replyToEmail":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("replyToEmail"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReplyToEmail = data
+		case "provider":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
+			data, err := unmarshalOEmailProvider2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProvider(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Provider = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalOEmailProfileStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProfileStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputTestEmailProfileInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.TestEmailProfileInput, error) {
+	var it gqlmodel.TestEmailProfileInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"to", "subject", "html", "text"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "to":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("to"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.To = data
+		case "subject":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subject"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Subject = data
+		case "html":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("html"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HTML = data
+		case "text":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Text = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
@@ -326,13 +1006,109 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNEmailProfileAssignmentInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEmailProfileAssignmentInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.EmailProfileAssignmentInput, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNEmailProfileAssignmentInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEmailProfileAssignmentInput)
+}
+
+func unmarshalNEmailProfileAssignmentInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEmailProfileAssignmentInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.EmailProfileAssignmentInput, error) {
+	res, err := unmarshalInputEmailProfileAssignmentInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNEmailProfileInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEmailProfileInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.EmailProfileInput, error) {
+	res, err := unmarshalInputEmailProfileInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNEmailPurpose2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐPurpose(ctx context.Context, ec *gqlexec.Exec, v any) (email.Purpose, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := email.Purpose(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNTestEmailProfileInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTestEmailProfileInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.TestEmailProfileInput, error) {
+	res, err := unmarshalInputTestEmailProfileInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOEmailProfileStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProfileStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*email.ProfileStatus, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := email.ProfileStatus(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOEmailProvider2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProvider(ctx context.Context, ec *gqlexec.Exec, v any) (*email.Provider, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := email.Provider(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
 	res := graphql.MarshalBoolean(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNEmailLog2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐMessage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *email.Message) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "EmailLog", v)
+}
+
+func marshalNEmailLogConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEmailLogConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.EmailLogConnection) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "EmailLogConnection", v)
+}
+
+func marshalNEmailLogEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEmailLogEdgeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.EmailLogEdge) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.EmailLogEdge]{
+		Elem:        marshalNEmailLogEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEmailLogEdge,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNEmailLogEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEmailLogEdge(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.EmailLogEdge) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "EmailLogEdge", v)
+}
+
+func marshalNEmailMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐMessageStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v email.MessageStatus) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
@@ -345,6 +1121,22 @@ func marshalNEmailProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "EmailProfile", v)
+}
+
+func marshalNEmailProfileAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProfileAssignmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*email.ProfileAssignment) graphql.Marshaler {
+	return gqlexec.List[*email.ProfileAssignment]{
+		Elem:        marshalNEmailProfileAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProfileAssignment,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNEmailProfileAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProfileAssignment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *email.ProfileAssignment) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "EmailProfileAssignment", v)
 }
 
 func marshalNEmailProfileConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEmailProfileConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.EmailProfileConnection) graphql.Marshaler {
@@ -387,8 +1179,24 @@ func marshalNEmailProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodules
 	return res
 }
 
+func marshalNEmailPurpose2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐPurpose(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v email.Purpose) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNInt2int32(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int32) graphql.Marshaler {
+	res := graphql.MarshalInt32(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
@@ -417,6 +1225,15 @@ func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	return gqlexec.List[string]{
+		Elem:        marshalNString2string,
+		NonNull:     true,
+		NonNullElem: true,
+		Scalar:      true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
@@ -454,4 +1271,22 @@ func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Organization", v)
+}
+
+func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	return res
+}
+
+func marshalOString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	return gqlexec.List[string]{
+		Elem:        marshalNString2string,
+		NonNullElem: true,
+		Scalar:      true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalOTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
+	return res
 }

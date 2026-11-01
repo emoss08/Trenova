@@ -16208,6 +16208,10 @@ type EdiConnectionCapabilities {
 
 type EdiConnection {
   id: ID!
+  "The organization that asked for the connection."
+  sourceOrganizationId: ID!
+  "The organization asked to accept it."
+  targetOrganizationId: ID!
   method: EdiConnectionMethod!
   status: EdiConnectionStatus!
   capabilities: EdiConnectionCapabilities!
@@ -16217,6 +16221,8 @@ type EdiConnection {
   rejectionReason: String
   suspendedAt: Timestamp
   revokedAt: Timestamp
+  sourceOrganization: Organization
+  targetOrganization: Organization
 }
 
 type EdiPartner @kind(resource: "edi") {
@@ -16290,7 +16296,11 @@ type EdiTransfer @kind(resource: "edi") {
   rejectionReason: String
   failureReason: String
   submittedAt: Timestamp!
+  approvedAt: Timestamp
+  processingStartedAt: Timestamp
   processedAt: Timestamp
+  rejectedAt: Timestamp
+  canceledAt: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -16413,6 +16423,10 @@ type EdiMessage @kind(resource: "edi") {
   invoiceId: ID
   "When the raw X12 was purged under the retention policy."
   rawPurgedAt: Timestamp
+  "The raw X12 in full as it was sent or received; empty once purged under the retention policy."
+  rawX12: String
+  "The document the message decoded to; null when none was kept."
+  payloadSnapshot: Any
 }
 
 "The raw X12 of a message or file, cut to its first 16 KB."
@@ -16473,6 +16487,8 @@ type EdiInboundFile @kind(resource: "edi") {
   partner: EdiPartner
   "When the raw file was purged under the retention policy."
   rawPurgedAt: Timestamp
+  "The raw file in full as it was received; empty once purged under the retention policy."
+  rawContent: String
 }
 
 "One inbound EDI file as its detail reads it, with the transaction sets parsed from it."
@@ -16675,6 +16691,8 @@ type EdiPartnerReadinessState {
   ready: Boolean!
   completedCount: Int!
   totalCount: Int!
+  "Each step of the partner's setup and whether it is done."
+  items: [EdiPartnerReadinessItem!]!
 }
 
 type EdiPartnerScorecard {
@@ -17010,6 +17028,317 @@ extend type Query {
   ediVolumeSeries(sinceHours: Int): [EdiVolumePoint!]!
   ediPartnerCard(id: ID!): EdiPartnerCard! @authorizes(resource: "edi")
 }
+
+"What a bulk EDI action did: the records it acted on, and why each of the others failed."
+type EdiBulkActionResult {
+  succeeded: [ID!]!
+  failed: [EdiBulkActionFailure!]!
+}
+
+type EdiBulkActionFailure {
+  id: ID!
+  error: String!
+}
+
+"Where an EDI message came from: the Lading version and flow that wrote it, and when."
+type EdiInspectionProvenance {
+  messageId: ID!
+  ladingVersionId: ID
+  flowInstanceId: ID
+  generatedAt: Timestamp!
+  generatedById: ID
+}
+
+"An EDI message with its X12 read segment by segment, as the message card shows it."
+type EdiMessageInspection @kind(resource: "edi") {
+  message: EdiMessage!
+  "The X12 read segment by segment: separators, envelope, groups, transactions, segments, the formatted copy and every finding."
+  inspection: Any!
+  provenance: EdiInspectionProvenance!
+}
+
+extend type Query {
+  "An inbound file's interchange as the file card reads it: separators, envelope, groups, transactions and findings, and whether the file opened with an ISA."
+  ediInboundFileInspection(id: ID!): Any!
+  ediMessageInspection(id: ID!): EdiMessageInspection! @authorizes(resource: "edi")
+  "One flow conversation as the flow panel reads it: the instance, the state its flow keeps and every event, in the Lading runtime's shape."
+  ediFlowInstanceDetail(id: ID!): Any!
+}
+
+extend type Mutation {
+  "Reads an inbound file's transactions again."
+  reprocessEdiInboundFile(id: ID!): EdiInboundFile!
+  "Reads each inbound file's transactions again, at most 500 files."
+  bulkReprocessEdiInboundFiles(ids: [ID!]!): EdiBulkActionResult!
+  "Queues another delivery attempt for an outbound message whose delivery failed."
+  retryEdiMessageDelivery(id: ID!): EdiMessage!
+  "Sends an outbound message again."
+  replayEdiMessage(id: ID!): EdiMessage!
+  "Queues another delivery attempt for each message, at most 500 messages."
+  bulkRetryEdiMessageDelivery(ids: [ID!]!): EdiBulkActionResult!
+  "Takes a held or escalated flow out of the exception queue once a person has dealt with it."
+  releaseEdiFlowInstance(id: ID!): EdiFlowInstance!
+}
+`, BuiltIn: false},
+	{Name: "../schema/edi_lading.graphqls", Input: `input CreateEdiLadingProjectInput {
+  partnerId: ID!
+  "carrier or broker: which starter the project begins from."
+  role: String!
+  "The transaction sets the partner exchanges."
+  sets: [String!]!
+  "The partner's ISA qualifier and id."
+  them: [String!]
+  "Trenova's ISA qualifier and id."
+  us: [String!]
+  "The partner's and Trenova's GS application codes."
+  group: [String!]
+  "Element, segment, component and repetition separators, in that order."
+  separators: [String!]
+  "test or production."
+  usage: String
+  "The acknowledgment Trenova sends back: 997, 999 or none."
+  acknowledge: String
+  "Seconds the flow waits for the partner's acknowledgment."
+  ackWithin: Int
+}
+
+input EdiLadingRunInput {
+  x12: String
+  csv: String
+  json: Any
+  document: Any
+}
+
+input StartEdiLadingReplayInput {
+  "The version to compare with; the active version unless given."
+  againstVersionId: ID
+  map: String!
+  "Start of the period whose messages are replayed."
+  from: Timestamp!
+  "End of the period whose messages are replayed."
+  to: Timestamp!
+}
+
+extend type Query {
+  "The organization and its shipment custom fields, the context the studio checks and runs a project against, as the server encodes with."
+  ediLadingContext: Any!
+  "A partner's Lading project with its settings, in the Lading studio's shape; null for a partner that has none yet."
+  ediLadingPartnerProject(partnerId: ID!): Any
+  "A project's versions with their files and checks, newest first, in the Lading studio's shape; 100 unless given, at most 100."
+  ediLadingVersions(projectId: ID!, limit: Int): Any!
+  "A version with its files, checks and samples' contents, as the studio opens it."
+  ediLadingVersion(id: ID!): Any!
+  "A version's replays against another version, newest first; 100 unless given, at most 100."
+  ediLadingReplays(versionId: ID!, limit: Int): Any!
+  "What a version running in shadow found against the active version: a summary and each message compared."
+  ediLadingShadowResults(versionId: ID!, onlyDiffering: Boolean, limit: Int): Any!
+  "Runs one map of a version on an input, its lookups answered from the partner's mappings as a live message's are; nothing is saved or sent."
+  runEdiLadingVersion(versionId: ID!, mapName: String!, input: EdiLadingRunInput!, rules: Boolean): Any!
+}
+
+extend type Mutation {
+  "Starts a partner's Lading project from the starter for its role: a draft that checks clean and whose tests pass."
+  createEdiLadingProject(input: CreateEdiLadingProjectInput!): EdiLadingProject!
+  "Starts a draft from a version: its files and samples, checked again."
+  createEdiLadingDraft(projectId: ID!, fromVersionId: ID!): EdiLadingVersion!
+  "Sets the partner settings a planner may change without a new version; a value equal to nothing is the partner file's default."
+  updateEdiLadingSettings(projectId: ID!, settings: JSON!, version: Int!): EdiLadingProject!
+  "Freezes a ready draft: no errors, every test passing, every flow arm reached, and a clean replay against the live version."
+  certifyEdiLadingVersion(id: ID!): EdiLadingVersion!
+  "Puts a certified version live for the partner."
+  activateEdiLadingVersion(id: ID!): EdiLadingVersion!
+  archiveEdiLadingVersion(id: ID!): EdiLadingVersion!
+  "Runs a certified version beside the active one on live traffic for some days, sending nothing, and records where they disagree."
+  startEdiLadingShadow(id: ID!, days: Int!): EdiLadingVersion!
+  stopEdiLadingShadow(id: ID!): EdiLadingVersion!
+  "Replays a version and the one it is compared with on the partner's real messages from a period, in the background."
+  startEdiLadingReplay(versionId: ID!, input: StartEdiLadingReplayInput!): ID!
+}
+`, BuiltIn: false},
+	{Name: "../schema/edi_setup.graphqls", Input: `"What a connection test checked and found, one check per step: certificates, credentials and reaching the endpoint."
+type EdiConnectionTestResult {
+  success: Boolean!
+  checks: [EdiConnectionCheck!]!
+}
+
+type EdiConnectionCheck {
+  name: String!
+  status: String!
+  message: String
+}
+
+"What a pickup asked for by hand found: the files it staged and how many it skipped as already read."
+type EdiPollResult {
+  profileId: ID!
+  stagedFileIds: [ID!]!
+  skippedFiles: Int!
+}
+
+"An AS2 certificate as the profile form shows it."
+type EdiCertificateSummary {
+  subject: String!
+  issuer: String!
+  serialNumber: String!
+  notBefore: Timestamp!
+  notAfter: Timestamp!
+  expiresInDays: Int!
+  expired: Boolean!
+  sha256Fingerprint: String!
+}
+
+input EdiPartnerInput {
+  "External unless given."
+  kind: EdiPartnerKind
+  "Active unless given."
+  status: EntityStatus
+  code: String!
+  name: String!
+  description: String
+  internalOrganizationId: ID
+  ediConnectionId: ID
+  customerId: ID
+  defaultTransportId: ID
+  defaultMappingProfileId: ID
+  timezone: String
+  "US unless given."
+  country: String
+  contactName: String
+  contactEmail: String
+  contactPhone: String
+  "On a new partner, true unless given; on an update, false unless given."
+  enabledForInbound: Boolean
+  "On a new partner, true unless given; on an update, false unless given."
+  enabledForOutbound: Boolean
+  "The partner's settings, by name."
+  settings: JSON
+  version: Int
+}
+
+input EdiConnectionCapabilitiesInput {
+  loadTenderOutbound: Boolean!
+  loadTenderInbound: Boolean!
+  shipmentStatus: Boolean!
+  invoice: Boolean!
+}
+
+"The partner a connection creates on one side, as that side will know the other."
+input EdiConnectionPartnerConfigInput {
+  code: String!
+  name: String!
+  description: String
+  contactName: String
+  contactEmail: String
+  contactPhone: String
+  enabledForInbound: Boolean!
+  enabledForOutbound: Boolean!
+  settings: JSON
+}
+
+input CreateEdiConnectionInput {
+  targetOrganizationId: ID!
+  method: EdiConnectionMethod!
+  capabilities: EdiConnectionCapabilitiesInput!
+  sourcePartnerConfig: EdiConnectionPartnerConfigInput!
+  targetPartnerConfig: EdiConnectionPartnerConfigInput!
+}
+
+input EdiCommunicationProfileInput {
+  ediConnectionId: ID
+  ediPartnerId: ID
+  method: EdiConnectionMethod!
+  status: EntityStatus
+  name: String!
+  description: String
+  "Transport settings for the method: endpoints, identifiers, paths and certificates. Never secret values."
+  config: JSON!
+  "Secret values by key, such as passwords and private keys. A key left out keeps the value on file; an empty value clears it. Stored encrypted and never returned."
+  secrets: JSON
+  version: Int
+}
+
+input EdiMappingProfileItemInput {
+  id: ID
+  entityType: EdiMappingEntityType!
+  "The partner's identifier for the record."
+  sourceId: ID!
+  sourceLabel: String
+  "The organization's record the partner's code maps to."
+  targetId: ID!
+  targetLabel: String
+}
+
+extend type Query {
+  ediPartner(id: ID!): EdiPartner!
+  "The connections other organizations asked this one to accept and that still wait on it, newest first; 25 unless given, at most 100."
+  pendingEdiConnections(limit: Int): [EdiConnection!]!
+  "A partner's mapping profile with its entries; a partner without one gets an empty profile on first read."
+  ediPartnerMappingProfile(partnerId: ID!): EdiMappingProfile!
+  "Reads a PEM certificate pasted into an AS2 profile; nothing is saved."
+  inspectEdiCertificate(certificate: String!): EdiCertificateSummary!
+}
+
+extend type Mutation {
+  createEdiPartner(input: EdiPartnerInput!): EdiPartner!
+  updateEdiPartner(id: ID!, input: EdiPartnerInput!): EdiPartner!
+  "Asks another organization on Trenova to trade EDI with this one; it waits for them to accept."
+  createEdiConnection(input: CreateEdiConnectionInput!): EdiConnection!
+  acceptEdiConnection(id: ID!): EdiConnection!
+  rejectEdiConnection(id: ID!, reason: String): EdiConnection!
+  createEdiCommunicationProfile(input: EdiCommunicationProfileInput!): EdiCommunicationProfile!
+  updateEdiCommunicationProfile(id: ID!, input: EdiCommunicationProfileInput!): EdiCommunicationProfile!
+  "Checks a profile's certificates, credentials and endpoint now; nothing is sent to the partner."
+  testEdiCommunicationProfileConnection(id: ID!): EdiConnectionTestResult!
+  "Picks up waiting files from a profile's mailbox now instead of at the next scheduled poll."
+  pollEdiCommunicationProfile(id: ID!): EdiPollResult!
+  "Adds or changes entries of a mapping profile."
+  saveEdiMappingProfileItems(profileId: ID!, items: [EdiMappingProfileItemInput!]!): [EdiMappingProfileItem!]!
+  deleteEdiMappingProfileItem(profileId: ID!, itemId: ID!): Boolean!
+  "Adds or changes entries of a partner's mapping profile, creating the profile when the partner has none."
+  saveEdiPartnerMappingProfile(partnerId: ID!, items: [EdiMappingProfileItemInput!]!): [EdiMappingProfileItem!]!
+  deleteEdiPartnerMappingItem(partnerId: ID!, itemId: ID!): Boolean!
+}
+`, BuiltIn: false},
+	{Name: "../schema/edi_transfer.graphqls", Input: `"A partner's code a tender carries, and the organization's record it maps to if one does."
+type EdiMappingResolution {
+  entityType: EdiMappingEntityType!
+  sourceId: ID!
+  sourceLabel: String
+  targetId: ID
+  targetLabel: String
+  resolved: Boolean!
+}
+
+"How a tender's codes map to the organization's records: the ones mapped, the ones not yet, and all of them."
+type EdiMappingPreview {
+  resolved: [EdiMappingResolution!]!
+  unresolved: [EdiMappingResolution!]!
+  all: [EdiMappingResolution!]!
+}
+
+input SubmitEdiLoadTenderInput {
+  sourceShipmentId: ID!
+  "The partner to tender to; the shipment customer's partner unless given."
+  ediPartnerId: ID
+}
+
+extend type Query {
+  "How an inbound tender's codes map to the organization's records, read before it is accepted."
+  ediTransferMappingPreview(id: ID!): EdiMappingPreview!
+}
+
+extend type Mutation {
+  "Tenders a shipment to a trading partner over EDI."
+  submitEdiLoadTender(input: SubmitEdiLoadTenderInput!): EdiTransfer!
+  "Accepts an inbound tender, saving the mappings given for the codes it carries; the shipment is built in the background."
+  approveEdiTransfer(id: ID!, mappings: [EdiMappingProfileItemInput!]): EdiTransfer!
+  rejectEdiTransfer(id: ID!, reason: String!): EdiTransfer!
+  "Withdraws a tender this organization sent before the partner answers it."
+  cancelEdiTransfer(id: ID!): EdiTransfer!
+  "Accepts each inbound tender, at most 500; each is accepted as approveEdiTransfer would."
+  bulkApproveEdiTransfers(ids: [ID!]!): EdiBulkActionResult!
+  "Rejects each inbound tender with one reason, at most 500."
+  bulkRejectEdiTransfers(ids: [ID!]!, reason: String!): EdiBulkActionResult!
+}
 `, BuiltIn: false},
 	{Name: "../schema/email_profile.graphqls", Input: `enum EmailProvider {
   Resend
@@ -17055,6 +17384,115 @@ type EmailProfileConnection {
 extend type Query {
   emailProfiles(input: DataTableConnectionInput!): EmailProfileConnection!
   emailProfile(id: ID!): EmailProfile
+}
+
+enum EmailPurpose {
+  General
+  Billing
+  Reporting
+  Operations
+  Authentication
+  Notifications
+}
+
+enum EmailMessageStatus {
+  Queued
+  Sending
+  Sent
+  Delivered
+  Failed
+  Bounced
+  Complained
+  Opened
+  Clicked
+  Suppressed
+}
+
+"One transactional email the organization sent or tried to send, without its body."
+type EmailLog {
+  id: ID!
+  profileId: ID!
+  purpose: EmailPurpose!
+  provider: EmailProvider!
+  providerMessageId: String
+  status: EmailMessageStatus!
+  attempts: Int!
+  fromEmail: String!
+  fromName: String!
+  replyToEmail: String
+  toRecipients: [String!]!
+  ccRecipients: [String!]
+  bccRecipients: [String!]
+  subject: String!
+  lastError: String
+  sentAt: Timestamp
+  deliveredAt: Timestamp
+  failedAt: Timestamp
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  profile: EmailProfile
+}
+
+type EmailLogEdge {
+  node: EmailLog!
+  cursor: String!
+}
+
+type EmailLogConnection {
+  edges: [EmailLogEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
+"Which email profile sends the mail of one purpose."
+type EmailProfileAssignment {
+  id: ID!
+  purpose: EmailPurpose!
+  profileId: ID!
+  profile: EmailProfile
+}
+
+input EmailProfileInput {
+  name: String!
+  description: String
+  senderName: String!
+  senderEmail: String!
+  replyToEmail: String
+  "Resend unless given."
+  provider: EmailProvider
+  "Active unless given."
+  status: EmailProfileStatus
+}
+
+input TestEmailProfileInput {
+  to: String!
+  subject: String!
+  html: String
+  text: String
+}
+
+input EmailProfileAssignmentInput {
+  purpose: EmailPurpose!
+  profileId: ID!
+}
+
+extend type Query {
+  "Transactional email send and delivery history, newest first."
+  emailLogs(input: DataTableConnectionInput!): EmailLogConnection!
+  "Which profile sends each purpose's mail."
+  emailProfileAssignments: [EmailProfileAssignment!]!
+}
+
+extend type Mutation {
+  createEmailProfile(input: EmailProfileInput!): EmailProfile!
+  updateEmailProfile(id: ID!, input: EmailProfileInput!): EmailProfile!
+  deleteEmailProfile(id: ID!): Boolean!
+  "Sends a test email through a profile now."
+  sendEmailProfileTest(id: ID!, input: TestEmailProfileInput!): EmailLog!
+  "Replaces which profile sends each purpose's mail; every profile named must be active."
+  updateEmailProfileAssignments(input: [EmailProfileAssignmentInput!]!): [EmailProfileAssignment!]!
 }
 `, BuiltIn: false},
 	{Name: "../schema/equipment_continuity.graphqls", Input: `type EquipmentContinuity {

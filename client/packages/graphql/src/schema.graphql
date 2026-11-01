@@ -10943,6 +10943,36 @@ input CreateDocumentTemplateVersionInput {
   templateId: ID!
 }
 
+input CreateEdiConnectionInput {
+  capabilities: EdiConnectionCapabilitiesInput!
+  method: EdiConnectionMethod!
+  sourcePartnerConfig: EdiConnectionPartnerConfigInput!
+  targetOrganizationId: ID!
+  targetPartnerConfig: EdiConnectionPartnerConfigInput!
+}
+
+input CreateEdiLadingProjectInput {
+  """Seconds the flow waits for the partner's acknowledgment."""
+  ackWithin: Int
+  """The acknowledgment Trenova sends back: 997, 999 or none."""
+  acknowledge: String
+  """The partner's and Trenova's GS application codes."""
+  group: [String!]
+  partnerId: ID!
+  """carrier or broker: which starter the project begins from."""
+  role: String!
+  """Element, segment, component and repetition separators, in that order."""
+  separators: [String!]
+  """The transaction sets the partner exchanges."""
+  sets: [String!]!
+  """The partner's ISA qualifier and id."""
+  them: [String!]
+  """Trenova's ISA qualifier and id."""
+  us: [String!]
+  """test or production."""
+  usage: String
+}
+
 input CreateFactoringRemittanceInput {
   """
   Funding unless the report is of reserve releases, rejections or chargebacks.
@@ -14619,6 +14649,19 @@ type EdiAckStatusCount {
   status: EdiMessageAckStatus!
 }
 
+type EdiBulkActionFailure {
+  error: String!
+  id: ID!
+}
+
+"""
+What a bulk EDI action did: the records it acted on, and why each of the others failed.
+"""
+type EdiBulkActionResult {
+  failed: [EdiBulkActionFailure!]!
+  succeeded: [ID!]!
+}
+
 """An inbound EDI 210 carrier freight invoice awaiting reconciliation."""
 type EdiCarrierInvoice @kind(resource: "carrier_invoice_match") {
   billToName: String!
@@ -14661,6 +14704,18 @@ type EdiCarrierInvoiceList {
   totalCountExact: Boolean!
 }
 
+"""An AS2 certificate as the profile form shows it."""
+type EdiCertificateSummary {
+  expired: Boolean!
+  expiresInDays: Int!
+  issuer: String!
+  notAfter: Timestamp!
+  notBefore: Timestamp!
+  serialNumber: String!
+  sha256Fingerprint: String!
+  subject: String!
+}
+
 type EdiCommunicationProfile @kind(resource: "edi") {
   businessUnitId: ID!
   """
@@ -14698,6 +14753,24 @@ type EdiCommunicationProfileEdge {
   node: EdiCommunicationProfile!
 }
 
+input EdiCommunicationProfileInput {
+  """
+  Transport settings for the method: endpoints, identifiers, paths and certificates. Never secret values.
+  """
+  config: JSON!
+  description: String
+  ediConnectionId: ID
+  ediPartnerId: ID
+  method: EdiConnectionMethod!
+  name: String!
+  """
+  Secret values by key, such as passwords and private keys. A key left out keeps the value on file; an empty value clears it. Stored encrypted and never returned.
+  """
+  secrets: JSON
+  status: EntityStatus
+  version: Int
+}
+
 type EdiCommunicationProfileSecretState {
   key: String!
 }
@@ -14711,8 +14784,14 @@ type EdiConnection {
   rejectionReason: String
   requestedAt: Timestamp!
   revokedAt: Timestamp
+  sourceOrganization: Organization
+  """The organization that asked for the connection."""
+  sourceOrganizationId: ID!
   status: EdiConnectionStatus!
   suspendedAt: Timestamp
+  targetOrganization: Organization
+  """The organization asked to accept it."""
+  targetOrganizationId: ID!
 }
 
 type EdiConnectionCapabilities {
@@ -14722,11 +14801,39 @@ type EdiConnectionCapabilities {
   shipmentStatus: Boolean!
 }
 
+input EdiConnectionCapabilitiesInput {
+  invoice: Boolean!
+  loadTenderInbound: Boolean!
+  loadTenderOutbound: Boolean!
+  shipmentStatus: Boolean!
+}
+
+type EdiConnectionCheck {
+  message: String
+  name: String!
+  status: String!
+}
+
 enum EdiConnectionMethod {
   AS2
   Internal
   SFTP
   VAN
+}
+
+"""
+The partner a connection creates on one side, as that side will know the other.
+"""
+input EdiConnectionPartnerConfigInput {
+  code: String!
+  contactEmail: String
+  contactName: String
+  contactPhone: String
+  description: String
+  enabledForInbound: Boolean!
+  enabledForOutbound: Boolean!
+  name: String!
+  settings: JSON
 }
 
 enum EdiConnectionStatus {
@@ -14735,6 +14842,14 @@ enum EdiConnectionStatus {
   Rejected
   Revoked
   Suspended
+}
+
+"""
+What a connection test checked and found, one check per step: certificates, credentials and reaching the endpoint.
+"""
+type EdiConnectionTestResult {
+  checks: [EdiConnectionCheck!]!
+  success: Boolean!
 }
 
 enum EdiDocumentDirection {
@@ -14810,6 +14925,10 @@ type EdiInboundFile @kind(resource: "edi") {
   organizationId: ID!
   partner: EdiPartner
   processedAt: Timestamp
+  """
+  The raw file in full as it was received; empty once purged under the retention policy.
+  """
+  rawContent: String
   """When the raw file was purged under the retention policy."""
   rawPurgedAt: Timestamp
   receivedAt: Timestamp!
@@ -14861,6 +14980,17 @@ enum EdiInboundFileStatus {
   Received
 }
 
+"""
+Where an EDI message came from: the Lading version and flow that wrote it, and when.
+"""
+type EdiInspectionProvenance {
+  flowInstanceId: ID
+  generatedAt: Timestamp!
+  generatedById: ID
+  ladingVersionId: ID
+  messageId: ID!
+}
+
 """A set a Lading version exchanges with the partner."""
 type EdiLadingExchange {
   """
@@ -14910,6 +15040,13 @@ type EdiLadingReadiness {
   ready: Boolean!
   tests: Int!
   uncoveredFlowClauses: Int!
+}
+
+input EdiLadingRunInput {
+  csv: String
+  document: Any
+  json: Any
+  x12: String
 }
 
 """A version of a partner's Lading project, without its files."""
@@ -14964,6 +15101,15 @@ enum EdiMappingEntityType {
   ShipmentType
 }
 
+"""
+How a tender's codes map to the organization's records: the ones mapped, the ones not yet, and all of them.
+"""
+type EdiMappingPreview {
+  all: [EdiMappingResolution!]!
+  resolved: [EdiMappingResolution!]!
+  unresolved: [EdiMappingResolution!]!
+}
+
 type EdiMappingProfile {
   businessUnitId: ID!
   createdAt: Timestamp!
@@ -15009,6 +15155,29 @@ type EdiMappingProfileItem {
   version: Int!
 }
 
+input EdiMappingProfileItemInput {
+  entityType: EdiMappingEntityType!
+  id: ID
+  """The partner's identifier for the record."""
+  sourceId: ID!
+  sourceLabel: String
+  """The organization's record the partner's code maps to."""
+  targetId: ID!
+  targetLabel: String
+}
+
+"""
+A partner's code a tender carries, and the organization's record it maps to if one does.
+"""
+type EdiMappingResolution {
+  entityType: EdiMappingEntityType!
+  resolved: Boolean!
+  sourceId: ID!
+  sourceLabel: String
+  targetId: ID
+  targetLabel: String
+}
+
 type EdiMessage @kind(resource: "edi") {
   ackLastError: String
   ackMessageId: ID
@@ -15040,8 +15209,14 @@ type EdiMessage @kind(resource: "edi") {
   ladingVersionId: ID
   organizationId: ID!
   partner: EdiPartner
+  """The document the message decoded to; null when none was kept."""
+  payloadSnapshot: Any
   """When the raw X12 was purged under the retention policy."""
   rawPurgedAt: Timestamp
+  """
+  The raw X12 in full as it was sent or received; empty once purged under the retention policy.
+  """
+  rawX12: String
   segmentCount: Int!
   shipmentId: ID
   status: EdiMessageStatus!
@@ -15112,6 +15287,18 @@ type EdiMessageDiagnostic {
 type EdiMessageEdge {
   cursor: String!
   node: EdiMessage!
+}
+
+"""
+An EDI message with its X12 read segment by segment, as the message card shows it.
+"""
+type EdiMessageInspection @kind(resource: "edi") {
+  """
+  The X12 read segment by segment: separators, envelope, groups, transactions, segments, the formatted copy and every finding.
+  """
+  inspection: Any!
+  message: EdiMessage!
+  provenance: EdiInspectionProvenance!
 }
 
 enum EdiMessageStatus {
@@ -15246,6 +15433,34 @@ type EdiPartnerEdge {
   node: EdiPartner!
 }
 
+input EdiPartnerInput {
+  code: String!
+  contactEmail: String
+  contactName: String
+  contactPhone: String
+  """US unless given."""
+  country: String
+  customerId: ID
+  defaultMappingProfileId: ID
+  defaultTransportId: ID
+  description: String
+  ediConnectionId: ID
+  """On a new partner, true unless given; on an update, false unless given."""
+  enabledForInbound: Boolean
+  """On a new partner, true unless given; on an update, false unless given."""
+  enabledForOutbound: Boolean
+  internalOrganizationId: ID
+  """External unless given."""
+  kind: EdiPartnerKind
+  name: String!
+  """The partner's settings, by name."""
+  settings: JSON
+  """Active unless given."""
+  status: EntityStatus
+  timezone: String
+  version: Int
+}
+
 enum EdiPartnerKind {
   External
   Internal
@@ -15273,6 +15488,8 @@ type EdiPartnerReadinessItem {
 
 type EdiPartnerReadinessState {
   completedCount: Int!
+  """Each step of the partner's setup and whether it is done."""
+  items: [EdiPartnerReadinessItem!]!
   partnerId: ID!
   ready: Boolean!
   totalCount: Int!
@@ -15315,6 +15532,15 @@ type EdiPartnerTransport {
   lastPollError: String
   lastPollSuccessAt: Timestamp
   profile: EdiCommunicationProfile!
+}
+
+"""
+What a pickup asked for by hand found: the files it staged and how many it skipped as already read.
+"""
+type EdiPollResult {
+  profileId: ID!
+  skippedFiles: Int!
+  stagedFileIds: [ID!]!
 }
 
 """The raw X12 of a message or file, cut to its first 16 KB."""
@@ -15390,10 +15616,12 @@ type EdiTenderStop {
 }
 
 type EdiTransfer @kind(resource: "edi") {
+  approvedAt: Timestamp
   """The tender's bill of lading number."""
   bol: String
   """Whether the tender can still be accepted or declined."""
   canDecide: Boolean!
+  canceledAt: Timestamp
   """What the tender offers to pay."""
   charges: EdiTenderCharges
   commodities: [EdiTenderCommodity!]!
@@ -15414,6 +15642,8 @@ type EdiTransfer @kind(resource: "edi") {
   mappingSnapshot: Any!
   pieces: Int
   processedAt: Timestamp
+  processingStartedAt: Timestamp
+  rejectedAt: Timestamp
   rejectionReason: String
   """The service type the tender asks for, as the sender labels it."""
   serviceTypeLabel: String
@@ -15550,6 +15780,61 @@ enum EffectiveRateSource {
   Override
 }
 
+"""
+One transactional email the organization sent or tried to send, without its body.
+"""
+type EmailLog {
+  attempts: Int!
+  bccRecipients: [String!]
+  ccRecipients: [String!]
+  createdAt: Timestamp!
+  deliveredAt: Timestamp
+  failedAt: Timestamp
+  fromEmail: String!
+  fromName: String!
+  id: ID!
+  lastError: String
+  profile: EmailProfile
+  profileId: ID!
+  provider: EmailProvider!
+  providerMessageId: String
+  purpose: EmailPurpose!
+  replyToEmail: String
+  sentAt: Timestamp
+  status: EmailMessageStatus!
+  subject: String!
+  toRecipients: [String!]!
+  updatedAt: Timestamp!
+}
+
+type EmailLogConnection {
+  edges: [EmailLogEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  """
+  Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+  """
+  totalCountExact: Boolean!
+}
+
+type EmailLogEdge {
+  cursor: String!
+  node: EmailLog!
+}
+
+enum EmailMessageStatus {
+  Bounced
+  Clicked
+  Complained
+  Delivered
+  Failed
+  Opened
+  Queued
+  Sending
+  Sent
+  Suppressed
+}
+
 type EmailProfile {
   businessUnit: BusinessUnit
   businessUnitId: ID!
@@ -15568,6 +15853,19 @@ type EmailProfile {
   version: Int!
 }
 
+"""Which email profile sends the mail of one purpose."""
+type EmailProfileAssignment {
+  id: ID!
+  profile: EmailProfile
+  profileId: ID!
+  purpose: EmailPurpose!
+}
+
+input EmailProfileAssignmentInput {
+  profileId: ID!
+  purpose: EmailPurpose!
+}
+
 type EmailProfileConnection {
   edges: [EmailProfileEdge!]!
   pageInfo: PageInfo!
@@ -15583,6 +15881,18 @@ type EmailProfileEdge {
   node: EmailProfile!
 }
 
+input EmailProfileInput {
+  description: String
+  name: String!
+  """Resend unless given."""
+  provider: EmailProvider
+  replyToEmail: String
+  senderEmail: String!
+  senderName: String!
+  """Active unless given."""
+  status: EmailProfileStatus
+}
+
 enum EmailProfileStatus {
   Active
   Inactive
@@ -15591,6 +15901,15 @@ enum EmailProfileStatus {
 enum EmailProvider {
   Postmark
   Resend
+}
+
+enum EmailPurpose {
+  Authentication
+  Billing
+  General
+  Notifications
+  Operations
+  Reporting
 }
 
 enum EmploymentVerificationMethod {
@@ -22434,6 +22753,7 @@ type Mutation {
   Resolves a variance match by accruing an Adjustment cost event for the variance amount.
   """
   acceptCarrierInvoiceMatchWithVariance(input: CarrierInvoiceMatchActionInput!): CarrierInvoiceMatch!
+  acceptEdiConnection(id: ID!): EdiConnection!
   acknowledgeCarrierIntelEvents(ids: [ID!]!): Int!
   acknowledgeFactoringNoa(input: AcknowledgeFactoringNoaInput!): FactoringNoa!
   acknowledgeMyDisciplinaryAction(comment: String, id: ID!): WorkerDisciplinaryAction!
@@ -22451,6 +22771,8 @@ type Mutation {
   Says someone has seen an open exception; an unowned one becomes the reader's.
   """
   acknowledgeWatchtowerItem(expectedVersion: Int, id: ID!): WatchtowerItem!
+  """Puts a certified version live for the partner."""
+  activateEdiLadingVersion(id: ID!): EdiLadingVersion!
   activateFactoringAgreement(input: ChangeFactoringAgreementStatusInput!): FactoringAgreement!
   """
   Add a line of guidance to the organization's profile. From someone who manages
@@ -22503,6 +22825,10 @@ type Mutation {
   approveDetentionOccurrence(occurrenceId: ID!): DetentionOccurrence!
   approveDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   """
+  Accepts an inbound tender, saving the mappings given for the codes it carries; the shipment is built in the background.
+  """
+  approveEdiTransfer(id: ID!, mappings: [EdiMappingProfileItemInput!]): EdiTransfer!
+  """
   Approves a pending adjustment and executes it: credit memo, rebill, and postings.
   """
   approveInvoiceAdjustment(adjustmentId: ID!): InvoiceAdjustment!
@@ -22517,6 +22843,7 @@ type Mutation {
   approveShipmentRatingReview(shipmentId: ID!): Shipment!
   approveWorkerPTO(id: ID!): WorkerPTO!
   archiveDocumentTemplateVersion(id: ID!): DocumentTemplateVersion!
+  archiveEdiLadingVersion(id: ID!): EdiLadingVersion!
   archivePerformanceReviewTemplate(id: ID!, version: Int): PerformanceReviewTemplate!
   archivePtoPolicy(id: ID!, version: Int): PTOPolicy!
   archiveTrainingCourse(id: ID!, version: Int): TrainingCourse!
@@ -22571,11 +22898,23 @@ type Mutation {
   Sends the sender's future mail on this source straight to Ignored, and ignores this message.
   """
   blockInboundSender(messageId: ID!): InboundMessage!
+  """
+  Accepts each inbound tender, at most 500; each is accepted as approveEdiTransfer would.
+  """
+  bulkApproveEdiTransfers(ids: [ID!]!): EdiBulkActionResult!
   bulkAssignTraining(input: BulkAssignTrainingInput!): BulkAssignTrainingPayload!
   """
   Run one lifecycle action across many settlements; per-settlement failures don't abort the rest.
   """
   bulkDriverSettlementAction(input: BulkSettlementActionInput!): BulkSettlementActionPayload!
+  """Rejects each inbound tender with one reason, at most 500."""
+  bulkRejectEdiTransfers(ids: [ID!]!, reason: String!): EdiBulkActionResult!
+  """Reads each inbound file's transactions again, at most 500 files."""
+  bulkReprocessEdiInboundFiles(ids: [ID!]!): EdiBulkActionResult!
+  """
+  Queues another delivery attempt for each message, at most 500 messages.
+  """
+  bulkRetryEdiMessageDelivery(ids: [ID!]!): EdiBulkActionResult!
   bulkTransferShipmentsToBilling(input: ShipmentBulkTransferToBillingInput!): ShipmentBulkTransferToBillingResponse!
   bulkUpdateAccountTypeStatus(input: BulkUpdateAccountTypeStatusInput!): [AccountType!]!
   bulkUpdateCommodityStatus(input: BulkUpdateCommodityStatusInput!): [Commodity!]!
@@ -22598,6 +22937,10 @@ type Mutation {
   cancelCaptureRequest(id: ID!): CaptureRequest!
   cancelDotRandomDraw(id: ID!, reason: String!): DOTRandomDraw!
   cancelDotTest(id: ID!, reason: String!): WorkerDOTTest!
+  """
+  Withdraws a tender this organization sent before the partner answers it.
+  """
+  cancelEdiTransfer(id: ID!): EdiTransfer!
   cancelExtractionEvalRun(id: ID!): ExtractionEvalRun!
   """Cancels a failed schedule and releases its invoices for another."""
   cancelFactoringSubmission(input: CancelFactoringSubmissionInput!): FactoringSubmission!
@@ -22610,6 +22953,10 @@ type Mutation {
   cancelWorkerChecklist(input: CancelWorkerChecklistInput!): WorkerChecklist!
   cancelWorkerPTO(id: ID!, reason: String): WorkerPTO!
   cancelWorkerTraining(input: CancelWorkerTrainingInput!): WorkerTrainingRecord!
+  """
+  Freezes a ready draft: no errors, every test passing, every flow arm reached, and a clean replay against the live version.
+  """
+  certifyEdiLadingVersion(id: ID!): EdiLadingVersion!
   certifyOshaSummary(year: Int!): OSHAAnnualSummary!
   changeAccountingBackfill(input: ChangeAccountingBackfillInput!): AccountingBackfill!
   """
@@ -22703,6 +23050,19 @@ type Mutation {
   createDocumentTemplateVersion(input: CreateDocumentTemplateVersionInput!): DocumentTemplateVersion!
   createDocumentType(input: DocumentTypeInput!): DocumentType!
   createDotRandomPool(input: DOTRandomPoolInput!): DOTRandomPool!
+  createEdiCommunicationProfile(input: EdiCommunicationProfileInput!): EdiCommunicationProfile!
+  """
+  Asks another organization on Trenova to trade EDI with this one; it waits for them to accept.
+  """
+  createEdiConnection(input: CreateEdiConnectionInput!): EdiConnection!
+  """Starts a draft from a version: its files and samples, checked again."""
+  createEdiLadingDraft(fromVersionId: ID!, projectId: ID!): EdiLadingVersion!
+  """
+  Starts a partner's Lading project from the starter for its role: a draft that checks clean and whose tests pass.
+  """
+  createEdiLadingProject(input: CreateEdiLadingProjectInput!): EdiLadingProject!
+  createEdiPartner(input: EdiPartnerInput!): EdiPartner!
+  createEmailProfile(input: EmailProfileInput!): EmailProfile!
   createEquipmentManufacturer(input: EquipmentManufacturerInput!): EquipmentManufacturer!
   createEquipmentType(input: EquipmentTypeInput!): EquipmentType!
   createFactoringAgreement(input: FactoringAgreementInput!): FactoringAgreement!
@@ -22839,6 +23199,9 @@ type Mutation {
   deleteDetentionPolicy(id: ID!): Boolean!
   deleteDocumentTemplate(id: ID!): Boolean!
   deleteDocumentTemplateVersion(id: ID!): Boolean!
+  deleteEdiMappingProfileItem(itemId: ID!, profileId: ID!): Boolean!
+  deleteEdiPartnerMappingItem(itemId: ID!, partnerId: ID!): Boolean!
+  deleteEmailProfile(id: ID!): Boolean!
   deleteEmploymentVerification(id: ID!): Boolean!
   deleteExtractionEvalCase(id: ID!): Boolean!
   deleteFuelIndex(id: ID!): Boolean!
@@ -23085,6 +23448,10 @@ type Mutation {
   """
   payWorkerNow(input: PayWorkerNowInput!): DriverSettlement!
   pinShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
+  """
+  Picks up waiting files from a profile's mailbox now instead of at the next scheduled poll.
+  """
+  pollEdiCommunicationProfile(id: ID!): EdiPollResult!
   postAndApplyCustomerPayment(input: PostCustomerPaymentInput!): CustomerPayment!
   """Posts an approved item's invoice, which sends it to the customer."""
   postBillingQueueItem(id: ID!): BillingQueuePostResult!
@@ -23186,6 +23553,8 @@ type Mutation {
   rejectCarrierInvoiceMatch(input: CarrierInvoiceMatchActionInput!): CarrierInvoiceMatch!
   rejectCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   rejectDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
+  rejectEdiConnection(id: ID!, reason: String): EdiConnection!
+  rejectEdiTransfer(id: ID!, reason: String!): EdiTransfer!
   """Rejects a pending adjustment; the invoice stays as posted."""
   rejectInvoiceAdjustment(input: RejectInvoiceAdjustmentInput!): InvoiceAdjustment!
   rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
@@ -23195,6 +23564,10 @@ type Mutation {
   releaseBillingQueueItem(id: ID!): BillingQueueItem!
   """Release a held pay event back into the settlement pool."""
   releaseDriverPayEvent(payEventId: ID!): DriverPayEvent!
+  """
+  Takes a held or escalated flow out of the exception queue once a person has dealt with it.
+  """
+  releaseEdiFlowInstance(id: ID!): EdiFlowInstance!
   releaseFactoringNoa(input: ReleaseFactoringNoaInput!): FactoringNoa!
   """
   Books the factor's release of an invoice's reserve; the factor's part is then done.
@@ -23241,6 +23614,10 @@ type Mutation {
   Replays a recorded run against its agent as it is now; every write is simulated.
   """
   replayAgentRun(runId: ID!): AgentEvaluation!
+  """Sends an outbound message again."""
+  replayEdiMessage(id: ID!): EdiMessage!
+  """Reads an inbound file's transactions again."""
+  reprocessEdiInboundFile(id: ID!): EdiInboundFile!
   requestAIAuditExport(input: RequestAIAuditExportInput!): AIAuditExport!
   """
   Queues documents posted before sync was turned on. One backfill runs at a time.
@@ -23314,6 +23691,10 @@ type Mutation {
   """
   retryBillingTransferRun(id: ID!): BillingTransferRun!
   """
+  Queues another delivery attempt for an outbound message whose delivery failed.
+  """
+  retryEdiMessageDelivery(id: ID!): EdiMessage!
+  """
   Sends a failed schedule again with the factor's current delivery settings.
   """
   retryFactoringSubmission(input: RetryFactoringSubmissionInput!): FactoringSubmission!
@@ -23379,6 +23760,12 @@ type Mutation {
   Holds a tool lower than its declared rule for this organization, or returns it to the declared rule.
   """
   saveAgentToolRule(input: AgentToolRuleInput!, name: String!, version: Int!): AgentToolRuleSaved!
+  """Adds or changes entries of a mapping profile."""
+  saveEdiMappingProfileItems(items: [EdiMappingProfileItemInput!]!, profileId: ID!): [EdiMappingProfileItem!]!
+  """
+  Adds or changes entries of a partner's mapping profile, creating the profile when the partner has none.
+  """
+  saveEdiPartnerMappingProfile(items: [EdiMappingProfileItemInput!]!, partnerId: ID!): [EdiMappingProfileItem!]!
   saveFactoringTransport(input: SaveFactoringTransportInput!): FactoringTransport!
   """
   Saves what a person wrote as the message's draft. documentIds replaces the draft's files; leaving it out keeps them.
@@ -23391,6 +23778,8 @@ type Mutation {
   """Saves a table's view as a report and sends it on a schedule."""
   scheduleTableView(input: ScheduleTableViewInput!): TableExportResult!
   sendDetentionNotice(occurrenceId: ID!): DetentionOccurrence!
+  """Sends a test email through a profile now."""
+  sendEmailProfileTest(id: ID!, input: TestEmailProfileInput!): EmailLog!
   """
   Emails the customer the notice letter. Sending the same version again does not send twice.
   """
@@ -23486,6 +23875,14 @@ type Mutation {
   """
   startBulkEdit(input: BulkEditInput!): BulkEditJob!
   """
+  Replays a version and the one it is compared with on the partner's real messages from a period, in the background.
+  """
+  startEdiLadingReplay(input: StartEdiLadingReplayInput!, versionId: ID!): ID!
+  """
+  Runs a certified version beside the active one on live traffic for some days, sending nothing, and records where they disagree.
+  """
+  startEdiLadingShadow(days: Int!, id: ID!): EdiLadingVersion!
+  """
   Runs one provider's model over the active cases, within the evaluation budget.
   """
   startExtractionEvalRun(input: StartExtractionEvalRunInput!): ExtractionEvalRun!
@@ -23500,10 +23897,13 @@ type Mutation {
   """
   startWatchtowerItem(expectedVersion: Int, id: ID!): WatchtowerItem!
   startWorkerChecklist(input: StartWorkerChecklistInput!): WorkerChecklist!
+  stopEdiLadingShadow(id: ID!): EdiLadingVersion!
   """Brings a message waiting on a reply back now."""
   stopWaitingForInboundReply(id: ID!): InboundMessage!
   submitCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   submitDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
+  """Tenders a shipment to a trading partner over EDI."""
+  submitEdiLoadTender(input: SubmitEdiLoadTenderInput!): EdiTransfer!
   """
   Builds the schedule and its packets and sends them to the factor. Submitting the same Ready invoices again returns the first schedule.
   """
@@ -23519,6 +23919,10 @@ type Mutation {
   tenderShipments(input: TenderShipmentsInput!): TenderShipmentsResult!
   """Probes an unsaved endpoint once and records nothing."""
   testAIProviderDraft(input: AIProviderDraftTestInput!): AIProviderDraftTestResult!
+  """
+  Checks a profile's certificates, credentials and endpoint now; nothing is sent to the partner.
+  """
+  testEdiCommunicationProfileConnection(id: ID!): EdiConnectionTestResult!
   """
   Connects with the saved settings without sending anything, and records the result.
   """
@@ -23597,6 +24001,17 @@ type Mutation {
   updateDotRandomDrawEntry(input: UpdateDOTRandomDrawEntryInput!): DOTRandomDrawEntry!
   updateDotRandomPool(id: ID!, input: DOTRandomPoolInput!, version: Int!): DOTRandomPool!
   updateDotViolation(input: UpdateDOTViolationInput!): WorkerDOTViolation!
+  updateEdiCommunicationProfile(id: ID!, input: EdiCommunicationProfileInput!): EdiCommunicationProfile!
+  """
+  Sets the partner settings a planner may change without a new version; a value equal to nothing is the partner file's default.
+  """
+  updateEdiLadingSettings(projectId: ID!, settings: JSON!, version: Int!): EdiLadingProject!
+  updateEdiPartner(id: ID!, input: EdiPartnerInput!): EdiPartner!
+  updateEmailProfile(id: ID!, input: EmailProfileInput!): EmailProfile!
+  """
+  Replaces which profile sends each purpose's mail; every profile named must be active.
+  """
+  updateEmailProfileAssignments(input: [EmailProfileAssignmentInput!]!): [EmailProfileAssignment!]!
   updateEmploymentVerification(input: UpdateEmploymentVerificationInput!): WorkerEmploymentVerification!
   updateEquipmentManufacturer(id: ID!, input: EquipmentManufacturerInput!): EquipmentManufacturer!
   updateEquipmentType(id: ID!, input: EquipmentTypeInput!): EquipmentType!
@@ -26235,20 +26650,62 @@ type Query {
   ): EdiCarrierInvoiceList! @authorizes(resource: "carrier_invoice_match")
   ediCommunicationProfiles(input: DataTableConnectionInput!): EdiCommunicationProfileConnection!
   """
+  One flow conversation as the flow panel reads it: the instance, the state its flow keeps and every event, in the Lading runtime's shape.
+  """
+  ediFlowInstanceDetail(id: ID!): Any!
+  """
   The partners' flow conversations: open ones, and the ones held or escalated for a person.
   """
   ediFlowInstances(input: DataTableConnectionInput!, partnerId: ID, shipmentId: ID, statuses: [EdiFlowInstanceStatus!]): EdiFlowInstanceConnection!
   ediInboundFile(id: ID!): EdiInboundFileDetail! @authorizes(resource: "edi")
+  """
+  An inbound file's interchange as the file card reads it: separators, envelope, groups, transactions and findings, and whether the file opened with an ISA.
+  """
+  ediInboundFileInspection(id: ID!): Any!
   ediInboundFiles(input: DataTableConnectionInput!, partnerId: ID, status: EdiInboundFileStatus): EdiInboundFileConnection!
+  """
+  The organization and its shipment custom fields, the context the studio checks and runs a project against, as the server encodes with.
+  """
+  ediLadingContext: Any!
+  """
+  A partner's Lading project with its settings, in the Lading studio's shape; null for a partner that has none yet.
+  """
+  ediLadingPartnerProject(partnerId: ID!): Any
+  """
+  A version's replays against another version, newest first; 100 unless given, at most 100.
+  """
+  ediLadingReplays(limit: Int, versionId: ID!): Any!
+  """
+  What a version running in shadow found against the active version: a summary and each message compared.
+  """
+  ediLadingShadowResults(limit: Int, onlyDiffering: Boolean, versionId: ID!): Any!
+  """
+  A version with its files, checks and samples' contents, as the studio opens it.
+  """
+  ediLadingVersion(id: ID!): Any!
+  """
+  A project's versions with their files and checks, newest first, in the Lading studio's shape; 100 unless given, at most 100.
+  """
+  ediLadingVersions(limit: Int, projectId: ID!): Any!
   ediMappingProfiles(input: DataTableConnectionInput!, partnerId: ID): EdiMappingProfileConnection!
   ediMessage(id: ID!): EdiMessageDetail! @authorizes(resource: "edi")
+  ediMessageInspection(id: ID!): EdiMessageInspection! @authorizes(resource: "edi")
   ediMessages(direction: EdiDocumentDirection, input: DataTableConnectionInput!, partnerId: ID, transactionSet: String): EdiMessageConnection!
+  ediPartner(id: ID!): EdiPartner!
   ediPartnerCard(id: ID!): EdiPartnerCard! @authorizes(resource: "edi")
+  """
+  A partner's mapping profile with its entries; a partner without one gets an empty profile on first read.
+  """
+  ediPartnerMappingProfile(partnerId: ID!): EdiMappingProfile!
   ediPartnerReadiness(partnerIds: [ID!]!): [EdiPartnerReadinessState!]!
   ediPartnerScorecards(sinceHours: Int): [EdiPartnerScorecard!]!
   ediPartners(input: DataTableConnectionInput!): EdiPartnerConnection!
   ediSummary(sinceHours: Int): EdiSummary!
   ediTransfer(id: ID!): EdiTransferDetail! @authorizes(resource: "edi")
+  """
+  How an inbound tender's codes map to the organization's records, read before it is accepted.
+  """
+  ediTransferMappingPreview(id: ID!): EdiMappingPreview!
   ediTransfers(
     """
     Inbound for the tenders partners sent in, Outbound for the ones this organization sent.
@@ -26262,7 +26719,11 @@ type Query {
   """The assignment governing the worker's pay right now, if any."""
   effectiveWorkerPayAssignment(workerId: ID!): WorkerPayAssignment
   eiaSeriesOptions: [EIASeriesOption!]!
+  """Transactional email send and delivery history, newest first."""
+  emailLogs(input: DataTableConnectionInput!): EmailLogConnection!
   emailProfile(id: ID!): EmailProfile
+  """Which profile sends each purpose's mail."""
+  emailProfileAssignments: [EmailProfileAssignment!]!
   emailProfiles(input: DataTableConnectionInput!): EmailProfileConnection!
   equipmentManufacturer(id: ID!): EquipmentManufacturer
   equipmentManufacturers(input: DataTableConnectionInput!): EquipmentManufacturerConnection!
@@ -26431,6 +26892,8 @@ type Query {
   inboundSenderProfile(messageId: ID!): InboundSenderProfile!
   """The messages in one thread, oldest first."""
   inboundThread(threadKey: String!): [InboundMessage!]!
+  """Reads a PEM certificate pasted into an AS2 profile; nothing is saved."""
+  inspectEdiCertificate(certificate: String!): EdiCertificateSummary!
   invoice(id: ID!): Invoice
   invoiceAdjustment(id: ID!): InvoiceAdjustment
   """Adjustments whose policy holds them for finance approval."""
@@ -26675,6 +27138,10 @@ type Query {
   """
   pendingDecisions(input: PendingDecisionsInput!): PendingDecisionConnection!
   pendingDriverExpenseCount: Int!
+  """
+  The connections other organizations asked this one to accept and that still wait on it, newest first; 25 unless given, at most 100.
+  """
+  pendingEdiConnections(limit: Int): [EdiConnection!]!
   performanceReview(id: ID!): PerformanceReview!
   performanceReviewTemplate(id: ID!): PerformanceReviewTemplate!
   performanceReviewTemplates(input: PerformanceReviewTemplatesInput!): PerformanceReviewTemplateConnection!
@@ -26775,6 +27242,10 @@ type Query {
   rota(filter: RotaFilterInput): Rota!
   routingGuide(id: ID!): RoutingGuide
   routingGuides(input: DataTableConnectionInput!): RoutingGuideConnection!
+  """
+  Runs one map of a version on an input, its lookups answered from the partner's mappings as a live message's are; nothing is saved or sent.
+  """
+  runEdiLadingVersion(input: EdiLadingRunInput!, mapName: String!, rules: Boolean, versionId: ID!): Any!
   scimDirectories(input: DataTableConnectionInput!): SCIMDirectoryConnection!
   scimGroupRoleMappings(directoryId: ID!, input: DataTableConnectionInput!): SCIMGroupRoleMappingConnection!
   selectOptions(input: SelectOptionsInput!): SelectOptionConnection!
@@ -32307,6 +32778,16 @@ input StartBillingTransferRunInput {
   status: ShipmentStatus
 }
 
+input StartEdiLadingReplayInput {
+  """The version to compare with; the active version unless given."""
+  againstVersionId: ID
+  """Start of the period whose messages are replayed."""
+  from: Timestamp!
+  map: String!
+  """End of the period whose messages are replayed."""
+  to: Timestamp!
+}
+
 input StartExtractionEvalRunInput {
   """
   How many active cases to run, newest first; 50 by default, at most 500.
@@ -32465,6 +32946,14 @@ type StoredMileageConnection {
 type StoredMileageEdge {
   cursor: String!
   node: StoredMileage!
+}
+
+input SubmitEdiLoadTenderInput {
+  """
+  The partner to tender to; the shipment customer's partner unless given.
+  """
+  ediPartnerId: ID
+  sourceShipmentId: ID!
 }
 
 input SubmitMyExpenseInput {
@@ -32947,6 +33436,13 @@ enum TenderStatus {
   Canceled
   Exhausted
   NeedsReview
+}
+
+input TestEmailProfileInput {
+  html: String
+  subject: String!
+  text: String
+  to: String!
 }
 
 """

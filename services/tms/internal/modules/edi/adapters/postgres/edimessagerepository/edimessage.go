@@ -63,19 +63,6 @@ func New(p Params) edimessageports.EDIMessageRepository {
 	}
 }
 
-func (r *repository) ListMessages(
-	ctx context.Context,
-	req *edimessageports.ListEDIMessagesRequest,
-) (*pagination.ListResult[*edimessage.EDIMessage], error) {
-	return dbtx.Read(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*edimessage.EDIMessage], error) {
-			return listquery.Offset(ctx, r.db.Keel(ctx), archiveQuery(req), req.Filter.Pagination)
-		},
-	)
-}
-
 func archiveQuery(req *edimessageports.ListEDIMessagesRequest) *keel.Query[*edimessage.EDIMessage] {
 	m := edimessagedb.EDIMessages
 	ve := edimessagedb.EDIMessageValidationErrors

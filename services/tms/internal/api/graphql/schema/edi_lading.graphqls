@@ -1,0 +1,74 @@
+input CreateEdiLadingProjectInput {
+  partnerId: ID!
+  "carrier or broker: which starter the project begins from."
+  role: String!
+  "The transaction sets the partner exchanges."
+  sets: [String!]!
+  "The partner's ISA qualifier and id."
+  them: [String!]
+  "Trenova's ISA qualifier and id."
+  us: [String!]
+  "The partner's and Trenova's GS application codes."
+  group: [String!]
+  "Element, segment, component and repetition separators, in that order."
+  separators: [String!]
+  "test or production."
+  usage: String
+  "The acknowledgment Trenova sends back: 997, 999 or none."
+  acknowledge: String
+  "Seconds the flow waits for the partner's acknowledgment."
+  ackWithin: Int
+}
+
+input EdiLadingRunInput {
+  x12: String
+  csv: String
+  json: Any
+  document: Any
+}
+
+input StartEdiLadingReplayInput {
+  "The version to compare with; the active version unless given."
+  againstVersionId: ID
+  map: String!
+  "Start of the period whose messages are replayed."
+  from: Timestamp!
+  "End of the period whose messages are replayed."
+  to: Timestamp!
+}
+
+extend type Query {
+  "The organization and its shipment custom fields, the context the studio checks and runs a project against, as the server encodes with."
+  ediLadingContext: Any!
+  "A partner's Lading project with its settings, in the Lading studio's shape; null for a partner that has none yet."
+  ediLadingPartnerProject(partnerId: ID!): Any
+  "A project's versions with their files and checks, newest first, in the Lading studio's shape; 100 unless given, at most 100."
+  ediLadingVersions(projectId: ID!, limit: Int): Any!
+  "A version with its files, checks and samples' contents, as the studio opens it."
+  ediLadingVersion(id: ID!): Any!
+  "A version's replays against another version, newest first; 100 unless given, at most 100."
+  ediLadingReplays(versionId: ID!, limit: Int): Any!
+  "What a version running in shadow found against the active version: a summary and each message compared."
+  ediLadingShadowResults(versionId: ID!, onlyDiffering: Boolean, limit: Int): Any!
+  "Runs one map of a version on an input, its lookups answered from the partner's mappings as a live message's are; nothing is saved or sent."
+  runEdiLadingVersion(versionId: ID!, mapName: String!, input: EdiLadingRunInput!, rules: Boolean): Any!
+}
+
+extend type Mutation {
+  "Starts a partner's Lading project from the starter for its role: a draft that checks clean and whose tests pass."
+  createEdiLadingProject(input: CreateEdiLadingProjectInput!): EdiLadingProject!
+  "Starts a draft from a version: its files and samples, checked again."
+  createEdiLadingDraft(projectId: ID!, fromVersionId: ID!): EdiLadingVersion!
+  "Sets the partner settings a planner may change without a new version; a value equal to nothing is the partner file's default."
+  updateEdiLadingSettings(projectId: ID!, settings: JSON!, version: Int!): EdiLadingProject!
+  "Freezes a ready draft: no errors, every test passing, every flow arm reached, and a clean replay against the live version."
+  certifyEdiLadingVersion(id: ID!): EdiLadingVersion!
+  "Puts a certified version live for the partner."
+  activateEdiLadingVersion(id: ID!): EdiLadingVersion!
+  archiveEdiLadingVersion(id: ID!): EdiLadingVersion!
+  "Runs a certified version beside the active one on live traffic for some days, sending nothing, and records where they disagree."
+  startEdiLadingShadow(id: ID!, days: Int!): EdiLadingVersion!
+  stopEdiLadingShadow(id: ID!): EdiLadingVersion!
+  "Replays a version and the one it is compared with on the partner's real messages from a period, in the background."
+  startEdiLadingReplay(versionId: ID!, input: StartEdiLadingReplayInput!): ID!
+}

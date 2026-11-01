@@ -5,8 +5,9 @@
 package edimessageportsmock
 
 import (
-	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"context"
+
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 
@@ -373,74 +374,6 @@ func (_c *MockEDIInboundFileRepository_GetInboundFileStatusCounts_Call) Return(i
 }
 
 func (_c *MockEDIInboundFileRepository_GetInboundFileStatusCounts_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetEDIInboundFileStatusCountsRequest) (map[ediinboundfile.InboundFileStatus]int, error)) *MockEDIInboundFileRepository_GetInboundFileStatusCounts_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListInboundFiles provides a mock function for the type MockEDIInboundFileRepository
-func (_mock *MockEDIInboundFileRepository) ListInboundFiles(ctx context.Context, req *edimessageports.ListEDIInboundFilesRequest) (*pagination.ListResult[*ediinboundfile.EDIInboundFile], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListInboundFiles")
-	}
-
-	var r0 *pagination.ListResult[*ediinboundfile.EDIInboundFile]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIInboundFilesRequest) (*pagination.ListResult[*ediinboundfile.EDIInboundFile], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListEDIInboundFilesRequest) *pagination.ListResult[*ediinboundfile.EDIInboundFile]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*ediinboundfile.EDIInboundFile])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edimessageports.ListEDIInboundFilesRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockEDIInboundFileRepository_ListInboundFiles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListInboundFiles'
-type MockEDIInboundFileRepository_ListInboundFiles_Call struct {
-	*mock.Call
-}
-
-// ListInboundFiles is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ListEDIInboundFilesRequest
-func (_e *MockEDIInboundFileRepository_Expecter) ListInboundFiles(ctx any, req any) *MockEDIInboundFileRepository_ListInboundFiles_Call {
-	return &MockEDIInboundFileRepository_ListInboundFiles_Call{Call: _e.mock.On("ListInboundFiles", ctx, req)}
-}
-
-func (_c *MockEDIInboundFileRepository_ListInboundFiles_Call) Run(run func(ctx context.Context, req *edimessageports.ListEDIInboundFilesRequest)) *MockEDIInboundFileRepository_ListInboundFiles_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *edimessageports.ListEDIInboundFilesRequest
-		if args[1] != nil {
-			arg1 = args[1].(*edimessageports.ListEDIInboundFilesRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockEDIInboundFileRepository_ListInboundFiles_Call) Return(listResult *pagination.ListResult[*ediinboundfile.EDIInboundFile], err error) *MockEDIInboundFileRepository_ListInboundFiles_Call {
-	_c.Call.Return(listResult, err)
-	return _c
-}
-
-func (_c *MockEDIInboundFileRepository_ListInboundFiles_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.ListEDIInboundFilesRequest) (*pagination.ListResult[*ediinboundfile.EDIInboundFile], error)) *MockEDIInboundFileRepository_ListInboundFiles_Call {
 	_c.Call.Return(run)
 	return _c
 }

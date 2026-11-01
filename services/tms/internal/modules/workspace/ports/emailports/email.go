@@ -9,10 +9,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type ListEmailProfilesRequest struct {
-	Filter *pagination.QueryOptions `json:"filter"`
-}
-
 type ListEmailProfileConnectionRequest struct {
 	Filter              *pagination.QueryOptions `json:"filter"`
 	Cursor              pagination.CursorInfo    `json:"-"`
@@ -25,10 +21,7 @@ type EmailProfileSelectOptionsRequest struct {
 
 type ListEmailMessagesRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
-}
-
-type ListEmailSuppressionsRequest struct {
-	Filter *pagination.QueryOptions `json:"filter"`
+	Cursor pagination.CursorInfo    `json:"-"`
 }
 
 type GetEmailEntityRequest struct {
@@ -69,10 +62,6 @@ type EmailWebhookConfig struct {
 }
 
 type EmailRepository interface {
-	ListProfiles(
-		context.Context,
-		*ListEmailProfilesRequest,
-	) (*pagination.ListResult[*email.Profile], error)
 	ListProfilesConnection(
 		context.Context,
 		*ListEmailProfileConnectionRequest,
@@ -114,14 +103,9 @@ type EmailRepository interface {
 	ListMessages(
 		context.Context,
 		*ListEmailMessagesRequest,
-	) (*pagination.ListResult[*email.Message], error)
+	) (*pagination.CursorListResult[*email.Message], error)
 	CreateEvent(context.Context, *email.Event) (bool, error)
 	ListEventRecipients(context.Context, ListEmailEventRecipientsRequest) ([]string, error)
-	ListSuppressions(
-		context.Context,
-		*ListEmailSuppressionsRequest,
-	) (*pagination.ListResult[*email.Suppression], error)
 	CreateSuppression(context.Context, *email.Suppression) (*email.Suppression, error)
-	DeleteSuppression(context.Context, GetEmailEntityRequest) error
 	HasSuppression(context.Context, pagination.TenantInfo, string) (bool, error)
 }

@@ -111,7 +111,7 @@ export function LadingVersionToolbar({
   });
   const newDraft = useApiMutation({
     mutationFn: () => apiService.ladingService.newDraft(project.id, version.id),
-    onSuccess: async (draft: LadingVersion) => {
+    onSuccess: async (draft) => {
       await refresh();
       onPickVersion(draft.id);
     },

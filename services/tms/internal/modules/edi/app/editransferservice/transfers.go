@@ -8,20 +8,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
-func (s *Service) ListInboundTransfers(
-	ctx context.Context,
-	req *editenderports.ListEDITransfersRequest,
-) (*pagination.ListResult[*editransfer.EDITransfer], error) {
-	return s.transferRepo.ListInbound(ctx, req)
-}
-
-func (s *Service) ListOutboundTransfers(
-	ctx context.Context,
-	req *editenderports.ListEDITransfersRequest,
-) (*pagination.ListResult[*editransfer.EDITransfer], error) {
-	return s.transferRepo.ListOutbound(ctx, req)
-}
-
 func (s *Service) GetTransfer(
 	ctx context.Context,
 	req *editenderports.GetEDITransferByIDRequest,

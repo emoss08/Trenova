@@ -86,36 +86,36 @@ matches anything fails too, so the file cannot drift behind the tools.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 85 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 247 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 242 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 48 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 112 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
-| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 48 |
+| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 43 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 53 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 10 |
 
 ## Totals
 
-1123 writes: 671 GraphQL mutations and 452 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1109 writes: 710 GraphQL mutations and 399 REST writes, after merging 27 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 443 |
-| Exempt | 678 |
+| Covered by a tool | 439 |
+| Exempt | 668 |
 | — Security | 85 |
-| — Configuration | 247 |
+| — Configuration | 242 |
 | — User preference | 40 |
 | — Infrastructure | 48 |
 | — Agent administration | 112 |
 | — Counterparty | 35 |
-| — Read-only | 48 |
+| — Read-only | 43 |
 | — Attestation | 53 |
 | — Duplicate | 10 |
 | **Pending** | **2** |
-| Total | 1123 |
+| Total | 1109 |
 
-Of the 445 writes an agent should be able to make, 443 have a tool (99%).
+Of the 441 writes an agent should be able to make, 439 have a tool (99%).
 
 ## Pending
 
@@ -124,7 +124,7 @@ The writes no tool performs yet, and what the tool would do.
 | Domain | Write | What the tool would do |
 | --- | --- | --- |
 | billingqueue | `PUT /api/v1/billing-queue/:itemID/invoice-details/` | Set the customer PO, invoice note, payment term, invoice date and packet documents on a queue item before approval |
-| edilading | `POST /api/v1/edi/flows/instances/:instanceID/release/` | Release a held or escalated EDI flow once the planner has dealt with what held it |
+| edi | `mutation releaseEdiFlowInstance` | Release a held or escalated EDI flow once the planner has dealt with what held it |
 
 ## By domain
 
@@ -194,11 +194,12 @@ The writes no tool performs yet, and what the tool would do.
 | documenttype | 2 | 0 | 2 | 0 |
 | driverportal | 31 | 3 | 28 | 0 |
 | driversettlement | 34 | 29 | 5 | 0 |
-| edi | 9 | 6 | 3 | 0 |
-| edilading | 13 | 1 | 11 | 1 |
-| edisetup | 17 | 5 | 12 | 0 |
-| editransfer | 9 | 7 | 2 | 0 |
-| email | 9 | 0 | 9 | 0 |
+| edi | 7 | 5 | 1 | 1 |
+| edilading | 10 | 1 | 9 | 0 |
+| edisetup | 13 | 5 | 8 | 0 |
+| editransfer | 6 | 4 | 2 | 0 |
+| email | 2 | 0 | 2 | 0 |
+| emailprofile | 5 | 0 | 5 | 0 |
 | equipmentmanufacturer | 4 | 0 | 4 | 0 |
 | equipmenttype | 4 | 0 | 4 | 0 |
 | exchangerate | 2 | 0 | 2 | 0 |
@@ -317,7 +318,10 @@ Tools that change something no person-facing write does, such as sending a messa
 | `agent_raise_exception` | agent_exception | create |
 | `detention_escalate` | detention | update |
 | `dispatch_set_move_status` | shipment_move | update |
+| `edi_expire_tender` | edi | update |
 | `edi_review_tender_change` | edi | update |
+| `edi_review_transfer_change` | edi | update |
+| `edi_send_status_update` | edi | create |
 | `invoice_adjust_run` | invoice_run | update |
 | `invoice_build_run` | invoice_run | create |
 | `invoice_cancel_run` | invoice_run | cancel |
@@ -1086,83 +1090,74 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `mutation bulkReprocessEdiInboundFiles` | Tool: `edi_reprocess_inbound_file` |
+| `mutation bulkRetryEdiMessageDelivery` | Tool: `edi_retry_message` |
+| `mutation releaseEdiFlowInstance` | Pending: Release a held or escalated EDI flow once the planner has dealt with what held it |
+| `mutation replayEdiMessage` | Tool: `edi_replay_message` |
+| `mutation reprocessEdiInboundFile` | Tool: `edi_reprocess_inbound_file` |
+| `mutation retryEdiMessageDelivery` | Tool: `edi_retry_message` |
 | `POST /api/v1/edi/as2/inbound/`<br>edihandler.receiveAS2Message | Exempt, infrastructure: Receives AS2 messages a trading partner sends; no person makes this call. |
-| `POST /api/v1/edi/documents/generate/`<br>edihandler.generateDocument | Tool: `edi_send_status_update` |
-| `POST /api/v1/edi/documents/preview/`<br>edihandler.previewDocument | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
-| `POST /api/v1/edi/inbound-files/:fileID/reprocess/`<br>edihandler.reprocessInboundFile | Tool: `edi_reprocess_inbound_file` |
-| `POST /api/v1/edi/inbound-files/bulk-reprocess/`<br>edihandler.bulkReprocessInboundFiles | Tool: `edi_reprocess_inbound_file` |
-| `POST /api/v1/edi/messages/:messageID/replay/`<br>edihandler.replayMessageDelivery | Tool: `edi_replay_message` |
-| `POST /api/v1/edi/messages/:messageID/retry-delivery/`<br>edihandler.retryMessageDelivery | Tool: `edi_retry_message` |
-| `POST /api/v1/edi/messages/bulk-retry-delivery/`<br>edihandler.bulkRetryMessageDelivery | Tool: `edi_retry_message` |
-| `POST /api/v1/edi/x12/inspect/`<br>edihandler.inspectX12 | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
 
 ### edilading
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/edi/lading/versions/:versionID/shadow/`<br>ediladinghandler.stopLadingShadow | Exempt, configuration: Stops comparing a certified Lading version with the active one; the person who started the shadow decides when it has run long enough. |
-| `POST /api/v1/edi/flows/instances/:instanceID/release/`<br>ediladinghandler.releaseFlowInstance | Pending: Release a held or escalated EDI flow once the planner has dealt with what held it |
-| `POST /api/v1/edi/lading/projects/`<br>ediladinghandler.createLadingProject | Tool: `edi_apply_connection_draft` |
-| `POST /api/v1/edi/lading/projects/:projectID/drafts/`<br>ediladinghandler.newLadingDraft | Exempt, configuration: Lading project files an EDI developer writes, tests and certifies in the Lading studio; an agent drafts them through edi_apply_connection_draft. |
-| `POST /api/v1/edi/lading/versions/:versionID/activate/`<br>ediladinghandler.activateLadingVersion | Exempt, attestation: Putting a certified Lading version live for a trading partner is the decision of the person accountable for that partner's EDI. |
-| `POST /api/v1/edi/lading/versions/:versionID/archive/`<br>ediladinghandler.archiveLadingVersion | Exempt, configuration: Lading project files an EDI developer writes, tests and certifies in the Lading studio; an agent drafts them through edi_apply_connection_draft. |
-| `POST /api/v1/edi/lading/versions/:versionID/certify/`<br>ediladinghandler.certifyLadingVersion | Exempt, attestation: Certifying a Lading version attests that its tests, coverage and replay were reviewed by a person. |
-| `POST /api/v1/edi/lading/versions/:versionID/replays/`<br>ediladinghandler.startLadingReplay | Exempt, read-only: Replays a Lading version on the partner's past messages and records the differences; nothing is sent or changed. |
-| `POST /api/v1/edi/lading/versions/:versionID/run/`<br>ediladinghandler.runLadingVersion | Exempt, read-only: Runs a map of a Lading version on an input and saves nothing. |
-| `POST /api/v1/edi/lading/versions/:versionID/shadow/`<br>ediladinghandler.startLadingShadow | Exempt, configuration: Compares a certified Lading version with the active one on live traffic, sending nothing; part of putting a version live. |
-| `POST /api/v1/edi/lading/versions/:versionID/test/`<br>ediladinghandler.testLadingVersion | Exempt, read-only: Runs a Lading version's tests and records their result; nothing a partner sees changes. |
-| `PUT /api/v1/edi/lading/projects/:projectID/settings/`<br>ediladinghandler.updateLadingSettings | Exempt, configuration: A partner's Lading settings, such as automatic acceptance, are policy an EDI administrator sets for the partner. |
+| `mutation activateEdiLadingVersion` | Exempt, attestation: Putting a certified Lading version live for a trading partner is the decision of the person accountable for that partner's EDI. |
+| `mutation archiveEdiLadingVersion` | Exempt, configuration: Lading project files an EDI developer writes, tests and certifies in the Lading studio; an agent drafts them through edi_apply_connection_draft. |
+| `mutation certifyEdiLadingVersion` | Exempt, attestation: Certifying a Lading version attests that its tests, coverage and replay were reviewed by a person. |
+| `mutation createEdiLadingDraft` | Exempt, configuration: Lading project files an EDI developer writes, tests and certifies in the Lading studio; an agent drafts them through edi_apply_connection_draft. |
+| `mutation createEdiLadingProject` | Tool: `edi_apply_connection_draft` |
+| `mutation startEdiLadingReplay` | Exempt, read-only: Replays a Lading version on the partner's past messages and records the differences; nothing is sent or changed. |
+| `mutation startEdiLadingShadow` | Exempt, configuration: Compares a certified Lading version with the active one on live traffic, sending nothing; part of putting a version live. |
+| `mutation stopEdiLadingShadow` | Exempt, configuration: Stops comparing a certified Lading version with the active one; the person who started the shadow decides when it has run long enough. |
+| `mutation updateEdiLadingSettings` | Exempt, configuration: A partner's Lading settings, such as automatic acceptance, are policy an EDI administrator sets for the partner. |
 | `PUT /api/v1/edi/lading/versions/:versionID/`<br>ediladinghandler.saveLadingDraft | Exempt, configuration: Lading project files an EDI developer writes, tests and certifies in the Lading studio; an agent drafts them through edi_apply_connection_draft. |
 
 ### edisetup
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/edi/mapping-profiles/:profileID/items/:mappingItemID/`<br>edisetuphandler.deleteMappingProfileItem | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
-| `DELETE /api/v1/edi/partners/:partnerID/mapping-profile/items/:mappingItemID/`<br>edisetuphandler.deleteMappingItem | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
-| `POST /api/v1/edi/communication-profiles/`<br>edisetuphandler.createCommunicationProfile | Tool: `edi_apply_connection_draft` |
-| `POST /api/v1/edi/communication-profiles/:profileID/poll/`<br>edisetuphandler.pollCommunicationProfile | Exempt, infrastructure: Polls a partner mailbox now; the scheduler polls on its own. |
-| `POST /api/v1/edi/communication-profiles/:profileID/test-connection/`<br>edisetuphandler.testCommunicationProfileConnection | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
-| `POST /api/v1/edi/communication-profiles/inspect-certificate/`<br>edisetuphandler.inspectCertificate | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
-| `POST /api/v1/edi/connections/`<br>edisetuphandler.createConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
-| `POST /api/v1/edi/connections/:connectionID/accept/`<br>edisetuphandler.acceptConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
-| `POST /api/v1/edi/connections/:connectionID/reject/`<br>edisetuphandler.rejectConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
-| `POST /api/v1/edi/connections/:connectionID/revoke/`<br>edisetuphandler.revokeConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
-| `POST /api/v1/edi/connections/:connectionID/suspend/`<br>edisetuphandler.suspendConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
-| `POST /api/v1/edi/partners/`<br>edisetuphandler.createPartner | Tool: `edi_apply_connection_draft` |
-| `POST /api/v1/edi/partners/internal-pairs/`<br>edisetuphandler.createInternalPartnerPair | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
-| `PUT /api/v1/edi/communication-profiles/:profileID/`<br>edisetuphandler.updateCommunicationProfile | Tool: `edi_apply_connection_draft` |
-| `PUT /api/v1/edi/mapping-profiles/:profileID/items/`<br>edisetuphandler.updateMappingProfileItems | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
-| `PUT /api/v1/edi/partners/:partnerID/`<br>edisetuphandler.updatePartner | Tool: `edi_apply_connection_draft` |
-| `PUT /api/v1/edi/partners/:partnerID/mapping-profile/`<br>edisetuphandler.updateMappingProfile | Tool: `edi_apply_connection_draft` |
+| `mutation acceptEdiConnection` | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
+| `mutation createEdiCommunicationProfile` | Tool: `edi_apply_connection_draft` |
+| `mutation createEdiConnection` | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
+| `mutation createEdiPartner` | Tool: `edi_apply_connection_draft` |
+| `mutation deleteEdiMappingProfileItem` | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
+| `mutation deleteEdiPartnerMappingItem` | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
+| `mutation pollEdiCommunicationProfile` | Exempt, infrastructure: Polls a partner mailbox now; the scheduler polls on its own. |
+| `mutation rejectEdiConnection` | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
+| `mutation saveEdiMappingProfileItems` | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
+| `mutation saveEdiPartnerMappingProfile` | Tool: `edi_apply_connection_draft` |
+| `mutation testEdiCommunicationProfileConnection` | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
+| `mutation updateEdiCommunicationProfile` | Tool: `edi_apply_connection_draft` |
+| `mutation updateEdiPartner` | Tool: `edi_apply_connection_draft` |
 
 ### editransfer
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/edi/load-tenders/`<br>editransferhandler.submitLoadTender | Tool: `edi_send_tender` |
-| `POST /api/v1/edi/transfer-changes/:changeID/apply/`<br>editransferhandler.applyTransferChange | Tool: `edi_review_transfer_change` |
-| `POST /api/v1/edi/transfer-changes/:changeID/reject/`<br>editransferhandler.rejectTransferChange | Tool: `edi_review_transfer_change` |
-| `POST /api/v1/edi/transfers/:transferID/approve/`<br>editransferhandler.approveTransfer | Tool: `edi_accept_tender` |
-| `POST /api/v1/edi/transfers/:transferID/cancel/`<br>editransferhandler.cancelTransfer | Tool: `edi_cancel_tender` |
-| `POST /api/v1/edi/transfers/:transferID/expire/`<br>editransferhandler.expireTransfer | Tool: `edi_expire_tender` |
-| `POST /api/v1/edi/transfers/:transferID/reject/`<br>editransferhandler.rejectTransfer | Tool: `edi_decline_tender` |
-| `POST /api/v1/edi/transfers/bulk-approve/`<br>editransferhandler.bulkApproveTransfers | Exempt, duplicate: Runs POST /api/v1/edi/transfers/:transferID/approve/ once per selected tender; edi_accept_tender answers one tender per proposal so each is previewed and pinned to its own version. |
-| `POST /api/v1/edi/transfers/bulk-reject/`<br>editransferhandler.bulkRejectTransfers | Exempt, duplicate: Runs POST /api/v1/edi/transfers/:transferID/reject/ once per selected tender; edi_decline_tender answers one tender per proposal so each is previewed and pinned to its own version. |
+| `mutation approveEdiTransfer` | Tool: `edi_accept_tender` |
+| `mutation bulkApproveEdiTransfers` | Exempt, duplicate: Runs mutation approveEdiTransfer once per selected tender; edi_accept_tender answers one tender per proposal so each is previewed and pinned to its own version. |
+| `mutation bulkRejectEdiTransfers` | Exempt, duplicate: Runs mutation rejectEdiTransfer once per selected tender; edi_decline_tender answers one tender per proposal so each is previewed and pinned to its own version. |
+| `mutation cancelEdiTransfer` | Tool: `edi_cancel_tender` |
+| `mutation rejectEdiTransfer` | Tool: `edi_decline_tender` |
+| `mutation submitEdiLoadTender` | Tool: `edi_send_tender` |
 
 ### email
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/email-profiles/:profileID/`<br>emailhandler.deleteProfile | Exempt, configuration: Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them. |
-| `DELETE /api/v1/email-suppressions/:suppressionID/`<br>emailhandler.deleteSuppression | Exempt, configuration: Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them. |
-| `POST /api/v1/email-profiles/`<br>emailhandler.createProfile | Exempt, configuration: Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them. |
-| `POST /api/v1/email-profiles/:profileID/test-send/`<br>emailhandler.testSend | Exempt, configuration: Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them. |
-| `POST /api/v1/email-suppressions/`<br>emailhandler.createSuppression | Exempt, configuration: Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them. |
 | `POST /api/v1/webhooks/email/postmark/:webhookToken/`<br>emailhandler.handlePostmarkWebhook | Exempt, infrastructure: An inbound webhook a provider calls with a signed token, not a person. |
 | `POST /api/v1/webhooks/email/resend/:webhookToken/`<br>emailhandler.handleResendWebhook | Exempt, infrastructure: An inbound webhook a provider calls with a signed token, not a person. |
-| `PUT /api/v1/email-profiles/:profileID/`<br>emailhandler.updateProfile | Exempt, configuration: Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them. |
-| `PUT /api/v1/email-profiles/assignments/`<br>emailhandler.updateAssignments | Exempt, configuration: Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them. |
+
+### emailprofile
+
+| Write | Decision |
+| --- | --- |
+| `mutation createEmailProfile` | Exempt, configuration: Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them. |
+| `mutation deleteEmailProfile` | Exempt, configuration: Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them. |
+| `mutation sendEmailProfileTest` | Exempt, configuration: Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them. |
+| `mutation updateEmailProfile` | Exempt, configuration: Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them. |
+| `mutation updateEmailProfileAssignments` | Exempt, configuration: Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them. |
 
 ### equipmentmanufacturer
 

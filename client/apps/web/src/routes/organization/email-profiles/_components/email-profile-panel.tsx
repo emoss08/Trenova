@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
+import { apiService } from "@/services/api";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { emailProfileSchema, type EmailProfile } from "@trenova/shared/types/email";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -32,11 +33,14 @@ export function EmailProfilePanel({
         onOpenChange={onOpenChange}
         row={row}
         form={form}
-        url="/email-profiles/"
         queryKey={emailProfileQueryKey}
         title={t("Email profile")}
         fieldKey="name"
         formComponent={<EmailProfileForm />}
+        mutationFn={async (values, current) => {
+          await apiService.emailService.updateProfile(current.id ?? "", values as EmailProfile);
+          return values;
+        }}
       />
     );
   }
@@ -46,10 +50,13 @@ export function EmailProfilePanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/email-profiles/"
       queryKey={emailProfileQueryKey}
       title={t("Email profile")}
       formComponent={<EmailProfileForm />}
+      mutationFn={async (values) => {
+        await apiService.emailService.createProfile(values as EmailProfile);
+        return values;
+      }}
     />
   );
 }

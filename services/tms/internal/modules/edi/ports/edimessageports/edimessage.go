@@ -223,10 +223,6 @@ type EDIMessageRepository interface {
 		ctx context.Context,
 		req *ListEDIReplayMessagesRequest,
 	) ([]*edimessage.EDIMessage, error)
-	ListMessages(
-		ctx context.Context,
-		req *ListEDIMessagesRequest,
-	) (*pagination.ListResult[*edimessage.EDIMessage], error)
 	ListMessagesCursor(
 		ctx context.Context,
 		req *ListEDIMessagesRequest,

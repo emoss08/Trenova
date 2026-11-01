@@ -1,0 +1,97 @@
+# What a person does to EDI messages, inbound files, tenders and flows.
+
+mutation ReprocessEdiInboundFile($id: ID!) {
+  reprocessEdiInboundFile(id: $id) {
+    id
+    status
+  }
+}
+
+mutation BulkReprocessEdiInboundFiles($ids: [ID!]!) {
+  bulkReprocessEdiInboundFiles(ids: $ids) {
+    succeeded
+    failed {
+      id
+      error
+    }
+  }
+}
+
+mutation RetryEdiMessageDelivery($id: ID!) {
+  retryEdiMessageDelivery(id: $id) {
+    id
+    deliveryStatus
+  }
+}
+
+mutation ReplayEdiMessage($id: ID!) {
+  replayEdiMessage(id: $id) {
+    id
+    deliveryStatus
+  }
+}
+
+mutation BulkRetryEdiMessageDelivery($ids: [ID!]!) {
+  bulkRetryEdiMessageDelivery(ids: $ids) {
+    succeeded
+    failed {
+      id
+      error
+    }
+  }
+}
+
+mutation ReleaseEdiFlowInstance($id: ID!) {
+  releaseEdiFlowInstance(id: $id) {
+    id
+    status
+  }
+}
+
+mutation SubmitEdiLoadTender($input: SubmitEdiLoadTenderInput!) {
+  submitEdiLoadTender(input: $input) {
+    id
+    status
+  }
+}
+
+mutation ApproveEdiTransfer($id: ID!, $mappings: [EdiMappingProfileItemInput!]) {
+  approveEdiTransfer(id: $id, mappings: $mappings) {
+    id
+    status
+  }
+}
+
+mutation RejectEdiTransfer($id: ID!, $reason: String!) {
+  rejectEdiTransfer(id: $id, reason: $reason) {
+    id
+    status
+  }
+}
+
+mutation CancelEdiTransfer($id: ID!) {
+  cancelEdiTransfer(id: $id) {
+    id
+    status
+  }
+}
+
+mutation BulkApproveEdiTransfers($ids: [ID!]!) {
+  bulkApproveEdiTransfers(ids: $ids) {
+    succeeded
+    failed {
+      id
+      error
+    }
+  }
+}
+
+mutation BulkRejectEdiTransfers($ids: [ID!]!, $reason: String!) {
+  bulkRejectEdiTransfers(ids: $ids, reason: $reason) {
+    succeeded
+    failed {
+      id
+      error
+    }
+  }
+}

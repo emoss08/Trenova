@@ -57,6 +57,12 @@ func (r *repository) ListConnections(
 		func(ctx context.Context) (*pagination.ListResult[*edi.EDIConnection], error) {
 			ec := edidb.EDIConnections
 			q := ec.Where(involvesOrganization(req.Filter.TenantInfo.OrgID))
+			if req.AwaitingAcceptance {
+				q.Where(
+					ec.TargetOrganizationID.Eq(req.Filter.TenantInfo.OrgID),
+					ec.Status.Eq(edi.ConnectionStatusPendingAcceptance),
+				)
+			}
 			if req.Filter.Query != "" {
 				q.Where(keel.Or(
 					listquery.TextContainsFold(ec.Method, req.Filter.Query),

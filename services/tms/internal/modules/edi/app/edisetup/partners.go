@@ -13,13 +13,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
-func (s *Service) ListPartners(
-	ctx context.Context,
-	req *edipartnerports.ListEDIPartnersRequest,
-) (*pagination.ListResult[*edi.EDIPartner], error) {
-	return s.partnerRepo.List(ctx, req)
-}
-
 func (s *Service) SelectPartnerOptions(
 	ctx context.Context,
 	req *edipartnerports.EDIPartnerSelectOptionsRequest,
@@ -93,29 +86,6 @@ func (s *Service) UpdatePartner(
 
 	s.logAction(updated, actor, permission.OpUpdate, original, updated, "EDI partner updated")
 	return updated, nil
-}
-
-func (s *Service) CreateInternalPartnerPair(
-	ctx context.Context,
-	req *CreateInternalPartnerPairRequest,
-	actor *permissionports.RequestActor,
-) (*edi.InternalPartnerPair, error) {
-	if req == nil || req.TargetOrganizationID.IsNil() {
-		return nil, errortypes.NewValidationError(
-			"targetOrganizationId",
-			errortypes.ErrRequired,
-			"Target organization is required",
-		)
-	}
-	if req.TargetOrganizationID == req.TenantInfo.OrgID {
-		return nil, errortypes.NewValidationError(
-			"targetOrganizationId",
-			errortypes.ErrInvalid,
-			"Target organization must be different from the current organization",
-		)
-	}
-
-	return s.CreateInternalPartnerPairViaConnection(ctx, req, actor)
 }
 
 func mapEDIPartnerConstraint(err error) error {

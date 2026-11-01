@@ -23,7 +23,9 @@ const catalogMessageSchema = z.custom<CatalogMessage>(
 );
 const ladingFileSchema = z.object({ path: z.string(), source: z.string() });
 const ladingSampleSchema = z.object({ path: z.string(), content: z.string() });
-const manifestSchema = z.custom<LadingCheck>((value) => typeof value === "object" && value !== null);
+const manifestSchema = z.custom<LadingCheck>(
+  (value) => typeof value === "object" && value !== null,
+);
 
 export const ladingReadinessSchema = z.object({
   errors: z.number(),
@@ -41,7 +43,10 @@ export const ladingVersionSchema = z.object({
   number: z.number(),
   status: ladingVersionStatusSchema,
   parentVersionId: z.string().nullish(),
-  files: z.array(ladingFileSchema).nullish().transform((files): LadingFile[] => files ?? []),
+  files: z
+    .array(ladingFileSchema)
+    .nullish()
+    .transform((files): LadingFile[] => files ?? []),
   samples: z
     .array(z.object({ path: z.string(), digest: z.string(), size: z.number() }))
     .nullish()
@@ -88,13 +93,6 @@ export const ladingProjectSchema = z.object({
 });
 export type LadingProject = z.infer<typeof ladingProjectSchema>;
 
-export const ladingVersionListSchema = z.object({
-  items: z
-    .array(ladingVersionSchema)
-    .nullish()
-    .transform((items) => items ?? []),
-});
-
 const replaySummarySchema = z.object({
   total: z.number(),
   same: z.number(),
@@ -140,13 +138,6 @@ export const ladingReplaySchema = z.object({
   createdAt: z.number(),
 });
 export type LadingReplay = z.infer<typeof ladingReplaySchema>;
-
-export const ladingReplayListSchema = z.object({
-  items: z
-    .array(ladingReplaySchema)
-    .nullish()
-    .transform((items) => items ?? []),
-});
 
 export const ladingShadowReportSchema = z.object({
   summary: z.object({ total: z.number(), same: z.number(), failed: z.number() }).nullish(),

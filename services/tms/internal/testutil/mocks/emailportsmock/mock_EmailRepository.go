@@ -509,63 +509,6 @@ func (_c *MockEmailRepository_DeleteProfile_Call) RunAndReturn(run func(context1
 	return _c
 }
 
-// DeleteSuppression provides a mock function for the type MockEmailRepository
-func (_mock *MockEmailRepository) DeleteSuppression(context1 context.Context, getEmailEntityRequest emailports.GetEmailEntityRequest) error {
-	ret := _mock.Called(context1, getEmailEntityRequest)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteSuppression")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, emailports.GetEmailEntityRequest) error); ok {
-		r0 = returnFunc(context1, getEmailEntityRequest)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockEmailRepository_DeleteSuppression_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteSuppression'
-type MockEmailRepository_DeleteSuppression_Call struct {
-	*mock.Call
-}
-
-// DeleteSuppression is a helper method to define mock.On call
-//   - context1 context.Context
-//   - getEmailEntityRequest emailports.GetEmailEntityRequest
-func (_e *MockEmailRepository_Expecter) DeleteSuppression(context1 any, getEmailEntityRequest any) *MockEmailRepository_DeleteSuppression_Call {
-	return &MockEmailRepository_DeleteSuppression_Call{Call: _e.mock.On("DeleteSuppression", context1, getEmailEntityRequest)}
-}
-
-func (_c *MockEmailRepository_DeleteSuppression_Call) Run(run func(context1 context.Context, getEmailEntityRequest emailports.GetEmailEntityRequest)) *MockEmailRepository_DeleteSuppression_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 emailports.GetEmailEntityRequest
-		if args[1] != nil {
-			arg1 = args[1].(emailports.GetEmailEntityRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockEmailRepository_DeleteSuppression_Call) Return(err error) *MockEmailRepository_DeleteSuppression_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockEmailRepository_DeleteSuppression_Call) RunAndReturn(run func(context1 context.Context, getEmailEntityRequest emailports.GetEmailEntityRequest) error) *MockEmailRepository_DeleteSuppression_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetAssignedProfile provides a mock function for the type MockEmailRepository
 func (_mock *MockEmailRepository) GetAssignedProfile(context1 context.Context, tenantInfo pagination.TenantInfo, purpose email.Purpose) (*email.Profile, error) {
 	ret := _mock.Called(context1, tenantInfo, purpose)
@@ -1257,23 +1200,23 @@ func (_c *MockEmailRepository_ListAttachments_Call) RunAndReturn(run func(contex
 }
 
 // ListMessages provides a mock function for the type MockEmailRepository
-func (_mock *MockEmailRepository) ListMessages(context1 context.Context, listEmailMessagesRequest *emailports.ListEmailMessagesRequest) (*pagination.ListResult[*email.Message], error) {
+func (_mock *MockEmailRepository) ListMessages(context1 context.Context, listEmailMessagesRequest *emailports.ListEmailMessagesRequest) (*pagination.CursorListResult[*email.Message], error) {
 	ret := _mock.Called(context1, listEmailMessagesRequest)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListMessages")
 	}
 
-	var r0 *pagination.ListResult[*email.Message]
+	var r0 *pagination.CursorListResult[*email.Message]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *emailports.ListEmailMessagesRequest) (*pagination.ListResult[*email.Message], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *emailports.ListEmailMessagesRequest) (*pagination.CursorListResult[*email.Message], error)); ok {
 		return returnFunc(context1, listEmailMessagesRequest)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *emailports.ListEmailMessagesRequest) *pagination.ListResult[*email.Message]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *emailports.ListEmailMessagesRequest) *pagination.CursorListResult[*email.Message]); ok {
 		r0 = returnFunc(context1, listEmailMessagesRequest)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*email.Message])
+			r0 = ret.Get(0).(*pagination.CursorListResult[*email.Message])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *emailports.ListEmailMessagesRequest) error); ok {
@@ -1314,80 +1257,12 @@ func (_c *MockEmailRepository_ListMessages_Call) Run(run func(context1 context.C
 	return _c
 }
 
-func (_c *MockEmailRepository_ListMessages_Call) Return(listResult *pagination.ListResult[*email.Message], err error) *MockEmailRepository_ListMessages_Call {
-	_c.Call.Return(listResult, err)
+func (_c *MockEmailRepository_ListMessages_Call) Return(cursorListResult *pagination.CursorListResult[*email.Message], err error) *MockEmailRepository_ListMessages_Call {
+	_c.Call.Return(cursorListResult, err)
 	return _c
 }
 
-func (_c *MockEmailRepository_ListMessages_Call) RunAndReturn(run func(context1 context.Context, listEmailMessagesRequest *emailports.ListEmailMessagesRequest) (*pagination.ListResult[*email.Message], error)) *MockEmailRepository_ListMessages_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListProfiles provides a mock function for the type MockEmailRepository
-func (_mock *MockEmailRepository) ListProfiles(context1 context.Context, listEmailProfilesRequest *emailports.ListEmailProfilesRequest) (*pagination.ListResult[*email.Profile], error) {
-	ret := _mock.Called(context1, listEmailProfilesRequest)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListProfiles")
-	}
-
-	var r0 *pagination.ListResult[*email.Profile]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *emailports.ListEmailProfilesRequest) (*pagination.ListResult[*email.Profile], error)); ok {
-		return returnFunc(context1, listEmailProfilesRequest)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *emailports.ListEmailProfilesRequest) *pagination.ListResult[*email.Profile]); ok {
-		r0 = returnFunc(context1, listEmailProfilesRequest)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*email.Profile])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *emailports.ListEmailProfilesRequest) error); ok {
-		r1 = returnFunc(context1, listEmailProfilesRequest)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockEmailRepository_ListProfiles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListProfiles'
-type MockEmailRepository_ListProfiles_Call struct {
-	*mock.Call
-}
-
-// ListProfiles is a helper method to define mock.On call
-//   - context1 context.Context
-//   - listEmailProfilesRequest *emailports.ListEmailProfilesRequest
-func (_e *MockEmailRepository_Expecter) ListProfiles(context1 any, listEmailProfilesRequest any) *MockEmailRepository_ListProfiles_Call {
-	return &MockEmailRepository_ListProfiles_Call{Call: _e.mock.On("ListProfiles", context1, listEmailProfilesRequest)}
-}
-
-func (_c *MockEmailRepository_ListProfiles_Call) Run(run func(context1 context.Context, listEmailProfilesRequest *emailports.ListEmailProfilesRequest)) *MockEmailRepository_ListProfiles_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *emailports.ListEmailProfilesRequest
-		if args[1] != nil {
-			arg1 = args[1].(*emailports.ListEmailProfilesRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockEmailRepository_ListProfiles_Call) Return(listResult *pagination.ListResult[*email.Profile], err error) *MockEmailRepository_ListProfiles_Call {
-	_c.Call.Return(listResult, err)
-	return _c
-}
-
-func (_c *MockEmailRepository_ListProfiles_Call) RunAndReturn(run func(context1 context.Context, listEmailProfilesRequest *emailports.ListEmailProfilesRequest) (*pagination.ListResult[*email.Profile], error)) *MockEmailRepository_ListProfiles_Call {
+func (_c *MockEmailRepository_ListMessages_Call) RunAndReturn(run func(context1 context.Context, listEmailMessagesRequest *emailports.ListEmailMessagesRequest) (*pagination.CursorListResult[*email.Message], error)) *MockEmailRepository_ListMessages_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1456,74 +1331,6 @@ func (_c *MockEmailRepository_ListProfilesConnection_Call) Return(cursorListResu
 }
 
 func (_c *MockEmailRepository_ListProfilesConnection_Call) RunAndReturn(run func(context1 context.Context, listEmailProfileConnectionRequest *emailports.ListEmailProfileConnectionRequest) (*pagination.CursorListResult[*email.Profile], error)) *MockEmailRepository_ListProfilesConnection_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListSuppressions provides a mock function for the type MockEmailRepository
-func (_mock *MockEmailRepository) ListSuppressions(context1 context.Context, listEmailSuppressionsRequest *emailports.ListEmailSuppressionsRequest) (*pagination.ListResult[*email.Suppression], error) {
-	ret := _mock.Called(context1, listEmailSuppressionsRequest)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListSuppressions")
-	}
-
-	var r0 *pagination.ListResult[*email.Suppression]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *emailports.ListEmailSuppressionsRequest) (*pagination.ListResult[*email.Suppression], error)); ok {
-		return returnFunc(context1, listEmailSuppressionsRequest)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *emailports.ListEmailSuppressionsRequest) *pagination.ListResult[*email.Suppression]); ok {
-		r0 = returnFunc(context1, listEmailSuppressionsRequest)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*email.Suppression])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *emailports.ListEmailSuppressionsRequest) error); ok {
-		r1 = returnFunc(context1, listEmailSuppressionsRequest)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockEmailRepository_ListSuppressions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListSuppressions'
-type MockEmailRepository_ListSuppressions_Call struct {
-	*mock.Call
-}
-
-// ListSuppressions is a helper method to define mock.On call
-//   - context1 context.Context
-//   - listEmailSuppressionsRequest *emailports.ListEmailSuppressionsRequest
-func (_e *MockEmailRepository_Expecter) ListSuppressions(context1 any, listEmailSuppressionsRequest any) *MockEmailRepository_ListSuppressions_Call {
-	return &MockEmailRepository_ListSuppressions_Call{Call: _e.mock.On("ListSuppressions", context1, listEmailSuppressionsRequest)}
-}
-
-func (_c *MockEmailRepository_ListSuppressions_Call) Run(run func(context1 context.Context, listEmailSuppressionsRequest *emailports.ListEmailSuppressionsRequest)) *MockEmailRepository_ListSuppressions_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *emailports.ListEmailSuppressionsRequest
-		if args[1] != nil {
-			arg1 = args[1].(*emailports.ListEmailSuppressionsRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockEmailRepository_ListSuppressions_Call) Return(listResult *pagination.ListResult[*email.Suppression], err error) *MockEmailRepository_ListSuppressions_Call {
-	_c.Call.Return(listResult, err)
-	return _c
-}
-
-func (_c *MockEmailRepository_ListSuppressions_Call) RunAndReturn(run func(context1 context.Context, listEmailSuppressionsRequest *emailports.ListEmailSuppressionsRequest) (*pagination.ListResult[*email.Suppression], error)) *MockEmailRepository_ListSuppressions_Call {
 	_c.Call.Return(run)
 	return _c
 }

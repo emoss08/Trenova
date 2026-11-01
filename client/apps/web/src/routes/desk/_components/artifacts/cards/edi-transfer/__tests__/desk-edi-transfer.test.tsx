@@ -5,6 +5,7 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ediGraphQLKey, ediGraphQLResponse } from "@/test/edi-graphql";
 import { edi } from "@/lib/queries/edi";
 import { money } from "../../../record-card/record-card-values";
 import { DeskEdiTransfer, DeskEdiTransferArtifact } from "../desk-edi-transfer";
@@ -12,9 +13,24 @@ import { wireMappingPreview, wireTransfer } from "./fixtures";
 
 const server = vi.hoisted(() => ({ get: vi.fn() }));
 
-vi.mock("@trenova/shared/lib/api", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@trenova/shared/lib/api")>();
-  return { ...actual, api: { ...actual.api, get: server.get } };
+vi.mock("@trenova/shared/lib/graphql", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@trenova/shared/lib/graphql")>();
+  return {
+    ...actual,
+    requestGraphQL: async ({
+      operationName,
+      variables,
+      signal,
+    }: {
+      operationName: string;
+      variables?: Record<string, unknown>;
+      signal?: AbortSignal;
+    }) =>
+      ediGraphQLResponse(
+        operationName,
+        await server.get(ediGraphQLKey(operationName, variables), { signal }),
+      ),
+  };
 });
 // The shipment and message cards are chunks of their own; here each stands in
 // as what it was given, with its way back.
@@ -52,11 +68,11 @@ let routes: Routes;
 
 function route(overrides: Routes = {}) {
   routes = {
-    "/edi/transfers/edilt_acme_88241/": () => wireTransfer("mappingRequired"),
-    "/edi/transfers/edilt_acme_88241/mapping-preview/": () => wireMappingPreview(),
-    "/edi/transfers/edilt_acme_88240/": () => wireTransfer("approved"),
-    "/edi/transfers/edilt_acme_88199/": () => wireTransfer("rejected"),
-    "/edi/transfers/edilt_s2610_1366/": () => wireTransfer("outbound"),
+    "EdiTransferRecord:edilt_acme_88241": () => wireTransfer("mappingRequired"),
+    "EdiTransferMappingPreview:edilt_acme_88241": () => wireMappingPreview(),
+    "EdiTransferRecord:edilt_acme_88240": () => wireTransfer("approved"),
+    "EdiTransferRecord:edilt_acme_88199": () => wireTransfer("rejected"),
+    "EdiTransferRecord:edilt_s2610_1366": () => wireTransfer("outbound"),
     ...overrides,
   };
 }
@@ -165,7 +181,7 @@ describe("DeskEdiTransfer", () => {
     expect(within(mappings).getAllByText("Not mapped")).toHaveLength(2);
     expect(within(section("Route")).getByText("Not mapped")).toBeInTheDocument();
     expect(within(section("Route")).getByText("Ours: Acme Plant 2 (Dallas)")).toBeInTheDocument();
-    expect(asked("/edi/transfers/edilt_acme_88241/mapping-preview/")).toBe(true);
+    expect(asked("EdiTransferMappingPreview:edilt_acme_88241")).toBe(true);
     expect(
       screen.getByText("Map its codes and decide on the inbound transfers page"),
     ).toBeInTheDocument();
@@ -184,7 +200,7 @@ describe("DeskEdiTransfer", () => {
     expect(within(freight).getByText("34–38 °F")).toBeInTheDocument();
     expect(within(freight).getByText("Fuel surcharge")).toBeInTheDocument();
     expect(within(freight).getByText("Total").nextSibling).toHaveTextContent(money("2880"));
-    expect(asked("/edi/transfers/edilt_acme_88240/mapping-preview/")).toBe(false);
+    expect(asked("EdiTransferMappingPreview:edilt_acme_88240")).toBe(false);
     expect(
       screen.getByText("Its history and the shipment link are on the transfers page"),
     ).toBeInTheDocument();
@@ -244,7 +260,7 @@ describe("DeskEdiTransfer", () => {
       within(section("Records it names")).getByRole("button", { name: /Shipment tendered/u }),
     ).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Mappings", level: 3 })).toBeNull();
-    expect(asked("/edi/transfers/edilt_s2610_1366/mapping-preview/")).toBe(false);
+    expect(asked("EdiTransferMappingPreview:edilt_s2610_1366")).toBe(false);
   });
 
   it("holds its outline until it knows which organization is reading", async () => {
@@ -264,7 +280,7 @@ describe("DeskEdiTransfer", () => {
 
   it("says the tender could not be read, and keeps the way back", async () => {
     route({
-      "/edi/transfers/edilt_acme_88241/": () => {
+      "EdiTransferRecord:edilt_acme_88241": () => {
         throw new Error("gone");
       },
     });

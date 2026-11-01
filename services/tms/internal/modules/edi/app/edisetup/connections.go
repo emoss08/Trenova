@@ -23,13 +23,6 @@ func (s *Service) ListConnections(
 	return s.connectionRepo.ListConnections(ctx, req)
 }
 
-func (s *Service) GetConnection(
-	ctx context.Context,
-	req edipartnerports.GetEDIConnectionByIDRequest,
-) (*edi.EDIConnection, error) {
-	return s.connectionRepo.GetConnectionByID(ctx, req)
-}
-
 func (s *Service) ConnectionSelectOptions(
 	ctx context.Context,
 	req *edipartnerports.EDIConnectionSelectOptionsRequest,
@@ -213,59 +206,6 @@ func (s *Service) RejectConnection(
 	)
 }
 
-func (s *Service) SuspendConnection(
-	ctx context.Context,
-	req *EDIConnectionActionRequest,
-	actor *permissionports.RequestActor,
-) (*edi.EDIConnection, error) {
-	return s.transitionConnection(
-		ctx,
-		req,
-		actor,
-		edi.ConnectionStatusSuspended,
-		func(connection *edi.EDIConnection, now int64) error {
-			if connection.Status != edi.ConnectionStatusActive {
-				return errortypes.NewValidationError(
-					"status",
-					errortypes.ErrInvalidOperation,
-					"Only active EDI connections can be suspended",
-				)
-			}
-			connection.SuspendedByID = actor.UserID
-			connection.SuspendedAt = &now
-			return nil
-		},
-		"EDI connection suspended",
-	)
-}
-
-func (s *Service) RevokeConnection(
-	ctx context.Context,
-	req *EDIConnectionActionRequest,
-	actor *permissionports.RequestActor,
-) (*edi.EDIConnection, error) {
-	return s.transitionConnection(
-		ctx,
-		req,
-		actor,
-		edi.ConnectionStatusRevoked,
-		func(connection *edi.EDIConnection, now int64) error {
-			if connection.Status == edi.ConnectionStatusRejected ||
-				connection.Status == edi.ConnectionStatusRevoked {
-				return errortypes.NewValidationError(
-					"status",
-					errortypes.ErrInvalidOperation,
-					"EDI connection cannot be revoked from its current status",
-				)
-			}
-			connection.RevokedByID = actor.UserID
-			connection.RevokedAt = &now
-			return nil
-		},
-		"EDI connection revoked",
-	)
-}
-
 func (s *Service) transitionConnection(
 	ctx context.Context,
 	req *EDIConnectionActionRequest,
@@ -299,73 +239,6 @@ func (s *Service) transitionConnection(
 
 	s.logAction(updated, actor, permission.OpUpdate, &original, updated, comment)
 	return updated, nil
-}
-
-func (s *Service) CreateInternalPartnerPairViaConnection(
-	ctx context.Context,
-	req *CreateInternalPartnerPairRequest,
-	actor *permissionports.RequestActor,
-) (*edi.InternalPartnerPair, error) {
-	connection, err := s.CreateConnection(
-		ctx,
-		&CreateEDIConnectionRequest{
-			TenantInfo:           req.TenantInfo,
-			TargetOrganizationID: req.TargetOrganizationID,
-			Method:               edi.ConnectionMethodInternal,
-			Capabilities: edi.ConnectionCapabilities{
-				LoadTenderOutbound: true,
-				LoadTenderInbound:  true,
-				ShipmentStatus:     true,
-			},
-			SourcePartnerConfig: edi.ConnectionPartnerConfig{
-				Code:               req.SourceCode,
-				Name:               req.SourceName,
-				Description:        req.SourceDescription,
-				ContactName:        req.SourceContactName,
-				ContactEmail:       req.SourceContactEmail,
-				ContactPhone:       req.SourceContactPhone,
-				EnabledForInbound:  req.SourceEnabledInbound,
-				EnabledForOutbound: req.SourceEnabledOutbound,
-				Settings:           req.SourceSettings,
-			},
-			TargetPartnerConfig: edi.ConnectionPartnerConfig{
-				Code:               req.TargetCode,
-				Name:               req.TargetName,
-				Description:        req.TargetDescription,
-				ContactName:        req.TargetContactName,
-				ContactEmail:       req.TargetContactEmail,
-				ContactPhone:       req.TargetContactPhone,
-				EnabledForInbound:  req.TargetEnabledInbound,
-				EnabledForOutbound: req.TargetEnabledOutbound,
-				Settings:           req.TargetSettings,
-			},
-		},
-		actor,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	accepted, err := s.AcceptConnection(
-		ctx,
-		&EDIConnectionActionRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  connection.TargetOrganizationID,
-				BuID:   connection.BusinessUnitID,
-				UserID: actor.UserID,
-			},
-			ConnectionID: connection.ID,
-		},
-		actor,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &edi.InternalPartnerPair{
-		SourcePartner: accepted.SourcePartner,
-		TargetPartner: accepted.TargetPartner,
-	}, nil
 }
 
 func normalizeConnectionCapabilities(

@@ -43,3 +43,112 @@ extend type Query {
   emailProfiles(input: DataTableConnectionInput!): EmailProfileConnection!
   emailProfile(id: ID!): EmailProfile
 }
+
+enum EmailPurpose {
+  General
+  Billing
+  Reporting
+  Operations
+  Authentication
+  Notifications
+}
+
+enum EmailMessageStatus {
+  Queued
+  Sending
+  Sent
+  Delivered
+  Failed
+  Bounced
+  Complained
+  Opened
+  Clicked
+  Suppressed
+}
+
+"One transactional email the organization sent or tried to send, without its body."
+type EmailLog {
+  id: ID!
+  profileId: ID!
+  purpose: EmailPurpose!
+  provider: EmailProvider!
+  providerMessageId: String
+  status: EmailMessageStatus!
+  attempts: Int!
+  fromEmail: String!
+  fromName: String!
+  replyToEmail: String
+  toRecipients: [String!]!
+  ccRecipients: [String!]
+  bccRecipients: [String!]
+  subject: String!
+  lastError: String
+  sentAt: Timestamp
+  deliveredAt: Timestamp
+  failedAt: Timestamp
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  profile: EmailProfile
+}
+
+type EmailLogEdge {
+  node: EmailLog!
+  cursor: String!
+}
+
+type EmailLogConnection {
+  edges: [EmailLogEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
+"Which email profile sends the mail of one purpose."
+type EmailProfileAssignment {
+  id: ID!
+  purpose: EmailPurpose!
+  profileId: ID!
+  profile: EmailProfile
+}
+
+input EmailProfileInput {
+  name: String!
+  description: String
+  senderName: String!
+  senderEmail: String!
+  replyToEmail: String
+  "Resend unless given."
+  provider: EmailProvider
+  "Active unless given."
+  status: EmailProfileStatus
+}
+
+input TestEmailProfileInput {
+  to: String!
+  subject: String!
+  html: String
+  text: String
+}
+
+input EmailProfileAssignmentInput {
+  purpose: EmailPurpose!
+  profileId: ID!
+}
+
+extend type Query {
+  "Transactional email send and delivery history, newest first."
+  emailLogs(input: DataTableConnectionInput!): EmailLogConnection!
+  "Which profile sends each purpose's mail."
+  emailProfileAssignments: [EmailProfileAssignment!]!
+}
+
+extend type Mutation {
+  createEmailProfile(input: EmailProfileInput!): EmailProfile!
+  updateEmailProfile(id: ID!, input: EmailProfileInput!): EmailProfile!
+  deleteEmailProfile(id: ID!): Boolean!
+  "Sends a test email through a profile now."
+  sendEmailProfileTest(id: ID!, input: TestEmailProfileInput!): EmailLog!
+  "Replaces which profile sends each purpose's mail; every profile named must be active."
+  updateEmailProfileAssignments(input: [EmailProfileAssignmentInput!]!): [EmailProfileAssignment!]!
+}

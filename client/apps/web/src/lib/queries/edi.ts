@@ -12,13 +12,15 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
 import { infiniteQueryOptions } from "@tanstack/react-query";
 
 export const edi = createQueryKeys("edi", {
-  connections: (query = "") => ({
-    queryKey: ["connections", query],
-    queryFn: async () => apiService.ediService.listConnections(query),
+  pendingConnections: () => ({
+    queryKey: ["pending-connections"],
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.ediService.listPendingConnections({ signal }),
   }),
   mappingProfile: (partnerId: string) => ({
     queryKey: ["mapping-profile", partnerId],
-    queryFn: async () => apiService.ediService.getMappingProfile(partnerId),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.ediService.getMappingProfile(partnerId, { signal }),
   }),
   mappingPreview: (transferId: string) => ({
     queryKey: ["mapping-preview", transferId],
@@ -56,10 +58,6 @@ export const edi = createQueryKeys("edi", {
     queryKey: ["inbound-file-inspection", fileId],
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
       apiService.ediService.inspectInboundFile(fileId, { signal }),
-  }),
-  messages: (query = "") => ({
-    queryKey: ["messages", query],
-    queryFn: async () => apiService.ediService.listMessages(query),
   }),
   partner: (partnerId: string) => ({
     queryKey: ["partner", partnerId],

@@ -3,7 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 
 export async function invalidateEDIConnections(queryClient: QueryClient) {
   await Promise.all([
-    queryClient.invalidateQueries({ queryKey: edi.connections._def }),
+    queryClient.invalidateQueries({ queryKey: edi.pendingConnections._def }),
     queryClient.invalidateQueries({ queryKey: ["edi-partner-list"] }),
     queryClient.invalidateQueries({ queryKey: ["edi-communication-profile-list"] }),
   ]);
@@ -37,7 +37,6 @@ export async function invalidateEDITransfers(queryClient: QueryClient, transferI
 export async function invalidateEDIMessages(queryClient: QueryClient, messageId?: string) {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: ["edi-message-list"] }),
-    queryClient.invalidateQueries({ queryKey: edi.messages._def }),
     ...(messageId
       ? [
           queryClient.invalidateQueries({ queryKey: edi.message(messageId).queryKey }),
@@ -53,7 +52,6 @@ export async function invalidateEDIInboundFiles(queryClient: QueryClient, fileId
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: ["edi-inbound-file-list"] }),
     queryClient.invalidateQueries({ queryKey: ["edi-message-list"] }),
-    queryClient.invalidateQueries({ queryKey: edi.messages._def }),
     ...(fileId
       ? [queryClient.invalidateQueries({ queryKey: edi.inboundFile(fileId).queryKey })]
       : []),

@@ -200,13 +200,6 @@ func (s *Projects) GetProject(
 	return s.projects.GetProject(ctx, *req)
 }
 
-func (s *Projects) ListProjects(
-	ctx context.Context,
-	req *ladingports.ListLadingProjectsRequest,
-) (*pagination.ListResult[*ladingproject.LadingProject], error) {
-	return s.projects.ListProjects(ctx, req)
-}
-
 func (s *Projects) ListVersions(
 	ctx context.Context,
 	req ladingports.ListLadingVersionsRequest,
@@ -769,29 +762,6 @@ func validateRunInput(input *lading.RunInput) error {
 type VersionRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 	VersionID  pulid.ID              `json:"versionId"`
-}
-
-// Test runs every test and property of a version against its samples and records its
-// readiness.
-func (s *Projects) Test(ctx context.Context, req *VersionRequest) (*lading.TestReport, error) {
-	version, err := s.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
-		TenantInfo: req.TenantInfo,
-		ID:         req.VersionID,
-	})
-	if err != nil {
-		return nil, err
-	}
-	report, err := s.test(ctx, req.TenantInfo, version)
-	if err != nil {
-		return nil, err
-	}
-	if version.Editable() {
-		version.Readiness = readinessOf(report)
-		if _, err = s.projects.UpdateVersionStatus(ctx, version); err != nil {
-			return nil, err
-		}
-	}
-	return report, nil
 }
 
 func (s *Projects) test(
@@ -1535,13 +1505,6 @@ func (s *Projects) replayAgainst(
 type ReplayWorkflowPayload struct {
 	ReplayID   pulid.ID              `json:"replayId"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
-}
-
-func (s *Projects) GetReplay(
-	ctx context.Context,
-	req ladingports.GetLadingReplayRequest,
-) (*ladingproject.LadingReplay, error) {
-	return s.replays.GetReplay(ctx, req)
 }
 
 func (s *Projects) ListReplays(

@@ -78,6 +78,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edimessageview"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
@@ -2921,6 +2922,36 @@ type CreateDocumentTemplateVersionInput struct {
 	Content         *DocumentTemplateVersionInput `json:"content,omitempty"`
 }
 
+type CreateEDIConnectionInput struct {
+	TargetOrganizationID string                           `json:"targetOrganizationId"`
+	Method               edi.ConnectionMethod             `json:"method"`
+	Capabilities         *EDIConnectionCapabilitiesInput  `json:"capabilities"`
+	SourcePartnerConfig  *EDIConnectionPartnerConfigInput `json:"sourcePartnerConfig"`
+	TargetPartnerConfig  *EDIConnectionPartnerConfigInput `json:"targetPartnerConfig"`
+}
+
+type CreateEDILadingProjectInput struct {
+	PartnerID string `json:"partnerId"`
+	// carrier or broker: which starter the project begins from.
+	Role string `json:"role"`
+	// The transaction sets the partner exchanges.
+	Sets []string `json:"sets"`
+	// The partner's ISA qualifier and id.
+	Them []string `json:"them,omitempty"`
+	// Trenova's ISA qualifier and id.
+	Us []string `json:"us,omitempty"`
+	// The partner's and Trenova's GS application codes.
+	Group []string `json:"group,omitempty"`
+	// Element, segment, component and repetition separators, in that order.
+	Separators []string `json:"separators,omitempty"`
+	// test or production.
+	Usage *string `json:"usage,omitempty"`
+	// The acknowledgment Trenova sends back: 997, 999 or none.
+	Acknowledge *string `json:"acknowledge,omitempty"`
+	// Seconds the flow waits for the partner's acknowledgment.
+	AckWithin *int `json:"ackWithin,omitempty"`
+}
+
 type CreateFactoringRemittanceInput struct {
 	FactoringCompanyID string `json:"factoringCompanyId"`
 	// Funding unless the report is of reserve releases, rejections or chargebacks.
@@ -4902,6 +4933,40 @@ type EDICommunicationProfileEdge struct {
 	Cursor string                       `json:"cursor"`
 }
 
+type EDICommunicationProfileInput struct {
+	EDIConnectionID *string              `json:"ediConnectionId,omitempty"`
+	EDIPartnerID    *string              `json:"ediPartnerId,omitempty"`
+	Method          edi.ConnectionMethod `json:"method"`
+	Status          *domaintypes.Status  `json:"status,omitempty"`
+	Name            string               `json:"name"`
+	Description     *string              `json:"description,omitempty"`
+	// Transport settings for the method: endpoints, identifiers, paths and certificates. Never secret values.
+	Config map[string]any `json:"config"`
+	// Secret values by key, such as passwords and private keys. A key left out keeps the value on file; an empty value clears it. Stored encrypted and never returned.
+	Secrets map[string]any `json:"secrets,omitempty"`
+	Version *int           `json:"version,omitempty"`
+}
+
+type EDIConnectionCapabilitiesInput struct {
+	LoadTenderOutbound bool `json:"loadTenderOutbound"`
+	LoadTenderInbound  bool `json:"loadTenderInbound"`
+	ShipmentStatus     bool `json:"shipmentStatus"`
+	Invoice            bool `json:"invoice"`
+}
+
+// The partner a connection creates on one side, as that side will know the other.
+type EDIConnectionPartnerConfigInput struct {
+	Code               string         `json:"code"`
+	Name               string         `json:"name"`
+	Description        *string        `json:"description,omitempty"`
+	ContactName        *string        `json:"contactName,omitempty"`
+	ContactEmail       *string        `json:"contactEmail,omitempty"`
+	ContactPhone       *string        `json:"contactPhone,omitempty"`
+	EnabledForInbound  bool           `json:"enabledForInbound"`
+	EnabledForOutbound bool           `json:"enabledForOutbound"`
+	Settings           map[string]any `json:"settings,omitempty"`
+}
+
 type EDIFlowInstanceConnection struct {
 	Edges      []*EDIFlowInstanceEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
@@ -4966,6 +5031,13 @@ type EDILadingInterchange struct {
 	Separators []string `json:"separators"`
 }
 
+type EDILadingRunInput struct {
+	X12      *string `json:"x12,omitempty"`
+	CSV      *string `json:"csv,omitempty"`
+	JSON     any     `json:"json,omitempty"`
+	Document any     `json:"document,omitempty"`
+}
+
 type EDIMappingCount struct {
 	EntityType edi.MappingEntityType `json:"entityType"`
 	Count      int                   `json:"count"`
@@ -4982,6 +5054,17 @@ type EDIMappingProfileConnection struct {
 type EDIMappingProfileEdge struct {
 	Node   *edi.EDIMappingProfile `json:"node"`
 	Cursor string                 `json:"cursor"`
+}
+
+type EDIMappingProfileItemInput struct {
+	ID         *string               `json:"id,omitempty"`
+	EntityType edi.MappingEntityType `json:"entityType"`
+	// The partner's identifier for the record.
+	SourceID    string  `json:"sourceId"`
+	SourceLabel *string `json:"sourceLabel,omitempty"`
+	// The organization's record the partner's code maps to.
+	TargetID    string  `json:"targetId"`
+	TargetLabel *string `json:"targetLabel,omitempty"`
 }
 
 type EDIMessageConnection struct {
@@ -5018,6 +5101,14 @@ type EDIMessageDiagnostic struct {
 type EDIMessageEdge struct {
 	Node   *edimessage.EDIMessage `json:"node"`
 	Cursor string                 `json:"cursor"`
+}
+
+// An EDI message with its X12 read segment by segment, as the message card shows it.
+type EDIMessageInspection struct {
+	Message *edimessage.EDIMessage `json:"message"`
+	// The X12 read segment by segment: separators, envelope, groups, transactions, segments, the formatted copy and every finding.
+	Inspection any                                     `json:"inspection"`
+	Provenance *edimessageview.EDIInspectionProvenance `json:"provenance"`
 }
 
 type EDIOverduePartnerAcks struct {
@@ -5111,6 +5202,34 @@ type EDIPartnerEdge struct {
 	Cursor string          `json:"cursor"`
 }
 
+type EDIPartnerInput struct {
+	// External unless given.
+	Kind *edi.PartnerKind `json:"kind,omitempty"`
+	// Active unless given.
+	Status                  *domaintypes.Status `json:"status,omitempty"`
+	Code                    string              `json:"code"`
+	Name                    string              `json:"name"`
+	Description             *string             `json:"description,omitempty"`
+	InternalOrganizationID  *string             `json:"internalOrganizationId,omitempty"`
+	EDIConnectionID         *string             `json:"ediConnectionId,omitempty"`
+	CustomerID              *string             `json:"customerId,omitempty"`
+	DefaultTransportID      *string             `json:"defaultTransportId,omitempty"`
+	DefaultMappingProfileID *string             `json:"defaultMappingProfileId,omitempty"`
+	Timezone                *string             `json:"timezone,omitempty"`
+	// US unless given.
+	Country      *string `json:"country,omitempty"`
+	ContactName  *string `json:"contactName,omitempty"`
+	ContactEmail *string `json:"contactEmail,omitempty"`
+	ContactPhone *string `json:"contactPhone,omitempty"`
+	// On a new partner, true unless given; on an update, false unless given.
+	EnabledForInbound *bool `json:"enabledForInbound,omitempty"`
+	// On a new partner, true unless given; on an update, false unless given.
+	EnabledForOutbound *bool `json:"enabledForOutbound,omitempty"`
+	// The partner's settings, by name.
+	Settings map[string]any `json:"settings,omitempty"`
+	Version  *int           `json:"version,omitempty"`
+}
+
 type EDIPartnerLading struct {
 	Project *ladingproject.LadingProject `json:"project,omitempty"`
 	// The version Trenova runs for the partner.
@@ -5136,6 +5255,8 @@ type EDIPartnerReadinessState struct {
 	Ready          bool   `json:"ready"`
 	CompletedCount int    `json:"completedCount"`
 	TotalCount     int    `json:"totalCount"`
+	// Each step of the partner's setup and whether it is done.
+	Items []*EDIPartnerReadinessItem `json:"items"`
 }
 
 type EDIPartnerScorecard struct {
@@ -5307,6 +5428,24 @@ type EditCaptureItemsInput struct {
 	Rotations []*CapturePageRotationInput `json:"rotations,omitempty"`
 }
 
+type EmailLogConnection struct {
+	Edges      []*EmailLogEdge `json:"edges"`
+	PageInfo   *PageInfo       `json:"pageInfo"`
+	TotalCount *int            `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+type EmailLogEdge struct {
+	Node   *email.Message `json:"node"`
+	Cursor string         `json:"cursor"`
+}
+
+type EmailProfileAssignmentInput struct {
+	Purpose   email.Purpose `json:"purpose"`
+	ProfileID string        `json:"profileId"`
+}
+
 type EmailProfileConnection struct {
 	Edges      []*EmailProfileEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
@@ -5318,6 +5457,18 @@ type EmailProfileConnection struct {
 type EmailProfileEdge struct {
 	Node   *email.Profile `json:"node"`
 	Cursor string         `json:"cursor"`
+}
+
+type EmailProfileInput struct {
+	Name         string  `json:"name"`
+	Description  *string `json:"description,omitempty"`
+	SenderName   string  `json:"senderName"`
+	SenderEmail  string  `json:"senderEmail"`
+	ReplyToEmail *string `json:"replyToEmail,omitempty"`
+	// Resend unless given.
+	Provider *email.Provider `json:"provider,omitempty"`
+	// Active unless given.
+	Status *email.ProfileStatus `json:"status,omitempty"`
 }
 
 // Finishes setup: from which day documents are sent, and how.
@@ -11548,6 +11699,16 @@ type StartBillingTransferRunInput struct {
 	MarkCompletedReadyToInvoice *bool `json:"markCompletedReadyToInvoice,omitempty"`
 }
 
+type StartEDILadingReplayInput struct {
+	// The version to compare with; the active version unless given.
+	AgainstVersionID *string `json:"againstVersionId,omitempty"`
+	Map              string  `json:"map"`
+	// Start of the period whose messages are replayed.
+	From int `json:"from"`
+	// End of the period whose messages are replayed.
+	To int `json:"to"`
+}
+
 type StartExtractionEvalRunInput struct {
 	ProviderID string `json:"providerId"`
 	// How many active cases to run, newest first; 50 by default, at most 500.
@@ -11571,6 +11732,12 @@ type StoredMileageConnection struct {
 type StoredMileageEdge struct {
 	Node   *storedmileage.StoredMileage `json:"node"`
 	Cursor string                       `json:"cursor"`
+}
+
+type SubmitEDILoadTenderInput struct {
+	SourceShipmentID string `json:"sourceShipmentId"`
+	// The partner to tender to; the shipment customer's partner unless given.
+	EDIPartnerID *string `json:"ediPartnerId,omitempty"`
 }
 
 type SubmitMyExpenseInput struct {
@@ -11848,6 +12015,13 @@ type TenderShipmentsInput struct {
 type TenderShipmentsResult struct {
 	Tendered []*TenderShipmentSuccess `json:"tendered"`
 	Failed   []*TenderShipmentFailure `json:"failed"`
+}
+
+type TestEmailProfileInput struct {
+	To      string  `json:"to"`
+	Subject string  `json:"subject"`
+	HTML    *string `json:"html,omitempty"`
+	Text    *string `json:"text,omitempty"`
 }
 
 type TimesheetFilterInput struct {

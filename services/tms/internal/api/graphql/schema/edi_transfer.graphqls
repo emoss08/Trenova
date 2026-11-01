@@ -1,0 +1,41 @@
+"A partner's code a tender carries, and the organization's record it maps to if one does."
+type EdiMappingResolution {
+  entityType: EdiMappingEntityType!
+  sourceId: ID!
+  sourceLabel: String
+  targetId: ID
+  targetLabel: String
+  resolved: Boolean!
+}
+
+"How a tender's codes map to the organization's records: the ones mapped, the ones not yet, and all of them."
+type EdiMappingPreview {
+  resolved: [EdiMappingResolution!]!
+  unresolved: [EdiMappingResolution!]!
+  all: [EdiMappingResolution!]!
+}
+
+input SubmitEdiLoadTenderInput {
+  sourceShipmentId: ID!
+  "The partner to tender to; the shipment customer's partner unless given."
+  ediPartnerId: ID
+}
+
+extend type Query {
+  "How an inbound tender's codes map to the organization's records, read before it is accepted."
+  ediTransferMappingPreview(id: ID!): EdiMappingPreview!
+}
+
+extend type Mutation {
+  "Tenders a shipment to a trading partner over EDI."
+  submitEdiLoadTender(input: SubmitEdiLoadTenderInput!): EdiTransfer!
+  "Accepts an inbound tender, saving the mappings given for the codes it carries; the shipment is built in the background."
+  approveEdiTransfer(id: ID!, mappings: [EdiMappingProfileItemInput!]): EdiTransfer!
+  rejectEdiTransfer(id: ID!, reason: String!): EdiTransfer!
+  "Withdraws a tender this organization sent before the partner answers it."
+  cancelEdiTransfer(id: ID!): EdiTransfer!
+  "Accepts each inbound tender, at most 500; each is accepted as approveEdiTransfer would."
+  bulkApproveEdiTransfers(ids: [ID!]!): EdiBulkActionResult!
+  "Rejects each inbound tender with one reason, at most 500."
+  bulkRejectEdiTransfers(ids: [ID!]!, reason: String!): EdiBulkActionResult!
+}

@@ -62,6 +62,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/driverportalexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/driversettlementexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/ediexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/ediladingexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/edisetupexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/editransferexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/emailprofileexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/equipmentcontinuityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/equipmentmanufacturerexec"
@@ -260,6 +263,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edibulk"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundpoll"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editendermapping"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
@@ -396,6 +403,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
+	"github.com/emoss08/trenova/shared/smime"
 )
 
 type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
@@ -1413,6 +1421,7 @@ type EdiLadingVersionResolver interface {
 
 type EdiMessageResolver interface {
 	TransactionSet(ctx context.Context, obj *edimessage.EDIMessage) (string, error)
+	PayloadSnapshot(ctx context.Context, obj *edimessage.EDIMessage) (any, error)
 }
 
 type EdiTransferResolver interface {
@@ -2313,6 +2322,45 @@ type MutationResolver interface {
 	AttachPayEventsToSettlement(ctx context.Context, input gqlmodel.AttachPayEventsInput) (*driversettlement.Settlement, error)
 	DetachPayEventFromSettlement(ctx context.Context, input gqlmodel.DetachPayEventInput) (*driversettlement.Settlement, error)
 	BulkDriverSettlementAction(ctx context.Context, input gqlmodel.BulkSettlementActionInput) (*driversettlementworkspaceservice.BulkActionPayload, error)
+	ReprocessEDIInboundFile(ctx context.Context, id string) (*ediinboundfile.EDIInboundFile, error)
+	BulkReprocessEDIInboundFiles(ctx context.Context, ids []string) (*edibulk.Result, error)
+	RetryEDIMessageDelivery(ctx context.Context, id string) (*edimessage.EDIMessage, error)
+	ReplayEDIMessage(ctx context.Context, id string) (*edimessage.EDIMessage, error)
+	BulkRetryEDIMessageDelivery(ctx context.Context, ids []string) (*edibulk.Result, error)
+	ReleaseEDIFlowInstance(ctx context.Context, id string) (*ladingproject.FlowInstance, error)
+	CreateEDILadingProject(ctx context.Context, input gqlmodel.CreateEDILadingProjectInput) (*ladingproject.LadingProject, error)
+	CreateEDILadingDraft(ctx context.Context, projectID string, fromVersionID string) (*ladingproject.LadingVersion, error)
+	UpdateEDILadingSettings(ctx context.Context, projectID string, settings map[string]any, version int) (*ladingproject.LadingProject, error)
+	CertifyEDILadingVersion(ctx context.Context, id string) (*ladingproject.LadingVersion, error)
+	ActivateEDILadingVersion(ctx context.Context, id string) (*ladingproject.LadingVersion, error)
+	ArchiveEDILadingVersion(ctx context.Context, id string) (*ladingproject.LadingVersion, error)
+	StartEDILadingShadow(ctx context.Context, id string, days int) (*ladingproject.LadingVersion, error)
+	StopEDILadingShadow(ctx context.Context, id string) (*ladingproject.LadingVersion, error)
+	StartEDILadingReplay(ctx context.Context, versionID string, input gqlmodel.StartEDILadingReplayInput) (string, error)
+	CreateEDIPartner(ctx context.Context, input gqlmodel.EDIPartnerInput) (*edi.EDIPartner, error)
+	UpdateEDIPartner(ctx context.Context, id string, input gqlmodel.EDIPartnerInput) (*edi.EDIPartner, error)
+	CreateEDIConnection(ctx context.Context, input gqlmodel.CreateEDIConnectionInput) (*edi.EDIConnection, error)
+	AcceptEDIConnection(ctx context.Context, id string) (*edi.EDIConnection, error)
+	RejectEDIConnection(ctx context.Context, id string, reason *string) (*edi.EDIConnection, error)
+	CreateEDICommunicationProfile(ctx context.Context, input gqlmodel.EDICommunicationProfileInput) (*edi.EDICommunicationProfile, error)
+	UpdateEDICommunicationProfile(ctx context.Context, id string, input gqlmodel.EDICommunicationProfileInput) (*edi.EDICommunicationProfile, error)
+	TestEDICommunicationProfileConnection(ctx context.Context, id string) (*edisetup.TestCommunicationProfileConnectionResult, error)
+	PollEDICommunicationProfile(ctx context.Context, id string) (*ediinboundpoll.PollMailboxResult, error)
+	SaveEDIMappingProfileItems(ctx context.Context, profileID string, items []*gqlmodel.EDIMappingProfileItemInput) ([]*edi.EDIMappingProfileItem, error)
+	DeleteEDIMappingProfileItem(ctx context.Context, profileID string, itemID string) (bool, error)
+	SaveEDIPartnerMappingProfile(ctx context.Context, partnerID string, items []*gqlmodel.EDIMappingProfileItemInput) ([]*edi.EDIMappingProfileItem, error)
+	DeleteEDIPartnerMappingItem(ctx context.Context, partnerID string, itemID string) (bool, error)
+	SubmitEDILoadTender(ctx context.Context, input gqlmodel.SubmitEDILoadTenderInput) (*editransfer.EDITransfer, error)
+	ApproveEDITransfer(ctx context.Context, id string, mappings []*gqlmodel.EDIMappingProfileItemInput) (*editransfer.EDITransfer, error)
+	RejectEDITransfer(ctx context.Context, id string, reason string) (*editransfer.EDITransfer, error)
+	CancelEDITransfer(ctx context.Context, id string) (*editransfer.EDITransfer, error)
+	BulkApproveEDITransfers(ctx context.Context, ids []string) (*edibulk.Result, error)
+	BulkRejectEDITransfers(ctx context.Context, ids []string, reason string) (*edibulk.Result, error)
+	CreateEmailProfile(ctx context.Context, input gqlmodel.EmailProfileInput) (*email.Profile, error)
+	UpdateEmailProfile(ctx context.Context, id string, input gqlmodel.EmailProfileInput) (*email.Profile, error)
+	DeleteEmailProfile(ctx context.Context, id string) (bool, error)
+	SendEmailProfileTest(ctx context.Context, id string, input gqlmodel.TestEmailProfileInput) (*email.Message, error)
+	UpdateEmailProfileAssignments(ctx context.Context, input []*gqlmodel.EmailProfileAssignmentInput) ([]*email.ProfileAssignment, error)
 	CreateEquipmentManufacturer(ctx context.Context, input gqlmodel.EquipmentManufacturerInput) (*equipmentmanufacturer.EquipmentManufacturer, error)
 	UpdateEquipmentManufacturer(ctx context.Context, id string, input gqlmodel.EquipmentManufacturerInput) (*equipmentmanufacturer.EquipmentManufacturer, error)
 	PatchEquipmentManufacturer(ctx context.Context, id string, input gqlmodel.EquipmentManufacturerPatchInput) (*equipmentmanufacturer.EquipmentManufacturer, error)
@@ -3171,8 +3219,25 @@ type QueryResolver interface {
 	EDIPartnerReadiness(ctx context.Context, partnerIds []string) ([]*gqlmodel.EDIPartnerReadinessState, error)
 	EDIVolumeSeries(ctx context.Context, sinceHours *int) ([]*gqlmodel.EDIVolumePoint, error)
 	EDIPartnerCard(ctx context.Context, id string) (*gqlmodel.EDIPartnerCard, error)
+	EDIInboundFileInspection(ctx context.Context, id string) (any, error)
+	EDIMessageInspection(ctx context.Context, id string) (*gqlmodel.EDIMessageInspection, error)
+	EDIFlowInstanceDetail(ctx context.Context, id string) (any, error)
+	EDILadingContext(ctx context.Context) (any, error)
+	EDILadingPartnerProject(ctx context.Context, partnerID string) (any, error)
+	EDILadingVersions(ctx context.Context, projectID string, limit *int) (any, error)
+	EDILadingVersion(ctx context.Context, id string) (any, error)
+	EDILadingReplays(ctx context.Context, versionID string, limit *int) (any, error)
+	EDILadingShadowResults(ctx context.Context, versionID string, onlyDiffering *bool, limit *int) (any, error)
+	RunEDILadingVersion(ctx context.Context, versionID string, mapName string, input gqlmodel.EDILadingRunInput, rules *bool) (any, error)
+	EDIPartner(ctx context.Context, id string) (*edi.EDIPartner, error)
+	PendingEDIConnections(ctx context.Context, limit *int) ([]*edi.EDIConnection, error)
+	EDIPartnerMappingProfile(ctx context.Context, partnerID string) (*edi.EDIMappingProfile, error)
+	InspectEDICertificate(ctx context.Context, certificate string) (*smime.CertificateSummary, error)
+	EDITransferMappingPreview(ctx context.Context, id string) (*editendermapping.MappingPreview, error)
 	EmailProfiles(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.EmailProfileConnection, error)
 	EmailProfile(ctx context.Context, id string) (*email.Profile, error)
+	EmailLogs(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.EmailLogConnection, error)
+	EmailProfileAssignments(ctx context.Context) ([]*email.ProfileAssignment, error)
 	EquipmentManufacturers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.EquipmentManufacturerConnection, error)
 	EquipmentManufacturer(ctx context.Context, id string) (*equipmentmanufacturer.EquipmentManufacturer, error)
 	EquipmentTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput, classes []equipmenttype.Class) (*gqlmodel.EquipmentTypeConnection, error)
@@ -4090,6 +4155,9 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		driverportalexec.Shard,
 		driversettlementexec.Shard,
 		ediexec.Shard,
+		ediladingexec.Shard,
+		edisetupexec.Shard,
+		editransferexec.Shard,
 		emailprofileexec.Shard,
 		equipmentcontinuityexec.Shard,
 		equipmentmanufacturerexec.Shard,

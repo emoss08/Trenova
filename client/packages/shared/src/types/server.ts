@@ -121,24 +121,6 @@ export type BaseEndpoint =
   | "/accounting/journal-reversals/"
   | "/accounting/bank-receipts/"
   | "/accounting/bank-receipt-batches/"
-  | "/accounting/bank-receipt-work-items/"
-  | "/edi/partners/"
-  | "/edi/connections/"
-  | "/edi/communication-profiles/"
-  | "/edi/mapping-profiles/"
-  | "/edi/catalog/document-types/"
-  | "/edi/catalog/source-context/fields/"
-  | "/edi/catalog/partner-settings/fields/"
-  | "/edi/templates/"
-  | "/edi/document-profiles/"
-  | "/edi/documents/preview/"
-  | "/edi/documents/generate/"
-  | "/edi/messages/"
-  | "/edi/test-cases/"
-  | "/edi/transfers/"
-  | "/edi/load-tenders/"
-  | "/email-profiles/"
-  | "/email-logs/"
-  | "/email-suppressions/";
+  | "/accounting/bank-receipt-work-items/";
 
 export type API_ENDPOINTS = `${BaseEndpoint}${"" | `?${string}`}`;

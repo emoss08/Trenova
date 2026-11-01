@@ -89,10 +89,6 @@ type EDIMappingProfileRepository interface {
 		ctx context.Context,
 		req GetMappingProfileRequest,
 	) (*edi.EDIMappingProfile, error)
-	ListMappingProfiles(
-		ctx context.Context,
-		req *ListEDIMappingProfilesRequest,
-	) (*pagination.ListResult[*edi.EDIMappingProfile], error)
 	ListMappingProfilesCursor(
 		ctx context.Context,
 		req *ListEDIMappingProfilesRequest,
