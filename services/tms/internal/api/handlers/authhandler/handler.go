@@ -24,9 +24,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// validKey says whether the session a request carries is still valid.
-const validKey = "valid"
-
 type Params struct {
 	fx.In
 
@@ -63,7 +60,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.POST("login", h.login)
 	api.POST("mfa/verify", h.verifyMFA)
 	api.POST("logout", h.logout)
-	api.POST("validate-session", h.validateSession)
 	api.POST("session/keepalive", h.keepSessionAlive)
 	api.POST("forgot-password", h.forgotPassword)
 	api.POST("reset-password", h.resetPassword)
@@ -200,30 +196,6 @@ func (h *Handler) logout(c *gin.Context) {
 	h.clearSessionCookie(c)
 
 	c.Status(http.StatusNoContent)
-}
-
-// @Summary Validate session
-// @Description Validates the current session cookie and returns whether the session is still active.
-// @ID validateSession
-// @Tags Auth
-// @Produce json
-// @Success 200 {object} gin.H
-// @Failure 401 {object} gin.H
-// @Router /auth/validate-session [post]
-func (h *Handler) validateSession(c *gin.Context) {
-	token, err := c.Cookie(h.securityConfig.Session.Name)
-	if err != nil || token == "" {
-		helpers.JSON(c, http.StatusUnauthorized, gin.H{validKey: false})
-		return
-	}
-
-	_, err = h.service.AuthenticateSession(c.Request.Context(), token)
-	if err != nil {
-		helpers.JSON(c, http.StatusUnauthorized, gin.H{validKey: false})
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, gin.H{validKey: true})
 }
 
 // @Summary Keep session alive

@@ -9,13 +9,16 @@ import (
 	"context"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -85,5 +88,116 @@ func (r *QueryResolver) Customer(ctx context.Context, id string) (*customer.Cust
 			IncludeBillingProfile: true,
 			IncludeEmailProfile:   true,
 		},
+	})
+}
+
+func (r *QueryResolver) ShipmentCustomerBillingRules(ctx context.Context, customerIds []string) ([]*customerports.ShipmentBillingRules, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipment, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	ids, err := gqlid.ParseIDs(customerIds)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.CustomerService.GetShipmentBillingRules(
+		ctx,
+		customerports.GetShipmentBillingRulesRequest{
+			TenantInfo:  resolvercore.TenantInfo(authCtx),
+			CustomerIDs: ids,
+		},
+	)
+}
+
+func (r *MutationResolver) CreateCustomer(ctx context.Context, input gqlmodel.CustomerInput) (*customer.Customer, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceCustomer, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := customerFromInput(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.CustomerService.Create(ctx, entity, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) UpdateCustomer(ctx context.Context, id string, input gqlmodel.CustomerInput) (*customer.Customer, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceCustomer, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	customerID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.CustomerService.Get(ctx, customerports.GetCustomerByIDRequest{
+		ID:         customerID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		CustomerFilterOptions: customerports.CustomerFilterOptions{
+			IncludeBillingProfile: input.BillingProfile != nil,
+			IncludeEmailProfile:   input.EmailProfile != nil,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = applyCustomerInput(existing, &input); err != nil {
+		return nil, err
+	}
+
+	return r.CustomerService.Update(ctx, existing, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) PatchCustomer(ctx context.Context, id string, input gqlmodel.CustomerPatchInput) (*customer.Customer, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceCustomer, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	customerID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.CustomerService.Get(ctx, customerports.GetCustomerByIDRequest{
+		ID:         customerID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = applyCustomerPatch(existing, &input); err != nil {
+		return nil, err
+	}
+
+	return r.CustomerService.Update(ctx, existing, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) BulkUpdateCustomerStatus(ctx context.Context, input gqlmodel.BulkUpdateCustomerStatusInput) ([]*customer.Customer, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceCustomer, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	if authCtx.IsAPIKey() {
+		return nil, errortypes.NewAuthorizationError("API keys cannot bulk update customer status")
+	}
+
+	customerIDs, err := gqlid.ParseIDs(input.CustomerIds)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.CustomerService.BulkUpdateStatus(ctx, &customerports.BulkUpdateCustomerStatusRequest{
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
+		CustomerIDs: customerIDs,
+		Status:      input.Status,
 	})
 }

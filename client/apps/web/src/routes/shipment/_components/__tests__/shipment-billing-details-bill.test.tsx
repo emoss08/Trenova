@@ -10,15 +10,30 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import ShipmentBillingDetails from "../shipment-billing-details";
 
-const { getBillingProfile, getUIPolicy, getDeclaredInputs, approveRating, getAppliedQuote } =
-  vi.hoisted(() => ({
-    getBillingProfile: vi.fn(),
+const { billingRules, getUIPolicy, getDeclaredInputs, approveRating, getAppliedQuote } = vi.hoisted(
+  () => ({
+    billingRules: vi.fn(),
     getUIPolicy: vi.fn(),
     getDeclaredInputs: vi.fn(),
     approveRating: vi.fn(),
     getAppliedQuote: vi.fn(),
-  }));
+  }),
+);
 
+vi.mock("@trenova/shared/lib/graphql", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@trenova/shared/lib/graphql")>();
+  return {
+    ...actual,
+    requestGraphQL: (request: Parameters<typeof actual.requestGraphQL>[0]) =>
+      request.operationName === "ShipmentCustomerBillingRules"
+        ? Promise.resolve({
+            shipmentCustomerBillingRules: billingRules(
+              (request.variables as { customerIds: string[] }).customerIds,
+            ),
+          })
+        : actual.requestGraphQL(request),
+  };
+});
 vi.mock("@/lib/graphql/shipment", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   approveShipmentRatingReviewGraphQL: approveRating,
@@ -30,7 +45,6 @@ vi.mock("@/hooks/use-permission", () => ({
 vi.mock("@/services/api", () => ({
   apiService: {
     shipmentService: { getUIPolicy },
-    customerService: { getBillingProfile },
     formulaTemplateService: { getDeclaredInputs },
     rateQuoteService: { getAppliedForShipment: getAppliedQuote },
   },
@@ -64,7 +78,7 @@ afterEach(cleanup);
 beforeEach(() => {
   vi.clearAllMocks();
   getUIPolicy.mockResolvedValue(undefined);
-  getBillingProfile.mockResolvedValue({ creditStatus: "Good" });
+  billingRules.mockReturnValue([]);
 });
 
 // The template's billing version declares these inputs, as `tariff.check` derives them.

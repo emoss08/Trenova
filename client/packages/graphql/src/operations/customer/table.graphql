@@ -103,9 +103,16 @@ fragment CustomerTableRowFields on Customer {
   latitude
   placeId
   externalId
+  dotNumber
+  mcNumber
+  brokerVettingEnabled
+  checkCallIntervalHours
+  etaRiskThresholdMinutes
   allowConsolidation
   exclusiveConsolidation
   consolidationPriority
+  statusUpdatePreference
+  statusUpdateRecipients
   version
   createdAt
   updatedAt

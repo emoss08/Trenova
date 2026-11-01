@@ -12,4 +12,6 @@ type Deps struct {
 	DocumentTypeService *documenttypeservice.Service
 }
 
+type MutationResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }

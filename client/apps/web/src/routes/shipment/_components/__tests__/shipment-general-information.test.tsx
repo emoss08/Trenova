@@ -5,10 +5,10 @@ import { FormProvider, useForm } from "react-hook-form";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ShipmentGeneralInformation, { BOLField } from "../shipment-general-information";
 
-const { checkForDuplicateBOLs, getUIPolicy, getBillingProfile } = vi.hoisted(() => ({
+const { checkForDuplicateBOLs, getUIPolicy, billingRules } = vi.hoisted(() => ({
   checkForDuplicateBOLs: vi.fn(),
   getUIPolicy: vi.fn(),
-  getBillingProfile: vi.fn(),
+  billingRules: vi.fn(),
 }));
 
 vi.mock("@/services/api", () => ({
@@ -17,11 +17,23 @@ vi.mock("@/services/api", () => ({
       checkForDuplicateBOLs,
       getUIPolicy,
     },
-    customerService: {
-      getBillingProfile,
-    },
   },
 }));
+
+vi.mock("@trenova/shared/lib/graphql", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@trenova/shared/lib/graphql")>();
+  return {
+    ...actual,
+    requestGraphQL: (request: Parameters<typeof actual.requestGraphQL>[0]) =>
+      request.operationName === "ShipmentCustomerBillingRules"
+        ? Promise.resolve({
+            shipmentCustomerBillingRules: billingRules(
+              (request.variables as { customerIds: string[] }).customerIds,
+            ),
+          })
+        : actual.requestGraphQL(request),
+  };
+});
 
 function createQueryClient() {
   return new QueryClient({
@@ -82,7 +94,7 @@ describe("BOLField", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getUIPolicy.mockResolvedValue({ checkForDuplicateBols: true });
-    getBillingProfile.mockResolvedValue(undefined);
+    billingRules.mockReturnValue([]);
     checkForDuplicateBOLs.mockResolvedValue({ valid: true });
   });
 
@@ -152,11 +164,17 @@ describe("BOLField", () => {
         resolvedAt: 0,
       },
     });
-    // The billing profile is what actually decides, and it does not require one.
-    getBillingProfile.mockResolvedValue({
-      enforceCustomerBillingReq: true,
-      requireBOLNumber: false,
-    });
+    // The customer's billing rules are what actually decide, and they do not require one.
+    billingRules.mockImplementation((customerIds: string[]) =>
+      customerIds.map((customerId) => ({
+        customerId,
+        bolRequired: false,
+        creditStatus: "Active",
+        creditHoldReason: "",
+        enforceCreditLimit: false,
+        creditHoldAutomatic: false,
+      })),
+    );
 
     // Renders the whole section, not BOLField alone: the guard is on the
     // descriptor wiring in CapabilityFields, so the descriptor path has to run.
@@ -173,15 +191,22 @@ describe("BOLField", () => {
 
   it("still marks BOL required when the customer's billing profile demands one", async () => {
     getUIPolicy.mockResolvedValue({ checkForDuplicateBols: true, profile: null });
-    getBillingProfile.mockResolvedValue({
-      enforceCustomerBillingReq: true,
-      requireBOLNumber: true,
-    });
+    billingRules.mockImplementation((customerIds: string[]) =>
+      customerIds.map((customerId) => ({
+        customerId,
+        bolRequired: true,
+        creditStatus: "Active",
+        creditHoldReason: "",
+        enforceCreditLimit: false,
+        creditHoldAutomatic: false,
+      })),
+    );
 
     render(<TestSection customerId="cus_1" />);
 
     await screen.findByPlaceholderText("Enter BOL");
 
     await waitFor(() => expect(screen.getByText("BOL")).toHaveClass("required"));
+    expect(billingRules).toHaveBeenCalledWith(["cus_1"]);
   });
 });

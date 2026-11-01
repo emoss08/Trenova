@@ -65,11 +65,6 @@ export const customFieldDefinitionSchema = z.object({
 
 export type CustomFieldDefinition = z.infer<typeof customFieldDefinitionSchema>;
 
-export const resourceTypesResponseSchema = z.object({
-  resourceTypes: z.array(z.string()),
-});
-export type ResourceTypesResponse = z.infer<typeof resourceTypesResponseSchema>;
-
 export const optionUsageStatsSchema = z.object({
   value: z.string(),
   label: z.string(),

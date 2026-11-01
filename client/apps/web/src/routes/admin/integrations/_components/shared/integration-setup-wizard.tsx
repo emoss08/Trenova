@@ -11,8 +11,9 @@ type IntegrationSetupWizardProps = {
 };
 
 /**
- * A setup flow that fills the rest of its dialog: the steps in a tinted rail on the left (on
- * top on a phone) and the active step beside them, scrolling on its own. A step ends with an
+ * A setup flow that fills the rest of its dialog: the steps in a tinted rail on the left and
+ * the active step beside them, scrolling on its own. A phone has no room for the rail, so it
+ * shows the step alone; each step's heading says which it is. A step ends with an
  * `IntegrationSetupFooter`, which stays pinned to the bottom however long the step runs.
  */
 export function IntegrationSetupWizard({
@@ -23,7 +24,7 @@ export function IntegrationSetupWizard({
 }: IntegrationSetupWizardProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col sm:grid sm:grid-cols-[13rem_minmax(0,1fr)]">
-      <aside className="bg-muted/40 border-b px-5 py-4 sm:overflow-y-auto sm:border-r sm:border-b-0 sm:py-5">
+      <aside className="bg-muted/40 hidden overflow-y-auto border-r px-5 py-5 sm:block">
         <Stepper steps={integrationSetupStepStates(steps, activeStepId)} aria-label={label} />
       </aside>
       {/* A pinned footer meets the bottom edge; a step without one keeps the bottom gutter. */}

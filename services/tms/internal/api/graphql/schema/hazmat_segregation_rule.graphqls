@@ -47,3 +47,32 @@ extend type Query {
   hazmatSegregationRules(input: DataTableConnectionInput!): HazmatSegregationRuleConnection!
   hazmatSegregationRule(id: ID!): HazmatSegregationRule
 }
+
+input HazmatSegregationRuleInput {
+  status: EntityStatus!
+  name: String!
+  description: String
+  classA: HazardousClass!
+  classB: HazardousClass!
+  hazmatAId: ID
+  hazmatBId: ID
+  segregationType: SegregationType!
+  "Required when the segregation type is Distance."
+  minimumDistance: Float
+  "Required when the segregation type is Distance."
+  distanceUnit: String
+  hasExceptions: Boolean!
+  "Required when the rule has exceptions."
+  exceptionNotes: String
+  referenceCode: String
+  regulationSource: String
+  version: Int
+}
+
+extend type Mutation {
+  createHazmatSegregationRule(input: HazmatSegregationRuleInput!): HazmatSegregationRule!
+  updateHazmatSegregationRule(
+    id: ID!
+    input: HazmatSegregationRuleInput!
+  ): HazmatSegregationRule!
+}

@@ -125,7 +125,12 @@ func TestFleetCodeRepository(t *testing.T) {
 
 	t.Run("get by ids reads only the caller's tenant", func(t *testing.T) {
 		got, err := f.repo.GetByIDs(a.Ctx, fleetcodeports.GetFleetCodesByIDsRequest{
-			FleetCodeIDs: []pulid.ID{f.codes[3].ID, f.other.ID, f.codes[1].ID, pulid.MustNew("fc_")},
+			FleetCodeIDs: []pulid.ID{
+				f.codes[3].ID,
+				f.other.ID,
+				f.codes[1].ID,
+				pulid.MustNew("fc_"),
+			},
 		})
 		require.NoError(t, err)
 		assert.ElementsMatch(t, []string{"FC1", "FC3"}, codesOf(got))
@@ -310,5 +315,47 @@ func TestFleetCodeRepository(t *testing.T) {
 		})
 		require.NoError(t, err)
 		assert.False(t, foreign)
+	})
+}
+
+func TestFleetCodeRepository_BulkUpdateStatus(t *testing.T) {
+	f := newFleetCodeFixture(t)
+	a := f.db.A
+
+	t.Run("sets the status of the caller's fleet codes", func(t *testing.T) {
+		updated, err := f.repo.BulkUpdateStatus(
+			a.Ctx,
+			&fleetcodeports.BulkUpdateFleetCodeStatusRequest{
+				FleetCodeIDs: []pulid.ID{f.codes[0].ID, f.codes[1].ID},
+				Status:       domaintypes.StatusInactive,
+			},
+		)
+		require.NoError(t, err)
+		require.Len(t, updated, 2)
+		for _, code := range updated {
+			assert.Equal(t, domaintypes.StatusInactive, code.Status)
+		}
+
+		untouched, err := f.repo.GetByID(
+			a.Ctx,
+			fleetcodeports.GetFleetCodeByIDRequest{ID: f.codes[2].ID},
+		)
+		require.NoError(t, err)
+		assert.Equal(t, domaintypes.StatusActive, untouched.Status)
+	})
+
+	t.Run("refuses a fleet code of another tenant and changes nothing", func(t *testing.T) {
+		_, err := f.repo.BulkUpdateStatus(a.Ctx, &fleetcodeports.BulkUpdateFleetCodeStatusRequest{
+			FleetCodeIDs: []pulid.ID{f.codes[3].ID, f.other.ID},
+			Status:       domaintypes.StatusInactive,
+		})
+		require.Error(t, err)
+
+		kept, err := f.repo.GetByID(
+			a.Ctx,
+			fleetcodeports.GetFleetCodeByIDRequest{ID: f.codes[3].ID},
+		)
+		require.NoError(t, err)
+		assert.Equal(t, domaintypes.StatusActive, kept.Status)
 	})
 }

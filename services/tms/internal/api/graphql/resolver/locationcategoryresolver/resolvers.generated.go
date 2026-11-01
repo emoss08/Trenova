@@ -14,4 +14,6 @@ type Deps struct {
 
 type LocationCategoryResolver struct{ *Deps }
 
+type MutationResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }

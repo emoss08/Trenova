@@ -12,4 +12,6 @@ type Deps struct {
 	HazmatSegregationRuleService *hazmatsegregationruleservice.Service
 }
 
+type MutationResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }

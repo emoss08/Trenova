@@ -4,127 +4,48 @@ import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
-import type { GraphQLSelectOptionsConfig } from "@/lib/graphql/select-options";
-import type { SELECT_OPTIONS_ENDPOINTS } from "@trenova/shared/types/server";
+import type {
+  GraphQLSelectOptionsConfig,
+  SelectOption as GraphQLSelectOption,
+} from "@/lib/graphql/select-options";
+import { selectOptionMetaString } from "@/lib/select-option-meta";
 import { XCloseIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import type { FieldValues } from "react-hook-form";
 
-type RefOption = Record<string, unknown>;
-
-function optionString(option: RefOption, key: string): string {
-  const value = option[key];
-  return typeof value === "string" ? value : "";
-}
-
-function codeNameDisplay(option: RefOption): string {
-  const code = optionString(option, "code");
-  const name = optionString(option, "name");
-  if (code && name) return `${code} - ${name}`;
-  return name || code || optionString(option, "id");
-}
-
-function nameDisplay(option: RefOption): string {
-  return optionString(option, "name") || optionString(option, "id");
-}
-
-function labelDisplay(option: RefOption): string {
-  return optionString(option, "label") || optionString(option, "id");
-}
-
 type RefEntityConfig = {
   label: string;
-  link: SELECT_OPTIONS_ENDPOINTS;
-  graphql?: GraphQLSelectOptionsConfig;
-  display: (option: RefOption) => string;
+  graphql: GraphQLSelectOptionsConfig;
 };
+
+/** A record as a report names it: its code before its label when it has one of its own. */
+function refDisplay(option: GraphQLSelectOption): string {
+  const code = selectOptionMetaString(option, "code");
+  return code && code !== option.label ? `${code} - ${option.label}` : option.label || option.id;
+}
 
 // Catalog entities the run dialog and builder can resolve through an
 // autocomplete. Keys match `reportcatalog` entity keys; entities without a
 // select-options surface (stops, moves, line items) are deliberately absent.
 export const REPORT_REF_ENTITIES: Record<string, RefEntityConfig> = {
-  customer: {
-    label: "Customer",
-    link: "/customers/select-options/",
-    display: codeNameDisplay,
-  },
-  worker: {
-    label: "Worker",
-    link: "/workers/select-options/",
-    graphql: { resource: "WORKER" },
-    display: labelDisplay,
-  },
-  tractor: {
-    label: "Tractor",
-    link: "/tractors/select-options/",
-    graphql: { resource: "TRACTOR" },
-    display: labelDisplay,
-  },
-  trailer: {
-    label: "Trailer",
-    link: "/trailers/select-options/",
-    graphql: { resource: "TRAILER" },
-    display: labelDisplay,
-  },
-  location: {
-    label: "Location",
-    link: "/locations/select-options/",
-    display: codeNameDisplay,
-  },
-  location_category: {
-    label: "Location category",
-    link: "/location-categories/select-options/",
-    display: nameDisplay,
-  },
-  equipment_type: {
-    label: "Equipment type",
-    link: "/equipment-types/select-options/",
-    graphql: { resource: "EQUIPMENT_TYPE" },
-    display: labelDisplay,
-  },
+  customer: { label: "Customer", graphql: { resource: "CUSTOMER" } },
+  worker: { label: "Worker", graphql: { resource: "WORKER" } },
+  tractor: { label: "Tractor", graphql: { resource: "TRACTOR" } },
+  trailer: { label: "Trailer", graphql: { resource: "TRAILER" } },
+  location: { label: "Location", graphql: { resource: "LOCATION" } },
+  location_category: { label: "Location category", graphql: { resource: "LOCATION_CATEGORY" } },
+  equipment_type: { label: "Equipment type", graphql: { resource: "EQUIPMENT_TYPE" } },
   equipment_manufacturer: {
     label: "Equipment manufacturer",
-    link: "/equipment-manufacturers/select-options/",
     graphql: { resource: "EQUIPMENT_MANUFACTURER" },
-    display: labelDisplay,
   },
-  fleet_code: {
-    label: "Fleet code",
-    link: "/fleet-codes/select-options/",
-    display: codeNameDisplay,
-  },
-  shipment_type: {
-    label: "Shipment type",
-    link: "/shipment-types/select-options/",
-    display: codeNameDisplay,
-  },
-  service_type: {
-    label: "Service type",
-    link: "/service-types/select-options/",
-    display: codeNameDisplay,
-  },
-  commodity: {
-    label: "Commodity",
-    link: "/commodities/select-options/",
-    display: nameDisplay,
-  },
-  hazardous_material: {
-    label: "Hazardous material",
-    link: "/hazardous-materials/select-options/",
-    display: nameDisplay,
-  },
-  order: {
-    label: "Order",
-    link: "/orders/select-options/",
-    graphql: { resource: "ORDER" },
-    display: labelDisplay,
-  },
-  shipment: {
-    label: "Shipment",
-    link: "/shipments/select-options/",
-    graphql: { resource: "SHIPMENT" },
-    display: labelDisplay,
-  },
+  fleet_code: { label: "Fleet code", graphql: { resource: "FLEET_CODE" } },
+  shipment_type: { label: "Shipment type", graphql: { resource: "SHIPMENT_TYPE" } },
+  service_type: { label: "Service type", graphql: { resource: "SERVICE_TYPE" } },
+  commodity: { label: "Commodity", graphql: { resource: "COMMODITY" } },
+  hazardous_material: { label: "Hazardous material", graphql: { resource: "HAZARDOUS_MATERIAL" } },
+  order: { label: "Order", graphql: { resource: "ORDER" } },
+  shipment: { label: "Shipment", graphql: { resource: "SHIPMENT" } },
 };
 
 const REF_SELECT_PLACEHOLDERS: Record<string, string> = defineLabels({
@@ -195,14 +116,13 @@ export function ReportRefAutocomplete({
   }
 
   return (
-    <Autocomplete<RefOption, FieldValues>
-      link={config.link}
+    <Autocomplete<GraphQLSelectOption, FieldValues>
       graphql={config.graphql}
       value={value}
       onChange={(next) => onChange(next ? String(next) : "")}
-      renderOption={(option) => config.display(option)}
-      getOptionValue={(option) => optionString(option, "id")}
-      getDisplayValue={(option) => config.display(option)}
+      renderOption={refDisplay}
+      getOptionValue={(option) => option.id}
+      getDisplayValue={refDisplay}
       placeholder={placeholder ?? REF_SELECT_PLACEHOLDERS[entityKey]}
       clearable={clearable}
     />
@@ -229,24 +149,38 @@ export function ReportRefMultiAutocomplete({
   const config = REPORT_REF_ENTITIES[entityKey];
   const [labels, setLabels] = useState<Record<string, string>>({});
 
+  if (!config) {
+    return (
+      <Input
+        value={values.join(", ")}
+        placeholder={t("Comma-separated values")}
+        onChange={(event) =>
+          onChange(
+            event.target.value
+              .split(",")
+              .map((part) => part.trim())
+              .filter(Boolean),
+          )
+        }
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col gap-1.5">
-      <Autocomplete<RefOption, FieldValues>
-        link={config?.link ?? "/customers/select-options/"}
-        graphql={config?.graphql}
+      <Autocomplete<GraphQLSelectOption, FieldValues>
+        graphql={config.graphql}
         value=""
         onChange={() => undefined}
         onOptionChange={(option) => {
-          if (!option) return;
-          const id = optionString(option, "id");
-          if (!id || values.includes(id)) return;
-          setLabels((prev) => ({ ...prev, [id]: config?.display(option) ?? id }));
-          onChange([...values, id]);
+          if (!option || values.includes(option.id)) return;
+          setLabels((prev) => ({ ...prev, [option.id]: refDisplay(option) }));
+          onChange([...values, option.id]);
         }}
-        renderOption={(option) => config?.display(option) ?? optionString(option, "id")}
-        getOptionValue={(option) => optionString(option, "id")}
-        getDisplayValue={(option) => config?.display(option) ?? optionString(option, "id")}
-        placeholder={config ? REF_ADD_PLACEHOLDERS[entityKey] : t("Add value...")}
+        renderOption={refDisplay}
+        getOptionValue={(option) => option.id}
+        getDisplayValue={refDisplay}
+        placeholder={REF_ADD_PLACEHOLDERS[entityKey]}
         clearable={false}
       />
       {values.length > 0 && (

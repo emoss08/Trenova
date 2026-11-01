@@ -42,3 +42,42 @@ extend type Query {
   accountTypes(input: DataTableConnectionInput!): AccountTypeConnection!
   accountType(id: ID!): AccountType
 }
+
+input AccountTypeInput {
+  status: EntityStatus!
+  code: String!
+  name: String!
+  description: String
+  category: AccountCategory!
+  color: String
+  version: Int
+}
+
+input AccountTypePatchInput {
+  "Omit to leave unchanged; null is rejected."
+  status: EntityStatus @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  code: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  name: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  description: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  category: AccountCategory @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  color: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  version: Int @goField(omittable: true)
+}
+
+input BulkUpdateAccountTypeStatusInput {
+  accountTypeIds: [ID!]!
+  status: EntityStatus!
+}
+
+extend type Mutation {
+  createAccountType(input: AccountTypeInput!): AccountType!
+  updateAccountType(id: ID!, input: AccountTypeInput!): AccountType!
+  patchAccountType(id: ID!, input: AccountTypePatchInput!): AccountType!
+  bulkUpdateAccountTypeStatus(input: BulkUpdateAccountTypeStatusInput!): [AccountType!]!
+}

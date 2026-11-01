@@ -708,37 +708,3 @@ func TestListCandidatesPagesThroughTheEligibleTeammates(t *testing.T) {
 	require.Len(t, result.Items, 1)
 	assert.Equal(t, users[4].ID, result.Items[0].ID)
 }
-
-func TestGetCandidateHidesTeammatesWhoCannotReceiveAShare(t *testing.T) {
-	t.Parallel()
-
-	h := newHarness(t)
-	dana := h.recipient("Dana Whitfield")
-	normal := h.recipient("Normal User")
-	h.expectInvoice()
-	for _, user := range []*tenant.User{dana, normal, h.sharer} {
-		h.users.On("GetByID", mock.Anything, tenantports.GetUserByIDRequest{
-			TenantInfo:   h.tenant,
-			LookupUserID: user.ID,
-		}).Return(user, nil)
-	}
-	h.expectPermission(dana, true)
-	h.expectPermission(normal, false)
-
-	candidate, err := h.svc.GetCandidate(t.Context(), &invoiceports.GetShareCandidateRequest{
-		TenantInfo: h.tenant,
-		InvoiceID:  h.invoice.ID,
-		UserID:     dana.ID,
-	})
-	require.NoError(t, err)
-	assert.Equal(t, dana.Name, candidate.Name)
-
-	for _, hidden := range []*tenant.User{normal, h.sharer} {
-		_, err = h.svc.GetCandidate(t.Context(), &invoiceports.GetShareCandidateRequest{
-			TenantInfo: h.tenant,
-			InvoiceID:  h.invoice.ID,
-			UserID:     hidden.ID,
-		})
-		assert.True(t, errortypes.IsNotFoundError(err), "expected not found for %s", hidden.Name)
-	}
-}

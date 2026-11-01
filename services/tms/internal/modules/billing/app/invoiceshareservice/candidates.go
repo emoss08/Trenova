@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -84,44 +83,6 @@ func (s *Service) eligibleCandidates(
 	}
 
 	return eligible, nil
-}
-
-func (s *Service) GetCandidate(
-	ctx context.Context,
-	req *invoiceports.GetShareCandidateRequest,
-) (*invoiceports.ShareCandidate, error) {
-	if req == nil {
-		return nil, errortypes.NewValidationError(
-			"request",
-			errortypes.ErrRequired,
-			"Request is required",
-		)
-	}
-
-	if _, err := s.invoiceRepo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
-		ID:         req.InvoiceID,
-		TenantInfo: req.TenantInfo,
-	}); err != nil {
-		return nil, err
-	}
-
-	user, err := s.userRepo.GetByID(ctx, tenantports.GetUserByIDRequest{
-		TenantInfo:   req.TenantInfo,
-		LookupUserID: req.UserID,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	ok, err := s.isCandidate(ctx, req.TenantInfo, user)
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
-		return nil, errortypes.NewNotFoundError("Teammate not found")
-	}
-
-	return toShareCandidate(user), nil
 }
 
 func (s *Service) isCandidate(

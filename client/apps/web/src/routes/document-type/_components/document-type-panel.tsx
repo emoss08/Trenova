@@ -11,7 +11,7 @@ import {
   useEditPanelActionPreference,
   type EditPanelSaveAction,
 } from "@/hooks/use-panel-action-preference";
-import { api } from "@trenova/shared/lib/api";
+import { createDocumentType, updateDocumentType } from "@/lib/graphql/document-type";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { documentTypeSchema, type DocumentType } from "@trenova/shared/types/document-type";
@@ -57,10 +57,13 @@ export function DocumentTypePanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/document-types/"
       queryKey="document-type-list"
       title={t("Document type")}
       formComponent={<DocumentTypeForm />}
+      mutationFn={async (values) => {
+        await createDocumentType(values);
+        return values;
+      }}
     />
   );
 }
@@ -103,8 +106,12 @@ function DocumentTypeEditPanel({ open, onOpenChange, row, form }: DocumentTypeEd
 
   const { mutateAsync } = useApiMutation<DocumentType, EditSubmitPayload, unknown, DocumentType>({
     mutationFn: async ({ values }) => {
-      const response = await api.put<DocumentType>(`/document-types/${row?.id}/`, values);
-      return response;
+      if (!row?.id) {
+        throw new Error("No Document Type ID selected");
+      }
+
+      await updateDocumentType(row.id, values);
+      return values;
     },
     onMutate: async (newValues) => {
       await queryClient.cancelQueries({

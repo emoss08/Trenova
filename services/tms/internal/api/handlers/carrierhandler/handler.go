@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -73,10 +72,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceCarrier.String(), permission.OpUpdate),
 		h.bulkUpdateStatus,
 	)
-
-	selectOptions := api.Group("/select-options", responseguard.References())
-	selectOptions.GET("/", h.selectOptions)
-	selectOptions.GET("/:carrierID/", h.getOption)
 }
 
 // @Summary List carriers
@@ -166,70 +161,6 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusOK, results)
-}
-
-// @Summary Get a carrier option
-// @ID getCarrierOption
-// @Tags Carriers
-// @Produce json
-// @Param carrierID path string true "Carrier ID"
-// @Success 200 {object} carrier.Carrier
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /carriers/select-options/{carrierID}/ [get]
-func (h *Handler) getOption(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	carrierID, err := pulid.MustParse(c.Param("carrierID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.service.Get(c.Request.Context(), carrierports.GetCarrierByIDRequest{
-		ID:         carrierID,
-		TenantInfo: pagination.FromAuth(authCtx),
-	})
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entity)
-}
-
-// @Summary List carrier options
-// @ID listCarrierOptions
-// @Tags Carriers
-// @Produce json
-// @Param query query string false "Search query"
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]carrier.Carrier]
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /carriers/select-options/ [get]
-func (h *Handler) selectOptions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewSelectQueryRequest(c, authCtx)
-
-	pagination.SelectOptions(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*carrier.Carrier], error) {
-			return h.service.SelectOptions(
-				c.Request.Context(),
-				&carrierports.CarrierSelectOptionsRequest{
-					SelectQueryRequest: req,
-				},
-			)
-		},
-	)
 }
 
 // @Summary Get a carrier

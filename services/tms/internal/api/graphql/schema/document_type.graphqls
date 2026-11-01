@@ -51,3 +51,18 @@ extend type Query {
   documentTypes(input: DataTableConnectionInput!): DocumentTypeConnection!
   documentType(id: ID!): DocumentType
 }
+
+input DocumentTypeInput {
+  code: String!
+  name: String!
+  description: String
+  color: String
+  documentClassification: DocumentClassification!
+  documentCategory: DocumentCategory!
+  version: Int
+}
+
+extend type Mutation {
+  createDocumentType(input: DocumentTypeInput!): DocumentType!
+  updateDocumentType(id: ID!, input: DocumentTypeInput!): DocumentType!
+}

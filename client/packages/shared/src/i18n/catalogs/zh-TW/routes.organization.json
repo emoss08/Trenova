@@ -41,6 +41,7 @@
   "No email profiles yet": "尚無電子郵件設定檔",
   "Operational notes for admins choosing sender identities.": "供管理員選擇寄件者身分時參考的作業備註。",
   "Optional reply destination. Blank uses the sender email.": "選填的回覆地址。留空則使用寄件者的電子郵件。",
+  "Postmark": "Postmark",
   "Purged with replays": "隨重播一併清除",
   "Purpose assignments": "用途指派",
   "Queue a test message from {0}.": "自 {0} 排入一封測試郵件。",

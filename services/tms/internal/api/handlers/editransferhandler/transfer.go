@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/editenderservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransferservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -64,30 +63,6 @@ func (h *Handler) registerTransferRoutes(transfers *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
 		h.expireTransfer,
 	)
-}
-
-func (h *Handler) resetControlNumber(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := new(edipartnerports.ResetEDIControlNumberRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	req.TenantInfo = pagination.TenantInfo{
-		OrgID:  authCtx.OrganizationID,
-		BuID:   authCtx.BusinessUnitID,
-		UserID: authCtx.UserID,
-	}
-	sequence, err := h.setup.ResetControlNumber(
-		c.Request.Context(),
-		req,
-		actorutil.FromAuthContext(authCtx),
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	helpers.JSON(c, http.StatusOK, sequence)
 }
 
 func (h *Handler) bulkApproveTransfers(c *gin.Context) {

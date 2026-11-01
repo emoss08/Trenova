@@ -79,6 +79,48 @@ func (s *Service) SelectOptions(
 	return s.repo.SelectOptions(ctx, req)
 }
 
+func (s *Service) BulkUpdateStatus(
+	ctx context.Context,
+	req *fleetcodeports.BulkUpdateFleetCodeStatusRequest,
+) ([]*fleetcode.FleetCode, error) {
+	log := s.l.With(
+		zap.String("operation", "BulkUpdateStatus"),
+		zap.Any("request", req),
+	)
+
+	originalEntities, err := s.repo.GetByIDs(ctx, fleetcodeports.GetFleetCodesByIDsRequest{
+		TenantInfo:   req.TenantInfo,
+		FleetCodeIDs: req.FleetCodeIDs,
+	})
+	if err != nil {
+		log.Error("failed to get original fleet codes", zap.Error(err))
+		return nil, err
+	}
+
+	entities, err := s.repo.BulkUpdateStatus(ctx, req)
+	if err != nil {
+		log.Error("failed to bulk update fleet code status", zap.Error(err))
+		return nil, err
+	}
+
+	entries := auditservice.BuildBulkLogEntries(
+		&auditservice.BulkLogEntriesParams[*fleetcode.FleetCode]{
+			Resource:  permission.ResourceFleetCode,
+			Operation: permission.OpUpdate,
+			UserID:    req.TenantInfo.UserID,
+			Updated:   entities,
+			Originals: originalEntities,
+		},
+		auditservice.WithComment("Fleet code status updated"),
+	)
+
+	if err = s.auditService.LogActions(entries); err != nil {
+		log.Error("failed to log audit actions", zap.Error(err))
+	}
+
+	return entities, nil
+}
+
 func (s *Service) Create(
 	ctx context.Context,
 	entity *fleetcode.FleetCode,

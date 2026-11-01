@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { optionalStringSchema, relationSchema } from "./helpers";
-import { createLimitOffsetResponse } from "./server";
 import { translate } from "@trenova/shared/i18n/runtime";
 
 export const usStateSchema = z.object({
@@ -33,7 +32,3 @@ export type UsState = z.infer<typeof usStateSchema>;
 export const usStateRelationSchema = relationSchema(usStateSchema);
 
 export type UsStateRelation = z.infer<typeof usStateRelationSchema>;
-
-export const usStateSelectOptionResponseSchema = createLimitOffsetResponse(usStateSchema);
-
-export type UsStateSelectOptionResponse = z.infer<typeof usStateSelectOptionResponseSchema>;

@@ -101,14 +101,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		),
 		h.get,
 	)
-	api.POST(
-		"/transfer/",
-		h.pm.RequirePermission(
-			permission.ResourceBillingQueue.String(),
-			permission.OpCreate,
-		),
-		h.transfer,
-	)
 	api.PUT(
 		"/:itemID/assign/",
 		h.pm.RequirePermission(
@@ -361,55 +353,6 @@ func (h *Handler) get(c *gin.Context) {
 	}
 
 	h.respondItem(c, http.StatusOK, entity)
-}
-
-type transferRequest struct {
-	ShipmentID pulid.ID              `json:"shipmentId" binding:"required"`
-	BillType   billingqueue.BillType `json:"billType"`
-}
-
-// @Summary Transfer a shipment to billing queue
-// @ID transferToBillingQueue
-// @Tags Billing Queue
-// @Accept json
-// @Produce json
-// @Param request body transferRequest true "Transfer request payload"
-// @Success 201 {object} billingqueue.BillingQueueItem
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 422 {object} helpers.ValidationError
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /billing-queue/transfer/ [post]
-func (h *Handler) transfer(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	var req transferRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	if req.BillType == "" {
-		req.BillType = billingqueue.BillTypeInvoice
-	}
-
-	created, err := h.service.TransferToBilling(
-		c.Request.Context(),
-		&billingqueueports.TransferToBillingRequest{
-			ShipmentID: req.ShipmentID,
-			BillType:   req.BillType,
-			TenantInfo: pagination.FromAuth(authCtx),
-		},
-		actorutil.FromAuthContext(authCtx),
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	h.respondItem(c, http.StatusCreated, created)
 }
 
 type assignRequest struct {

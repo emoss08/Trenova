@@ -10,7 +10,7 @@ import {
   useEditPanelActionPreference,
   type EditPanelSaveAction,
 } from "@/hooks/use-panel-action-preference";
-import { api } from "@trenova/shared/lib/api";
+import { createFactoringCompany, updateFactoringCompany } from "@/lib/graphql/factoring-company";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { factoringCompanySchema, type FactoringCompany } from "@/types/factoring-company";
@@ -81,10 +81,13 @@ export function FactoringCompanyPanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/factoring-companies/"
       queryKey="factoring-company-list"
       title={t("Factoring company")}
       formComponent={<FactoringCompanyForm />}
+      mutationFn={async (values) => {
+        await createFactoringCompany(values);
+        return values;
+      }}
     />
   );
 }
@@ -146,8 +149,12 @@ function FactoringCompanyEditPanel({
     FactoringCompany
   >({
     mutationFn: async ({ values }) => {
-      const response = await api.put<FactoringCompany>(`/factoring-companies/${row?.id}/`, values);
-      return response;
+      if (!row?.id) {
+        throw new Error("No Factoring Company ID selected");
+      }
+
+      await updateFactoringCompany(row.id, values);
+      return values;
     },
     onMutate: async (newValues) => {
       await queryClient.cancelQueries({

@@ -29,6 +29,9 @@ import {
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
+import { SectionPanel } from "@/components/section-panel";
+import { Building01Icon, Link01Icon } from "@trenova/shared/components/icons";
+import { Tabs, TabsList, TabsPanel, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { useState } from "react";
 import type {
   AccountingAppSettings,
@@ -101,149 +104,188 @@ export function AccountingConnectionPanel({
       nowSeconds,
     );
 
+  const settingsReady = connection.setupStep === "Complete";
+  const appName = t(profile.appName);
+
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2">
-          <h3 className="truncate text-base font-semibold">
-            {connection.externalCompanyName || vendor.name}
-          </h3>
-          <Badge variant={phaseTone(accountingConnectionPhase(connection.status))}>
-            {statusLabels[connection.status]}
-          </Badge>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <Tabs defaultValue="overview" className="flex min-h-0 flex-1 flex-col gap-0">
+        <div className="border-b px-5">
+          <TabsList variant="underline" className="-mb-px">
+            <TabsTab value="overview">{t("Overview")}</TabsTab>
+            {settingsReady ? <TabsTab value="settings">{t("Settings")}</TabsTab> : null}
+            <TabsTab value="app">{appName}</TabsTab>
+          </TabsList>
         </div>
-        {canUpdate && !revoked ? (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={onCheck}
-            isLoading={isChecking}
-            loadingText={t("Checking...")}
-          >
-            {t("Check now")}
-          </Button>
-        ) : null}
-      </div>
 
-      {revoked ? (
-        <Alert variant="destructive" size="sm">
-          <AlertTitle>{t("{0} no longer accepts Trenova's access", vendor.name)}</AlertTitle>
-          <AlertDescription>
-            {usesCertificate
-              ? t(
-                  "{0} refused Trenova's certificate. If the account was refreshed from production, set up the certificate mapping again, then renew the certificate here. Nothing reaches {0} until then.",
-                  vendor.name,
-                )
-              : t(
-                  "The authorization was revoked or has expired. Nothing reaches {0} until someone with manage access reconnects the same company.",
-                  vendor.name,
-                )}
-          </AlertDescription>
-        </Alert>
-      ) : null}
-      {connection.status === "Degraded" || connection.status === "Failing" ? (
-        <Alert variant={connection.status === "Failing" ? "destructive" : "warning"} size="sm">
-          <AlertTitle>
-            {connection.status === "Failing"
-              ? t("{0} calls in a row have failed", connection.consecutiveFailures)
-              : t("The last call to {0} failed; Trenova will keep retrying", vendor.name)}
-          </AlertTitle>
-          {connection.lastErrorMessage ? (
-            <AlertDescription>{connection.lastErrorMessage}</AlertDescription>
+        <TabsPanel value="overview" className="min-h-0 space-y-4 overflow-y-auto p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <h3 className="truncate text-base font-semibold">
+                {connection.externalCompanyName || vendor.name}
+              </h3>
+              <Badge variant={phaseTone(accountingConnectionPhase(connection.status))}>
+                {statusLabels[connection.status]}
+              </Badge>
+            </div>
+            {canUpdate && !revoked ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={onCheck}
+                isLoading={isChecking}
+                loadingText={t("Checking...")}
+              >
+                {t("Check now")}
+              </Button>
+            ) : null}
+          </div>
+
+          {revoked ? (
+            <Alert variant="destructive" size="sm">
+              <AlertTitle>{t("{0} no longer accepts Trenova's access", vendor.name)}</AlertTitle>
+              <AlertDescription>
+                {usesCertificate
+                  ? t(
+                      "{0} refused Trenova's certificate. If the account was refreshed from production, set up the certificate mapping again, then renew the certificate here. Nothing reaches {0} until then.",
+                      vendor.name,
+                    )
+                  : t(
+                      "The authorization was revoked or has expired. Nothing reaches {0} until someone with manage access reconnects the same company.",
+                      vendor.name,
+                    )}
+              </AlertDescription>
+            </Alert>
           ) : null}
-        </Alert>
-      ) : null}
-      {deadlineNear ? (
-        <Alert variant="warning" size="sm">
-          <AlertDescription>
-            {usesCertificate
-              ? t(
-                  "The certificate Trenova connects to {0} with expires on {1}. Renew it before then to keep syncing without a gap.",
-                  vendor.name,
-                  formatUnixDateMedium(connection.refreshTokenAbsoluteExpiresAt),
-                )
-              : t(
-                  "{0} ends this authorization on {1}. Reconnect before then to keep syncing without a gap.",
-                  vendor.name,
-                  formatUnixDateMedium(connection.refreshTokenAbsoluteExpiresAt),
-                )}
-          </AlertDescription>
-        </Alert>
-      ) : null}
+          {connection.status === "Degraded" || connection.status === "Failing" ? (
+            <Alert variant={connection.status === "Failing" ? "destructive" : "warning"} size="sm">
+              <AlertTitle>
+                {connection.status === "Failing"
+                  ? t("{0} calls in a row have failed", connection.consecutiveFailures)
+                  : t("The last call to {0} failed; Trenova will keep retrying", vendor.name)}
+              </AlertTitle>
+              {connection.lastErrorMessage ? (
+                <AlertDescription>{connection.lastErrorMessage}</AlertDescription>
+              ) : null}
+            </Alert>
+          ) : null}
+          {deadlineNear ? (
+            <Alert variant="warning" size="sm">
+              <AlertDescription>
+                {usesCertificate
+                  ? t(
+                      "The certificate Trenova connects to {0} with expires on {1}. Renew it before then to keep syncing without a gap.",
+                      vendor.name,
+                      formatUnixDateMedium(connection.refreshTokenAbsoluteExpiresAt),
+                    )
+                  : t(
+                      "{0} ends this authorization on {1}. Reconnect before then to keep syncing without a gap.",
+                      vendor.name,
+                      formatUnixDateMedium(connection.refreshTokenAbsoluteExpiresAt),
+                    )}
+              </AlertDescription>
+            </Alert>
+          ) : null}
 
-      <AccountingCompanyFacts connection={connection} />
+          <DescriptionList
+            columns={receivesNotices ? 4 : 3}
+            className="bg-muted/40 rounded-lg border p-3"
+          >
+            <DescriptionItem label={t("Last checked")} numeric>
+              {since(connection.lastCheckedAt) ?? <DescriptionEmpty />}
+            </DescriptionItem>
+            <DescriptionItem label={t("Last successful call")} numeric>
+              {since(connection.lastSuccessAt) ?? <DescriptionEmpty />}
+            </DescriptionItem>
+            <DescriptionItem label={t("Last failure")} numeric>
+              {since(connection.lastFailureAt) ?? <DescriptionEmpty />}
+            </DescriptionItem>
+            {receivesNotices ? (
+              <DescriptionItem label={t("Last notice from {0}", vendor.name)} numeric>
+                {since(connection.lastWebhookAt) ?? <DescriptionEmpty />}
+              </DescriptionItem>
+            ) : null}
+          </DescriptionList>
 
-      {webhookSubscriptions ? (
-        <AccountingWebhookSubscriptions vendor={vendor} summary={webhookSubscriptions} />
-      ) : null}
+          <div className="grid items-start gap-4 md:grid-cols-2">
+            <SectionPanel title={t("Company")} icon={<Building01Icon />}>
+              <div className="p-3">
+                <AccountingCompanyFacts connection={connection} columns={1} />
+              </div>
+            </SectionPanel>
+            <SectionPanel title={t("Connection")} icon={<Link01Icon />}>
+              <div className="p-3">
+                <DescriptionList columns={1}>
+                  <DescriptionItem label={t("What is sent")}>
+                    {connection.syncMode === "Ledger"
+                      ? connection.ledgerGranularity === "DailySummary"
+                        ? t("Journal entries, summed by day")
+                        : t("Journal entries")
+                      : t("Documents")}
+                  </DescriptionItem>
+                  {connection.syncMode === "Ledger" ? (
+                    <DescriptionItem label={t("Opening balances")}>
+                      {connection.ledgerOpeningBalancesSentAt != null
+                        ? t(
+                            "Sent on {0}",
+                            formatUnixDateMedium(connection.ledgerOpeningBalancesSentAt),
+                          )
+                        : t("Not sent")}
+                    </DescriptionItem>
+                  ) : null}
+                  <DescriptionItem label={t("Connected on")} numeric>
+                    {formatUnixDateMedium(connection.connectedAt)}
+                  </DescriptionItem>
+                  <DescriptionItem label={t("Connected with")}>
+                    {usesCertificate ? t("A certificate") : t("A sign-in")}
+                  </DescriptionItem>
+                  {usesCertificate && connection.certificateExpiresAt != null ? (
+                    <DescriptionItem label={t("Certificate expires")} numeric>
+                      {formatUnixDateMedium(connection.certificateExpiresAt)}
+                    </DescriptionItem>
+                  ) : null}
+                  {!usesCertificate &&
+                  hasReconnectDeadline(connection.refreshTokenAbsoluteExpiresAt) ? (
+                    <DescriptionItem label={t("Reconnect by")} numeric>
+                      {formatUnixDateMedium(connection.refreshTokenAbsoluteExpiresAt)}
+                    </DescriptionItem>
+                  ) : null}
+                </DescriptionList>
+              </div>
+              {webhookSubscriptions ? (
+                <div className="border-t p-3">
+                  <AccountingWebhookSubscriptions vendor={vendor} summary={webhookSubscriptions} />
+                </div>
+              ) : null}
+            </SectionPanel>
+          </div>
+        </TabsPanel>
 
-      <DescriptionList columns={2} className="border-t pt-4">
-        <DescriptionItem label={t("What is sent")}>
-          {connection.syncMode === "Ledger"
-            ? connection.ledgerGranularity === "DailySummary"
-              ? t("Journal entries, summed by day")
-              : t("Journal entries")
-            : t("Documents")}
-        </DescriptionItem>
-        {connection.syncMode === "Ledger" ? (
-          <DescriptionItem label={t("Opening balances")}>
-            {connection.ledgerOpeningBalancesSentAt != null
-              ? t("Sent on {0}", formatUnixDateMedium(connection.ledgerOpeningBalancesSentAt))
-              : t("Not sent")}
-          </DescriptionItem>
+        {settingsReady ? (
+          <TabsPanel value="settings" keepMounted className="min-h-0 overflow-y-auto p-5">
+            <AccountingSyncSettings
+              vendor={vendor}
+              profile={profile}
+              connection={connection}
+              canManage={canManage}
+            />
+          </TabsPanel>
         ) : null}
-        <DescriptionItem label={t("Connected on")} numeric>
-          {formatUnixDateMedium(connection.connectedAt)}
-        </DescriptionItem>
-        <DescriptionItem label={t("Connected with")}>
-          {usesCertificate ? t("A certificate") : t("A sign-in")}
-        </DescriptionItem>
-        {usesCertificate && connection.certificateExpiresAt != null ? (
-          <DescriptionItem label={t("Certificate expires")} numeric>
-            {formatUnixDateMedium(connection.certificateExpiresAt)}
-          </DescriptionItem>
-        ) : null}
-        {!usesCertificate && hasReconnectDeadline(connection.refreshTokenAbsoluteExpiresAt) ? (
-          <DescriptionItem label={t("Reconnect by")} numeric>
-            {formatUnixDateMedium(connection.refreshTokenAbsoluteExpiresAt)}
-          </DescriptionItem>
-        ) : null}
-        <DescriptionItem label={t("Last checked")} numeric>
-          {since(connection.lastCheckedAt) ?? <DescriptionEmpty />}
-        </DescriptionItem>
-        <DescriptionItem label={t("Last successful call")} numeric>
-          {since(connection.lastSuccessAt) ?? <DescriptionEmpty />}
-        </DescriptionItem>
-        <DescriptionItem label={t("Last failure")} numeric>
-          {since(connection.lastFailureAt) ?? <DescriptionEmpty />}
-        </DescriptionItem>
-        {receivesNotices ? (
-          <DescriptionItem label={t("Last notice from {0}", vendor.name)} numeric>
-            {since(connection.lastWebhookAt) ?? <DescriptionEmpty />}
-          </DescriptionItem>
-        ) : null}
-      </DescriptionList>
 
-      {connection.setupStep === "Complete" ? (
-        <AccountingSyncSettings
-          vendor={vendor}
-          profile={profile}
-          connection={connection}
-          canManage={canManage}
-        />
-      ) : null}
-
-      <AccountingAppKeys
-        vendor={vendor}
-        app={app}
-        profile={profile}
-        connection={connection}
-        canManage={canManage}
-      />
+        <TabsPanel value="app" keepMounted className="min-h-0 overflow-y-auto p-5">
+          <AccountingAppKeys
+            vendor={vendor}
+            app={app}
+            profile={profile}
+            connection={connection}
+            canManage={canManage}
+          />
+        </TabsPanel>
+      </Tabs>
 
       {canManage ? (
-        <div className="flex justify-end gap-2 border-t pt-4">
+        <div className="bg-card flex flex-wrap items-center justify-between gap-2 border-t px-5 py-3">
           <Button type="button" variant="outline" onClick={() => setConfirmOpen(true)}>
             {t("Disconnect")}
           </Button>

@@ -3,11 +3,9 @@ package documenthandler
 import (
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -123,15 +121,6 @@ func (h *Handler) maxUploadBodyBytes(maxFiles int) int64 {
 	return int64(maxFiles) * (h.storageConfig.GetMaxFileSize() + multipartFormOverheadBytes)
 }
 
-func NewTestHandler(
-	service *documentservice.Service,
-	eh *helpers.ErrorHandler,
-	pm *middleware.PermissionMiddleware,
-	importAssistant ...shipmentimportassistantports.ShipmentImportAssistantService,
-) *Handler {
-	return NewTestHandlerWithConfig(service, eh, pm, &storageconfig.Config{}, importAssistant...)
-}
-
 func NewTestHandlerWithConfig(
 	service *documentservice.Service,
 	eh *helpers.ErrorHandler,
@@ -187,11 +176,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpCreate),
 		h.getUploadPartURLs,
 	)
-	api.PUT(
-		"/uploads/:uploadSessionID/parts/:partNumber/",
-		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpCreate),
-		h.uploadSessionPart,
-	)
 	api.POST(
 		"/uploads/:uploadSessionID/complete/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpCreate),
@@ -207,9 +191,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
 		h.list,
 	)
-	selectOptions := api.Group("/select-options", responseguard.References())
-	selectOptions.GET("/", h.selectOptions)
-	selectOptions.GET("/:documentID", h.getOption)
 	api.GET(
 		"/:documentID/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
@@ -370,100 +351,6 @@ func (h *Handler) list(c *gin.Context) {
 					ResourceID:   helpers.QueryString(c, "resourceId", ""),
 					ResourceType: helpers.QueryString(c, "resourceType", ""),
 					Status:       helpers.QueryString(c, "status", ""),
-				},
-			)
-		},
-	)
-}
-
-// @Summary Get a document option
-// @ID getDocumentOption
-// @Tags Documents
-// @Produce json
-// @Param documentID path string true "Document ID"
-// @Param resourceId query string false "Filter by resource ID"
-// @Param resourceType query string false "Filter by resource type"
-// @Success 200 {object} document.Document
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 404 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /documents/select-options/{documentID} [get]
-func (h *Handler) getOption(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	documentID, err := pulid.MustParse(c.Param("documentID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.service.Get(
-		c.Request.Context(),
-		documentports.GetDocumentByIDRequest{
-			ID:         documentID,
-			TenantInfo: pagination.FromAuth(authCtx),
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	resourceID := c.Query("resourceId")
-	resourceType := c.Query("resourceType")
-	if (resourceID != "" && entity.ResourceID != resourceID) ||
-		(resourceType != "" && entity.ResourceType != resourceType) {
-		h.eh.HandleError(c, errortypes.NewNotFoundError("document not found"))
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entity)
-}
-
-// @Summary List document options
-// @ID listDocumentOptions
-// @Tags Documents
-// @Produce json
-// @Param query query string false "Search query"
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Param resourceId query string false "Filter by resource ID"
-// @Param resourceType query string false "Filter by resource type"
-// @Param ids query []string false "Look up these documents, archived or not, instead of searching" collectionFormat(multi)
-// @Success 200 {object} pagination.Response[[]document.Document]
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 422 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /documents/select-options/ [get]
-func (h *Handler) selectOptions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewSelectQueryRequest(c, authCtx)
-
-	ids, err := selectOptionIDs(c.QueryArray("ids"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	if len(ids) > 0 {
-		req.Query = ""
-		req.Pagination = pagination.Info{Limit: len(ids), Offset: 0}
-	}
-
-	pagination.SelectOptions(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*document.Document], error) {
-			return h.service.SelectOptions(
-				c.Request.Context(),
-				&documentports.DocumentSelectOptionsRequest{
-					SelectQueryRequest: req,
-					ResourceID:         c.Query("resourceId"),
-					ResourceType:       c.Query("resourceType"),
-					IDs:                ids,
 				},
 			)
 		},
@@ -912,42 +799,6 @@ func (h *Handler) getUploadPartURLs(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusOK, gin.H{"parts": targets})
-}
-
-func (h *Handler) uploadSessionPart(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	id, err := pulid.MustParse(c.Param("uploadSessionID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	partNumber, err := strconv.Atoi(c.Param("partNumber"))
-	if err != nil {
-		h.eh.HandleError(c, errortypes.NewValidationError(
-			"partNumber",
-			errortypes.ErrInvalid,
-			"Invalid part number",
-		))
-		return
-	}
-
-	session, err := h.uploadService.UploadPart(
-		c.Request.Context(),
-		&documentuploadports.UploadPartRequest{
-			TenantInfo: pagination.FromAuthAsUser(authCtx),
-			SessionID:  id,
-			PartNumber: partNumber,
-			Body:       c.Request.Body,
-			Size:       c.Request.ContentLength,
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, session)
 }
 
 func (h *Handler) completeUploadSession(c *gin.Context) {
@@ -1735,35 +1586,4 @@ func (h *Handler) setDeliveryFacts(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusOK, updated)
-}
-
-func selectOptionIDs(values []string) ([]pulid.ID, error) {
-	if len(values) > pagination.MaxLimit {
-		return nil, errortypes.NewValidationError(
-			"ids",
-			errortypes.ErrInvalidLength,
-			"No more than {0} documents can be looked up at once",
-			pagination.MaxLimit,
-		)
-	}
-
-	ids := make([]pulid.ID, 0, len(values))
-	seen := make(map[pulid.ID]struct{}, len(values))
-	for _, value := range values {
-		id, err := pulid.MustParse(strings.TrimSpace(value))
-		if err != nil {
-			return nil, errortypes.NewValidationError(
-				"ids",
-				errortypes.ErrInvalidFormat,
-				"Every document ID must be valid",
-			)
-		}
-		if _, dup := seen[id]; dup {
-			continue
-		}
-		seen[id] = struct{}{}
-		ids = append(ids, id)
-	}
-
-	return ids, nil
 }

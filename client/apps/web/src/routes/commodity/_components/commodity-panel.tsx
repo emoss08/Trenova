@@ -3,6 +3,7 @@ import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { CommodityRow } from "@/lib/graphql/commodity-table";
+import { apiService } from "@/services/api";
 import { commoditySchema } from "@trenova/shared/types/commodity";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -43,11 +44,13 @@ export function CommodityPanel({
         onOpenChange={onOpenChange}
         row={row}
         form={form}
-        url="/commodities/"
         queryKey="commodity-list"
         title={t("Commodity")}
         fieldKey="name"
         formComponent={<CommodityForm />}
+        mutationFn={(values, currentRow) =>
+          apiService.commodityService.update(currentRow.id, values)
+        }
       />
     );
   }
@@ -57,10 +60,10 @@ export function CommodityPanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/commodities/"
       queryKey="commodity-list"
       title={t("Commodity")}
       formComponent={<CommodityForm />}
+      mutationFn={(values) => apiService.commodityService.create(values)}
     />
   );
 }

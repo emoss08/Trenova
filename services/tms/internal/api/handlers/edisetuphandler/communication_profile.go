@@ -5,45 +5,20 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundpoll"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
-	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 )
 
 func (h *Handler) registerCommunicationProfileRoutes(profiles *gin.RouterGroup) {
-	selectOptions := profiles.Group("/select-options", responseguard.References())
-	selectOptions.GET(
-		"/",
-		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
-		h.selectCommunicationProfileOptions,
-	)
-	selectOptions.GET(
-		"/:profileID",
-		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
-		h.getCommunicationProfileOption,
-	)
-	profiles.GET(
-		"/",
-		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
-		h.listCommunicationProfiles,
-	)
 	profiles.POST(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpCreate),
 		h.createCommunicationProfile,
-	)
-	profiles.GET(
-		"/:profileID/",
-		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
-		h.getCommunicationProfile,
 	)
 	profiles.PUT(
 		"/:profileID/",
@@ -64,45 +39,6 @@ func (h *Handler) registerCommunicationProfileRoutes(profiles *gin.RouterGroup) 
 		"/inspect-certificate/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
 		h.inspectCertificate,
-	)
-}
-
-func (h *Handler) listCommunicationProfiles(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewQueryOptions(c, authCtx)
-
-	pagination.List(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
-			return h.setup.ListCommunicationProfiles(
-				c.Request.Context(),
-				&edipartnerports.ListEDICommunicationProfilesRequest{Filter: req},
-			)
-		},
-	)
-}
-
-func (h *Handler) selectCommunicationProfileOptions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewSelectQueryRequest(c, authCtx)
-
-	pagination.SelectOptions(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
-			return h.setup.SelectCommunicationProfileOptions(
-				c.Request.Context(),
-				&edipartnerports.EDICommunicationProfileSelectOptionsRequest{
-					SelectQueryRequest: req,
-					Status:             domaintypes.Status(helpers.QueryString(c, "status", "")),
-					Method:             edi.ConnectionMethod(helpers.QueryString(c, "method", "")),
-					PartnerID:          helpers.QueryPulid(c, "partnerId"),
-				},
-			)
-		},
 	)
 }
 
@@ -131,33 +67,6 @@ func (h *Handler) createCommunicationProfile(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusCreated, profile)
-}
-
-func (h *Handler) getCommunicationProfileOption(c *gin.Context) {
-	h.getCommunicationProfile(c)
-}
-
-func (h *Handler) getCommunicationProfile(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	profileID, err := pulid.MustParse(c.Param("profileID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	profile, err := h.setup.GetCommunicationProfile(
-		c.Request.Context(),
-		edipartnerports.GetEDICommunicationProfileByIDRequest{
-			ID:         profileID,
-			TenantInfo: pagination.FromAuth(authCtx),
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, profile)
 }
 
 func (h *Handler) updateCommunicationProfile(c *gin.Context) {

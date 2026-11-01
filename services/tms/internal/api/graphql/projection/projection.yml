@@ -390,6 +390,7 @@ virtuals:
     - allocations
   BillingQueueItem:
     - billToCustomer
+    - headline
   FuelPurchaseImportBatch:
     - rows
   FuelPurchaseImportRow:
@@ -586,6 +587,11 @@ virtuals:
   EdiCarrierInvoiceList:
     - totalCountExact
 
+  RateAgreementAccessorial:
+    - chargeDescription
+    - chargeCode
+  RateAgreementFuelBinding:
+    - programName
 specials:
   ManualJournal:
     balance:

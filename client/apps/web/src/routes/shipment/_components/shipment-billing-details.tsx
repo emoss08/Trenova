@@ -14,6 +14,7 @@ import type { SelectOption as GraphQLSelectOption } from "@/lib/graphql/select-o
 import { customer as customerQueries } from "@/lib/queries/customer";
 import { shipment as shipmentQueries } from "@/lib/queries/shipment";
 import { selectOptionMetaString } from "@/lib/select-option-meta";
+import type { ShipmentCustomerBillingRulesQuery } from "@trenova/graphql/generated/graphql";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CapabilityFields,
@@ -141,29 +142,33 @@ function creditConsequence(
   }
 }
 
-function CreditHoldAlert({ customerId, payerName }: { customerId: string; payerName?: string }) {
+type ShipmentBillingRules =
+  ShipmentCustomerBillingRulesQuery["shipmentCustomerBillingRules"][number];
+
+function CreditHoldAlert({
+  rules,
+  payerName,
+}: {
+  rules: ShipmentBillingRules;
+  payerName?: string;
+}) {
   const t = useT();
 
-  const { data: billingProfile } = useQuery({
-    ...customerQueries.getBillingProfile(customerId),
-    enabled: !!customerId,
-  });
-
-  if (!billingProfile) return null;
-
-  const config = CREDIT_STATUS_CONFIG[billingProfile.creditStatus as CreditStatus];
+  const config = CREDIT_STATUS_CONFIG[rules.creditStatus as CreditStatus];
   if (!config) return null;
 
   const Icon = config.icon;
 
   return (
-    <Alert variant={config.variant} className="mb-3" data-testid={`credit-alert-${customerId}`}>
+    <Alert
+      variant={config.variant}
+      className="mb-3"
+      data-testid={`credit-alert-${rules.customerId}`}
+    >
       <Icon className="size-4" />
       <AlertTitle>{payerName ? `${t(config.label)} — ${payerName}` : t(config.label)}</AlertTitle>
       <AlertDescription>
-        {[billingProfile.creditHoldReason, creditConsequence(billingProfile, t)]
-          .filter(Boolean)
-          .join(". ")}
+        {[rules.creditHoldReason, creditConsequence(rules, t)].filter(Boolean).join(". ")}
       </AlertDescription>
     </Alert>
   );
@@ -209,7 +214,11 @@ function CreditHoldAlerts() {
     freightAllocations,
     additionalCharges,
   });
-  if (payerIds.length === 0) return null;
+  const { data: billingRules } = useQuery({
+    ...customerQueries.shipmentBillingRules(payerIds),
+    enabled: payerIds.length > 0,
+  });
+  if (payerIds.length === 0 || !billingRules) return null;
 
   const nameFor = (id: string) => {
     if (id === customer?.id) return customer.name;
@@ -227,13 +236,16 @@ function CreditHoldAlerts() {
 
   return (
     <>
-      {payerIds.map((id) => (
-        <CreditHoldAlert
-          key={id}
-          customerId={id}
-          payerName={payerIds.length > 1 ? nameFor(id) : undefined}
-        />
-      ))}
+      {payerIds.map((id) => {
+        const rules = billingRules.find((candidate) => candidate.customerId === id);
+        return rules ? (
+          <CreditHoldAlert
+            key={id}
+            rules={rules}
+            payerName={payerIds.length > 1 ? nameFor(id) : undefined}
+          />
+        ) : null;
+      })}
     </>
   );
 }

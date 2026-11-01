@@ -1474,6 +1474,7 @@
   "You don't have access to this": "您没有访问权限",
   "You don't have access to {0}": "您没有{0}的访问权限",
   "You haven't been active for a while. To keep your account secure, you will be signed out when the timer runs out, and anything you haven't saved will be lost.": "您已有一段时间没有操作。为保护您的账户安全，计时结束时将会登出，所有尚未保存的内容都会丢失。",
+  "You signed out in another tab. Sign in again to continue.": "您已在另一个标签页退出登录。请重新登录以继续。",
   "You were signed out after a period of inactivity. Sign in again to continue.": "由于一段时间没有操作，您已被登出。请重新登录以继续。",
   "You're offline": "您当前处于离线状态",
   "You've reached the request limit for now. Wait a few seconds, then try again.": "您已暂时达到请求上限。请等待几秒后重试。",

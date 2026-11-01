@@ -73,16 +73,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpUpdate),
 		h.submit,
 	)
-	api.POST(
-		"/bulk-preview/",
-		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpRead),
-		h.bulkPreview,
-	)
-	api.POST(
-		"/bulk-submit/",
-		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpUpdate),
-		h.bulkSubmit,
-	)
 	api.GET(
 		"/summary/",
 		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpRead),
@@ -127,11 +117,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/:adjustmentID/reject/",
 		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpApprove),
 		h.reject,
-	)
-	api.GET(
-		"/:adjustmentID/lineage/",
-		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpRead),
-		h.lineage,
 	)
 }
 
@@ -264,46 +249,6 @@ func (h *Handler) submit(c *gin.Context) {
 		UserID: authCtx.UserID,
 	}
 	resp, err := h.service.Submit(c.Request.Context(), req, actorutil.FromAuthContext(authCtx))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	helpers.JSON(c, http.StatusOK, resp)
-}
-
-func (h *Handler) bulkPreview(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := new(invoiceadjustmentports.InvoiceAdjustmentBulkRequest)
-	if err := authctx.BindJSON(c, authCtx, req); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	req.TenantInfo = pagination.TenantInfo{
-		OrgID:  authCtx.OrganizationID,
-		BuID:   authCtx.BusinessUnitID,
-		UserID: authCtx.UserID,
-	}
-	resp, err := h.service.BulkPreview(c.Request.Context(), req, actorutil.FromAuthContext(authCtx))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	helpers.JSON(c, http.StatusOK, resp)
-}
-
-func (h *Handler) bulkSubmit(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := new(invoiceadjustmentports.InvoiceAdjustmentBulkRequest)
-	if err := authctx.BindJSON(c, authCtx, req); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	req.TenantInfo = pagination.TenantInfo{
-		OrgID:  authCtx.OrganizationID,
-		BuID:   authCtx.BusinessUnitID,
-		UserID: authCtx.UserID,
-	}
-	resp, err := h.service.BulkSubmit(c.Request.Context(), req, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -451,38 +396,6 @@ func (h *Handler) reject(c *gin.Context) {
 			TenantInfo:   pagination.FromAuth(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	helpers.JSON(c, http.StatusOK, resp)
-}
-
-func (h *Handler) lineage(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	adjustmentID, err := pulid.MustParse(c.Param("adjustmentID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	detail, err := h.service.GetDetail(
-		c.Request.Context(),
-		&invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
-			AdjustmentID: adjustmentID,
-			TenantInfo:   pagination.FromAuth(authCtx),
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	resp, err := h.service.GetLineage(
-		c.Request.Context(),
-		&invoiceadjustmentports.GetInvoiceAdjustmentLineageRequest{
-			CorrectionGroupID: detail.CorrectionGroupID,
-			TenantInfo:        pagination.FromAuth(authCtx),
-		},
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)

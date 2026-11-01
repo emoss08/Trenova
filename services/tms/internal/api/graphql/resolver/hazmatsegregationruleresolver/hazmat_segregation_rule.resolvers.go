@@ -59,3 +59,43 @@ func (r *QueryResolver) HazmatSegregationRule(ctx context.Context, id string) (*
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
+
+func (r *MutationResolver) CreateHazmatSegregationRule(ctx context.Context, input gqlmodel.HazmatSegregationRuleInput) (*hazmatsegregationrule.HazmatSegregationRule, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceHazmatSegregationRule, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := hazmatSegregationRuleFromInput(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.HazmatSegregationRuleService.Create(ctx, entity, authCtx.UserID)
+}
+
+func (r *MutationResolver) UpdateHazmatSegregationRule(ctx context.Context, id string, input gqlmodel.HazmatSegregationRuleInput) (*hazmatsegregationrule.HazmatSegregationRule, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceHazmatSegregationRule, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	hazmatSegregationRuleID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.HazmatSegregationRuleService.Get(ctx, hazmatsegregationruleports.GetHazmatSegregationRuleByIDRequest{
+		ID:         hazmatSegregationRuleID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = applyHazmatSegregationRuleInput(existing, &input); err != nil {
+		return nil, err
+	}
+
+	return r.HazmatSegregationRuleService.Update(ctx, existing, authCtx.UserID)
+}

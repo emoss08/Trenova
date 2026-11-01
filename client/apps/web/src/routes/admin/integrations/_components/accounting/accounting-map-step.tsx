@@ -11,11 +11,13 @@ import {
 import type { AccountingMappingSummary } from "@/lib/graphql/accounting-sync";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Progress } from "@trenova/shared/components/ui/progress";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { Link } from "react-router";
 import type { AccountingVendor } from "./accounting-vendors";
+import { IntegrationSetupFooter } from "../shared/integration-setup-wizard";
 
 const REVIEW_PAGE_SIZE = 50;
 
@@ -42,6 +44,7 @@ export function AccountingMapStep({
   });
   const [overrides, setOverrides] = useState<Record<string, boolean>>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const progressLabelId = useId();
 
   const rows = useMemo(() => {
     const seen = new Set(required.mappings.map((mapping) => mapping.id));
@@ -58,7 +61,7 @@ export function AccountingMapStep({
 
   return (
     <>
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <h3 className="text-base font-semibold">{t("Match your records")}</h3>
         <p className="text-foreground-muted text-sm">
           {t(
@@ -76,13 +79,26 @@ export function AccountingMapStep({
         onRefresh={() => actions.refreshReference.mutate()}
       />
 
-      <p className="text-sm font-medium">
-        {t(
-          "{0} of {1} required mappings confirmed",
-          summary.requiredConfirmed,
-          summary.requiredTotal,
-        )}
-      </p>
+      <div className="space-y-1.5">
+        <p id={progressLabelId} className="text-sm font-medium">
+          {t(
+            "{0} of {1} required mappings confirmed",
+            summary.requiredConfirmed,
+            summary.requiredTotal,
+          )}
+        </p>
+        <Progress
+          size="sm"
+          value={summary.requiredConfirmed}
+          max={Math.max(summary.requiredTotal, 1)}
+          variant={
+            summary.requiredTotal > 0 && summary.requiredConfirmed >= summary.requiredTotal
+              ? "success"
+              : "default"
+          }
+          aria-labelledby={progressLabelId}
+        />
+      </div>
 
       {required.isLoading || proposals.isLoading ? (
         <div className="space-y-2">
@@ -95,7 +111,7 @@ export function AccountingMapStep({
           <AlertDescription>{t("The mappings could not be loaded.")}</AlertDescription>
         </Alert>
       ) : (
-        <div className="divide-border-subtle max-h-80 divide-y overflow-y-auto rounded-md border">
+        <div className="divide-border-subtle divide-y rounded-lg border">
           {rows.map((mapping) => (
             <MappingRow
               key={mapping.id}
@@ -119,7 +135,7 @@ export function AccountingMapStep({
       ) : null}
 
       {selected ? (
-        <div className="rounded-md border p-4">
+        <div className="rounded-lg border p-4">
           <MappingEditor
             key={selected.id}
             system={vendor.system}
@@ -130,11 +146,11 @@ export function AccountingMapStep({
         </div>
       ) : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-4">
+      <IntegrationSetupFooter className="justify-between">
         <Button
-          type="button"
           variant="link"
           size="sm"
+          nativeButton={false}
           render={<Link to={ACCOUNTING_MAPPINGS_PATH} />}
         >
           {t("Open all mappings")}
@@ -160,7 +176,7 @@ export function AccountingMapStep({
             </Button>
           </div>
         ) : null}
-      </div>
+      </IntegrationSetupFooter>
     </>
   );
 }

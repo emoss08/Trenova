@@ -212,7 +212,6 @@ type RealtimeGateway interface {
 	Open(ctx context.Context, req *OpenRealtimeStreamRequest) (RealtimeStream, error)
 	JoinPresence(ctx context.Context, req *RealtimeScopeRequest) (*RealtimePresenceSnapshot, error)
 	LeavePresence(ctx context.Context, req *RealtimeScopeRequest) error
-	SignalTyping(ctx context.Context, req *RealtimeTypingRequest) error
 	// Drain ends every open stream with a shutdown notice, so readers reconnect
 	// to another instance instead of holding this one's shutdown open.
 	Drain()

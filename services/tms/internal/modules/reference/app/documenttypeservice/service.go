@@ -74,7 +74,7 @@ func (s *Service) GetByIDs(
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *pagination.SelectQueryRequest,
+	req *documenttypeports.DocumentTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*documenttype.DocumentType], error) {
 	return s.repo.SelectOptions(ctx, req)
 }

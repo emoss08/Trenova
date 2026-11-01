@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/places/app/locationservice"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
@@ -48,20 +47,10 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceLocation.String(), permission.OpRead),
 		h.list,
 	)
-	api.GET(
-		"/:locationID/",
-		h.pm.RequirePermission(permission.ResourceLocation.String(), permission.OpRead),
-		h.get,
-	)
 	api.POST(
 		"/",
 		h.pm.RequirePermission(permission.ResourceLocation.String(), permission.OpCreate),
 		h.create,
-	)
-	api.PUT(
-		"/:locationID/",
-		h.pm.RequirePermission(permission.ResourceLocation.String(), permission.OpUpdate),
-		h.update,
 	)
 	api.PATCH(
 		"/:locationID/",
@@ -73,10 +62,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceLocation.String(), permission.OpUpdate),
 		h.bulkUpdateStatus,
 	)
-
-	selectOptions := api.Group("/select-options", responseguard.References())
-	selectOptions.GET("/", h.selectOptions)
-	selectOptions.GET("/:locationID", h.getOption)
 }
 
 // @Summary List locations
@@ -155,106 +140,6 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusOK, results)
-}
-
-// @Summary Get a location option
-// @ID getLocationOption
-// @Tags Locations
-// @Produce json
-// @Param locationID path string true "Location ID"
-// @Success 200 {object} location.Location
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /locations/select-options/{locationID} [get]
-func (h *Handler) getOption(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	locationID, err := pulid.MustParse(c.Param("locationID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.service.Get(c.Request.Context(), locationports.GetLocationByIDRequest{
-		ID:         locationID,
-		TenantInfo: pagination.FromAuth(authCtx),
-	})
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entity)
-}
-
-// @Summary List location options
-// @ID listLocationOptions
-// @Tags Locations
-// @Produce json
-// @Param query query string false "Search query"
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]location.Location]
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /locations/select-options/ [get]
-func (h *Handler) selectOptions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewSelectQueryRequest(c, authCtx)
-
-	pagination.SelectOptions(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*location.Location], error) {
-			return h.service.SelectOptions(
-				c.Request.Context(),
-				&locationports.LocationSelectOptionsRequest{
-					SelectQueryRequest: req,
-				},
-			)
-		},
-	)
-}
-
-// @Summary Get a location
-// @ID getLocation
-// @Tags Locations
-// @Produce json
-// @Param locationID path string true "Location ID"
-// @Success 200 {object} location.Location
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 404 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /locations/{locationID} [get]
-func (h *Handler) get(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	locationID, err := pulid.MustParse(c.Param("locationID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.service.Get(
-		c.Request.Context(),
-		locationports.GetLocationByIDRequest{
-			ID:         locationID,
-			TenantInfo: pagination.FromAuth(authCtx),
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Create a location
@@ -340,45 +225,4 @@ func (h *Handler) patch(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusOK, updatedEntity)
-}
-
-// @Summary Update a location
-// @ID updateLocation
-// @Tags Locations
-// @Accept json
-// @Produce json
-// @Param locationID path string true "Location ID"
-// @Param request body location.Location true "Location payload"
-// @Success 200 {object} location.Location
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 404 {object} helpers.ProblemDetail
-// @Failure 422 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /locations/{locationID} [put]
-func (h *Handler) update(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	locationID, err := pulid.MustParse(c.Param("locationID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity := new(location.Location)
-	entity.ID = locationID
-	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	actor := actorutil.FromAuthContext(authCtx)
-	updated, err := h.service.Update(c.Request.Context(), entity, actor)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, updated)
 }

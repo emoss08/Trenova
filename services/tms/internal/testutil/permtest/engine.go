@@ -88,13 +88,6 @@ func (e *Engine) GetEffectivePermissions(
 	return &permissionports.EffectivePermissions{}, nil
 }
 
-func (e *Engine) SimulatePermissions(
-	context.Context,
-	*permissionports.SimulatePermissionsRequest,
-) (*permissionports.EffectivePermissions, error) {
-	return &permissionports.EffectivePermissions{}, nil
-}
-
 func (e *Engine) AgentsUsable(
 	context.Context,
 	*permissionports.RequestActor,

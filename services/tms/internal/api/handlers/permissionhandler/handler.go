@@ -46,7 +46,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/me/permissions")
 	api.GET("", h.getManifest)
 	api.GET("/version", h.getVersion)
-	api.GET("/:resource", h.getResourcePermissions)
 	api.POST("/check", h.checkBatch)
 
 	resources := rg.Group("/permissions")
@@ -108,41 +107,6 @@ func (h *Handler) getVersion(c *gin.Context) {
 		"checksum":  manifest.Checksum,
 		"expiresAt": manifest.ExpiresAt,
 	})
-}
-
-// @Summary Get resource permissions
-// @Description Returns the effective permissions for a single resource.
-// @ID getResourcePermissions
-// @Tags Permissions
-// @Produce json
-// @Param resource path string true "Resource name"
-// @Success 200 {object} services.ResourcePermissionDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 404 {object} gin.H
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /me/permissions/{resource} [get]
-func (h *Handler) getResourcePermissions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	resource := c.Param("resource")
-
-	detail, err := h.permEngine.GetResourcePermissions(
-		c.Request.Context(),
-		authCtx.UserID,
-		authCtx.OrganizationID,
-		resource,
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	if detail == nil {
-		helpers.JSON(c, http.StatusNotFound, gin.H{"error": "Resource not found"})
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, detail)
 }
 
 type batchCheckRequest struct {

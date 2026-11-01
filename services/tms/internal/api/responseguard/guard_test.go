@@ -38,7 +38,6 @@ import (
 type routeOptions struct {
 	install    bool
 	selfScoped bool
-	references bool
 }
 
 // serve writes value through helpers.JSON as a signed-in caller the engine
@@ -93,9 +92,6 @@ func serveRaw(
 	handlers := make([]gin.HandlerFunc, 0, 3)
 	if opts.selfScoped {
 		handlers = append(handlers, SelfScoped())
-	}
-	if opts.references {
-		handlers = append(handlers, References())
 	}
 	handlers = append(handlers, func(c *gin.Context) { helpers.JSON(c, http.StatusOK, value) })
 	router.GET("/", handlers...)
@@ -443,20 +439,6 @@ func TestASelfScopedRouteShowsEveryRecordWhole(t *testing.T) {
 	primary := object(t, body, "moves", 0, "assignment", "primaryWorker")
 	assert.Equal(t, "12 Home Street", primary["addressLine1"])
 	assert.Empty(t, header)
-}
-
-func TestAReferenceRouteShowsOnlyTheViewOfAKindTheCallerCannotRead(t *testing.T) {
-	t.Parallel()
-
-	body, header := serve(t, []permission.Resource{permission.ResourceWorker},
-		driver(), routeOptions{install: true, references: true})
-	assert.Equal(t, "Dana", body["firstName"])
-	assert.Nil(t, body["addressLine1"])
-	assert.Nil(t, body["phoneNumber"])
-	assert.Empty(t, header, "the record is the response itself")
-
-	readable, _ := serve(t, nil, driver(), routeOptions{install: true, references: true})
-	assert.Equal(t, "12 Home Street", readable["addressLine1"])
 }
 
 func TestAResponseWithoutAGuardIsWrittenAsIs(t *testing.T) {

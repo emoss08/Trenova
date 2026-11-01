@@ -41,6 +41,7 @@
   "No email profiles yet": "尚无邮件配置",
   "Operational notes for admins choosing sender identities.": "供管理员选择发件人身份时参考的作业备注。",
   "Optional reply destination. Blank uses the sender email.": "选填的回复地址。留空则使用发件人的电子邮件。",
+  "Postmark": "Postmark",
   "Purged with replays": "随重放一并清除",
   "Purpose assignments": "用途分配",
   "Queue a test message from {0}.": "自 {0} 排入一封测试邮件。",

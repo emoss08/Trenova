@@ -2538,6 +2538,15 @@
       "routes/inbox"
     ]
   },
+  "<b>{0}</b> <m>{1}</m> isn't billed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "<b>{0}</b> <u>has the tools for this</u>": {
     "sites": 1,
     "scope": [
@@ -11166,6 +11175,15 @@
       "edi/lading"
     ]
   },
+  "A rule found this": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "A rule had Nova {0}": {
     "sites": 1,
     "scope": [
@@ -11928,6 +11946,15 @@
     ]
   },
   "A shipment with status {0} cannot be canceled.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A shipment's billing rules can be read for at most {0} customers at once": {
     "sites": 1,
     "scope": [
       "go"
@@ -15622,6 +15649,15 @@
       "routes/ifta-jurisdiction-mileage"
     ]
   },
+  "Above {0}°F": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Absolute tolerance cannot be negative": {
     "sites": 1,
     "scope": [
@@ -16356,6 +16392,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Accessorials on this contract": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Accessorials {0}": {
@@ -18175,7 +18220,7 @@
     ]
   },
   "Active": {
-    "sites": 94,
+    "sites": 95,
     "scope": [
       "go",
       "ts"
@@ -18191,6 +18236,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/benefits",
+      "routes/billing-queue",
       "routes/carrier",
       "routes/cost-control",
       "routes/desk",
@@ -20950,15 +20996,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Add value...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/reports"
     ]
   },
   "Add widget": {
@@ -24117,7 +24154,7 @@
     ]
   },
   "All bill types": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -24238,7 +24275,7 @@
     ]
   },
   "All customers": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -24246,6 +24283,7 @@
       "apps/web/components",
       "routes/ar-aging",
       "routes/ar-open-items",
+      "routes/billing-queue",
       "routes/late-charges"
     ]
   },
@@ -24692,7 +24730,7 @@
     ]
   },
   "All statuses": {
-    "sites": 13,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -29745,11 +29783,12 @@
     ]
   },
   "Any time": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/intake"
     ]
   },
@@ -32763,7 +32802,7 @@
     ]
   },
   "Archived": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -32774,6 +32813,7 @@
       "go/other",
       "packages/shared/components",
       "routes/benefits",
+      "routes/billing-queue",
       "routes/desk",
       "routes/formula-template",
       "routes/org-structure"
@@ -33311,12 +33351,13 @@
     ]
   },
   "Arrived {0}": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
+      "routes/billing-queue",
       "routes/carrier-tracking-public",
       "routes/desk",
       "routes/shipment",
@@ -33330,6 +33371,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Arrived → departed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Arrived: {0}": {
@@ -39180,7 +39230,7 @@
     ]
   },
   "BOL": {
-    "sites": 26,
+    "sites": 27,
     "scope": [
       "go",
       "ts"
@@ -39190,6 +39240,7 @@
       "apps/web/lib",
       "go/other",
       "routes/admin",
+      "routes/billing-queue",
       "routes/carrier-invoice-matching",
       "routes/desk",
       "routes/inbox",
@@ -41209,6 +41260,15 @@
       "packages/shared/lib"
     ]
   },
+  "Below {0}°F": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Benchmark": {
     "sites": 2,
     "scope": [
@@ -41921,7 +41981,7 @@
     ]
   },
   "Bill type": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -42128,7 +42188,7 @@
     ]
   },
   "Billed": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -42138,6 +42198,7 @@
       "go/other",
       "packages/shared/components",
       "packages/shared/lib",
+      "routes/billing-queue",
       "routes/desk",
       "routes/detention-intelligence",
       "routes/formula-template",
@@ -43144,15 +43205,6 @@
     ],
     "areas": [
       "routes/customer"
-    ]
-  },
-  "Billing requirements not met": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/billing-queue"
     ]
   },
   "Billing review": {
@@ -56347,6 +56399,15 @@
       "routes/auth"
     ]
   },
+  "Choose your language": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Choose…": {
     "sites": 1,
     "scope": [
@@ -59994,7 +60055,7 @@
     ]
   },
   "Comma-separated values": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -60330,7 +60391,7 @@
     ]
   },
   "Commodity": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -60340,6 +60401,7 @@
       "apps/web/lib",
       "go/other",
       "routes/agent-control",
+      "routes/billing-queue",
       "routes/commodity",
       "routes/desk",
       "routes/inbox",
@@ -60606,7 +60668,7 @@
     ]
   },
   "Company": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -63482,7 +63544,7 @@
     ]
   },
   "Connection": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -67588,6 +67650,15 @@
       "routes/desk"
     ]
   },
+  "Couldn't load more · Try again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Couldn't load the files: {0}": {
     "sites": 1,
     "scope": [
@@ -71670,6 +71741,15 @@
       "apps/web/config"
     ]
   },
+  "Custom fields are not supported on this resource type": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Custom format is required": {
     "sites": 1,
     "scope": [
@@ -71844,7 +71924,7 @@
     ]
   },
   "Customer": {
-    "sites": 92,
+    "sites": 94,
     "scope": [
       "go",
       "ts"
@@ -71982,7 +72062,7 @@
     ]
   },
   "Customer PO": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
@@ -72554,11 +72634,12 @@
     ]
   },
   "Customer reference": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/shipment"
     ]
   },
@@ -73587,12 +73668,13 @@
     ]
   },
   "Dark": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/routes",
+      "apps/web/components",
       "routes/desk",
       "routes/settings",
       "routes/worker"
@@ -74276,11 +74358,12 @@
     ]
   },
   "Dates": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/worker"
     ]
   },
@@ -78376,7 +78459,7 @@
     ]
   },
   "Delivered": {
-    "sites": 26,
+    "sites": 27,
     "scope": [
       "go",
       "ts"
@@ -78444,11 +78527,12 @@
     ]
   },
   "Delivered {0}": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/desk",
       "routes/inbox",
       "routes/shipment"
@@ -78470,6 +78554,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Delivered {0} – {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Delivered {0}. Record the factor's funding once its report or remittance arrives.": {
@@ -78563,7 +78656,7 @@
     ]
   },
   "Delivery": {
-    "sites": 33,
+    "sites": 34,
     "scope": [
       "go",
       "ts"
@@ -78575,6 +78668,7 @@
       "go/other",
       "packages/shared/lib",
       "routes/agent-control",
+      "routes/billing-queue",
       "routes/desk",
       "routes/edi",
       "routes/factoring",
@@ -80761,7 +80855,7 @@
     ]
   },
   "Detention charge": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -84856,15 +84950,6 @@
       "go/other"
     ]
   },
-  "Document type id is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
   "Document type is invalid": {
     "sites": 1,
     "scope": [
@@ -85711,7 +85796,7 @@
     ]
   },
   "Draft": {
-    "sites": 56,
+    "sites": 57,
     "scope": [
       "go",
       "ts"
@@ -85723,6 +85808,7 @@
       "go/other",
       "packages/shared/components",
       "packages/shared/types",
+      "routes/billing-queue",
       "routes/carrier-settlement-workspace",
       "routes/desk",
       "routes/formula-template",
@@ -86593,7 +86679,7 @@
     ]
   },
   "Driver": {
-    "sites": 50,
+    "sites": 51,
     "scope": [
       "go",
       "ts"
@@ -86604,6 +86690,7 @@
       "go/other",
       "packages/shared/lib",
       "routes/agent-control",
+      "routes/billing-queue",
       "routes/desk",
       "routes/driver-expense",
       "routes/driver-pay-event",
@@ -89283,15 +89370,6 @@
       "go/other"
     ]
   },
-  "EDI document type not found": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
   "EDI documents that failed or are waiting on a reply.": {
     "sites": 1,
     "scope": [
@@ -89659,15 +89737,6 @@
       "go/other"
     ]
   },
-  "EDI transaction set not found": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
   "EDI transfer": {
     "sites": 2,
     "scope": [
@@ -89813,15 +89882,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "EIA logo": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "EIA series is required for EIA indices": {
@@ -91557,6 +91617,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Edit on the shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Edit or archive a plan": {
@@ -103495,7 +103564,7 @@
     ]
   },
   "Expired": {
-    "sites": 40,
+    "sites": 41,
     "scope": [
       "go",
       "ts"
@@ -103509,6 +103578,7 @@
       "packages/shared/lib",
       "packages/shared/types",
       "routes/agent-control",
+      "routes/billing-queue",
       "routes/carrier",
       "routes/desk",
       "routes/shipment",
@@ -110111,6 +110181,15 @@
       "go/other"
     ]
   },
+  "Filter preset": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Filter rows": {
     "sites": 1,
     "scope": [
@@ -113581,7 +113660,7 @@
     ]
   },
   "Formula template": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -113590,6 +113669,7 @@
       "apps/web/config",
       "apps/web/lib",
       "go/other",
+      "routes/billing-queue",
       "routes/desk",
       "routes/shipment"
     ]
@@ -114787,6 +114867,15 @@
       "routes/inbox"
     ]
   },
+  "From {0} · rate agreement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "From {0} · {1}": {
     "sites": 2,
     "scope": [
@@ -114854,7 +114943,7 @@
     ]
   },
   "Fuel": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -114863,6 +114952,7 @@
       "apps/web/config",
       "go/other",
       "routes/admin",
+      "routes/billing-queue",
       "routes/desk",
       "routes/fuel-management",
       "routes/fuel-purchase",
@@ -118211,15 +118301,6 @@
     ],
     "areas": [
       "routes/location"
-    ]
-  },
-  "Google maps logo": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Got back": {
@@ -122722,6 +122803,15 @@
       "routes/fuel-purchase"
     ]
   },
+  "How it was rated": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "How it was worked out": {
     "sites": 1,
     "scope": [
@@ -126150,7 +126240,7 @@
     ]
   },
   "In review": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "ts"
     ],
@@ -126160,6 +126250,7 @@
       "packages/shared/components",
       "routes/agent-control",
       "routes/bank-receipt-queue",
+      "routes/billing-queue",
       "routes/desk",
       "routes/formula-template",
       "routes/reconciliation-summary",
@@ -134176,7 +134267,7 @@
     ]
   },
   "Journal entries": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -135659,6 +135750,15 @@
       "routes/invoice"
     ]
   },
+  "Keep this page open": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Keep this under {0} characters": {
     "sites": 1,
     "scope": [
@@ -136329,7 +136429,7 @@
     ]
   },
   "Keyboard shortcuts": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -137049,6 +137149,15 @@
       "apps/web/components",
       "routes/admin",
       "routes/settings"
+    ]
+  },
+  "Languages": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Lapsed {0}d ago": {
@@ -138810,6 +138919,15 @@
       "routes/agent-control"
     ]
   },
+  "Learn more": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Learned by an agent looking back over its work · {0}": {
     "sites": 1,
     "scope": [
@@ -140495,12 +140613,13 @@
     ]
   },
   "License": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "go/other",
       "packages/shared/types"
     ]
@@ -140766,12 +140885,13 @@
     ]
   },
   "Light": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/routes",
+      "apps/web/components",
       "routes/desk",
       "routes/settings",
       "routes/worker"
@@ -142526,11 +142646,12 @@
     ]
   },
   "Load": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/desk",
       "routes/edi"
     ]
@@ -143074,11 +143195,12 @@
     ]
   },
   "Loading": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/benefits",
       "routes/carrier-sourcing",
       "routes/home",
@@ -144744,11 +144866,12 @@
     ]
   },
   "Loading the shipment": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/shipment-tracking-public"
     ]
   },
@@ -144795,6 +144918,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Loading the terms": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Loading the top overdue customers": {
@@ -152595,7 +152727,7 @@
     ]
   },
   "Miles": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -152603,6 +152735,7 @@
     "areas": [
       "apps/web/lib",
       "go/other",
+      "routes/billing-queue",
       "routes/desk",
       "routes/driver-pay-event",
       "routes/ifta-jurisdiction-mileage"
@@ -162964,6 +163097,15 @@
       "routes/shipment"
     ]
   },
+  "No contract covers this lane, so the shipment rated on its template.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "No contract or shipment sets this template's inputs yet": {
     "sites": 1,
     "scope": [
@@ -165125,6 +165267,15 @@
       "routes/rate-agreement"
     ]
   },
+  "No languages match “{0}”.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "No late charges are assessed; the Late Charges page can still preview them.": {
     "sites": 1,
     "scope": [
@@ -166659,6 +166810,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "No preset": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "No preview": {
@@ -170483,6 +170643,15 @@
       "packages/shared/lib"
     ]
   },
+  "Not arrived": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Not asked": {
     "sites": 2,
     "scope": [
@@ -170562,7 +170731,7 @@
     ]
   },
   "Not billed": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -173674,6 +173843,15 @@
       "routes/agent-control"
     ]
   },
+  "Nothing more can be saved on this page. Reload it to continue in the organization you switched to, or switch back in the other tab to keep working here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Nothing moving right now.": {
     "sites": 1,
     "scope": [
@@ -175817,6 +175995,15 @@
       "routes/formula-template"
     ]
   },
+  "Nova found this": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Nova had nothing to add: every input is described.": {
     "sites": 1,
     "scope": [
@@ -176494,15 +176681,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "OANDA logo": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "OANDA returned no exchange rate for currency pair": {
@@ -178105,6 +178283,15 @@
       "apps/web/components"
     ]
   },
+  "On site": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "On the 1st": {
     "sites": 1,
     "scope": [
@@ -178692,11 +178879,12 @@
     ]
   },
   "One customer": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/desk",
       "routes/rate-agreement"
     ]
@@ -182613,11 +182801,12 @@
     ]
   },
   "Open agreement": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/desk"
     ]
   },
@@ -183590,6 +183779,15 @@
       "routes/shipment"
     ]
   },
+  "Open template": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Open tender": {
     "sites": 1,
     "scope": [
@@ -184423,15 +184621,6 @@
     ]
   },
   "OpenWeatherMap API keys.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "OpenWeatherMap logo": {
     "sites": 1,
     "scope": [
       "ts"
@@ -188338,7 +188527,7 @@
     ]
   },
   "Overview": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -188862,15 +189051,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "PC*Miler logo": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "PC*Miler profile name": {
@@ -196493,6 +196673,24 @@
       "apps/web/components"
     ]
   },
+  "Pick dates": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "Pick dates…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Pick invoice": {
     "sites": 1,
     "scope": [
@@ -196629,13 +196827,14 @@
     ]
   },
   "Picked up": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "routes/billing-queue",
       "routes/customer",
       "routes/inbox",
       "template/customertracking.status.email"
@@ -196669,12 +196868,22 @@
     ]
   },
   "Picked up {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/desk"
+    ]
+  },
+  "Picked up {0} – {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Picked up: load {0}": {
@@ -196790,7 +196999,7 @@
     ]
   },
   "Pickup": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -196802,6 +197011,7 @@
       "go/other",
       "packages/shared/lib",
       "routes/agent-control",
+      "routes/billing-queue",
       "routes/desk",
       "routes/inbox",
       "routes/shipment",
@@ -197146,7 +197356,7 @@
     ]
   },
   "Pieces": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
@@ -199960,12 +200170,11 @@
     ]
   },
   "Postmark": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/organization"
     ]
   },
@@ -202240,7 +202449,7 @@
     ]
   },
   "Privacy policy": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -206126,7 +206335,7 @@
     ]
   },
   "Queued": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -206140,6 +206349,7 @@
       "routes/accounting-sync",
       "routes/admin",
       "routes/agent-control",
+      "routes/billing-queue",
       "routes/desk",
       "routes/invoice-adjustment-batch",
       "routes/shipment"
@@ -206236,13 +206446,23 @@
     ]
   },
   "Queued {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/billing-queue",
       "routes/desk"
+    ]
+  },
+  "Queued {0} – {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Queued — waiting to start.": {
@@ -208563,8 +208783,17 @@
       "routes/desk"
     ]
   },
+  "Rated by <name>{0}</name>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Rated by {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -208616,6 +208845,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Rated {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Rates": {
@@ -217196,6 +217434,15 @@
       "packages/shared/components"
     ]
   },
+  "Reload this page": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Remaining": {
     "sites": 1,
     "scope": [
@@ -220840,12 +221087,13 @@
     ]
   },
   "Request failed": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "packages/shared/lib",
+      "packages/shared/services"
     ]
   },
   "Request from driver": {
@@ -222211,13 +222459,12 @@
     ]
   },
   "Resend": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/desk",
       "routes/invoice",
       "routes/organization"
@@ -228364,7 +228611,7 @@
     ]
   },
   "Rule": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -228494,11 +228741,12 @@
     ]
   },
   "Rule {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/pto-policy"
     ]
   },
@@ -234025,7 +234273,7 @@
     ]
   },
   "Scheduled": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
@@ -234038,6 +234286,7 @@
       "packages/shared/lib",
       "packages/shared/types",
       "routes/agent-control",
+      "routes/billing-queue",
       "routes/desk",
       "routes/shipment"
     ]
@@ -235398,6 +235647,15 @@
       "routes/agent-control"
     ]
   },
+  "Search languages": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Search locations...": {
     "sites": 1,
     "scope": [
@@ -235906,7 +236164,7 @@
       "routes/desk"
     ]
   },
-  "Search, or ask: “Acme over $5k this week”": {
+  "Search, or ask: “Acme over $5k delivered this week”": {
     "sites": 1,
     "scope": [
       "ts"
@@ -236436,6 +236694,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "See the terms": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "See the waiver against the facility's other stops on the detention desk": {
@@ -238394,15 +238661,6 @@
     ],
     "areas": [
       "routes/carrier"
-    ]
-  },
-  "Select preset...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/billing-queue"
     ]
   },
   "Select primary worker": {
@@ -242394,6 +242652,15 @@
       "routes/agent-control"
     ]
   },
+  "Session Changed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/helpers"
+    ]
+  },
   "Session expired": {
     "sites": 1,
     "scope": [
@@ -243245,7 +243512,7 @@
     ]
   },
   "Settings": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -243352,14 +243619,13 @@
     ]
   },
   "Settle the flagged check first": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
-      "routes/billing-queue",
       "routes/desk"
     ]
   },
@@ -244874,7 +245140,7 @@
     ]
   },
   "Shipment": {
-    "sites": 49,
+    "sites": 50,
     "scope": [
       "go",
       "ts"
@@ -246591,6 +246857,15 @@
       "apps/web/lib"
     ]
   },
+  "Shipments for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Shipments in the organization, however they were created.": {
     "sites": 1,
     "scope": [
@@ -247374,6 +247649,15 @@
       "routes/desk"
     ]
   },
+  "Show me": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Show me the plan for what's left.": {
     "sites": 1,
     "scope": [
@@ -247384,12 +247668,11 @@
     ]
   },
   "Show more": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/billing-queue",
       "routes/desk"
     ]
   },
@@ -247730,12 +248013,11 @@
     ]
   },
   "Show {0} more": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/billing-queue",
       "routes/scheduling"
     ]
   },
@@ -251886,13 +252168,14 @@
     ]
   },
   "Split delivery": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
       "apps/web/lib",
+      "routes/billing-queue",
       "routes/desk"
     ]
   },
@@ -251991,13 +252274,14 @@
     ]
   },
   "Split pickup": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
       "apps/web/lib",
+      "routes/billing-queue",
       "routes/desk"
     ]
   },
@@ -254170,7 +254454,7 @@
     ]
   },
   "Status": {
-    "sites": 339,
+    "sites": 340,
     "scope": [
       "go",
       "ts"
@@ -255033,7 +255317,7 @@
     ]
   },
   "Stop": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
@@ -255718,7 +256002,7 @@
     ]
   },
   "Stops": {
-    "sites": 15,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -255727,6 +256011,7 @@
       "apps/web/components",
       "go/other",
       "routes/agent-control",
+      "routes/billing-queue",
       "routes/desk",
       "routes/distance-override",
       "routes/shipment",
@@ -256964,7 +257249,7 @@
     ]
   },
   "Suggested": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -257651,7 +257936,7 @@
     ]
   },
   "Suspended": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -257661,6 +257946,7 @@
       "go/other",
       "packages/shared/components",
       "packages/shared/types",
+      "routes/billing-queue",
       "routes/desk"
     ]
   },
@@ -258541,7 +258827,7 @@
     ]
   },
   "System": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -260512,11 +260798,12 @@
     ]
   },
   "Temperature": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/commodity",
       "routes/desk",
       "routes/shipment"
@@ -261665,7 +261952,7 @@
     ]
   },
   "Terms of Service": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -277986,6 +278273,15 @@
       "routes/shipment"
     ]
   },
+  "The rating recorded no terms.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "The rating stopped with an error": {
     "sites": 1,
     "scope": [
@@ -279276,6 +279572,15 @@
       "rules/tariff"
     ]
   },
+  "The route, PRO and charges above are still yours to bill. An administrator can grant shipment access to see the stops and load.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "The routing being tendered, in stop order.": {
     "sites": 1,
     "scope": [
@@ -279328,6 +279633,15 @@
     ],
     "areas": [
       "routes/fuel-feed-run"
+    ]
+  },
+  "The rule that matched": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "The rule was turned off": {
@@ -280357,6 +280671,24 @@
       "routes/shipment"
     ]
   },
+  "The shipment couldn't be loaded. Open the tab again to retry.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "The shipment doesn't meet your billing requirements yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "The shipment draft open on the page: accepting, correcting and placing its fields and stops.": {
     "sites": 1,
     "scope": [
@@ -280393,6 +280725,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The shipment has no stops.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "The shipment is already in the billing queue.": {
@@ -282114,6 +282455,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "The terms couldn't be loaded. Close this and try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "The terms each factor buys invoices on, with their advance, reserve and effective dates": {
@@ -284364,11 +284714,12 @@
     ]
   },
   "Theme": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/desk",
       "routes/settings"
     ]
@@ -286642,6 +286993,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "This contract names no fuel program": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "This conversation already has {0} schedules. Delete one to add another.": {
@@ -293930,6 +294290,15 @@
       "go/other"
     ]
   },
+  "Times are in your timezone.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Times are on {0} time.": {
     "sites": 1,
     "scope": [
@@ -294597,11 +294966,13 @@
     ]
   },
   "Today's date": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/agent-control"
     ]
   },
@@ -296782,6 +297153,15 @@
       "routes/desk"
     ]
   },
+  "Tractor / trailer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Tractor Details": {
     "sites": 1,
     "scope": [
@@ -297762,15 +298142,6 @@
       "go/other"
     ]
   },
-  "Transaction set id is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
   "Transaction set is required": {
     "sites": 3,
     "scope": [
@@ -298307,6 +298678,15 @@
       "routes/desk"
     ]
   },
+  "Trenova Academy": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Trenova Capture": {
     "sites": 1,
     "scope": [
@@ -298389,6 +298769,24 @@
     ]
   },
   "Trenova Capture {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Trenova Cloud privacy policy": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Trenova Cloud terms": {
     "sites": 1,
     "scope": [
       "ts"
@@ -304929,6 +305327,15 @@
       "routes/factoring-remittance"
     ]
   },
+  "Use \"{0}\"": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Use <down/> to reach the cards and <enter/> to add one.": {
     "sites": 1,
     "scope": [
@@ -310762,7 +311169,7 @@
     ]
   },
   "Waived": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -310770,6 +311177,7 @@
     "areas": [
       "go/other",
       "packages/shared/lib",
+      "routes/billing-queue",
       "routes/desk",
       "routes/rate-agreement",
       "routes/shipment",
@@ -310801,6 +311209,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Waived on this contract": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Waived {0}": {
@@ -312498,7 +312915,7 @@
     ]
   },
   "Weight": {
-    "sites": 26,
+    "sites": 27,
     "scope": [
       "go",
       "ts"
@@ -312509,6 +312926,7 @@
       "go/other",
       "routes/admin",
       "routes/agent-control",
+      "routes/billing-queue",
       "routes/desk",
       "routes/edi",
       "routes/inbox",
@@ -313799,6 +314217,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "What it charged": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "What it did": {
@@ -324467,6 +324894,15 @@
       "routes/admin"
     ]
   },
+  "You don't have access to shipments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "You don't have access to this": {
     "sites": 1,
     "scope": [
@@ -324864,6 +325300,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "You signed out in another tab. Sign in again to continue.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components"
     ]
   },
   "You stopped it before it finished": {
@@ -325883,6 +326328,24 @@
       "go/other"
     ]
   },
+  "Your organization changed in another tab": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Your organization changed in another tab, so nothing more can be saved on this page.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Your organization changed this from {0}": {
     "sites": 1,
     "scope": [
@@ -326399,6 +326862,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Your session changed in another tab. Reload this page to continue.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Your session has ended": {
@@ -329818,15 +330290,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "document not found": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
     ]
   },
   "dollar": {
@@ -335883,6 +336346,15 @@
       "go/other"
     ]
   },
+  "rated {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "rates raised up to {0}%": {
     "sites": 1,
     "scope": [
@@ -339989,7 +340461,7 @@
       "routes/billing-queue"
     ]
   },
-  "{0, plural, one {# detention charge needs approval} other {# detention charges need approval}} before this can be approved": {
+  "{0, plural, one {# detention charge needs approval} other {# detention charges need approval}} before you can approve": {
     "sites": 1,
     "scope": [
       "ts"
@@ -342280,7 +342752,7 @@
       "routes/reports"
     ]
   },
-  "{0, plural, one {# required document} other {# required documents}} missing": {
+  "{0, plural, one {# required document is missing} other {# required documents are missing}}; add them on the Documents tab": {
     "sites": 1,
     "scope": [
       "ts"
@@ -342332,6 +342804,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0, plural, one {# review item needs you} other {# review items need you}} before you can approve": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "{0, plural, one {# review} other {# reviews}}": {
@@ -342967,6 +343448,15 @@
     ],
     "areas": [
       "routes/detention-desk"
+    ]
+  },
+  "{0, plural, one {# stop} other {# stops}} · scheduled against what happened": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "{0, plural, one {# stop} other {# stops}} · {1} past free time {2}": {
@@ -344037,6 +344527,15 @@
       "routes/intake"
     ]
   },
+  "{0, plural, one {Delivered in the last day} other {Delivered in the last # days}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "{0, plural, one {Drawn from # rating} other {Drawn from # ratings}} by {1, plural, one {# person} other {# people}}": {
     "sites": 1,
     "scope": [
@@ -344354,6 +344853,15 @@
       "routes/settings"
     ]
   },
+  "{0, plural, one {Last day} other {Last # days}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "{0, plural, one {Last invoice} other {Last # invoices}}": {
     "sites": 1,
     "scope": [
@@ -344624,6 +345132,15 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {Picked up in the last day} other {Picked up in the last # days}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "{0, plural, one {Post # approved carrier settlement to the ledger and queue it for the accounting system.} other {Post # approved carrier settlements to the ledger and queue each for the accounting system.}}": {
     "sites": 1,
     "scope": [
@@ -344794,6 +345311,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {Queued in the last day} other {Queued in the last # days}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "{0, plural, one {Ran # lookup} other {Ran # lookups}}": {
@@ -346570,6 +347096,24 @@
       "routes/agent-control"
     ]
   },
+  "{0} a day": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "{0} a day after {1, plural, one {# free day} other {# free days}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "{0} a load": {
     "sites": 1,
     "scope": [
@@ -346579,6 +347123,15 @@
       "routes/desk"
     ]
   },
+  "{0} a mile": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "{0} a settlement": {
     "sites": 1,
     "scope": [
@@ -346586,6 +347139,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0} a stop": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "{0} a stop after {1, plural, one {# free stop} other {# free stops}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "{0} accepted": {
@@ -346941,6 +347512,24 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "{0} an hour": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "{0} an hour after {1, plural, one {# free hour} other {# free hours}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "{0} and above": {
@@ -348591,6 +349180,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} dates": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "{0} days": {
@@ -353628,12 +354226,13 @@
     ]
   },
   "{0} lb": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/billing-queue",
       "routes/desk",
       "routes/edi",
       "routes/shipment",
@@ -353751,6 +354350,15 @@
       "routes/desk"
     ]
   },
+  "{0} loaded · {1} empty": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "{0} location": {
     "sites": 1,
     "scope": [
@@ -353797,7 +354405,7 @@
     ]
   },
   "{0} logo": {
-    "sites": 5,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -360087,6 +360695,15 @@
       "routes/settlement-batch"
     ]
   },
+  "{0} – {1} · rate agreement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "{0} – {1} · {2, plural, one {# timesheet} other {# timesheets}}.": {
     "sites": 1,
     "scope": [
@@ -360288,7 +360905,7 @@
     ]
   },
   "{0}% of line haul": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -361363,20 +361980,22 @@
     ]
   },
   "{0}h {1}m": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/desk"
     ]
   },
   "{0}m": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/desk",
       "routes/inbox",
       "routes/time-attendance"
@@ -361520,6 +362139,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0}°F to {1}°F": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "{0}× on canvas": {

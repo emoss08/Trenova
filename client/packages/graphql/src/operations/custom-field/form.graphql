@@ -1,0 +1,35 @@
+query CustomFieldFormFields($resourceType: String!) {
+  customFieldFormFields(resourceType: $resourceType) {
+    id
+    name
+    label
+    description
+    fieldType
+    isRequired
+    displayOrder
+    color
+    options {
+      value
+      label
+      color
+      description
+    }
+    validationRules {
+      minLength
+      maxLength
+      min
+      max
+      pattern
+    }
+    defaultValue
+    uiAttributes {
+      placeholder
+      helpText
+      width
+    }
+  }
+}
+
+query CustomFieldResourceTypes {
+  customFieldResourceTypes
+}

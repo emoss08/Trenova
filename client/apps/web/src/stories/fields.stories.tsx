@@ -54,6 +54,8 @@ type FieldStoryValues = {
 const fixedDate = Math.floor(new Date("2026-05-25T12:00:00Z").getTime() / 1000);
 const fixedDateTime = Math.floor(new Date("2026-05-25T16:30:00Z").getTime() / 1000);
 
+const driverSelectOptions = { resource: "WORKER" } as const;
+
 const driverOptions: DriverOption[] = [
   { id: "drv-001", name: "Ada Lovelace", status: "Available" },
   { id: "drv-002", name: "Grace Hopper", status: "Assigned" },
@@ -184,9 +186,7 @@ function DriverOptionRow(option: DriverOption) {
   return (
     <div className="flex w-full items-center justify-between gap-2">
       <span>{option.name}</span>
-      <Badge variant={option.status === "Available" ? "success" : "neutral"}>
-        {option.status}
-      </Badge>
+      <Badge variant={option.status === "Available" ? "success" : "neutral"}>{option.status}</Badge>
     </div>
   );
 }
@@ -279,7 +279,7 @@ function FieldsCatalog({
                   name="multiValues"
                   label="Drivers"
                   description="Async multi-select with fetched options."
-                  link="/storybook/drivers/"
+                  graphql={driverSelectOptions}
                   preload
                   placeholder="Select drivers"
                   getDisplayValue={(option) => option.name}

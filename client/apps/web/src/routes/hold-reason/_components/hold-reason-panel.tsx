@@ -10,9 +10,9 @@ import {
   useEditPanelActionPreference,
   type EditPanelSaveAction,
 } from "@/hooks/use-panel-action-preference";
-import { api } from "@trenova/shared/lib/api";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
+import { apiService } from "@/services/api";
 import { holdReasonSchema, type HoldReason } from "@/types/hold-reason";
 import { TimeFormat } from "@trenova/shared/types/user";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -60,10 +60,13 @@ export function HoldReasonPanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/hold-reasons/"
       queryKey="hold-reason-list"
       title={t("Hold reason")}
       formComponent={<HoldReasonForm />}
+      mutationFn={async (values) => {
+        await apiService.holdReasonService.create(values);
+        return values;
+      }}
     />
   );
 }
@@ -106,8 +109,12 @@ function HoldReasonEditPanel({ open, onOpenChange, row, form }: HoldReasonEditPa
 
   const { mutateAsync } = useApiMutation<HoldReason, EditSubmitPayload, unknown, HoldReason>({
     mutationFn: async ({ values }) => {
-      const response = await api.put<HoldReason>(`/hold-reasons/${row?.id}/`, values);
-      return response;
+      if (!row?.id) {
+        throw new Error("No Hold Reason ID selected");
+      }
+
+      await apiService.holdReasonService.update(row.id, values);
+      return values;
     },
     onMutate: async (newValues) => {
       await queryClient.cancelQueries({

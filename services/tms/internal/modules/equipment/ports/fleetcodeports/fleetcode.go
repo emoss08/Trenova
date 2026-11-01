@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -27,6 +28,12 @@ type GetFleetCodeByIDRequest struct {
 type GetFleetCodesByIDsRequest struct {
 	TenantInfo   pagination.TenantInfo `json:"-"`
 	FleetCodeIDs []pulid.ID            `json:"fleetCodeIds"`
+}
+
+type BulkUpdateFleetCodeStatusRequest struct {
+	TenantInfo   pagination.TenantInfo `json:"-"`
+	FleetCodeIDs []pulid.ID            `json:"fleetCodeIds"`
+	Status       domaintypes.Status    `json:"status"`
 }
 
 type FleetCodeRepository interface {
@@ -54,6 +61,10 @@ type FleetCodeRepository interface {
 		ctx context.Context,
 		entity *fleetcode.FleetCode,
 	) (*fleetcode.FleetCode, error)
+	BulkUpdateStatus(
+		ctx context.Context,
+		req *BulkUpdateFleetCodeStatusRequest,
+	) ([]*fleetcode.FleetCode, error)
 	SelectOptions(
 		ctx context.Context,
 		req *pagination.SelectQueryRequest,

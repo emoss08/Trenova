@@ -1,13 +1,10 @@
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
-import { ApiRequestError, api } from "@trenova/shared/lib/api";
-import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import {
   fetchGraphQLSelectedOption,
   selectOptionFiltersFromSearchParams,
   type GraphQLSelectOptionsConfig,
 } from "@/lib/graphql/select-options";
 import { cn } from "@trenova/shared/lib/utils";
-import type { API_ENDPOINTS, SELECT_OPTIONS_ENDPOINTS } from "@trenova/shared/types/server";
 import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useFieldValueFormat } from "@trenova/shared/lib/form-field-registry";
@@ -15,142 +12,8 @@ import React, { useCallback, useId, useMemo, useState } from "react";
 import type { Control, Path, RegisterOptions } from "react-hook-form";
 import { Controller, type FieldValues } from "react-hook-form";
 import { FieldWrapper, type FieldLayout } from "../field-components";
-import { AutocompleteCommandContent, MISSING_OPTION_SOURCE_ERROR } from "./autocomplete-content";
+import { AutocompleteCommandContent } from "./autocomplete-content";
 import { AutocompleteTrigger } from "./autocomplete-input";
-
-const optionRequestQueueByLink = new Map<string, Promise<void>>();
-let optionRequestSequence = 0;
-
-function logOptionRequestDebug(event: string, details: Record<string, unknown>) {
-  if (!import.meta.env.DEV) return;
-  console.debug("[AutocompleteOption]", event, details);
-}
-
-async function fetchOptionQueued<T>(
-  endpoint: string,
-  link: string,
-  signal: AbortSignal | undefined,
-): Promise<T> {
-  const previousRequest = optionRequestQueueByLink.get(link) ?? Promise.resolve();
-  const requestId = ++optionRequestSequence;
-  const queuedAt = Date.now();
-
-  let releaseQueue!: () => void;
-  const currentRequest = new Promise<void>((resolve) => {
-    releaseQueue = resolve;
-  });
-
-  optionRequestQueueByLink.set(
-    link,
-    previousRequest.then(() => currentRequest),
-  );
-
-  logOptionRequestDebug("queued", { requestId, link, endpoint });
-
-  await previousRequest;
-  const startedAt = Date.now();
-  logOptionRequestDebug("started", {
-    requestId,
-    link,
-    endpoint,
-    queuedMs: startedAt - queuedAt,
-  });
-
-  try {
-    const option = await api.get<T>(endpoint, { signal });
-    logOptionRequestDebug("response", {
-      requestId,
-      link,
-      endpoint,
-      durationMs: Date.now() - startedAt,
-    });
-    return option;
-  } catch (error) {
-    logOptionRequestDebug("failed", {
-      requestId,
-      link,
-      endpoint,
-      durationMs: Date.now() - startedAt,
-      status: error instanceof ApiRequestError ? error.status : null,
-      isAbortError: error instanceof DOMException && error.name === "AbortError",
-      error: error instanceof Error ? { name: error.name, message: error.message } : String(error),
-    });
-    throw error;
-  } finally {
-    releaseQueue();
-    logOptionRequestDebug("finished", {
-      requestId,
-      link,
-      endpoint,
-      totalMs: Date.now() - queuedAt,
-    });
-    if (optionRequestQueueByLink.get(link) === currentRequest) {
-      optionRequestQueueByLink.delete(link);
-    }
-  }
-}
-
-type SelectedValueLookupCandidate = {
-  lookupLink: string;
-  /** The path `api.get` takes. */
-  endpoint: string;
-  /** The full address, for logs and tests. */
-  url: string;
-};
-
-function getFallbackLookupLink(link: string): API_ENDPOINTS | null {
-  if (!link.endsWith("select-options/")) {
-    return null;
-  }
-  return link.replace("select-options/", "") as API_ENDPOINTS;
-}
-
-function appendSelectedValueLookupCandidate(
-  candidates: SelectedValueLookupCandidate[],
-  seenEndpoints: Set<string>,
-  lookupLink: string,
-  value: string,
-) {
-  const endpoint = `${lookupLink}${value}`;
-  for (const candidate of endpoint.endsWith("/") ? [endpoint] : [endpoint, `${endpoint}/`]) {
-    if (seenEndpoints.has(candidate)) continue;
-    seenEndpoints.add(candidate);
-    candidates.push({
-      lookupLink,
-      endpoint: candidate,
-      url: new URL(`${API_BASE_URL}${candidate}`, window.location.origin).href,
-    });
-  }
-}
-
-export function buildSelectedValueLookupCandidates(
-  lookupLink: string,
-  value: string,
-): SelectedValueLookupCandidate[] {
-  const candidates: SelectedValueLookupCandidate[] = [];
-  const seenEndpoints = new Set<string>();
-
-  appendSelectedValueLookupCandidate(candidates, seenEndpoints, lookupLink, value);
-
-  const fallbackLookupLink = getFallbackLookupLink(lookupLink);
-  if (fallbackLookupLink) {
-    appendSelectedValueLookupCandidate(candidates, seenEndpoints, fallbackLookupLink, value);
-  }
-
-  return candidates;
-}
-
-/**
- * Whether a failed lookup may try the record's next route. Only a route that does not exist
- * here (404, 405) or a dropped connection says the next one might answer; a refusal (401,
- * 403), a server error or a cancelled request means it will not.
- */
-function canTryNextCandidate(error: unknown): boolean {
-  if (error instanceof ApiRequestError) {
-    return error.status === 404 || error.status === 405;
-  }
-  return !(error instanceof DOMException && error.name === "AbortError");
-}
 
 export interface AutocompleteFormControlProps<T extends FieldValues> {
   name: Path<T>;
@@ -163,17 +26,8 @@ export interface BaseAutocompleteFieldProps<
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _TForm extends FieldValues,
 > {
-  /**
-   * Link to fetch options over REST. Optional only because a select-option
-   * resource that exists solely behind GraphQL has no REST route to name; every
-   * picker must pass either this or `graphql`, or the queries throw
-   * MISSING_OPTION_SOURCE_ERROR.
-   */
-  link?: SELECT_OPTIONS_ENDPOINTS;
-  /** Optional GraphQL select-options resource. REST link remains the compatibility fallback. */
-  graphql?: GraphQLSelectOptionsConfig;
-  /** Optional link to fetch selected value details by id */
-  selectedValueLink?: API_ENDPOINTS;
+  /** The GraphQL select-options resource the picker searches and names its value from. */
+  graphql: GraphQLSelectOptionsConfig;
   /** Preload all data ahead of time */
   preload?: boolean;
   /** Function to filter options */
@@ -221,6 +75,11 @@ export interface BaseAutocompleteFieldProps<
 
   /** Initial limit for the query */
   initialLimit?: number;
+  /**
+   * Lets the person pick what they typed when no option has that value: the
+   * option this returns is offered as "Use …" and selected like any other.
+   */
+  createOption?: (text: string) => TOption;
 }
 
 export type AutocompleteFieldProps<TOption, TForm extends FieldValues> = Omit<
@@ -233,9 +92,7 @@ export type AutocompleteFieldProps<TOption, TForm extends FieldValues> = Omit<
   };
 
 type SelectedOptionSource = {
-  link?: SELECT_OPTIONS_ENDPOINTS;
-  valueLookupLink?: SELECT_OPTIONS_ENDPOINTS | API_ENDPOINTS;
-  graphql?: GraphQLSelectOptionsConfig;
+  graphql: GraphQLSelectOptionsConfig;
   filters?: Record<string, unknown>;
 };
 
@@ -247,46 +104,16 @@ function selectedOptionQuery<TOption>(source: SelectedOptionSource, value: strin
   return queryOptions({
     queryKey: [
       "autocomplete-option",
-      source.link,
-      source.valueLookupLink,
       value,
-      source.graphql,
-      source.graphql?.resource,
+      source.graphql.resource,
+      source.graphql.filters,
       source.filters,
     ],
     queryFn: async ({ signal }): Promise<TOption | null> => {
       if (!value) return null;
-      if (source.graphql) {
-        return (await fetchGraphQLSelectedOption(source.graphql.resource, value, source.filters, {
-          signal,
-        })) as TOption | null;
-      }
-
-      if (!source.valueLookupLink) {
-        throw new Error(MISSING_OPTION_SOURCE_ERROR);
-      }
-
-      const candidates = buildSelectedValueLookupCandidates(source.valueLookupLink, value);
-
-      for (const [index, candidate] of candidates.entries()) {
-        try {
-          return await fetchOptionQueued<TOption>(candidate.endpoint, candidate.lookupLink, signal);
-        } catch (error) {
-          const nextCandidate = candidates[index + 1];
-          if (!nextCandidate || !canTryNextCandidate(error)) {
-            throw error;
-          }
-          logOptionRequestDebug("fallback_retry", {
-            value,
-            primaryLink: candidate.lookupLink,
-            primaryEndpoint: candidate.endpoint,
-            fallbackLink: nextCandidate.lookupLink,
-            fallbackEndpoint: nextCandidate.endpoint,
-          });
-        }
-      }
-
-      return null;
+      return (await fetchGraphQLSelectedOption(source.graphql.resource, value, source.filters, {
+        signal,
+      })) as TOption | null;
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -314,8 +141,6 @@ function RecordName<TOption>({
 }
 
 export function Autocomplete<TOption, TForm extends FieldValues>({
-  link,
-  selectedValueLink,
   preload = false,
   renderOption,
   getOptionValue,
@@ -338,6 +163,7 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
   popoutLink,
   initialLimit,
   filterOption,
+  createOption,
 }: BaseAutocompleteFieldProps<TOption, TForm>) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -347,13 +173,12 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
     value: string;
   } | null>(null);
 
-  const valueLookupLink = selectedValueLink ?? link;
   const graphQLFilters = useMemo(
     () => ({
       ...selectOptionFiltersFromSearchParams(extraSearchParams),
-      ...graphql?.filters,
+      ...graphql.filters,
     }),
-    [extraSearchParams, graphql?.filters],
+    [extraSearchParams, graphql.filters],
   );
   const normalizedGraphQLFilters = useMemo(
     () => (Object.keys(graphQLFilters).length > 0 ? graphQLFilters : undefined),
@@ -361,8 +186,8 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
   );
 
   const optionSource = useMemo<SelectedOptionSource>(
-    () => ({ link, valueLookupLink, graphql, filters: normalizedGraphQLFilters }),
-    [link, valueLookupLink, graphql, normalizedGraphQLFilters],
+    () => ({ graphql, filters: normalizedGraphQLFilters }),
+    [graphql, normalizedGraphQLFilters],
   );
 
   const getOptionQueryKey = useCallback(
@@ -379,12 +204,8 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
     enabled: !!value && (!userSelectedOptionState || userSelectedOptionState.value !== value),
   });
 
-  const canLookUp = Boolean(optionSource.graphql || optionSource.valueLookupLink);
   useFieldValueFormat((optionValue) =>
-    !canLookUp ||
-    optionValue === null ||
-    optionValue === undefined ||
-    optionValue === "" ? undefined : (
+    optionValue === null || optionValue === undefined || optionValue === "" ? undefined : (
       <RecordName
         query={selectedOptionQuery<TOption>(optionSource, String(optionValue))}
         getDisplayValue={getDisplayValue}
@@ -474,7 +295,6 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
         >
           <AutocompleteCommandContent
             open={open}
-            link={link}
             preload={preload}
             label={label}
             getOptionValue={getOptionValue}
@@ -493,6 +313,7 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
             popoutLink={popoutLink}
             listboxId={listboxId}
             filterOption={filterOption}
+            createOption={createOption}
             onClear={() => {
               setUserSelectedOptionState(null);
               if (onOptionChange) {
@@ -512,7 +333,6 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
   control,
   rules,
   className,
-  link,
   preload,
   renderOption,
   description,
@@ -525,7 +345,6 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
   placeholder,
   initialLimit,
   filterOption,
-  selectedValueLink,
   layout,
   ...props
 }: AutocompleteFieldProps<TOption, TForm>) {
@@ -546,7 +365,6 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
             layout={layout}
           >
             <Autocomplete<TOption, TForm>
-              link={link}
               preload={preload}
               renderOption={renderOption}
               getOptionValue={getOptionValue}
@@ -557,7 +375,6 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
               graphql={graphql}
               label={label}
               initialLimit={initialLimit}
-              selectedValueLink={selectedValueLink}
               filterOption={filterOption}
               placeholder={placeholder}
               value={field.value}

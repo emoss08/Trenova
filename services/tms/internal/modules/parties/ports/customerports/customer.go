@@ -39,6 +39,22 @@ type GetCustomerBillingProfileRequest struct {
 	TenantInfo pagination.TenantInfo
 }
 
+const MaxShipmentBillingRulesCustomers = 50
+
+type GetShipmentBillingRulesRequest struct {
+	TenantInfo  pagination.TenantInfo
+	CustomerIDs []pulid.ID
+}
+
+type ShipmentBillingRules struct {
+	CustomerID          pulid.ID              `json:"customerId"`
+	BOLRequired         bool                  `json:"bolRequired"`
+	CreditStatus        customer.CreditStatus `json:"creditStatus"`
+	CreditHoldReason    string                `json:"creditHoldReason"`
+	EnforceCreditLimit  bool                  `json:"enforceCreditLimit"`
+	CreditHoldAutomatic bool                  `json:"creditHoldAutomatic"`
+}
+
 type BulkUpdateCustomerStatusRequest struct {
 	TenantInfo  pagination.TenantInfo `json:"-"`
 	CustomerIDs []pulid.ID            `json:"customerIds"`
@@ -200,6 +216,10 @@ type CustomerRepository interface {
 		ctx context.Context,
 		req GetCustomerBillingProfileRequest,
 	) (*customer.CustomerBillingProfile, error)
+	GetShipmentBillingProfiles(
+		ctx context.Context,
+		req GetShipmentBillingRulesRequest,
+	) ([]*customer.CustomerBillingProfile, error)
 	Create(
 		ctx context.Context,
 		entity *customer.Customer,

@@ -7,11 +7,17 @@ import {
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
-export function AccountingCompanyFacts({ connection }: { connection: AccountingConnection }) {
+export function AccountingCompanyFacts({
+  connection,
+  columns = 2,
+}: {
+  connection: AccountingConnection;
+  columns?: 1 | 2;
+}) {
   const t = useT();
 
   return (
-    <DescriptionList columns={2}>
+    <DescriptionList columns={columns}>
       <DescriptionItem label={t("Company")}>
         {connection.externalCompanyName || <DescriptionEmpty />}
       </DescriptionItem>

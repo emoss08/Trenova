@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
@@ -59,10 +58,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.DELETE("/constraints/:constraintID", require(permission.OpUpdate), h.deleteConstraint)
 	api.GET("/preflight", require(permission.OpRead), h.preflight)
 
-	selectOptions := api.Group("/select-options", responseguard.References())
-	selectOptions.GET("/", require(permission.OpRead), h.selectOptions)
-	selectOptions.GET("/:roleID", require(permission.OpRead), h.getOption)
-
 	api.DELETE(
 		"/assignments/:assignmentID",
 		h.requireUserPermission(permission.OpUnassign),
@@ -74,7 +69,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.DELETE("/:roleID", require(permission.OpDelete), h.delete)
 	api.GET("/:roleID/impact", require(permission.OpRead), h.getImpact)
 
-	api.POST("/:roleID/permissions", require(permission.OpUpdate), h.addPermission)
 	api.PUT("/:roleID/permissions/:permID", require(permission.OpUpdate), h.updatePermission)
 	api.DELETE("/:roleID/permissions/:permID", require(permission.OpUpdate), h.deletePermission)
 
@@ -161,47 +155,6 @@ func (h *Handler) get(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusOK, role)
-}
-
-// @Summary Get a role option
-// @ID getRoleOption
-// @Tags Roles
-// @Produce json
-// @Param roleID path string true "Role ID"
-// @Success 200 {object} rbac.Role
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /roles/select-options/{roleID} [get]
-func (h *Handler) getOption(c *gin.Context) {
-	h.get(c)
-}
-
-// @Summary List role options
-// @ID listRoleOptions
-// @Tags Roles
-// @Produce json
-// @Param query query string false "Search query"
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]rbac.Role]
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /roles/select-options/ [get]
-func (h *Handler) selectOptions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewSelectQueryRequest(c, authCtx)
-
-	pagination.SelectOptions(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*rbac.Role], error) {
-			return h.service.SelectRoleOptions(c.Request.Context(), req)
-		},
-	)
 }
 
 // @Summary Create a role
@@ -503,55 +456,6 @@ func (h *Handler) preflight(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusOK, report)
-}
-
-// @Summary Add a role permission
-// @ID addRolePermission
-// @Tags Roles
-// @Accept json
-// @Produce json
-// @Param roleID path string true "Role ID"
-// @Param request body AddPermissionRequest true "Permission payload"
-// @Success 201 {object} rbac.ResourcePermission
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /roles/{roleID}/permissions [post]
-func (h *Handler) addPermission(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	roleID, err := pulid.MustParse(c.Param("roleID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	var req AddPermissionRequest
-	if err = c.ShouldBindJSON(&req); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	rp := &rbac.ResourcePermission{
-		RoleID:     roleID,
-		Resource:   req.Resource,
-		Operations: req.Operations,
-		DataScope:  req.DataScope,
-	}
-
-	err = h.service.CreateResourcePermission(
-		c.Request.Context(),
-		authCtx.UserID,
-		authCtx.OrganizationID,
-		rp,
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusCreated, rp)
 }
 
 // @Summary Update a role permission

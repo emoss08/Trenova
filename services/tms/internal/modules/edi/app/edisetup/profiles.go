@@ -18,21 +18,6 @@ import (
 	"github.com/emoss08/trenova/shared/smime"
 )
 
-func (s *Service) ListCommunicationProfiles(
-	ctx context.Context,
-	req *edipartnerports.ListEDICommunicationProfilesRequest,
-) (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
-	result, err := s.profileRepo.ListProfiles(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	for idx := range result.Items {
-		result.Items[idx] = ediprofilesecret.WithSecretState(result.Items[idx])
-	}
-	return result, nil
-}
-
 func (s *Service) SelectCommunicationProfileOptions(
 	ctx context.Context,
 	req *edipartnerports.EDICommunicationProfileSelectOptionsRequest,
@@ -46,18 +31,6 @@ func (s *Service) SelectCommunicationProfileOptions(
 		result.Items[idx] = ediprofilesecret.WithSecretState(result.Items[idx])
 	}
 	return result, nil
-}
-
-func (s *Service) GetCommunicationProfile(
-	ctx context.Context,
-	req edipartnerports.GetEDICommunicationProfileByIDRequest,
-) (*edi.EDICommunicationProfile, error) {
-	profile, err := s.profileRepo.GetProfileByID(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return ediprofilesecret.WithSecretState(profile), nil
 }
 
 func (s *Service) GetCommunicationProfilesByIDs(

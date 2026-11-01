@@ -51,9 +51,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/ai-providers")
 	resource := permission.ResourceAIProvider.String()
 
-	api.GET("/", h.pm.RequirePermission(resource, permission.OpRead), h.list)
 	api.GET("/catalog/", h.pm.RequirePermission(resource, permission.OpRead), h.catalog)
-	api.GET("/:providerID/", h.pm.RequirePermission(resource, permission.OpRead), h.get)
 	api.POST("/", h.pm.RequirePermission(resource, permission.OpCreate), h.create)
 	api.PUT("/:providerID/", h.pm.RequirePermission(resource, permission.OpUpdate), h.update)
 	api.DELETE("/:providerID/", h.pm.RequirePermission(resource, permission.OpDelete), h.remove)
@@ -76,47 +74,6 @@ func tenantFromAuthContext(authCtx *authctx.AuthContext) pagination.TenantInfo {
 		OrgID: authCtx.OrganizationID,
 		BuID:  authCtx.BusinessUnitID,
 	}
-}
-
-func (h *Handler) list(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewQueryOptions(c, authCtx)
-
-	pagination.List(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*aiprovider.Provider], error) {
-			return h.service.List(
-				c.Request.Context(),
-				&aiproviderports.ListAIProviderRequest{Filter: req},
-			)
-		},
-	)
-}
-
-func (h *Handler) get(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	providerID, err := pulid.Parse(c.Param("providerID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	provider, err := h.service.GetByID(
-		c.Request.Context(),
-		aiproviderports.GetAIProviderByIDRequest{
-			ID:         providerID,
-			TenantInfo: tenantFromAuthContext(authCtx),
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, provider)
 }
 
 // saveProviderRequest mirrors the service request. APIKey is a pointer so an

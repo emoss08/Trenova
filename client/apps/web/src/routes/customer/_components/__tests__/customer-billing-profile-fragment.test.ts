@@ -75,3 +75,31 @@ describe("CustomerBillingProfileFields fragment", () => {
     }
   });
 });
+
+const CUSTOMER_FORM = join(import.meta.dirname, "..", "customer-form.tsx");
+
+function selectedCustomerRowFields(): Set<string> {
+  const source = readFileSync(FRAGMENT, "utf8");
+  const start = source.indexOf("fragment CustomerTableRowFields");
+  expect(start).toBeGreaterThanOrEqual(0);
+
+  const block = source.slice(start, source.indexOf("\n}", start));
+  return new Set([...block.matchAll(/^ {2}(\w+)/gm)].map((match) => match[1]));
+}
+
+function boundCustomerFields(): string[] {
+  const source = readFileSync(CUSTOMER_FORM, "utf8");
+  return [...new Set([...source.matchAll(/name="(\w+)"/g)].map((m) => m[1]))].sort();
+}
+
+// The update mutation writes every field the form holds, so a field the row does not
+// select would be saved back empty. Broker vetting, DOT and MC numbers and the
+// tracking thresholds were cleared on every edit this way.
+describe("CustomerTableRowFields fragment", () => {
+  it("selects every top-level field the customer form binds", () => {
+    const selected = selectedCustomerRowFields();
+    const missing = boundCustomerFields().filter((field) => !selected.has(field));
+
+    expect(missing).toEqual([]);
+  });
+});

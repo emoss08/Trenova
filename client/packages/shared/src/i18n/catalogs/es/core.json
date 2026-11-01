@@ -1474,6 +1474,7 @@
   "You don't have access to this": "No tiene acceso a esto",
   "You don't have access to {0}": "No tienes acceso a {0}",
   "You haven't been active for a while. To keep your account secure, you will be signed out when the timer runs out, and anything you haven't saved will be lost.": "Lleva un tiempo sin actividad. Para mantener segura su cuenta, su sesión se cerrará cuando termine el temporizador y se perderá todo lo que no haya guardado.",
+  "You signed out in another tab. Sign in again to continue.": "Cerró sesión en otra pestaña. Vuelva a iniciar sesión para continuar.",
   "You were signed out after a period of inactivity. Sign in again to continue.": "Se cerró su sesión tras un periodo de inactividad. Inicie sesión de nuevo para continuar.",
   "You're offline": "No tiene conexión",
   "You've reached the request limit for now. Wait a few seconds, then try again.": "Alcanzó el límite de solicitudes por ahora. Espere unos segundos y vuelva a intentarlo.",

@@ -12,13 +12,13 @@
 #   pending: <what the tool would do>   no tool yet; counted, never failed
 writes:
   # accessorialcharge
-  "PATCH /api/v1/accessorial-charges/:accessorialChargeID/":
+  "mutation createAccessorialCharge":
     exempt: configuration
     reason: "The accessorial charge catalog is a price list an administrator maintains; charges on a shipment use it."
-  "POST /api/v1/accessorial-charges/":
+  "mutation patchAccessorialCharge":
     exempt: configuration
     reason: "The accessorial charge catalog is a price list an administrator maintains; charges on a shipment use it."
-  "PUT /api/v1/accessorial-charges/:accessorialChargeID/":
+  "mutation updateAccessorialCharge":
     exempt: configuration
     reason: "The accessorial charge catalog is a price list an administrator maintains; charges on a shipment use it."
 
@@ -114,16 +114,16 @@ writes:
     reason: "An inbound webhook a provider calls with a signed token, not a person."
 
   # accounttype
-  "PATCH /api/v1/account-types/:accountTypeID/":
+  "mutation bulkUpdateAccountTypeStatus":
     exempt: configuration
     reason: "The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them."
-  "POST /api/v1/account-types/":
+  "mutation createAccountType":
     exempt: configuration
     reason: "The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them."
-  "POST /api/v1/account-types/bulk-update-status/":
+  "mutation patchAccountType":
     exempt: configuration
     reason: "The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them."
-  "PUT /api/v1/account-types/:accountTypeID/":
+  "mutation updateAccountType":
     exempt: configuration
     reason: "The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them."
 
@@ -421,6 +421,12 @@ writes:
   "POST /api/v1/assistant/ask/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "DELETE /api/v1/assistant/ask/:askID/":
+    exempt: agent-administration
+    reason: "Stops a question a person typed into the command palette; it is that person's own conversation with Nova, not work an agent does."
+  "POST /api/v1/assistant/ask/:askID/keep/":
+    exempt: agent-administration
+    reason: "Keeps a palette answer as a Desk conversation for the person who asked; an agent has no palette question of its own to keep."
   "POST /api/v1/assistant/schedules/:scheduleID/run/":
     exempt: agent-administration
     reason: "Editing, pausing, deleting or running a schedule now is the person arranging what they asked an agent to repeat; an agent only proposes a new schedule, through agent_create_schedule, and a person approves it, so it never sets its own workload."
@@ -518,9 +524,6 @@ writes:
   "POST /api/v1/auth/session/roles/activate":
     exempt: security
     reason: "Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own."
-  "POST /api/v1/auth/validate-session":
-    exempt: security
-    reason: "Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own."
 
   # bankreceipt
   "POST /api/v1/accounting/bank-receipts/":
@@ -583,8 +586,6 @@ writes:
   "POST /api/v1/billing-queue/search-intent/":
     exempt: read-only
     reason: "Turns a sentence into filters for the queue screen and changes nothing."
-  "POST /api/v1/billing-queue/transfer/":
-    tools: [billing_transfer]
   "PUT /api/v1/billing-queue/:itemID/charges/":
     tools: [billing_correct_charge_codes]
   "PUT /api/v1/billing-queue/:itemID/invoice-details/":
@@ -828,13 +829,13 @@ writes:
     tools: [receivable_send_statement]
 
   # commodity
-  "PATCH /api/v1/commodities/:commodityID/":
-    tools: [masterdata_update_commodity]
-  "POST /api/v1/commodities/":
-    tools: [masterdata_create_commodity]
-  "POST /api/v1/commodities/bulk-update-status/":
+  "mutation bulkUpdateCommodityStatus":
     tools: [masterdata_set_commodity_status]
-  "PUT /api/v1/commodities/:commodityID/":
+  "mutation createCommodity":
+    tools: [masterdata_create_commodity]
+  "mutation patchCommodity":
+    tools: [masterdata_update_commodity]
+  "mutation updateCommodity":
     tools: [masterdata_update_commodity]
 
   # costing
@@ -846,13 +847,13 @@ writes:
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
 
   # customer
-  "PATCH /api/v1/customers/:customerID/":
-    tools: [customer_update]
-  "POST /api/v1/customers/":
-    tools: [customer_create]
-  "POST /api/v1/customers/bulk-update-status/":
+  "mutation bulkUpdateCustomerStatus":
     tools: [customer_set_status]
-  "PUT /api/v1/customers/:customerID/":
+  "mutation createCustomer":
+    tools: [customer_create]
+  "mutation patchCustomer":
+    tools: [customer_update]
+  "mutation updateCustomer":
     tools: [customer_update]
 
   # customerpayment
@@ -936,11 +937,6 @@ writes:
   "mutation waiveDetentionOccurrence":
     tools: [detention_waive]
 
-  # detentionpolicy
-  "POST /api/v1/detention-policies/preview/":
-    exempt: read-only
-    reason: "Previews how a detention policy would apply and saves nothing."
-
   # dispatchconsole
   "mutation dispatchAssignMoveToCarrier":
     tools: [dispatch_create_carrier_assignment]
@@ -961,9 +957,6 @@ writes:
 
   # distancecontrol
   "PATCH /api/v1/distance-controls/":
-    exempt: configuration
-    reason: "An organization-wide control an administrator sets once; every later write depends on it."
-  "PUT /api/v1/distance-controls/":
     exempt: configuration
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
 
@@ -1043,9 +1036,6 @@ writes:
   "POST /api/v1/documents/uploads/:uploadSessionID/parts/":
     exempt: infrastructure
     reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
-  "PUT /api/v1/documents/uploads/:uploadSessionID/parts/:partNumber/":
-    exempt: infrastructure
-    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
 
   # documentcontrol
   "PUT /api/v1/document-controls/":
@@ -1102,13 +1092,10 @@ writes:
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
 
   # documenttype
-  "PATCH /api/v1/document-types/:docTypeID/":
+  "mutation createDocumentType":
     exempt: configuration
     reason: "A lookup list every record points at, maintained by an administrator."
-  "POST /api/v1/document-types/":
-    exempt: configuration
-    reason: "A lookup list every record points at, maintained by an administrator."
-  "PUT /api/v1/document-types/:docTypeID/":
+  "mutation updateDocumentType":
     exempt: configuration
     reason: "A lookup list every record points at, maintained by an administrator."
 
@@ -1315,9 +1302,6 @@ writes:
   "POST /api/v1/edi/connections/:connectionID/suspend/":
     exempt: configuration
     reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
-  "POST /api/v1/edi/control-numbers/reset/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
   "POST /api/v1/edi/documents/generate/":
     tools: [edi_send_status_update]
   "POST /api/v1/edi/documents/preview/":
@@ -1377,10 +1361,6 @@ writes:
   "POST /api/v1/edi/partners/internal-pairs/":
     exempt: configuration
     reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
-  "POST /api/v1/edi/tender-changes/:changeID/apply/":
-    tools: [edi_review_tender_change]
-  "POST /api/v1/edi/tender-changes/:changeID/reject/":
-    tools: [edi_review_tender_change]
   "POST /api/v1/edi/transfer-changes/:changeID/apply/":
     tools: [edi_review_transfer_change]
   "POST /api/v1/edi/transfer-changes/:changeID/reject/":
@@ -1504,18 +1484,6 @@ writes:
     reason: "Choosing which AI provider shadows document extraction, and how much it is sent, is oversight of the agents; an agent must not pick or tune the model it is measured against."
 
   # fiscalperiod
-  "DELETE /api/v1/fiscal-periods/:fiscalPeriodID/":
-    exempt: configuration
-    reason: "The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work."
-  "PATCH /api/v1/fiscal-periods/:fiscalPeriodID/":
-    exempt: configuration
-    reason: "The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work."
-  "POST /api/v1/fiscal-periods/":
-    exempt: configuration
-    reason: "The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work."
-  "PUT /api/v1/fiscal-periods/:fiscalPeriodID/":
-    exempt: configuration
-    reason: "The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work."
   "PUT /api/v1/fiscal-periods/:fiscalPeriodID/activate/":
     tools: [ledger_open_fiscal_period]
   "PUT /api/v1/fiscal-periods/:fiscalPeriodID/close/":
@@ -1528,12 +1496,6 @@ writes:
     tools: [ledger_unlock_fiscal_period]
 
   # fiscalyear
-  "DELETE /api/v1/fiscal-years/:fiscalYearID/":
-    exempt: configuration
-    reason: "The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from."
-  "PATCH /api/v1/fiscal-years/:fiscalYearID/":
-    exempt: configuration
-    reason: "The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from."
   "POST /api/v1/fiscal-years/":
     exempt: configuration
     reason: "The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from."
@@ -1551,13 +1513,16 @@ writes:
     reason: "Reverses the year's closing entries and withdraws the year-end sign-off, which only the person accountable for the books does."
 
   # fleetcode
-  "PATCH /api/v1/fleet-codes/:fleetCodeID":
+  "mutation bulkUpdateFleetCodeStatus":
     exempt: configuration
     reason: "A lookup list every record points at, maintained by an administrator."
-  "POST /api/v1/fleet-codes/":
+  "mutation createFleetCode":
     exempt: configuration
     reason: "A lookup list every record points at, maintained by an administrator."
-  "PUT /api/v1/fleet-codes/:fleetCodeID":
+  "mutation patchFleetCode":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "mutation updateFleetCode":
     exempt: configuration
     reason: "A lookup list every record points at, maintained by an administrator."
 
@@ -1602,9 +1567,6 @@ writes:
     reason: "Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them."
 
   # formulatemplate
-  "PATCH /api/v1/formula-templates/:templateID/":
-    exempt: configuration
-    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
   "PATCH /api/v1/formula-templates/:templateID/versions/:versionNumber/effective-date":
     exempt: configuration
     reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
@@ -1745,23 +1707,6 @@ writes:
     exempt: configuration
     reason: "Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up."
 
-  # glaccount
-  "DELETE /api/v1/gl-accounts/:glAccountID/":
-    exempt: configuration
-    reason: "The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means."
-  "PATCH /api/v1/gl-accounts/:glAccountID/":
-    exempt: configuration
-    reason: "The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means."
-  "POST /api/v1/gl-accounts/":
-    exempt: configuration
-    reason: "The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means."
-  "POST /api/v1/gl-accounts/bulk-update-status/":
-    exempt: configuration
-    reason: "The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means."
-  "PUT /api/v1/gl-accounts/:glAccountID/":
-    exempt: configuration
-    reason: "The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means."
-
   # googlemaps
   "POST /api/v1/google-maps/autocomplete/":
     exempt: read-only
@@ -1773,23 +1718,20 @@ writes:
     reason: "The GraphQL transport; every mutation it carries is listed as its own write."
 
   # hazardousmaterial
-  "PATCH /api/v1/hazardous-materials/:hazardousMaterialID/":
-    tools: [masterdata_update_hazardous_material]
-  "POST /api/v1/hazardous-materials/":
-    tools: [masterdata_create_hazardous_material]
-  "POST /api/v1/hazardous-materials/bulk-update-status/":
+  "mutation bulkUpdateHazardousMaterialStatus":
     tools: [masterdata_set_hazardous_material_status]
-  "PUT /api/v1/hazardous-materials/:hazardousMaterialID/":
+  "mutation createHazardousMaterial":
+    tools: [masterdata_create_hazardous_material]
+  "mutation patchHazardousMaterial":
+    tools: [masterdata_update_hazardous_material]
+  "mutation updateHazardousMaterial":
     tools: [masterdata_update_hazardous_material]
 
   # hazmatsegregationrule
-  "PATCH /api/v1/hazmat-segregation-rules/:hazmatSegregationRuleID/":
+  "mutation createHazmatSegregationRule":
     exempt: configuration
     reason: "Hazmat segregation rules encode the regulation every load is checked against; an administrator maintains them."
-  "POST /api/v1/hazmat-segregation-rules/":
-    exempt: configuration
-    reason: "Hazmat segregation rules encode the regulation every load is checked against; an administrator maintains them."
-  "PUT /api/v1/hazmat-segregation-rules/:hazmatSegregationRuleID/":
+  "mutation updateHazmatSegregationRule":
     exempt: configuration
     reason: "Hazmat segregation rules encode the regulation every load is checked against; an administrator maintains them."
 
@@ -1862,13 +1804,10 @@ writes:
     reason: "A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator."
 
   # holdreason
-  "PATCH /api/v1/hold-reasons/:holdReasonID/":
+  "mutation createHoldReason":
     exempt: configuration
     reason: "A lookup list every record points at, maintained by an administrator."
-  "POST /api/v1/hold-reasons/":
-    exempt: configuration
-    reason: "A lookup list every record points at, maintained by an administrator."
-  "PUT /api/v1/hold-reasons/:holdReasonID/":
+  "mutation updateHoldReason":
     exempt: configuration
     reason: "A lookup list every record points at, maintained by an administrator."
 
@@ -2117,13 +2056,8 @@ writes:
     tools: [invoice_generate_pdf]
   "POST /api/v1/billing/invoices/:invoiceID/post/":
     tools: [invoice_post]
-  "POST /api/v1/billing/invoices/:invoiceID/preview/":
-    exempt: read-only
-    reason: "Renders an invoice for review and saves nothing."
   "POST /api/v1/billing/invoices/:invoiceID/send/":
     tools: [invoice_send]
-  "POST /api/v1/billing/invoices/from-order/":
-    tools: [invoice_create]
   "POST /api/v1/billing/invoices/from-shipments/":
     tools: [invoice_create]
   "mutation createInvoicesFromOrder":
@@ -2140,11 +2074,6 @@ writes:
   # invoiceadjustment
   "PATCH /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/":
     tools: [invoice_save_adjustment_draft]
-  "POST /api/v1/billing/invoice-adjustments/bulk-preview/":
-    exempt: read-only
-    reason: "Previews an invoice adjustment and saves nothing."
-  "POST /api/v1/billing/invoice-adjustments/bulk-submit/":
-    tools: [invoice_submit_adjustment]
   "POST /api/v1/billing/invoice-adjustments/drafts/":
     tools: [invoice_save_adjustment_draft]
   "POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/preview/":
@@ -2176,14 +2105,6 @@ writes:
     tools: [invoice_withdraw_dispute]
 
   # invoicerun
-  "PATCH /api/v1/billing/invoice-runs/:runID/membership/":
-    tools: [invoice_adjust_run]
-  "POST /api/v1/billing/invoice-runs/:runID/cancel/":
-    tools: [invoice_cancel_run]
-  "POST /api/v1/billing/invoice-runs/:runID/commit/":
-    tools: [invoice_commit_run]
-  "POST /api/v1/billing/invoice-runs/preview/":
-    tools: [invoice_build_run]
   "POST /api/v1/billing/statements/:customerID/bill/":
     tools: [invoice_bill_statement]
 
@@ -2244,17 +2165,12 @@ writes:
     tools: [location_create]
   "POST /api/v1/locations/bulk-update-status/":
     tools: [location_set_status]
-  "PUT /api/v1/locations/:locationID/":
-    tools: [location_update]
 
   # locationcategory
-  "PATCH /api/v1/location-categories/:locationCategoryID/":
+  "mutation createLocationCategory":
     exempt: configuration
     reason: "A lookup list every record points at, maintained by an administrator."
-  "POST /api/v1/location-categories/":
-    exempt: configuration
-    reason: "A lookup list every record points at, maintained by an administrator."
-  "PUT /api/v1/location-categories/:locationCategoryID/":
+  "mutation updateLocationCategory":
     exempt: configuration
     reason: "A lookup list every record points at, maintained by an administrator."
 
@@ -2462,8 +2378,6 @@ writes:
     tools: [rate_reject_agreement]
   "POST /api/v1/rate-agreements/:rateAgreementID/resume/":
     tools: [rate_resume_agreement]
-  "POST /api/v1/rate-agreements/:rateAgreementID/rules/amend/":
-    tools: [rate_amend_agreement_rules]
   "POST /api/v1/rate-agreements/:rateAgreementID/submit/":
     tools: [rate_submit_agreement]
   "POST /api/v1/rate-agreements/:rateAgreementID/suspend/":
@@ -2501,9 +2415,6 @@ writes:
     tools: [rate_discard_import]
 
   # ratematrix
-  "DELETE /api/v1/rate-matrices/:rateMatrixID/":
-    exempt: configuration
-    reason: "A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist."
   "POST /api/v1/rate-matrices/":
     exempt: configuration
     reason: "A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist."
@@ -2533,9 +2444,6 @@ writes:
     reason: "A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist."
 
   # ratequote
-  "POST /api/v1/rate-quotes/quote/":
-    exempt: read-only
-    reason: "Quotes a rate from the rating engine and saves nothing."
   "POST /api/v1/rate-quotes/shipment/:shipmentID/explain/":
     exempt: read-only
     reason: "Explains how a shipment was rated and saves nothing."
@@ -2548,9 +2456,6 @@ writes:
     tools: [rate_run_simulation]
 
   # ratezone
-  "DELETE /api/v1/rate-zones/:rateZoneID/":
-    exempt: configuration
-    reason: "Rate zones are the geography agreements price against, which an administrator defines once for every agreement."
   "POST /api/v1/rate-zones/":
     exempt: configuration
     reason: "Rate zones are the geography agreements price against, which an administrator defines once for every agreement."
@@ -2559,15 +2464,6 @@ writes:
     reason: "Rate zones are the geography agreements price against, which an administrator defines once for every agreement."
 
   # realtime
-  "DELETE /api/v1/shipments/:shipmentID/comments/presence/":
-    exempt: infrastructure
-    reason: "Presence and typing signals a browser sends while a person is on the page."
-  "POST /api/v1/shipments/:shipmentID/comments/presence/":
-    exempt: infrastructure
-    reason: "Presence and typing signals a browser sends while a person is on the page."
-  "POST /api/v1/shipments/:shipmentID/comments/typing/":
-    exempt: infrastructure
-    reason: "Presence and typing signals a browser sends while a person is on the page."
   "DELETE /api/v1/realtime/presence/:resource/":
     exempt: infrastructure
     reason: "Presence and typing signals a browser sends while a person is on the page."
@@ -2656,9 +2552,6 @@ writes:
   "POST /api/v1/roles/:roleID/assignments":
     exempt: security
     reason: "Grants or removes access. An agent that could change access could widen its own."
-  "POST /api/v1/roles/:roleID/permissions":
-    exempt: security
-    reason: "Grants or removes access. An agent that could change access could widen its own."
   "POST /api/v1/roles/constraints":
     exempt: security
     reason: "Grants or removes access. An agent that could change access could widen its own."
@@ -2718,14 +2611,11 @@ writes:
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
 
   # servicefailure
-  "PATCH /api/v1/service-failures/:serviceFailureID/":
-    tools: [exception_update_service_failure]
-  "POST /api/v1/service-failures/":
-    exempt: read-only
-    reason: "The service refuses every manual service failure: failures are opened only by evaluation against stop actuals, which exception_evaluate_service_failures runs, so the route changes nothing."
   "POST /api/v1/service-failures/:serviceFailureID/edi-214-payload/":
     exempt: read-only
     reason: "Builds the EDI 214 a service failure would send and returns it."
+  "PUT /api/v1/service-failures/:serviceFailureID/":
+    tools: [exception_update_service_failure]
   "POST /api/v1/service-failures/:serviceFailureID/resolve/":
     tools: [exception_resolve_service_failure]
   "POST /api/v1/service-failures/:serviceFailureID/review/":
@@ -2740,9 +2630,6 @@ writes:
     tools: [exception_evaluate_service_failures]
 
   # servicefailurereasoncode
-  "PATCH /api/v1/service-failure-reason-codes/:reasonCodeID/":
-    exempt: configuration
-    reason: "A lookup list every record points at, maintained by an administrator."
   "POST /api/v1/service-failure-reason-codes/":
     exempt: configuration
     reason: "A lookup list every record points at, maintained by an administrator."
@@ -2774,29 +2661,9 @@ writes:
     reason: "A lookup list every record points at, maintained by an administrator."
 
   # shipment
-  "POST /api/v1/shipments/:shipmentID/holds/":
-    tools: [shipment_place_hold]
-  "POST /api/v1/shipments/:shipmentID/holds/:holdID/release/":
-    tools: [shipment_release_hold]
-  "POST /api/v1/shipments/:shipmentID/transfer-to-billing/":
-    tools: [billing_transfer]
-  "POST /api/v1/shipments/auto-cancel/":
-    exempt: infrastructure
-    reason: "The sweep the Temporal schedule runs over every organization to cancel shipments past the auto-cancel threshold; a person does not decide which shipments it takes, and shipment_cancel cancels one."
-  "POST /api/v1/shipments/check-for-duplicate-bols/":
-    exempt: read-only
-    reason: "Computes a figure or a check for the shipment form and saves nothing."
-  "POST /api/v1/shipments/check-hazmat-segregation/":
-    exempt: read-only
-    reason: "Computes a figure or a check for the shipment form and saves nothing."
   "POST /api/v1/shipments/delay/":
     exempt: infrastructure
     reason: "The sweep the Temporal schedule runs to mark late shipments delayed from their stop windows; exception_evaluate_service_failures records a late stop for one shipment."
-  "POST /api/v1/shipments/previous-rates/":
-    exempt: read-only
-    reason: "Computes a figure or a check for the shipment form and saves nothing."
-  "PUT /api/v1/shipments/:shipmentID/holds/:holdID/":
-    tools: [shipment_update_hold]
   "mutation acknowledgeShipmentComment":
     exempt: attestation
     reason: "Acknowledging a comment says that the person it was addressed to has read it; only that person can say so."
@@ -2877,10 +2744,6 @@ writes:
     tools: [dispatch_split_move]
   "POST /api/v1/shipment-moves/:moveID/stops/:stopID/record-actual/":
     tools: [dispatch_record_stop_actual]
-  "POST /api/v1/shipment-moves/:moveID/update-status/":
-    tools: [dispatch_set_move_status]
-  "POST /api/v1/shipment-moves/bulk-update-status/":
-    tools: [dispatch_set_move_status]
 
   # shipmenttype
   "PATCH /api/v1/shipment-types/:shipmentTypeID/":
@@ -3111,9 +2974,6 @@ writes:
   "POST /api/v1/users/me/sessions/revoke-others/":
     exempt: security
     reason: "Signing a device out decides who can act as the person; an agent never ends someone's sessions."
-  "POST /api/v1/users/:userID/permissions/simulate/":
-    exempt: read-only
-    reason: "Shows what a user could do with a set of roles and saves nothing."
   "POST /api/v1/users/:userID/reset-password/":
     exempt: security
     reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."

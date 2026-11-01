@@ -355,11 +355,6 @@ type InvoiceCreationService interface {
 		req *CreateInvoiceFromShipmentsRequest,
 		actor *permissionports.RequestActor,
 	) (*invoice.Invoice, error)
-	CreateFromOrder(
-		ctx context.Context,
-		req *CreateInvoiceFromOrderRequest,
-		actor *permissionports.RequestActor,
-	) (*invoice.Invoice, error)
 	CreateInvoicesFromShipments(
 		ctx context.Context,
 		req *CreateInvoiceFromShipmentsRequest,

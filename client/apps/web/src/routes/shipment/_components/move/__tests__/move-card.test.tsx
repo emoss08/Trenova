@@ -13,22 +13,24 @@ import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MoveCard } from "../move-card";
 
-const { getUIPolicy, getEta, getLocationOption, getAssignment, assignmentDialog } = vi.hoisted(
-  () => ({
+const { getUIPolicy, getEta, fetchGraphQLSelectedOption, getAssignment, assignmentDialog } =
+  vi.hoisted(() => ({
     getUIPolicy: vi.fn(),
     getEta: vi.fn(),
-    getLocationOption: vi.fn(),
+    fetchGraphQLSelectedOption: vi.fn(),
     getAssignment: vi.fn(),
     assignmentDialog: vi.fn(),
-  }),
-);
+  }));
 
 vi.mock("@/services/api", () => ({
   apiService: {
     shipmentService: { getUIPolicy, getEta },
-    locationService: { getOption: getLocationOption },
     assignmentService: { get: getAssignment },
   },
+}));
+vi.mock("@/lib/graphql/select-options", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/graphql/select-options")>()),
+  fetchGraphQLSelectedOption,
 }));
 vi.mock("../../assignment-dialog", () => ({
   AssignmentDialog: (props: { open: boolean }) => {
@@ -194,23 +196,35 @@ describe("MoveCard", () => {
     expect(screen.getByRole("button", { name: "Secaucus DC" })).toBeInTheDocument();
     expect(screen.getByText("Pickup · Secaucus, NJ")).toBeInTheDocument();
     expect(screen.getByText("Delivery · Lexington, KY")).toBeInTheDocument();
-    expect(getLocationOption).not.toHaveBeenCalled();
+    expect(fetchGraphQLSelectedOption).not.toHaveBeenCalled();
   });
 
   it("reads the location of a stop changed since the shipment was read", async () => {
-    getLocationOption.mockResolvedValue({
+    fetchGraphQLSelectedOption.mockResolvedValue({
       id: "loc_9",
-      name: "Columbus Hub",
-      city: "Columbus",
-      state: { abbreviation: "OH" },
+      label: "Columbus Hub",
+      description: "COL01",
+      meta: {
+        code: "COL01",
+        addressLine1: "40 Broad St",
+        city: "Columbus",
+        stateAbbreviation: "OH",
+        postalCode: "43215",
+      },
     });
     const move = inTransitMove();
     move.stops[1] = { ...move.stops[1], locationId: "loc_9" };
     render(<Harness move={move} />);
 
     expect(await screen.findByRole("button", { name: "Columbus Hub" })).toBeInTheDocument();
-    expect(getLocationOption).toHaveBeenCalledTimes(1);
-    expect(getLocationOption).toHaveBeenCalledWith("loc_9");
+    expect(screen.getByText("Delivery · Columbus, OH")).toBeInTheDocument();
+    expect(fetchGraphQLSelectedOption).toHaveBeenCalledTimes(1);
+    expect(fetchGraphQLSelectedOption).toHaveBeenCalledWith(
+      "LOCATION",
+      "loc_9",
+      undefined,
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
   });
 
   it("marks a departed stop done and offers the next stop's arrival check call", () => {

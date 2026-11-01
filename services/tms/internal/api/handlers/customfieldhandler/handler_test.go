@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/assert"
@@ -65,103 +64,6 @@ func setupCustomFieldHandler(
 		ErrorHandler:         errorHandler,
 		PermissionMiddleware: pm,
 	})
-}
-
-func TestCustomFieldHandler_List_Success(t *testing.T) {
-	t.Parallel()
-
-	cfdID := pulid.MustNew("cfd_")
-
-	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
-	repo.On("List", mock.Anything, mock.Anything).
-		Return(&pagination.ListResult[*customfield.CustomFieldDefinition]{
-			Items: []*customfield.CustomFieldDefinition{
-				{
-					ID:             cfdID,
-					OrganizationID: testutil.TestOrgID,
-					BusinessUnitID: testutil.TestBuID,
-					Name:           "test_field",
-					Label:          "Test Field",
-					FieldType:      customfield.FieldTypeText,
-					ResourceType:   "trailer",
-				},
-			},
-			Total:      1,
-			TotalExact: true,
-		}, nil)
-
-	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
-	handler := setupCustomFieldHandler(t, repo, valueRepo)
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodGet).
-		WithPath("/api/v1/custom-fields/definitions/").
-		WithDefaultAuthContext()
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-
-	var resp pagination.Response[[]map[string]any]
-	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.Equal(t, 1, resp.Count)
-	assert.Len(t, resp.Results, 1)
-}
-
-func TestCustomFieldHandler_Get_Success(t *testing.T) {
-	t.Parallel()
-
-	cfdID := pulid.MustNew("cfd_")
-
-	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
-	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req customfieldports.GetCustomFieldDefinitionByIDRequest) (*customfield.CustomFieldDefinition, error) {
-			return &customfield.CustomFieldDefinition{
-				ID:             req.ID,
-				OrganizationID: testutil.TestOrgID,
-				BusinessUnitID: testutil.TestBuID,
-				Name:           "test_field",
-				Label:          "Test Field",
-				FieldType:      customfield.FieldTypeText,
-				ResourceType:   "trailer",
-			}, nil
-		})
-
-	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
-	handler := setupCustomFieldHandler(t, repo, valueRepo)
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodGet).
-		WithPath("/api/v1/custom-fields/definitions/" + cfdID.String() + "/").
-		WithDefaultAuthContext()
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-
-	var resp map[string]any
-	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.Equal(t, "test_field", resp["name"])
-}
-
-func TestCustomFieldHandler_Get_InvalidID(t *testing.T) {
-	t.Parallel()
-
-	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
-	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
-	handler := setupCustomFieldHandler(t, repo, valueRepo)
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodGet).
-		WithPath("/api/v1/custom-fields/definitions/invalid-id/").
-		WithDefaultAuthContext()
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
 }
 
 func TestCustomFieldHandler_Create_Success(t *testing.T) {
@@ -305,69 +207,6 @@ func TestCustomFieldHandler_Delete_Success(t *testing.T) {
 	assert.Equal(t, http.StatusNoContent, ginCtx.ResponseCode())
 }
 
-func TestCustomFieldHandler_GetResourceTypes_Success(t *testing.T) {
-	t.Parallel()
-
-	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
-	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
-	handler := setupCustomFieldHandler(t, repo, valueRepo)
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodGet).
-		WithPath("/api/v1/custom-fields/resource-types/").
-		WithDefaultAuthContext()
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-
-	var resp map[string]any
-	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	resourceTypes, ok := resp["resourceTypes"].([]any)
-	require.True(t, ok)
-	assert.NotEmpty(t, resourceTypes)
-}
-
-func TestCustomFieldHandler_GetByResourceType_Success(t *testing.T) {
-	t.Parallel()
-
-	cfdID := pulid.MustNew("cfd_")
-
-	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
-	repo.On("GetActiveByResourceType", mock.Anything, mock.Anything).
-		Return([]*customfield.CustomFieldDefinition{
-			{
-				ID:             cfdID,
-				OrganizationID: testutil.TestOrgID,
-				BusinessUnitID: testutil.TestBuID,
-				Name:           "active_field",
-				Label:          "Active Field",
-				FieldType:      customfield.FieldTypeText,
-				ResourceType:   "trailer",
-				IsActive:       true,
-			},
-		}, nil)
-
-	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
-	handler := setupCustomFieldHandler(t, repo, valueRepo)
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodGet).
-		WithPath("/api/v1/custom-fields/resources/trailer/").
-		WithDefaultAuthContext()
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-
-	var resp []map[string]any
-	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.Len(t, resp, 1)
-	assert.Equal(t, "active_field", resp[0]["name"])
-}
-
 func TestCustomFieldHandler_Patch_Success(t *testing.T) {
 	t.Parallel()
 
@@ -459,28 +298,6 @@ func TestCustomFieldHandler_Patch_InvalidID(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
-}
-
-func TestCustomFieldHandler_Get_NotFound(t *testing.T) {
-	t.Parallel()
-
-	cfdID := pulid.MustNew("cfd_")
-
-	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
-	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
-
-	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
-	handler := setupCustomFieldHandler(t, repo, valueRepo)
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodGet).
-		WithPath("/api/v1/custom-fields/definitions/" + cfdID.String() + "/").
-		WithDefaultAuthContext()
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())
 }
 
 func TestCustomFieldHandler_Create_ServiceError(t *testing.T) {
@@ -589,27 +406,6 @@ func TestCustomFieldHandler_Delete_ServiceError(t *testing.T) {
 	assert.True(t, ginCtx.ResponseCode() >= 400)
 }
 
-func TestCustomFieldHandler_GetByResourceType_Error(t *testing.T) {
-	t.Parallel()
-
-	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
-	repo.On("GetActiveByResourceType", mock.Anything, mock.Anything).
-		Return(nil, errors.New("repo error"))
-
-	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
-	handler := setupCustomFieldHandler(t, repo, valueRepo)
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodGet).
-		WithPath("/api/v1/custom-fields/resources/trailer/").
-		WithDefaultAuthContext()
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.True(t, ginCtx.ResponseCode() >= 400)
-}
-
 func TestCustomFieldHandler_Update_ServiceError(t *testing.T) {
 	t.Parallel()
 
@@ -651,22 +447,4 @@ func TestCustomFieldHandler_Update_ServiceError(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
-}
-
-func TestCustomFieldHandler_GetByResourceType_Unsupported(t *testing.T) {
-	t.Parallel()
-
-	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
-	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
-	handler := setupCustomFieldHandler(t, repo, valueRepo)
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodGet).
-		WithPath("/api/v1/custom-fields/resources/invalid_type/").
-		WithDefaultAuthContext()
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
 }

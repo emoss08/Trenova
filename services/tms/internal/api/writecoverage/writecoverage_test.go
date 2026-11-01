@@ -120,9 +120,9 @@ func TestEnumerationFindsBothSurfaces(t *testing.T) {
 	assert.Contains(t, twinRoutes(create), "POST /api/v1/shipments/",
 		"the REST create reaches the same service call and is merged into the mutation")
 
-	hold := writeByKey(t, report.Writes, "POST /api/v1/shipments/:shipmentID/holds/")
-	assert.Equal(t, writecoverage.KindRoute, hold.Kind)
-	assert.Equal(t, "shipmenthandler.createHold", hold.Handler)
+	cancel := writeByKey(t, report.Writes, "POST /api/v1/tenders/:tenderID/cancel/")
+	assert.Equal(t, writecoverage.KindRoute, cancel.Kind)
+	assert.Equal(t, "tenderhandler.cancel", cancel.Handler)
 
 	for idx := range report.Writes {
 		write := &report.Writes[idx]

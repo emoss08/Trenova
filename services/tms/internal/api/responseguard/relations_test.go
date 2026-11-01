@@ -327,7 +327,6 @@ var carried = map[string]string{
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIMappingProfileItem":                                      "one mapping of an EDI mapping profile",
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage.EDIMessageValidationError":                           "a validation error of the EDI message that carries it",
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument.EDITransactionSet":                                  "the X12 transaction set an EDI document type names",
-	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange.TenderRecipient":                                "who a tender is sent to on the EDI connection that carries it",
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac.ResourcePermission":                                   "a grant of the role that carries it",
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac.UserRoleAssignment":                                   "a role held by the user that carries it",
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant.OrganizationMembership":                             "an organization the user that carries it belongs to",
@@ -610,8 +609,8 @@ func rootKindsOf(
 // Row-level security does not hide a shipment, order, invoice or worker the
 // person cannot read, because a record that links to one shows its reference
 // view. A route returns its records whole, so only the kind's own handler,
-// whose every route requires an operation on the kind (or marks its records
-// as references), may write one as the response's own record.
+// whose every route requires an operation on the kind, may write one as the
+// response's own record.
 func TestEveryRESTRootOfADatabaseScopedKindIsWrittenByItsOwnHandler(t *testing.T) {
 	registry := permissioncatalog.NewRegistry()
 	scoped := registry.DatabaseScopedResources()

@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/fieldguard"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
@@ -51,16 +50,6 @@ func (h *Handler) withhold(c *gin.Context, entities ...*worker.Worker) {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/workers")
-	api.GET(
-		"/",
-		h.pm.RequirePermission(permission.ResourceWorker.String(), permission.OpRead),
-		h.list,
-	)
-	api.GET(
-		"/:workerID/",
-		h.pm.RequirePermission(permission.ResourceWorker.String(), permission.OpRead),
-		h.get,
-	)
 	api.POST(
 		"/",
 		h.pm.RequirePermission(permission.ResourceWorker.String(), permission.OpCreate),
@@ -76,160 +65,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceWorker.String(), permission.OpUpdate),
 		h.patch,
 	)
-
-	selectOptions := api.Group("/select-options", responseguard.References())
-	selectOptions.GET("/", h.selectOptions)
-	selectOptions.GET("/:workerID", h.getOption)
-}
-
-// @Summary List workers
-// @ID listWorkers
-// @Tags Workers
-// @Accept json
-// @Produce json
-// @Param query query string false "Search query"
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param after query string false "Opaque cursor"
-// @Success 200 {object} pagination.CursorResponse[[]worker.Worker]
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /workers/ [get]
-func (h *Handler) list(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewQueryOptions(c, authCtx)
-
-	pagination.CursorList(
-		c,
-		req,
-		h.eh,
-		func(cursor pagination.CursorInfo) (*pagination.CursorListResult[*worker.Worker], error) {
-			result, err := h.service.List(
-				c.Request.Context(),
-				&workerports.ListWorkersRequest{
-					Filter: req,
-					Cursor: cursor,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			h.withhold(c, result.Items...)
-			return result, nil
-		},
-	)
-}
-
-// @Summary Get a worker option
-// @ID getWorkerOption
-// @Tags Workers
-// @Produce json
-// @Param workerID path string true "Worker ID"
-// @Success 200 {object} worker.Worker
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /workers/select-options/{workerID} [get]
-func (h *Handler) getOption(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	workerID, err := pulid.MustParse(c.Param("workerID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.service.Get(c.Request.Context(), workerports.GetWorkerByIDRequest{
-		ID:         workerID,
-		TenantInfo: pagination.FromAuth(authCtx),
-	})
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	h.withhold(c, entity)
-	helpers.JSON(c, http.StatusOK, entity)
-}
-
-// @Summary List worker options
-// @ID listWorkerOptions
-// @Tags Workers
-// @Produce json
-// @Param query query string false "Search query"
-// @Param includeProfile query bool false "Include worker profile"
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]worker.Worker]
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /workers/select-options/ [get]
-func (h *Handler) selectOptions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewSelectQueryRequest(c, authCtx)
-
-	pagination.SelectOptions(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*worker.Worker], error) {
-			result, err := h.service.SelectOptions(
-				c.Request.Context(),
-				&workerports.WorkerSelectOptionsRequest{
-					SelectQueryRequest: req,
-					IncludeProfile:     helpers.QueryBool(c, "includeProfile", false),
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			h.withhold(c, result.Items...)
-			return result, nil
-		},
-	)
-}
-
-// @Summary Get a worker
-// @ID getWorker
-// @Tags Workers
-// @Produce json
-// @Param workerID path string true "Worker ID"
-// @Success 200 {object} worker.Worker
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 404 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /workers/{workerID} [get]
-func (h *Handler) get(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	workerID, err := pulid.MustParse(c.Param("workerID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.service.Get(
-		c.Request.Context(),
-		workerports.GetWorkerByIDRequest{
-			ID:             workerID,
-			TenantInfo:     pagination.FromAuth(authCtx),
-			IncludeProfile: true,
-			IncludeState:   true,
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	h.withhold(c, entity)
-	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Create a worker

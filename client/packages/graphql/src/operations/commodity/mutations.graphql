@@ -1,0 +1,29 @@
+mutation CreateCommodity($input: CommodityInput!) {
+  createCommodity(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateCommodity($id: ID!, $input: CommodityInput!) {
+  updateCommodity(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation PatchCommodity($id: ID!, $input: CommodityPatchInput!) {
+  patchCommodity(id: $id, input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation BulkUpdateCommodityStatus($input: BulkUpdateCommodityStatusInput!) {
+  bulkUpdateCommodityStatus(input: $input) {
+    id
+    status
+    version
+  }
+}

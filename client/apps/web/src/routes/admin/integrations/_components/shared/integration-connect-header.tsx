@@ -67,7 +67,16 @@ function LogoTile({ children, className }: { children: ReactNode; className?: st
 }
 
 /** A vendor's logo in a bordered tile, or its initials when it has none. */
-export function IntegrationLogoMark({ name, logo }: { name: string; logo: IntegrationLogo }) {
+export function IntegrationLogoMark({
+  name,
+  logo,
+  className,
+}: {
+  name: string;
+  logo: IntegrationLogo;
+  /** Caps a wordmark's width where the tile shares a row with text. */
+  className?: string;
+}) {
   if (!logo.light && !logo.dark) {
     return (
       <LogoTile className="text-muted-foreground text-xs font-semibold">
@@ -78,7 +87,7 @@ export function IntegrationLogoMark({ name, logo }: { name: string; logo: Integr
 
   // A wordmark widens its tile up to a limit; a square mark keeps the tile square.
   return (
-    <LogoTile className="max-w-36">
+    <LogoTile className={cn("max-w-36", className)}>
       <ThemedLogo logo={logo} alt="" className="h-full w-auto max-w-full object-contain" />
     </LogoTile>
   );

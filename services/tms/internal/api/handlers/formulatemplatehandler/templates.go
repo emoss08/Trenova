@@ -85,72 +85,6 @@ func (h *Handler) get(c *gin.Context) {
 	helpers.JSON(c, http.StatusOK, entity)
 }
 
-// @Summary Get a formula template option
-// @ID getFormulaTemplateOption
-// @Tags Formula Templates
-// @Produce json
-// @Param templateID path string true "Formula template ID"
-// @Success 200 {object} formulatemplate.FormulaTemplate
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /formula-templates/select-options/{templateID} [get]
-func (h *Handler) getOption(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	templateID, err := pulid.MustParse(c.Param("templateID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.service.GetByID(
-		c.Request.Context(),
-		formulatemplateports.GetFormulaTemplateByIDRequest{
-			TemplateID: templateID,
-			TenantInfo: pagination.FromAuth(authCtx),
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entity)
-}
-
-// @Summary List formula template options
-// @ID listFormulaTemplateOptions
-// @Tags Formula Templates
-// @Produce json
-// @Param query query string false "Search query"
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]formulatemplate.FormulaTemplate]
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /formula-templates/select-options/ [get]
-func (h *Handler) selectOptions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewSelectQueryRequest(c, authCtx)
-
-	pagination.SelectOptions(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
-			return h.service.SelectOptions(
-				c.Request.Context(),
-				&formulatemplateports.FormulaTemplateSelectOptionsRequest{
-					SelectQueryRequest: req,
-				},
-			)
-		},
-	)
-}
-
 // @Summary Get formula template usage
 // @ID getFormulaTemplateUsage
 // @Tags Formula Templates
@@ -342,54 +276,6 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusOK, results)
-}
-
-// @Summary Patch a formula template
-// @ID patchFormulaTemplate
-// @Tags Formula Templates
-// @Accept json
-// @Produce json
-// @Param templateID path string true "Formula template ID"
-// @Param request body formulatemplate.FormulaTemplate true "Formula template payload"
-// @Success 200 {object} formulatemplate.FormulaTemplate
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /formula-templates/{templateID}/ [patch]
-func (h *Handler) patch(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	templateID, err := pulid.MustParse(c.Param("templateID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	existing, err := h.service.GetByID(
-		c.Request.Context(),
-		formulatemplateports.GetFormulaTemplateByIDRequest{
-			TemplateID: templateID,
-			TenantInfo: pagination.FromAuthAsUser(authCtx),
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	if err = authctx.BindJSON(c, authCtx, existing); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	updatedEntity, err := h.service.Update(c.Request.Context(), existing, authCtx.UserID)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, updatedEntity)
 }
 
 // @Summary Import formula templates from an exported JSON payload

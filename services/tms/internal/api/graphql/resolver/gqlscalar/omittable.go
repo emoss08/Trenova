@@ -30,3 +30,45 @@ func NullableOmittable[T any](value graphql.Omittable[*T]) optional.Value[*T] {
 
 	return optional.Some(value.Value())
 }
+
+func ApplyRequired[T any](field, label string, value graphql.Omittable[*T], dest *T) error {
+	resolved, err := RequiredOmittable(field, label, value)
+	if err != nil {
+		return err
+	}
+	resolved.Apply(dest)
+
+	return nil
+}
+
+func ApplyRequiredInt[D ~int16 | ~int32 | ~int64](
+	field, label string,
+	value graphql.Omittable[*int],
+	dest *D,
+) error {
+	resolved, err := RequiredOmittable(field, label, value)
+	if err != nil {
+		return err
+	}
+	if resolved.Set {
+		*dest = D(resolved.Value)
+	}
+
+	return nil
+}
+
+func ApplyClearable[T any](value graphql.Omittable[*T], dest *T) {
+	if !value.IsSet() {
+		return
+	}
+	if ptr := value.Value(); ptr != nil {
+		*dest = *ptr
+		return
+	}
+	var zero T
+	*dest = zero
+}
+
+func ApplyNullable[T any](value graphql.Omittable[*T], dest **T) {
+	NullableOmittable(value).Apply(dest)
+}

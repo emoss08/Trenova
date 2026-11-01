@@ -131,6 +131,33 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
 			},
 			{
+				Name:     "lengthPerUnit",
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*commodity.Commodity)
+					return obj.LengthPerUnit, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
+			},
+			{
+				Name:     "widthPerUnit",
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*commodity.Commodity)
+					return obj.WidthPerUnit, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
+			},
+			{
+				Name:     "heightPerUnit",
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*commodity.Commodity)
+					return obj.HeightPerUnit, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
+			},
+			{
 				Name:     "maxQuantityPerShipment",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
@@ -296,6 +323,60 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createCommodity",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "Commodity",
+				Args:       field_Mutation_createCommodity_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateCommodity(ctx, fc.Args["input"].(gqlmodel.CommodityInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNCommodity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋcommodityᚐCommodity),
+			},
+			{
+				Name:       "updateCommodity",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "Commodity",
+				Args:       field_Mutation_updateCommodity_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateCommodity(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.CommodityInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNCommodity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋcommodityᚐCommodity),
+			},
+			{
+				Name:       "patchCommodity",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "Commodity",
+				Args:       field_Mutation_patchCommodity_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchCommodity(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.CommodityPatchInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNCommodity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋcommodityᚐCommodity),
+			},
+			{
+				Name:       "bulkUpdateCommodityStatus",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "Commodity",
+				Args:       field_Mutation_bulkUpdateCommodityStatus_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkUpdateCommodityStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateCommodityStatusInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNCommodity2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋcommodityᚐCommodityᚄ),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "commodities",
@@ -326,14 +407,27 @@ var Shard = &gqlexec.Shard{
 			},
 		}},
 	},
+	Inputs: []gqlexec.Input{
+		{Name: "BulkUpdateCommodityStatusInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputBulkUpdateCommodityStatusInput)},
+		{Name: "CommodityInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCommodityInput)},
+		{Name: "CommodityPatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCommodityPatchInput)},
+	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "Commodity", Check: func(r any) bool { _, ok := r.(resolverCommodity); return ok }},
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
 }
 
 type resolverCommodity interface {
 	FreightClass(ctx context.Context, obj *commodity.Commodity) (*commodity.FreightClass, error)
+}
+
+type resolverMutation interface {
+	CreateCommodity(ctx context.Context, input gqlmodel.CommodityInput) (*commodity.Commodity, error)
+	UpdateCommodity(ctx context.Context, id string, input gqlmodel.CommodityInput) (*commodity.Commodity, error)
+	PatchCommodity(ctx context.Context, id string, input gqlmodel.CommodityPatchInput) (*commodity.Commodity, error)
+	BulkUpdateCommodityStatus(ctx context.Context, input gqlmodel.BulkUpdateCommodityStatusInput) ([]*commodity.Commodity, error)
 }
 
 type resolverQuery interface {
@@ -351,6 +445,74 @@ var (
 	errNoChild6 = errors.New("field of type Boolean does not have child fields")
 	errNoChild7 = errors.New("field of type Timestamp does not have child fields")
 )
+
+func field_Mutation_createCommodity_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.CommodityInput, error) {
+			return unmarshalNCommodityInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCommodityInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateCommodity_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.CommodityInput, error) {
+			return unmarshalNCommodityInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCommodityInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_patchCommodity_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.CommodityPatchInput, error) {
+			return unmarshalNCommodityPatchInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCommodityPatchInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_bulkUpdateCommodityStatus_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.BulkUpdateCommodityStatusInput, error) {
+			return unmarshalNBulkUpdateCommodityStatusInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkUpdateCommodityStatusInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
 
 func field_Query_commodities_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -378,12 +540,359 @@ func field_Query_commodity_args(ctx context.Context, ec *gqlexec.Exec, rawArgs m
 	return args, nil
 }
 
+func unmarshalInputBulkUpdateCommodityStatusInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.BulkUpdateCommodityStatusInput, error) {
+	var it gqlmodel.BulkUpdateCommodityStatusInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"commodityIds", "status"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "commodityIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("commodityIds"))
+			data, err := unmarshalNID2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CommodityIds = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputCommodityInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CommodityInput, error) {
+	var it gqlmodel.CommodityInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"status", "name", "description", "hazardousMaterialId", "minTemperature", "maxTemperature", "weightPerUnit", "linearFeetPerUnit", "lengthPerUnit", "widthPerUnit", "heightPerUnit", "maxQuantityPerShipment", "freightClass", "loadingInstructions", "stackable", "fragile", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "hazardousMaterialId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hazardousMaterialId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HazardousMaterialID = data
+		case "minTemperature":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minTemperature"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MinTemperature = data
+		case "maxTemperature":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxTemperature"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxTemperature = data
+		case "weightPerUnit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("weightPerUnit"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.WeightPerUnit = data
+		case "linearFeetPerUnit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("linearFeetPerUnit"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.LinearFeetPerUnit = data
+		case "lengthPerUnit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lengthPerUnit"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.LengthPerUnit = data
+		case "widthPerUnit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("widthPerUnit"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.WidthPerUnit = data
+		case "heightPerUnit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("heightPerUnit"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HeightPerUnit = data
+		case "maxQuantityPerShipment":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxQuantityPerShipment"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxQuantityPerShipment = data
+		case "freightClass":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("freightClass"))
+			data, err := unmarshalOFreightClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋcommodityᚐFreightClass(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.FreightClass = data
+		case "loadingInstructions":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("loadingInstructions"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.LoadingInstructions = data
+		case "stackable":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stackable"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Stackable = data
+		case "fragile":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fragile"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Fragile = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputCommodityPatchInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CommodityPatchInput, error) {
+	var it gqlmodel.CommodityPatchInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"status", "name", "description", "hazardousMaterialId", "minTemperature", "maxTemperature", "weightPerUnit", "linearFeetPerUnit", "lengthPerUnit", "widthPerUnit", "heightPerUnit", "maxQuantityPerShipment", "freightClass", "loadingInstructions", "stackable", "fragile", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalOEntityStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = graphql.OmittableOf(data)
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = graphql.OmittableOf(data)
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = graphql.OmittableOf(data)
+		case "hazardousMaterialId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hazardousMaterialId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HazardousMaterialID = graphql.OmittableOf(data)
+		case "minTemperature":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minTemperature"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MinTemperature = graphql.OmittableOf(data)
+		case "maxTemperature":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxTemperature"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxTemperature = graphql.OmittableOf(data)
+		case "weightPerUnit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("weightPerUnit"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.WeightPerUnit = graphql.OmittableOf(data)
+		case "linearFeetPerUnit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("linearFeetPerUnit"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.LinearFeetPerUnit = graphql.OmittableOf(data)
+		case "lengthPerUnit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lengthPerUnit"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.LengthPerUnit = graphql.OmittableOf(data)
+		case "widthPerUnit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("widthPerUnit"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.WidthPerUnit = graphql.OmittableOf(data)
+		case "heightPerUnit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("heightPerUnit"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HeightPerUnit = graphql.OmittableOf(data)
+		case "maxQuantityPerShipment":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxQuantityPerShipment"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxQuantityPerShipment = graphql.OmittableOf(data)
+		case "freightClass":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("freightClass"))
+			data, err := unmarshalOFreightClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋcommodityᚐFreightClass(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.FreightClass = graphql.OmittableOf(data)
+		case "loadingInstructions":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("loadingInstructions"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.LoadingInstructions = graphql.OmittableOf(data)
+		case "stackable":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stackable"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Stackable = graphql.OmittableOf(data)
+		case "fragile":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fragile"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Fragile = graphql.OmittableOf(data)
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = graphql.OmittableOf(data)
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
 
+func unmarshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool, error) {
+	res, err := graphql.UnmarshalBoolean(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNBulkUpdateCommodityStatusInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkUpdateCommodityStatusInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.BulkUpdateCommodityStatusInput, error) {
+	res, err := unmarshalInputBulkUpdateCommodityStatusInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCommodityInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCommodityInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.CommodityInput, error) {
+	res, err := unmarshalInputCommodityInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCommodityPatchInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCommodityPatchInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.CommodityPatchInput, error) {
+	res, err := unmarshalInputCommodityPatchInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
 	res, err := unmarshalInputDataTableConnectionInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (domaintypes.Status, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := domaintypes.Status(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -392,12 +901,87 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalBoolean(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOEntityStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*domaintypes.Status, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := domaintypes.Status(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOFloat2ᚖfloat64(ctx context.Context, ec *gqlexec.Exec, v any) (*float64, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOFreightClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋcommodityᚐFreightClass(ctx context.Context, ec *gqlexec.Exec, v any) (*commodity.FreightClass, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := commodity.FreightClass(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
 	res := graphql.MarshalBoolean(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNCommodity2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋcommodityᚐCommodityᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*commodity.Commodity) graphql.Marshaler {
+	return gqlexec.List[*commodity.Commodity]{
+		Elem:        marshalNCommodity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋcommodityᚐCommodity,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNCommodity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋcommodityᚐCommodity(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *commodity.Commodity) graphql.Marshaler {

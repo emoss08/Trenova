@@ -1,4 +1,4 @@
-import { SelectField } from "@/components/fields/select-field";
+import { ChoiceButton } from "@/components/choice-button";
 import { ACCOUNTING_LEDGER_GRANULARITIES, ACCOUNTING_SYNC_MODES } from "@/lib/accounting-sync";
 import type {
   AccountingConnection,
@@ -11,13 +11,15 @@ import type {
 } from "@trenova/graphql/generated/graphql";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { Form } from "@trenova/shared/components/ui/form";
+import { InfoCircleIcon, Lock01Icon } from "@trenova/shared/components/icons";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { accountingModeSchema, type AccountingModeValues } from "./accounting-start-date-schema";
 import type { AccountingVendor } from "./accounting-vendors";
 import { useAccountingModeAction } from "./use-accounting-connection";
+import { IntegrationSetupFooter } from "../shared/integration-setup-wizard";
 
 type AccountingModeStepProps = {
   vendor: AccountingVendor;
@@ -42,82 +44,95 @@ export function AccountingModeStep({
       granularity: connection.ledgerGranularity ?? "Detailed",
     },
   });
-  const { control, handleSubmit } = form;
+  const { control, handleSubmit, setValue } = form;
   const choose = useAccountingModeAction(vendor, ledgerAvailable, form);
   const mode = useWatch({ control, name: "mode" });
   const granularity = useWatch({ control, name: "granularity" });
 
-  const modeLabels = useMemo<Record<AccountingSyncMode, string>>(
-    () => ({
-      Document: t("Send documents"),
-      Ledger: t("Send journal entries"),
-    }),
-    [t],
-  );
-  const granularityLabels = useMemo<Record<AccountingLedgerGranularity, string>>(
-    () => ({
-      Detailed: t("Detailed"),
-      DailySummary: t("Daily summary"),
-    }),
-    [t],
-  );
+  const modeChoices: Record<AccountingSyncMode, { label: string; description: string }> = {
+    Document: {
+      label: t("Send documents"),
+      description: t(
+        "Trenova sends {0} the invoices, memos, customer payments and settlement bills it posts, and {0} keeps the ledger.",
+        vendor.name,
+      ),
+    },
+    Ledger: {
+      label: t("Send journal entries"),
+      description: t(
+        "Trenova keeps the ledger and sends {0} every journal entry it posts. Invoices, payments and bills stay in Trenova; {0} receives their accounting.",
+        vendor.name,
+      ),
+    },
+  };
+  const granularityChoices: Record<
+    AccountingLedgerGranularity,
+    { label: string; description: string }
+  > = {
+    Detailed: {
+      label: t("Detailed"),
+      description: t("One journal entry in {0} for each one posted in Trenova.", vendor.name),
+    },
+    DailySummary: {
+      label: t("Daily summary"),
+      description: t(
+        "One journal entry per day, summed per account and customer or vendor. A day is sent again when an entry is posted to it later.",
+      ),
+    },
+  };
 
   return (
-    <Form onSubmit={handleSubmit((values) => choose.mutate(values))} className="space-y-4">
-      <div className="space-y-2">
-        <h3 className="text-base font-semibold">{t("Choose what is sent")}</h3>
-        <p className="text-foreground-muted text-sm">
-          {mode === "Ledger"
-            ? t(
-                "Trenova keeps the ledger and sends {0} every journal entry it posts. Invoices, payments and bills stay in Trenova; {0} receives their accounting.",
-                vendor.name,
-              )
-            : t(
-                "Trenova sends {0} the invoices, memos, customer payments and settlement bills it posts, and {0} keeps the ledger.",
-                vendor.name,
-              )}
-        </p>
-      </div>
-      <FormGroup cols={1}>
-        <FormControl>
-          <SelectField
-            name="mode"
-            control={control}
-            label={t("What is sent")}
-            options={ACCOUNTING_SYNC_MODES.map((value) => ({
-              value,
-              label: modeLabels[value],
-              disabled: value === "Ledger" && !ledgerAvailable,
-              description:
-                value === "Ledger" && !ledgerAvailable
+    <Form
+      onSubmit={handleSubmit((values) => choose.mutate(values))}
+      className="flex flex-1 flex-col gap-4"
+    >
+      <h3 className="text-base font-semibold">{t("Choose what is sent")}</h3>
+      <div role="radiogroup" aria-label={t("What is sent")} className="grid gap-2 sm:grid-cols-2">
+        {ACCOUNTING_SYNC_MODES.map((value) => {
+          const unavailable = value === "Ledger" && !ledgerAvailable;
+          return (
+            <ChoiceButton
+              key={value}
+              selected={mode === value}
+              disabled={!canManage || unavailable}
+              onClick={() => setValue("mode", value, { shouldDirty: true })}
+              className="gap-1 p-3"
+            >
+              <span className="font-medium">{modeChoices[value].label}</span>
+              <span className="text-foreground-muted text-xs">
+                {unavailable
                   ? t("Not available for {0}", vendor.name)
-                  : undefined,
-            }))}
-            isReadOnly={!canManage}
-          />
-        </FormControl>
-        {mode === "Ledger" && ledgerAvailable ? (
-          <FormControl>
-            <SelectField
-              name="granularity"
-              control={control}
-              label={t("Journal entries")}
-              description={
-                granularity === "DailySummary"
-                  ? t(
-                      "One journal entry per day, summed per account and customer or vendor. A day is sent again when an entry is posted to it later.",
-                    )
-                  : t("One journal entry in {0} for each one posted in Trenova.", vendor.name)
-              }
-              options={ACCOUNTING_LEDGER_GRANULARITIES.map((value) => ({
-                value,
-                label: granularityLabels[value],
-              }))}
-              isReadOnly={!canManage}
-            />
-          </FormControl>
-        ) : null}
-      </FormGroup>
+                  : modeChoices[value].description}
+              </span>
+            </ChoiceButton>
+          );
+        })}
+      </div>
+      {mode === "Ledger" && ledgerAvailable ? (
+        <div className="space-y-2">
+          <p className="text-sm font-medium">{t("Journal entries")}</p>
+          <div
+            role="radiogroup"
+            aria-label={t("Journal entries")}
+            className="grid gap-2 sm:grid-cols-2"
+          >
+            {ACCOUNTING_LEDGER_GRANULARITIES.map((value) => (
+              <ChoiceButton
+                key={value}
+                selected={granularity === value}
+                disabled={!canManage}
+                onClick={() => setValue("granularity", value, { shouldDirty: true })}
+                className="gap-1 p-3"
+              >
+                <span className="font-medium">{granularityChoices[value].label}</span>
+                <span className="text-foreground-muted text-xs">
+                  {granularityChoices[value].description}
+                </span>
+              </ChoiceButton>
+            ))}
+          </div>
+        </div>
+      ) : null}
       {!ledgerAvailable ? (
         <Alert size="sm" variant="info">
           <AlertTitle>{t("Journal entries cannot be sent to {0}", vendor.name)}</AlertTitle>
@@ -128,24 +143,31 @@ export function AccountingModeStep({
           </AlertDescription>
         </Alert>
       ) : null}
-      {mode === "Ledger" && ledgerAvailable ? (
-        <Alert size="sm">
-          <AlertDescription>
+      <ul className="bg-muted/40 text-foreground-muted space-y-2 rounded-lg border p-3 text-sm">
+        {mode === "Ledger" && ledgerAvailable ? (
+          <li className="flex gap-2">
+            <InfoCircleIcon
+              aria-hidden
+              className="text-foreground-subtle mt-0.5 size-3.5 shrink-0"
+            />
+            <span>
+              {t(
+                "Entries are sent once they are posted. When journals are posted by hand, an entry goes to {0} after someone posts it on Journals to post.",
+                vendor.name,
+              )}
+            </span>
+          </li>
+        ) : null}
+        <li className="flex gap-2">
+          <Lock01Icon aria-hidden className="text-foreground-subtle mt-0.5 size-3.5 shrink-0" />
+          <span>
             {t(
-              "Entries are sent once they are posted. When journals are posted by hand, an entry goes to {0} after someone posts it on Journals to post.",
+              "This choice is fixed once sending starts, because {0} will already hold what was sent.",
               vendor.name,
             )}
-          </AlertDescription>
-        </Alert>
-      ) : null}
-      <Alert size="sm" variant="warning">
-        <AlertDescription>
-          {t(
-            "This choice is fixed once sending starts, because {0} will already hold what was sent.",
-            vendor.name,
-          )}
-        </AlertDescription>
-      </Alert>
+          </span>
+        </li>
+      </ul>
       {!canManage ? (
         <Alert size="sm" variant="warning">
           <AlertDescription>
@@ -153,7 +175,7 @@ export function AccountingModeStep({
           </AlertDescription>
         </Alert>
       ) : null}
-      <div className="flex justify-end gap-2 border-t pt-4">
+      <IntegrationSetupFooter>
         <Button
           type="submit"
           disabled={!canManage}
@@ -162,7 +184,7 @@ export function AccountingModeStep({
         >
           {t("Continue")}
         </Button>
-      </div>
+      </IntegrationSetupFooter>
     </Form>
   );
 }

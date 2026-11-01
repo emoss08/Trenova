@@ -42,11 +42,6 @@ func New(p Params) *Handler {
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/organizations/")
 	api.GET(
-		"/select-options/",
-		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpRead),
-		h.selectOptions,
-	)
-	api.GET(
 		"/:id",
 		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpRead),
 		h.get,
@@ -90,27 +85,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/:id/okta-sso",
 		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpUpdate),
 		h.upsertOktaSSOConfig,
-	)
-}
-
-func (h *Handler) selectOptions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewSelectQueryRequest(c, authCtx)
-
-	pagination.SelectOptions(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*tenant.Organization], error) {
-			return h.service.SelectOptions(
-				c.Request.Context(),
-				&tenantports.SelectOrganizationOptionsRequest{
-					SelectQueryRequest: req,
-					Scope:              helpers.QueryString(c, "scope", ""),
-					ExcludeCurrent:     helpers.QueryBool(c, "excludeCurrent", false),
-				},
-			)
-		},
 	)
 }
 

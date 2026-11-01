@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/places/domain/distancecontrol"
 	"github.com/emoss08/trenova/internal/modules/places/ports/distancecontrolports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,11 +38,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceDistanceControl.String(), permission.OpRead),
 		h.get,
 	)
-	api.PUT(
-		"/",
-		h.pm.RequirePermission(permission.ResourceDistanceControl.String(), permission.OpUpdate),
-		h.update,
-	)
 	api.PATCH(
 		"/",
 		h.pm.RequirePermission(permission.ResourceDistanceControl.String(), permission.OpUpdate),
@@ -62,31 +56,6 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 	helpers.JSON(c, http.StatusOK, entity)
-}
-
-func (h *Handler) update(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	entity := new(distancecontrol.DistanceControl)
-	if err := authctx.BindJSON(c, authCtx, entity); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	existing, err := h.service.Get(c.Request.Context(), pagination.TenantInfo{
-		OrgID: authCtx.OrganizationID,
-		BuID:  authCtx.BusinessUnitID,
-	})
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	entity.ID = existing.ID
-	entity.Version = existing.Version
-	updated, err := h.service.Update(c.Request.Context(), entity, authCtx.UserID)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	helpers.JSON(c, http.StatusOK, updated)
 }
 
 func (h *Handler) patch(c *gin.Context) {

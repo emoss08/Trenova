@@ -12,4 +12,6 @@ type Deps struct {
 	FleetCodeService *fleetcodeservice.Service
 }
 
+type MutationResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }

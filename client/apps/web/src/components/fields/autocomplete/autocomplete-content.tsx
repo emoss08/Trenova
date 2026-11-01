@@ -9,11 +9,10 @@ import {
   CommandItemCheck,
   CommandList,
 } from "@trenova/shared/components/ui/command";
+import { PlusIcon } from "@trenova/shared/components/icons";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { popoutWindowManager } from "@/hooks/popout-window/popout-window";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
-import { api } from "@trenova/shared/lib/api";
-import { selectOptionsPath } from "@/lib/select-options-path";
 import {
   fetchGraphQLSelectOptions,
   selectOptionFiltersFromSearchParams,
@@ -23,34 +22,6 @@ import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import type React from "react";
 import { useCallback, useMemo, useState } from "react";
-
-export const MISSING_OPTION_SOURCE_ERROR =
-  "Autocomplete needs either a GraphQL select-options resource or a REST link";
-
-export async function fetchOptions<T>(
-  link: string,
-  inputValue: string,
-  page: number,
-  initialLimit?: number,
-  extraSearchParams?: Record<string, string | string[]>,
-  options: { signal?: AbortSignal } = {},
-): Promise<GenericLimitOffsetResponse<T>> {
-  const limit = initialLimit ?? 10;
-  const offset = (page - 1) * limit;
-
-  return api.get<GenericLimitOffsetResponse<T>>(
-    selectOptionsPath(
-      link,
-      {
-        limit: limit.toString(),
-        offset: offset.toString(),
-        ...(inputValue ? { query: inputValue } : {}),
-      },
-      extraSearchParams,
-    ),
-    { signal: options.signal },
-  );
-}
 
 function openPopoutWindow(popoutLink: string, event: React.MouseEvent<HTMLButtonElement>) {
   event.preventDefault();
@@ -71,7 +42,6 @@ function openPopoutWindow(popoutLink: string, event: React.MouseEvent<HTMLButton
 
 export function AutocompleteCommandContent<TOption>({
   open,
-  link,
   preload,
   label,
   getOptionValue,
@@ -91,9 +61,9 @@ export function AutocompleteCommandContent<TOption>({
   initialLimit = 20,
   listboxId,
   filterOption,
+  createOption,
 }: {
   open: boolean;
-  link?: string;
   preload: boolean;
   label?: string;
   clearable: boolean;
@@ -107,12 +77,13 @@ export function AutocompleteCommandContent<TOption>({
   selectedOption: TOption | null;
   onOptionChange?: (option: TOption | null) => void;
   extraSearchParams?: Record<string, string | string[]>;
-  graphql?: GraphQLSelectOptionsConfig;
+  graphql: GraphQLSelectOptionsConfig;
   initialLimit?: number;
   popoutLink?: string;
   onClear?: () => void;
   listboxId: string;
   filterOption?: (option: TOption) => boolean;
+  createOption?: (text: string) => TOption;
 }) {
   const t = useT();
 
@@ -124,6 +95,7 @@ export function AutocompleteCommandContent<TOption>({
     isLoading,
     isError,
     isFetching,
+    isPlaceholderData,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
@@ -131,42 +103,25 @@ export function AutocompleteCommandContent<TOption>({
   } = useInfiniteQuery({
     queryKey: [
       "autocomplete-search",
-      link,
       debouncedSearchTerm,
       extraSearchParams,
       graphql,
       initialLimit,
     ],
-    queryFn: async ({ pageParam, signal }) => {
-      if (graphql) {
-        return (await fetchGraphQLSelectOptions(
-          {
-            resource: graphql.resource,
-            query: debouncedSearchTerm,
-            page: pageParam,
-            initialLimit,
-            filters: {
-              ...selectOptionFiltersFromSearchParams(extraSearchParams),
-              ...graphql.filters,
-            },
+    queryFn: async ({ pageParam, signal }) =>
+      (await fetchGraphQLSelectOptions(
+        {
+          resource: graphql.resource,
+          query: debouncedSearchTerm,
+          page: pageParam,
+          initialLimit,
+          filters: {
+            ...selectOptionFiltersFromSearchParams(extraSearchParams),
+            ...graphql.filters,
           },
-          { signal },
-        )) as GenericLimitOffsetResponse<TOption>;
-      }
-
-      if (!link) {
-        throw new Error(MISSING_OPTION_SOURCE_ERROR);
-      }
-
-      return fetchOptions<TOption>(
-        link,
-        debouncedSearchTerm,
-        pageParam,
-        initialLimit,
-        extraSearchParams,
+        },
         { signal },
-      );
-    },
+      )) as GenericLimitOffsetResponse<TOption>,
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => (lastPage.next ? allPages.length + 1 : undefined),
     placeholderData: keepPreviousData,
@@ -194,6 +149,17 @@ export function AutocompleteCommandContent<TOption>({
     return filteredOptions;
   }, [data, filterOption, value, selectedOption, getOptionValue]);
 
+  const typedText = debouncedSearchTerm.trim();
+  const createdOption = useMemo(() => {
+    if (!createOption || !typedText || !data || isPlaceholderData) return null;
+    const candidate = createOption(typedText);
+    const candidateValue = getOptionValue(candidate).toString().toLowerCase();
+    const taken = options.some(
+      (option) => getOptionValue(option).toString().toLowerCase() === candidateValue,
+    );
+    return taken ? null : candidate;
+  }, [createOption, typedText, data, isPlaceholderData, options, getOptionValue]);
+
   const handleScroll = useCallback(
     (e: React.UIEvent<HTMLDivElement>) => {
       const target = e.currentTarget;
@@ -213,7 +179,10 @@ export function AutocompleteCommandContent<TOption>({
       const newValue = isClearing ? null : currentValue;
       const selectedOpt = isClearing
         ? null
-        : options.find((opt) => getOptionValue(opt).toString() === currentValue);
+        : (options.find((opt) => getOptionValue(opt).toString() === currentValue) ??
+          (createdOption && getOptionValue(createdOption).toString() === currentValue
+            ? createdOption
+            : undefined));
 
       setSelectedOption(selectedOpt || null);
       onChange(newValue);
@@ -231,6 +200,7 @@ export function AutocompleteCommandContent<TOption>({
       onOptionChange,
       clearable,
       options,
+      createdOption,
       getOptionValue,
       setSelectedOption,
       setOpen,
@@ -259,7 +229,7 @@ export function AutocompleteCommandContent<TOption>({
             </Button>
           </div>
         )}
-        {!isError && !isFetching && data && options.length === 0 && (
+        {!isError && !isFetching && data && options.length === 0 && !createdOption && (
           <div className="flex size-full flex-col items-center justify-center gap-2 p-4">
             <CommandEmpty className="p-0 text-center">
               {noResultsMessage ?? t("No results found.")}
@@ -277,6 +247,16 @@ export function AutocompleteCommandContent<TOption>({
           </div>
         )}
         <CommandGroup>
+          {createdOption && (
+            <CommandItem
+              className="cursor-pointer"
+              value={getOptionValue(createdOption).toString()}
+              onSelect={handleSelect}
+            >
+              <PlusIcon className="text-muted-foreground size-3.5 shrink-0" />
+              <span className="min-w-0 flex-1 truncate">{t('Use "{0}"', typedText)}</span>
+            </CommandItem>
+          )}
           {options.map((option) => (
             <AutocompleteCommandOption
               key={getOptionValue(option).toString()}

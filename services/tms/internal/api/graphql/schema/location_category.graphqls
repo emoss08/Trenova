@@ -55,3 +55,21 @@ extend type Query {
   locationCategories(input: DataTableConnectionInput!): LocationCategoryConnection!
   locationCategory(id: ID!): LocationCategory
 }
+
+input LocationCategoryInput {
+  name: String!
+  description: String
+  type: LocationCategoryType!
+  facilityType: FacilityType
+  color: String
+  hasSecureParking: Boolean!
+  requiresAppointment: Boolean!
+  allowsOvernight: Boolean!
+  hasRestroom: Boolean!
+  version: Int
+}
+
+extend type Mutation {
+  createLocationCategory(input: LocationCategoryInput!): LocationCategory!
+  updateLocationCategory(id: ID!, input: LocationCategoryInput!): LocationCategory!
+}

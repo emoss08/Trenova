@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/fleetcodeports"
@@ -58,5 +59,91 @@ func (r *QueryResolver) FleetCode(ctx context.Context, id string) (*fleetcode.Fl
 	return r.FleetCodeService.Get(ctx, fleetcodeports.GetFleetCodeByIDRequest{
 		ID:         fleetCodeID,
 		TenantInfo: &ti,
+	})
+}
+
+func (r *MutationResolver) CreateFleetCode(ctx context.Context, input gqlmodel.FleetCodeInput) (*fleetcode.FleetCode, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFleetCode, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := fleetCodeFromInput(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FleetCodeService.Create(ctx, entity, authCtx.UserID)
+}
+
+func (r *MutationResolver) UpdateFleetCode(ctx context.Context, id string, input gqlmodel.FleetCodeInput) (*fleetcode.FleetCode, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFleetCode, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	fleetCodeID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	ti := resolvercore.TenantInfo(authCtx)
+	existing, err := r.FleetCodeService.Get(ctx, fleetcodeports.GetFleetCodeByIDRequest{
+		ID:         fleetCodeID,
+		TenantInfo: &ti,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = applyFleetCodeInput(existing, &input); err != nil {
+		return nil, err
+	}
+
+	return r.FleetCodeService.Update(ctx, existing, authCtx.UserID)
+}
+
+func (r *MutationResolver) PatchFleetCode(ctx context.Context, id string, input gqlmodel.FleetCodePatchInput) (*fleetcode.FleetCode, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFleetCode, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	fleetCodeID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	ti := resolvercore.TenantInfo(authCtx)
+	existing, err := r.FleetCodeService.Get(ctx, fleetcodeports.GetFleetCodeByIDRequest{
+		ID:         fleetCodeID,
+		TenantInfo: &ti,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = applyFleetCodePatch(existing, &input); err != nil {
+		return nil, err
+	}
+
+	return r.FleetCodeService.Update(ctx, existing, authCtx.UserID)
+}
+
+func (r *MutationResolver) BulkUpdateFleetCodeStatus(ctx context.Context, input gqlmodel.BulkUpdateFleetCodeStatusInput) ([]*fleetcode.FleetCode, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFleetCode, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	fleetCodeIDs, err := gqlid.ParseIDs(input.FleetCodeIds)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FleetCodeService.BulkUpdateStatus(ctx, &fleetcodeports.BulkUpdateFleetCodeStatusRequest{
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
+		FleetCodeIDs: fleetCodeIDs,
+		Status:       input.Status,
 	})
 }

@@ -55,11 +55,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpCreate),
 		h.submitLoadTender,
 	)
-	api.POST(
-		"/control-numbers/reset/",
-		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
-		h.resetControlNumber,
-	)
 	h.registerTransferRoutes(api.Group("/transfers"))
 	h.registerShipmentLinkRoutes(api.Group("/shipment-links"))
 	h.registerTransferChangeRoutes(api.Group("/transfer-changes"))

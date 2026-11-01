@@ -95,17 +95,6 @@ func (m *mockPermissionEngine) GetEffectivePermissions(
 	return args.Get(0).(*permissionports.EffectivePermissions), args.Error(1)
 }
 
-func (m *mockPermissionEngine) SimulatePermissions(
-	ctx context.Context,
-	req *permissionports.SimulatePermissionsRequest,
-) (*permissionports.EffectivePermissions, error) {
-	args := m.Called(ctx, req)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*permissionports.EffectivePermissions), args.Error(1)
-}
-
 func (m *mockPermissionEngine) AgentsUsable(
 	ctx context.Context,
 	actor *permissionports.RequestActor,

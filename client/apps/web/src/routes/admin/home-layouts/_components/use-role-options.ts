@@ -1,12 +1,9 @@
-import { api } from "@trenova/shared/lib/api";
-import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
+import { fetchGraphQLSelectOptions } from "@/lib/graphql/select-options";
 import { useQuery } from "@tanstack/react-query";
 
 export type RoleOption = {
   id: string;
   name: string;
-  description?: string | null;
-  coreResponsibility?: string | null;
 };
 
 const ROLE_OPTIONS_LIMIT = 100;
@@ -20,11 +17,10 @@ const ROLE_OPTIONS_STALE_TIME = 5 * 60_000;
 export function useRoleOptions() {
   return useQuery({
     queryKey: ["home-layout", "role-options"],
-    queryFn: () =>
-      api.get<GenericLimitOffsetResponse<RoleOption>>(
-        `/roles/select-options/?limit=${ROLE_OPTIONS_LIMIT}&offset=0`,
-      ),
+    queryFn: ({ signal }) =>
+      fetchGraphQLSelectOptions({ resource: "ROLE", initialLimit: ROLE_OPTIONS_LIMIT }, { signal }),
     staleTime: ROLE_OPTIONS_STALE_TIME,
-    select: (data) => data.results,
+    select: (data): RoleOption[] =>
+      data.results.map((option) => ({ id: option.id, name: option.label })),
   });
 }

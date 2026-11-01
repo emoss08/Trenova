@@ -33,10 +33,4 @@ export class LocationService {
 
     return safeParse(locationSchema, response, "Location");
   }
-
-  public async getOption(id: Location["id"]) {
-    const response = await api.get<Location>(`/locations/select-options/${id}`);
-
-    return safeParse(locationSchema, response, "Location");
-  }
 }

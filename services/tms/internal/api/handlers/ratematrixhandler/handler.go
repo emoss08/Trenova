@@ -8,7 +8,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratematrixservice"
@@ -58,7 +57,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.GET("/:rateMatrixID/", requireRead, h.get)
 	api.POST("/", h.pm.RequirePermission(resource, permission.OpCreate), h.create)
 	api.PUT("/:rateMatrixID/", requireUpdate, h.update)
-	api.DELETE("/:rateMatrixID/", h.pm.RequirePermission(resource, permission.OpDelete), h.delete)
 
 	api.GET("/:rateMatrixID/cells/", requireRead, h.listCells)
 	api.PUT("/:rateMatrixID/cells/", requireUpdate, h.replaceCells)
@@ -90,9 +88,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	)
 	api.POST("/:rateMatrixID/restore/", requireUpdate, h.restore)
 	api.GET("/:rateMatrixID/reviewers/", requireRead, h.reviewers)
-
-	selectOptions := api.Group("/select-options", responseguard.References())
-	selectOptions.GET("/", h.selectOptions)
 }
 
 type approvalActionRequest struct {
@@ -513,39 +508,6 @@ func (h *Handler) update(c *gin.Context) {
 	helpers.JSON(c, http.StatusOK, updated)
 }
 
-// @Summary Delete a rate matrix
-// @ID deleteRateMatrix
-// @Tags Rate Matrices
-// @Produce json
-// @Param rateMatrixID path string true "Rate matrix ID"
-// @Success 204
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 404 {object} helpers.ProblemDetail
-// @Failure 409 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /rate-matrices/{rateMatrixID} [delete]
-func (h *Handler) delete(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	matrixID, err := h.matrixID(c)
-	if err != nil {
-		return
-	}
-
-	if err = h.service.Delete(c.Request.Context(), &ratematrixports.GetRateMatrixByIDRequest{
-		RateMatrixID: matrixID,
-		TenantInfo:   tenantOf(authCtx),
-	}, authCtx.UserID); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	c.Status(http.StatusNoContent)
-}
-
 // @Summary List a rate matrix's cells
 // @ID listRateMatrixCells
 // @Tags Rate Matrices
@@ -650,32 +612,6 @@ func (h *Handler) replaceCells(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
-}
-
-// @Summary List rate matrix options
-// @ID listRateMatrixOptions
-// @Tags Rate Matrices
-// @Produce json
-// @Param query query string false "Search query"
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]ratematrix.RateMatrix]
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /rate-matrices/select-options/ [get]
-func (h *Handler) selectOptions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewSelectQueryRequest(c, authCtx)
-
-	pagination.SelectOptions(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*ratematrix.RateMatrix], error) {
-			return h.service.SelectOptions(c.Request.Context(), req)
-		},
-	)
 }
 
 func (h *Handler) matrixID(c *gin.Context) (pulid.ID, error) {

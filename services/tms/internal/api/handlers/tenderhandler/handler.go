@@ -58,11 +58,6 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/tenders")
-	api.GET(
-		"/:tenderID/",
-		h.pm.RequirePermission(permission.ResourceTender.String(), permission.OpRead),
-		h.get,
-	)
 	api.POST(
 		"/waterfall/",
 		h.pm.RequirePermission(permission.ResourceTender.String(), permission.OpCreate),
@@ -88,17 +83,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceTender.String(), permission.OpUpdate),
 		h.bounce,
 	)
-
-	api.GET(
-		"/by-shipment/:shipmentID/",
-		h.pm.RequirePermission(permission.ResourceTender.String(), permission.OpRead),
-		h.listByShipment,
-	)
-	api.GET(
-		"/by-move/:moveID/live/",
-		h.pm.RequirePermission(permission.ResourceTender.String(), permission.OpRead),
-		h.getLiveByMove,
-	)
 }
 
 func tenantInfoFor(c *gin.Context) pagination.TenantInfo {
@@ -108,39 +92,6 @@ func tenantInfoFor(c *gin.Context) pagination.TenantInfo {
 		BuID:   authCtx.BusinessUnitID,
 		UserID: authCtx.UserID,
 	}
-}
-
-// @Summary Get a tender with its offers
-// @ID getTender
-// @Tags Tenders
-// @Produce json
-// @Param tenderID path string true "Tender ID"
-// @Success 200 {object} tender.Tender
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 404 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /tenders/{tenderID}/ [get]
-func (h *Handler) get(c *gin.Context) {
-	tenderID, err := pulid.MustParse(c.Param("tenderID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.tenders.GetByID(c.Request.Context(), tenderports.GetTenderByIDRequest{
-		TenantInfo:    tenantInfoFor(c),
-		TenderID:      tenderID,
-		IncludeOffers: true,
-	})
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Start a waterfall tender from a routing guide
@@ -355,72 +306,4 @@ func requestActorFromAuthContext(authCtx *authctx.AuthContext) *permissionports.
 		BusinessUnitID: authCtx.BusinessUnitID,
 		OrganizationID: authCtx.OrganizationID,
 	}
-}
-
-// @Summary List a shipment's tenders
-// @ID listTendersByShipment
-// @Tags Tenders
-// @Produce json
-// @Param shipmentID path string true "Shipment ID"
-// @Success 200 {array} tender.Tender
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /tenders/by-shipment/{shipmentID}/ [get]
-func (h *Handler) listByShipment(c *gin.Context) {
-	shipmentID, err := pulid.MustParse(c.Param("shipmentID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entities, err := h.tenders.ListByShipment(
-		c.Request.Context(),
-		tenderports.ListTendersByShipmentRequest{
-			TenantInfo: tenantInfoFor(c),
-			ShipmentID: shipmentID,
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entities)
-}
-
-// @Summary Get the live tender for a move
-// @ID getLiveTenderByMove
-// @Tags Tenders
-// @Produce json
-// @Param moveID path string true "Shipment move ID"
-// @Success 200 {object} tender.Tender
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /tenders/by-move/{moveID}/live/ [get]
-func (h *Handler) getLiveByMove(c *gin.Context) {
-	moveID, err := pulid.MustParse(c.Param("moveID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.tenders.GetLiveByMoveID(
-		c.Request.Context(),
-		tenderports.GetLiveTenderByMoveRequest{
-			TenantInfo: tenantInfoFor(c),
-			MoveID:     moveID,
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entity)
 }

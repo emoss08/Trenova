@@ -61,9 +61,3 @@ export const bulkUpdateCommodityStatusRequestSchema = z.object({
 export type BulkUpdateCommodityStatusRequest = z.infer<
   typeof bulkUpdateCommodityStatusRequestSchema
 >;
-
-export const bulkUpdateCommodityStatusResponseSchema = z.array(commoditySchema);
-
-export type BulkUpdateCommodityStatusResponse = z.infer<
-  typeof bulkUpdateCommodityStatusResponseSchema
->;

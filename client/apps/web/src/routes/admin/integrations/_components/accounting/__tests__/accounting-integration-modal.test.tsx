@@ -274,6 +274,11 @@ function renderWithRouter(props: { justConnected?: boolean; vendor?: AccountingV
   );
 }
 
+/** Opens a tab of the connected integration; each tab draws only what it holds. */
+async function openTab(name: string) {
+  await userEvent.click(await screen.findByRole("tab", { name }));
+}
+
 function resetModal() {
   for (const mock of Object.values(mocks)) {
     if (typeof mock === "function") mock.mockReset();
@@ -455,6 +460,7 @@ describe("AccountingIntegrationModal", () => {
     mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: connected }));
 
     renderModal();
+    await openTab("Intuit app");
 
     expect(await screen.findByRole("button", { name: "Use your own app" })).toBeDisabled();
     expect(
@@ -468,6 +474,7 @@ describe("AccountingIntegrationModal", () => {
     );
 
     renderModal();
+    await openTab("Intuit app");
 
     expect(await screen.findByRole("button", { name: "Remove" })).toBeDisabled();
     await userEvent.click(screen.getByRole("button", { name: "Change keys" }));
@@ -602,6 +609,44 @@ describe("AccountingIntegrationModal", () => {
     expect(screen.queryByRole("button", { name: "Disconnect" })).not.toBeInTheDocument();
   });
 
+  it("opens with focus on the dialog, not on the help link in its description", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status());
+
+    renderModal();
+
+    await screen.findByRole("button", { name: /Connect to QuickBooks Online/ });
+    await waitFor(() => expect(screen.getByRole("dialog")).toHaveFocus());
+    expect(screen.getByRole("button", { name: "QuickBooks Online help" })).not.toHaveFocus();
+  });
+
+  it("keeps Disconnect in view on every tab of a connected integration", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: connected }));
+
+    renderModal();
+
+    expect(await screen.findByRole("button", { name: "Disconnect" })).toBeInTheDocument();
+    await openTab("Settings");
+    expect(screen.getByRole("button", { name: "Disconnect" })).toBeInTheDocument();
+    await openTab("Intuit app");
+    expect(screen.getByRole("button", { name: "Disconnect" })).toBeInTheDocument();
+  });
+
+  it("keeps an unsaved sync settings change while the person looks at another tab", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: connected }));
+
+    renderModal();
+    await openTab("Settings");
+    await userEvent.click(
+      await screen.findByRole("switch", { name: "Send owner-operator settlements" }),
+    );
+    await openTab("Overview");
+    await openTab("Settings");
+
+    expect(screen.getByRole("switch", { name: "Send owner-operator settlements" })).toBeChecked();
+    expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+    expect(mocks.updateAccountingSyncSettings).not.toHaveBeenCalled();
+  });
+
   it("says so instead of querying when the person may not read the integration", async () => {
     mocks.granted = new Set();
 
@@ -632,6 +677,11 @@ describe("AccountingIntegrationModal", () => {
 
     expect(await screen.findByText("Match your records")).toBeInTheDocument();
     expect(screen.getByText("1 of 4 required mappings confirmed")).toBeInTheDocument();
+    const progress = screen.getByRole("progressbar", {
+      name: "1 of 4 required mappings confirmed",
+    });
+    expect(progress).toHaveAttribute("aria-valuenow", "1");
+    expect(progress).toHaveAttribute("aria-valuemax", "4");
     expect(await screen.findByText("Revenue")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Finish setup" })).toBeDisabled();
     expect(screen.queryByRole("button", { name: "Check now" })).not.toBeInTheDocument();
@@ -863,6 +913,7 @@ describe("AccountingIntegrationModal", () => {
     });
 
     renderModal();
+    await openTab("Settings");
     const save = await screen.findByRole("button", { name: "Save" });
     expect(save).toBeDisabled();
 
@@ -893,6 +944,7 @@ describe("AccountingIntegrationModal", () => {
     });
 
     renderModal();
+    await openTab("Settings");
     expect(await screen.findByText("Payments recorded in QuickBooks Online")).toBeInTheDocument();
     const policy = screen.getByRole("button", { name: "Wait for someone to apply them" });
     await userEvent.click(policy);
@@ -926,6 +978,7 @@ describe("AccountingIntegrationModal", () => {
     );
 
     renderModal();
+    await openTab("Settings");
     const driverSwitch = await screen.findByRole("switch", {
       name: "Send owner-operator settlements",
     });
@@ -943,6 +996,7 @@ describe("AccountingIntegrationModal", () => {
     mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: connected }));
 
     renderModal();
+    await openTab("Settings");
 
     expect(
       await screen.findByRole("switch", { name: "Send owner-operator settlements" }),
@@ -978,11 +1032,12 @@ describe("AccountingIntegrationModal", () => {
 
     expect(await screen.findByText("Choose what is sent")).toBeInTheDocument();
     expect(screen.queryByText("Match your records")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Detailed" })).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Send documents" }));
-    await user.click(await screen.findByRole("option", { name: "Send journal entries" }));
-    await user.click(await screen.findByRole("button", { name: "Detailed" }));
-    await user.click(await screen.findByRole("option", { name: "Daily summary" }));
+    expect(screen.getByRole("radio", { name: /^Send documents/ })).toBeChecked();
+    expect(screen.queryByRole("radio", { name: /^Detailed/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("radio", { name: /^Send journal entries/ }));
+    expect(screen.getByRole("radio", { name: /^Detailed/ })).toBeChecked();
+    await user.click(screen.getByRole("radio", { name: /^Daily summary/ }));
+    expect(screen.getByRole("radio", { name: /^Daily summary/ })).toBeChecked();
     expect(screen.getByText(/One journal entry per day/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Continue" }));
 
@@ -1060,6 +1115,10 @@ describe("AccountingIntegrationModal", () => {
 
     expect(await screen.findByText("Journal entries, summed by day")).toBeInTheDocument();
     expect(screen.getByText(/^Sent on /)).toBeInTheDocument();
+    await openTab("Settings");
+    expect(
+      await screen.findByRole("switch", { name: "Send posted documents automatically" }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("switch", { name: "Send owner-operator settlements" }),
     ).not.toBeInTheDocument();
@@ -1227,12 +1286,12 @@ describe("AccountingIntegrationModal for Xero", () => {
 
     expect(await screen.findByText("Journal entries cannot be sent to Xero")).toBeInTheDocument();
     expect(screen.getByText(XERO_LEDGER_REASON)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Send documents" }));
-    const ledger = await screen.findByRole("option", { name: /Send journal entries/ });
-    expect(ledger).toHaveAttribute("aria-disabled", "true");
+    const ledger = screen.getByRole("radio", { name: /^Send journal entries/ });
+    expect(ledger).toBeDisabled();
+    expect(ledger).toHaveTextContent("Not available for Xero");
     await user.click(ledger);
-    expect(screen.queryByRole("button", { name: "Detailed" })).not.toBeInTheDocument();
-    await user.keyboard("{Escape}");
+    expect(screen.getByRole("radio", { name: /^Send documents/ })).toBeChecked();
+    expect(screen.queryByRole("radio", { name: /^Detailed/ })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Continue" }));
 
     await waitFor(() =>

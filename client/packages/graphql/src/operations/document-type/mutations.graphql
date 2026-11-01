@@ -1,0 +1,13 @@
+mutation CreateDocumentType($input: DocumentTypeInput!) {
+  createDocumentType(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateDocumentType($id: ID!, $input: DocumentTypeInput!) {
+  updateDocumentType(id: $id, input: $input) {
+    id
+    version
+  }
+}

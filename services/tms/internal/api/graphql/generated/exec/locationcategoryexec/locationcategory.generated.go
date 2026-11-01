@@ -259,6 +259,34 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createLocationCategory",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "LocationCategory",
+				Args:       field_Mutation_createLocationCategory_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateLocationCategory(ctx, fc.Args["input"].(gqlmodel.LocationCategoryInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNLocationCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationcategoryᚐLocationCategory),
+			},
+			{
+				Name:       "updateLocationCategory",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "LocationCategory",
+				Args:       field_Mutation_updateLocationCategory_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateLocationCategory(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.LocationCategoryInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNLocationCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationcategoryᚐLocationCategory),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "locationCategories",
@@ -289,14 +317,23 @@ var Shard = &gqlexec.Shard{
 			},
 		}},
 	},
+	Inputs: []gqlexec.Input{
+		{Name: "LocationCategoryInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputLocationCategoryInput)},
+	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "LocationCategory", Check: func(r any) bool { _, ok := r.(resolverLocationCategory); return ok }},
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
 }
 
 type resolverLocationCategory interface {
 	FacilityType(ctx context.Context, obj *locationcategory.LocationCategory) (*locationcategory.FacilityType, error)
+}
+
+type resolverMutation interface {
+	CreateLocationCategory(ctx context.Context, input gqlmodel.LocationCategoryInput) (*locationcategory.LocationCategory, error)
+	UpdateLocationCategory(ctx context.Context, id string, input gqlmodel.LocationCategoryInput) (*locationcategory.LocationCategory, error)
 }
 
 type resolverQuery interface {
@@ -313,6 +350,40 @@ var (
 	errNoChild5 = errors.New("field of type Int does not have child fields")
 	errNoChild6 = errors.New("field of type Timestamp does not have child fields")
 )
+
+func field_Mutation_createLocationCategory_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.LocationCategoryInput, error) {
+			return unmarshalNLocationCategoryInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐLocationCategoryInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateLocationCategory_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.LocationCategoryInput, error) {
+			return unmarshalNLocationCategoryInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐLocationCategoryInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
 
 func field_Query_locationCategories_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -340,8 +411,106 @@ func field_Query_locationCategory_args(ctx context.Context, ec *gqlexec.Exec, ra
 	return args, nil
 }
 
+func unmarshalInputLocationCategoryInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.LocationCategoryInput, error) {
+	var it gqlmodel.LocationCategoryInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "description", "type", "facilityType", "color", "hasSecureParking", "requiresAppointment", "allowsOvernight", "hasRestroom", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "type":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			data, err := unmarshalNLocationCategoryType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationcategoryᚐCategory(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Type = data
+		case "facilityType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("facilityType"))
+			data, err := unmarshalOFacilityType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationcategoryᚐFacilityType(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.FacilityType = data
+		case "color":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("color"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Color = data
+		case "hasSecureParking":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasSecureParking"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HasSecureParking = data
+		case "requiresAppointment":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requiresAppointment"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RequiresAppointment = data
+		case "allowsOvernight":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allowsOvernight"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AllowsOvernight = data
+		case "hasRestroom":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasRestroom"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HasRestroom = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
+}
+
+func unmarshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool, error) {
+	res, err := graphql.UnmarshalBoolean(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
@@ -352,6 +521,47 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNLocationCategoryInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐLocationCategoryInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.LocationCategoryInput, error) {
+	res, err := unmarshalInputLocationCategoryInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNLocationCategoryType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationcategoryᚐCategory(ctx context.Context, ec *gqlexec.Exec, v any) (locationcategory.Category, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := locationcategory.Category(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOFacilityType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationcategoryᚐFacilityType(ctx context.Context, ec *gqlexec.Exec, v any) (*locationcategory.FacilityType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := locationcategory.FacilityType(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {

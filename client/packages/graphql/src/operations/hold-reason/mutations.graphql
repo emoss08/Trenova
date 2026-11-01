@@ -1,0 +1,13 @@
+mutation CreateHoldReason($input: HoldReasonInput!) {
+  createHoldReason(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateHoldReason($id: ID!, $input: HoldReasonInput!) {
+  updateHoldReason(id: $id, input: $input) {
+    id
+    version
+  }
+}

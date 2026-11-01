@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
+import { apiService } from "@/services/api";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import {
   equipmentManufacturerSchema,
@@ -34,11 +35,17 @@ export function EquipmentManufacturerPanel({
         onOpenChange={onOpenChange}
         row={row}
         form={form}
-        url="/equipment-manufacturers/"
         queryKey="equipment-manufacturer-list"
         title={t("Equipment manufacturer")}
         fieldKey="name"
         formComponent={<EquipmentManufacturerForm />}
+        mutationFn={(values, currentRow) => {
+          if (!currentRow.id) {
+            throw new Error("No Equipment Manufacturer ID selected");
+          }
+
+          return apiService.equipmentManufacturerService.update(currentRow.id, values);
+        }}
       />
     );
   }
@@ -48,10 +55,10 @@ export function EquipmentManufacturerPanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/equipment-manufacturers/"
       queryKey="equipment-manufacturer-list"
       title={t("Equipment manufacturer")}
       formComponent={<EquipmentManufacturerForm />}
+      mutationFn={(values) => apiService.equipmentManufacturerService.create(values)}
     />
   );
 }

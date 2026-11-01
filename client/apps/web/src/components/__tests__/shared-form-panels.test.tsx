@@ -43,7 +43,7 @@ function SharedFormPanels({
         onOpenChange={() => undefined}
         row={ROW as unknown as typeof ROW & Record<string, unknown>}
         form={form}
-        url="/accessorial-charges/"
+        mutationFn={async (values) => values}
         queryKey="accessorial-charge-list"
         title="Accessorial charge"
         formComponent={null}
@@ -56,7 +56,7 @@ function SharedFormPanels({
       open
       onOpenChange={() => undefined}
       form={form}
-      url="/accessorial-charges/"
+      mutationFn={async (values) => values}
       queryKey="accessorial-charge-list"
       title="Accessorial charge"
       formComponent={null}

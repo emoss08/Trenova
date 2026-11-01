@@ -60,6 +60,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
@@ -76,6 +77,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturerequests"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturesupport"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentpacketruleservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documenttemplateservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundintake"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmailbox"
@@ -172,6 +174,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/app/accessorialchargeservice"
 	"github.com/emoss08/trenova/internal/modules/reference/app/commodityservice"
 	"github.com/emoss08/trenova/internal/modules/reference/app/documenttypeservice"
+	"github.com/emoss08/trenova/internal/modules/reference/app/dothazmatreferenceservice"
 	"github.com/emoss08/trenova/internal/modules/reference/app/hazardousmaterialservice"
 	"github.com/emoss08/trenova/internal/modules/reference/app/hazmatsegregationruleservice"
 	"github.com/emoss08/trenova/internal/modules/reference/app/holdreasonservice"
@@ -311,6 +314,9 @@ type Params struct {
 	LocationService                   *locationservice.Service
 	LocationCategoryService           *locationcategoryservice.Service
 	DocumentTypeService               *documenttypeservice.Service
+	DocumentService                   *documentservice.Service
+	BankReceiptBatchService           bankreceiptbatchports.BankReceiptBatchService
+	DotHazmatReferenceService         *dothazmatreferenceservice.Service
 	ServiceTypeService                *servicetypeservice.Service
 	OrderService                      *orderservice.Service
 	ShipmentTypeService               *shipmenttypeservice.Service
@@ -598,6 +604,9 @@ type Services struct {
 	LocationService                   *locationservice.Service
 	LocationCategoryService           *locationcategoryservice.Service
 	DocumentTypeService               *documenttypeservice.Service
+	DocumentService                   *documentservice.Service
+	BankReceiptBatchService           bankreceiptbatchports.BankReceiptBatchService
+	DotHazmatReferenceService         *dothazmatreferenceservice.Service
 	ServiceTypeService                *servicetypeservice.Service
 	OrderService                      *orderservice.Service
 	ShipmentTypeService               *shipmenttypeservice.Service
@@ -890,6 +899,9 @@ func newServices(p *Params) *Services {
 		LocationService:                   p.LocationService,
 		LocationCategoryService:           p.LocationCategoryService,
 		DocumentTypeService:               p.DocumentTypeService,
+		DocumentService:                   p.DocumentService,
+		BankReceiptBatchService:           p.BankReceiptBatchService,
+		DotHazmatReferenceService:         p.DotHazmatReferenceService,
 		ServiceTypeService:                p.ServiceTypeService,
 		OrderService:                      p.OrderService,
 		ShipmentTypeService:               p.ShipmentTypeService,

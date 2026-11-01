@@ -51,3 +51,25 @@ extend type Query {
   holdReasons(input: DataTableConnectionInput!): HoldReasonConnection!
   holdReason(id: ID!): HoldReason
 }
+
+input HoldReasonInput {
+  type: HoldType!
+  code: String!
+  label: String!
+  description: String
+  active: Boolean!
+  defaultSeverity: HoldSeverity!
+  defaultBlocksDispatch: Boolean!
+  defaultBlocksDelivery: Boolean!
+  defaultBlocksBilling: Boolean!
+  defaultVisibleToCustomer: Boolean!
+  sortOrder: Int!
+  "Codes this reason maps to in other systems, keyed by system."
+  externalMap: JSON
+  version: Int
+}
+
+extend type Mutation {
+  createHoldReason(input: HoldReasonInput!): HoldReason!
+  updateHoldReason(id: ID!, input: HoldReasonInput!): HoldReason!
+}

@@ -70,7 +70,6 @@ export function AuditScopeBar({ scope, onChange, canPickAgent, actions }: AuditS
       ) : null}
       <div className="w-56">
         <Autocomplete<SelectOption, Record<string, never>>
-          link="/users/select-options/"
           graphql={USER_OPTIONS}
           initialLimit={50}
           label={t("Person")}

@@ -1,0 +1,29 @@
+mutation CreateFleetCode($input: FleetCodeInput!) {
+  createFleetCode(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateFleetCode($id: ID!, $input: FleetCodeInput!) {
+  updateFleetCode(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation PatchFleetCode($id: ID!, $input: FleetCodePatchInput!) {
+  patchFleetCode(id: $id, input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation BulkUpdateFleetCodeStatus($input: BulkUpdateFleetCodeStatusInput!) {
+  bulkUpdateFleetCodeStatus(input: $input) {
+    id
+    status
+    version
+  }
+}

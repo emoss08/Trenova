@@ -1,28 +1,47 @@
-import { api } from "@trenova/shared/lib/api";
-import { safeParse } from "@trenova/shared/lib/parse";
-import { holdReasonSchema, type HoldReason } from "@/types/hold-reason";
-import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
+import {
+  CreateHoldReasonDocument,
+  UpdateHoldReasonDocument,
+  type HoldReasonInput,
+} from "@trenova/graphql/generated/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { HoldReason } from "@/types/hold-reason";
+
+export function toHoldReasonInput(data: HoldReason): HoldReasonInput {
+  return {
+    type: data.type,
+    code: data.code,
+    label: data.label,
+    description: data.description || null,
+    active: data.active,
+    defaultSeverity: data.defaultSeverity,
+    defaultBlocksDispatch: data.defaultBlocksDispatch,
+    defaultBlocksDelivery: data.defaultBlocksDelivery,
+    defaultBlocksBilling: data.defaultBlocksBilling,
+    defaultVisibleToCustomer: data.defaultVisibleToCustomer,
+    sortOrder: data.sortOrder,
+    externalMap: data.externalMap ?? null,
+    version: data.version,
+  };
+}
 
 export class HoldReasonService {
-  async getAll(params?: string) {
-    const response = await api.get<GenericLimitOffsetResponse<HoldReason>>(
-      `/hold-reasons/${params ? `?${params}` : ""}`,
-    );
-    return safeParse(holdReasonSchema.array(), response.results, "HoldReasons");
-  }
-
-  async getById(id: string) {
-    const response = await api.get<HoldReason>(`/hold-reasons/${id}/`);
-    return safeParse(holdReasonSchema, response, "HoldReason");
-  }
-
   async create(data: HoldReason) {
-    const response = await api.post<HoldReason>("/hold-reasons/", data);
-    return safeParse(holdReasonSchema, response, "HoldReason");
+    const response = await requestGraphQL({
+      document: CreateHoldReasonDocument,
+      operationName: "CreateHoldReason",
+      variables: { input: toHoldReasonInput(data) },
+    });
+
+    return response.createHoldReason;
   }
 
   async update(id: string, data: HoldReason) {
-    const response = await api.put<HoldReason>(`/hold-reasons/${id}/`, data);
-    return safeParse(holdReasonSchema, response, "HoldReason");
+    const response = await requestGraphQL({
+      document: UpdateHoldReasonDocument,
+      operationName: "UpdateHoldReason",
+      variables: { id, input: toHoldReasonInput(data) },
+    });
+
+    return response.updateHoldReason;
   }
 }

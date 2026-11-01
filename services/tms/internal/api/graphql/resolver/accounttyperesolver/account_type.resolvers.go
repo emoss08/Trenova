@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accounttypeports"
@@ -57,5 +58,82 @@ func (r *QueryResolver) AccountType(ctx context.Context, id string) (*accounttyp
 	return r.AccountTypeService.Get(ctx, accounttypeports.GetAccountTypeByIDRequest{
 		ID:         accountTypeID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+}
+
+func (r *MutationResolver) CreateAccountType(ctx context.Context, input gqlmodel.AccountTypeInput) (*accounttype.AccountType, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountType, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AccountTypeService.Create(ctx, accountTypeFromInput(&input, authCtx), authCtx.UserID)
+}
+
+func (r *MutationResolver) UpdateAccountType(ctx context.Context, id string, input gqlmodel.AccountTypeInput) (*accounttype.AccountType, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountType, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	accountTypeID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.AccountTypeService.Get(ctx, accounttypeports.GetAccountTypeByIDRequest{
+		ID:         accountTypeID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	applyAccountTypeInput(existing, &input)
+
+	return r.AccountTypeService.Update(ctx, existing, authCtx.UserID)
+}
+
+func (r *MutationResolver) PatchAccountType(ctx context.Context, id string, input gqlmodel.AccountTypePatchInput) (*accounttype.AccountType, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountType, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	accountTypeID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.AccountTypeService.Get(ctx, accounttypeports.GetAccountTypeByIDRequest{
+		ID:         accountTypeID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = applyAccountTypePatch(existing, &input); err != nil {
+		return nil, err
+	}
+
+	return r.AccountTypeService.Update(ctx, existing, authCtx.UserID)
+}
+
+func (r *MutationResolver) BulkUpdateAccountTypeStatus(ctx context.Context, input gqlmodel.BulkUpdateAccountTypeStatusInput) ([]*accounttype.AccountType, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountType, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	accountTypeIDs, err := gqlid.ParseIDs(input.AccountTypeIds)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AccountTypeService.BulkUpdateStatus(ctx, &accounttypeports.BulkUpdateAccountTypeStatusRequest{
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
+		AccountTypeIDs: accountTypeIDs,
+		Status:         input.Status,
 	})
 }

@@ -1,0 +1,13 @@
+mutation CreateHazmatSegregationRule($input: HazmatSegregationRuleInput!) {
+  createHazmatSegregationRule(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateHazmatSegregationRule($id: ID!, $input: HazmatSegregationRuleInput!) {
+  updateHazmatSegregationRule(id: $id, input: $input) {
+    id
+    version
+  }
+}

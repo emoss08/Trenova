@@ -291,9 +291,3 @@ export const bulkUpdateCustomerStatusRequestSchema = z.object({
 });
 
 export type BulkUpdateCustomerStatusRequest = z.infer<typeof bulkUpdateCustomerStatusRequestSchema>;
-
-export const bulkUpdateCustomerStatusResponseSchema = z.array(customerSchema);
-
-export type BulkUpdateCustomerStatusResponse = z.infer<
-  typeof bulkUpdateCustomerStatusResponseSchema
->;

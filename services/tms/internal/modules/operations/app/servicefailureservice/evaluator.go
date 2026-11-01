@@ -21,8 +21,7 @@ type evaluateShipmentParams struct {
 }
 
 type detectedAction struct {
-	entity   *servicefailure.ServiceFailure
-	existing bool
+	entity *servicefailure.ServiceFailure
 }
 
 type qualifyingFailureParams struct {
@@ -206,20 +205,6 @@ func (s *service) qualifyingFailure(params qualifyingFailureParams) (*detectedAc
 	}
 	entity.Normalize()
 	return &detectedAction{entity: entity}, ""
-}
-
-func (s *service) createOrUpdateDetected(
-	ctx context.Context,
-	action *detectedAction,
-	actor *permissionports.RequestActor,
-) (*servicefailure.ServiceFailure, error) {
-	detected, err := s.planDetected(ctx, action.entity)
-	if err != nil {
-		return nil, err
-	}
-	action.existing = detected.Existing != nil
-
-	return s.persistDetected(ctx, detected, actor)
 }
 
 func mergeEvaluationResult(target, source *servicefailureports.ServiceFailureEvaluationResult) {

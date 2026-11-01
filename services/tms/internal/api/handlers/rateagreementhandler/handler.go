@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/fieldguard"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
@@ -75,11 +74,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.summarizeLanes,
 	)
-	api.POST(
-		"/:rateAgreementID/rules/amend/",
-		h.pm.RequirePermission(resource, permission.OpUpdate),
-		h.amendRules,
-	)
 	api.GET(
 		"/:rateAgreementID/versions/",
 		h.pm.RequirePermission(resource, permission.OpRead),
@@ -135,9 +129,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(resource, permission.OpArchive),
 		h.review(h.service.Archive),
 	)
-
-	selectOptions := api.Group("/select-options", responseguard.References())
-	selectOptions.GET("/", h.selectOptions)
 }
 
 // @Summary List rate agreements
@@ -421,61 +412,6 @@ func (h *Handler) summarizeLanes(c *gin.Context) {
 	helpers.JSON(c, http.StatusOK, summary)
 }
 
-type amendRulesRequest struct {
-	EffectiveFrom int64                              `json:"effectiveFrom"`
-	SupersededIDs []pulid.ID                         `json:"supersededIds"`
-	Rules         []*rateagreement.RateAgreementRule `json:"rules"`
-}
-
-// @Summary Amend a rate agreement's rules
-// @Description Closes out the rules a change replaces and inserts their successors, in one transaction. Nothing is edited in place, so the superseded rates keep their history.
-// @ID amendRateAgreementRules
-// @Tags Rate Agreements
-// @Accept json
-// @Produce json
-// @Param rateAgreementID path string true "Rate agreement ID"
-// @Param request body amendRulesRequest true "Amendment payload"
-// @Success 200 {object} rateagreement.RateAgreement
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 422 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /rate-agreements/{rateAgreementID}/rules/amend [post]
-func (h *Handler) amendRules(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	agreementID, err := h.agreementID(c)
-	if err != nil {
-		return
-	}
-
-	body := new(amendRulesRequest)
-	if err = c.ShouldBindJSON(body); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	amended, err := h.service.AmendRules(
-		c.Request.Context(),
-		&rateagreementports.AmendRateAgreementRulesRequest{
-			TenantInfo:      tenantOf(authCtx),
-			RateAgreementID: agreementID,
-			EffectiveFrom:   body.EffectiveFrom,
-			SupersededIDs:   body.SupersededIDs,
-			Rules:           body.Rules,
-		},
-		authCtx.UserID,
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, amended)
-}
-
 // @Summary List a rate agreement's versions
 // @ID listRateAgreementVersions
 // @Tags Rate Agreements
@@ -517,37 +453,6 @@ func (h *Handler) listVersions(c *gin.Context) {
 				return nil, err
 			}
 			fieldguard.Withhold(fieldguard.Visible(c, h.engine), result.Items...)
-			return result, nil
-		},
-	)
-}
-
-// @Summary List rate agreement options
-// @ID listRateAgreementOptions
-// @Tags Rate Agreements
-// @Produce json
-// @Param query query string false "Search query"
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]rateagreement.RateAgreement]
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /rate-agreements/select-options/ [get]
-func (h *Handler) selectOptions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewSelectQueryRequest(c, authCtx)
-
-	pagination.SelectOptions(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*rateagreement.RateAgreement], error) {
-			result, err := h.service.SelectOptions(c.Request.Context(), req)
-			if err != nil {
-				return nil, err
-			}
-			h.withhold(c, result.Items...)
 			return result, nil
 		},
 	)

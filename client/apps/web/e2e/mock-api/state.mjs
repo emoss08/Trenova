@@ -3,6 +3,7 @@ import { buildShipments, CARRIERS, createDriverPool } from "./fixtures/board.mjs
 import { createTriageState } from "./handlers/triage-model.mjs";
 import { createSettingsState } from "./fixtures/settings.mjs";
 import { createPaletteState } from "./fixtures/palette.mjs";
+import { createAccountingState } from "./handlers/accounting.mjs";
 
 export const SCENARIO_DEFAULTS = {
   // quiet | busy | high (480 rows)
@@ -44,6 +45,15 @@ export const SCENARIO_DEFAULTS = {
   lading: process.env.MOCK_LADING ?? "draft",
   // the command palette's waiting counts in the sidebar and on the palette's home
   palette: process.env.MOCK_PALETTE === "1",
+  // accounting integrations: the connected system's stage — connect (nothing connected) | mode |
+  // mappings | startDate | connected | degraded | failing | revoked | expiring
+  accounting: process.env.MOCK_ACCOUNTING ?? "connect",
+  // QuickBooksOnline | Xero | BusinessCentral | NetSuite
+  accountingSystem: process.env.MOCK_ACCOUNTING_SYSTEM ?? "QuickBooksOnline",
+  // the provider app it connects through: instance (the server's) | tenant (the organization's own) | none
+  accountingApp: process.env.MOCK_ACCOUNTING_APP ?? "instance",
+  // NetSuite only: signIn | certificate
+  accountingAuth: process.env.MOCK_ACCOUNTING_AUTH ?? "signIn",
 };
 
 const TRIAGE_SCENARIOS = new Set(["live", "firstDay", "noMailbox", "deskOff"]);
@@ -123,6 +133,7 @@ export function createState(requested) {
     ai: createAIState(anchor, scenario),
     settings: createSettingsState(anchor),
     palette: createPaletteState(anchor),
+    accounting: createAccountingState(scenario, anchor),
     shipments,
     drivers:
       scenario.board === "quiet"

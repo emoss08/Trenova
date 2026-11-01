@@ -1,8 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { apiService } from "@/services/api";
-import type { CustomFieldDefinition, SelectOption } from "@/types/custom-field";
+import { customField } from "@/lib/queries/custom-field";
+import type { CustomFieldFormFieldsQuery } from "@trenova/graphql/generated/graphql";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
 import { type Control, type FieldValues, type Path } from "react-hook-form";
 import { AutoCompleteDateField } from "./fields/date-field/date-field";
 import { InputField } from "./fields/input-field";
@@ -17,7 +16,9 @@ interface CustomFieldsSectionProps<T extends FieldValues> {
   fieldPrefix?: string;
 }
 
-function mapSelectOptions(options: SelectOption[]) {
+type CustomFieldFormField = CustomFieldFormFieldsQuery["customFieldFormFields"][number];
+
+function mapSelectOptions(options: CustomFieldFormField["options"]) {
   return options.map((opt) => ({
     value: opt.value,
     label: opt.label,
@@ -30,7 +31,7 @@ function CustomFieldRenderer<T extends FieldValues>({
   control,
   fieldPrefix,
 }: {
-  definition: CustomFieldDefinition;
+  definition: CustomFieldFormField;
   control: Control<T>;
   fieldPrefix: string;
 }) {
@@ -129,31 +130,19 @@ export function CustomFieldsSection<T extends FieldValues>({
 }: CustomFieldsSectionProps<T>) {
   const t = useT();
 
-  const { data: customFields, isLoading } = useQuery({
-    queryKey: ["custom-fields", resourceType],
-    queryFn: () => apiService.customFieldService.getByResourceType(resourceType),
+  const { data: fields, isLoading } = useQuery({
+    ...customField.formFields(resourceType),
     staleTime: 5 * 60 * 1000,
   });
 
-  const sortedFields = useMemo(() => {
-    if (!customFields) return [];
-    return [...customFields]
-      .filter((field) => field.isActive)
-      .sort((a, b) => a.displayOrder - b.displayOrder);
-  }, [customFields]);
-
-  if (isLoading) {
-    return null;
-  }
-
-  if (!sortedFields || sortedFields.length === 0) {
+  if (isLoading || !fields || fields.length === 0) {
     return null;
   }
 
   return (
     <FormSection title={t("Custom fields")}>
       <FormGroup cols={2}>
-        {sortedFields.map((definition) => (
+        {fields.map((definition) => (
           <FormControl key={definition.id} cols={definition.fieldType === "boolean" ? "full" : 1}>
             <CustomFieldRenderer
               definition={definition}

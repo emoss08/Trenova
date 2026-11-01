@@ -79,9 +79,8 @@ Internal.
   `refview` withholds, and the response names it, without list indices, in the
   `Withheld-By-Access` header (`moves.assignment.primaryWorker`). The handler's own value is never
   changed. Protected field groups are withheld from every record in the response through the
-  entity's `WithholdFields`. Select-option routes mark their records `responseguard.References()`
-  (they authorize no kind, so each is shown as a linked record), and routes that return only the
-  caller's own records (`/users/me`, the driver portal) mark them `responseguard.SelfScoped()`.
+  entity's `WithholdFields`. Routes that return only the caller's own records (`/users/me`, the
+  driver portal) mark them `responseguard.SelfScoped()`.
   On the client, a REST schema carries a linked record as
   `linkedRecordSchema(kind, schema)` (`@trenova/shared/lib/linked-record`), which makes every field
   outside the view nullable, and a screen draws `WithheldValue` where one it shows is null.

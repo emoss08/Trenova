@@ -13,8 +13,6 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
-import { api } from "@trenova/shared/lib/api";
-import { selectOptionsPath } from "@/lib/select-options-path";
 import {
   fetchGraphQLSelectOptions,
   selectOptionFiltersFromSearchParams,
@@ -47,8 +45,7 @@ import { FieldWrapper } from "./field-components";
 import { fieldInvalidClass, fieldTriggerClass } from "@trenova/shared/lib/variants/field";
 
 export interface BaseMultiSelectAutocompleteFieldProps<TOption> {
-  link: string;
-  graphql?: GraphQLSelectOptionsConfig;
+  graphql: GraphQLSelectOptionsConfig;
   preload?: boolean;
   renderOption: (option: TOption) => React.ReactNode;
   renderBadge?: (option: TOption) => React.ReactNode;
@@ -82,8 +79,7 @@ export interface MultiSelectAutocompleteFieldProps<TOption, TForm extends FieldV
   label?: string;
   description?: string;
   className?: string;
-  link: string;
-  graphql?: GraphQLSelectOptionsConfig;
+  graphql: GraphQLSelectOptionsConfig;
   preload?: boolean;
   renderOption: (option: TOption) => React.ReactNode;
   renderBadge?: (option: TOption) => React.ReactNode;
@@ -102,85 +98,47 @@ export interface MultiSelectAutocompleteFieldProps<TOption, TForm extends FieldV
   nestedValues?: boolean;
 }
 
-/** The most IDs one REST lookup answers; a REST select-options endpoint pages at this size. */
-const REST_IDS_PER_REQUEST = 100;
-
 async function fetchOptions<T>(
-  link: string,
+  graphql: GraphQLSelectOptionsConfig,
   inputValue: string,
   page: number,
   extraSearchParams?: Record<string, string>,
-  graphql?: GraphQLSelectOptionsConfig,
 ): Promise<GenericLimitOffsetResponse<T>> {
-  const limit = 10;
-  const offset = (page - 1) * limit;
-
-  if (graphql) {
-    const response = await fetchGraphQLSelectOptions({
-      resource: graphql.resource,
-      query: inputValue || undefined,
-      page,
-      initialLimit: limit,
-      filters: {
-        ...selectOptionFiltersFromSearchParams(extraSearchParams),
-        ...graphql.filters,
-      },
-    });
-    return response as GenericLimitOffsetResponse<T>;
-  }
-
-  return api.get<GenericLimitOffsetResponse<T>>(
-    selectOptionsPath(
-      link,
-      {
-        limit: limit.toString(),
-        offset: offset.toString(),
-        ...(inputValue ? { query: inputValue } : {}),
-      },
-      extraSearchParams,
-    ),
-  );
+  const response = await fetchGraphQLSelectOptions({
+    resource: graphql.resource,
+    query: inputValue || undefined,
+    page,
+    initialLimit: 10,
+    filters: {
+      ...selectOptionFiltersFromSearchParams(extraSearchParams),
+      ...graphql.filters,
+    },
+  });
+  return response as GenericLimitOffsetResponse<T>;
 }
 
 async function fetchOptionsByIds<T>(
-  link: string,
+  graphql: GraphQLSelectOptionsConfig,
   ids: string[],
   extraSearchParams?: Record<string, string>,
-  graphql?: GraphQLSelectOptionsConfig,
 ): Promise<T[]> {
   if (!ids.length) {
     return [];
   }
 
-  if (graphql) {
-    const response = await fetchGraphQLSelectOptions({
-      resource: graphql.resource,
-      ids,
-      initialLimit: ids.length,
-      filters: {
-        ...selectOptionFiltersFromSearchParams(extraSearchParams),
-        ...graphql.filters,
-      },
-    });
-    return response.results as T[];
-  }
-
-  const pages: string[][] = [];
-  for (let start = 0; start < ids.length; start += REST_IDS_PER_REQUEST) {
-    pages.push(ids.slice(start, start + REST_IDS_PER_REQUEST));
-  }
-  const responses = await Promise.all(
-    pages.map((pageIds) =>
-      api.get<GenericLimitOffsetResponse<T>>(
-        selectOptionsPath(link, {}, extraSearchParams, pageIds),
-      ),
-    ),
-  );
-  return responses.flatMap((response) => response.results);
+  const response = await fetchGraphQLSelectOptions({
+    resource: graphql.resource,
+    ids,
+    initialLimit: ids.length,
+    filters: {
+      ...selectOptionFiltersFromSearchParams(extraSearchParams),
+      ...graphql.filters,
+    },
+  });
+  return response.results as T[];
 }
 
 export function MultiSelectAutocomplete<T>({
-  link,
   graphql,
   preload = false,
   renderOption,
@@ -299,17 +257,16 @@ export function MultiSelectAutocomplete<T>({
             const strings = values.filter((v): v is string => typeof v === "string");
             const additionalOptionsPromise =
               strings.length > 0
-                ? fetchOptionsByIds<T>(link, strings, extraSearchParams, graphql)
+                ? fetchOptionsByIds<T>(graphql, strings, extraSearchParams)
                 : Promise.resolve([] as T[]);
 
             const additionalOptions = await additionalOptionsPromise;
             return [...objects, ...additionalOptions];
           })()
         : fetchOptionsByIds<T>(
-            link,
+            graphql,
             values.map((v) => (typeof v === "string" ? v : getOptionValue(v as T).toString())),
             extraSearchParams,
-            graphql,
           );
 
       await resolveInitialOptions
@@ -335,13 +292,13 @@ export function MultiSelectAutocomplete<T>({
     };
 
     void fetchInitialValues();
-  }, [values, link, nestedValues, getOptionValue, extraSearchParams, graphql]);
+  }, [values, nestedValues, getOptionValue, extraSearchParams, graphql]);
 
   useEffect(() => {
     const loadOptions = async () => {
       dispatchAsyncState({ type: "fetchStart" });
 
-      await fetchOptions<T>(link, debouncedSearchTerm, page, extraSearchParams, graphql)
+      await fetchOptions<T>(graphql, debouncedSearchTerm, page, extraSearchParams)
         .then((response) => {
           dispatchAsyncState({
             type: "fetchSuccess",
@@ -351,7 +308,7 @@ export function MultiSelectAutocomplete<T>({
           });
         })
         .catch((err) => {
-          console.error(link, err);
+          console.error(graphql.resource, err);
           dispatchAsyncState({
             type: "fetchError",
             error: err instanceof Error ? err.message : "Failed to fetch options",
@@ -365,7 +322,7 @@ export function MultiSelectAutocomplete<T>({
     if (open) {
       void loadOptions();
     }
-  }, [debouncedSearchTerm, open, page, link, extraSearchParams, graphql]);
+  }, [debouncedSearchTerm, open, page, extraSearchParams, graphql]);
 
   useEffect(() => {
     return () => {
@@ -757,7 +714,6 @@ export function MultiSelectAutocompleteField<TOption, TForm extends FieldValues>
   control,
   rules,
   className,
-  link,
   graphql,
   preload,
   renderOption,
@@ -789,7 +745,6 @@ export function MultiSelectAutocompleteField<TOption, TForm extends FieldValues>
             className={className}
           >
             <MultiSelectAutocomplete<TOption>
-              link={link}
               graphql={graphql}
               preload={preload}
               renderOption={renderOption}

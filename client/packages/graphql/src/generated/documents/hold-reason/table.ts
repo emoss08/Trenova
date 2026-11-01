@@ -2,4 +2,4 @@
 import type { TypedDocumentString, HoldReasonTableQuery, HoldReasonTableQueryVariables, HoldReasonTableRowFieldsFragment } from "../../graphql";
 
 export const HoldReasonTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"HoldReasonTableRowFields"}} as unknown as TypedDocumentString<HoldReasonTableRowFieldsFragment, unknown>;
-export const HoldReasonTableDocument = {"__meta__":{"kind":"query","name":"HoldReasonTable","hash":"sha256:a90ea543247ade1f06a13a861011a27d0e03255bc5f1d0673d628b66f547893c"}} as unknown as TypedDocumentString<HoldReasonTableQuery, HoldReasonTableQueryVariables>;
+export const HoldReasonTableDocument = {"__meta__":{"kind":"query","name":"HoldReasonTable","hash":"sha256:6f82d9070c470b39add2c4acea54155f342a1d4b1ea43b16dbb22f1bdfd5fd0b"}} as unknown as TypedDocumentString<HoldReasonTableQuery, HoldReasonTableQueryVariables>;

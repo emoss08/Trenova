@@ -335,42 +335,6 @@ func TestGateway_LeaveOfAnEndedConnectionIsNotAnError(t *testing.T) {
 	assert.Empty(t, f.broker.left)
 }
 
-func TestGateway_TypingIsThrottledAndStampedWithTheCaller(t *testing.T) {
-	t.Parallel()
-
-	f := newGatewayFixture(t)
-	scope := "shipment-comments:shp_01J00000000000000000000000"
-
-	require.NoError(t, f.gateway.SignalTyping(t.Context(), &realtimeports.RealtimeTypingRequest{
-		RealtimeScopeRequest: f.scope(scope),
-	}))
-	require.Len(t, f.broker.enqueued, 1)
-	env := f.broker.enqueued[0]
-	assert.Equal(t, realtimeports.RealtimeEventTyping, env.Event)
-	assert.Equal(t, scope, env.Scope)
-	assert.True(t, env.Ephemeral)
-	assert.Nil(t, env.PortalPayload)
-
-	var event realtimeports.RealtimeTypingEvent
-	require.NoError(t, sonic.Unmarshal(env.Payload, &event))
-	assert.Equal(t, f.conn.UserID.String(), event.UserID)
-	assert.Equal(t, "Dana", event.Name)
-	assert.False(t, event.Stop)
-
-	f.broker.allow = false
-	require.NoError(t, f.gateway.SignalTyping(t.Context(), &realtimeports.RealtimeTypingRequest{
-		RealtimeScopeRequest: f.scope(scope),
-	}))
-	assert.Len(t, f.broker.enqueued, 1, "a throttled signal is not sent")
-
-	require.NoError(t, f.gateway.SignalTyping(t.Context(), &realtimeports.RealtimeTypingRequest{
-		RealtimeScopeRequest: f.scope(scope),
-		Stop:                 true,
-	}))
-	require.Len(t, f.broker.enqueued, 2, "a stop is never throttled")
-	assert.Len(t, f.broker.released, 1)
-}
-
 func TestGateway_JoinCarriesPresenceState(t *testing.T) {
 	t.Parallel()
 

@@ -41,6 +41,7 @@
   "No email profiles yet": "Aún no hay perfiles de correo electrónico",
   "Operational notes for admins choosing sender identities.": "Notas operativas para los administradores que eligen identidades de remitente.",
   "Optional reply destination. Blank uses the sender email.": "Destino de respuesta opcional. En blanco se usa el correo del remitente.",
+  "Postmark": "Postmark",
   "Purged with replays": "Se depura con las repeticiones",
   "Purpose assignments": "Asignaciones de propósito",
   "Queue a test message from {0}.": "Poner en cola un mensaje de prueba desde {0}.",

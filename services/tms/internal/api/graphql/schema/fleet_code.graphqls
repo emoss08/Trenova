@@ -35,3 +35,48 @@ extend type Query {
   fleetCodes(input: DataTableConnectionInput!): FleetCodeConnection!
   fleetCode(id: ID!): FleetCode
 }
+
+input FleetCodeInput {
+  status: EntityStatus!
+  code: String!
+  description: String
+  managerId: ID!
+  revenueGoal: Float
+  deadheadGoal: Float
+  mileageGoal: Float
+  color: String
+  version: Int
+}
+
+input FleetCodePatchInput {
+  "Omit to leave unchanged; null is rejected."
+  status: EntityStatus @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  code: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  description: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  managerId: ID @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  revenueGoal: Float @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  deadheadGoal: Float @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  mileageGoal: Float @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  color: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  version: Int @goField(omittable: true)
+}
+
+input BulkUpdateFleetCodeStatusInput {
+  fleetCodeIds: [ID!]!
+  status: EntityStatus!
+}
+
+extend type Mutation {
+  createFleetCode(input: FleetCodeInput!): FleetCode!
+  updateFleetCode(id: ID!, input: FleetCodeInput!): FleetCode!
+  patchFleetCode(id: ID!, input: FleetCodePatchInput!): FleetCode!
+  bulkUpdateFleetCodeStatus(input: BulkUpdateFleetCodeStatusInput!): [FleetCode!]!
+}

@@ -7,8 +7,8 @@ package servicefailureportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
@@ -177,80 +177,6 @@ func (_c *MockServiceFailureService_CountUnresolved_Call) Return(n int, err erro
 }
 
 func (_c *MockServiceFailureService_CountUnresolved_Call) RunAndReturn(run func(ctx context.Context, req *servicefailureports.CountUnresolvedServiceFailuresRequest) (int, error)) *MockServiceFailureService_CountUnresolved_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// CreateManual provides a mock function for the type MockServiceFailureService
-func (_mock *MockServiceFailureService) CreateManual(ctx context.Context, req *servicefailureports.CreateManualServiceFailureRequest, actor *permissionports.RequestActor) (*servicefailure.ServiceFailure, error) {
-	ret := _mock.Called(ctx, req, actor)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreateManual")
-	}
-
-	var r0 *servicefailure.ServiceFailure
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicefailureports.CreateManualServiceFailureRequest, *permissionports.RequestActor) (*servicefailure.ServiceFailure, error)); ok {
-		return returnFunc(ctx, req, actor)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicefailureports.CreateManualServiceFailureRequest, *permissionports.RequestActor) *servicefailure.ServiceFailure); ok {
-		r0 = returnFunc(ctx, req, actor)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*servicefailure.ServiceFailure)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *servicefailureports.CreateManualServiceFailureRequest, *permissionports.RequestActor) error); ok {
-		r1 = returnFunc(ctx, req, actor)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockServiceFailureService_CreateManual_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateManual'
-type MockServiceFailureService_CreateManual_Call struct {
-	*mock.Call
-}
-
-// CreateManual is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *services.CreateManualServiceFailureRequest
-//   - actor *services.RequestActor
-func (_e *MockServiceFailureService_Expecter) CreateManual(ctx any, req any, actor any) *MockServiceFailureService_CreateManual_Call {
-	return &MockServiceFailureService_CreateManual_Call{Call: _e.mock.On("CreateManual", ctx, req, actor)}
-}
-
-func (_c *MockServiceFailureService_CreateManual_Call) Run(run func(ctx context.Context, req *servicefailureports.CreateManualServiceFailureRequest, actor *permissionports.RequestActor)) *MockServiceFailureService_CreateManual_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *servicefailureports.CreateManualServiceFailureRequest
-		if args[1] != nil {
-			arg1 = args[1].(*servicefailureports.CreateManualServiceFailureRequest)
-		}
-		var arg2 *permissionports.RequestActor
-		if args[2] != nil {
-			arg2 = args[2].(*permissionports.RequestActor)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *MockServiceFailureService_CreateManual_Call) Return(serviceFailure *servicefailure.ServiceFailure, err error) *MockServiceFailureService_CreateManual_Call {
-	_c.Call.Return(serviceFailure, err)
-	return _c
-}
-
-func (_c *MockServiceFailureService_CreateManual_Call) RunAndReturn(run func(ctx context.Context, req *servicefailureports.CreateManualServiceFailureRequest, actor *permissionports.RequestActor) (*servicefailure.ServiceFailure, error)) *MockServiceFailureService_CreateManual_Call {
 	_c.Call.Return(run)
 	return _c
 }

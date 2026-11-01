@@ -5308,6 +5308,34 @@ func init() {
 					Target: &UserSpec,
 				},
 			},
+			{
+				Name:   "lane",
+				Column: "lane",
+			},
+			{
+				Name:   "holdReasonCode",
+				Column: "hold_reason_code",
+			},
+			{
+				Name:   "poNumber",
+				Column: "po_number",
+			},
+			{
+				Name:   "agentVerdict",
+				Column: "agent_verdict",
+			},
+			{
+				Name:   "agentSummary",
+				Column: "agent_summary",
+			},
+			{
+				Name:   "agentReviewedAt",
+				Column: "agent_reviewed_at",
+			},
+			{
+				Name:    "headline",
+				Special: "headline",
+			},
 		},
 	}
 
@@ -8717,6 +8745,18 @@ func init() {
 				Column: "linear_feet_per_unit",
 			},
 			{
+				Name:   "lengthPerUnit",
+				Column: "length_per_unit",
+			},
+			{
+				Name:   "widthPerUnit",
+				Column: "width_per_unit",
+			},
+			{
+				Name:   "heightPerUnit",
+				Column: "height_per_unit",
+			},
+			{
 				Name:   "maxQuantityPerShipment",
 				Column: "max_quantity_per_shipment",
 			},
@@ -9132,6 +9172,14 @@ func init() {
 			{
 				Name:   "externalId",
 				Column: "external_id",
+			},
+			{
+				Name:   "checkCallIntervalHours",
+				Column: "check_call_interval_hours",
+			},
+			{
+				Name:   "etaRiskThresholdMinutes",
+				Column: "eta_risk_threshold_minutes",
 			},
 			{
 				Name:   "allowConsolidation",
@@ -21898,6 +21946,14 @@ func init() {
 				Name:   "condition",
 				Column: "condition",
 			},
+			{
+				Name:    "chargeCode",
+				Special: "chargeCode",
+			},
+			{
+				Name:    "chargeDescription",
+				Special: "chargeDescription",
+			},
 		},
 	}
 
@@ -21919,6 +21975,10 @@ func init() {
 			{
 				Name:   "waived",
 				Column: "waived",
+			},
+			{
+				Name:    "programName",
+				Special: "programName",
 			},
 		},
 	}

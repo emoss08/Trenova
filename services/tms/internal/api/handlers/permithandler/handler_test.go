@@ -121,34 +121,6 @@ func setupHandler(t *testing.T, service permitports.PermitService) *permithandle
 	})
 }
 
-func TestPermitHandler_ListPermits_ScopesToTheSessionTenant(t *testing.T) {
-	t.Parallel()
-
-	shipmentID := pulid.MustNew("shp_")
-	var gotShipment pulid.ID
-	var gotTenant pagination.TenantInfo
-
-	handler := setupHandler(t, &serviceStub{
-		listPermitsFn: func(id pulid.ID, tenant pagination.TenantInfo) ([]*permit.Permit, error) {
-			gotShipment, gotTenant = id, tenant
-			return []*permit.Permit{{PermitNumber: "GA-1234"}}, nil
-		},
-	})
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodGet).
-		WithPath("/api/v1/shipments/" + shipmentID.String() + "/permits/").
-		WithDefaultAuthContext()
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-	assert.Equal(t, shipmentID, gotShipment)
-	assert.Equal(t, testutil.TestOrgID, gotTenant.OrgID)
-	assert.Equal(t, testutil.TestBuID, gotTenant.BuID)
-}
-
 func TestPermitHandler_CreatePermit_RefusesAForeignTenantInTheBody(t *testing.T) {
 	t.Parallel()
 
@@ -246,36 +218,6 @@ func TestPermitHandler_WaiveRequirement_TakesTheWaivingUserFromTheSession(t *tes
 	assert.Equal(t, testutil.TestUserID, captured.WaivedByID)
 	assert.Equal(t, "Escort booked and route surveyed with the state", captured.Reason)
 	assert.Equal(t, testutil.TestOrgID, captured.TenantInfo.OrgID)
-}
-
-func TestPermitHandler_ListRequirements_Success(t *testing.T) {
-	t.Parallel()
-
-	shipmentID := pulid.MustNew("shp_")
-	handler := setupHandler(t, &serviceStub{
-		listRequirementsFn: func(
-			pulid.ID, pagination.TenantInfo,
-		) ([]*permit.Requirement, error) {
-			return []*permit.Requirement{
-				{ID: pulid.MustNew("pmr_"), Status: permit.RequirementOpen},
-			}, nil
-		},
-	})
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodGet).
-		WithPath("/api/v1/shipments/" + shipmentID.String() + "/permit-requirements/").
-		WithDefaultAuthContext()
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-
-	var resp []*permit.Requirement
-	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	require.Len(t, resp, 1)
-	assert.Equal(t, permit.RequirementOpen, resp[0].Status)
 }
 
 func TestPermitHandler_InvalidRequirementID(t *testing.T) {

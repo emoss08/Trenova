@@ -56,14 +56,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		),
 		h.create,
 	)
-	api.GET(
-		"/select-options/",
-		h.pm.RequirePermission(
-			permission.ResourceServiceFailureReasonCode.String(),
-			permission.OpRead,
-		),
-		h.selectOptions,
-	)
 	api.POST(
 		"/reorder/",
 		h.pm.RequirePermission(
@@ -87,14 +79,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 			permission.OpUpdate,
 		),
 		h.update,
-	)
-	api.PATCH(
-		"/:reasonCodeID/",
-		h.pm.RequirePermission(
-			permission.ResourceServiceFailureReasonCode.String(),
-			permission.OpUpdate,
-		),
-		h.patch,
 	)
 	api.POST(
 		"/:reasonCodeID/archive/",
@@ -203,40 +187,6 @@ func (h *Handler) update(c *gin.Context) {
 	helpers.JSON(c, http.StatusOK, updated)
 }
 
-func (h *Handler) patch(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	id, err := pulid.MustParse(c.Param("reasonCodeID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	entity, err := h.service.Get(
-		c.Request.Context(),
-		servicefailureports.GetServiceFailureReasonCodeByIDRequest{
-			ID:         id,
-			TenantInfo: pagination.FromAuth(authCtx),
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	updated, err := h.service.Update(
-		c.Request.Context(),
-		entity,
-		actorutil.FromAuthContext(authCtx),
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	helpers.JSON(c, http.StatusOK, updated)
-}
-
 func (h *Handler) archive(c *gin.Context) {
 	h.toggleActive(c, false)
 }
@@ -297,25 +247,4 @@ func (h *Handler) reorder(c *gin.Context) {
 		return
 	}
 	helpers.JSON(c, http.StatusOK, entities)
-}
-
-func (h *Handler) selectOptions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewSelectQueryRequest(c, authCtx)
-	appliesTo := servicefailure.ReasonCodeAppliesTo(c.Query("appliesTo"))
-
-	pagination.SelectOptions(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*servicefailure.ReasonCode], error) {
-			return h.service.SelectOptions(
-				c.Request.Context(),
-				&servicefailureports.ServiceFailureReasonCodeSelectOptionsRequest{
-					SelectQueryRequest: req,
-					AppliesTo:          appliesTo,
-				},
-			)
-		},
-	)
 }

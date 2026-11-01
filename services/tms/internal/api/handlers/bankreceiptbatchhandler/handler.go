@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -48,13 +47,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/",
 		h.pm.RequirePermission(permission.ResourceBankReceipt.String(), permission.OpCreate),
 		h.importBatch,
-	)
-
-	selectOptions := api.Group("/select-options", responseguard.References())
-	selectOptions.GET(
-		"/sources/",
-		h.pm.RequirePermission(permission.ResourceBankReceipt.String(), permission.OpRead),
-		h.selectSources,
 	)
 }
 
@@ -98,20 +90,6 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 	helpers.JSON(c, http.StatusOK, item)
-}
-
-func (h *Handler) selectSources(c *gin.Context) {
-	auth := authctx.GetAuthContext(c)
-	req := pagination.NewSelectQueryRequest(c, auth)
-
-	pagination.SelectOptions(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*bankreceiptbatchports.BankReceiptBatchSourceOption], error) {
-			return h.service.DistinctSources(c.Request.Context(), req)
-		},
-	)
 }
 
 func (h *Handler) importBatch(c *gin.Context) {

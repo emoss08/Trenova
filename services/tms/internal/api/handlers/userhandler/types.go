@@ -2,13 +2,7 @@ package userhandler
 
 import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/shared/pulid"
 )
-
-type SimulatePermissionsRequest struct {
-	AddRoleIDs    []pulid.ID `json:"addRoleIds"`
-	RemoveRoleIDs []pulid.ID `json:"removeRoleIds"`
-}
 
 type SwitchOrganizationRequest struct {
 	OrganizationID string `json:"organizationId" binding:"required"`

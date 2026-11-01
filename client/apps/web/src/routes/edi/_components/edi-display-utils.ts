@@ -94,41 +94,6 @@ export function firstDisplayValue(...values: Array<string | null | undefined>) {
   return values.find((value) => value?.trim())?.trim() ?? "";
 }
 
-export function getTargetOptionValue(option: unknown) {
-  if (!option || typeof option !== "object") {
-    return "";
-  }
-  const record = option as Record<string, unknown>;
-  return getStringValue(record.id) || getStringValue(record.value);
-}
-
-export function getTargetOptionDescription(option: unknown) {
-  if (!option || typeof option !== "object") {
-    return "";
-  }
-  const record = option as Record<string, unknown>;
-  return getStringValue(record.description);
-}
-
-export function getTargetOptionLabel(option: unknown) {
-  if (!option || typeof option !== "object") {
-    return "";
-  }
-  const record = option as Record<string, unknown>;
-  const codeName = joinDisplayParts(
-    getStringValue(record.code),
-    getStringValue(record.name),
-    " - ",
-  );
-  return (
-    codeName ||
-    getStringValue(record.label) ||
-    getStringValue(record.name) ||
-    getStringValue(record.description) ||
-    getTargetOptionValue(option)
-  );
-}
-
 export function joinDisplayParts(...args: Array<string | null | undefined>) {
   const separator = args.pop() || " ";
   return args

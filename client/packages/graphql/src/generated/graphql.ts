@@ -484,6 +484,34 @@ export type AiWorkSource =
   /** A call a feature made on its own, such as reading a document. */
   | 'Call';
 
+export type AccessorialChargeInput = {
+  amount: string;
+  code: string;
+  description: string;
+  method: AccessorialMethod;
+  /** Required when the method is PerUnit. */
+  rateUnit?: RateUnit | null | undefined;
+  status: EntityStatus;
+  version?: number | null | undefined;
+};
+
+export type AccessorialChargePatchInput = {
+  /** Omit to leave unchanged; null is rejected. */
+  amount?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  code?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  description?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  method?: AccessorialMethod | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  rateUnit?: RateUnit | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  status?: EntityStatus | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  version?: number | null | undefined;
+};
+
 export type AccessorialMethod =
   | 'Flat'
   | 'PerUnit'
@@ -496,6 +524,33 @@ export type AccountCategory =
   | 'Expense'
   | 'Liability'
   | 'Revenue';
+
+export type AccountTypeInput = {
+  category: AccountCategory;
+  code: string;
+  color?: string | null | undefined;
+  description?: string | null | undefined;
+  name: string;
+  status: EntityStatus;
+  version?: number | null | undefined;
+};
+
+export type AccountTypePatchInput = {
+  /** Omit to leave unchanged; null is rejected. */
+  category?: AccountCategory | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  code?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  color?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  description?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  name?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  status?: EntityStatus | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  version?: number | null | undefined;
+};
 
 /** Which of the accounting system's environments an app's keys are for. */
 export type AccountingAppEnvironment =
@@ -1988,8 +2043,38 @@ export type BulkSettlementActionType =
   | 'Post'
   | 'Submit';
 
+export type BulkUpdateAccountTypeStatusInput = {
+  accountTypeIds: Array<string | number>;
+  status: EntityStatus;
+};
+
+export type BulkUpdateCommodityStatusInput = {
+  commodityIds: Array<string | number>;
+  status: EntityStatus;
+};
+
+export type BulkUpdateCustomerStatusInput = {
+  customerIds: Array<string | number>;
+  status: EntityStatus;
+};
+
+export type BulkUpdateEquipmentManufacturerStatusInput = {
+  equipmentManufacturerIds: Array<string | number>;
+  status: EntityStatus;
+};
+
 export type BulkUpdateEquipmentTypeStatusInput = {
   equipmentTypeIds: Array<string | number>;
+  status: EntityStatus;
+};
+
+export type BulkUpdateFleetCodeStatusInput = {
+  fleetCodeIds: Array<string | number>;
+  status: EntityStatus;
+};
+
+export type BulkUpdateHazardousMaterialStatusInput = {
+  hazardousMaterialIds: Array<string | number>;
   status: EntityStatus;
 };
 
@@ -2661,6 +2746,63 @@ export type ClockInput = {
   workerId: string | number;
 };
 
+export type CommodityInput = {
+  description: string;
+  fragile: boolean;
+  freightClass?: FreightClass | null | undefined;
+  hazardousMaterialId?: string | number | null | undefined;
+  heightPerUnit?: number | null | undefined;
+  lengthPerUnit?: number | null | undefined;
+  linearFeetPerUnit?: number | null | undefined;
+  loadingInstructions?: string | null | undefined;
+  maxQuantityPerShipment?: number | null | undefined;
+  maxTemperature?: number | null | undefined;
+  minTemperature?: number | null | undefined;
+  name: string;
+  stackable: boolean;
+  status: EntityStatus;
+  version?: number | null | undefined;
+  weightPerUnit?: number | null | undefined;
+  widthPerUnit?: number | null | undefined;
+};
+
+export type CommodityPatchInput = {
+  /** Omit to leave unchanged; null is rejected. */
+  description?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  fragile?: boolean | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  freightClass?: FreightClass | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  hazardousMaterialId?: string | number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  heightPerUnit?: number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  lengthPerUnit?: number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  linearFeetPerUnit?: number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  loadingInstructions?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  maxQuantityPerShipment?: number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  maxTemperature?: number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  minTemperature?: number | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  name?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  stackable?: boolean | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  status?: EntityStatus | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  version?: number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  weightPerUnit?: number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  widthPerUnit?: number | null | undefined;
+};
+
 /** What the accounting system returned to the callback page after the person approved access. */
 export type CompleteAccountingAuthorizationInput = {
   code: string;
@@ -3002,6 +3144,63 @@ export type CustomerBillingCycle =
   | 'SemiMonthly'
   | 'Weekly';
 
+export type CustomerBillingProfileInput = {
+  applyLateCharges: boolean;
+  arAccountId?: string | number | null | undefined;
+  autoApplyAccessorials: boolean;
+  autoApprove: boolean;
+  autoBill: boolean;
+  autoCreditHold: boolean;
+  autoMarkReadyToBill: boolean;
+  autoSendInvoiceOnGeneration: boolean;
+  autoTransfer: boolean;
+  billingCurrency: string;
+  billingCycle: CustomerBillingCycle;
+  /** Weekday 0-6 for weekly cycles, day of month 1-28 for monthly and longer. */
+  billingCycleAnchorDay: number;
+  /** IANA zone the period boundaries are evaluated in. */
+  billingCycleTimezone: string;
+  billingNotes?: string | null | undefined;
+  countLateOnlyOnAppointmentStops: boolean;
+  creditHoldReason?: string | null | undefined;
+  creditLimit?: string | null | undefined;
+  creditStatus: CustomerCreditStatus;
+  customerInvoicePrefix?: string | null | undefined;
+  defaultBillerId?: string | number | null | undefined;
+  /** The document types an invoice for this customer cannot be generated without. */
+  documentTypeIds: Array<string | number>;
+  ediInvoiceEnabled: boolean;
+  emailInvoiceEnabled: boolean;
+  enforceCreditLimit: boolean;
+  enforceCustomerBillingReq: boolean;
+  /** The factor this customer's invoices are assigned to; null when they are not factored. */
+  factoringCompanyId?: string | number | null | undefined;
+  fuelSurchargeMode: CustomerFuelSurchargeMode;
+  fuelSurchargeProgramId?: string | number | null | undefined;
+  gracePeriodDays: number;
+  hasBillingControlOverrides: boolean;
+  invoiceCopies: number;
+  invoiceDelivery: CustomerInvoiceDelivery;
+  invoiceDetail: InvoiceDetail;
+  invoiceNumberFormat: CustomerInvoiceNumberFormat;
+  lateChargeRate?: string | null | undefined;
+  /** Zero means unbounded. */
+  maxShipmentsPerInvoice: number;
+  minConsolidatedAmount?: string | null | undefined;
+  paymentTerm: CustomerPaymentTerm;
+  requireBOLNumber: boolean;
+  requireDeliveryNumber: boolean;
+  requirePONumber: boolean;
+  revenueAccountId?: string | number | null | undefined;
+  sectionBy: InvoiceSectionKey;
+  sendPaymentReminders: boolean;
+  sendStatements: boolean;
+  splitBy: InvoiceSplitKey;
+  taxExempt: boolean;
+  taxExemptNumber?: string | null | undefined;
+  validateCustomerRates: boolean;
+};
+
 export type CustomerCreditStatus =
   | 'Active'
   | 'Hold'
@@ -3009,10 +3208,51 @@ export type CustomerCreditStatus =
   | 'Suspended'
   | 'Warning';
 
+export type CustomerEmailProfileInput = {
+  attachmentName?: string | null | undefined;
+  bccRecipients?: string | null | undefined;
+  ccRecipients?: string | null | undefined;
+  comment?: string | null | undefined;
+  includeShipmentDetail: boolean;
+  readReceipt: boolean;
+  subject?: string | null | undefined;
+  toRecipients?: string | null | undefined;
+};
+
 export type CustomerFuelSurchargeMode =
   | 'FuelIncluded'
   | 'None'
   | 'Program';
+
+export type CustomerInput = {
+  addressLine1: string;
+  addressLine2?: string | null | undefined;
+  allowConsolidation: boolean;
+  /** Omit to leave the billing profile as it is; a new customer then gets the default profile. */
+  billingProfile?: CustomerBillingProfileInput | null | undefined;
+  brokerVettingEnabled: boolean;
+  checkCallIntervalHours?: number | null | undefined;
+  city: string;
+  code: string;
+  consolidationPriority: number;
+  dotNumber?: string | null | undefined;
+  /** Omit to leave the email profile as it is. */
+  emailProfile?: CustomerEmailProfileInput | null | undefined;
+  etaRiskThresholdMinutes?: number | null | undefined;
+  exclusiveConsolidation: boolean;
+  externalId?: string | null | undefined;
+  latitude?: number | null | undefined;
+  longitude?: number | null | undefined;
+  mcNumber?: string | null | undefined;
+  name: string;
+  placeId?: string | null | undefined;
+  postalCode: string;
+  stateId: string | number;
+  status: EntityStatus;
+  statusUpdatePreference: CustomerStatusUpdatePreference;
+  statusUpdateRecipients?: string | null | undefined;
+  version?: number | null | undefined;
+};
 
 /** How many invoices a customer's freight turns into. */
 export type CustomerInvoiceDelivery =
@@ -3027,6 +3267,55 @@ export type CustomerInvoiceNumberFormat =
   | 'CustomPrefix'
   | 'Default'
   | 'POBased';
+
+export type CustomerPatchInput = {
+  /** Omit to leave unchanged; null is rejected. */
+  addressLine1?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  addressLine2?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  allowConsolidation?: boolean | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  brokerVettingEnabled?: boolean | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  checkCallIntervalHours?: number | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  city?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  code?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  consolidationPriority?: number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  dotNumber?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  etaRiskThresholdMinutes?: number | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  exclusiveConsolidation?: boolean | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  externalId?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  latitude?: number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  longitude?: number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  mcNumber?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  name?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  placeId?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  postalCode?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  stateId?: string | number | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  status?: EntityStatus | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  statusUpdatePreference?: CustomerStatusUpdatePreference | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  statusUpdateRecipients?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  version?: number | null | undefined;
+};
 
 export type CustomerPaymentApplicationInput = {
   appliedAmountMinor: number;
@@ -3710,6 +3999,16 @@ export type DocumentClassification =
   | 'Regulatory'
   | 'Sensitive';
 
+export type DocumentTypeInput = {
+  code: string;
+  color?: string | null | undefined;
+  description?: string | null | undefined;
+  documentCategory: DocumentCategory;
+  documentClassification: DocumentClassification;
+  name: string;
+  version?: number | null | undefined;
+};
+
 export type DraftFactoringNoaInput = {
   customerId: string | number;
   factoringCompanyId: string | number;
@@ -3967,6 +4266,24 @@ export type EquipmentClass =
   | 'Tractor'
   | 'Trailer';
 
+export type EquipmentManufacturerInput = {
+  description?: string | null | undefined;
+  name: string;
+  status?: EntityStatus | null | undefined;
+  version?: number | null | undefined;
+};
+
+export type EquipmentManufacturerPatchInput = {
+  /** Omit to leave unchanged; pass null to clear. */
+  description?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  name?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  status?: EntityStatus | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  version?: number | null | undefined;
+};
+
 /** Who owns a piece of equipment. */
 export type EquipmentOwnershipType =
   | 'CompanyOwned'
@@ -4132,6 +4449,24 @@ export type FactoringCheckCode =
   | 'Factored'
   | 'Noa'
   | 'ShipmentUnavailable';
+
+export type FactoringCompanyInput = {
+  addressLine1: string;
+  addressLine2?: string | null | undefined;
+  city: string;
+  code: string;
+  email?: string | null | undefined;
+  name: string;
+  /** Kept in step with the agreement in force once the factor has one. */
+  nonRecourse?: boolean | null | undefined;
+  notes?: string | null | undefined;
+  noticeOfAssignment?: string | null | undefined;
+  phoneNumber?: string | null | undefined;
+  postalCode: string;
+  remittanceInstructions?: string | null | undefined;
+  stateId: string | number;
+  status: EntityStatus;
+};
 
 export type FactoringFeeTierInput = {
   daysFrom: number;
@@ -4425,6 +4760,39 @@ export type FiscalYearStatus =
   | 'Draft'
   | 'Open'
   | 'PermanentlyClosed';
+
+export type FleetCodeInput = {
+  code: string;
+  color?: string | null | undefined;
+  deadheadGoal?: number | null | undefined;
+  description?: string | null | undefined;
+  managerId: string | number;
+  mileageGoal?: number | null | undefined;
+  revenueGoal?: number | null | undefined;
+  status: EntityStatus;
+  version?: number | null | undefined;
+};
+
+export type FleetCodePatchInput = {
+  /** Omit to leave unchanged; null is rejected. */
+  code?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  color?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  deadheadGoal?: number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  description?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  managerId?: string | number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  mileageGoal?: number | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  revenueGoal?: number | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  status?: EntityStatus | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  version?: number | null | undefined;
+};
 
 export type FleetSafetyInput = {
   /** Narrows every section to one terminal. */
@@ -4810,10 +5178,117 @@ export type HazardousClass =
   | 'HazardClass8'
   | 'HazardClass9';
 
+export type HazardousMaterialInput = {
+  class: HazardousClass;
+  code?: string | null | undefined;
+  description?: string | null | undefined;
+  emergencyContact?: string | null | undefined;
+  emergencyContactPhoneNumber?: string | null | undefined;
+  ergGuideNumber?: string | null | undefined;
+  handlingInstructions?: string | null | undefined;
+  inhalationHazard: boolean;
+  isReportableQuantity: boolean;
+  labelCodes?: string | null | undefined;
+  marinePollutant: boolean;
+  name: string;
+  packingGroup?: PackingGroup | null | undefined;
+  placardRequired: boolean;
+  properShippingName?: string | null | undefined;
+  quantityThreshold?: string | null | undefined;
+  specialProvisions?: string | null | undefined;
+  status: EntityStatus;
+  subsidiaryHazardClass?: string | null | undefined;
+  unNumber?: string | null | undefined;
+  version?: number | null | undefined;
+};
+
+export type HazardousMaterialPatchInput = {
+  /** Omit to leave unchanged; null is rejected. */
+  class?: HazardousClass | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  code?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  description?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  emergencyContact?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  emergencyContactPhoneNumber?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  ergGuideNumber?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  handlingInstructions?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  inhalationHazard?: boolean | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  isReportableQuantity?: boolean | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  labelCodes?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  marinePollutant?: boolean | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  name?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  packingGroup?: PackingGroup | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  placardRequired?: boolean | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  properShippingName?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  quantityThreshold?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  specialProvisions?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  status?: EntityStatus | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  subsidiaryHazardClass?: string | null | undefined;
+  /** Omit to leave unchanged; pass null to clear. */
+  unNumber?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  version?: number | null | undefined;
+};
+
+export type HazmatSegregationRuleInput = {
+  classA: HazardousClass;
+  classB: HazardousClass;
+  description?: string | null | undefined;
+  /** Required when the segregation type is Distance. */
+  distanceUnit?: string | null | undefined;
+  /** Required when the rule has exceptions. */
+  exceptionNotes?: string | null | undefined;
+  hasExceptions: boolean;
+  hazmatAId?: string | number | null | undefined;
+  hazmatBId?: string | number | null | undefined;
+  /** Required when the segregation type is Distance. */
+  minimumDistance?: number | null | undefined;
+  name: string;
+  referenceCode?: string | null | undefined;
+  regulationSource?: string | null | undefined;
+  segregationType: SegregationType;
+  status: EntityStatus;
+  version?: number | null | undefined;
+};
+
 export type HoldPayEventInput = {
   payEventId: string | number;
   /** Why pay is being deferred — shown to whoever reviews the held event. */
   reason: string;
+};
+
+export type HoldReasonInput = {
+  active: boolean;
+  code: string;
+  defaultBlocksBilling: boolean;
+  defaultBlocksDelivery: boolean;
+  defaultBlocksDispatch: boolean;
+  defaultSeverity: HoldSeverity;
+  defaultVisibleToCustomer: boolean;
+  description?: string | null | undefined;
+  /** Codes this reason maps to in other systems, keyed by system. */
+  externalMap?: unknown;
+  label: string;
+  sortOrder: number;
+  type: HoldType;
+  version?: number | null | undefined;
 };
 
 export type HoldSeverity =
@@ -5518,6 +5993,19 @@ export type LinkInboundMessageInput = {
   /** Why this is the right record. Stored, because a link nobody can check is one nobody will trust. */
   reason: string;
   shipmentId?: string | number | null | undefined;
+};
+
+export type LocationCategoryInput = {
+  allowsOvernight: boolean;
+  color?: string | null | undefined;
+  description?: string | null | undefined;
+  facilityType?: FacilityType | null | undefined;
+  hasRestroom: boolean;
+  hasSecureParking: boolean;
+  name: string;
+  requiresAppointment: boolean;
+  type: LocationCategoryType;
+  version?: number | null | undefined;
 };
 
 export type LocationCategoryType =
@@ -7009,6 +7497,7 @@ export type SelectOptionResource =
   | 'ACCESSORIAL_CHARGE'
   | 'ACCOUNT_TYPE'
   | 'AI_PROVIDER'
+  | 'BANK_RECEIPT_SOURCE'
   | 'BENEFIT_PLAN'
   | 'CAPTURE_DEVICE'
   | 'CAPTURE_PROFILE'
@@ -7017,7 +7506,9 @@ export type SelectOptionResource =
   | 'CUSTOMER'
   | 'DETENTION_POLICY'
   | 'DISTANCE_PROFILE'
+  | 'DOCUMENT'
   | 'DOCUMENT_TYPE'
+  | 'DOT_HAZMAT_REFERENCE'
   | 'EDI_COMMUNICATION_PROFILE'
   | 'EDI_CONNECTION'
   | 'EDI_DOCUMENT_TYPE'
@@ -8469,6 +8960,12 @@ export type UpdateFactoringAgreementInput = {
   version: number;
 };
 
+export type UpdateFactoringCompanyInput = {
+  factoringCompany: FactoringCompanyInput;
+  id: string | number;
+  version: number;
+};
+
 export type UpdateFactoringRemittanceLineInput = {
   action: FactoringRemittanceLineAction;
   /** The schedule item, for Match. */
@@ -9271,6 +9768,29 @@ export type WriteOffPayAdvanceInput = {
   reason: string;
 };
 
+export type CreateAccessorialChargeMutationVariables = Exact<{
+  input: AccessorialChargeInput;
+}>;
+
+
+export type CreateAccessorialChargeMutation = { createAccessorialCharge: { id: string, version: number } };
+
+export type UpdateAccessorialChargeMutationVariables = Exact<{
+  id: string | number;
+  input: AccessorialChargeInput;
+}>;
+
+
+export type UpdateAccessorialChargeMutation = { updateAccessorialCharge: { id: string, version: number } };
+
+export type PatchAccessorialChargeMutationVariables = Exact<{
+  id: string | number;
+  input: AccessorialChargePatchInput;
+}>;
+
+
+export type PatchAccessorialChargeMutation = { patchAccessorialCharge: { id: string, status: EntityStatus, version: number } };
+
 export type AccessorialChargeTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, description: string, method: AccessorialMethod, rateUnit: RateUnit | null, amount: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AccessorialChargeTableRowFieldsFragment' };
 
 export type AccessorialChargeTableQueryVariables = Exact<{
@@ -9280,6 +9800,36 @@ export type AccessorialChargeTableQueryVariables = Exact<{
 
 
 export type AccessorialChargeTableQuery = { accessorialCharges: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'AccessorialChargeTableRowFieldsFragment': AccessorialChargeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type CreateAccountTypeMutationVariables = Exact<{
+  input: AccountTypeInput;
+}>;
+
+
+export type CreateAccountTypeMutation = { createAccountType: { id: string, version: number } };
+
+export type UpdateAccountTypeMutationVariables = Exact<{
+  id: string | number;
+  input: AccountTypeInput;
+}>;
+
+
+export type UpdateAccountTypeMutation = { updateAccountType: { id: string, version: number } };
+
+export type PatchAccountTypeMutationVariables = Exact<{
+  id: string | number;
+  input: AccountTypePatchInput;
+}>;
+
+
+export type PatchAccountTypeMutation = { patchAccountType: { id: string, status: EntityStatus, version: number } };
+
+export type BulkUpdateAccountTypeStatusMutationVariables = Exact<{
+  input: BulkUpdateAccountTypeStatusInput;
+}>;
+
+
+export type BulkUpdateAccountTypeStatusMutation = { bulkUpdateAccountTypeStatus: Array<{ id: string, status: EntityStatus, version: number }> };
 
 export type AccountTypeTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, name: string, description: string | null, category: AccountCategory, color: string | null, isSystem: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AccountTypeTableRowFieldsFragment' };
 
@@ -12280,7 +12830,37 @@ export type CommandPaletteCustomerPreviewQueryVariables = Exact<{
 
 export type CommandPaletteCustomerPreviewQuery = { customer: { id: string, status: EntityStatus, code: string, name: string, addressLine1: string | null, city: string | null, postalCode: string, updatedAt: number, state: { abbreviation: string } | null, billingProfile: { paymentTerm: CustomerPaymentTerm, creditStatus: CustomerCreditStatus, creditLimit: string | null, creditBalance: string, invoiceDelivery: CustomerInvoiceDelivery, billingCycle: CustomerBillingCycle } | null, emailProfile: { toRecipients: string } | null } | null };
 
-export type CommodityTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, hazardousMaterialId: string | null, status: EntityStatus, name: string, description: string, minTemperature: number | null, maxTemperature: number | null, weightPerUnit: number | null, linearFeetPerUnit: number | null, maxQuantityPerShipment: number | null, freightClass: FreightClass | null, loadingInstructions: string | null, stackable: boolean, fragile: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CommodityTableRowFieldsFragment' };
+export type CreateCommodityMutationVariables = Exact<{
+  input: CommodityInput;
+}>;
+
+
+export type CreateCommodityMutation = { createCommodity: { id: string, version: number } };
+
+export type UpdateCommodityMutationVariables = Exact<{
+  id: string | number;
+  input: CommodityInput;
+}>;
+
+
+export type UpdateCommodityMutation = { updateCommodity: { id: string, version: number } };
+
+export type PatchCommodityMutationVariables = Exact<{
+  id: string | number;
+  input: CommodityPatchInput;
+}>;
+
+
+export type PatchCommodityMutation = { patchCommodity: { id: string, status: EntityStatus, version: number } };
+
+export type BulkUpdateCommodityStatusMutationVariables = Exact<{
+  input: BulkUpdateCommodityStatusInput;
+}>;
+
+
+export type BulkUpdateCommodityStatusMutation = { bulkUpdateCommodityStatus: Array<{ id: string, status: EntityStatus, version: number }> };
+
+export type CommodityTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, hazardousMaterialId: string | null, status: EntityStatus, name: string, description: string, minTemperature: number | null, maxTemperature: number | null, weightPerUnit: number | null, linearFeetPerUnit: number | null, lengthPerUnit: number | null, widthPerUnit: number | null, heightPerUnit: number | null, maxQuantityPerShipment: number | null, freightClass: FreightClass | null, loadingInstructions: string | null, stackable: boolean, fragile: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CommodityTableRowFieldsFragment' };
 
 export type CommodityTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -12315,6 +12895,18 @@ export type UpdateCostCategoryMutationVariables = Exact<{
 
 
 export type UpdateCostCategoryMutation = { updateCostCategory: { id: string, version: number } };
+
+export type CustomFieldFormFieldsQueryVariables = Exact<{
+  resourceType: string;
+}>;
+
+
+export type CustomFieldFormFieldsQuery = { customFieldFormFields: Array<{ id: string, name: string, label: string, description: string | null, fieldType: FieldType, isRequired: boolean, displayOrder: number, color: string | null, defaultValue: unknown, options: Array<{ value: string, label: string, color: string, description: string }>, validationRules: { minLength: number | null, maxLength: number | null, min: number | null, max: number | null, pattern: string | null } | null, uiAttributes: { placeholder: string, helpText: string, width: string } | null }> };
+
+export type CustomFieldResourceTypesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CustomFieldResourceTypesQuery = { customFieldResourceTypes: Array<string> };
 
 export type CustomFieldDefinitionTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, resourceType: string, name: string, label: string, description: string | null, fieldType: FieldType, isRequired: boolean, isActive: boolean, displayOrder: number, color: string | null, defaultValue: unknown, version: number, createdAt: number, updatedAt: number, options: Array<{ value: string, label: string, color: string, description: string }>, validationRules: { minLength: number | null, maxLength: number | null, min: number | null, max: number | null, pattern: string | null } | null, uiAttributes: { placeholder: string, helpText: string, width: string } | null } & { ' $fragmentName'?: 'CustomFieldDefinitionTableRowFieldsFragment' };
 
@@ -12407,11 +12999,48 @@ export type DeskCustomerUpdatePreferencesQueryVariables = Exact<{
 
 export type DeskCustomerUpdatePreferencesQuery = { customer: { id: string, name: string, statusUpdatePreference: CustomerStatusUpdatePreference, statusUpdateRecipients: string | null, emailProfile: { id: string, toRecipients: string } | null } | null };
 
+export type CreateCustomerMutationVariables = Exact<{
+  input: CustomerInput;
+}>;
+
+
+export type CreateCustomerMutation = { createCustomer: { id: string, version: number } };
+
+export type UpdateCustomerMutationVariables = Exact<{
+  id: string | number;
+  input: CustomerInput;
+}>;
+
+
+export type UpdateCustomerMutation = { updateCustomer: { id: string, version: number } };
+
+export type PatchCustomerMutationVariables = Exact<{
+  id: string | number;
+  input: CustomerPatchInput;
+}>;
+
+
+export type PatchCustomerMutation = { patchCustomer: { id: string, status: EntityStatus, version: number } };
+
+export type BulkUpdateCustomerStatusMutationVariables = Exact<{
+  input: BulkUpdateCustomerStatusInput;
+}>;
+
+
+export type BulkUpdateCustomerStatusMutation = { bulkUpdateCustomerStatus: Array<{ id: string, status: EntityStatus, version: number }> };
+
+export type ShipmentCustomerBillingRulesQueryVariables = Exact<{
+  customerIds: Array<string | number> | string | number;
+}>;
+
+
+export type ShipmentCustomerBillingRulesQuery = { shipmentCustomerBillingRules: Array<{ customerId: string, bolRequired: boolean, creditStatus: CustomerCreditStatus, creditHoldReason: string, enforceCreditLimit: boolean, creditHoldAutomatic: boolean }> };
+
 export type CustomerBillingProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, invoiceDelivery: CustomerInvoiceDelivery, billingCycle: CustomerBillingCycle, billingCycleAnchorDay: number, billingCycleTimezone: string, lastBilledPeriodEnd: number | null, paymentTerm: CustomerPaymentTerm, hasBillingControlOverrides: boolean, creditLimit: string | null, creditBalance: string, creditStatus: CustomerCreditStatus, enforceCreditLimit: boolean, autoCreditHold: boolean, creditHoldReason: string, autoSendInvoiceOnGeneration: boolean, sendPaymentReminders: boolean, sendStatements: boolean, factoringCompanyId: string | null, creditHoldAutomatic: boolean, creditReviewedAt: number | null, emailInvoiceEnabled: boolean, ediInvoiceEnabled: boolean, splitBy: InvoiceSplitKey, sectionBy: InvoiceSectionKey, invoiceDetail: InvoiceDetail, minConsolidatedAmount: string | null, maxShipmentsPerInvoice: number, invoiceNumberFormat: CustomerInvoiceNumberFormat, customerInvoicePrefix: string, invoiceCopies: number, revenueAccountId: string | null, arAccountId: string | null, applyLateCharges: boolean, lateChargeRate: string | null, gracePeriodDays: number, taxExempt: boolean, taxExemptNumber: string, enforceCustomerBillingReq: boolean, validateCustomerRates: boolean, autoTransfer: boolean, autoMarkReadyToBill: boolean, autoApprove: boolean, autoBill: boolean, countLateOnlyOnAppointmentStops: boolean, autoApplyAccessorials: boolean, billingCurrency: string, requirePONumber: boolean, requireBOLNumber: boolean, requireDeliveryNumber: boolean, defaultBillerId: string | null, billingNotes: string, fuelSurchargeMode: CustomerFuelSurchargeMode, fuelSurchargeProgramId: string | null, version: number, createdAt: number, updatedAt: number, documentTypes: Array<{ id: string, code: string, name: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory }> | null } & { ' $fragmentName'?: 'CustomerBillingProfileFieldsFragment' };
 
 export type CustomerEmailProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, subject: string, comment: string, toRecipients: string, ccRecipients: string, bccRecipients: string, attachmentName: string, readReceipt: boolean, includeShipmentDetail: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CustomerEmailProfileFieldsFragment' };
 
-export type CustomerTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string | null, addressLine2: string | null, city: string | null, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string | null, externalId: string | null, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, version: number, createdAt: number, updatedAt: number, billingProfile: { ' $fragmentRefs'?: { 'CustomerBillingProfileFieldsFragment': CustomerBillingProfileFieldsFragment } } | null, emailProfile: { ' $fragmentRefs'?: { 'CustomerEmailProfileFieldsFragment': CustomerEmailProfileFieldsFragment } } | null } & { ' $fragmentName'?: 'CustomerTableRowFieldsFragment' };
+export type CustomerTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string | null, addressLine2: string | null, city: string | null, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string | null, externalId: string | null, dotNumber: string | null, mcNumber: string | null, brokerVettingEnabled: boolean, checkCallIntervalHours: number | null, etaRiskThresholdMinutes: number | null, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, statusUpdatePreference: CustomerStatusUpdatePreference, statusUpdateRecipients: string | null, version: number, createdAt: number, updatedAt: number, billingProfile: { ' $fragmentRefs'?: { 'CustomerBillingProfileFieldsFragment': CustomerBillingProfileFieldsFragment } } | null, emailProfile: { ' $fragmentRefs'?: { 'CustomerEmailProfileFieldsFragment': CustomerEmailProfileFieldsFragment } } | null } & { ' $fragmentName'?: 'CustomerTableRowFieldsFragment' };
 
 export type CustomerTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -12707,6 +13336,21 @@ export type DocumentPacketRuleTableQueryVariables = Exact<{
 
 
 export type DocumentPacketRuleTableQuery = { documentPacketRules: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'DocumentPacketRuleTableRowFieldsFragment': DocumentPacketRuleTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type CreateDocumentTypeMutationVariables = Exact<{
+  input: DocumentTypeInput;
+}>;
+
+
+export type CreateDocumentTypeMutation = { createDocumentType: { id: string, version: number } };
+
+export type UpdateDocumentTypeMutationVariables = Exact<{
+  id: string | number;
+  input: DocumentTypeInput;
+}>;
+
+
+export type UpdateDocumentTypeMutation = { updateDocumentType: { id: string, version: number } };
 
 export type DocumentTypeTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory, isSystem: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'DocumentTypeTableRowFieldsFragment' };
 
@@ -13808,6 +14452,36 @@ export type EmailProfileTableQueryVariables = Exact<{
 
 export type EmailProfileTableQuery = { emailProfiles: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'EmailProfileTableRowFieldsFragment': EmailProfileTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type CreateEquipmentManufacturerMutationVariables = Exact<{
+  input: EquipmentManufacturerInput;
+}>;
+
+
+export type CreateEquipmentManufacturerMutation = { createEquipmentManufacturer: { id: string, version: number } };
+
+export type UpdateEquipmentManufacturerMutationVariables = Exact<{
+  id: string | number;
+  input: EquipmentManufacturerInput;
+}>;
+
+
+export type UpdateEquipmentManufacturerMutation = { updateEquipmentManufacturer: { id: string, version: number } };
+
+export type PatchEquipmentManufacturerMutationVariables = Exact<{
+  id: string | number;
+  input: EquipmentManufacturerPatchInput;
+}>;
+
+
+export type PatchEquipmentManufacturerMutation = { patchEquipmentManufacturer: { id: string, status: EntityStatus, version: number } };
+
+export type BulkUpdateEquipmentManufacturerStatusMutationVariables = Exact<{
+  input: BulkUpdateEquipmentManufacturerStatusInput;
+}>;
+
+
+export type BulkUpdateEquipmentManufacturerStatusMutation = { bulkUpdateEquipmentManufacturerStatus: Array<{ id: string, status: EntityStatus, version: number }> };
+
 export type EquipmentManufacturerTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, name: string, description: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'EquipmentManufacturerTableRowFieldsFragment' };
 
 export type EquipmentManufacturerTableQueryVariables = Exact<{
@@ -14124,6 +14798,20 @@ export type UpdateExtractionShadowSettingsMutationVariables = Exact<{
 
 
 export type UpdateExtractionShadowSettingsMutation = { updateExtractionShadowSettings: { ' $fragmentRefs'?: { 'ExtractionShadowSettingsFieldsFragment': ExtractionShadowSettingsFieldsFragment } } };
+
+export type CreateFactoringCompanyMutationVariables = Exact<{
+  input: FactoringCompanyInput;
+}>;
+
+
+export type CreateFactoringCompanyMutation = { createFactoringCompany: { id: string, version: number } };
+
+export type UpdateFactoringCompanyMutationVariables = Exact<{
+  input: UpdateFactoringCompanyInput;
+}>;
+
+
+export type UpdateFactoringCompanyMutation = { updateFactoringCompany: { id: string, version: number } };
 
 export type FactoringCompanyTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string | null, city: string, stateId: string, postalCode: string, email: string | null, phoneNumber: string | null, remittanceInstructions: string | null, noticeOfAssignment: string | null, nonRecourse: boolean, notes: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FactoringCompanyTableRowFieldsFragment' };
 
@@ -14597,6 +15285,36 @@ export type FiscalYearTableQueryVariables = Exact<{
 
 export type FiscalYearTableQuery = { fiscalYears: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'FiscalYearTableRowFieldsFragment': FiscalYearTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type CreateFleetCodeMutationVariables = Exact<{
+  input: FleetCodeInput;
+}>;
+
+
+export type CreateFleetCodeMutation = { createFleetCode: { id: string, version: number } };
+
+export type UpdateFleetCodeMutationVariables = Exact<{
+  id: string | number;
+  input: FleetCodeInput;
+}>;
+
+
+export type UpdateFleetCodeMutation = { updateFleetCode: { id: string, version: number } };
+
+export type PatchFleetCodeMutationVariables = Exact<{
+  id: string | number;
+  input: FleetCodePatchInput;
+}>;
+
+
+export type PatchFleetCodeMutation = { patchFleetCode: { id: string, status: EntityStatus, version: number } };
+
+export type BulkUpdateFleetCodeStatusMutationVariables = Exact<{
+  input: BulkUpdateFleetCodeStatusInput;
+}>;
+
+
+export type BulkUpdateFleetCodeStatusMutation = { bulkUpdateFleetCodeStatus: Array<{ id: string, status: EntityStatus, version: number }> };
+
 export type FleetCodeTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, managerId: string, status: EntityStatus, code: string, description: string, revenueGoal: number | null, deadheadGoal: number | null, mileageGoal: number | null, color: string, version: number, createdAt: number, updatedAt: number, manager: { id: string, name: string } | null } & { ' $fragmentName'?: 'FleetCodeTableRowFieldsFragment' };
 
 export type FleetCodeTableQueryVariables = Exact<{
@@ -15060,6 +15778,36 @@ export type DeleteFuelSurchargeProgramMutationVariables = Exact<{
 
 export type DeleteFuelSurchargeProgramMutation = { deleteFuelSurchargeProgram: boolean };
 
+export type CreateHazardousMaterialMutationVariables = Exact<{
+  input: HazardousMaterialInput;
+}>;
+
+
+export type CreateHazardousMaterialMutation = { createHazardousMaterial: { id: string, version: number } };
+
+export type UpdateHazardousMaterialMutationVariables = Exact<{
+  id: string | number;
+  input: HazardousMaterialInput;
+}>;
+
+
+export type UpdateHazardousMaterialMutation = { updateHazardousMaterial: { id: string, version: number } };
+
+export type PatchHazardousMaterialMutationVariables = Exact<{
+  id: string | number;
+  input: HazardousMaterialPatchInput;
+}>;
+
+
+export type PatchHazardousMaterialMutation = { patchHazardousMaterial: { id: string, status: EntityStatus, version: number } };
+
+export type BulkUpdateHazardousMaterialStatusMutationVariables = Exact<{
+  input: BulkUpdateHazardousMaterialStatusInput;
+}>;
+
+
+export type BulkUpdateHazardousMaterialStatusMutation = { bulkUpdateHazardousMaterialStatus: Array<{ id: string, status: EntityStatus, version: number }> };
+
 export type HazardousMaterialTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, name: string, description: string, class: HazardousClass, unNumber: string, packingGroup: PackingGroup, subsidiaryHazardClass: string, ergGuideNumber: string, labelCodes: string, specialProvisions: string, properShippingName: string, handlingInstructions: string, emergencyContact: string, emergencyContactPhoneNumber: string, quantityThreshold: string, placardRequired: boolean, isReportableQuantity: boolean, marinePollutant: boolean, inhalationHazard: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'HazardousMaterialTableRowFieldsFragment' };
 
 export type HazardousMaterialTableQueryVariables = Exact<{
@@ -15069,6 +15817,21 @@ export type HazardousMaterialTableQueryVariables = Exact<{
 
 
 export type HazardousMaterialTableQuery = { hazardousMaterials: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'HazardousMaterialTableRowFieldsFragment': HazardousMaterialTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type CreateHazmatSegregationRuleMutationVariables = Exact<{
+  input: HazmatSegregationRuleInput;
+}>;
+
+
+export type CreateHazmatSegregationRuleMutation = { createHazmatSegregationRule: { id: string, version: number } };
+
+export type UpdateHazmatSegregationRuleMutationVariables = Exact<{
+  id: string | number;
+  input: HazmatSegregationRuleInput;
+}>;
+
+
+export type UpdateHazmatSegregationRuleMutation = { updateHazmatSegregationRule: { id: string, version: number } };
 
 export type HazmatSegregationRuleTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, name: string, description: string, exceptionNotes: string, referenceCode: string, regulationSource: string, distanceUnit: string, classA: HazardousClass, classB: HazardousClass, segregationType: SegregationType, hasExceptions: boolean, hazmatAId: string | null, hazmatBId: string | null, minimumDistance: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'HazmatSegregationRuleTableRowFieldsFragment' };
 
@@ -15080,7 +15843,22 @@ export type HazmatSegregationRuleTableQueryVariables = Exact<{
 
 export type HazmatSegregationRuleTableQuery = { hazmatSegregationRules: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'HazmatSegregationRuleTableRowFieldsFragment': HazmatSegregationRuleTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type HoldReasonTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, type: HoldType, code: string, label: string, description: string, active: boolean, defaultSeverity: HoldSeverity, defaultBlocksDispatch: boolean, defaultBlocksDelivery: boolean, defaultBlocksBilling: boolean, defaultVisibleToCustomer: boolean, sortOrder: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'HoldReasonTableRowFieldsFragment' };
+export type CreateHoldReasonMutationVariables = Exact<{
+  input: HoldReasonInput;
+}>;
+
+
+export type CreateHoldReasonMutation = { createHoldReason: { id: string, version: number } };
+
+export type UpdateHoldReasonMutationVariables = Exact<{
+  id: string | number;
+  input: HoldReasonInput;
+}>;
+
+
+export type UpdateHoldReasonMutation = { updateHoldReason: { id: string, version: number } };
+
+export type HoldReasonTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, type: HoldType, code: string, label: string, description: string, active: boolean, defaultSeverity: HoldSeverity, defaultBlocksDispatch: boolean, defaultBlocksDelivery: boolean, defaultBlocksBilling: boolean, defaultVisibleToCustomer: boolean, sortOrder: number, externalMap: unknown, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'HoldReasonTableRowFieldsFragment' };
 
 export type HoldReasonTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -16253,6 +17031,21 @@ export type JurisdictionRuleTableQueryVariables = Exact<{
 
 
 export type JurisdictionRuleTableQuery = { jurisdictionRules: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'JurisdictionRuleTableRowFieldsFragment': JurisdictionRuleTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type CreateLocationCategoryMutationVariables = Exact<{
+  input: LocationCategoryInput;
+}>;
+
+
+export type CreateLocationCategoryMutation = { createLocationCategory: { id: string, version: number } };
+
+export type UpdateLocationCategoryMutationVariables = Exact<{
+  id: string | number;
+  input: LocationCategoryInput;
+}>;
+
+
+export type UpdateLocationCategoryMutation = { updateLocationCategory: { id: string, version: number } };
 
 export type LocationCategoryTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, type: LocationCategoryType, facilityType: FacilityType | null, color: string, hasSecureParking: boolean | null, requiresAppointment: boolean, allowsOvernight: boolean | null, hasRestroom: boolean | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'LocationCategoryTableRowFieldsFragment' };
 
@@ -19921,7 +20714,9 @@ export class TypedDocumentString<TResult, TVariables>
   }
 }
 
+export { CreateAccessorialChargeDocument, UpdateAccessorialChargeDocument, PatchAccessorialChargeDocument } from "./documents/accessorial-charge/mutations";
 export { AccessorialChargeTableRowFieldsFragmentDoc, AccessorialChargeTableDocument } from "./documents/accessorial-charge/table";
+export { CreateAccountTypeDocument, UpdateAccountTypeDocument, PatchAccountTypeDocument, BulkUpdateAccountTypeStatusDocument } from "./documents/account-type/mutations";
 export { AccountTypeTableRowFieldsFragmentDoc, AccountTypeTableDocument } from "./documents/account-type/table";
 export { DeskAccountingSyncRecordFieldsFragmentDoc, DeskAccountingMappingFieldsFragmentDoc, DeskAccountingConnectionDocument, DeskAccountingSyncSummaryDocument, DeskAccountingSyncRecordsDocument, DeskAccountingSyncObjectStatesDocument, DeskAccountingSyncRecordDocument, DeskAccountingSyncAttemptsDocument, DeskAccountingMappingsDocument, DeskAccountingMappingSummaryDocument, DeskAccountingMappingDetailDocument, DeskAccountingDriftFindingsDocument, DeskAccountingDriftOverviewDocument, DeskAccountingInboundChangesDocument } from "./documents/accounting-sync/desk";
 export { AccountingDriftFindingFieldsFragmentDoc, AccountingDriftOverviewFieldsFragmentDoc, AccountingDriftOverviewDocument, AccountingDriftFindingDocument, AccountingDriftFixPreviewDocument, ResolveAccountingDriftDocument, DismissAccountingDriftDocument, CheckAccountingDriftDocument, AccountingDriftFindingTableDocument } from "./documents/accounting-sync/drift";
@@ -19977,13 +20772,17 @@ export { DeskCarrierSettlementCardDocument } from "./documents/carrier-settlemen
 export { CarrierSettlementTableDocument, CarrierSettlementDetailDocument, CarrierSettlementBatchTableDocument, CarrierSettlementBatchDetailDocument, CarrierCostEventTableDocument, CarrierSettlementControlDocument, CurrentCarrierSettlementPeriodDocument, CarrierSettlementWorkspaceSummaryDocument, CarrierLedgerEntriesDocument, CarrierInvoiceMatchesDocument, EdiCarrierInvoicesDocument, SuggestCarrierForEdiInvoiceDocument, ExportCarrierSettlementBatchCsvDocument, GenerateCarrierSettlementBatchDocument, SubmitCarrierSettlementDocument, ApproveCarrierSettlementDocument, RejectCarrierSettlementDocument, PostCarrierSettlementDocument, MarkCarrierSettlementPaidDocument, VoidCarrierSettlementDocument, RecalculateCarrierSettlementDocument, AddCarrierSettlementAdjustmentDocument, RemoveCarrierSettlementAdjustmentDocument, UpdateCarrierSettlementControlDocument, LinkEdiCarrierInvoiceToCarrierDocument, CreateCarrierInvoiceMatchDocument, AcceptCarrierInvoiceMatchDocument, AcceptCarrierInvoiceMatchWithVarianceDocument, RejectCarrierInvoiceMatchDocument } from "./documents/carrier-settlement/operations";
 export { CarrierContactFieldsFragmentDoc, CarrierInsurancePolicyFieldsFragmentDoc, CarrierTableRowFieldsFragmentDoc, CarrierTableDocument } from "./documents/carrier/table";
 export { CommandPaletteCustomerPreviewDocument } from "./documents/command-palette/operations";
+export { CreateCommodityDocument, UpdateCommodityDocument, PatchCommodityDocument, BulkUpdateCommodityStatusDocument } from "./documents/commodity/mutations";
 export { CommodityTableRowFieldsFragmentDoc, CommodityTableDocument } from "./documents/commodity/table";
 export { CostingControlPageDocument, ResolvedCostProfilePageDocument, UpdateCostingControlDocument, UpdateCostCategoryDocument } from "./documents/cost-control/operations";
+export { CustomFieldFormFieldsDocument, CustomFieldResourceTypesDocument } from "./documents/custom-field/form";
 export { CustomFieldDefinitionTableRowFieldsFragmentDoc, CustomFieldDefinitionTableDocument } from "./documents/custom-field/table";
 export { DeskCustomerPaymentsDocument } from "./documents/customer-payment/desk";
 export { CustomerPaymentTableDocument, CustomerPaymentDetailDocument, PostAndApplyCustomerPaymentDocument, ApplyUnappliedCustomerPaymentDocument, ReverseCustomerPaymentDocument } from "./documents/customer-payment/operations";
 export { CustomerTrackingProfileFieldsFragmentDoc, CustomerTrackingProfileDocument, UpdateCustomerTrackingProfileDocument } from "./documents/customer/customer-tracking-profile";
 export { DeskCustomerCardDocument, DeskCustomerRateAgreementsDocument, DeskCustomerUpdatePreferencesDocument } from "./documents/customer/desk";
+export { CreateCustomerDocument, UpdateCustomerDocument, PatchCustomerDocument, BulkUpdateCustomerStatusDocument } from "./documents/customer/mutations";
+export { ShipmentCustomerBillingRulesDocument } from "./documents/customer/shipment-billing-rules";
 export { CustomerBillingProfileFieldsFragmentDoc, CustomerEmailProfileFieldsFragmentDoc, CustomerTableRowFieldsFragmentDoc, CustomerTableDocument } from "./documents/customer/table";
 export { DataTableInsightFieldsDocument, DataTableFacetsDocument, DataTableAggregatesDocument, DataTableSeriesDocument } from "./documents/data-table-insight/operations";
 export { DetentionFacilityStatsDocument, DetentionCustomerStatsDocument, DetentionWaiverStatsDocument, DetentionPolicyPreviewDocument, DetentionBacktestDocument } from "./documents/detention/analytics";
@@ -19995,6 +20794,7 @@ export { DispatchBoardDocument, DispatchMoveCandidatesDocument, DispatchDriverMo
 export { DistanceOverrideLocationFieldsFragmentDoc, DistanceOverrideTableRowFieldsFragmentDoc, DistanceOverrideTableDocument } from "./documents/distance-override/table";
 export { DistanceProfileTableRowFieldsFragmentDoc, DistanceProfileTableDocument } from "./documents/distance-profile/table";
 export { DocumentPacketRuleTableRowFieldsFragmentDoc, DocumentPacketRuleTableDocument } from "./documents/document-packet-rule/table";
+export { CreateDocumentTypeDocument, UpdateDocumentTypeDocument } from "./documents/document-type/mutations";
 export { DocumentTypeTableRowFieldsFragmentDoc, DocumentTypeTableDocument } from "./documents/document-type/table";
 export { PortalTrainingFieldsFragmentDoc, WorkerPortalStatusDocument, InviteWorkerToPortalDocument, RevokeWorkerPortalAccessDocument, SettlementDisputeTableDocument, SettlementDisputeDetailDocument, OpenSettlementDisputeCountDocument, StartSettlementDisputeReviewDocument, ResolveSettlementDisputeDocument, MyPortalProfileDocument, MyLoadsDocument, MyLoadCommentsDocument, RecordMyStopActionDocument, CreateMyLoadCommentDocument, MyPeriodSummaryDocument, MyRecentPayEventsDocument, MySettlementsDocument, MySettlementDocument, MyEscrowDocument, MyAdvancesDocument, MyDisputesDocument, CreateSettlementDisputeDocument, WithdrawSettlementDisputeDocument, MyComplianceProfileDocument, UpdateMyContactInfoDocument, MyPtoDocument, RequestMyPtoDocument, CancelMyPtoDocument, MyExpensesDocument, SubmitMyExpenseDocument, CancelMyExpenseDocument, RespondToMyAssignmentDocument, MyLoadPayEstimateDocument, MyYtdPayDocument, DriverExpenseTableDocument, DriverExpenseDetailDocument, PendingDriverExpenseCountDocument, ReviewDriverExpenseDocument, DashControlDocument, UpdateDashControlDocument, MyPortalFeaturesDocument, MyPoliciesDocument, MyPolicyDocumentUrlDocument, MyProfileChangeRequestsDocument, AcknowledgeMyPolicyDocument, WithdrawMyProfileChangeDocument, MyScheduleDocument, MyAvailabilityDocument, MyShiftSwapsDocument, SetMyAvailabilityDocument, ProposeMyShiftSwapDocument, RespondToMyShiftSwapDocument, MyHosStateDocument, MyHosDailyLogsDocument, MyHosViolationsDocument, MyCredentialsDocument, MyPtoBalancesDocument, MyTrainingDocument, StartMyTrainingDocument, AcknowledgeMyTrainingDocument, MySafetyScorecardDocument, MyRecognitionsDocument, MyDisciplinaryActionsDocument, AcknowledgeMyDisciplinaryActionDocument, MyReviewsDocument, AcknowledgeMyReviewDocument, MyLeaveDocument } from "./documents/driver-portal/operations";
 export { DeskDriverSettlementCardDocument, DeskDriverSettlementStatementDocument, DeskPayCodeOptionsDocument } from "./documents/driver-settlement/desk";
@@ -20007,11 +20807,13 @@ export { EdiSummaryDocument } from "./documents/edi/summary";
 export { EdiPartnerRowFieldsFragmentDoc, EdiCommunicationProfileRowFieldsFragmentDoc, EdiTransferRowFieldsFragmentDoc, EdiMessageRowFieldsFragmentDoc, EdiInboundFileRowFieldsFragmentDoc, EdiMappingProfileRowFieldsFragmentDoc, EdiFlowInstanceRowFieldsFragmentDoc, EdiPartnerTableDocument, EdiCommunicationProfileTableDocument, EdiTransferTableDocument, EdiMessageTableDocument, EdiInboundFileTableDocument, EdiMappingProfileTableDocument, EdiFlowInstanceTableDocument } from "./documents/edi/table";
 export { DeskEmailProfilesDocument } from "./documents/email-profile/desk";
 export { EmailProfileTableRowFieldsFragmentDoc, EmailProfileTableDocument } from "./documents/email-profile/table";
+export { CreateEquipmentManufacturerDocument, UpdateEquipmentManufacturerDocument, PatchEquipmentManufacturerDocument, BulkUpdateEquipmentManufacturerStatusDocument } from "./documents/equipment-manufacturer/mutations";
 export { EquipmentManufacturerTableRowFieldsFragmentDoc, EquipmentManufacturerTableDocument } from "./documents/equipment-manufacturer/table";
 export { EquipmentTypeConfigurationRowFieldsFragmentDoc, DataTablePageInfoFieldsFragmentDoc, EquipmentTypeTableFieldsFragmentDoc, EquipmentManufacturerTableFieldsFragmentDoc, FleetCodeTableFieldsFragmentDoc, UsStateTableFieldsFragmentDoc, WorkerTableReferenceFieldsFragmentDoc, TractorTableRowFieldsFragmentDoc, TrailerTableRowFieldsFragmentDoc, TractorTableDocument, TrailerTableDocument, EquipmentTypeTableDocument, EquipmentTypeDocument, CreateEquipmentTypeDocument, UpdateEquipmentTypeDocument, PatchEquipmentTypeDocument, BulkUpdateEquipmentTypeStatusDocument } from "./documents/equipment/table";
 export { ExtractionEvalRunFieldsFragmentDoc, ExtractionFieldAccuracyFieldsFragmentDoc, ExtractionEvalRunDetailFieldsFragmentDoc, AiCorrectionTableRowFieldsFragmentDoc, AiCorrectionFieldResultFieldsFragmentDoc, AiCorrectionDetailFieldsFragmentDoc, ExtractionEvalCaseTableRowFieldsFragmentDoc, ExtractionEvalResultTableRowFieldsFragmentDoc, ExtractionEvalRefreezeProgressFieldsFragmentDoc, ExtractionWeekAccuracyFieldsFragmentDoc, ExtractionSnapshotFieldsFragmentDoc, ExtractionAccuracyDocument, AiCorrectionTableDocument, AiCorrectionDetailDocument, ExtractionEvalCaseTableDocument, ExtractionEvalCaseDetailDocument, ExtractionEvalRunTableDocument, ExtractionEvalRunDetailDocument, ExtractionEvalResultTableDocument, ExtractionEvalResultDetailDocument, PromoteAiCorrectionDocument, UpdateExtractionEvalCaseDocument, DeleteExtractionEvalCaseDocument, StartExtractionEvalRunDocument, CancelExtractionEvalRunDocument, ExtractionEvalRefreezeDocument, RefreezeExtractionEvalCasesDocument, ExtractionProviderTrendsDocument } from "./documents/extraction-eval/extraction-eval";
 export { ExtractionRolloutFieldsFragmentDoc, ExtractionRolloutArmFieldsFragmentDoc, ExtractionRolloutAccuracyFieldsFragmentDoc, ExtractionRolloutDocument, ExtractionRolloutReportDocument, UpdateExtractionRolloutDocument } from "./documents/extraction-rollout/extraction-rollout";
 export { ExtractionShadowSettingsFieldsFragmentDoc, ExtractionShadowResultTableRowFieldsFragmentDoc, ExtractionShadowResultDetailFieldsFragmentDoc, ExtractionShadowSettingsDocument, ExtractionShadowReportDocument, ExtractionShadowResultTableDocument, ExtractionShadowResultDetailDocument, UpdateExtractionShadowSettingsDocument } from "./documents/extraction-shadow/extraction-shadow";
+export { CreateFactoringCompanyDocument, UpdateFactoringCompanyDocument } from "./documents/factoring-company/mutations";
 export { FactoringCompanyTableRowFieldsFragmentDoc, FactoringCompanyTableDocument } from "./documents/factoring-company/table";
 export { FactoringAgreementFieldsFragmentDoc, FactoringAgreementsDocument, FactoringAgreementOwnerDocument, CreateFactoringAgreementDocument, UpdateFactoringAgreementDocument, ActivateFactoringAgreementDocument, EndFactoringAgreementDocument, FactoringCompanyRecordDocument } from "./documents/factoring/agreements";
 export { DeskFactoringInvoiceStateFieldsFragmentDoc, DeskFactoringSubmissionFieldsFragmentDoc, DeskFactoringRemittanceFieldsFragmentDoc, DeskFactoringReadinessDocument, DeskFactoringInvoiceStatesDocument, DeskFactoringAgreementsDocument, DeskFactoringNoasDocument, DeskFactoringSubmissionsDocument, DeskFactoringSubmissionDocument, DeskFactoringRemittancesDocument, DeskFactoringRemittanceDocument } from "./documents/factoring/desk";
@@ -20023,6 +20825,7 @@ export { FactoringSubmissionItemFieldsFragmentDoc, FactoringSubmissionFieldsFrag
 export { FactoringTransportFieldsFragmentDoc, FactoringTransportDocument, SaveFactoringTransportDocument, TestFactoringTransportDocument } from "./documents/factoring/transport";
 export { DeskFiscalPeriodsDocument } from "./documents/fiscal-period/desk";
 export { FiscalPeriodFieldsFragmentDoc, FiscalYearTableRowFieldsFragmentDoc, FiscalYearTableDocument } from "./documents/fiscal-year/table";
+export { CreateFleetCodeDocument, UpdateFleetCodeDocument, PatchFleetCodeDocument, BulkUpdateFleetCodeStatusDocument } from "./documents/fleet-code/mutations";
 export { FleetCodeTableRowFieldsFragmentDoc, FleetCodeTableDocument } from "./documents/fleet-code/table";
 export { FleetSafetyDocument, WorkerSafetyViolationsDocument, RecordSafetyViolationDocument, UpdateSafetyViolationDocument, DeleteSafetyViolationDocument } from "./documents/fleet-safety/operations";
 export { DeskFormulaLibrariesDocument, DeskFormulaLibraryCardDocument } from "./documents/formula-library/desk";
@@ -20039,8 +20842,11 @@ export { DeskFuelPurchaseCardDocument, DeskFuelPurchasesDocument } from "./docum
 export { FuelPurchaseFieldsFragmentDoc, FuelPurchaseTableDocument, FuelPurchaseDocument, CreateFuelPurchaseDocument, UpdateFuelPurchaseDocument, DeleteFuelPurchaseDocument } from "./documents/fuel-purchase/operations";
 export { DeskFuelIndexPricesDocument, DeskFuelProgramCurrentRatesDocument } from "./documents/fuel-surcharge/desk";
 export { FuelIndexFieldsFragmentDoc, FuelSurchargeProgramFieldsFragmentDoc, FuelIndexTableDocument, FuelSurchargeProgramTableDocument, FuelSurchargeProgramDetailDocument, FuelDashboardDocument, FuelIndexPriceHistoryDocument, FuelProgramCurrentRatesDocument, GenerateFuelSurchargeTableDocument, EiaSeriesOptionsDocument, CreateFuelIndexDocument, UpdateFuelIndexDocument, DeleteFuelIndexDocument, AddFuelIndexPriceDocument, UpdateFuelIndexPriceDocument, DeleteFuelIndexPriceDocument, CreateFuelSurchargeProgramDocument, UpdateFuelSurchargeProgramDocument, DeleteFuelSurchargeProgramDocument } from "./documents/fuel-surcharge/operations";
+export { CreateHazardousMaterialDocument, UpdateHazardousMaterialDocument, PatchHazardousMaterialDocument, BulkUpdateHazardousMaterialStatusDocument } from "./documents/hazardous-material/mutations";
 export { HazardousMaterialTableRowFieldsFragmentDoc, HazardousMaterialTableDocument } from "./documents/hazardous-material/table";
+export { CreateHazmatSegregationRuleDocument, UpdateHazmatSegregationRuleDocument } from "./documents/hazmat-segregation-rule/mutations";
 export { HazmatSegregationRuleTableRowFieldsFragmentDoc, HazmatSegregationRuleTableDocument } from "./documents/hazmat-segregation-rule/table";
+export { CreateHoldReasonDocument, UpdateHoldReasonDocument } from "./documents/hold-reason/mutations";
 export { HoldReasonTableRowFieldsFragmentDoc, HoldReasonTableDocument } from "./documents/hold-reason/table";
 export { HomeWidgetFieldsFragmentDoc, HomeLayoutFieldsFragmentDoc, HomeLayoutPresetFieldsFragmentDoc } from "./documents/home-layout/fragments";
 export { UpdateHomeLayoutDocument, ResetHomeLayoutDocument, CreateHomeLayoutPresetDocument, UpdateHomeLayoutPresetDocument, DeleteHomeLayoutPresetDocument } from "./documents/home-layout/mutations";
@@ -20069,6 +20875,7 @@ export { DeskJournalReversalsDocument } from "./documents/journal-reversal/desk"
 export { JournalReversalTableRowFieldsFragmentDoc, JournalReversalTableDocument } from "./documents/journal-reversal/table";
 export { JurisdictionRuleOverrideTableRowFieldsFragmentDoc, JurisdictionRuleOverrideTableDocument } from "./documents/jurisdiction-rule/overrides";
 export { JurisdictionRuleTableRowFieldsFragmentDoc, JurisdictionRuleTableDocument } from "./documents/jurisdiction-rule/table";
+export { CreateLocationCategoryDocument, UpdateLocationCategoryDocument } from "./documents/location-category/mutations";
 export { LocationCategoryTableRowFieldsFragmentDoc, LocationCategoryTableDocument } from "./documents/location-category/table";
 export { DeskLocationCardDocument, DeskLocationDwellDocument, DeskLocationPoliciesDocument } from "./documents/location-desk/desk";
 export { LocationTableRowFieldsFragmentDoc, LocationTableDocument } from "./documents/location/table";

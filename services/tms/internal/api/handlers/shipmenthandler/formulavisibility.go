@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/formulavisibility"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentformula"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/gin-gonic/gin"
 )
 
@@ -28,19 +27,4 @@ func (h *Handler) respondShipments(c *gin.Context, entities []*shipment.Shipment
 		entities,
 		shipmentformula.WithholdAll,
 	)
-}
-
-func (h *Handler) visibleShipmentPage(
-	c *gin.Context,
-	result *pagination.CursorListResult[*shipment.Shipment],
-) *pagination.CursorListResult[*shipment.Shipment] {
-	visible := *result
-	visible.Items = formulavisibility.Apply(
-		c,
-		h.formulas,
-		result.Items,
-		shipmentformula.WithholdAll,
-	)
-
-	return &visible
 }

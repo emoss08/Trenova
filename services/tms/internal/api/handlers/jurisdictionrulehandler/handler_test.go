@@ -157,26 +157,6 @@ func TestVerify_PassesTheStateAndNoteThrough(t *testing.T) {
 	assert.Equal(t, testutil.TestUserID, service.verifyReq.Actor.UserID)
 }
 
-func TestList_PassesTheVerificationFilterThrough(t *testing.T) {
-	t.Parallel()
-
-	service := &serviceStub{}
-	handler := setupHandler(t, service)
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodGet).
-		WithPath("/api/v1/jurisdiction-rules/").
-		WithQuery(map[string]string{"verificationState": "Unverified"}).
-		WithDefaultAuthContext()
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-	require.NotNil(t, service.listReq)
-	assert.Equal(t, jurisdictionrule.VerificationUnverified, service.listReq.VerificationState)
-}
-
 func TestVerify_RejectsAnInvalidRuleID(t *testing.T) {
 	t.Parallel()
 

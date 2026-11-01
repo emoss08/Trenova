@@ -4868,6 +4868,9 @@ models:
   CustomerFuelSurchargeMode:
     model:
       - github.com/emoss08/trenova/internal/modules/parties/domain/customer.FuelSurchargeMode
+  ShipmentCustomerBillingRules:
+    model:
+      - github.com/emoss08/trenova/internal/modules/parties/ports/customerports.ShipmentBillingRules
   CustomerBillingProfile:
     model:
       - github.com/emoss08/trenova/internal/modules/parties/domain/customer.CustomerBillingProfile
@@ -5004,6 +5007,9 @@ models:
     model:
       - github.com/emoss08/trenova/internal/modules/workspace/domain/customfield.FieldType
   CustomFieldDefinition:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/customfield.CustomFieldDefinition
+  CustomFieldFormField:
     model:
       - github.com/emoss08/trenova/internal/modules/workspace/domain/customfield.CustomFieldDefinition
   CustomFieldSelectOption:

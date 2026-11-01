@@ -136,6 +136,10 @@ export function BillingQueueFilters() {
     { value: ALL, label: t("All bill types") },
     ...billTypeChoices.map((choice) => ({ value: choice.value, label: t(choice.label) })),
   ];
+  const presetItems = [
+    { value: ALL, label: t("No preset") },
+    ...presets.map((preset) => ({ value: preset.id, label: preset.name })),
+  ];
 
   const deletePreset = useApiMutation({
     mutationFn: (id: string) => apiService.billingQueueService.deleteFilterPreset(id),
@@ -289,7 +293,6 @@ export function BillingQueueFilters() {
               <div className="flex flex-col gap-1.5">
                 <p className="text-muted-foreground text-xs">{t("Assigned billers")}</p>
                 <MultiSelectAutocomplete<GraphQLSelectOption>
-                  link="/users/select-options/"
                   graphql={BILLER_SELECT_OPTIONS}
                   label={t("Billers")}
                   className="text-foreground"
@@ -325,10 +328,10 @@ export function BillingQueueFilters() {
 
             <div className="flex items-center gap-1 border-t pt-3">
               <div className="flex-1">
-                <Autocomplete<BillingQueueFilterPreset, FieldValues>
-                  link="/billing-queue/filter-presets/"
-                  value={params.preset}
-                  onChange={(value) => {
+                <Select
+                  value={params.preset ?? ALL}
+                  items={presetItems}
+                  onValueChange={(value) => {
                     const preset = presets.find((p) => p.id === value);
                     if (preset) {
                       applyPreset(preset);
@@ -336,13 +339,18 @@ export function BillingQueueFilters() {
                       void setParams({ preset: null });
                     }
                   }}
-                  getOptionValue={(preset) => preset.id}
-                  getDisplayValue={(preset) => preset.name}
-                  renderOption={(preset) => <span className="text-xs">{preset.name}</span>}
-                  placeholder={t("Select preset...")}
-                  clearable
-                  triggerClassName="h-7 text-xs"
-                />
+                >
+                  <SelectTrigger aria-label={t("Filter preset")} className="h-7 w-full text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {presetItems.map((item) => (
+                      <SelectItem key={item.value} value={item.value}>
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               {hasActiveFilters && (
                 <Button

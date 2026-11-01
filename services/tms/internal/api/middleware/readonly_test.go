@@ -114,7 +114,7 @@ func TestReadOnlyGuardLetsReadsAndAllowlistedWritesThroughWhileReadOnly(t *testi
 	for _, tc := range []guardCase{
 		{method: http.MethodGet, route: "/api/v1/shipments/"},
 		{method: http.MethodPost, route: "/api/v1/users/me/change-password/"},
-		{method: http.MethodPost, route: "/api/v1/shipments/calculate-totals/"},
+		{method: http.MethodPost, route: "/api/v1/rate-agreements/rate-increase/preview/"},
 		{
 			method: http.MethodPost,
 			route:  "/api/v1/billing/invoice-adjustments/drafts/:adjustmentID/preview/",

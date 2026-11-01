@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/reference/app/commodityservice"
+	"github.com/emoss08/trenova/internal/modules/reference/app/dothazmatreferenceservice"
 	"github.com/emoss08/trenova/internal/modules/reference/app/hazardousmaterialservice"
 	"github.com/emoss08/trenova/internal/modules/reference/app/servicetypeservice"
 	"github.com/emoss08/trenova/internal/modules/reference/app/shipmenttypeservice"
@@ -34,6 +35,7 @@ type Sources struct {
 	ServiceTypeService          *servicetypeservice.Service
 	CommodityService            *commodityservice.Service
 	HazardousMaterialService    *hazardousmaterialservice.Service
+	DotHazmatReferenceService   *dothazmatreferenceservice.Service
 	OrderService                *orderservice.Service
 	ShipmentReader              shipmentserviceports.ShipmentReader
 	ServiceFailureReasonCodeSvc servicefailureports.ServiceFailureReasonCodeService

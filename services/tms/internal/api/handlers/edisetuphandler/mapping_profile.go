@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -15,27 +14,6 @@ import (
 )
 
 func (h *Handler) registerMappingProfileRoutes(mappingProfiles *gin.RouterGroup) {
-	selectOptions := mappingProfiles.Group("/select-options", responseguard.References())
-	selectOptions.GET(
-		"/",
-		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
-		h.selectMappingProfileOptions,
-	)
-	selectOptions.GET(
-		"/:profileID",
-		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
-		h.getMappingProfileOption,
-	)
-	mappingProfiles.GET(
-		"/",
-		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
-		h.listMappingProfiles,
-	)
-	mappingProfiles.GET(
-		"/:profileID/",
-		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
-		h.getMappingProfileByID,
-	)
 	mappingProfiles.PUT(
 		"/:profileID/items/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
@@ -131,65 +109,6 @@ func (h *Handler) deleteMappingItem(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
-}
-
-func (h *Handler) listMappingProfiles(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewQueryOptions(c, authCtx)
-
-	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.EDIMappingProfile], error) {
-		return h.setup.ListMappingProfiles(
-			c.Request.Context(),
-			&edipartnerports.ListEDIMappingProfilesRequest{Filter: req},
-		)
-	})
-}
-
-func (h *Handler) selectMappingProfileOptions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewSelectQueryRequest(c, authCtx)
-
-	pagination.SelectOptions(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*edi.EDIMappingProfile], error) {
-			return h.setup.SelectMappingProfileOptions(
-				c.Request.Context(),
-				&edipartnerports.EDIMappingProfileSelectOptionsRequest{
-					SelectQueryRequest: req,
-					PartnerID:          helpers.QueryPulid(c, "partnerId"),
-				},
-			)
-		},
-	)
-}
-
-func (h *Handler) getMappingProfileOption(c *gin.Context) {
-	h.getMappingProfileByID(c)
-}
-
-func (h *Handler) getMappingProfileByID(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	profileID, err := pulid.MustParse(c.Param("profileID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	profile, err := h.setup.GetMappingProfileByID(
-		c.Request.Context(),
-		edipartnerports.GetMappingProfileByIDRequest{
-			ProfileID:  profileID,
-			TenantInfo: pagination.FromAuth(authCtx),
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, profile)
 }
 
 func (h *Handler) updateMappingProfileItems(c *gin.Context) {

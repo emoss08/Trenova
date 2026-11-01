@@ -1,30 +1,66 @@
-import { api } from "@trenova/shared/lib/api";
-import { safeParse } from "@trenova/shared/lib/parse";
 import {
-  bulkUpdateFleetCodeStatusResponseSchema,
-  fleetCodeSchema,
-  type BulkUpdateFleetCodeStatusRequest,
-  type BulkUpdateFleetCodeStatusResponse,
-  type FleetCode,
-} from "@trenova/shared/types/fleet-code";
+  BulkUpdateFleetCodeStatusDocument,
+  CreateFleetCodeDocument,
+  PatchFleetCodeDocument,
+  UpdateFleetCodeDocument,
+  type FleetCodeInput,
+  type FleetCodePatchInput,
+} from "@trenova/graphql/generated/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { BulkUpdateFleetCodeStatusRequest, FleetCode } from "@trenova/shared/types/fleet-code";
+
+export function toFleetCodeInput(data: FleetCode): FleetCodeInput {
+  return {
+    status: data.status,
+    code: data.code,
+    description: data.description || null,
+    managerId: data.managerId,
+    revenueGoal: data.revenueGoal ?? null,
+    deadheadGoal: data.deadheadGoal ?? null,
+    mileageGoal: data.mileageGoal ?? null,
+    color: data.color || null,
+    version: data.version,
+  };
+}
 
 export class FleetCodeService {
-  public async bulkUpdateStatus(request: BulkUpdateFleetCodeStatusRequest) {
-    const response = await api.post<BulkUpdateFleetCodeStatusResponse>(
-      "/fleet-codes/bulk-update-status",
-      request,
-    );
+  public async create(data: FleetCode) {
+    const response = await requestGraphQL({
+      document: CreateFleetCodeDocument,
+      operationName: "CreateFleetCode",
+      variables: { input: toFleetCodeInput(data) },
+    });
 
-    return safeParse(
-      bulkUpdateFleetCodeStatusResponseSchema,
-      response,
-      "BulkUpdateFleetCodeStatus",
-    );
+    return response.createFleetCode;
   }
 
-  public async patch(id: FleetCode["id"], data: Partial<FleetCode>) {
-    const response = await api.patch<FleetCode>(`/fleet-codes/${id}`, data);
+  public async update(id: string, data: FleetCode) {
+    const response = await requestGraphQL({
+      document: UpdateFleetCodeDocument,
+      operationName: "UpdateFleetCode",
+      variables: { id, input: toFleetCodeInput(data) },
+    });
 
-    return safeParse(fleetCodeSchema, response, "FleetCode");
+    return response.updateFleetCode;
+  }
+
+  public async bulkUpdateStatus(request: BulkUpdateFleetCodeStatusRequest) {
+    const response = await requestGraphQL({
+      document: BulkUpdateFleetCodeStatusDocument,
+      operationName: "BulkUpdateFleetCodeStatus",
+      variables: { input: request },
+    });
+
+    return response.bulkUpdateFleetCodeStatus;
+  }
+
+  public async patch(id: string, input: FleetCodePatchInput) {
+    const response = await requestGraphQL({
+      document: PatchFleetCodeDocument,
+      operationName: "PatchFleetCode",
+      variables: { id, input },
+    });
+
+    return response.patchFleetCode;
   }
 }

@@ -362,11 +362,6 @@ type ServiceFailureService interface {
 		ctx context.Context,
 		req *CountUnresolvedServiceFailuresRequest,
 	) (int, error)
-	CreateManual(
-		ctx context.Context,
-		req *CreateManualServiceFailureRequest,
-		actor *permissionports.RequestActor,
-	) (*servicefailure.ServiceFailure, error)
 	BulkEvaluate(
 		ctx context.Context,
 		req *BulkEvaluateServiceFailuresRequest,

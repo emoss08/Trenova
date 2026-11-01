@@ -177,6 +177,46 @@ func (r *repository) GetBillingProfile(
 	)
 }
 
+func (r *repository) GetShipmentBillingProfiles(
+	ctx context.Context,
+	req customerports.GetShipmentBillingRulesRequest,
+) ([]*customer.CustomerBillingProfile, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*customer.CustomerBillingProfile, error) {
+			if len(req.CustomerIDs) == 0 {
+				return []*customer.CustomerBillingProfile{}, nil
+			}
+
+			cbp := customerdb.CustomerBillingProfiles
+			entities, err := cbp.Pick(
+				cbp.ID,
+				cbp.CustomerID,
+				cbp.EnforceCustomerBillingReq,
+				cbp.RequireBOLNumber,
+				cbp.CreditStatus,
+				cbp.CreditHoldReason,
+				cbp.EnforceCreditLimit,
+				cbp.CreditHoldAutomatic,
+			).
+				Where(cbp.CustomerID.In(req.CustomerIDs...)).
+				Limit(len(req.CustomerIDs)).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error(
+					"failed to get shipment billing profiles",
+					zap.Int("customers", len(req.CustomerIDs)),
+					zap.Error(err),
+				)
+				return nil, billingProfileErrors.Map(err, "")
+			}
+
+			return entities, nil
+		},
+	)
+}
+
 func (r *repository) GetByIDs(
 	ctx context.Context,
 	req customerports.GetCustomersByIDsRequest,

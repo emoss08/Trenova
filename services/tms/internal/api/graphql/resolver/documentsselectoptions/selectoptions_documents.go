@@ -5,9 +5,11 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/selectoption"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureprofiles"
+	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
 	"github.com/emoss08/trenova/internal/modules/reference/app/documenttypeservice"
@@ -22,8 +24,10 @@ import (
 )
 
 type Sources struct {
+	*resolvercore.Core
 	CaptureProfileService *captureprofiles.Service
 	CaptureDeviceService  *capturedevices.Service
+	DocumentService       *documentservice.Service
 	DocumentTypeService   *documenttypeservice.Service
 	EmailService          *emailservice.Service
 }
@@ -55,7 +59,12 @@ func (r *Sources) DocumentType(
 
 	result, err := r.DocumentTypeService.SelectOptions(
 		ctx,
-		req.SelectQuery,
+		&documenttypeports.DocumentTypeSelectOptionsRequest{
+			SelectQuery: req.SelectQuery,
+			Category: documenttype.DocumentCategory(
+				selectoption.StringFilter(req.Filters, "documentCategory"),
+			),
+		},
 	)
 	if err != nil {
 		return nil, err

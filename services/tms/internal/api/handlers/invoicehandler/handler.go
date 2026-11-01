@@ -74,11 +74,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpCreate),
 		h.createFromShipments,
 	)
-	api.POST(
-		"/from-order/",
-		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpCreate),
-		h.createFromOrder,
-	)
 	api.GET(
 		"/:invoiceID/",
 		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpRead),
@@ -88,11 +83,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/:invoiceID/",
 		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpUpdate),
 		h.updateDraft,
-	)
-	api.POST(
-		"/:invoiceID/preview/",
-		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpUpdate),
-		h.preview,
 	)
 	api.POST(
 		"/:invoiceID/generate-pdf/",
@@ -129,16 +119,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpPost),
 		h.post,
 	)
-	api.POST(
-		"/:invoiceID/void/",
-		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpCancel),
-		h.void,
-	)
-	api.POST(
-		"/memos/",
-		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpCreate),
-		h.createMemo,
-	)
 }
 
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
@@ -153,11 +133,6 @@ type createFromShipmentsRequest struct {
 	// statement, and is what the client sends back after the biller confirms the
 	// deviation.
 	OffCycleReason string `json:"offCycleReason"`
-}
-
-type createFromOrderRequest struct {
-	OrderID        pulid.ID `json:"orderId"`
-	OffCycleReason string   `json:"offCycleReason"`
 }
 
 type updateDraftRequest struct {
@@ -263,31 +238,6 @@ func (h *Handler) createFromShipments(c *gin.Context) {
 	helpers.JSON(c, http.StatusCreated, entity)
 }
 
-func (h *Handler) createFromOrder(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	var req createFromOrderRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.creation.CreateFromOrder(
-		c.Request.Context(),
-		&invoiceports.CreateInvoiceFromOrderRequest{
-			OrderID:        req.OrderID,
-			OffCycleReason: req.OffCycleReason,
-			TenantInfo:     pagination.FromAuth(authCtx),
-		},
-		actorutil.FromAuthContext(authCtx),
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusCreated, entity)
-}
-
 func (h *Handler) updateDraft(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	invoiceID, err := pulid.MustParse(c.Param("invoiceID"))
@@ -322,25 +272,6 @@ func (h *Handler) updateDraft(c *gin.Context) {
 		return
 	}
 	helpers.JSON(c, http.StatusOK, updated)
-}
-
-func (h *Handler) preview(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	invoiceID, err := pulid.MustParse(c.Param("invoiceID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	result, err := h.pdf.RenderPreview(
-		c.Request.Context(),
-		&invoiceports.InvoicePreviewRequest{InvoiceID: invoiceID, TenantInfo: tenantInfo(authCtx)},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	c.Header("Content-Disposition", `inline; filename="`+result.FileName+`"`)
-	c.Data(http.StatusOK, result.ContentType, result.Content)
 }
 
 func (h *Handler) generatePDF(c *gin.Context) {
@@ -532,67 +463,4 @@ func baseURL(c *gin.Context) string {
 		}
 	}
 	return scheme + "://" + c.Request.Host
-}
-
-type voidInvoiceRequest struct {
-	Reason      string                  `json:"reason"`
-	Disposition invoice.VoidDisposition `json:"disposition"`
-}
-
-// void takes an invoice out of circulation. A draft is voided at once; a
-// posted invoice goes through a full-reversal adjustment and the response says
-// whether that reversal still awaits an approver.
-func (h *Handler) void(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	invoiceID, err := pulid.MustParse(c.Param("invoiceID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	var req voidInvoiceRequest
-	if err = c.ShouldBindJSON(&req); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	result, err := h.voids.VoidInvoice(
-		c.Request.Context(),
-		&invoiceports.VoidInvoiceRequest{
-			InvoiceID:   invoiceID,
-			TenantInfo:  tenantInfo(authCtx),
-			Reason:      req.Reason,
-			Disposition: req.Disposition,
-		},
-		actorutil.FromAuthContext(authCtx),
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, result)
-}
-
-// createMemo raises a standalone credit or debit memo for a customer.
-func (h *Handler) createMemo(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := new(invoiceports.CreateMemoRequest)
-	if err := authctx.BindJSON(c, authCtx, req); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	req.ID = pulid.Nil
-	req.TenantInfo = tenantInfo(authCtx)
-
-	entity, err := h.memos.CreateMemo(
-		c.Request.Context(),
-		req,
-		actorutil.FromAuthContext(authCtx),
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusCreated, entity)
 }

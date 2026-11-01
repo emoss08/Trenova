@@ -310,6 +310,34 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createHazmatSegregationRule",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "HazmatSegregationRule",
+				Args:       field_Mutation_createHazmatSegregationRule_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateHazmatSegregationRule(ctx, fc.Args["input"].(gqlmodel.HazmatSegregationRuleInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNHazmatSegregationRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazmatsegregationruleᚐHazmatSegregationRule),
+			},
+			{
+				Name:       "updateHazmatSegregationRule",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "HazmatSegregationRule",
+				Args:       field_Mutation_updateHazmatSegregationRule_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateHazmatSegregationRule(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.HazmatSegregationRuleInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNHazmatSegregationRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazmatsegregationruleᚐHazmatSegregationRule),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "hazmatSegregationRules",
@@ -340,9 +368,18 @@ var Shard = &gqlexec.Shard{
 			},
 		}},
 	},
+	Inputs: []gqlexec.Input{
+		{Name: "HazmatSegregationRuleInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputHazmatSegregationRuleInput)},
+	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
+}
+
+type resolverMutation interface {
+	CreateHazmatSegregationRule(ctx context.Context, input gqlmodel.HazmatSegregationRuleInput) (*hazmatsegregationrule.HazmatSegregationRule, error)
+	UpdateHazmatSegregationRule(ctx context.Context, id string, input gqlmodel.HazmatSegregationRuleInput) (*hazmatsegregationrule.HazmatSegregationRule, error)
 }
 
 type resolverQuery interface {
@@ -361,6 +398,40 @@ var (
 	errNoChild7 = errors.New("field of type Int does not have child fields")
 	errNoChild8 = errors.New("field of type Timestamp does not have child fields")
 )
+
+func field_Mutation_createHazmatSegregationRule_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.HazmatSegregationRuleInput, error) {
+			return unmarshalNHazmatSegregationRuleInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHazmatSegregationRuleInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateHazmatSegregationRule_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.HazmatSegregationRuleInput, error) {
+			return unmarshalNHazmatSegregationRuleInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHazmatSegregationRuleInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
 
 func field_Query_hazmatSegregationRules_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -388,8 +459,141 @@ func field_Query_hazmatSegregationRule_args(ctx context.Context, ec *gqlexec.Exe
 	return args, nil
 }
 
+func unmarshalInputHazmatSegregationRuleInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.HazmatSegregationRuleInput, error) {
+	var it gqlmodel.HazmatSegregationRuleInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"status", "name", "description", "classA", "classB", "hazmatAId", "hazmatBId", "segregationType", "minimumDistance", "distanceUnit", "hasExceptions", "exceptionNotes", "referenceCode", "regulationSource", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "classA":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("classA"))
+			data, err := unmarshalNHazardousClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐHazardousClass(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClassA = data
+		case "classB":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("classB"))
+			data, err := unmarshalNHazardousClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐHazardousClass(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClassB = data
+		case "hazmatAId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hazmatAId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HazmatAId = data
+		case "hazmatBId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hazmatBId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HazmatBId = data
+		case "segregationType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("segregationType"))
+			data, err := unmarshalNSegregationType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazmatsegregationruleᚐSegregationType(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SegregationType = data
+		case "minimumDistance":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minimumDistance"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MinimumDistance = data
+		case "distanceUnit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("distanceUnit"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DistanceUnit = data
+		case "hasExceptions":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasExceptions"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HasExceptions = data
+		case "exceptionNotes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exceptionNotes"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExceptionNotes = data
+		case "referenceCode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("referenceCode"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReferenceCode = data
+		case "regulationSource":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("regulationSource"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RegulationSource = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
+}
+
+func unmarshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool, error) {
+	res, err := graphql.UnmarshalBoolean(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
@@ -397,9 +601,69 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (domaintypes.Status, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := domaintypes.Status(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNHazardousClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐHazardousClass(ctx context.Context, ec *gqlexec.Exec, v any) (hazardousmaterial.HazardousClass, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := hazardousmaterial.HazardousClass(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNHazmatSegregationRuleInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHazmatSegregationRuleInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.HazmatSegregationRuleInput, error) {
+	res, err := unmarshalInputHazmatSegregationRuleInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNSegregationType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazmatsegregationruleᚐSegregationType(ctx context.Context, ec *gqlexec.Exec, v any) (hazmatsegregationrule.SegregationType, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := hazmatsegregationrule.SegregationType(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOFloat2ᚖfloat64(ctx context.Context, ec *gqlexec.Exec, v any) (*float64, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {

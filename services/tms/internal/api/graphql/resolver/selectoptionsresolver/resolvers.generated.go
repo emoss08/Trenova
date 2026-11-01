@@ -10,8 +10,10 @@ import (
 	fiscalyearports "github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	glaccountports "github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	aiproviderports "github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	bankreceiptbatchports "github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
 	capturedevices "github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
 	captureprofiles "github.com/emoss08/trenova/internal/modules/documents/app/captureprofiles"
+	documentservice "github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	edisetup "github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
 	editransferservice "github.com/emoss08/trenova/internal/modules/edi/app/editransferservice"
 	equipmentmanufacturerservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
@@ -41,6 +43,7 @@ import (
 	accessorialchargeservice "github.com/emoss08/trenova/internal/modules/reference/app/accessorialchargeservice"
 	commodityservice "github.com/emoss08/trenova/internal/modules/reference/app/commodityservice"
 	documenttypeservice "github.com/emoss08/trenova/internal/modules/reference/app/documenttypeservice"
+	dothazmatreferenceservice "github.com/emoss08/trenova/internal/modules/reference/app/dothazmatreferenceservice"
 	hazardousmaterialservice "github.com/emoss08/trenova/internal/modules/reference/app/hazardousmaterialservice"
 	servicetypeservice "github.com/emoss08/trenova/internal/modules/reference/app/servicetypeservice"
 	shipmenttypeservice "github.com/emoss08/trenova/internal/modules/reference/app/shipmenttypeservice"
@@ -77,6 +80,9 @@ type Deps struct {
 	LocationService              *locationservice.Service
 	LocationCategoryService      *locationcategoryservice.Service
 	DocumentTypeService          *documenttypeservice.Service
+	DocumentService              *documentservice.Service
+	BankReceiptBatchService      bankreceiptbatchports.BankReceiptBatchService
+	DotHazmatReferenceService    *dothazmatreferenceservice.Service
 	ServiceTypeService           *servicetypeservice.Service
 	OrderService                 *orderservice.Service
 	ShipmentTypeService          *shipmenttypeservice.Service

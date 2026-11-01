@@ -73,6 +73,11 @@ type DocumentTypeRepository interface {
 	) (*documenttype.DocumentType, error)
 	SelectOptions(
 		ctx context.Context,
-		req *pagination.SelectQueryRequest,
+		req *DocumentTypeSelectOptionsRequest,
 	) (*pagination.ListResult[*documenttype.DocumentType], error)
+}
+
+type DocumentTypeSelectOptionsRequest struct {
+	SelectQuery *pagination.SelectQueryRequest
+	Category    documenttype.DocumentCategory
 }

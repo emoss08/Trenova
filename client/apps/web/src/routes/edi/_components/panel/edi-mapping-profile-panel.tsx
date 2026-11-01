@@ -21,7 +21,10 @@ import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { EDIMappingProfileItem } from "@trenova/shared/types/edi";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import type { ServiceFailureReasonCode } from "@/types/service-failure-reason-code";
+import type {
+  GraphQLSelectOptionsConfig,
+  SelectOption as GraphQLSelectOption,
+} from "@/lib/graphql/select-options";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
@@ -30,6 +33,15 @@ import { toast } from "@trenova/shared/components/ui/toast";
 import { mappingEntityTypes } from "../edi-schemas";
 import { TargetLookup } from "../edi-target-lookup";
 import { EDIEmptyState } from "./edi-panel-primitives";
+
+const SERVICE_FAILURE_REASON_CODES = {
+  resource: "SERVICE_FAILURE_REASON_CODE",
+} satisfies GraphQLSelectOptionsConfig;
+
+/** How a mapped reason code reads in the profile: its code, then what it means. */
+function reasonCodeSourceLabel(option: GraphQLSelectOption): string {
+  return option.description ? `${option.label} - ${option.description}` : option.label;
+}
 
 const emptyDraft: EDIMappingProfileItem = {
   entityType: "Customer",
@@ -224,9 +236,8 @@ function MappingSourceInput({
 
   if (entityType === "ServiceFailureReasonCode") {
     return (
-      <Autocomplete<ServiceFailureReasonCode, FieldValues>
-        link="/service-failure-reason-codes/select-options/"
-        selectedValueLink="/service-failure-reason-codes/"
+      <Autocomplete<GraphQLSelectOption, FieldValues>
+        graphql={SERVICE_FAILURE_REASON_CODES}
         value={value}
         placeholder={t("Service failure reason")}
         clearable
@@ -238,17 +249,19 @@ function MappingSourceInput({
         onOptionChange={(option) =>
           onChange({
             sourceId: option?.id ?? "",
-            sourceLabel: option ? `${option.code} - ${option.label}` : "",
+            sourceLabel: option ? reasonCodeSourceLabel(option) : "",
           })
         }
-        getOptionValue={(option) => option.id || ""}
-        getDisplayValue={(option) => option.code || option.label || ""}
+        getOptionValue={(option) => option.id}
+        getDisplayValue={(option) => option.label}
         renderOption={(option) => (
           <div className="flex size-full flex-col items-start">
-            <span className="w-full truncate font-medium">{option.code}</span>
-            <span className="text-2xs text-muted-foreground w-full truncate">
-              {t(option.label)}
-            </span>
+            <span className="w-full truncate font-medium">{option.label}</span>
+            {option.description && (
+              <span className="text-2xs text-muted-foreground w-full truncate">
+                {t(option.description)}
+              </span>
+            )}
           </div>
         )}
       />

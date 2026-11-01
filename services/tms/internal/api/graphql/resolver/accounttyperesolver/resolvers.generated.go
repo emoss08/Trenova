@@ -12,4 +12,6 @@ type Deps struct {
 	AccountTypeService *accounttypeservice.Service
 }
 
+type MutationResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }

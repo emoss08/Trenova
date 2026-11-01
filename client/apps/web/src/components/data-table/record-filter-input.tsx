@@ -62,7 +62,6 @@ export function RecordFilterInput({ record, operator, value, onChange }: RecordF
   if (isMultiRecordOperator(operator)) {
     return (
       <MultiSelectAutocomplete<SelectOption>
-        link=""
         graphql={source}
         values={recordFilterIds(value)}
         onChange={(next) =>

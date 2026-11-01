@@ -3,7 +3,6 @@ import type {
   SuggestionFetcher,
   SuggestionPage,
 } from "@trenova/shared/components/comment-editor/comment-editor";
-import { fetchOptions } from "@/components/fields/autocomplete/autocomplete-content";
 import {
   fetchGraphQLSelectOptions,
   type GraphQLSelectOptionsConfig,
@@ -12,6 +11,10 @@ import {
 
 const MENTION_PAGE_SIZE = 10;
 const ENTITY_REF_GROUP_PAGE_SIZE = 5;
+
+const userSelectOptionsGraphQL = {
+  resource: "USER",
+} satisfies GraphQLSelectOptionsConfig;
 
 const shipmentSelectOptionsGraphQL = {
   resource: "SHIPMENT",
@@ -25,32 +28,27 @@ const customerSelectOptionsGraphQL = {
   resource: "CUSTOMER",
 } satisfies GraphQLSelectOptionsConfig;
 
-interface UserSelectOption {
-  id: string;
-  name?: string;
-  emailAddress?: string;
-}
-
 function selectOptionMetaString(option: SelectOption, key: string): string {
   const value = option.meta?.[key];
   return typeof value === "string" ? value : "";
 }
 
 export const fetchMentionCandidates: SuggestionFetcher = async (query, page, options) => {
-  const response = await fetchOptions<UserSelectOption>(
-    "/users/select-options/",
-    query,
-    page,
-    MENTION_PAGE_SIZE,
-    undefined,
+  const response = await fetchGraphQLSelectOptions(
+    {
+      resource: userSelectOptionsGraphQL.resource,
+      query: query || undefined,
+      page,
+      initialLimit: MENTION_PAGE_SIZE,
+    },
     { signal: options?.signal },
   );
 
   return {
-    items: (response.results ?? []).map((user) => ({
+    items: response.results.map((user) => ({
       id: user.id,
-      label: user.name || user.emailAddress || user.id,
-      description: user.name ? (user.emailAddress ?? null) : null,
+      label: user.label || user.id,
+      description: user.description && user.description !== user.label ? user.description : null,
     })),
     hasMore: response.next != null,
   };

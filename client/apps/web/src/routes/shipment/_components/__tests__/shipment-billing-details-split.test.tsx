@@ -15,17 +15,51 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ShipmentBillingDetails from "../shipment-billing-details";
 
-const { getBillingProfile, getUIPolicy } = vi.hoisted(() => ({
-  getBillingProfile: vi.fn(),
+const { billingRules, getUIPolicy } = vi.hoisted(() => ({
+  billingRules: vi.fn(),
   getUIPolicy: vi.fn(),
 }));
 
 vi.mock("@/services/api", () => ({
   apiService: {
     shipmentService: { getUIPolicy },
-    customerService: { getBillingProfile },
   },
 }));
+vi.mock("@trenova/shared/lib/graphql", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@trenova/shared/lib/graphql")>();
+  return {
+    ...actual,
+    requestGraphQL: (request: Parameters<typeof actual.requestGraphQL>[0]) =>
+      request.operationName === "ShipmentCustomerBillingRules"
+        ? Promise.resolve({
+            shipmentCustomerBillingRules: billingRules(
+              (request.variables as { customerIds: string[] }).customerIds,
+            ),
+          })
+        : actual.requestGraphQL(request),
+  };
+});
+
+function rulesFor(
+  customerId: string,
+  rules: Partial<{
+    bolRequired: boolean;
+    creditStatus: string;
+    creditHoldReason: string;
+    enforceCreditLimit: boolean;
+    creditHoldAutomatic: boolean;
+  }>,
+) {
+  return {
+    customerId,
+    bolRequired: false,
+    creditStatus: "Active",
+    creditHoldReason: "",
+    enforceCreditLimit: false,
+    creditHoldAutomatic: false,
+    ...rules,
+  };
+}
 
 const CUSTOMERS = [
   { id: "cus_intel", label: "Intel", description: null, meta: { code: "INTEL" } },
@@ -94,11 +128,11 @@ afterEach(cleanup);
 beforeEach(() => {
   vi.clearAllMocks();
   getUIPolicy.mockResolvedValue(undefined);
-  getBillingProfile.mockImplementation(async (customerId: string) => ({
-    customerId,
-    creditStatus: "Hold",
-    creditHoldReason: `${customerId} is on hold`,
-  }));
+  billingRules.mockImplementation((customerIds: string[]) =>
+    customerIds.map((customerId) =>
+      rulesFor(customerId, { creditStatus: "Hold", creditHoldReason: `${customerId} is on hold` }),
+    ),
+  );
 });
 
 let latestForm: UseFormReturn<Shipment> | null = null;
@@ -163,20 +197,22 @@ describe("ShipmentBillingDetails split billing", () => {
       expect(screen.getByTestId("credit-alert-cus_nvidia")).toBeInTheDocument();
     });
     expect(screen.queryByTestId("credit-alert-cus_intel")).not.toBeInTheDocument();
-    expect(getBillingProfile).toHaveBeenCalledWith("cus_amd");
-    expect(getBillingProfile).toHaveBeenCalledWith("cus_nvidia");
-    expect(getBillingProfile).not.toHaveBeenCalledWith("cus_intel");
+    expect(billingRules).toHaveBeenCalledTimes(1);
+    expect(billingRules).toHaveBeenCalledWith(["cus_amd", "cus_nvidia"]);
   });
 
   it("says an automatic hold stops new shipments but not billing", async () => {
-    getBillingProfile.mockImplementation(async (customerId: string) => ({
-      customerId,
-      creditStatus: customerId === "cus_amd" ? "Hold" : "Active",
-      enforceCreditLimit: true,
-      creditHoldAutomatic: true,
-      creditHoldReason:
-        "Open receivables of 15000.00 USD are over the credit limit of 10000.00 USD",
-    }));
+    billingRules.mockImplementation((customerIds: string[]) =>
+      customerIds.map((customerId) =>
+        rulesFor(customerId, {
+          creditStatus: customerId === "cus_amd" ? "Hold" : "Active",
+          enforceCreditLimit: true,
+          creditHoldAutomatic: true,
+          creditHoldReason:
+            "Open receivables of 15000.00 USD are over the credit limit of 10000.00 USD",
+        }),
+      ),
+    );
     render(<Harness values={SPLIT_SHIPMENT} />);
 
     const alert = await screen.findByTestId("credit-alert-cus_amd");
@@ -186,13 +222,16 @@ describe("ShipmentBillingDetails split billing", () => {
   });
 
   it("says a hold a person placed also holds the payer's invoices", async () => {
-    getBillingProfile.mockImplementation(async (customerId: string) => ({
-      customerId,
-      creditStatus: customerId === "cus_amd" ? "Suspended" : "Active",
-      enforceCreditLimit: true,
-      creditHoldAutomatic: false,
-      creditHoldReason: "Bankruptcy filing",
-    }));
+    billingRules.mockImplementation((customerIds: string[]) =>
+      customerIds.map((customerId) =>
+        rulesFor(customerId, {
+          creditStatus: customerId === "cus_amd" ? "Suspended" : "Active",
+          enforceCreditLimit: true,
+          creditHoldAutomatic: false,
+          creditHoldReason: "Bankruptcy filing",
+        }),
+      ),
+    );
     render(<Harness values={SPLIT_SHIPMENT} />);
 
     const alert = await screen.findByTestId("credit-alert-cus_amd");

@@ -21,7 +21,7 @@ export function AccountingWebhookSubscriptions({
   const t = useT();
 
   return (
-    <div className="space-y-3 border-t pt-4">
+    <div className="space-y-3">
       {!summary.configured ? (
         <Alert variant="info" size="sm">
           <AlertDescription>

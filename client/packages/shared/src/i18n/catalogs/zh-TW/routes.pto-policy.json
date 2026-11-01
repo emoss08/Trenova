@@ -46,7 +46,6 @@
   "Restored {0, plural, one {# policy} other {# policies}}": "已還原 {0, plural, other {# 項政策}}",
   "Restored {0, plural, one {# policy} other {# policies}}; {1} failed": "已還原 {0, plural, other {# 項政策}}；{1} 項失敗",
   "Rule changes apply going forward": "規則變更自此後生效",
-  "Rule {0}": "規則 {0}",
   "Select a PTO type": "選擇有薪假類型",
   "Select a year basis": "選擇年度基準",
   "Select an accrual method": "選擇計提方式",

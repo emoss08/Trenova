@@ -1,6 +1,5 @@
 import { type TranslateFn, useT } from "@trenova/shared/i18n/use-t";
 import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
-import { fetchOptions } from "@/components/fields/autocomplete/autocomplete-content";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { useLocalStorage } from "@/hooks/use-local-storage";
@@ -8,6 +7,12 @@ import { usePermission } from "@/hooks/use-permission";
 import { usePendingActions } from "@/hooks/use-pending-actions";
 import { useShipmentBillingActions } from "@/hooks/use-shipment-billing-actions";
 import { shipment as shipmentQueries } from "@/lib/queries/shipment";
+import { documentType } from "@/lib/queries/document-type";
+import type {
+  GraphQLSelectOptionsConfig,
+  SelectOption as GraphQLSelectOption,
+} from "@/lib/graphql/select-options";
+import { selectOptionMetaString } from "@/lib/select-option-meta";
 import {
   hasPendingDocumentWork,
   PENDING_DOCUMENTS_REFETCH_MS,
@@ -15,7 +20,6 @@ import {
 } from "@/lib/resource-documents";
 import { apiService } from "@/services/api";
 import type { Document, DocumentPacketSummary } from "@trenova/shared/types/document";
-import type { DocumentType } from "@trenova/shared/types/document-type";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type {
   ShipmentBillingReadiness,
@@ -50,6 +54,12 @@ import { DocumentSignatureDialog } from "./document-signature-dialog";
 import { RejectDocumentDialog } from "./reject-document-dialog";
 import { ShipmentBillingReadinessPanel } from "./shipment-billing-readiness-panel";
 import { UploadPanel } from "./upload-panel";
+
+/** The document types a shipment upload can be filed under. */
+const SHIPMENT_DOCUMENT_TYPES = {
+  resource: "DOCUMENT_TYPE",
+  filters: { documentCategory: "Shipment" },
+} satisfies GraphQLSelectOptionsConfig;
 
 interface DocumentsTabProps {
   resourceId: string;
@@ -133,21 +143,15 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
   const isShipment = resourceType === "shipment";
 
   const { data: documentTypesData } = useQuery({
-    queryKey: ["document-types-select-options"],
-    queryFn: ({ signal }) =>
-      fetchOptions<DocumentType>("/document-types/select-options/", "", 1, 100, undefined, {
-        signal,
-      }),
+    ...documentType.options(),
     enabled: isShipment,
     staleTime: 5 * 60 * 1000,
   });
 
   const documentTypeMap = useMemo(() => {
     const map = new Map<string, string>();
-    for (const dt of documentTypesData?.results ?? []) {
-      if (dt.id) {
-        map.set(dt.id, dt.name);
-      }
+    for (const option of documentTypesData?.results ?? []) {
+      map.set(option.id, option.description ?? option.label);
     }
     return map;
   }, [documentTypesData]);
@@ -553,21 +557,26 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
       {captureKind !== null && <CaptureStacksPanel kind={captureKind} recordId={resourceId} />}
 
       {isShipment && (
-        <Autocomplete<DocumentType, Record<string, any>>
-          link="/document-types/select-options/"
-          extraSearchParams={{ documentCategory: "Shipment" }}
+        <Autocomplete<GraphQLSelectOption, Record<string, never>>
+          graphql={SHIPMENT_DOCUMENT_TYPES}
           value={selectedDocumentTypeId ?? null}
           onChange={(value: string | null) => setSelectedDocumentTypeId(value ?? undefined)}
-          getOptionValue={(option) => option.id || ""}
+          getOptionValue={(option) => option.id}
           getDisplayValue={(option) => (
-            <ColorOptionValue color={option.color ?? undefined} value={option.code} />
+            <ColorOptionValue
+              color={selectOptionMetaString(option, "color")}
+              value={option.label}
+            />
           )}
           renderOption={(option) => (
             <div className="flex size-full flex-col items-start">
-              <ColorOptionValue color={option.color ?? undefined} value={option.code} />
-              {option?.name && (
+              <ColorOptionValue
+                color={selectOptionMetaString(option, "color")}
+                value={option.label}
+              />
+              {option.description && (
                 <span className="text-2xs text-muted-foreground w-full truncate">
-                  {option.name}
+                  {option.description}
                 </span>
               )}
             </div>

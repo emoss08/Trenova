@@ -7,23 +7,24 @@ import {
   type EDIPartner,
   type UpsertEDIPartnerRequest,
 } from "@trenova/shared/types/edi";
-import type { SELECT_OPTIONS_ENDPOINTS } from "@trenova/shared/types/server";
+import type { GraphQLSelectOptionsConfig } from "@/lib/graphql/select-options";
 import { z } from "zod";
 
 export const mappingEntityTypes = ediMappingEntityTypeSchema.options;
 
-export const mappingTargetEndpoints: Record<
+/** Where the records an EDI mapping can point at are looked up, by the kind of record. */
+export const mappingTargetSources: Record<
   (typeof mappingEntityTypes)[number],
-  SELECT_OPTIONS_ENDPOINTS
+  GraphQLSelectOptionsConfig
 > = {
-  Customer: "/customers/select-options/",
-  ServiceType: "/service-types/select-options/",
-  ShipmentType: "/shipment-types/select-options/",
-  FormulaTemplate: "/formula-templates/select-options/",
-  Location: "/locations/select-options/",
-  Commodity: "/commodities/select-options/",
-  AccessorialCharge: "/accessorial-charges/select-options/",
-  ServiceFailureReasonCode: "/service-failure-reason-codes/select-options/",
+  Customer: { resource: "CUSTOMER" },
+  ServiceType: { resource: "SERVICE_TYPE" },
+  ShipmentType: { resource: "SHIPMENT_TYPE" },
+  FormulaTemplate: { resource: "FORMULA_TEMPLATE" },
+  Location: { resource: "LOCATION" },
+  Commodity: { resource: "COMMODITY" },
+  AccessorialCharge: { resource: "ACCESSORIAL_CHARGE" },
+  ServiceFailureReasonCode: { resource: "SERVICE_FAILURE_REASON_CODE" },
 };
 
 export const communicationProfileMethods = ediConnectionMethodSchema.options;

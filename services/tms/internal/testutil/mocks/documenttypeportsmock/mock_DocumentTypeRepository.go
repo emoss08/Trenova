@@ -517,7 +517,7 @@ func (_c *MockDocumentTypeRepository_ListConnection_Call) RunAndReturn(run func(
 }
 
 // SelectOptions provides a mock function for the type MockDocumentTypeRepository
-func (_mock *MockDocumentTypeRepository) SelectOptions(ctx context.Context, req *pagination.SelectQueryRequest) (*pagination.ListResult[*documenttype.DocumentType], error) {
+func (_mock *MockDocumentTypeRepository) SelectOptions(ctx context.Context, req *documenttypeports.DocumentTypeSelectOptionsRequest) (*pagination.ListResult[*documenttype.DocumentType], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -526,17 +526,17 @@ func (_mock *MockDocumentTypeRepository) SelectOptions(ctx context.Context, req 
 
 	var r0 *pagination.ListResult[*documenttype.DocumentType]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pagination.SelectQueryRequest) (*pagination.ListResult[*documenttype.DocumentType], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documenttypeports.DocumentTypeSelectOptionsRequest) (*pagination.ListResult[*documenttype.DocumentType], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pagination.SelectQueryRequest) *pagination.ListResult[*documenttype.DocumentType]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documenttypeports.DocumentTypeSelectOptionsRequest) *pagination.ListResult[*documenttype.DocumentType]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*pagination.ListResult[*documenttype.DocumentType])
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *pagination.SelectQueryRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *documenttypeports.DocumentTypeSelectOptionsRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -551,20 +551,20 @@ type MockDocumentTypeRepository_SelectOptions_Call struct {
 
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *pagination.SelectQueryRequest
+//   - req *documenttypeports.DocumentTypeSelectOptionsRequest
 func (_e *MockDocumentTypeRepository_Expecter) SelectOptions(ctx any, req any) *MockDocumentTypeRepository_SelectOptions_Call {
 	return &MockDocumentTypeRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
-func (_c *MockDocumentTypeRepository_SelectOptions_Call) Run(run func(ctx context.Context, req *pagination.SelectQueryRequest)) *MockDocumentTypeRepository_SelectOptions_Call {
+func (_c *MockDocumentTypeRepository_SelectOptions_Call) Run(run func(ctx context.Context, req *documenttypeports.DocumentTypeSelectOptionsRequest)) *MockDocumentTypeRepository_SelectOptions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *pagination.SelectQueryRequest
+		var arg1 *documenttypeports.DocumentTypeSelectOptionsRequest
 		if args[1] != nil {
-			arg1 = args[1].(*pagination.SelectQueryRequest)
+			arg1 = args[1].(*documenttypeports.DocumentTypeSelectOptionsRequest)
 		}
 		run(
 			arg0,
@@ -579,7 +579,7 @@ func (_c *MockDocumentTypeRepository_SelectOptions_Call) Return(listResult *pagi
 	return _c
 }
 
-func (_c *MockDocumentTypeRepository_SelectOptions_Call) RunAndReturn(run func(ctx context.Context, req *pagination.SelectQueryRequest) (*pagination.ListResult[*documenttype.DocumentType], error)) *MockDocumentTypeRepository_SelectOptions_Call {
+func (_c *MockDocumentTypeRepository_SelectOptions_Call) RunAndReturn(run func(ctx context.Context, req *documenttypeports.DocumentTypeSelectOptionsRequest) (*pagination.ListResult[*documenttype.DocumentType], error)) *MockDocumentTypeRepository_SelectOptions_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -1,13 +1,30 @@
 import { fetchCustomerRateAgreements, fetchDeskCustomer } from "@/lib/graphql/customer-card";
 import { getCustomerTrackingProfile } from "@/lib/graphql/customer-tracking";
-import { apiService } from "@/services/api";
+import { ShipmentCustomerBillingRulesDocument } from "@trenova/graphql/generated/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const customer = createQueryKeys("customer", {
-  getBillingProfile: (customerId: string) => ({
-    queryKey: ["getBillingProfile", customerId],
-    queryFn: async () => apiService.customerService.getBillingProfile(customerId),
-  }),
+  /**
+   * What a shipment form shows about the customers it bills (BOL requirement, credit
+   * standing), every customer in one read. Keyed by the sorted ids, so the same payers
+   * share one answer whatever order the form names them in.
+   */
+  shipmentBillingRules: (customerIds: readonly string[]) => {
+    const ids = [...customerIds].sort();
+    return {
+      queryKey: ["shipmentBillingRules", ids],
+      queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+        (
+          await requestGraphQL({
+            document: ShipmentCustomerBillingRulesDocument,
+            operationName: "ShipmentCustomerBillingRules",
+            variables: { customerIds: ids },
+            signal,
+          })
+        ).shipmentCustomerBillingRules,
+    };
+  },
   card: (customerId: string) => ({
     queryKey: ["card", customerId],
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>

@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
+import { createLocationCategory, updateLocationCategory } from "@/lib/graphql/location-category";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { locationCategorySchema, type LocationCategory } from "@/types/location-category";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,11 +38,17 @@ export function LocationCategoryPanel({
         onOpenChange={onOpenChange}
         row={row}
         form={form}
-        url="/location-categories/"
         queryKey="location-category-list"
         title={t("Location category")}
         fieldKey="name"
         formComponent={<LocationCategoryForm />}
+        mutationFn={(values, currentRow) => {
+          if (!currentRow.id) {
+            throw new Error("No Location Category ID selected");
+          }
+
+          return updateLocationCategory(currentRow.id, values);
+        }}
       />
     );
   }
@@ -51,10 +58,10 @@ export function LocationCategoryPanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/location-categories/"
       queryKey="location-category-list"
       title={t("Location category")}
       formComponent={<LocationCategoryForm />}
+      mutationFn={(values) => createLocationCategory(values)}
     />
   );
 }

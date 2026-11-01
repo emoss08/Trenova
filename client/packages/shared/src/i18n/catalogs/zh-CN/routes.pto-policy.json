@@ -46,7 +46,6 @@
   "Restored {0, plural, one {# policy} other {# policies}}": "已恢复{0, plural, other { # 项政策}}",
   "Restored {0, plural, one {# policy} other {# policies}}; {1} failed": "已恢复{0, plural, other { # 项政策}}；{1} 项失败",
   "Rule changes apply going forward": "规则变更自此后生效",
-  "Rule {0}": "规则 {0}",
   "Select a PTO type": "选择带薪假类型",
   "Select a year basis": "选择年度基准",
   "Select an accrual method": "选择计提方式",

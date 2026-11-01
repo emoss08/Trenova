@@ -1,0 +1,29 @@
+mutation CreateHazardousMaterial($input: HazardousMaterialInput!) {
+  createHazardousMaterial(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateHazardousMaterial($id: ID!, $input: HazardousMaterialInput!) {
+  updateHazardousMaterial(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation PatchHazardousMaterial($id: ID!, $input: HazardousMaterialPatchInput!) {
+  patchHazardousMaterial(id: $id, input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation BulkUpdateHazardousMaterialStatus($input: BulkUpdateHazardousMaterialStatusInput!) {
+  bulkUpdateHazardousMaterialStatus(input: $input) {
+    id
+    status
+    version
+  }
+}
