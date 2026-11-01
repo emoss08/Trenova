@@ -580,7 +580,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
               </Button>
             ) : null}
           </div>
-          <dl className="grid min-w-60 grid-cols-[auto_8rem] gap-x-4 gap-y-1">
+          <dl className="grid min-w-60 grid-cols-[auto_9rem] gap-y-1 [&>dd]:pl-4">
             <dt className="text-foreground-muted">{t("Line haul")}</dt>
             <dd className="text-right font-mono">{formatCurrency(linehaulTotal)}</dd>
             <dt className="text-foreground-muted">{t("Accessorials")}</dt>
