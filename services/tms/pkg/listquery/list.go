@@ -23,6 +23,7 @@ type Request[T any] struct {
 	// matches is found beside the rows the query matches on their own columns.
 	AlsoMatch func(query string) keel.Pred
 	Copies    map[string]keel.Expr
+	Window    *Window
 }
 
 type Keyset struct {
@@ -37,7 +38,12 @@ func Connection[T any](
 	req *Request[T],
 ) (*pagination.CursorListResult[*T], error) {
 	p := newPlan(q, req.Computed).withCopies(req.Copies)
+	base := q.Clone()
 	read := narrow(p, q, req)
+	q, read, err := bindWindow(ctx, db, p, base, q, read, req)
+	if err != nil {
+		return nil, err
+	}
 
 	orders, shape, err := connectionOrder(p, req)
 	if err != nil {
@@ -162,7 +168,12 @@ func List[T any](
 	req *Request[T],
 ) (*pagination.ListResult[*T], error) {
 	p := newPlan(q, req.Computed).withCopies(req.Copies)
+	base := q.Clone()
 	read := narrow(p, q, req)
+	q, read, err := bindWindow(ctx, db, p, base, q, read, req)
+	if err != nil {
+		return nil, err
+	}
 
 	rows, counted, err := listRows(p, q, req, p.rank(queryOf(req.Filter)))
 	if err != nil {

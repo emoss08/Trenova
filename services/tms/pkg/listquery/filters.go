@@ -1,6 +1,7 @@
 package listquery
 
 import (
+	"maps"
 	"slices"
 	"time"
 
@@ -112,6 +113,9 @@ func (p *plan) predicate(f domaintypes.FieldFilter) (keel.Pred, bool) {
 	case dbtype.OpIn, dbtype.OpNotIn:
 		return membership(fd, f.Operator, f.Value)
 	case dbtype.OpDateRange:
+		if slices.Contains(p.wide, f.Field) {
+			return wideDateRange(fd, f.Value)
+		}
 		return dateRange(fd, f.Value)
 	case dbtype.OpLastNDays:
 		start := time.Now().AddDate(0, 0, -extractDays(f.Value)).Unix()
@@ -339,6 +343,31 @@ func dateRange(fd field, value any) (keel.Pred, bool) {
 	}
 
 	return keel.And(preds...), true
+}
+
+func wideDateRange(fd field, value any) (keel.Pred, bool) {
+	bounds, ok := value.(map[string]any)
+	if !ok {
+		return nil, false
+	}
+	to, hasTo := bounds["to"]
+	end, isNumber := listvalue.ToFloat(to)
+	if !hasTo || !isNumber {
+		return dateRange(fd, value)
+	}
+	from := maps.Clone(bounds)
+	delete(from, "to")
+	lower, ok := dateRange(fd, from)
+	if !ok {
+		return nil, false
+	}
+	endAt, _ := end.(float64)
+	upper, ok := comparison(fd, dbtype.OpGreaterThanOrEqual, endAt+secondsPerDay)
+	if !ok {
+		return nil, false
+	}
+
+	return keel.And(lower, keel.Not(upper)), true
 }
 
 func dayWindow(fd field, day time.Time) (keel.Pred, bool) {
