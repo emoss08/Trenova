@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/keelcatalog"
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/pkg/listcatalog"
 )
 
 func entityTable(entity domaintypes.PostgresSearchable) (*schema.Table, bool) {
@@ -28,5 +28,5 @@ func entityFields(entity domaintypes.PostgresSearchable) *domaintypes.FieldConfi
 		return &domaintypes.FieldConfiguration{}
 	}
 
-	return listquery.Describe(entity, table)
+	return listcatalog.Describe(entity, table)
 }

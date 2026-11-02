@@ -1,9 +1,8 @@
-package listquery
+package listcatalog
 
 import (
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/listcatalog"
 )
 
 func Describe(
@@ -14,7 +13,7 @@ func Describe(
 		return nil
 	}
 
-	c := listcatalog.Of(table, func() *domaintypes.PostgresSearchConfig {
+	c := Of(table, func() *domaintypes.PostgresSearchConfig {
 		config := model.GetPostgresSearchConfig()
 		return &config
 	})

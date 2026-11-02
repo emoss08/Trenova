@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
-	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/pkg/listcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -34,7 +34,7 @@ func NewListCarriersTool(repo carrierports.CarrierRepository) agenttoolports.Age
 		EntityPlural: pluralCarriers,
 		Summary:      carriersSummary,
 		Resource:     permission.ResourceCarrier,
-		Config:       listquery.Describe((*carrier.Carrier)(nil), carrierdb.CarriersSchema()),
+		Config:       listcatalog.Describe((*carrier.Carrier)(nil), carrierdb.CarriersSchema()),
 		Fields: []filtercatalog.Field{
 			{
 				Name:   querytool.ListFieldStatus,

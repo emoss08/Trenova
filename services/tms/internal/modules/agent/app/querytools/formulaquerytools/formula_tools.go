@@ -20,7 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/formulaassistantservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
-	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/pkg/listcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -152,7 +152,7 @@ func NewListFormulaTemplatesTool(
 		EntityPlural: pluralFormulaTemplates,
 		Summary:      formulaTemplatesSummary,
 		Resource:     permission.ResourceFormulaTemplate,
-		Config: listquery.Describe(
+		Config: listcatalog.Describe(
 			(*formulatemplate.FormulaTemplate)(nil),
 			formulatemplatedb.FormulaTemplatesSchema(),
 		),

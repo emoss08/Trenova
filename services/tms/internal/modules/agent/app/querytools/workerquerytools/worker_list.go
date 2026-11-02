@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
-	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/pkg/listcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/textsim"
 )
@@ -85,7 +85,7 @@ func NewListWorkersTool(
 		SearchTerms:  workerSearchTerms,
 		QueryNote:    workersQueryNote,
 		Resource:     permission.ResourceWorker,
-		Config:       listquery.Describe((*worker.Worker)(nil), workerdb.WorkersSchema()),
+		Config:       listcatalog.Describe((*worker.Worker)(nil), workerdb.WorkersSchema()),
 		Fields: []filtercatalog.Field{
 			{
 				Name:   "status",

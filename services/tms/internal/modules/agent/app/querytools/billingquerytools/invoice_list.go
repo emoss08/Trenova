@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
-	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/pkg/listcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -47,7 +47,7 @@ func NewListInvoicesTool(
 			"overdue or in dispute.",
 		SearchTerms: []string{"last invoice", "latest invoice"},
 		Resource:    permission.ResourceInvoice,
-		Config:      listquery.Describe((*invoice.Invoice)(nil), invoicedb.InvoicesSchema()),
+		Config:      listcatalog.Describe((*invoice.Invoice)(nil), invoicedb.InvoicesSchema()),
 		Fields: []filtercatalog.Field{
 			{
 				Name:   "status",
