@@ -211,7 +211,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*dotrandom.DOTRandomDraw)
-					return gqlexec.Resolver[resolverDOTRandomDraw](ec, "DOTRandomDraw").DrawnByID(ctx, obj)
+					return gqlexec.Resolver[DOTRandomDrawResolver](ec, "DOTRandomDraw@workerdrugalcohol").DrawnByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -222,7 +222,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*dotrandom.DOTRandomDraw)
-					return gqlexec.Resolver[resolverDOTRandomDraw](ec, "DOTRandomDraw").FinalizedAt(ctx, obj)
+					return gqlexec.Resolver[DOTRandomDrawResolver](ec, "DOTRandomDraw@workerdrugalcohol").FinalizedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -285,7 +285,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "DOTRandomDrawEntry",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*dotrandom.DOTRandomDraw)
-					return gqlexec.Resolver[resolverDOTRandomDraw](ec, "DOTRandomDraw").Entries(ctx, obj)
+					return gqlexec.Resolver[DOTRandomDrawResolver](ec, "DOTRandomDraw@workerdrugalcohol").Entries(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDOTRandomDrawEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋdotrandomᚐDOTRandomDrawEntryᚄ),
 			},
@@ -378,7 +378,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*dotrandom.DOTRandomDrawEntry)
-					return gqlexec.Resolver[resolverDOTRandomDrawEntry](ec, "DOTRandomDrawEntry").NotifiedAt(ctx, obj)
+					return gqlexec.Resolver[DOTRandomDrawEntryResolver](ec, "DOTRandomDrawEntry@workerdrugalcohol").NotifiedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -389,7 +389,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*dotrandom.DOTRandomDrawEntry)
-					return gqlexec.Resolver[resolverDOTRandomDrawEntry](ec, "DOTRandomDrawEntry").CompletedAt(ctx, obj)
+					return gqlexec.Resolver[DOTRandomDrawEntryResolver](ec, "DOTRandomDrawEntry@workerdrugalcohol").CompletedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -400,7 +400,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*dotrandom.DOTRandomDrawEntry)
-					return gqlexec.Resolver[resolverDOTRandomDrawEntry](ec, "DOTRandomDrawEntry").TestID(ctx, obj)
+					return gqlexec.Resolver[DOTRandomDrawEntryResolver](ec, "DOTRandomDrawEntry@workerdrugalcohol").TestID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -582,7 +582,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*dotrandom.DOTRandomPool)
-					return gqlexec.Resolver[resolverDOTRandomPool](ec, "DOTRandomPool").MeetsDOTMinimums(ctx, obj)
+					return gqlexec.Resolver[DOTRandomPoolResolver](ec, "DOTRandomPool@workerdrugalcohol").MeetsDOTMinimums(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -711,7 +711,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdot.DrugAlcoholStanding)
-					return gqlexec.Resolver[resolverDrugAlcoholStanding](ec, "DrugAlcoholStanding").LastClearinghouseQueryAt(ctx, obj)
+					return gqlexec.Resolver[DrugAlcoholStandingResolver](ec, "DrugAlcoholStanding@workerdrugalcohol").LastClearinghouseQueryAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -722,7 +722,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdot.DrugAlcoholStanding)
-					return gqlexec.Resolver[resolverDrugAlcoholStanding](ec, "DrugAlcoholStanding").NextClearinghouseQueryDue(ctx, obj)
+					return gqlexec.Resolver[DrugAlcoholStandingResolver](ec, "DrugAlcoholStanding@workerdrugalcohol").NextClearinghouseQueryDue(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -767,7 +767,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_recordDotTest_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordDOTTest(ctx, fc.Args["input"].(gqlmodel.RecordDOTTestInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerdrugalcohol").RecordDOTTest(ctx, fc.Args["input"].(gqlmodel.RecordDOTTestInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerDOTTest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdotᚐWorkerDOTTest),
 			},
@@ -780,7 +780,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_recordDotTestResult_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordDOTTestResult(ctx, fc.Args["input"].(gqlmodel.RecordDOTTestResultInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerdrugalcohol").RecordDOTTestResult(ctx, fc.Args["input"].(gqlmodel.RecordDOTTestResultInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerDOTTest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdotᚐWorkerDOTTest),
 			},
@@ -793,7 +793,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_cancelDotTest_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CancelDOTTest(ctx, fc.Args["id"].(string), fc.Args["reason"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerdrugalcohol").CancelDOTTest(ctx, fc.Args["id"].(string), fc.Args["reason"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerDOTTest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdotᚐWorkerDOTTest),
 			},
@@ -806,7 +806,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_recordDotViolation_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordDOTViolation(ctx, fc.Args["input"].(gqlmodel.RecordDOTViolationInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerdrugalcohol").RecordDOTViolation(ctx, fc.Args["input"].(gqlmodel.RecordDOTViolationInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerDOTViolation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdotᚐWorkerDOTViolation),
 			},
@@ -819,7 +819,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateDotViolation_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateDOTViolation(ctx, fc.Args["input"].(gqlmodel.UpdateDOTViolationInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerdrugalcohol").UpdateDOTViolation(ctx, fc.Args["input"].(gqlmodel.UpdateDOTViolationInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerDOTViolation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdotᚐWorkerDOTViolation),
 			},
@@ -832,7 +832,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_recordClearinghouseQuery_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordClearinghouseQuery(ctx, fc.Args["input"].(gqlmodel.RecordClearinghouseQueryInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerdrugalcohol").RecordClearinghouseQuery(ctx, fc.Args["input"].(gqlmodel.RecordClearinghouseQueryInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerClearinghouseQuery2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋdotclearinghouseᚐWorkerClearinghouseQuery),
 			},
@@ -845,7 +845,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_completeClearinghouseQuery_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CompleteClearinghouseQuery(ctx, fc.Args["input"].(gqlmodel.CompleteClearinghouseQueryInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerdrugalcohol").CompleteClearinghouseQuery(ctx, fc.Args["input"].(gqlmodel.CompleteClearinghouseQueryInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerClearinghouseQuery2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋdotclearinghouseᚐWorkerClearinghouseQuery),
 			},
@@ -858,7 +858,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createDotRandomPool_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateDOTRandomPool(ctx, fc.Args["input"].(gqlmodel.DOTRandomPoolInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerdrugalcohol").CreateDOTRandomPool(ctx, fc.Args["input"].(gqlmodel.DOTRandomPoolInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDOTRandomPool2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋdotrandomᚐDOTRandomPool),
 			},
@@ -871,7 +871,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateDotRandomPool_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateDOTRandomPool(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.DOTRandomPoolInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerdrugalcohol").UpdateDOTRandomPool(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.DOTRandomPoolInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDOTRandomPool2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋdotrandomᚐDOTRandomPool),
 			},
@@ -884,7 +884,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_runDotRandomDraw_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RunDOTRandomDraw(ctx, fc.Args["input"].(gqlmodel.RunDOTRandomDrawInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerdrugalcohol").RunDOTRandomDraw(ctx, fc.Args["input"].(gqlmodel.RunDOTRandomDrawInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDOTRandomDraw2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋdotrandomᚐDOTRandomDraw),
 			},
@@ -897,7 +897,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_finalizeDotRandomDraw_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").FinalizeDOTRandomDraw(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerdrugalcohol").FinalizeDOTRandomDraw(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDOTRandomDraw2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋdotrandomᚐDOTRandomDraw),
 			},
@@ -910,7 +910,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_cancelDotRandomDraw_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CancelDOTRandomDraw(ctx, fc.Args["id"].(string), fc.Args["reason"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerdrugalcohol").CancelDOTRandomDraw(ctx, fc.Args["id"].(string), fc.Args["reason"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDOTRandomDraw2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋdotrandomᚐDOTRandomDraw),
 			},
@@ -923,7 +923,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateDotRandomDrawEntry_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateDOTRandomDrawEntry(ctx, fc.Args["input"].(gqlmodel.UpdateDOTRandomDrawEntryInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerdrugalcohol").UpdateDOTRandomDrawEntry(ctx, fc.Args["input"].(gqlmodel.UpdateDOTRandomDrawEntryInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDOTRandomDrawEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋdotrandomᚐDOTRandomDrawEntry),
 			},
@@ -939,7 +939,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerDotTests_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerDOTTests(ctx, fc.Args["workerId"].(*string), fc.Args["openOnly"].(*bool), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerdrugalcohol").WorkerDOTTests(ctx, fc.Args["workerId"].(*string), fc.Args["openOnly"].(*bool), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerDOTTest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdotᚐWorkerDOTTestᚄ),
 			},
@@ -953,7 +953,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerDotTest_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerDOTTest(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerdrugalcohol").WorkerDOTTest(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerDOTTest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdotᚐWorkerDOTTest),
 			},
@@ -965,7 +965,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "WorkerDOTTest",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").OpenDOTTests(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerdrugalcohol").OpenDOTTests(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerDOTTest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdotᚐWorkerDOTTestᚄ),
 			},
@@ -979,7 +979,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerDotViolations_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerDOTViolations(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerdrugalcohol").WorkerDOTViolations(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerDOTViolation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdotᚐWorkerDOTViolationᚄ),
 			},
@@ -993,7 +993,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerClearinghouseQueries_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerClearinghouseQueries(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerdrugalcohol").WorkerClearinghouseQueries(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerClearinghouseQuery2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋdotclearinghouseᚐWorkerClearinghouseQueryᚄ),
 			},
@@ -1007,7 +1007,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerDrugAlcoholStanding_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerDrugAlcoholStanding(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerdrugalcohol").WorkerDrugAlcoholStanding(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDrugAlcoholStanding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdotᚐDrugAlcoholStanding),
 			},
@@ -1021,7 +1021,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_dotRandomPools_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DOTRandomPools(ctx, fc.Args["input"].(gqlmodel.DOTRandomPoolsInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerdrugalcohol").DOTRandomPools(ctx, fc.Args["input"].(gqlmodel.DOTRandomPoolsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDOTRandomPoolConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDOTRandomPoolConnection),
 			},
@@ -1035,7 +1035,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_dotRandomPool_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DOTRandomPool(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerdrugalcohol").DOTRandomPool(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDOTRandomPool2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋdotrandomᚐDOTRandomPool),
 			},
@@ -1049,7 +1049,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_dotRandomDraws_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DOTRandomDraws(ctx, fc.Args["poolId"].(*string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerdrugalcohol").DOTRandomDraws(ctx, fc.Args["poolId"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDOTRandomDraw2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋdotrandomᚐDOTRandomDrawᚄ),
 			},
@@ -1063,7 +1063,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_dotRandomDraw_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DOTRandomDraw(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerdrugalcohol").DOTRandomDraw(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDOTRandomDraw2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋdotrandomᚐDOTRandomDraw),
 			},
@@ -1077,7 +1077,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerRandomSelections_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerRandomSelections(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerdrugalcohol").WorkerRandomSelections(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDOTRandomDrawEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋdotrandomᚐDOTRandomDrawEntryᚄ),
 			},
@@ -1150,7 +1150,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*dotclearinghouse.WorkerClearinghouseQuery)
-					return gqlexec.Resolver[resolverWorkerClearinghouseQuery](ec, "WorkerClearinghouseQuery").ConsentObtainedAt(ctx, obj)
+					return gqlexec.Resolver[WorkerClearinghouseQueryResolver](ec, "WorkerClearinghouseQuery@workerdrugalcohol").ConsentObtainedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -1161,7 +1161,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*dotclearinghouse.WorkerClearinghouseQuery)
-					return gqlexec.Resolver[resolverWorkerClearinghouseQuery](ec, "WorkerClearinghouseQuery").ConsentExpiresAt(ctx, obj)
+					return gqlexec.Resolver[WorkerClearinghouseQueryResolver](ec, "WorkerClearinghouseQuery@workerdrugalcohol").ConsentExpiresAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -1182,7 +1182,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*dotclearinghouse.WorkerClearinghouseQuery)
-					return gqlexec.Resolver[resolverWorkerClearinghouseQuery](ec, "WorkerClearinghouseQuery").CompletedAt(ctx, obj)
+					return gqlexec.Resolver[WorkerClearinghouseQueryResolver](ec, "WorkerClearinghouseQuery@workerdrugalcohol").CompletedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -1212,7 +1212,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*dotclearinghouse.WorkerClearinghouseQuery)
-					return gqlexec.Resolver[resolverWorkerClearinghouseQuery](ec, "WorkerClearinghouseQuery").DocumentID(ctx, obj)
+					return gqlexec.Resolver[WorkerClearinghouseQueryResolver](ec, "WorkerClearinghouseQuery@workerdrugalcohol").DocumentID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1232,7 +1232,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*dotclearinghouse.WorkerClearinghouseQuery)
-					return gqlexec.Resolver[resolverWorkerClearinghouseQuery](ec, "WorkerClearinghouseQuery").PerformedByID(ctx, obj)
+					return gqlexec.Resolver[WorkerClearinghouseQueryResolver](ec, "WorkerClearinghouseQuery@workerdrugalcohol").PerformedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1374,7 +1374,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdot.WorkerDOTTest)
-					return gqlexec.Resolver[resolverWorkerDOTTest](ec, "WorkerDOTTest").ScheduledAt(ctx, obj)
+					return gqlexec.Resolver[WorkerDOTTestResolver](ec, "WorkerDOTTest@workerdrugalcohol").ScheduledAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -1385,7 +1385,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdot.WorkerDOTTest)
-					return gqlexec.Resolver[resolverWorkerDOTTest](ec, "WorkerDOTTest").CollectedAt(ctx, obj)
+					return gqlexec.Resolver[WorkerDOTTestResolver](ec, "WorkerDOTTest@workerdrugalcohol").CollectedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -1396,7 +1396,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdot.WorkerDOTTest)
-					return gqlexec.Resolver[resolverWorkerDOTTest](ec, "WorkerDOTTest").ResultAt(ctx, obj)
+					return gqlexec.Resolver[WorkerDOTTestResolver](ec, "WorkerDOTTest@workerdrugalcohol").ResultAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -1452,7 +1452,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdot.WorkerDOTTest)
-					return gqlexec.Resolver[resolverWorkerDOTTest](ec, "WorkerDOTTest").MroVerifiedAt(ctx, obj)
+					return gqlexec.Resolver[WorkerDOTTestResolver](ec, "WorkerDOTTest@workerdrugalcohol").MroVerifiedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -1463,7 +1463,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild17,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdot.WorkerDOTTest)
-					return gqlexec.Resolver[resolverWorkerDOTTest](ec, "WorkerDOTTest").AlcoholConcentration(ctx, obj)
+					return gqlexec.Resolver[WorkerDOTTestResolver](ec, "WorkerDOTTest@workerdrugalcohol").AlcoholConcentration(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -1474,7 +1474,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdot.WorkerDOTTest)
-					return gqlexec.Resolver[resolverWorkerDOTTest](ec, "WorkerDOTTest").SafetyEventID(ctx, obj)
+					return gqlexec.Resolver[WorkerDOTTestResolver](ec, "WorkerDOTTest@workerdrugalcohol").SafetyEventID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1485,7 +1485,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdot.WorkerDOTTest)
-					return gqlexec.Resolver[resolverWorkerDOTTest](ec, "WorkerDOTTest").DrawEntryID(ctx, obj)
+					return gqlexec.Resolver[WorkerDOTTestResolver](ec, "WorkerDOTTest@workerdrugalcohol").DrawEntryID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1496,7 +1496,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdot.WorkerDOTTest)
-					return gqlexec.Resolver[resolverWorkerDOTTest](ec, "WorkerDOTTest").DocumentID(ctx, obj)
+					return gqlexec.Resolver[WorkerDOTTestResolver](ec, "WorkerDOTTest@workerdrugalcohol").DocumentID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1516,7 +1516,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdot.WorkerDOTTest)
-					return gqlexec.Resolver[resolverWorkerDOTTest](ec, "WorkerDOTTest").OrderedByID(ctx, obj)
+					return gqlexec.Resolver[WorkerDOTTestResolver](ec, "WorkerDOTTest@workerdrugalcohol").OrderedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1527,7 +1527,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdot.WorkerDOTTest)
-					return gqlexec.Resolver[resolverWorkerDOTTest](ec, "WorkerDOTTest").RecordedByID(ctx, obj)
+					return gqlexec.Resolver[WorkerDOTTestResolver](ec, "WorkerDOTTest@workerdrugalcohol").RecordedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1680,7 +1680,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdot.WorkerDOTViolation)
-					return gqlexec.Resolver[resolverWorkerDOTViolation](ec, "WorkerDOTViolation").SourceTestID(ctx, obj)
+					return gqlexec.Resolver[WorkerDOTViolationResolver](ec, "WorkerDOTViolation@workerdrugalcohol").SourceTestID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1691,7 +1691,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdot.WorkerDOTViolation)
-					return gqlexec.Resolver[resolverWorkerDOTViolation](ec, "WorkerDOTViolation").ReportedToClearinghouseAt(ctx, obj)
+					return gqlexec.Resolver[WorkerDOTViolationResolver](ec, "WorkerDOTViolation@workerdrugalcohol").ReportedToClearinghouseAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -1711,7 +1711,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdot.WorkerDOTViolation)
-					return gqlexec.Resolver[resolverWorkerDOTViolation](ec, "WorkerDOTViolation").SapReferredAt(ctx, obj)
+					return gqlexec.Resolver[WorkerDOTViolationResolver](ec, "WorkerDOTViolation@workerdrugalcohol").SapReferredAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -1722,7 +1722,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdot.WorkerDOTViolation)
-					return gqlexec.Resolver[resolverWorkerDOTViolation](ec, "WorkerDOTViolation").SapEvaluationCompletedAt(ctx, obj)
+					return gqlexec.Resolver[WorkerDOTViolationResolver](ec, "WorkerDOTViolation@workerdrugalcohol").SapEvaluationCompletedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -1733,7 +1733,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdot.WorkerDOTViolation)
-					return gqlexec.Resolver[resolverWorkerDOTViolation](ec, "WorkerDOTViolation").RtdTestID(ctx, obj)
+					return gqlexec.Resolver[WorkerDOTViolationResolver](ec, "WorkerDOTViolation@workerdrugalcohol").RtdTestID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1744,7 +1744,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdot.WorkerDOTViolation)
-					return gqlexec.Resolver[resolverWorkerDOTViolation](ec, "WorkerDOTViolation").RtdCompletedAt(ctx, obj)
+					return gqlexec.Resolver[WorkerDOTViolationResolver](ec, "WorkerDOTViolation@workerdrugalcohol").RtdCompletedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -1775,7 +1775,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdot.WorkerDOTViolation)
-					return gqlexec.Resolver[resolverWorkerDOTViolation](ec, "WorkerDOTViolation").FollowUpEndsAt(ctx, obj)
+					return gqlexec.Resolver[WorkerDOTViolationResolver](ec, "WorkerDOTViolation@workerdrugalcohol").FollowUpEndsAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -1786,7 +1786,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdot.WorkerDOTViolation)
-					return gqlexec.Resolver[resolverWorkerDOTViolation](ec, "WorkerDOTViolation").ResolvedAt(ctx, obj)
+					return gqlexec.Resolver[WorkerDOTViolationResolver](ec, "WorkerDOTViolation@workerdrugalcohol").ResolvedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -1797,7 +1797,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdot.WorkerDOTViolation)
-					return gqlexec.Resolver[resolverWorkerDOTViolation](ec, "WorkerDOTViolation").DocumentID(ctx, obj)
+					return gqlexec.Resolver[WorkerDOTViolationResolver](ec, "WorkerDOTViolation@workerdrugalcohol").DocumentID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1817,7 +1817,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdot.WorkerDOTViolation)
-					return gqlexec.Resolver[resolverWorkerDOTViolation](ec, "WorkerDOTViolation").RecordedByID(ctx, obj)
+					return gqlexec.Resolver[WorkerDOTViolationResolver](ec, "WorkerDOTViolation@workerdrugalcohol").RecordedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1886,40 +1886,40 @@ var Shard = &gqlexec.Shard{
 		{Name: "UpdateDOTViolationInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateDOTViolationInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "DOTRandomDraw", Check: func(r any) bool { _, ok := r.(resolverDOTRandomDraw); return ok }},
-		{Root: "DOTRandomDrawEntry", Check: func(r any) bool { _, ok := r.(resolverDOTRandomDrawEntry); return ok }},
-		{Root: "DOTRandomPool", Check: func(r any) bool { _, ok := r.(resolverDOTRandomPool); return ok }},
-		{Root: "DrugAlcoholStanding", Check: func(r any) bool { _, ok := r.(resolverDrugAlcoholStanding); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "WorkerClearinghouseQuery", Check: func(r any) bool { _, ok := r.(resolverWorkerClearinghouseQuery); return ok }},
-		{Root: "WorkerDOTTest", Check: func(r any) bool { _, ok := r.(resolverWorkerDOTTest); return ok }},
-		{Root: "WorkerDOTViolation", Check: func(r any) bool { _, ok := r.(resolverWorkerDOTViolation); return ok }},
+		{Root: "DOTRandomDrawEntry@workerdrugalcohol", Check: func(r any) bool { _, ok := r.(DOTRandomDrawEntryResolver); return ok }},
+		{Root: "DOTRandomDraw@workerdrugalcohol", Check: func(r any) bool { _, ok := r.(DOTRandomDrawResolver); return ok }},
+		{Root: "DOTRandomPool@workerdrugalcohol", Check: func(r any) bool { _, ok := r.(DOTRandomPoolResolver); return ok }},
+		{Root: "DrugAlcoholStanding@workerdrugalcohol", Check: func(r any) bool { _, ok := r.(DrugAlcoholStandingResolver); return ok }},
+		{Root: "Mutation@workerdrugalcohol", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@workerdrugalcohol", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "WorkerClearinghouseQuery@workerdrugalcohol", Check: func(r any) bool { _, ok := r.(WorkerClearinghouseQueryResolver); return ok }},
+		{Root: "WorkerDOTTest@workerdrugalcohol", Check: func(r any) bool { _, ok := r.(WorkerDOTTestResolver); return ok }},
+		{Root: "WorkerDOTViolation@workerdrugalcohol", Check: func(r any) bool { _, ok := r.(WorkerDOTViolationResolver); return ok }},
 	},
 }
 
-type resolverDOTRandomDraw interface {
-	DrawnByID(ctx context.Context, obj *dotrandom.DOTRandomDraw) (*string, error)
-	FinalizedAt(ctx context.Context, obj *dotrandom.DOTRandomDraw) (*int, error)
-	Entries(ctx context.Context, obj *dotrandom.DOTRandomDraw) ([]*dotrandom.DOTRandomDrawEntry, error)
-}
-
-type resolverDOTRandomDrawEntry interface {
+type DOTRandomDrawEntryResolver interface {
 	NotifiedAt(ctx context.Context, obj *dotrandom.DOTRandomDrawEntry) (*int, error)
 	CompletedAt(ctx context.Context, obj *dotrandom.DOTRandomDrawEntry) (*int, error)
 	TestID(ctx context.Context, obj *dotrandom.DOTRandomDrawEntry) (*string, error)
 }
 
-type resolverDOTRandomPool interface {
+type DOTRandomDrawResolver interface {
+	DrawnByID(ctx context.Context, obj *dotrandom.DOTRandomDraw) (*string, error)
+	FinalizedAt(ctx context.Context, obj *dotrandom.DOTRandomDraw) (*int, error)
+	Entries(ctx context.Context, obj *dotrandom.DOTRandomDraw) ([]*dotrandom.DOTRandomDrawEntry, error)
+}
+
+type DOTRandomPoolResolver interface {
 	MeetsDOTMinimums(ctx context.Context, obj *dotrandom.DOTRandomPool) (bool, error)
 }
 
-type resolverDrugAlcoholStanding interface {
+type DrugAlcoholStandingResolver interface {
 	LastClearinghouseQueryAt(ctx context.Context, obj *workerdot.DrugAlcoholStanding) (*int, error)
 	NextClearinghouseQueryDue(ctx context.Context, obj *workerdot.DrugAlcoholStanding) (*int, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	RecordDOTTest(ctx context.Context, input gqlmodel.RecordDOTTestInput) (*workerdot.WorkerDOTTest, error)
 	RecordDOTTestResult(ctx context.Context, input gqlmodel.RecordDOTTestResultInput) (*workerdot.WorkerDOTTest, error)
 	CancelDOTTest(ctx context.Context, id string, reason string) (*workerdot.WorkerDOTTest, error)
@@ -1935,7 +1935,7 @@ type resolverMutation interface {
 	UpdateDOTRandomDrawEntry(ctx context.Context, input gqlmodel.UpdateDOTRandomDrawEntryInput) (*dotrandom.DOTRandomDrawEntry, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	WorkerDOTTests(ctx context.Context, workerID *string, openOnly *bool, limit *int) ([]*workerdot.WorkerDOTTest, error)
 	WorkerDOTTest(ctx context.Context, id string) (*workerdot.WorkerDOTTest, error)
 	OpenDOTTests(ctx context.Context) ([]*workerdot.WorkerDOTTest, error)
@@ -1949,7 +1949,7 @@ type resolverQuery interface {
 	WorkerRandomSelections(ctx context.Context, workerID string) ([]*dotrandom.DOTRandomDrawEntry, error)
 }
 
-type resolverWorkerClearinghouseQuery interface {
+type WorkerClearinghouseQueryResolver interface {
 	ConsentObtainedAt(ctx context.Context, obj *dotclearinghouse.WorkerClearinghouseQuery) (*int, error)
 	ConsentExpiresAt(ctx context.Context, obj *dotclearinghouse.WorkerClearinghouseQuery) (*int, error)
 	CompletedAt(ctx context.Context, obj *dotclearinghouse.WorkerClearinghouseQuery) (*int, error)
@@ -1957,7 +1957,7 @@ type resolverWorkerClearinghouseQuery interface {
 	PerformedByID(ctx context.Context, obj *dotclearinghouse.WorkerClearinghouseQuery) (*string, error)
 }
 
-type resolverWorkerDOTTest interface {
+type WorkerDOTTestResolver interface {
 	ScheduledAt(ctx context.Context, obj *workerdot.WorkerDOTTest) (*int, error)
 	CollectedAt(ctx context.Context, obj *workerdot.WorkerDOTTest) (*int, error)
 	ResultAt(ctx context.Context, obj *workerdot.WorkerDOTTest) (*int, error)
@@ -1970,7 +1970,7 @@ type resolverWorkerDOTTest interface {
 	RecordedByID(ctx context.Context, obj *workerdot.WorkerDOTTest) (*string, error)
 }
 
-type resolverWorkerDOTViolation interface {
+type WorkerDOTViolationResolver interface {
 	SourceTestID(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*string, error)
 	ReportedToClearinghouseAt(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*int, error)
 	SapReferredAt(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*int, error)

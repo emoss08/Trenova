@@ -267,7 +267,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingprofile.Profile)
-					return gqlexec.Resolver[resolverCustomerTrackingProfile](ec, "CustomerTrackingProfile").ID(ctx, obj)
+					return gqlexec.Resolver[CustomerTrackingProfileResolver](ec, "CustomerTrackingProfile@customertracking").ID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -443,7 +443,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_issueCustomerTrackingLink_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").IssueCustomerTrackingLink(ctx, fc.Args["input"].(gqlmodel.IssueCustomerTrackingLinkInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@customertracking").IssueCustomerTrackingLink(ctx, fc.Args["input"].(gqlmodel.IssueCustomerTrackingLinkInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNIssueCustomerTrackingLinkPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐIssueCustomerTrackingLinkPayload),
 			},
@@ -455,7 +455,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_revokeCustomerTrackingLink_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RevokeCustomerTrackingLink(ctx, fc.Args["shipmentId"].(string), fc.Args["linkId"].(*string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@customertracking").RevokeCustomerTrackingLink(ctx, fc.Args["shipmentId"].(string), fc.Args["linkId"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
@@ -471,7 +471,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_customerTrackingLinks_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CustomerTrackingLinks(ctx, fc.Args["shipmentId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@customertracking").CustomerTrackingLinks(ctx, fc.Args["shipmentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNCustomerTrackingLink2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋcustomertrackingᚐLinkᚄ),
 			},
@@ -485,7 +485,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_customerStatusNotifications_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CustomerStatusNotifications(ctx, fc.Args["shipmentId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@customertracking").CustomerStatusNotifications(ctx, fc.Args["shipmentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNCustomerStatusNotification2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋcustomertrackingᚐNotificationᚄ),
 			},
@@ -495,22 +495,22 @@ var Shard = &gqlexec.Shard{
 		{Name: "IssueCustomerTrackingLinkInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputIssueCustomerTrackingLinkInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "CustomerTrackingProfile", Check: func(r any) bool { _, ok := r.(resolverCustomerTrackingProfile); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "CustomerTrackingProfile@customertracking", Check: func(r any) bool { _, ok := r.(CustomerTrackingProfileResolver); return ok }},
+		{Root: "Mutation@customertracking", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@customertracking", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverCustomerTrackingProfile interface {
+type CustomerTrackingProfileResolver interface {
 	ID(ctx context.Context, obj *trackingprofile.Profile) (*string, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	IssueCustomerTrackingLink(ctx context.Context, input gqlmodel.IssueCustomerTrackingLinkInput) (*gqlmodel.IssueCustomerTrackingLinkPayload, error)
 	RevokeCustomerTrackingLink(ctx context.Context, shipmentID string, linkID *string) (int, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	CustomerTrackingLinks(ctx context.Context, shipmentID string) ([]*customertracking.Link, error)
 	CustomerStatusNotifications(ctx context.Context, shipmentID string) ([]*customertracking.Notification, error)
 }

@@ -30,7 +30,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createOrgHoliday_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateOrgHoliday(ctx, fc.Args["input"].(gqlmodel.OrgHolidayInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@orgholiday").CreateOrgHoliday(ctx, fc.Args["input"].(gqlmodel.OrgHolidayInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNOrgHoliday2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋptoᚐOrgHoliday),
 			},
@@ -43,7 +43,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateOrgHoliday_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateOrgHoliday(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.OrgHolidayInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@orgholiday").UpdateOrgHoliday(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.OrgHolidayInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNOrgHoliday2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋptoᚐOrgHoliday),
 			},
@@ -55,7 +55,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteOrgHoliday_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteOrgHoliday(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@orgholiday").DeleteOrgHoliday(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -182,7 +182,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_orgHolidays_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").OrgHolidays(ctx, fc.Args["year"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@orgholiday").OrgHolidays(ctx, fc.Args["year"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNOrgHoliday2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋptoᚐOrgHolidayᚄ),
 			},
@@ -192,18 +192,18 @@ var Shard = &gqlexec.Shard{
 		{Name: "OrgHolidayInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputOrgHolidayInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@orgholiday", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@orgholiday", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateOrgHoliday(ctx context.Context, input gqlmodel.OrgHolidayInput) (*pto.OrgHoliday, error)
 	UpdateOrgHoliday(ctx context.Context, id string, input gqlmodel.OrgHolidayInput) (*pto.OrgHoliday, error)
 	DeleteOrgHoliday(ctx context.Context, id string) (bool, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	OrgHolidays(ctx context.Context, year *int) ([]*pto.OrgHoliday, error)
 }
 

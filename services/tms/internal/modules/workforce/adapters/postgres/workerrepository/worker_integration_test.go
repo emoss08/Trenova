@@ -326,7 +326,7 @@ func TestListFindsWorkersByACloseSpellingAndPagesThem(t *testing.T) {
 	require.NotNil(t, first.TotalCount)
 	assert.Equal(t, 3, *first.TotalCount)
 
-	next, err := first.NextCursor()
+	next, err := pagination.NextCursor(first)
 	require.NoError(t, err)
 	second := list("smithrs", next)
 	require.Len(t, second.Items, 1, "the close spelling pages on with the same cursor")

@@ -173,7 +173,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*commodity.Commodity)
-					return gqlexec.Resolver[resolverCommodity](ec, "Commodity").FreightClass(ctx, obj)
+					return gqlexec.Resolver[CommodityResolver](ec, "Commodity@commodity").FreightClass(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOFreightClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋcommodityᚐFreightClass),
 			},
@@ -333,7 +333,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createCommodity_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateCommodity(ctx, fc.Args["input"].(gqlmodel.CommodityInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@commodity").CreateCommodity(ctx, fc.Args["input"].(gqlmodel.CommodityInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCommodity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋcommodityᚐCommodity),
 			},
@@ -346,7 +346,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateCommodity_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateCommodity(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.CommodityInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@commodity").UpdateCommodity(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.CommodityInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCommodity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋcommodityᚐCommodity),
 			},
@@ -359,7 +359,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_patchCommodity_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchCommodity(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.CommodityPatchInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@commodity").PatchCommodity(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.CommodityPatchInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCommodity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋcommodityᚐCommodity),
 			},
@@ -372,7 +372,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_bulkUpdateCommodityStatus_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkUpdateCommodityStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateCommodityStatusInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@commodity").BulkUpdateCommodityStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateCommodityStatusInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCommodity2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋcommodityᚐCommodityᚄ),
 			},
@@ -388,7 +388,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_commodities_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Commodities(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@commodity").Commodities(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCommodityConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCommodityConnection),
 			},
@@ -401,7 +401,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_commodity_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Commodity(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@commodity").Commodity(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOCommodity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋcommodityᚐCommodity),
 			},
@@ -413,24 +413,24 @@ var Shard = &gqlexec.Shard{
 		{Name: "CommodityPatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCommodityPatchInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Commodity", Check: func(r any) bool { _, ok := r.(resolverCommodity); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Commodity@commodity", Check: func(r any) bool { _, ok := r.(CommodityResolver); return ok }},
+		{Root: "Mutation@commodity", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@commodity", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverCommodity interface {
+type CommodityResolver interface {
 	FreightClass(ctx context.Context, obj *commodity.Commodity) (*commodity.FreightClass, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateCommodity(ctx context.Context, input gqlmodel.CommodityInput) (*commodity.Commodity, error)
 	UpdateCommodity(ctx context.Context, id string, input gqlmodel.CommodityInput) (*commodity.Commodity, error)
 	PatchCommodity(ctx context.Context, id string, input gqlmodel.CommodityPatchInput) (*commodity.Commodity, error)
 	BulkUpdateCommodityStatus(ctx context.Context, input gqlmodel.BulkUpdateCommodityStatusInput) ([]*commodity.Commodity, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	Commodities(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CommodityConnection, error)
 	Commodity(ctx context.Context, id string) (*commodity.Commodity, error)
 }

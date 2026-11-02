@@ -138,7 +138,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createTrainingCourse_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateTrainingCourse(ctx, fc.Args["input"].(gqlmodel.TrainingCourseInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workertraining").CreateTrainingCourse(ctx, fc.Args["input"].(gqlmodel.TrainingCourseInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTrainingCourse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkertrainingᚐTrainingCourse),
 			},
@@ -151,7 +151,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateTrainingCourse_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateTrainingCourse(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.TrainingCourseInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workertraining").UpdateTrainingCourse(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.TrainingCourseInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTrainingCourse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkertrainingᚐTrainingCourse),
 			},
@@ -164,7 +164,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_archiveTrainingCourse_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ArchiveTrainingCourse(ctx, fc.Args["id"].(string), fc.Args["version"].(*int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workertraining").ArchiveTrainingCourse(ctx, fc.Args["id"].(string), fc.Args["version"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNTrainingCourse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkertrainingᚐTrainingCourse),
 			},
@@ -177,7 +177,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_restoreTrainingCourse_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RestoreTrainingCourse(ctx, fc.Args["id"].(string), fc.Args["version"].(*int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workertraining").RestoreTrainingCourse(ctx, fc.Args["id"].(string), fc.Args["version"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNTrainingCourse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkertrainingᚐTrainingCourse),
 			},
@@ -190,7 +190,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_assignWorkerTraining_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AssignWorkerTraining(ctx, fc.Args["input"].(gqlmodel.AssignWorkerTrainingInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workertraining").AssignWorkerTraining(ctx, fc.Args["input"].(gqlmodel.AssignWorkerTrainingInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerTrainingRecord2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkertrainingᚐWorkerTrainingRecord),
 			},
@@ -203,7 +203,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_assignRequiredWorkerTraining_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AssignRequiredWorkerTraining(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workertraining").AssignRequiredWorkerTraining(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerTrainingRecord2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkertrainingᚐWorkerTrainingRecordᚄ),
 			},
@@ -216,7 +216,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_completeWorkerTraining_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CompleteWorkerTraining(ctx, fc.Args["input"].(gqlmodel.CompleteWorkerTrainingInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workertraining").CompleteWorkerTraining(ctx, fc.Args["input"].(gqlmodel.CompleteWorkerTrainingInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerTrainingRecord2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkertrainingᚐWorkerTrainingRecord),
 			},
@@ -229,7 +229,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_waiveWorkerTraining_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").WaiveWorkerTraining(ctx, fc.Args["input"].(gqlmodel.WaiveWorkerTrainingInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workertraining").WaiveWorkerTraining(ctx, fc.Args["input"].(gqlmodel.WaiveWorkerTrainingInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerTrainingRecord2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkertrainingᚐWorkerTrainingRecord),
 			},
@@ -242,7 +242,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_cancelWorkerTraining_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CancelWorkerTraining(ctx, fc.Args["input"].(gqlmodel.CancelWorkerTrainingInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workertraining").CancelWorkerTraining(ctx, fc.Args["input"].(gqlmodel.CancelWorkerTrainingInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerTrainingRecord2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkertrainingᚐWorkerTrainingRecord),
 			},
@@ -255,7 +255,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_attachWorkerTrainingDocument_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AttachWorkerTrainingDocument(ctx, fc.Args["input"].(gqlmodel.AttachWorkerTrainingDocumentInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workertraining").AttachWorkerTrainingDocument(ctx, fc.Args["input"].(gqlmodel.AttachWorkerTrainingDocumentInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerTrainingRecord2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkertrainingᚐWorkerTrainingRecord),
 			},
@@ -268,7 +268,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_startMyTraining_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").StartMyTraining(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workertraining").StartMyTraining(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNPortalTraining2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalTraining),
 			},
@@ -281,7 +281,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_acknowledgeMyTraining_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AcknowledgeMyTraining(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workertraining").AcknowledgeMyTraining(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNPortalTraining2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalTraining),
 			},
@@ -294,7 +294,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_bulkAssignTraining_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkAssignTraining(ctx, fc.Args["input"].(gqlmodel.BulkAssignTrainingInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workertraining").BulkAssignTraining(ctx, fc.Args["input"].(gqlmodel.BulkAssignTrainingInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNBulkAssignTrainingPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkertrainingserviceᚐBulkAssignResult),
 			},
@@ -307,7 +307,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driverportalrecordsservice.PortalTraining)
-					return gqlexec.Resolver[resolverPortalTraining](ec, "PortalTraining").ID(ctx, obj)
+					return gqlexec.Resolver[PortalTrainingResolver](ec, "PortalTraining@workertraining").ID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -386,7 +386,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driverportalrecordsservice.PortalTraining)
-					return gqlexec.Resolver[resolverPortalTraining](ec, "PortalTraining").Status(ctx, obj)
+					return gqlexec.Resolver[PortalTrainingResolver](ec, "PortalTraining@workertraining").Status(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOWorkerTrainingStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkertrainingᚐTrainingStatus),
 			},
@@ -500,7 +500,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driverportalrecordsservice.PortalTraining)
-					return gqlexec.Resolver[resolverPortalTraining](ec, "PortalTraining").Score(ctx, obj)
+					return gqlexec.Resolver[PortalTrainingResolver](ec, "PortalTraining@workertraining").Score(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -516,7 +516,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_trainingCourses_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").TrainingCourses(ctx, fc.Args["input"].(gqlmodel.TrainingCoursesInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workertraining").TrainingCourses(ctx, fc.Args["input"].(gqlmodel.TrainingCoursesInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTrainingCourseConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTrainingCourseConnection),
 			},
@@ -530,7 +530,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_trainingCourse_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").TrainingCourse(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workertraining").TrainingCourse(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNTrainingCourse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkertrainingᚐTrainingCourse),
 			},
@@ -542,7 +542,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "TrainingCourse",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ActiveTrainingCourses(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workertraining").ActiveTrainingCourses(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNTrainingCourse2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkertrainingᚐTrainingCourseᚄ),
 			},
@@ -556,7 +556,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerTrainingRecords_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerTrainingRecords(ctx, fc.Args["workerId"].(string), fc.Args["includeClosed"].(*bool))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workertraining").WorkerTrainingRecords(ctx, fc.Args["workerId"].(string), fc.Args["includeClosed"].(*bool))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerTrainingRecord2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkertrainingᚐWorkerTrainingRecordᚄ),
 			},
@@ -570,7 +570,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerTrainingRecord_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerTrainingRecord(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workertraining").WorkerTrainingRecord(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerTrainingRecord2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkertrainingᚐWorkerTrainingRecord),
 			},
@@ -584,7 +584,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerTrainingSummary_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerTrainingSummary(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workertraining").WorkerTrainingSummary(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerTrainingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkertrainingᚐWorkerTrainingSummary),
 			},
@@ -596,7 +596,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "PortalTraining",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").MyTraining(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workertraining").MyTraining(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNPortalTraining2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalTrainingᚄ),
 			},
@@ -717,7 +717,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workertraining.TrainingCourse)
-					return gqlexec.Resolver[resolverTrainingCourse](ec, "TrainingCourse").PassingScore(ctx, obj)
+					return gqlexec.Resolver[TrainingCourseResolver](ec, "TrainingCourse@workertraining").PassingScore(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -798,7 +798,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workertraining.TrainingCourse)
-					return gqlexec.Resolver[resolverTrainingCourse](ec, "TrainingCourse").OpenRecordCount(ctx, obj)
+					return gqlexec.Resolver[TrainingCourseResolver](ec, "TrainingCourse@workertraining").OpenRecordCount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
@@ -1023,7 +1023,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workertraining.WorkerTrainingRecord)
-					return gqlexec.Resolver[resolverWorkerTrainingRecord](ec, "WorkerTrainingRecord").Score(ctx, obj)
+					return gqlexec.Resolver[WorkerTrainingRecordResolver](ec, "WorkerTrainingRecord@workertraining").Score(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -1052,7 +1052,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workertraining.WorkerTrainingRecord)
-					return gqlexec.Resolver[resolverWorkerTrainingRecord](ec, "WorkerTrainingRecord").DocumentID(ctx, obj)
+					return gqlexec.Resolver[WorkerTrainingRecordResolver](ec, "WorkerTrainingRecord@workertraining").DocumentID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1073,7 +1073,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workertraining.WorkerTrainingRecord)
-					return gqlexec.Resolver[resolverWorkerTrainingRecord](ec, "WorkerTrainingRecord").AssignedByID(ctx, obj)
+					return gqlexec.Resolver[WorkerTrainingRecordResolver](ec, "WorkerTrainingRecord@workertraining").AssignedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1094,7 +1094,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workertraining.WorkerTrainingRecord)
-					return gqlexec.Resolver[resolverWorkerTrainingRecord](ec, "WorkerTrainingRecord").RecordedByID(ctx, obj)
+					return gqlexec.Resolver[WorkerTrainingRecordResolver](ec, "WorkerTrainingRecord@workertraining").RecordedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1134,7 +1134,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workertraining.WorkerTrainingRecord)
-					return gqlexec.Resolver[resolverWorkerTrainingRecord](ec, "WorkerTrainingRecord").Health(ctx, obj)
+					return gqlexec.Resolver[WorkerTrainingRecordResolver](ec, "WorkerTrainingRecord@workertraining").Health(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerTrainingHealth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingHealth),
 			},
@@ -1145,7 +1145,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workertraining.WorkerTrainingRecord)
-					return gqlexec.Resolver[resolverWorkerTrainingRecord](ec, "WorkerTrainingRecord").DaysUntilDue(ctx, obj)
+					return gqlexec.Resolver[WorkerTrainingRecordResolver](ec, "WorkerTrainingRecord@workertraining").DaysUntilDue(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
@@ -1156,7 +1156,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workertraining.WorkerTrainingRecord)
-					return gqlexec.Resolver[resolverWorkerTrainingRecord](ec, "WorkerTrainingRecord").DaysUntilExpiry(ctx, obj)
+					return gqlexec.Resolver[WorkerTrainingRecordResolver](ec, "WorkerTrainingRecord@workertraining").DaysUntilExpiry(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
@@ -1377,15 +1377,15 @@ var Shard = &gqlexec.Shard{
 		{Name: "WaiveWorkerTrainingInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputWaiveWorkerTrainingInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "PortalTraining", Check: func(r any) bool { _, ok := r.(resolverPortalTraining); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "TrainingCourse", Check: func(r any) bool { _, ok := r.(resolverTrainingCourse); return ok }},
-		{Root: "WorkerTrainingRecord", Check: func(r any) bool { _, ok := r.(resolverWorkerTrainingRecord); return ok }},
+		{Root: "Mutation@workertraining", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "PortalTraining@workertraining", Check: func(r any) bool { _, ok := r.(PortalTrainingResolver); return ok }},
+		{Root: "Query@workertraining", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "TrainingCourse@workertraining", Check: func(r any) bool { _, ok := r.(TrainingCourseResolver); return ok }},
+		{Root: "WorkerTrainingRecord@workertraining", Check: func(r any) bool { _, ok := r.(WorkerTrainingRecordResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateTrainingCourse(ctx context.Context, input gqlmodel.TrainingCourseInput) (*workertraining.TrainingCourse, error)
 	UpdateTrainingCourse(ctx context.Context, id string, input gqlmodel.TrainingCourseInput) (*workertraining.TrainingCourse, error)
 	ArchiveTrainingCourse(ctx context.Context, id string, version *int) (*workertraining.TrainingCourse, error)
@@ -1401,13 +1401,13 @@ type resolverMutation interface {
 	BulkAssignTraining(ctx context.Context, input gqlmodel.BulkAssignTrainingInput) (*workertrainingservice.BulkAssignResult, error)
 }
 
-type resolverPortalTraining interface {
+type PortalTrainingResolver interface {
 	ID(ctx context.Context, obj *driverportalrecordsservice.PortalTraining) (*string, error)
 	Status(ctx context.Context, obj *driverportalrecordsservice.PortalTraining) (*workertraining.TrainingStatus, error)
 	Score(ctx context.Context, obj *driverportalrecordsservice.PortalTraining) (*string, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	TrainingCourses(ctx context.Context, input gqlmodel.TrainingCoursesInput) (*gqlmodel.TrainingCourseConnection, error)
 	TrainingCourse(ctx context.Context, id string) (*workertraining.TrainingCourse, error)
 	ActiveTrainingCourses(ctx context.Context) ([]*workertraining.TrainingCourse, error)
@@ -1417,12 +1417,12 @@ type resolverQuery interface {
 	MyTraining(ctx context.Context) ([]*driverportalrecordsservice.PortalTraining, error)
 }
 
-type resolverTrainingCourse interface {
+type TrainingCourseResolver interface {
 	PassingScore(ctx context.Context, obj *workertraining.TrainingCourse) (*string, error)
 	OpenRecordCount(ctx context.Context, obj *workertraining.TrainingCourse) (int, error)
 }
 
-type resolverWorkerTrainingRecord interface {
+type WorkerTrainingRecordResolver interface {
 	Score(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*string, error)
 	DocumentID(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*string, error)
 	AssignedByID(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*string, error)

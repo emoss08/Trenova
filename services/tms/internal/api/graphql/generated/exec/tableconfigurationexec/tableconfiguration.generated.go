@@ -33,7 +33,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createTableConfiguration_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateTableConfiguration(ctx, fc.Args["input"].(gqlmodel.TableConfigurationInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@tableconfiguration").CreateTableConfiguration(ctx, fc.Args["input"].(gqlmodel.TableConfigurationInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐTableConfiguration),
 			},
@@ -46,7 +46,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateTableConfiguration_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateTableConfiguration(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.TableConfigurationInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@tableconfiguration").UpdateTableConfiguration(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.TableConfigurationInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐTableConfiguration),
 			},
@@ -59,7 +59,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_patchTableConfiguration_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchTableConfiguration(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.TableConfigurationPatchInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@tableconfiguration").PatchTableConfiguration(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.TableConfigurationPatchInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐTableConfiguration),
 			},
@@ -71,7 +71,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteTableConfiguration_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteTableConfiguration(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@tableconfiguration").DeleteTableConfiguration(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -84,7 +84,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_setDefaultTableConfiguration_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetDefaultTableConfiguration(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@tableconfiguration").SetDefaultTableConfiguration(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐTableConfiguration),
 			},
@@ -97,7 +97,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_setOrgDefaultTableConfiguration_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetOrgDefaultTableConfiguration(ctx, fc.Args["id"].(string), fc.Args["enabled"].(bool))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@tableconfiguration").SetOrgDefaultTableConfiguration(ctx, fc.Args["id"].(string), fc.Args["enabled"].(bool))
 				},
 				Marshal: gqlexec.Marshal(marshalNTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐTableConfiguration),
 			},
@@ -113,7 +113,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_tableConfigurations_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").TableConfigurations(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["resource"].(*string), fc.Args["visibility"].(*tableconfiguration.Visibility))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@tableconfiguration").TableConfigurations(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["resource"].(*string), fc.Args["visibility"].(*tableconfiguration.Visibility))
 				},
 				Marshal: gqlexec.Marshal(marshalNTableConfigurationConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTableConfigurationConnection),
 			},
@@ -126,7 +126,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_tableConfiguration_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").TableConfiguration(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@tableconfiguration").TableConfiguration(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐTableConfiguration),
 			},
@@ -139,7 +139,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_defaultTableConfiguration_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DefaultTableConfiguration(ctx, fc.Args["resource"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@tableconfiguration").DefaultTableConfiguration(ctx, fc.Args["resource"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐTableConfiguration),
 			},
@@ -223,7 +223,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tableconfiguration.TableConfiguration)
-					return gqlexec.Resolver[resolverTableConfiguration](ec, "TableConfiguration").TableConfig(ctx, obj)
+					return gqlexec.Resolver[TableConfigurationResolver](ec, "TableConfiguration@tableconfiguration").TableConfig(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNJSON2map),
 			},
@@ -390,13 +390,13 @@ var Shard = &gqlexec.Shard{
 		{Name: "TableConfigurationPatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputTableConfigurationPatchInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "TableConfiguration", Check: func(r any) bool { _, ok := r.(resolverTableConfiguration); return ok }},
+		{Root: "Mutation@tableconfiguration", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@tableconfiguration", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "TableConfiguration@tableconfiguration", Check: func(r any) bool { _, ok := r.(TableConfigurationResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateTableConfiguration(ctx context.Context, input gqlmodel.TableConfigurationInput) (*tableconfiguration.TableConfiguration, error)
 	UpdateTableConfiguration(ctx context.Context, id string, input gqlmodel.TableConfigurationInput) (*tableconfiguration.TableConfiguration, error)
 	PatchTableConfiguration(ctx context.Context, id string, input gqlmodel.TableConfigurationPatchInput) (*tableconfiguration.TableConfiguration, error)
@@ -405,13 +405,13 @@ type resolverMutation interface {
 	SetOrgDefaultTableConfiguration(ctx context.Context, id string, enabled bool) (*tableconfiguration.TableConfiguration, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	TableConfigurations(ctx context.Context, input gqlmodel.DataTableConnectionInput, resource *string, visibility *tableconfiguration.Visibility) (*gqlmodel.TableConfigurationConnection, error)
 	TableConfiguration(ctx context.Context, id string) (*tableconfiguration.TableConfiguration, error)
 	DefaultTableConfiguration(ctx context.Context, resource string) (*tableconfiguration.TableConfiguration, error)
 }
 
-type resolverTableConfiguration interface {
+type TableConfigurationResolver interface {
 	TableConfig(ctx context.Context, obj *tableconfiguration.TableConfiguration) (map[string]any, error)
 }
 

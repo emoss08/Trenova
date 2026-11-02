@@ -367,7 +367,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_logCheckCall_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").LogCheckCall(ctx, fc.Args["input"].(gqlmodel.LogCheckCallInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@checkcall").LogCheckCall(ctx, fc.Args["input"].(gqlmodel.LogCheckCallInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNLogCheckCallPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐLogCheckCallPayload),
 			},
@@ -380,7 +380,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_issueCarrierTrackingLink_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").IssueCarrierTrackingLink(ctx, fc.Args["input"].(gqlmodel.IssueCarrierTrackingLinkInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@checkcall").IssueCarrierTrackingLink(ctx, fc.Args["input"].(gqlmodel.IssueCarrierTrackingLinkInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNIssueCarrierTrackingLinkPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐIssueCarrierTrackingLinkPayload),
 			},
@@ -392,7 +392,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_revokeCarrierTrackingLink_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RevokeCarrierTrackingLink(ctx, fc.Args["shipmentMoveId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@checkcall").RevokeCarrierTrackingLink(ctx, fc.Args["shipmentMoveId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -408,7 +408,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentCheckCalls_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentCheckCalls(ctx, fc.Args["shipmentId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@checkcall").ShipmentCheckCalls(ctx, fc.Args["shipmentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNCheckCall2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋcheckcallᚐCheckCallᚄ),
 			},
@@ -421,7 +421,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_carrierTrackingLink_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierTrackingLink(ctx, fc.Args["shipmentMoveId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@checkcall").CarrierTrackingLink(ctx, fc.Args["shipmentMoveId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOCarrierTrackingLink2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋcheckcallᚐTrackingLink),
 			},
@@ -432,18 +432,18 @@ var Shard = &gqlexec.Shard{
 		{Name: "LogCheckCallInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputLogCheckCallInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@checkcall", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@checkcall", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	LogCheckCall(ctx context.Context, input gqlmodel.LogCheckCallInput) (*gqlmodel.LogCheckCallPayload, error)
 	IssueCarrierTrackingLink(ctx context.Context, input gqlmodel.IssueCarrierTrackingLinkInput) (*gqlmodel.IssueCarrierTrackingLinkPayload, error)
 	RevokeCarrierTrackingLink(ctx context.Context, shipmentMoveID string) (bool, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	ShipmentCheckCalls(ctx context.Context, shipmentID string) ([]*checkcall.CheckCall, error)
 	CarrierTrackingLink(ctx context.Context, shipmentMoveID string) (*checkcall.TrackingLink, error)
 }

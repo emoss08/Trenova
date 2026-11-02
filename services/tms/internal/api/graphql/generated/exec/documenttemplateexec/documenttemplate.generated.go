@@ -71,7 +71,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*documenttemplate.DocumentTemplate)
-					return gqlexec.Resolver[resolverDocumentTemplate](ec, "DocumentTemplate").Kind(ctx, obj)
+					return gqlexec.Resolver[DocumentTemplateResolver](ec, "DocumentTemplate@documenttemplate").Kind(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -242,7 +242,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*documenttemplate.DocumentTemplateAssignment)
-					return gqlexec.Resolver[resolverDocumentTemplateAssignment](ec, "DocumentTemplateAssignment").Kind(ctx, obj)
+					return gqlexec.Resolver[DocumentTemplateAssignmentResolver](ec, "DocumentTemplateAssignment@documenttemplate").Kind(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -959,7 +959,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*documenttemplate.DocumentTemplateVersion)
-					return gqlexec.Resolver[resolverDocumentTemplateVersion](ec, "DocumentTemplateVersion").StarterDrifted(ctx, obj)
+					return gqlexec.Resolver[DocumentTemplateVersionResolver](ec, "DocumentTemplateVersion@documenttemplate").StarterDrifted(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -1050,7 +1050,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createDocumentTemplate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateDocumentTemplate(ctx, fc.Args["input"].(gqlmodel.DocumentTemplateInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@documenttemplate").CreateDocumentTemplate(ctx, fc.Args["input"].(gqlmodel.DocumentTemplateInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplate),
 			},
@@ -1063,7 +1063,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateDocumentTemplate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateDocumentTemplate(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.DocumentTemplateInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@documenttemplate").UpdateDocumentTemplate(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.DocumentTemplateInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplate),
 			},
@@ -1075,7 +1075,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteDocumentTemplate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteDocumentTemplate(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@documenttemplate").DeleteDocumentTemplate(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -1088,7 +1088,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createDocumentTemplateVersion_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateDocumentTemplateVersion(ctx, fc.Args["input"].(gqlmodel.CreateDocumentTemplateVersionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@documenttemplate").CreateDocumentTemplateVersion(ctx, fc.Args["input"].(gqlmodel.CreateDocumentTemplateVersionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion),
 			},
@@ -1101,7 +1101,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateDocumentTemplateVersion_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateDocumentTemplateVersion(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.DocumentTemplateVersionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@documenttemplate").UpdateDocumentTemplateVersion(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.DocumentTemplateVersionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion),
 			},
@@ -1114,7 +1114,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_publishDocumentTemplateVersion_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PublishDocumentTemplateVersion(ctx, fc.Args["id"].(string), fc.Args["notes"].(*string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@documenttemplate").PublishDocumentTemplateVersion(ctx, fc.Args["id"].(string), fc.Args["notes"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion),
 			},
@@ -1127,7 +1127,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_archiveDocumentTemplateVersion_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ArchiveDocumentTemplateVersion(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@documenttemplate").ArchiveDocumentTemplateVersion(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion),
 			},
@@ -1139,7 +1139,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteDocumentTemplateVersion_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteDocumentTemplateVersion(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@documenttemplate").DeleteDocumentTemplateVersion(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -1152,7 +1152,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_rollbackDocumentTemplate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RollbackDocumentTemplate(ctx, fc.Args["versionId"].(string), fc.Args["notes"].(*string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@documenttemplate").RollbackDocumentTemplate(ctx, fc.Args["versionId"].(string), fc.Args["notes"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion),
 			},
@@ -1165,7 +1165,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_assignDocumentTemplate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AssignDocumentTemplate(ctx, fc.Args["input"].(gqlmodel.AssignDocumentTemplateInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@documenttemplate").AssignDocumentTemplate(ctx, fc.Args["input"].(gqlmodel.AssignDocumentTemplateInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDocumentTemplateAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignment),
 			},
@@ -1177,7 +1177,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_unassignDocumentTemplate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UnassignDocumentTemplate(ctx, fc.Args["input"].(gqlmodel.UnassignDocumentTemplateInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@documenttemplate").UnassignDocumentTemplate(ctx, fc.Args["input"].(gqlmodel.UnassignDocumentTemplateInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -1189,7 +1189,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_sendTestMessageTemplate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SendTestMessageTemplate(ctx, fc.Args["input"].(gqlmodel.SendTestMessageTemplateInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@documenttemplate").SendTestMessageTemplate(ctx, fc.Args["input"].(gqlmodel.SendTestMessageTemplateInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -1205,7 +1205,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_documentTemplates_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DocumentTemplates(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@documenttemplate").DocumentTemplates(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDocumentTemplateConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateConnection),
 			},
@@ -1218,7 +1218,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_documentTemplate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DocumentTemplate(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@documenttemplate").DocumentTemplate(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalODocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplate),
 			},
@@ -1231,7 +1231,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_documentTemplateVersion_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DocumentTemplateVersion(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@documenttemplate").DocumentTemplateVersion(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalODocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion),
 			},
@@ -1243,7 +1243,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "DocumentTemplateKind",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DocumentTemplateKinds(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@documenttemplate").DocumentTemplateKinds(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNDocumentTemplateKind2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateKindᚄ),
 			},
@@ -1257,7 +1257,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_documentTemplateAssignments_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DocumentTemplateAssignments(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@documenttemplate").DocumentTemplateAssignments(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDocumentTemplateAssignmentConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateAssignmentConnection),
 			},
@@ -1271,7 +1271,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_customerDocumentTemplateAssignments_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CustomerDocumentTemplateAssignments(ctx, fc.Args["customerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@documenttemplate").CustomerDocumentTemplateAssignments(ctx, fc.Args["customerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDocumentTemplateAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignmentᚄ),
 			},
@@ -1285,7 +1285,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_renderDocumentTemplatePreview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").RenderDocumentTemplatePreview(ctx, fc.Args["input"].(gqlmodel.DocumentTemplatePreviewInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@documenttemplate").RenderDocumentTemplatePreview(ctx, fc.Args["input"].(gqlmodel.DocumentTemplatePreviewInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDocumentTemplatePreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplatePreview),
 			},
@@ -1299,7 +1299,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_renderMessageTemplatePreview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").RenderMessageTemplatePreview(ctx, fc.Args["input"].(gqlmodel.DocumentTemplatePreviewInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@documenttemplate").RenderMessageTemplatePreview(ctx, fc.Args["input"].(gqlmodel.DocumentTemplatePreviewInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDocumentTemplatePreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplatePreview),
 			},
@@ -1315,27 +1315,27 @@ var Shard = &gqlexec.Shard{
 		{Name: "UnassignDocumentTemplateInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUnassignDocumentTemplateInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "DocumentTemplate", Check: func(r any) bool { _, ok := r.(resolverDocumentTemplate); return ok }},
-		{Root: "DocumentTemplateAssignment", Check: func(r any) bool { _, ok := r.(resolverDocumentTemplateAssignment); return ok }},
-		{Root: "DocumentTemplateVersion", Check: func(r any) bool { _, ok := r.(resolverDocumentTemplateVersion); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "DocumentTemplateAssignment@documenttemplate", Check: func(r any) bool { _, ok := r.(DocumentTemplateAssignmentResolver); return ok }},
+		{Root: "DocumentTemplate@documenttemplate", Check: func(r any) bool { _, ok := r.(DocumentTemplateResolver); return ok }},
+		{Root: "DocumentTemplateVersion@documenttemplate", Check: func(r any) bool { _, ok := r.(DocumentTemplateVersionResolver); return ok }},
+		{Root: "Mutation@documenttemplate", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@documenttemplate", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverDocumentTemplate interface {
-	Kind(ctx context.Context, obj *documenttemplate.DocumentTemplate) (string, error)
-}
-
-type resolverDocumentTemplateAssignment interface {
+type DocumentTemplateAssignmentResolver interface {
 	Kind(ctx context.Context, obj *documenttemplate.DocumentTemplateAssignment) (string, error)
 }
 
-type resolverDocumentTemplateVersion interface {
+type DocumentTemplateResolver interface {
+	Kind(ctx context.Context, obj *documenttemplate.DocumentTemplate) (string, error)
+}
+
+type DocumentTemplateVersionResolver interface {
 	StarterDrifted(ctx context.Context, obj *documenttemplate.DocumentTemplateVersion) (bool, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateDocumentTemplate(ctx context.Context, input gqlmodel.DocumentTemplateInput) (*documenttemplate.DocumentTemplate, error)
 	UpdateDocumentTemplate(ctx context.Context, id string, input gqlmodel.DocumentTemplateInput) (*documenttemplate.DocumentTemplate, error)
 	DeleteDocumentTemplate(ctx context.Context, id string) (bool, error)
@@ -1350,7 +1350,7 @@ type resolverMutation interface {
 	SendTestMessageTemplate(ctx context.Context, input gqlmodel.SendTestMessageTemplateInput) (bool, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	DocumentTemplates(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DocumentTemplateConnection, error)
 	DocumentTemplate(ctx context.Context, id string) (*documenttemplate.DocumentTemplate, error)
 	DocumentTemplateVersion(ctx context.Context, id string) (*documenttemplate.DocumentTemplateVersion, error)

@@ -202,7 +202,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateBillingQueueStatus_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateBillingQueueStatus(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.BillingQueueUpdateStatusInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@billingqueue").UpdateBillingQueueStatus(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.BillingQueueUpdateStatusInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNBillingQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItem),
 			},
@@ -215,7 +215,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_assignBillingQueueBiller_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AssignBillingQueueBiller(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.BillingQueueAssignInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@billingqueue").AssignBillingQueueBiller(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.BillingQueueAssignInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNBillingQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItem),
 			},
@@ -228,7 +228,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_postBillingQueueItem_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PostBillingQueueItem(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@billingqueue").PostBillingQueueItem(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBillingQueuePostResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueuePostResult),
 			},
@@ -241,7 +241,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_releaseBillingQueueItem_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReleaseBillingQueueItem(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@billingqueue").ReleaseBillingQueueItem(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBillingQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItem),
 			},
@@ -254,7 +254,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_resolveBillingQueueIssue_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ResolveBillingQueueIssue(ctx, fc.Args["id"].(string), fc.Args["issueId"].(string), fc.Args["optionKey"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@billingqueue").ResolveBillingQueueIssue(ctx, fc.Args["id"].(string), fc.Args["issueId"].(string), fc.Args["optionKey"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBillingQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItem),
 			},
@@ -267,7 +267,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_undoBillingQueueIssue_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UndoBillingQueueIssue(ctx, fc.Args["id"].(string), fc.Args["issueId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@billingqueue").UndoBillingQueueIssue(ctx, fc.Args["id"].(string), fc.Args["issueId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBillingQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItem),
 			},
@@ -283,7 +283,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_billingQueueItems_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").BillingQueueItems(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["filter"].(*gqlmodel.BillingQueueItemsFilterInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@billingqueue").BillingQueueItems(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["filter"].(*gqlmodel.BillingQueueItemsFilterInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNBillingQueueItemConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItemConnection),
 			},
@@ -295,12 +295,12 @@ var Shard = &gqlexec.Shard{
 		{Name: "BillingQueueUpdateStatusInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputBillingQueueUpdateStatusInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@billingqueue", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@billingqueue", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	UpdateBillingQueueStatus(ctx context.Context, id string, input gqlmodel.BillingQueueUpdateStatusInput) (*gqlmodel.BillingQueueItem, error)
 	AssignBillingQueueBiller(ctx context.Context, id string, input gqlmodel.BillingQueueAssignInput) (*gqlmodel.BillingQueueItem, error)
 	PostBillingQueueItem(ctx context.Context, id string) (*gqlmodel.BillingQueuePostResult, error)
@@ -309,7 +309,7 @@ type resolverMutation interface {
 	UndoBillingQueueIssue(ctx context.Context, id string, issueID string) (*gqlmodel.BillingQueueItem, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	BillingQueueItems(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.BillingQueueItemsFilterInput) (*gqlmodel.BillingQueueItemConnection, error)
 }
 

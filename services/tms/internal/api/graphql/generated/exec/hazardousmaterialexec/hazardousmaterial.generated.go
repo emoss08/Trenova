@@ -382,7 +382,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createHazardousMaterial_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateHazardousMaterial(ctx, fc.Args["input"].(gqlmodel.HazardousMaterialInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@hazardousmaterial").CreateHazardousMaterial(ctx, fc.Args["input"].(gqlmodel.HazardousMaterialInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNHazardousMaterial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐHazardousMaterial),
 			},
@@ -395,7 +395,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateHazardousMaterial_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateHazardousMaterial(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.HazardousMaterialInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@hazardousmaterial").UpdateHazardousMaterial(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.HazardousMaterialInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNHazardousMaterial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐHazardousMaterial),
 			},
@@ -408,7 +408,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_patchHazardousMaterial_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchHazardousMaterial(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.HazardousMaterialPatchInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@hazardousmaterial").PatchHazardousMaterial(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.HazardousMaterialPatchInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNHazardousMaterial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐHazardousMaterial),
 			},
@@ -421,7 +421,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_bulkUpdateHazardousMaterialStatus_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkUpdateHazardousMaterialStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateHazardousMaterialStatusInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@hazardousmaterial").BulkUpdateHazardousMaterialStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateHazardousMaterialStatusInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNHazardousMaterial2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐHazardousMaterialᚄ),
 			},
@@ -437,7 +437,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_hazardousMaterials_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").HazardousMaterials(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@hazardousmaterial").HazardousMaterials(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNHazardousMaterialConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHazardousMaterialConnection),
 			},
@@ -450,7 +450,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_hazardousMaterial_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").HazardousMaterial(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@hazardousmaterial").HazardousMaterial(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOHazardousMaterial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐHazardousMaterial),
 			},
@@ -462,19 +462,19 @@ var Shard = &gqlexec.Shard{
 		{Name: "HazardousMaterialPatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputHazardousMaterialPatchInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@hazardousmaterial", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@hazardousmaterial", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateHazardousMaterial(ctx context.Context, input gqlmodel.HazardousMaterialInput) (*hazardousmaterial.HazardousMaterial, error)
 	UpdateHazardousMaterial(ctx context.Context, id string, input gqlmodel.HazardousMaterialInput) (*hazardousmaterial.HazardousMaterial, error)
 	PatchHazardousMaterial(ctx context.Context, id string, input gqlmodel.HazardousMaterialPatchInput) (*hazardousmaterial.HazardousMaterial, error)
 	BulkUpdateHazardousMaterialStatus(ctx context.Context, input gqlmodel.BulkUpdateHazardousMaterialStatusInput) ([]*hazardousmaterial.HazardousMaterial, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	HazardousMaterials(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.HazardousMaterialConnection, error)
 	HazardousMaterial(ctx context.Context, id string) (*hazardousmaterial.HazardousMaterial, error)
 }

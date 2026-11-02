@@ -296,7 +296,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_distanceOverrides_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DistanceOverrides(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@distanceoverride").DistanceOverrides(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDistanceOverrideConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDistanceOverrideConnection),
 			},
@@ -309,18 +309,18 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_distanceOverride_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DistanceOverride(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@distanceoverride").DistanceOverride(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalODistanceOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋdistanceoverrideᚐDistanceOverride),
 			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Query@distanceoverride", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	DistanceOverrides(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DistanceOverrideConnection, error)
 	DistanceOverride(ctx context.Context, id string) (*distanceoverride.DistanceOverride, error)
 }

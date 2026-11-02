@@ -567,7 +567,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_startBillingTransferRun_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").StartBillingTransferRun(ctx, fc.Args["input"].(gqlmodel.StartBillingTransferRunInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@billingtransfer").StartBillingTransferRun(ctx, fc.Args["input"].(gqlmodel.StartBillingTransferRunInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNBillingTransferRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingTransferRun),
 			},
@@ -580,7 +580,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_cancelBillingTransferRun_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CancelBillingTransferRun(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@billingtransfer").CancelBillingTransferRun(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBillingTransferRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingTransferRun),
 			},
@@ -593,7 +593,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_retryBillingTransferRun_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RetryBillingTransferRun(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@billingtransfer").RetryBillingTransferRun(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBillingTransferRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingTransferRun),
 			},
@@ -609,7 +609,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_billingTransferRun_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").BillingTransferRun(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@billingtransfer").BillingTransferRun(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBillingTransferRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingTransferRun),
 			},
@@ -620,7 +620,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "BillingTransferRun",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").MyActiveBillingTransferRun(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@billingtransfer").MyActiveBillingTransferRun(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalOBillingTransferRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingTransferRun),
 			},
@@ -634,7 +634,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_billingTransferRunItems_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").BillingTransferRunItems(ctx, fc.Args["runId"].(string), fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["filter"].(*gqlmodel.BillingTransferRunItemsFilterInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@billingtransfer").BillingTransferRunItems(ctx, fc.Args["runId"].(string), fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["filter"].(*gqlmodel.BillingTransferRunItemsFilterInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNBillingTransferRunItemConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingTransferRunItemConnection),
 			},
@@ -645,18 +645,18 @@ var Shard = &gqlexec.Shard{
 		{Name: "StartBillingTransferRunInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputStartBillingTransferRunInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@billingtransfer", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@billingtransfer", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	StartBillingTransferRun(ctx context.Context, input gqlmodel.StartBillingTransferRunInput) (*gqlmodel.BillingTransferRun, error)
 	CancelBillingTransferRun(ctx context.Context, id string) (*gqlmodel.BillingTransferRun, error)
 	RetryBillingTransferRun(ctx context.Context, id string) (*gqlmodel.BillingTransferRun, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	BillingTransferRun(ctx context.Context, id string) (*gqlmodel.BillingTransferRun, error)
 	MyActiveBillingTransferRun(ctx context.Context) (*gqlmodel.BillingTransferRun, error)
 	BillingTransferRunItems(ctx context.Context, runID string, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.BillingTransferRunItemsFilterInput) (*gqlmodel.BillingTransferRunItemConnection, error)

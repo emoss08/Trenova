@@ -270,7 +270,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aicontrolsummary.Segment)
-					return gqlexec.Resolver[resolverAIControlSegment](ec, "AIControlSegment").Target(ctx, obj)
+					return gqlexec.Resolver[AIControlSegmentResolver](ec, "AIControlSegment@aicontrol").Target(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -281,7 +281,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aicontrolsummary.Segment)
-					return gqlexec.Resolver[resolverAIControlSegment](ec, "AIControlSegment").ProviderID(ctx, obj)
+					return gqlexec.Resolver[AIControlSegmentResolver](ec, "AIControlSegment@aicontrol").ProviderID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -292,7 +292,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aicontrolsummary.Segment)
-					return gqlexec.Resolver[resolverAIControlSegment](ec, "AIControlSegment").Tone(ctx, obj)
+					return gqlexec.Resolver[AIControlSegmentResolver](ec, "AIControlSegment@aicontrol").Tone(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -379,7 +379,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "AIProviderFailure",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aicontrolsummary.Summary)
-					return gqlexec.Resolver[resolverAIControlSummary](ec, "AIControlSummary").VisibleFailures(ctx, obj)
+					return gqlexec.Resolver[AIControlSummaryResolver](ec, "AIControlSummary@aicontrol").VisibleFailures(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNAIProviderFailure2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaicontrolsummaryᚐProviderFailureᚄ),
 			},
@@ -596,7 +596,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aituneup.Evidence)
-					return gqlexec.Resolver[resolverAITuneUpEvidence](ec, "AITuneUpEvidence").FromTier(ctx, obj)
+					return gqlexec.Resolver[AITuneUpEvidenceResolver](ec, "AITuneUpEvidence@aicontrol").FromTier(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentAutonomyTier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAutonomyTier),
 			},
@@ -607,7 +607,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aituneup.Evidence)
-					return gqlexec.Resolver[resolverAITuneUpEvidence](ec, "AITuneUpEvidence").ToTier(ctx, obj)
+					return gqlexec.Resolver[AITuneUpEvidenceResolver](ec, "AITuneUpEvidence@aicontrol").ToTier(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentAutonomyTier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAutonomyTier),
 			},
@@ -834,7 +834,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_dismissAIProviderFailure_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DismissAIProviderFailure(ctx, fc.Args["providerId"].(string), fc.Args["lastFailureAt"].(int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@aicontrol").DismissAIProviderFailure(ctx, fc.Args["providerId"].(string), fc.Args["lastFailureAt"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -846,7 +846,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_restoreAIProviderFailure_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RestoreAIProviderFailure(ctx, fc.Args["providerId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@aicontrol").RestoreAIProviderFailure(ctx, fc.Args["providerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -859,7 +859,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_applyAITuneUp_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApplyAITuneUp(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@aicontrol").ApplyAITuneUp(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNAITuneUp2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAITuneUp),
 			},
@@ -872,7 +872,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_dismissAITuneUp_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DismissAITuneUp(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["days"].(*int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@aicontrol").DismissAITuneUp(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["days"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNAITuneUp2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAITuneUp),
 			},
@@ -885,7 +885,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_restoreAITuneUp_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RestoreAITuneUp(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@aicontrol").RestoreAITuneUp(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNAITuneUp2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAITuneUp),
 			},
@@ -901,7 +901,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_aiControlSummary_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiControlSummary(ctx, fc.Args["tab"].(aicontrolsummary.Tab))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@aicontrol").AiControlSummary(ctx, fc.Args["tab"].(aicontrolsummary.Tab))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIControlSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaicontrolsummaryᚐSummary),
 			},
@@ -913,7 +913,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "AIAgentRosterStat",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiAgentRoster(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@aicontrol").AiAgentRoster(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNAIAgentRosterStat2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIAgentRosterStatᚄ),
 			},
@@ -925,37 +925,37 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "AITuneUps",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiTuneUps(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@aicontrol").AiTuneUps(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNAITuneUps2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAITuneUps),
 			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "AIControlSegment", Check: func(r any) bool { _, ok := r.(resolverAIControlSegment); return ok }},
-		{Root: "AIControlSummary", Check: func(r any) bool { _, ok := r.(resolverAIControlSummary); return ok }},
-		{Root: "AITuneUpEvidence", Check: func(r any) bool { _, ok := r.(resolverAITuneUpEvidence); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "AIControlSegment@aicontrol", Check: func(r any) bool { _, ok := r.(AIControlSegmentResolver); return ok }},
+		{Root: "AIControlSummary@aicontrol", Check: func(r any) bool { _, ok := r.(AIControlSummaryResolver); return ok }},
+		{Root: "AITuneUpEvidence@aicontrol", Check: func(r any) bool { _, ok := r.(AITuneUpEvidenceResolver); return ok }},
+		{Root: "Mutation@aicontrol", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@aicontrol", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverAIControlSegment interface {
+type AIControlSegmentResolver interface {
 	Target(ctx context.Context, obj *aicontrolsummary.Segment) (*string, error)
 	ProviderID(ctx context.Context, obj *aicontrolsummary.Segment) (*string, error)
 	Tone(ctx context.Context, obj *aicontrolsummary.Segment) (*string, error)
 }
 
-type resolverAIControlSummary interface {
+type AIControlSummaryResolver interface {
 	VisibleFailures(ctx context.Context, obj *aicontrolsummary.Summary) ([]*aicontrolsummary.ProviderFailure, error)
 }
 
-type resolverAITuneUpEvidence interface {
+type AITuneUpEvidenceResolver interface {
 	FromTier(ctx context.Context, obj *aituneup.Evidence) (*agent.AutonomyTier, error)
 	ToTier(ctx context.Context, obj *aituneup.Evidence) (*agent.AutonomyTier, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	DismissAIProviderFailure(ctx context.Context, providerID string, lastFailureAt int) (bool, error)
 	RestoreAIProviderFailure(ctx context.Context, providerID string) (bool, error)
 	ApplyAITuneUp(ctx context.Context, id string, version int) (*gqlmodel.AITuneUp, error)
@@ -963,7 +963,7 @@ type resolverMutation interface {
 	RestoreAITuneUp(ctx context.Context, id string, version int) (*gqlmodel.AITuneUp, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	AiControlSummary(ctx context.Context, tab aicontrolsummary.Tab) (*aicontrolsummary.Summary, error)
 	AiAgentRoster(ctx context.Context) ([]*gqlmodel.AIAgentRosterStat, error)
 	AiTuneUps(ctx context.Context) (*gqlmodel.AITuneUps, error)

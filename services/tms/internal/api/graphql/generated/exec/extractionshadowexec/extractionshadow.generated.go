@@ -281,7 +281,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*extractionshadowports.ExtractionShadowReport)
-					return gqlexec.Resolver[resolverExtractionShadowReport](ec, "ExtractionShadowReport").CostUsd(ctx, obj)
+					return gqlexec.Resolver[ExtractionShadowReportResolver](ec, "ExtractionShadowReport@extractionshadow").CostUsd(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -471,7 +471,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*extractionshadow.ShadowResult)
-					return gqlexec.Resolver[resolverExtractionShadowResult](ec, "ExtractionShadowResult").Verdict(ctx, obj)
+					return gqlexec.Resolver[ExtractionShadowResultResolver](ec, "ExtractionShadowResult@extractionshadow").Verdict(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOExtractionShadowVerdict2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionshadowᚐVerdict),
 			},
@@ -635,7 +635,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*extractionshadow.ShadowResult)
-					return gqlexec.Resolver[resolverExtractionShadowResult](ec, "ExtractionShadowResult").CostUsd(ctx, obj)
+					return gqlexec.Resolver[ExtractionShadowResultResolver](ec, "ExtractionShadowResult@extractionshadow").CostUsd(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -896,7 +896,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateExtractionShadowSettings_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateExtractionShadowSettings(ctx, fc.Args["input"].(gqlmodel.UpdateExtractionShadowSettingsInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@extractionshadow").UpdateExtractionShadowSettings(ctx, fc.Args["input"].(gqlmodel.UpdateExtractionShadowSettingsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionShadowSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionshadowᚐShadowSettings),
 			},
@@ -910,7 +910,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "ExtractionShadowSettings",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ExtractionShadowSettings(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@extractionshadow").ExtractionShadowSettings(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionShadowSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionshadowᚐShadowSettings),
 			},
@@ -924,7 +924,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_extractionShadowReport_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ExtractionShadowReport(ctx, fc.Args["windowDays"].(*int), fc.Args["providerId"].(*string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@extractionshadow").ExtractionShadowReport(ctx, fc.Args["windowDays"].(*int), fc.Args["providerId"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionShadowReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionshadowportsᚐExtractionShadowReport),
 			},
@@ -938,7 +938,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_extractionShadowResults_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ExtractionShadowResults(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@extractionshadow").ExtractionShadowResults(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionShadowResultConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐExtractionShadowResultConnection),
 			},
@@ -951,7 +951,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_extractionShadowResult_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ExtractionShadowResult(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@extractionshadow").ExtractionShadowResult(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOExtractionShadowResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionshadowᚐShadowResult),
 			},
@@ -961,27 +961,27 @@ var Shard = &gqlexec.Shard{
 		{Name: "UpdateExtractionShadowSettingsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateExtractionShadowSettingsInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "ExtractionShadowReport", Check: func(r any) bool { _, ok := r.(resolverExtractionShadowReport); return ok }},
-		{Root: "ExtractionShadowResult", Check: func(r any) bool { _, ok := r.(resolverExtractionShadowResult); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "ExtractionShadowReport@extractionshadow", Check: func(r any) bool { _, ok := r.(ExtractionShadowReportResolver); return ok }},
+		{Root: "ExtractionShadowResult@extractionshadow", Check: func(r any) bool { _, ok := r.(ExtractionShadowResultResolver); return ok }},
+		{Root: "Mutation@extractionshadow", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@extractionshadow", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverExtractionShadowReport interface {
+type ExtractionShadowReportResolver interface {
 	CostUsd(ctx context.Context, obj *extractionshadowports.ExtractionShadowReport) (string, error)
 }
 
-type resolverExtractionShadowResult interface {
+type ExtractionShadowResultResolver interface {
 	Verdict(ctx context.Context, obj *extractionshadow.ShadowResult) (*extractionshadow.Verdict, error)
 	CostUsd(ctx context.Context, obj *extractionshadow.ShadowResult) (string, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	UpdateExtractionShadowSettings(ctx context.Context, input gqlmodel.UpdateExtractionShadowSettingsInput) (*extractionshadow.ShadowSettings, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	ExtractionShadowSettings(ctx context.Context) (*extractionshadow.ShadowSettings, error)
 	ExtractionShadowReport(ctx context.Context, windowDays *int, providerID *string) (*extractionshadowports.ExtractionShadowReport, error)
 	ExtractionShadowResults(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ExtractionShadowResultConnection, error)

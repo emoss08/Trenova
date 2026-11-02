@@ -2036,7 +2036,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentAnalytics_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentAnalytics(ctx, fc.Args["input"].(gqlmodel.AIAnalyticsInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@aianalytics").AgentAnalytics(ctx, fc.Args["input"].(gqlmodel.AIAnalyticsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentAnalytics2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentAnalytics),
 			},
@@ -2050,7 +2050,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentAnalyticsToolFailures_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentAnalyticsToolFailures(ctx, fc.Args["input"].(gqlmodel.AIAnalyticsInput), fc.Args["seriesKey"].(string), fc.Args["toolName"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@aianalytics").AgentAnalyticsToolFailures(ctx, fc.Args["input"].(gqlmodel.AIAnalyticsInput), fc.Args["seriesKey"].(string), fc.Args["toolName"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentAnalyticsToolFailures2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentAnalyticsToolFailures),
 			},
@@ -2060,11 +2060,11 @@ var Shard = &gqlexec.Shard{
 		{Name: "AIAnalyticsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAIAnalyticsInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Query@aianalytics", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	AgentAnalytics(ctx context.Context, input gqlmodel.AIAnalyticsInput) (*gqlmodel.AgentAnalytics, error)
 	AgentAnalyticsToolFailures(ctx context.Context, input gqlmodel.AIAnalyticsInput, seriesKey string, toolName string) (*gqlmodel.AgentAnalyticsToolFailures, error)
 }

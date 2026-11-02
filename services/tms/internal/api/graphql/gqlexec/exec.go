@@ -22,7 +22,7 @@ func (ec *Exec) WorkerLimit() int64 {
 }
 
 func Resolver[T any](ec *Exec, root string) T {
-	resolver, ok := ec.schema.resolvers[root]().(T)
+	resolver, ok := ec.schema.resolvers[root].(T)
 	if !ok {
 		var want T
 		panic(fmt.Sprintf("gqlexec: resolver %s does not implement %T", root, want))

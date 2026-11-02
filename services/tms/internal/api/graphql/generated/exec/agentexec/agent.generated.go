@@ -306,7 +306,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentcontrol.AgentControl)
-					return gqlexec.Resolver[resolverAgentControl](ec, "AgentControl").AgentMoneyCallCeiling(ctx, obj)
+					return gqlexec.Resolver[AgentControlResolver](ec, "AgentControl@agent").AgentMoneyCallCeiling(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -328,7 +328,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentcontrol.AgentControl)
-					return gqlexec.Resolver[resolverAgentControl](ec, "AgentControl").AgentMoneyRunAmount(ctx, obj)
+					return gqlexec.Resolver[AgentControlResolver](ec, "AgentControl@agent").AgentMoneyRunAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -350,7 +350,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentcontrol.AgentControl)
-					return gqlexec.Resolver[resolverAgentControl](ec, "AgentControl").AgentMoneyDayAmount(ctx, obj)
+					return gqlexec.Resolver[AgentControlResolver](ec, "AgentControl@agent").AgentMoneyDayAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -362,7 +362,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentcontrol.AgentControl)
-					return gqlexec.Resolver[resolverAgentControl](ec, "AgentControl").AgentMoneyCurrency(ctx, obj)
+					return gqlexec.Resolver[AgentControlResolver](ec, "AgentControl@agent").AgentMoneyCurrency(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -512,7 +512,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdecision.AgentDecision)
-					return gqlexec.Resolver[resolverAgentDecision](ec, "AgentDecision").TraceURL(ctx, obj)
+					return gqlexec.Resolver[AgentDecisionResolver](ec, "AgentDecision@agent").TraceURL(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -662,7 +662,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentevaluation.Evaluation)
-					return gqlexec.Resolver[resolverAgentEvaluation](ec, "AgentEvaluation").SubjectType(ctx, obj)
+					return gqlexec.Resolver[AgentEvaluationResolver](ec, "AgentEvaluation@agent").SubjectType(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -744,7 +744,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentevaluation.Evaluation)
-					return gqlexec.Resolver[resolverAgentEvaluation](ec, "AgentEvaluation").Actions(ctx, obj)
+					return gqlexec.Resolver[AgentEvaluationResolver](ec, "AgentEvaluation@agent").Actions(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNJSON2ᚕmapᚄ),
 			},
@@ -755,7 +755,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentevaluation.Evaluation)
-					return gqlexec.Resolver[resolverAgentEvaluation](ec, "AgentEvaluation").Comparison(ctx, obj)
+					return gqlexec.Resolver[AgentEvaluationResolver](ec, "AgentEvaluation@agent").Comparison(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -786,7 +786,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentevaluation.Evaluation)
-					return gqlexec.Resolver[resolverAgentEvaluation](ec, "AgentEvaluation").Checks(ctx, obj)
+					return gqlexec.Resolver[AgentEvaluationResolver](ec, "AgentEvaluation@agent").Checks(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -797,7 +797,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentevaluation.Evaluation)
-					return gqlexec.Resolver[resolverAgentEvaluation](ec, "AgentEvaluation").Judge(ctx, obj)
+					return gqlexec.Resolver[AgentEvaluationResolver](ec, "AgentEvaluation@agent").Judge(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -817,7 +817,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentevaluation.Evaluation)
-					return gqlexec.Resolver[resolverAgentEvaluation](ec, "AgentEvaluation").Fingerprint(ctx, obj)
+					return gqlexec.Resolver[AgentEvaluationResolver](ec, "AgentEvaluation@agent").Fingerprint(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -1481,7 +1481,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "AgentMemory",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentmemory.Memory)
-					return gqlexec.Resolver[resolverAgentMemory](ec, "AgentMemory").Supersedes(ctx, obj)
+					return gqlexec.Resolver[AgentMemoryResolver](ec, "AgentMemory@agent").Supersedes(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemory),
 			},
@@ -1493,7 +1493,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "AgentMemory",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentmemory.Memory)
-					return gqlexec.Resolver[resolverAgentMemory](ec, "AgentMemory").ReplacedBy(ctx, obj)
+					return gqlexec.Resolver[AgentMemoryResolver](ec, "AgentMemory@agent").ReplacedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemory),
 			},
@@ -1920,7 +1920,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentplan.AgentPlan)
-					return gqlexec.Resolver[resolverAgentPlan](ec, "AgentPlan").DecidedBy(ctx, obj)
+					return gqlexec.Resolver[AgentPlanResolver](ec, "AgentPlan@agent").DecidedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -1961,7 +1961,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild21,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentplan.AgentPlan)
-					return gqlexec.Resolver[resolverAgentPlan](ec, "AgentPlan").RunMode(ctx, obj)
+					return gqlexec.Resolver[AgentPlanResolver](ec, "AgentPlan@agent").RunMode(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentPlanRunMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentplanᚐPlanRunMode),
 			},
@@ -2223,7 +2223,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentProposal)
-					return gqlexec.Resolver[resolverAgentProposal](ec, "AgentProposal").Confidence(ctx, obj)
+					return gqlexec.Resolver[AgentProposalResolver](ec, "AgentProposal@agent").Confidence(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
 			},
@@ -2324,7 +2324,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentProposal)
-					return gqlexec.Resolver[resolverAgentProposal](ec, "AgentProposal").Simulation(ctx, obj)
+					return gqlexec.Resolver[AgentProposalResolver](ec, "AgentProposal@agent").Simulation(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -2337,7 +2337,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "AgentProposalField",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentProposal)
-					return gqlexec.Resolver[resolverAgentProposal](ec, "AgentProposal").ParameterFields(ctx, obj)
+					return gqlexec.Resolver[AgentProposalResolver](ec, "AgentProposal@agent").ParameterFields(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentProposalField2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋtoolschemaᚐFieldᚄ),
 			},
@@ -2348,7 +2348,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentProposal)
-					return gqlexec.Resolver[resolverAgentProposal](ec, "AgentProposal").Modifications(ctx, obj)
+					return gqlexec.Resolver[AgentProposalResolver](ec, "AgentProposal@agent").Modifications(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -2379,7 +2379,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentProposal)
-					return gqlexec.Resolver[resolverAgentProposal](ec, "AgentProposal").EgressClass(ctx, obj)
+					return gqlexec.Resolver[AgentProposalResolver](ec, "AgentProposal@agent").EgressClass(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentEgressClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEgressClass),
 			},
@@ -2401,7 +2401,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentProposal)
-					return gqlexec.Resolver[resolverAgentProposal](ec, "AgentProposal").ReviewRequired(ctx, obj)
+					return gqlexec.Resolver[AgentProposalResolver](ec, "AgentProposal@agent").ReviewRequired(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -2422,7 +2422,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentProposal)
-					return gqlexec.Resolver[resolverAgentProposal](ec, "AgentProposal").TraceURL(ctx, obj)
+					return gqlexec.Resolver[AgentProposalResolver](ec, "AgentProposal@agent").TraceURL(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -2628,7 +2628,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*toolschema.Field)
-					return gqlexec.Resolver[resolverAgentProposalField](ec, "AgentProposalField").Resource(ctx, obj)
+					return gqlexec.Resolver[AgentProposalFieldResolver](ec, "AgentProposalField@agent").Resource(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -2640,7 +2640,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "AgentProposalFieldChoice",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*toolschema.Field)
-					return gqlexec.Resolver[resolverAgentProposalField](ec, "AgentProposalField").Choices(ctx, obj)
+					return gqlexec.Resolver[AgentProposalFieldResolver](ec, "AgentProposalField@agent").Choices(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentProposalFieldChoice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋtoolschemaᚐChoiceᚄ),
 			},
@@ -2793,7 +2793,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "AgentReflectionSignal",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentreflection.Reflection)
-					return gqlexec.Resolver[resolverAgentReflection](ec, "AgentReflection").Signals(ctx, obj)
+					return gqlexec.Resolver[AgentReflectionResolver](ec, "AgentReflection@agent").Signals(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentReflectionSignal2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentreflectionᚐReflectionSignalᚄ),
 			},
@@ -3290,7 +3290,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentRun)
-					return gqlexec.Resolver[resolverAgentRun](ec, "AgentRun").TraceURL(ctx, obj)
+					return gqlexec.Resolver[AgentRunResolver](ec, "AgentRun@agent").TraceURL(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -3301,7 +3301,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild33,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentRun)
-					return gqlexec.Resolver[resolverAgentRun](ec, "AgentRun").ParentOwnerKind(ctx, obj)
+					return gqlexec.Resolver[AgentRunResolver](ec, "AgentRun@agent").ParentOwnerKind(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentRunEventOwnerKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentRunEventOwnerKind),
 			},
@@ -3333,7 +3333,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "AgentRunTranscript",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentRun)
-					return gqlexec.Resolver[resolverAgentRun](ec, "AgentRun").Transcript(ctx, obj)
+					return gqlexec.Resolver[AgentRunResolver](ec, "AgentRun@agent").Transcript(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentRunTranscript2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐRunTranscript),
 			},
@@ -3800,7 +3800,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_decideAgentProposal_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DecideAgentProposal(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AgentProposalDecisionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agent").DecideAgentProposal(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AgentProposalDecisionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentProposalDecisionResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentProposalDecisionResult),
 			},
@@ -3813,7 +3813,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_decideAgentPlan_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DecideAgentPlan(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AgentPlanDecisionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agent").DecideAgentPlan(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AgentPlanDecisionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentPlanDecisionResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentPlanDecisionResult),
 			},
@@ -3826,7 +3826,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_decideMyProposal_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DecideMyProposal(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AgentProposalDecisionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agent").DecideMyProposal(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AgentProposalDecisionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentProposalDecisionResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentProposalDecisionResult),
 			},
@@ -3839,7 +3839,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_decideMyProposals_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DecideMyProposals(ctx, fc.Args["ids"].([]string), fc.Args["input"].(gqlmodel.DecideAgentProposalsInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agent").DecideMyProposals(ctx, fc.Args["ids"].([]string), fc.Args["input"].(gqlmodel.DecideAgentProposalsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentProposalDecisionResult2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentProposalDecisionResultᚄ),
 			},
@@ -3852,7 +3852,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_decideMyPlan_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DecideMyPlan(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AgentPlanDecisionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agent").DecideMyPlan(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AgentPlanDecisionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentPlanDecisionResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentPlanDecisionResult),
 			},
@@ -3864,7 +3864,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_undoMyDecision_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UndoMyDecision(ctx, fc.Args["proposalId"].(*string), fc.Args["planId"].(*string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agent").UndoMyDecision(ctx, fc.Args["proposalId"].(*string), fc.Args["planId"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -3876,7 +3876,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_commitMyDecisionNow_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CommitMyDecisionNow(ctx, fc.Args["proposalId"].(*string), fc.Args["planId"].(*string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agent").CommitMyDecisionNow(ctx, fc.Args["proposalId"].(*string), fc.Args["planId"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -3889,7 +3889,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_replayAgentRun_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReplayAgentRun(ctx, fc.Args["runId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agent").ReplayAgentRun(ctx, fc.Args["runId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentevaluationᚐEvaluation),
 			},
@@ -3902,7 +3902,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createAgentMemory_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateAgentMemory(ctx, fc.Args["input"].(gqlmodel.AgentMemoryInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agent").CreateAgentMemory(ctx, fc.Args["input"].(gqlmodel.AgentMemoryInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemory),
 			},
@@ -3915,7 +3915,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateAgentMemory_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateAgentMemory(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AgentMemoryInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agent").UpdateAgentMemory(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AgentMemoryInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemory),
 			},
@@ -3928,7 +3928,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_setAgentMemoryStatus_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetAgentMemoryStatus(ctx, fc.Args["id"].(string), fc.Args["status"].(agentmemory.MemoryStatus))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agent").SetAgentMemoryStatus(ctx, fc.Args["id"].(string), fc.Args["status"].(agentmemory.MemoryStatus))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemory),
 			},
@@ -3941,7 +3941,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_reviewAgentMemory_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReviewAgentMemory(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agent").ReviewAgentMemory(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemory),
 			},
@@ -3954,7 +3954,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_approveAgentMemorySuggestion_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApproveAgentMemorySuggestion(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ApproveAgentMemorySuggestionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agent").ApproveAgentMemorySuggestion(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ApproveAgentMemorySuggestionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemory),
 			},
@@ -3967,7 +3967,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_dismissAgentMemorySuggestion_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DismissAgentMemorySuggestion(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agent").DismissAgentMemorySuggestion(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemory),
 			},
@@ -3980,7 +3980,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_resolveAgentException_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ResolveAgentException(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AgentExceptionResolveInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agent").ResolveAgentException(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AgentExceptionResolveInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentException2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentexceptionᚐAgentException),
 			},
@@ -3993,7 +3993,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateAgentControl_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateAgentControl(ctx, fc.Args["input"].(gqlmodel.AgentControlInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agent").UpdateAgentControl(ctx, fc.Args["input"].(gqlmodel.AgentControlInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋagentcontrolᚐAgentControl),
 			},
@@ -4009,7 +4009,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentRuns_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentRuns(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agent").AgentRuns(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentRunConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentRunConnection),
 			},
@@ -4022,7 +4022,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentRun_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentRun(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agent").AgentRun(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentRun),
 			},
@@ -4036,7 +4036,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentProposals_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentProposals(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agent").AgentProposals(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentProposalConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentProposalConnection),
 			},
@@ -4049,7 +4049,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentProposal_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentProposal(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agent").AgentProposal(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentProposal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentProposal),
 			},
@@ -4063,7 +4063,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentPlans_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentPlans(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agent").AgentPlans(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentPlanConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentPlanConnection),
 			},
@@ -4076,7 +4076,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentPlan_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentPlan(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agent").AgentPlan(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentplanᚐAgentPlan),
 			},
@@ -4090,7 +4090,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentMemories_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentMemories(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agent").AgentMemories(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentMemoryConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentMemoryConnection),
 			},
@@ -4104,7 +4104,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentEvaluations_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentEvaluations(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agent").AgentEvaluations(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentEvaluationConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentEvaluationConnection),
 			},
@@ -4117,7 +4117,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentEvaluation_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentEvaluation(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agent").AgentEvaluation(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentevaluationᚐEvaluation),
 			},
@@ -4130,7 +4130,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentMemory_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentMemory(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agent").AgentMemory(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemory),
 			},
@@ -4144,7 +4144,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentReflections_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentReflections(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agent").AgentReflections(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentReflectionConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentReflectionConnection),
 			},
@@ -4156,7 +4156,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "AgentMemoryUsage",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentMemoryUsage(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agent").AgentMemoryUsage(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentMemoryUsage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentmemoryportsᚐAgentMemoryUsage),
 			},
@@ -4170,7 +4170,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentExceptions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentExceptions(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agent").AgentExceptions(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentExceptionConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentExceptionConnection),
 			},
@@ -4183,7 +4183,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentException_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentException(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agent").AgentException(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentException2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentexceptionᚐAgentException),
 			},
@@ -4195,7 +4195,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "AgentControl",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentControl(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agent").AgentControl(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋagentcontrolᚐAgentControl),
 			},
@@ -4209,7 +4209,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentPromotionPreview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentPromotionPreview(ctx, fc.Args["threshold"].(int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agent").AgentPromotionPreview(ctx, fc.Args["threshold"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentToolPromotion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagenttrustportsᚐToolPromotionᚄ),
 			},
@@ -4223,7 +4223,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentActivitySummary_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentActivitySummary(ctx, fc.Args["since"].(int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agent").AgentActivitySummary(ctx, fc.Args["since"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentActivitySummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentActivitySummary),
 			},
@@ -4238,32 +4238,32 @@ var Shard = &gqlexec.Shard{
 		{Name: "ApproveAgentMemorySuggestionInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputApproveAgentMemorySuggestionInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "AgentControl", Check: func(r any) bool { _, ok := r.(resolverAgentControl); return ok }},
-		{Root: "AgentDecision", Check: func(r any) bool { _, ok := r.(resolverAgentDecision); return ok }},
-		{Root: "AgentEvaluation", Check: func(r any) bool { _, ok := r.(resolverAgentEvaluation); return ok }},
-		{Root: "AgentMemory", Check: func(r any) bool { _, ok := r.(resolverAgentMemory); return ok }},
-		{Root: "AgentPlan", Check: func(r any) bool { _, ok := r.(resolverAgentPlan); return ok }},
-		{Root: "AgentProposal", Check: func(r any) bool { _, ok := r.(resolverAgentProposal); return ok }},
-		{Root: "AgentProposalField", Check: func(r any) bool { _, ok := r.(resolverAgentProposalField); return ok }},
-		{Root: "AgentReflection", Check: func(r any) bool { _, ok := r.(resolverAgentReflection); return ok }},
-		{Root: "AgentRun", Check: func(r any) bool { _, ok := r.(resolverAgentRun); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "AgentControl@agent", Check: func(r any) bool { _, ok := r.(AgentControlResolver); return ok }},
+		{Root: "AgentDecision@agent", Check: func(r any) bool { _, ok := r.(AgentDecisionResolver); return ok }},
+		{Root: "AgentEvaluation@agent", Check: func(r any) bool { _, ok := r.(AgentEvaluationResolver); return ok }},
+		{Root: "AgentMemory@agent", Check: func(r any) bool { _, ok := r.(AgentMemoryResolver); return ok }},
+		{Root: "AgentPlan@agent", Check: func(r any) bool { _, ok := r.(AgentPlanResolver); return ok }},
+		{Root: "AgentProposalField@agent", Check: func(r any) bool { _, ok := r.(AgentProposalFieldResolver); return ok }},
+		{Root: "AgentProposal@agent", Check: func(r any) bool { _, ok := r.(AgentProposalResolver); return ok }},
+		{Root: "AgentReflection@agent", Check: func(r any) bool { _, ok := r.(AgentReflectionResolver); return ok }},
+		{Root: "AgentRun@agent", Check: func(r any) bool { _, ok := r.(AgentRunResolver); return ok }},
+		{Root: "Mutation@agent", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@agent", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverAgentControl interface {
+type AgentControlResolver interface {
 	AgentMoneyCallCeiling(ctx context.Context, obj *agentcontrol.AgentControl) (string, error)
 	AgentMoneyRunAmount(ctx context.Context, obj *agentcontrol.AgentControl) (string, error)
 	AgentMoneyDayAmount(ctx context.Context, obj *agentcontrol.AgentControl) (string, error)
 	AgentMoneyCurrency(ctx context.Context, obj *agentcontrol.AgentControl) (string, error)
 }
 
-type resolverAgentDecision interface {
+type AgentDecisionResolver interface {
 	TraceURL(ctx context.Context, obj *agentdecision.AgentDecision) (*string, error)
 }
 
-type resolverAgentEvaluation interface {
+type AgentEvaluationResolver interface {
 	SubjectType(ctx context.Context, obj *agentevaluation.Evaluation) (string, error)
 	Actions(ctx context.Context, obj *agentevaluation.Evaluation) ([]map[string]any, error)
 	Comparison(ctx context.Context, obj *agentevaluation.Evaluation) (map[string]any, error)
@@ -4272,17 +4272,22 @@ type resolverAgentEvaluation interface {
 	Fingerprint(ctx context.Context, obj *agentevaluation.Evaluation) (map[string]any, error)
 }
 
-type resolverAgentMemory interface {
+type AgentMemoryResolver interface {
 	Supersedes(ctx context.Context, obj *agentmemory.Memory) (*agentmemory.Memory, error)
 	ReplacedBy(ctx context.Context, obj *agentmemory.Memory) (*agentmemory.Memory, error)
 }
 
-type resolverAgentPlan interface {
+type AgentPlanResolver interface {
 	DecidedBy(ctx context.Context, obj *agentplan.AgentPlan) (*tenant.User, error)
 	RunMode(ctx context.Context, obj *agentplan.AgentPlan) (agentplan.PlanRunMode, error)
 }
 
-type resolverAgentProposal interface {
+type AgentProposalFieldResolver interface {
+	Resource(ctx context.Context, obj *toolschema.Field) (*string, error)
+	Choices(ctx context.Context, obj *toolschema.Field) ([]*toolschema.Choice, error)
+}
+
+type AgentProposalResolver interface {
 	Confidence(ctx context.Context, obj *agent.AgentProposal) (float64, error)
 	Simulation(ctx context.Context, obj *agent.AgentProposal) (map[string]any, error)
 	ParameterFields(ctx context.Context, obj *agent.AgentProposal) ([]*toolschema.Field, error)
@@ -4292,22 +4297,17 @@ type resolverAgentProposal interface {
 	TraceURL(ctx context.Context, obj *agent.AgentProposal) (*string, error)
 }
 
-type resolverAgentProposalField interface {
-	Resource(ctx context.Context, obj *toolschema.Field) (*string, error)
-	Choices(ctx context.Context, obj *toolschema.Field) ([]*toolschema.Choice, error)
-}
-
-type resolverAgentReflection interface {
+type AgentReflectionResolver interface {
 	Signals(ctx context.Context, obj *agentreflection.Reflection) ([]*agentreflection.ReflectionSignal, error)
 }
 
-type resolverAgentRun interface {
+type AgentRunResolver interface {
 	TraceURL(ctx context.Context, obj *agent.AgentRun) (*string, error)
 	ParentOwnerKind(ctx context.Context, obj *agent.AgentRun) (*gqlmodel.AgentRunEventOwnerKind, error)
 	Transcript(ctx context.Context, obj *agent.AgentRun) (*agent.RunTranscript, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	DecideAgentProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*gqlmodel.AgentProposalDecisionResult, error)
 	DecideAgentPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*gqlmodel.AgentPlanDecisionResult, error)
 	DecideMyProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*gqlmodel.AgentProposalDecisionResult, error)
@@ -4326,7 +4326,7 @@ type resolverMutation interface {
 	UpdateAgentControl(ctx context.Context, input gqlmodel.AgentControlInput) (*agentcontrol.AgentControl, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	AgentRuns(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentRunConnection, error)
 	AgentRun(ctx context.Context, id string) (*agent.AgentRun, error)
 	AgentProposals(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentProposalConnection, error)

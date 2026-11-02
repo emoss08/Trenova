@@ -241,7 +241,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createEquipmentType_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateEquipmentType(ctx, fc.Args["input"].(gqlmodel.EquipmentTypeInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@equipmenttype").CreateEquipmentType(ctx, fc.Args["input"].(gqlmodel.EquipmentTypeInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐEquipmentType),
 			},
@@ -254,7 +254,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateEquipmentType_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateEquipmentType(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.EquipmentTypeInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@equipmenttype").UpdateEquipmentType(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.EquipmentTypeInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐEquipmentType),
 			},
@@ -267,7 +267,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_patchEquipmentType_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchEquipmentType(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.EquipmentTypePatchInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@equipmenttype").PatchEquipmentType(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.EquipmentTypePatchInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐEquipmentType),
 			},
@@ -280,7 +280,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_bulkUpdateEquipmentTypeStatus_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkUpdateEquipmentTypeStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateEquipmentTypeStatusInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@equipmenttype").BulkUpdateEquipmentTypeStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateEquipmentTypeStatusInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNEquipmentType2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐEquipmentTypeᚄ),
 			},
@@ -296,7 +296,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_equipmentTypes_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").EquipmentTypes(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["classes"].([]equipmenttype.Class))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@equipmenttype").EquipmentTypes(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["classes"].([]equipmenttype.Class))
 				},
 				Marshal: gqlexec.Marshal(marshalNEquipmentTypeConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEquipmentTypeConnection),
 			},
@@ -309,7 +309,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_equipmentType_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").EquipmentType(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@equipmenttype").EquipmentType(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐEquipmentType),
 			},
@@ -321,19 +321,19 @@ var Shard = &gqlexec.Shard{
 		{Name: "EquipmentTypePatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputEquipmentTypePatchInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@equipmenttype", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@equipmenttype", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateEquipmentType(ctx context.Context, input gqlmodel.EquipmentTypeInput) (*equipmenttype.EquipmentType, error)
 	UpdateEquipmentType(ctx context.Context, id string, input gqlmodel.EquipmentTypeInput) (*equipmenttype.EquipmentType, error)
 	PatchEquipmentType(ctx context.Context, id string, input gqlmodel.EquipmentTypePatchInput) (*equipmenttype.EquipmentType, error)
 	BulkUpdateEquipmentTypeStatus(ctx context.Context, input gqlmodel.BulkUpdateEquipmentTypeStatusInput) ([]*equipmenttype.EquipmentType, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	EquipmentTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput, classes []equipmenttype.Class) (*gqlmodel.EquipmentTypeConnection, error)
 	EquipmentType(ctx context.Context, id string) (*equipmenttype.EquipmentType, error)
 }

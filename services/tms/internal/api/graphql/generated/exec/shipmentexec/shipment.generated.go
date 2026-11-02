@@ -616,7 +616,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
-					return gqlexec.Resolver[resolverCarrierAssignment](ec, "CarrierAssignment").BaseRate(ctx, obj)
+					return gqlexec.Resolver[CarrierAssignmentResolver](ec, "CarrierAssignment@shipment").BaseRate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -628,7 +628,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
-					return gqlexec.Resolver[resolverCarrierAssignment](ec, "CarrierAssignment").BaseAmount(ctx, obj)
+					return gqlexec.Resolver[CarrierAssignmentResolver](ec, "CarrierAssignment@shipment").BaseAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -640,7 +640,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
-					return gqlexec.Resolver[resolverCarrierAssignment](ec, "CarrierAssignment").FuelSurcharge(ctx, obj)
+					return gqlexec.Resolver[CarrierAssignmentResolver](ec, "CarrierAssignment@shipment").FuelSurcharge(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -652,7 +652,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
-					return gqlexec.Resolver[resolverCarrierAssignment](ec, "CarrierAssignment").AccessorialTotal(ctx, obj)
+					return gqlexec.Resolver[CarrierAssignmentResolver](ec, "CarrierAssignment@shipment").AccessorialTotal(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -664,7 +664,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
-					return gqlexec.Resolver[resolverCarrierAssignment](ec, "CarrierAssignment").TotalCost(ctx, obj)
+					return gqlexec.Resolver[CarrierAssignmentResolver](ec, "CarrierAssignment@shipment").TotalCost(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -878,7 +878,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignmentAccessorial)
-					return gqlexec.Resolver[resolverCarrierAssignmentAccessorial](ec, "CarrierAssignmentAccessorial").Amount(ctx, obj)
+					return gqlexec.Resolver[CarrierAssignmentAccessorialResolver](ec, "CarrierAssignmentAccessorial@shipment").Amount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1008,7 +1008,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ChargeAllocation)
-					return gqlexec.Resolver[resolverChargeAllocation](ec, "ChargeAllocation").Percent(ctx, obj)
+					return gqlexec.Resolver[ChargeAllocationResolver](ec, "ChargeAllocation@shipment").Percent(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -1019,7 +1019,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ChargeAllocation)
-					return gqlexec.Resolver[resolverChargeAllocation](ec, "ChargeAllocation").Amount(ctx, obj)
+					return gqlexec.Resolver[ChargeAllocationResolver](ec, "ChargeAllocation@shipment").Amount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -1153,7 +1153,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createShipment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateShipment(ctx, fc.Args["input"].(gqlmodel.ShipmentInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").CreateShipment(ctx, fc.Args["input"].(gqlmodel.ShipmentInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipment),
 			},
@@ -1166,7 +1166,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateShipment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateShipment(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ShipmentInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").UpdateShipment(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ShipmentInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipment),
 			},
@@ -1179,7 +1179,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_cancelShipment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CancelShipment(ctx, fc.Args["id"].(string), fc.Args["input"].(*gqlmodel.ShipmentCancelInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").CancelShipment(ctx, fc.Args["id"].(string), fc.Args["input"].(*gqlmodel.ShipmentCancelInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipment),
 			},
@@ -1192,7 +1192,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_uncancelShipment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UncancelShipment(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").UncancelShipment(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipment),
 			},
@@ -1205,7 +1205,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_approveShipmentRatingReview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApproveShipmentRatingReview(ctx, fc.Args["shipmentId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").ApproveShipmentRatingReview(ctx, fc.Args["shipmentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipment),
 			},
@@ -1218,7 +1218,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_duplicateShipment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DuplicateShipment(ctx, fc.Args["input"].(gqlmodel.ShipmentDuplicateInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").DuplicateShipment(ctx, fc.Args["input"].(gqlmodel.ShipmentDuplicateInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentDuplicateResponse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentDuplicateResponse),
 			},
@@ -1231,7 +1231,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_transferShipmentOwnership_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").TransferShipmentOwnership(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ShipmentTransferOwnershipInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").TransferShipmentOwnership(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ShipmentTransferOwnershipInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipment),
 			},
@@ -1244,7 +1244,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_transferShipmentToBillingItems_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").TransferShipmentToBillingItems(ctx, fc.Args["input"].(gqlmodel.ShipmentTransferToBillingInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").TransferShipmentToBillingItems(ctx, fc.Args["input"].(gqlmodel.ShipmentTransferToBillingInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentTransferToBillingResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentTransferToBillingResult),
 			},
@@ -1257,7 +1257,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_bulkTransferShipmentsToBilling_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkTransferShipmentsToBilling(ctx, fc.Args["input"].(gqlmodel.ShipmentBulkTransferToBillingInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").BulkTransferShipmentsToBilling(ctx, fc.Args["input"].(gqlmodel.ShipmentBulkTransferToBillingInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentBulkTransferToBillingResponse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBulkTransferToBillingResponse),
 			},
@@ -1270,7 +1270,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_calculateShipmentTotals_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CalculateShipmentTotals(ctx, fc.Args["input"].(gqlmodel.ShipmentInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").CalculateShipmentTotals(ctx, fc.Args["input"].(gqlmodel.ShipmentInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentTotalsResponse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentTotalsResponse),
 			},
@@ -1283,7 +1283,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_previewShipmentContractRate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PreviewShipmentContractRate(ctx, fc.Args["input"].(gqlmodel.ShipmentInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").PreviewShipmentContractRate(ctx, fc.Args["input"].(gqlmodel.ShipmentInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentContractRate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentContractRate),
 			},
@@ -1296,7 +1296,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_autoRateShipment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AutoRateShipment(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").AutoRateShipment(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentAutoRateResponse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentAutoRateResponse),
 			},
@@ -1309,7 +1309,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_calculateShipmentDistance_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CalculateShipmentDistance(ctx, fc.Args["input"].(gqlmodel.ShipmentInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").CalculateShipmentDistance(ctx, fc.Args["input"].(gqlmodel.ShipmentInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentDistanceResponse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentDistanceResponse),
 			},
@@ -1322,7 +1322,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_recalculateShipmentDistance_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecalculateShipmentDistance(ctx, fc.Args["shipmentId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").RecalculateShipmentDistance(ctx, fc.Args["shipmentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentDistanceResponse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentDistanceResponse),
 			},
@@ -1335,7 +1335,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_checkShipmentDuplicateBol_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CheckShipmentDuplicateBOL(ctx, fc.Args["input"].(gqlmodel.ShipmentDuplicateBOLInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").CheckShipmentDuplicateBOL(ctx, fc.Args["input"].(gqlmodel.ShipmentDuplicateBOLInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentValidationResponse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentValidationResponse),
 			},
@@ -1348,7 +1348,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_checkShipmentHazmatSegregation_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CheckShipmentHazmatSegregation(ctx, fc.Args["input"].(gqlmodel.ShipmentHazmatInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").CheckShipmentHazmatSegregation(ctx, fc.Args["input"].(gqlmodel.ShipmentHazmatInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentValidationResponse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentValidationResponse),
 			},
@@ -1361,7 +1361,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_calculateShipmentLoadingOptimization_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CalculateShipmentLoadingOptimization(ctx, fc.Args["input"].(gqlmodel.ShipmentLoadingOptimizationInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").CalculateShipmentLoadingOptimization(ctx, fc.Args["input"].(gqlmodel.ShipmentLoadingOptimizationInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentLoadingOptimizationResponse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentLoadingOptimizationResponse),
 			},
@@ -1374,7 +1374,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createShipmentComment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateShipmentComment(ctx, fc.Args["shipmentId"].(string), fc.Args["input"].(gqlmodel.ShipmentCommentInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").CreateShipmentComment(ctx, fc.Args["shipmentId"].(string), fc.Args["input"].(gqlmodel.ShipmentCommentInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentComment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentComment),
 			},
@@ -1387,7 +1387,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateShipmentComment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateShipmentComment(ctx, fc.Args["shipmentId"].(string), fc.Args["commentId"].(string), fc.Args["input"].(gqlmodel.ShipmentCommentUpdateInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").UpdateShipmentComment(ctx, fc.Args["shipmentId"].(string), fc.Args["commentId"].(string), fc.Args["input"].(gqlmodel.ShipmentCommentUpdateInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentComment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentComment),
 			},
@@ -1399,7 +1399,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteShipmentComment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteShipmentComment(ctx, fc.Args["shipmentId"].(string), fc.Args["commentId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").DeleteShipmentComment(ctx, fc.Args["shipmentId"].(string), fc.Args["commentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -1412,7 +1412,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_pinShipmentComment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PinShipmentComment(ctx, fc.Args["shipmentId"].(string), fc.Args["commentId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").PinShipmentComment(ctx, fc.Args["shipmentId"].(string), fc.Args["commentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentComment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentComment),
 			},
@@ -1425,7 +1425,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_unpinShipmentComment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UnpinShipmentComment(ctx, fc.Args["shipmentId"].(string), fc.Args["commentId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").UnpinShipmentComment(ctx, fc.Args["shipmentId"].(string), fc.Args["commentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentComment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentComment),
 			},
@@ -1438,7 +1438,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_resolveShipmentComment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ResolveShipmentComment(ctx, fc.Args["shipmentId"].(string), fc.Args["commentId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").ResolveShipmentComment(ctx, fc.Args["shipmentId"].(string), fc.Args["commentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentComment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentComment),
 			},
@@ -1451,7 +1451,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_unresolveShipmentComment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UnresolveShipmentComment(ctx, fc.Args["shipmentId"].(string), fc.Args["commentId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").UnresolveShipmentComment(ctx, fc.Args["shipmentId"].(string), fc.Args["commentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentComment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentComment),
 			},
@@ -1464,7 +1464,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_acknowledgeShipmentComment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AcknowledgeShipmentComment(ctx, fc.Args["shipmentId"].(string), fc.Args["commentId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipment").AcknowledgeShipmentComment(ctx, fc.Args["shipmentId"].(string), fc.Args["commentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentComment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentComment),
 			},
@@ -1480,7 +1480,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipments_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Shipments(ctx, fc.Args["input"].(gqlmodel.ShipmentsInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipment").Shipments(ctx, fc.Args["input"].(gqlmodel.ShipmentsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentConnection),
 			},
@@ -1494,7 +1494,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentTrackingEvents_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentTrackingEvents(ctx, fc.Args["shipmentId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipment").ShipmentTrackingEvents(ctx, fc.Args["shipmentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNTrackingEvent2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtrackingeventᚐTrackingEventᚄ),
 			},
@@ -1507,7 +1507,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Shipment(ctx, fc.Args["id"].(string), fc.Args["expandShipmentDetails"].(*bool), fc.Args["status"].(*string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipment").Shipment(ctx, fc.Args["id"].(string), fc.Args["expandShipmentDetails"].(*bool), fc.Args["status"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalOShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipment),
 			},
@@ -1521,7 +1521,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_unassignedShipments_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").UnassignedShipments(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipment").UnassignedShipments(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentConnection),
 			},
@@ -1535,7 +1535,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentComments_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentComments(ctx, fc.Args["shipmentId"].(string), fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["filter"].(*gqlmodel.ShipmentCommentsFilterInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipment").ShipmentComments(ctx, fc.Args["shipmentId"].(string), fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["filter"].(*gqlmodel.ShipmentCommentsFilterInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentCommentConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentConnection),
 			},
@@ -1549,7 +1549,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentCommentReplies_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentCommentReplies(ctx, fc.Args["shipmentId"].(string), fc.Args["commentId"].(string), fc.Args["first"].(*int), fc.Args["after"].(*string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipment").ShipmentCommentReplies(ctx, fc.Args["shipmentId"].(string), fc.Args["commentId"].(string), fc.Args["first"].(*int), fc.Args["after"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentCommentConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentConnection),
 			},
@@ -1563,7 +1563,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentCommentCount_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentCommentCount(ctx, fc.Args["shipmentId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipment").ShipmentCommentCount(ctx, fc.Args["shipmentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentCommentCountResponse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentCountResponse),
 			},
@@ -1575,7 +1575,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "ShipmentUIPolicy",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentUIPolicy(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipment").ShipmentUIPolicy(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentUIPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentUIPolicy),
 			},
@@ -1589,7 +1589,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentBillingReadiness_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentBillingReadiness(ctx, fc.Args["shipmentId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipment").ShipmentBillingReadiness(ctx, fc.Args["shipmentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentBillingReadiness2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBillingReadiness),
 			},
@@ -1603,7 +1603,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentBillingTransferCandidateIds_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentBillingTransferCandidateIds(ctx, fc.Args["input"].(gqlmodel.ShipmentBillingTransferCandidateIdsInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipment").ShipmentBillingTransferCandidateIds(ctx, fc.Args["input"].(gqlmodel.ShipmentBillingTransferCandidateIdsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentBillingTransferCandidateIds2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBillingTransferCandidateIds),
 			},
@@ -1617,7 +1617,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentEvents_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentEvents(ctx, fc.Args["input"].(gqlmodel.ShipmentEventsInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipment").ShipmentEvents(ctx, fc.Args["input"].(gqlmodel.ShipmentEventsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentEvent2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentEventᚄ),
 			},
@@ -1631,7 +1631,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentAnalytics_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentAnalytics(ctx, fc.Args["input"].(gqlmodel.ShipmentAnalyticsInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipment").ShipmentAnalytics(ctx, fc.Args["input"].(gqlmodel.ShipmentAnalyticsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentAnalytics2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentAnalytics),
 			},
@@ -1645,7 +1645,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentPreviousRates_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentPreviousRates(ctx, fc.Args["input"].(gqlmodel.ShipmentPreviousRatesInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipment").ShipmentPreviousRates(ctx, fc.Args["input"].(gqlmodel.ShipmentPreviousRatesInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentPreviousRatesResponse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentPreviousRatesResponse),
 			},
@@ -1679,7 +1679,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "ShipmentEta",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
-					return gqlexec.Resolver[resolverShipment](ec, "Shipment").Eta(ctx, obj)
+					return gqlexec.Resolver[ShipmentResolver](ec, "Shipment@shipment").Eta(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOShipmentEta2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentEta),
 			},
@@ -1840,7 +1840,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
-					return gqlexec.Resolver[resolverShipment](ec, "Shipment").OrderNumber(ctx, obj)
+					return gqlexec.Resolver[ShipmentResolver](ec, "Shipment@shipment").OrderNumber(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -1851,7 +1851,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild20,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
-					return gqlexec.Resolver[resolverShipment](ec, "Shipment").OrderStatus(ctx, obj)
+					return gqlexec.Resolver[ShipmentResolver](ec, "Shipment@shipment").OrderStatus(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOOrderStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐStatus),
 			},
@@ -1863,7 +1863,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "ShipmentProfitabilityEstimate",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
-					return gqlexec.Resolver[resolverShipment](ec, "Shipment").ProfitabilityEstimate(ctx, obj)
+					return gqlexec.Resolver[ShipmentResolver](ec, "Shipment@shipment").ProfitabilityEstimate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOShipmentProfitabilityEstimate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentProfitabilityEstimate),
 			},
@@ -2286,7 +2286,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "ShipmentFormulaTemplate",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
-					return gqlexec.Resolver[resolverShipment](ec, "Shipment").FormulaTemplate(ctx, obj)
+					return gqlexec.Resolver[ShipmentResolver](ec, "Shipment@shipment").FormulaTemplate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOShipmentFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentFormulaTemplate),
 			},
@@ -6014,7 +6014,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "EdiPartner",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
-					return gqlexec.Resolver[resolverShipmentCustomer](ec, "ShipmentCustomer").EDIPartner(ctx, obj)
+					return gqlexec.Resolver[ShipmentCustomerResolver](ec, "ShipmentCustomer@shipment").EDIPartner(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIPartner),
 			},
@@ -7864,7 +7864,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "ShipmentMoveJurisdictionMile",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
-					return gqlexec.Resolver[resolverShipmentMove](ec, "ShipmentMove").JurisdictionMiles(ctx, obj)
+					return gqlexec.Resolver[ShipmentMoveResolver](ec, "ShipmentMove@shipment").JurisdictionMiles(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentMoveJurisdictionMile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐShipmentMoveJurisdictionMileᚄ),
 			},
@@ -8143,7 +8143,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild29,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ShipmentMoveJurisdictionMile)
-					return gqlexec.Resolver[resolverShipmentMoveJurisdictionMile](ec, "ShipmentMoveJurisdictionMile").TollDistance(ctx, obj)
+					return gqlexec.Resolver[ShipmentMoveJurisdictionMileResolver](ec, "ShipmentMoveJurisdictionMile@shipment").TollDistance(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
 			},
@@ -8154,7 +8154,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild29,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ShipmentMoveJurisdictionMile)
-					return gqlexec.Resolver[resolverShipmentMoveJurisdictionMile](ec, "ShipmentMoveJurisdictionMile").FerryDistance(ctx, obj)
+					return gqlexec.Resolver[ShipmentMoveJurisdictionMileResolver](ec, "ShipmentMoveJurisdictionMile@shipment").FerryDistance(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
 			},
@@ -8176,7 +8176,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ShipmentMoveJurisdictionMile)
-					return gqlexec.Resolver[resolverShipmentMoveJurisdictionMile](ec, "ShipmentMoveJurisdictionMile").Source(ctx, obj)
+					return gqlexec.Resolver[ShipmentMoveJurisdictionMileResolver](ec, "ShipmentMoveJurisdictionMile@shipment").Source(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -8759,7 +8759,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
-					return gqlexec.Resolver[resolverShipmentRatingDetail](ec, "ShipmentRatingDetail").Trace(ctx, obj)
+					return gqlexec.Resolver[ShipmentRatingDetailResolver](ec, "ShipmentRatingDetail@shipment").Trace(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -8893,7 +8893,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingReviewApproval)
-					return gqlexec.Resolver[resolverShipmentRatingReviewApproval](ec, "ShipmentRatingReviewApproval").ApprovedBy(ctx, obj)
+					return gqlexec.Resolver[ShipmentRatingReviewApprovalResolver](ec, "ShipmentRatingReviewApproval@shipment").ApprovedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -10341,21 +10341,25 @@ var Shard = &gqlexec.Shard{
 		{Name: "ShipmentsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputShipmentsInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "CarrierAssignment", Check: func(r any) bool { _, ok := r.(resolverCarrierAssignment); return ok }},
-		{Root: "CarrierAssignmentAccessorial", Check: func(r any) bool { _, ok := r.(resolverCarrierAssignmentAccessorial); return ok }},
-		{Root: "ChargeAllocation", Check: func(r any) bool { _, ok := r.(resolverChargeAllocation); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "Shipment", Check: func(r any) bool { _, ok := r.(resolverShipment); return ok }},
-		{Root: "ShipmentCustomer", Check: func(r any) bool { _, ok := r.(resolverShipmentCustomer); return ok }},
-		{Root: "ShipmentMove", Check: func(r any) bool { _, ok := r.(resolverShipmentMove); return ok }},
-		{Root: "ShipmentMoveJurisdictionMile", Check: func(r any) bool { _, ok := r.(resolverShipmentMoveJurisdictionMile); return ok }},
-		{Root: "ShipmentRatingDetail", Check: func(r any) bool { _, ok := r.(resolverShipmentRatingDetail); return ok }},
-		{Root: "ShipmentRatingReviewApproval", Check: func(r any) bool { _, ok := r.(resolverShipmentRatingReviewApproval); return ok }},
+		{Root: "CarrierAssignmentAccessorial@shipment", Check: func(r any) bool { _, ok := r.(CarrierAssignmentAccessorialResolver); return ok }},
+		{Root: "CarrierAssignment@shipment", Check: func(r any) bool { _, ok := r.(CarrierAssignmentResolver); return ok }},
+		{Root: "ChargeAllocation@shipment", Check: func(r any) bool { _, ok := r.(ChargeAllocationResolver); return ok }},
+		{Root: "Mutation@shipment", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@shipment", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "ShipmentCustomer@shipment", Check: func(r any) bool { _, ok := r.(ShipmentCustomerResolver); return ok }},
+		{Root: "ShipmentMoveJurisdictionMile@shipment", Check: func(r any) bool { _, ok := r.(ShipmentMoveJurisdictionMileResolver); return ok }},
+		{Root: "ShipmentMove@shipment", Check: func(r any) bool { _, ok := r.(ShipmentMoveResolver); return ok }},
+		{Root: "ShipmentRatingDetail@shipment", Check: func(r any) bool { _, ok := r.(ShipmentRatingDetailResolver); return ok }},
+		{Root: "ShipmentRatingReviewApproval@shipment", Check: func(r any) bool { _, ok := r.(ShipmentRatingReviewApprovalResolver); return ok }},
+		{Root: "Shipment@shipment", Check: func(r any) bool { _, ok := r.(ShipmentResolver); return ok }},
 	},
 }
 
-type resolverCarrierAssignment interface {
+type CarrierAssignmentAccessorialResolver interface {
+	Amount(ctx context.Context, obj *shipment.CarrierAssignmentAccessorial) (string, error)
+}
+
+type CarrierAssignmentResolver interface {
 	BaseRate(ctx context.Context, obj *shipment.CarrierAssignment) (string, error)
 	BaseAmount(ctx context.Context, obj *shipment.CarrierAssignment) (string, error)
 	FuelSurcharge(ctx context.Context, obj *shipment.CarrierAssignment) (string, error)
@@ -10363,16 +10367,12 @@ type resolverCarrierAssignment interface {
 	TotalCost(ctx context.Context, obj *shipment.CarrierAssignment) (string, error)
 }
 
-type resolverCarrierAssignmentAccessorial interface {
-	Amount(ctx context.Context, obj *shipment.CarrierAssignmentAccessorial) (string, error)
-}
-
-type resolverChargeAllocation interface {
+type ChargeAllocationResolver interface {
 	Percent(ctx context.Context, obj *shipment.ChargeAllocation) (*string, error)
 	Amount(ctx context.Context, obj *shipment.ChargeAllocation) (*string, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateShipment(ctx context.Context, input gqlmodel.ShipmentInput) (*gqlmodel.Shipment, error)
 	UpdateShipment(ctx context.Context, id string, input gqlmodel.ShipmentInput) (*gqlmodel.Shipment, error)
 	CancelShipment(ctx context.Context, id string, input *gqlmodel.ShipmentCancelInput) (*gqlmodel.Shipment, error)
@@ -10400,7 +10400,7 @@ type resolverMutation interface {
 	AcknowledgeShipmentComment(ctx context.Context, shipmentID string, commentID string) (*gqlmodel.ShipmentComment, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	Shipments(ctx context.Context, input gqlmodel.ShipmentsInput) (*gqlmodel.ShipmentConnection, error)
 	ShipmentTrackingEvents(ctx context.Context, shipmentID string) ([]*trackingevent.TrackingEvent, error)
 	Shipment(ctx context.Context, id string, expandShipmentDetails *bool, status *string) (*gqlmodel.Shipment, error)
@@ -10416,34 +10416,34 @@ type resolverQuery interface {
 	ShipmentPreviousRates(ctx context.Context, input gqlmodel.ShipmentPreviousRatesInput) (*gqlmodel.ShipmentPreviousRatesResponse, error)
 }
 
-type resolverShipment interface {
-	Eta(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentEta, error)
-	OrderNumber(ctx context.Context, obj *gqlmodel.Shipment) (*string, error)
-	OrderStatus(ctx context.Context, obj *gqlmodel.Shipment) (*order.Status, error)
-	ProfitabilityEstimate(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentProfitabilityEstimate, error)
-	FormulaTemplate(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentFormulaTemplate, error)
-}
-
-type resolverShipmentCustomer interface {
+type ShipmentCustomerResolver interface {
 	EDIPartner(ctx context.Context, obj *gqlmodel.ShipmentCustomer) (*edi.EDIPartner, error)
 }
 
-type resolverShipmentMove interface {
-	JurisdictionMiles(ctx context.Context, obj *gqlmodel.ShipmentMove) ([]*shipment.ShipmentMoveJurisdictionMile, error)
-}
-
-type resolverShipmentMoveJurisdictionMile interface {
+type ShipmentMoveJurisdictionMileResolver interface {
 	TollDistance(ctx context.Context, obj *shipment.ShipmentMoveJurisdictionMile) (*float64, error)
 	FerryDistance(ctx context.Context, obj *shipment.ShipmentMoveJurisdictionMile) (*float64, error)
 	Source(ctx context.Context, obj *shipment.ShipmentMoveJurisdictionMile) (string, error)
 }
 
-type resolverShipmentRatingDetail interface {
+type ShipmentMoveResolver interface {
+	JurisdictionMiles(ctx context.Context, obj *gqlmodel.ShipmentMove) ([]*shipment.ShipmentMoveJurisdictionMile, error)
+}
+
+type ShipmentRatingDetailResolver interface {
 	Trace(ctx context.Context, obj *gqlmodel.ShipmentRatingDetail) (map[string]any, error)
 }
 
-type resolverShipmentRatingReviewApproval interface {
+type ShipmentRatingReviewApprovalResolver interface {
 	ApprovedBy(ctx context.Context, obj *gqlmodel.ShipmentRatingReviewApproval) (*tenant.User, error)
+}
+
+type ShipmentResolver interface {
+	Eta(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentEta, error)
+	OrderNumber(ctx context.Context, obj *gqlmodel.Shipment) (*string, error)
+	OrderStatus(ctx context.Context, obj *gqlmodel.Shipment) (*order.Status, error)
+	ProfitabilityEstimate(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentProfitabilityEstimate, error)
+	FormulaTemplate(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentFormulaTemplate, error)
 }
 
 var (

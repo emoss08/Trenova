@@ -126,7 +126,7 @@ func reviewTemplateCursorConnectionToModel(
 ) (*gqlmodel.PerformanceReviewTemplateConnection, error) {
 	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
-		result,
+		result.EdgeCursors,
 		func(node *workerreview.PerformanceReviewTemplate, cursor string) *gqlmodel.PerformanceReviewTemplateEdge {
 			return &gqlmodel.PerformanceReviewTemplateEdge{Node: node, Cursor: cursor}
 		},

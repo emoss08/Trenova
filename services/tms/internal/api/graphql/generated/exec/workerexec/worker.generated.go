@@ -109,7 +109,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_patchWorker_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchWorker(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.WorkerPatchInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@worker").PatchWorker(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.WorkerPatchInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
 			},
@@ -122,7 +122,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createWorkerPTO_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateWorkerPTO(ctx, fc.Args["input"].(gqlmodel.CreateWorkerPTOInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@worker").CreateWorkerPTO(ctx, fc.Args["input"].(gqlmodel.CreateWorkerPTOInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerPTO2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPTO),
 			},
@@ -135,7 +135,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateWorkerPTO_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateWorkerPTO(ctx, fc.Args["input"].(gqlmodel.UpdateWorkerPTOInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@worker").UpdateWorkerPTO(ctx, fc.Args["input"].(gqlmodel.UpdateWorkerPTOInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerPTO2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPTO),
 			},
@@ -148,7 +148,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_approveWorkerPTO_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApproveWorkerPTO(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@worker").ApproveWorkerPTO(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerPTO2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPTO),
 			},
@@ -161,7 +161,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_rejectWorkerPTO_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RejectWorkerPTO(ctx, fc.Args["id"].(string), fc.Args["reason"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@worker").RejectWorkerPTO(ctx, fc.Args["id"].(string), fc.Args["reason"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerPTO2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPTO),
 			},
@@ -174,7 +174,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_cancelWorkerPTO_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CancelWorkerPTO(ctx, fc.Args["id"].(string), fc.Args["reason"].(*string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@worker").CancelWorkerPTO(ctx, fc.Args["id"].(string), fc.Args["reason"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerPTO2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPTO),
 			},
@@ -187,7 +187,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_bulkWorkerPTOAction_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkWorkerPTOAction(ctx, fc.Args["input"].(gqlmodel.BulkWorkerPTOActionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@worker").BulkWorkerPTOAction(ctx, fc.Args["input"].(gqlmodel.BulkWorkerPTOActionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNBulkWorkerPTOActionPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerptoportsᚐPTOBulkActionPayload),
 			},
@@ -281,7 +281,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerptoports.PTOChartDataPoint)
-					return gqlexec.Resolver[resolverPTOChartDataPoint](ec, "PTOChartDataPoint").Workers(ctx, obj)
+					return gqlexec.Resolver[PTOChartDataPointResolver](ec, "PTOChartDataPoint@worker").Workers(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNJSON2map),
 			},
@@ -297,7 +297,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workers_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Workers(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["withoutCredential"].(*string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@worker").Workers(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["withoutCredential"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerConnection),
 			},
@@ -310,7 +310,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_worker_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Worker(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@worker").Worker(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
 			},
@@ -324,7 +324,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerPTOEntries_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerPTOEntries(ctx, fc.Args["input"].(gqlmodel.WorkerPTOEntriesInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@worker").WorkerPTOEntries(ctx, fc.Args["input"].(gqlmodel.WorkerPTOEntriesInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerPTOConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPTOConnection),
 			},
@@ -338,7 +338,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_upcomingWorkerPTO_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").UpcomingWorkerPTO(ctx, fc.Args["input"].(gqlmodel.UpcomingWorkerPTOInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@worker").UpcomingWorkerPTO(ctx, fc.Args["input"].(gqlmodel.UpcomingWorkerPTOInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerPTOConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPTOConnection),
 			},
@@ -352,7 +352,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerPTOChartData_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerPTOChartData(ctx, fc.Args["input"].(gqlmodel.WorkerPTOChartInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@worker").WorkerPTOChartData(ctx, fc.Args["input"].(gqlmodel.WorkerPTOChartInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPTOChartDataPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerptoportsᚐPTOChartDataPointᚄ),
 			},
@@ -405,7 +405,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.Worker)
-					return gqlexec.Resolver[resolverWorker](ec, "Worker").FleetCodeID(ctx, obj)
+					return gqlexec.Resolver[WorkerResolver](ec, "Worker@worker").FleetCodeID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -416,7 +416,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.Worker)
-					return gqlexec.Resolver[resolverWorker](ec, "Worker").ManagerID(ctx, obj)
+					return gqlexec.Resolver[WorkerResolver](ec, "Worker@worker").ManagerID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -862,7 +862,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerPTO)
-					return gqlexec.Resolver[resolverWorkerPTO](ec, "WorkerPTO").ApproverID(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOResolver](ec, "WorkerPTO@worker").ApproverID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -873,7 +873,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerPTO)
-					return gqlexec.Resolver[resolverWorkerPTO](ec, "WorkerPTO").RejectorID(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOResolver](ec, "WorkerPTO@worker").RejectorID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -884,7 +884,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerPTO)
-					return gqlexec.Resolver[resolverWorkerPTO](ec, "WorkerPTO").CancelledByID(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOResolver](ec, "WorkerPTO@worker").CancelledByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -945,7 +945,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerPTO)
-					return gqlexec.Resolver[resolverWorkerPTO](ec, "WorkerPTO").RejectionReason(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOResolver](ec, "WorkerPTO@worker").RejectionReason(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -956,7 +956,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerPTO)
-					return gqlexec.Resolver[resolverWorkerPTO](ec, "WorkerPTO").CancellationReason(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOResolver](ec, "WorkerPTO@worker").CancellationReason(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -968,7 +968,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerPTO)
-					return gqlexec.Resolver[resolverWorkerPTO](ec, "WorkerPTO").Days(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOResolver](ec, "WorkerPTO@worker").Days(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -979,7 +979,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerPTO)
-					return gqlexec.Resolver[resolverWorkerPTO](ec, "WorkerPTO").BalanceAfterDays(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOResolver](ec, "WorkerPTO@worker").BalanceAfterDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -1178,7 +1178,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
-					return gqlexec.Resolver[resolverWorkerProfile](ec, "WorkerProfile").LicenseStateID(ctx, obj)
+					return gqlexec.Resolver[WorkerProfileResolver](ec, "WorkerProfile@worker").LicenseStateID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1522,16 +1522,16 @@ var Shard = &gqlexec.Shard{
 		{Name: "WorkerPatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputWorkerPatchInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "PTOChartDataPoint", Check: func(r any) bool { _, ok := r.(resolverPTOChartDataPoint); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "Worker", Check: func(r any) bool { _, ok := r.(resolverWorker); return ok }},
-		{Root: "WorkerPTO", Check: func(r any) bool { _, ok := r.(resolverWorkerPTO); return ok }},
-		{Root: "WorkerProfile", Check: func(r any) bool { _, ok := r.(resolverWorkerProfile); return ok }},
+		{Root: "Mutation@worker", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "PTOChartDataPoint@worker", Check: func(r any) bool { _, ok := r.(PTOChartDataPointResolver); return ok }},
+		{Root: "Query@worker", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "WorkerPTO@worker", Check: func(r any) bool { _, ok := r.(WorkerPTOResolver); return ok }},
+		{Root: "WorkerProfile@worker", Check: func(r any) bool { _, ok := r.(WorkerProfileResolver); return ok }},
+		{Root: "Worker@worker", Check: func(r any) bool { _, ok := r.(WorkerResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	PatchWorker(ctx context.Context, id string, input gqlmodel.WorkerPatchInput) (*worker.Worker, error)
 	CreateWorkerPTO(ctx context.Context, input gqlmodel.CreateWorkerPTOInput) (*worker.WorkerPTO, error)
 	UpdateWorkerPTO(ctx context.Context, input gqlmodel.UpdateWorkerPTOInput) (*worker.WorkerPTO, error)
@@ -1541,11 +1541,11 @@ type resolverMutation interface {
 	BulkWorkerPTOAction(ctx context.Context, input gqlmodel.BulkWorkerPTOActionInput) (*workerptoports.PTOBulkActionPayload, error)
 }
 
-type resolverPTOChartDataPoint interface {
+type PTOChartDataPointResolver interface {
 	Workers(ctx context.Context, obj *workerptoports.PTOChartDataPoint) (map[string]any, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	Workers(ctx context.Context, input gqlmodel.DataTableConnectionInput, withoutCredential *string) (*gqlmodel.WorkerConnection, error)
 	Worker(ctx context.Context, id string) (*worker.Worker, error)
 	WorkerPTOEntries(ctx context.Context, input gqlmodel.WorkerPTOEntriesInput) (*gqlmodel.WorkerPTOConnection, error)
@@ -1553,12 +1553,7 @@ type resolverQuery interface {
 	WorkerPTOChartData(ctx context.Context, input gqlmodel.WorkerPTOChartInput) ([]*workerptoports.PTOChartDataPoint, error)
 }
 
-type resolverWorker interface {
-	FleetCodeID(ctx context.Context, obj *worker.Worker) (*string, error)
-	ManagerID(ctx context.Context, obj *worker.Worker) (*string, error)
-}
-
-type resolverWorkerPTO interface {
+type WorkerPTOResolver interface {
 	ApproverID(ctx context.Context, obj *worker.WorkerPTO) (*string, error)
 	RejectorID(ctx context.Context, obj *worker.WorkerPTO) (*string, error)
 	CancelledByID(ctx context.Context, obj *worker.WorkerPTO) (*string, error)
@@ -1568,8 +1563,13 @@ type resolverWorkerPTO interface {
 	BalanceAfterDays(ctx context.Context, obj *worker.WorkerPTO) (*string, error)
 }
 
-type resolverWorkerProfile interface {
+type WorkerProfileResolver interface {
 	LicenseStateID(ctx context.Context, obj *worker.WorkerProfile) (*string, error)
+}
+
+type WorkerResolver interface {
+	FleetCodeID(ctx context.Context, obj *worker.Worker) (*string, error)
+	ManagerID(ctx context.Context, obj *worker.Worker) (*string, error)
 }
 
 var (

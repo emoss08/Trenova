@@ -251,7 +251,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createDocumentType_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateDocumentType(ctx, fc.Args["input"].(gqlmodel.DocumentTypeInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@documenttype").CreateDocumentType(ctx, fc.Args["input"].(gqlmodel.DocumentTypeInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDocumentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋdocumenttypeᚐDocumentType),
 			},
@@ -264,7 +264,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateDocumentType_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateDocumentType(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.DocumentTypeInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@documenttype").UpdateDocumentType(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.DocumentTypeInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDocumentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋdocumenttypeᚐDocumentType),
 			},
@@ -280,7 +280,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_documentTypes_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DocumentTypes(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@documenttype").DocumentTypes(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDocumentTypeConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTypeConnection),
 			},
@@ -293,7 +293,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_documentType_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DocumentType(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@documenttype").DocumentType(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalODocumentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋdocumenttypeᚐDocumentType),
 			},
@@ -303,17 +303,17 @@ var Shard = &gqlexec.Shard{
 		{Name: "DocumentTypeInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputDocumentTypeInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@documenttype", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@documenttype", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateDocumentType(ctx context.Context, input gqlmodel.DocumentTypeInput) (*documenttype.DocumentType, error)
 	UpdateDocumentType(ctx context.Context, id string, input gqlmodel.DocumentTypeInput) (*documenttype.DocumentType, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	DocumentTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DocumentTypeConnection, error)
 	DocumentType(ctx context.Context, id string) (*documenttype.DocumentType, error)
 }

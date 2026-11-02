@@ -33,7 +33,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_tcaSubscriptions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").TcaSubscriptions(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@tablechangealert").TcaSubscriptions(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTCASubscriptionConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTCASubscriptionConnection),
 			},
@@ -46,7 +46,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_tcaSubscription_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").TcaSubscription(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@tablechangealert").TcaSubscription(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOTCASubscription2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtablechangealertᚐTCASubscription),
 			},
@@ -139,7 +139,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tablechangealert.TCASubscription)
-					return gqlexec.Resolver[resolverTCASubscription](ec, "TCASubscription").Conditions(ctx, obj)
+					return gqlexec.Resolver[TCASubscriptionResolver](ec, "TCASubscription@tablechangealert").Conditions(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNJSON2ᚕmapᚄ),
 			},
@@ -211,7 +211,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tablechangealert.TCASubscription)
-					return gqlexec.Resolver[resolverTCASubscription](ec, "TCASubscription").Status(ctx, obj)
+					return gqlexec.Resolver[TCASubscriptionResolver](ec, "TCASubscription@tablechangealert").Status(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -314,17 +314,17 @@ var Shard = &gqlexec.Shard{
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "TCASubscription", Check: func(r any) bool { _, ok := r.(resolverTCASubscription); return ok }},
+		{Root: "Query@tablechangealert", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "TCASubscription@tablechangealert", Check: func(r any) bool { _, ok := r.(TCASubscriptionResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	TcaSubscriptions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.TCASubscriptionConnection, error)
 	TcaSubscription(ctx context.Context, id string) (*tablechangealert.TCASubscription, error)
 }
 
-type resolverTCASubscription interface {
+type TCASubscriptionResolver interface {
 	Conditions(ctx context.Context, obj *tablechangealert.TCASubscription) ([]map[string]any, error)
 	Status(ctx context.Context, obj *tablechangealert.TCASubscription) (string, error)
 }

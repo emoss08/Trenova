@@ -672,7 +672,7 @@ func (s *Service) listWorkersForSamsaraSync(
 			break
 		}
 
-		after, err = page.NextCursor()
+		after, err = pagination.NextCursor(page)
 		if err != nil {
 			return nil, err
 		}

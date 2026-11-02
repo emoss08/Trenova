@@ -55,7 +55,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.LeaveControl)
-					return gqlexec.Resolver[resolverLeaveControl](ec, "LeaveControl").EntitlementWeeks(ctx, obj)
+					return gqlexec.Resolver[LeaveControlResolver](ec, "LeaveControl@workerleave").EntitlementWeeks(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -67,7 +67,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.LeaveControl)
-					return gqlexec.Resolver[resolverLeaveControl](ec, "LeaveControl").MilitaryCaregiverWeeks(ctx, obj)
+					return gqlexec.Resolver[LeaveControlResolver](ec, "LeaveControl@workerleave").MilitaryCaregiverWeeks(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -79,7 +79,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.LeaveControl)
-					return gqlexec.Resolver[resolverLeaveControl](ec, "LeaveControl").WorkweekHours(ctx, obj)
+					return gqlexec.Resolver[LeaveControlResolver](ec, "LeaveControl@workerleave").WorkweekHours(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -154,7 +154,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.LeaveEntitlement)
-					return gqlexec.Resolver[resolverLeaveEntitlement](ec, "LeaveEntitlement").TotalHours(ctx, obj)
+					return gqlexec.Resolver[LeaveEntitlementResolver](ec, "LeaveEntitlement@workerleave").TotalHours(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -166,7 +166,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.LeaveEntitlement)
-					return gqlexec.Resolver[resolverLeaveEntitlement](ec, "LeaveEntitlement").UsedHours(ctx, obj)
+					return gqlexec.Resolver[LeaveEntitlementResolver](ec, "LeaveEntitlement@workerleave").UsedHours(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -178,7 +178,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.LeaveEntitlement)
-					return gqlexec.Resolver[resolverLeaveEntitlement](ec, "LeaveEntitlement").RemainingHours(ctx, obj)
+					return gqlexec.Resolver[LeaveEntitlementResolver](ec, "LeaveEntitlement@workerleave").RemainingHours(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -190,7 +190,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.LeaveEntitlement)
-					return gqlexec.Resolver[resolverLeaveEntitlement](ec, "LeaveEntitlement").TotalWeeks(ctx, obj)
+					return gqlexec.Resolver[LeaveEntitlementResolver](ec, "LeaveEntitlement@workerleave").TotalWeeks(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -202,7 +202,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.LeaveEntitlement)
-					return gqlexec.Resolver[resolverLeaveEntitlement](ec, "LeaveEntitlement").UsedWeeks(ctx, obj)
+					return gqlexec.Resolver[LeaveEntitlementResolver](ec, "LeaveEntitlement@workerleave").UsedWeeks(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -214,7 +214,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.LeaveEntitlement)
-					return gqlexec.Resolver[resolverLeaveEntitlement](ec, "LeaveEntitlement").RemainingWeeks(ctx, obj)
+					return gqlexec.Resolver[LeaveEntitlementResolver](ec, "LeaveEntitlement@workerleave").RemainingWeeks(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -301,7 +301,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_openLeaveCase_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").OpenLeaveCase(ctx, fc.Args["input"].(gqlmodel.OpenLeaveCaseInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerleave").OpenLeaveCase(ctx, fc.Args["input"].(gqlmodel.OpenLeaveCaseInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerleaveᚐWorkerLeaveCase),
 			},
@@ -314,7 +314,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateLeaveCase_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateLeaveCase(ctx, fc.Args["input"].(gqlmodel.UpdateLeaveCaseInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerleave").UpdateLeaveCase(ctx, fc.Args["input"].(gqlmodel.UpdateLeaveCaseInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerleaveᚐWorkerLeaveCase),
 			},
@@ -327,7 +327,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_decideLeaveCase_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DecideLeaveCase(ctx, fc.Args["input"].(gqlmodel.DecideLeaveCaseInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerleave").DecideLeaveCase(ctx, fc.Args["input"].(gqlmodel.DecideLeaveCaseInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerleaveᚐWorkerLeaveCase),
 			},
@@ -340,7 +340,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_closeLeaveCase_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CloseLeaveCase(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerleave").CloseLeaveCase(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerleaveᚐWorkerLeaveCase),
 			},
@@ -353,7 +353,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_requestLeaveCertification_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RequestLeaveCertification(ctx, fc.Args["caseId"].(string), fc.Args["dueAt"].(*int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerleave").RequestLeaveCertification(ctx, fc.Args["caseId"].(string), fc.Args["dueAt"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerleaveᚐWorkerLeaveCase),
 			},
@@ -366,7 +366,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_recordLeaveCertification_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordLeaveCertification(ctx, fc.Args["input"].(gqlmodel.RecordLeaveCertificationInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerleave").RecordLeaveCertification(ctx, fc.Args["input"].(gqlmodel.RecordLeaveCertificationInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerleaveᚐWorkerLeaveCase),
 			},
@@ -379,7 +379,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_recordLeaveDay_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordLeaveDay(ctx, fc.Args["input"].(gqlmodel.RecordLeaveDayInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerleave").RecordLeaveDay(ctx, fc.Args["input"].(gqlmodel.RecordLeaveDayInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerLeaveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerleaveᚐWorkerLeaveEntry),
 			},
@@ -392,7 +392,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateLeaveDay_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateLeaveDay(ctx, fc.Args["input"].(gqlmodel.UpdateLeaveDayInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerleave").UpdateLeaveDay(ctx, fc.Args["input"].(gqlmodel.UpdateLeaveDayInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerLeaveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerleaveᚐWorkerLeaveEntry),
 			},
@@ -404,7 +404,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteLeaveDay_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteLeaveDay(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerleave").DeleteLeaveDay(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -417,7 +417,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateLeaveControl_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateLeaveControl(ctx, fc.Args["input"].(gqlmodel.UpdateLeaveControlInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerleave").UpdateLeaveControl(ctx, fc.Args["input"].(gqlmodel.UpdateLeaveControlInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNLeaveControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerleaveᚐLeaveControl),
 			},
@@ -431,7 +431,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "LeaveControl",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").LeaveControl(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerleave").LeaveControl(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNLeaveControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerleaveᚐLeaveControl),
 			},
@@ -445,7 +445,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerLeaveCases_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerLeaveCases(ctx, fc.Args["workerId"].(*string), fc.Args["openOnly"].(*bool), fc.Args["certificationOutstandingOnly"].(*bool), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerleave").WorkerLeaveCases(ctx, fc.Args["workerId"].(*string), fc.Args["openOnly"].(*bool), fc.Args["certificationOutstandingOnly"].(*bool), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerleaveᚐWorkerLeaveCaseᚄ),
 			},
@@ -459,7 +459,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerLeaveCase_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerLeaveCase(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerleave").WorkerLeaveCase(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerleaveᚐWorkerLeaveCase),
 			},
@@ -473,7 +473,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerLeaveEntitlement_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerLeaveEntitlement(ctx, fc.Args["workerId"].(string), fc.Args["asOf"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerleave").WorkerLeaveEntitlement(ctx, fc.Args["workerId"].(string), fc.Args["asOf"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNLeaveEntitlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerleaveᚐLeaveEntitlement),
 			},
@@ -485,7 +485,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "WorkerLeaveCase",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").LeaveCertificationsOutstanding(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerleave").LeaveCertificationsOutstanding(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerleaveᚐWorkerLeaveCaseᚄ),
 			},
@@ -617,7 +617,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.WorkerLeaveCase)
-					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").EndsAt(ctx, obj)
+					return gqlexec.Resolver[WorkerLeaveCaseResolver](ec, "WorkerLeaveCase@workerleave").EndsAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -628,7 +628,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.WorkerLeaveCase)
-					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").DecidedAt(ctx, obj)
+					return gqlexec.Resolver[WorkerLeaveCaseResolver](ec, "WorkerLeaveCase@workerleave").DecidedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -639,7 +639,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.WorkerLeaveCase)
-					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").ClosedAt(ctx, obj)
+					return gqlexec.Resolver[WorkerLeaveCaseResolver](ec, "WorkerLeaveCase@workerleave").ClosedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -660,7 +660,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.WorkerLeaveCase)
-					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").CertificationRequestedAt(ctx, obj)
+					return gqlexec.Resolver[WorkerLeaveCaseResolver](ec, "WorkerLeaveCase@workerleave").CertificationRequestedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -671,7 +671,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.WorkerLeaveCase)
-					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").CertificationDueAt(ctx, obj)
+					return gqlexec.Resolver[WorkerLeaveCaseResolver](ec, "WorkerLeaveCase@workerleave").CertificationDueAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -682,7 +682,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.WorkerLeaveCase)
-					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").CertificationReceivedAt(ctx, obj)
+					return gqlexec.Resolver[WorkerLeaveCaseResolver](ec, "WorkerLeaveCase@workerleave").CertificationReceivedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -693,7 +693,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.WorkerLeaveCase)
-					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").RecertificationDueAt(ctx, obj)
+					return gqlexec.Resolver[WorkerLeaveCaseResolver](ec, "WorkerLeaveCase@workerleave").RecertificationDueAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -705,7 +705,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.WorkerLeaveCase)
-					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").CertificationLate(ctx, obj)
+					return gqlexec.Resolver[WorkerLeaveCaseResolver](ec, "WorkerLeaveCase@workerleave").CertificationLate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -716,7 +716,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.WorkerLeaveCase)
-					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").EligibilityHoursWorked(ctx, obj)
+					return gqlexec.Resolver[WorkerLeaveCaseResolver](ec, "WorkerLeaveCase@workerleave").EligibilityHoursWorked(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
@@ -727,7 +727,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.WorkerLeaveCase)
-					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").EmploymentEventID(ctx, obj)
+					return gqlexec.Resolver[WorkerLeaveCaseResolver](ec, "WorkerLeaveCase@workerleave").EmploymentEventID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -738,7 +738,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.WorkerLeaveCase)
-					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").DocumentID(ctx, obj)
+					return gqlexec.Resolver[WorkerLeaveCaseResolver](ec, "WorkerLeaveCase@workerleave").DocumentID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -810,7 +810,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "WorkerLeaveEntry",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.WorkerLeaveCase)
-					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").Entries(ctx, obj)
+					return gqlexec.Resolver[WorkerLeaveCaseResolver](ec, "WorkerLeaveCase@workerleave").Entries(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerLeaveEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerleaveᚐWorkerLeaveEntryᚄ),
 			},
@@ -864,7 +864,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.WorkerLeaveEntry)
-					return gqlexec.Resolver[resolverWorkerLeaveEntry](ec, "WorkerLeaveEntry").Hours(ctx, obj)
+					return gqlexec.Resolver[WorkerLeaveEntryResolver](ec, "WorkerLeaveEntry@workerleave").Hours(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -885,7 +885,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerleave.WorkerLeaveEntry)
-					return gqlexec.Resolver[resolverWorkerLeaveEntry](ec, "WorkerLeaveEntry").PTOID(ctx, obj)
+					return gqlexec.Resolver[WorkerLeaveEntryResolver](ec, "WorkerLeaveEntry@workerleave").PTOID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -920,22 +920,22 @@ var Shard = &gqlexec.Shard{
 		{Name: "UpdateLeaveDayInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateLeaveDayInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "LeaveControl", Check: func(r any) bool { _, ok := r.(resolverLeaveControl); return ok }},
-		{Root: "LeaveEntitlement", Check: func(r any) bool { _, ok := r.(resolverLeaveEntitlement); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "WorkerLeaveCase", Check: func(r any) bool { _, ok := r.(resolverWorkerLeaveCase); return ok }},
-		{Root: "WorkerLeaveEntry", Check: func(r any) bool { _, ok := r.(resolverWorkerLeaveEntry); return ok }},
+		{Root: "LeaveControl@workerleave", Check: func(r any) bool { _, ok := r.(LeaveControlResolver); return ok }},
+		{Root: "LeaveEntitlement@workerleave", Check: func(r any) bool { _, ok := r.(LeaveEntitlementResolver); return ok }},
+		{Root: "Mutation@workerleave", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@workerleave", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "WorkerLeaveCase@workerleave", Check: func(r any) bool { _, ok := r.(WorkerLeaveCaseResolver); return ok }},
+		{Root: "WorkerLeaveEntry@workerleave", Check: func(r any) bool { _, ok := r.(WorkerLeaveEntryResolver); return ok }},
 	},
 }
 
-type resolverLeaveControl interface {
+type LeaveControlResolver interface {
 	EntitlementWeeks(ctx context.Context, obj *workerleave.LeaveControl) (string, error)
 	MilitaryCaregiverWeeks(ctx context.Context, obj *workerleave.LeaveControl) (string, error)
 	WorkweekHours(ctx context.Context, obj *workerleave.LeaveControl) (string, error)
 }
 
-type resolverLeaveEntitlement interface {
+type LeaveEntitlementResolver interface {
 	TotalHours(ctx context.Context, obj *workerleave.LeaveEntitlement) (string, error)
 	UsedHours(ctx context.Context, obj *workerleave.LeaveEntitlement) (string, error)
 	RemainingHours(ctx context.Context, obj *workerleave.LeaveEntitlement) (string, error)
@@ -944,7 +944,7 @@ type resolverLeaveEntitlement interface {
 	RemainingWeeks(ctx context.Context, obj *workerleave.LeaveEntitlement) (string, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	OpenLeaveCase(ctx context.Context, input gqlmodel.OpenLeaveCaseInput) (*workerleave.WorkerLeaveCase, error)
 	UpdateLeaveCase(ctx context.Context, input gqlmodel.UpdateLeaveCaseInput) (*workerleave.WorkerLeaveCase, error)
 	DecideLeaveCase(ctx context.Context, input gqlmodel.DecideLeaveCaseInput) (*workerleave.WorkerLeaveCase, error)
@@ -957,7 +957,7 @@ type resolverMutation interface {
 	UpdateLeaveControl(ctx context.Context, input gqlmodel.UpdateLeaveControlInput) (*workerleave.LeaveControl, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	LeaveControl(ctx context.Context) (*workerleave.LeaveControl, error)
 	WorkerLeaveCases(ctx context.Context, workerID *string, openOnly *bool, certificationOutstandingOnly *bool, limit *int) ([]*workerleave.WorkerLeaveCase, error)
 	WorkerLeaveCase(ctx context.Context, id string) (*workerleave.WorkerLeaveCase, error)
@@ -965,7 +965,7 @@ type resolverQuery interface {
 	LeaveCertificationsOutstanding(ctx context.Context) ([]*workerleave.WorkerLeaveCase, error)
 }
 
-type resolverWorkerLeaveCase interface {
+type WorkerLeaveCaseResolver interface {
 	EndsAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error)
 	DecidedAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error)
 	ClosedAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error)
@@ -980,7 +980,7 @@ type resolverWorkerLeaveCase interface {
 	Entries(ctx context.Context, obj *workerleave.WorkerLeaveCase) ([]*workerleave.WorkerLeaveEntry, error)
 }
 
-type resolverWorkerLeaveEntry interface {
+type WorkerLeaveEntryResolver interface {
 	Hours(ctx context.Context, obj *workerleave.WorkerLeaveEntry) (string, error)
 	PTOID(ctx context.Context, obj *workerleave.WorkerLeaveEntry) (*string, error)
 }

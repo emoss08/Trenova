@@ -269,7 +269,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createFleetCode_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateFleetCode(ctx, fc.Args["input"].(gqlmodel.FleetCodeInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fleetcode").CreateFleetCode(ctx, fc.Args["input"].(gqlmodel.FleetCodeInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFleetCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋfleetcodeᚐFleetCode),
 			},
@@ -282,7 +282,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateFleetCode_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateFleetCode(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.FleetCodeInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fleetcode").UpdateFleetCode(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.FleetCodeInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFleetCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋfleetcodeᚐFleetCode),
 			},
@@ -295,7 +295,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_patchFleetCode_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchFleetCode(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.FleetCodePatchInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fleetcode").PatchFleetCode(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.FleetCodePatchInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFleetCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋfleetcodeᚐFleetCode),
 			},
@@ -308,7 +308,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_bulkUpdateFleetCodeStatus_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkUpdateFleetCodeStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateFleetCodeStatusInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fleetcode").BulkUpdateFleetCodeStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateFleetCodeStatusInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFleetCode2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋfleetcodeᚐFleetCodeᚄ),
 			},
@@ -324,7 +324,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_fleetCodes_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FleetCodes(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fleetcode").FleetCodes(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFleetCodeConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFleetCodeConnection),
 			},
@@ -337,7 +337,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_fleetCode_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FleetCode(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fleetcode").FleetCode(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOFleetCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋfleetcodeᚐFleetCode),
 			},
@@ -349,19 +349,19 @@ var Shard = &gqlexec.Shard{
 		{Name: "FleetCodePatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputFleetCodePatchInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@fleetcode", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@fleetcode", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateFleetCode(ctx context.Context, input gqlmodel.FleetCodeInput) (*fleetcode.FleetCode, error)
 	UpdateFleetCode(ctx context.Context, id string, input gqlmodel.FleetCodeInput) (*fleetcode.FleetCode, error)
 	PatchFleetCode(ctx context.Context, id string, input gqlmodel.FleetCodePatchInput) (*fleetcode.FleetCode, error)
 	BulkUpdateFleetCodeStatus(ctx context.Context, input gqlmodel.BulkUpdateFleetCodeStatusInput) ([]*fleetcode.FleetCode, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	FleetCodes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FleetCodeConnection, error)
 	FleetCode(ctx context.Context, id string) (*fleetcode.FleetCode, error)
 }

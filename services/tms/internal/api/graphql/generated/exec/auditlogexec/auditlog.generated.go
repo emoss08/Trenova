@@ -109,7 +109,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
-					return gqlexec.Resolver[resolverAuditEntry](ec, "AuditEntry").Changes(ctx, obj)
+					return gqlexec.Resolver[AuditEntryResolver](ec, "AuditEntry@auditlog").Changes(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -120,7 +120,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
-					return gqlexec.Resolver[resolverAuditEntry](ec, "AuditEntry").PreviousState(ctx, obj)
+					return gqlexec.Resolver[AuditEntryResolver](ec, "AuditEntry@auditlog").PreviousState(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -131,7 +131,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
-					return gqlexec.Resolver[resolverAuditEntry](ec, "AuditEntry").CurrentState(ctx, obj)
+					return gqlexec.Resolver[AuditEntryResolver](ec, "AuditEntry@auditlog").CurrentState(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -152,7 +152,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
-					return gqlexec.Resolver[resolverAuditEntry](ec, "AuditEntry").Resource(ctx, obj)
+					return gqlexec.Resolver[AuditEntryResolver](ec, "AuditEntry@auditlog").Resource(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -164,7 +164,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
-					return gqlexec.Resolver[resolverAuditEntry](ec, "AuditEntry").Operation(ctx, obj)
+					return gqlexec.Resolver[AuditEntryResolver](ec, "AuditEntry@auditlog").Operation(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -251,7 +251,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
-					return gqlexec.Resolver[resolverAuditEntry](ec, "AuditEntry").EntityRef(ctx, obj)
+					return gqlexec.Resolver[AuditEntryResolver](ec, "AuditEntry@auditlog").EntityRef(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -343,7 +343,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_auditEntries_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AuditEntries(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@auditlog").AuditEntries(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAuditEntryConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditEntryConnection),
 			},
@@ -357,7 +357,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_auditEntriesByResourceId_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AuditEntriesByResourceID(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["resourceId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@auditlog").AuditEntriesByResourceID(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["resourceId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNAuditEntryConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditEntryConnection),
 			},
@@ -370,19 +370,19 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_auditEntry_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AuditEntry(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@auditlog").AuditEntry(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOAuditEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋauditᚐEntry),
 			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "AuditEntry", Check: func(r any) bool { _, ok := r.(resolverAuditEntry); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "AuditEntry@auditlog", Check: func(r any) bool { _, ok := r.(AuditEntryResolver); return ok }},
+		{Root: "Query@auditlog", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverAuditEntry interface {
+type AuditEntryResolver interface {
 	Changes(ctx context.Context, obj *audit.Entry) (map[string]any, error)
 	PreviousState(ctx context.Context, obj *audit.Entry) (map[string]any, error)
 	CurrentState(ctx context.Context, obj *audit.Entry) (map[string]any, error)
@@ -391,7 +391,7 @@ type resolverAuditEntry interface {
 	EntityRef(ctx context.Context, obj *audit.Entry) (*string, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	AuditEntries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AuditEntryConnection, error)
 	AuditEntriesByResourceID(ctx context.Context, input gqlmodel.DataTableConnectionInput, resourceID string) (*gqlmodel.AuditEntryConnection, error)
 	AuditEntry(ctx context.Context, id string) (*audit.Entry, error)

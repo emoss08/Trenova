@@ -744,7 +744,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateAIRetrievalSettings_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateAIRetrievalSettings(ctx, fc.Args["input"].(gqlmodel.AIRetrievalSettingsPatchInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@airetrieval").UpdateAIRetrievalSettings(ctx, fc.Args["input"].(gqlmodel.AIRetrievalSettingsPatchInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIRetrievalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋretrievalportsᚐAIRetrievalStatus),
 			},
@@ -757,7 +757,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_reindexAIRetrievalSource_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReindexAIRetrievalSource(ctx, fc.Args["sourceType"].(airetrieval.SourceType))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@airetrieval").ReindexAIRetrievalSource(ctx, fc.Args["sourceType"].(airetrieval.SourceType))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIRetrievalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋretrievalportsᚐAIRetrievalStatus),
 			},
@@ -771,7 +771,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "AIRetrievalStatus",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiRetrievalStatus(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@airetrieval").AiRetrievalStatus(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNAIRetrievalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋretrievalportsᚐAIRetrievalStatus),
 			},
@@ -785,7 +785,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_aiRetrievalReindexEstimate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiRetrievalReindexEstimate(ctx, fc.Args["sourceType"].(airetrieval.SourceType))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@airetrieval").AiRetrievalReindexEstimate(ctx, fc.Args["sourceType"].(airetrieval.SourceType))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIRetrievalReindexEstimate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋretrievalportsᚐAIRetrievalReindexEstimate),
 			},
@@ -799,7 +799,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_aiRetrievalFailedEntryConnection_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiRetrievalFailedEntryConnection(ctx, fc.Args["sourceType"].(*airetrieval.SourceType), fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@airetrieval").AiRetrievalFailedEntryConnection(ctx, fc.Args["sourceType"].(*airetrieval.SourceType), fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIRetrievalFailedEntryConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIRetrievalFailedEntryConnection),
 			},
@@ -809,17 +809,17 @@ var Shard = &gqlexec.Shard{
 		{Name: "AIRetrievalSettingsPatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAIRetrievalSettingsPatchInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@airetrieval", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@airetrieval", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	UpdateAIRetrievalSettings(ctx context.Context, input gqlmodel.AIRetrievalSettingsPatchInput) (*retrievalports.AIRetrievalStatus, error)
 	ReindexAIRetrievalSource(ctx context.Context, sourceType airetrieval.SourceType) (*retrievalports.AIRetrievalStatus, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	AiRetrievalStatus(ctx context.Context) (*retrievalports.AIRetrievalStatus, error)
 	AiRetrievalReindexEstimate(ctx context.Context, sourceType airetrieval.SourceType) (*retrievalports.AIRetrievalReindexEstimate, error)
 	AiRetrievalFailedEntryConnection(ctx context.Context, sourceType *airetrieval.SourceType, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIRetrievalFailedEntryConnection, error)

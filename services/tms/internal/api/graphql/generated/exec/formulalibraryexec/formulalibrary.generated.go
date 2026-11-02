@@ -541,7 +541,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulalibrary.FormulaLibraryVersion)
-					return gqlexec.Resolver[resolverFormulaLibraryVersion](ec, "FormulaLibraryVersion").ChangeSummary(ctx, obj)
+					return gqlexec.Resolver[FormulaLibraryVersionResolver](ec, "FormulaLibraryVersion@formulalibrary").ChangeSummary(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -587,7 +587,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_formulaLibraries_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaLibraries(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@formulalibrary").FormulaLibraries(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFormulaLibraryConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaLibraryConnection),
 			},
@@ -600,7 +600,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_formulaLibrary_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaLibrary(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@formulalibrary").FormulaLibrary(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOFormulaLibrary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulalibraryᚐFormulaLibrary),
 			},
@@ -614,7 +614,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_formulaLibraryVersions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaLibraryVersions(ctx, fc.Args["libraryId"].(string), fc.Args["first"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@formulalibrary").FormulaLibraryVersions(ctx, fc.Args["libraryId"].(string), fc.Args["first"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNFormulaLibraryVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulalibraryᚐFormulaLibraryVersionᚄ),
 			},
@@ -628,23 +628,23 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_formulaLibraryReviews_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaLibraryReviews(ctx, fc.Args["libraryId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@formulalibrary").FormulaLibraryReviews(ctx, fc.Args["libraryId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNFormulaLibraryReview2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulalibraryᚐFormulaLibraryReviewᚄ),
 			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "FormulaLibraryVersion", Check: func(r any) bool { _, ok := r.(resolverFormulaLibraryVersion); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "FormulaLibraryVersion@formulalibrary", Check: func(r any) bool { _, ok := r.(FormulaLibraryVersionResolver); return ok }},
+		{Root: "Query@formulalibrary", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverFormulaLibraryVersion interface {
+type FormulaLibraryVersionResolver interface {
 	ChangeSummary(ctx context.Context, obj *formulalibrary.FormulaLibraryVersion) (map[string]any, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	FormulaLibraries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FormulaLibraryConnection, error)
 	FormulaLibrary(ctx context.Context, id string) (*formulalibrary.FormulaLibrary, error)
 	FormulaLibraryVersions(ctx context.Context, libraryID string, first *int) ([]*formulalibrary.FormulaLibraryVersion, error)

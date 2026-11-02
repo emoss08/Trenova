@@ -306,7 +306,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createFactoringCompany_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateFactoringCompany(ctx, fc.Args["input"].(gqlmodel.FactoringCompanyInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@factoringcompany").CreateFactoringCompany(ctx, fc.Args["input"].(gqlmodel.FactoringCompanyInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFactoringCompany2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋfactoringcompanyᚐFactoringCompany),
 			},
@@ -319,7 +319,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateFactoringCompany_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateFactoringCompany(ctx, fc.Args["input"].(gqlmodel.UpdateFactoringCompanyInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@factoringcompany").UpdateFactoringCompany(ctx, fc.Args["input"].(gqlmodel.UpdateFactoringCompanyInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFactoringCompany2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋfactoringcompanyᚐFactoringCompany),
 			},
@@ -335,7 +335,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_factoringCompanies_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FactoringCompanies(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@factoringcompany").FactoringCompanies(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFactoringCompanyConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringCompanyConnection),
 			},
@@ -348,7 +348,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_factoringCompany_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FactoringCompany(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@factoringcompany").FactoringCompany(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOFactoringCompany2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋfactoringcompanyᚐFactoringCompany),
 			},
@@ -359,17 +359,17 @@ var Shard = &gqlexec.Shard{
 		{Name: "UpdateFactoringCompanyInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateFactoringCompanyInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@factoringcompany", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@factoringcompany", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateFactoringCompany(ctx context.Context, input gqlmodel.FactoringCompanyInput) (*factoringcompany.FactoringCompany, error)
 	UpdateFactoringCompany(ctx context.Context, input gqlmodel.UpdateFactoringCompanyInput) (*factoringcompany.FactoringCompany, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	FactoringCompanies(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FactoringCompanyConnection, error)
 	FactoringCompany(ctx context.Context, id string) (*factoringcompany.FactoringCompany, error)
 }

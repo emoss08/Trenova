@@ -35,7 +35,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_serviceTypes_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ServiceTypes(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@servicetype").ServiceTypes(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNServiceTypeConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐServiceTypeConnection),
 			},
@@ -48,7 +48,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_serviceType_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ServiceType(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@servicetype").ServiceType(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOServiceType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋservicetypeᚐServiceType),
 			},
@@ -241,11 +241,11 @@ var Shard = &gqlexec.Shard{
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Query@servicetype", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	ServiceTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ServiceTypeConnection, error)
 	ServiceType(ctx context.Context, id string) (*servicetype.ServiceType, error)
 }

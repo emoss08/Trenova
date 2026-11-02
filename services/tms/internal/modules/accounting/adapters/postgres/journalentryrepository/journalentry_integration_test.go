@@ -161,7 +161,7 @@ func TestListConnectionPagesThroughEveryEntry(t *testing.T) {
 	assert.Equal(t, 2, *first.TotalCount)
 	require.True(t, first.HasNextPage)
 
-	next, err := first.NextCursor()
+	next, err := pagination.NextCursor(first)
 	require.NoError(t, err)
 	second := f.connection(t, 1, next)
 	require.Len(t, second.Items, 1)

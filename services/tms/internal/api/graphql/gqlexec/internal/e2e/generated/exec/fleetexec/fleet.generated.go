@@ -34,7 +34,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_renameTruck_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RenameTruck(ctx, fc.Args["input"].(gqlmodel.RenameTruckInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fleet").RenameTruck(ctx, fc.Args["input"].(gqlmodel.RenameTruckInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTruck2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlexecᚋinternalᚋe2eᚋmodelᚐTruck),
 			},
@@ -71,7 +71,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_node_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Node(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fleet").Node(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalONode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlexecᚋinternalᚋe2eᚋmodelᚐNode),
 			},
@@ -85,7 +85,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_trucks_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Trucks(ctx, fc.Args["filter"].(*gqlmodel.TruckFilter))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fleet").Trucks(ctx, fc.Args["filter"].(*gqlmodel.TruckFilter))
 				},
 				Marshal: gqlexec.Marshal(marshalNTruck2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlexecᚋinternalᚋe2eᚋmodelᚐTruckᚄ),
 			},
@@ -98,7 +98,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_truck_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Truck(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fleet").Truck(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOTruck2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlexecᚋinternalᚋe2eᚋmodelᚐTruck),
 			},
@@ -111,7 +111,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_search_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Search(ctx, fc.Args["text"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fleet").Search(ctx, fc.Args["text"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNSearchResult2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlexecᚋinternalᚋe2eᚋmodelᚐSearchResultᚄ),
 			},
@@ -121,7 +121,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Panics(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fleet").Panics(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -134,7 +134,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_echoFilter_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").EchoFilter(ctx, fc.Args["filter"].(gqlmodel.TruckFilter))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fleet").EchoFilter(ctx, fc.Args["filter"].(gqlmodel.TruckFilter))
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -243,7 +243,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*model.Truck)
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverTruck](ec, "Truck").LoadCount(ctx, obj, fc.Args["since"].(*int))
+					return gqlexec.Resolver[TruckResolver](ec, "Truck@fleet").LoadCount(ctx, obj, fc.Args["since"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
@@ -255,7 +255,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*model.Truck)
-					return gqlexec.Resolver[resolverTruck](ec, "Truck").Failing(ctx, obj)
+					return gqlexec.Resolver[TruckResolver](ec, "Truck@fleet").Failing(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -266,7 +266,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*model.Truck)
-					return gqlexec.Resolver[resolverTruck](ec, "Truck").NullableFailing(ctx, obj)
+					return gqlexec.Resolver[TruckResolver](ec, "Truck@fleet").NullableFailing(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -280,17 +280,17 @@ var Shard = &gqlexec.Shard{
 		{Name: "TruckFilter", Unmarshal: gqlexec.Unmarshal(unmarshalInputTruckFilter)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "Truck", Check: func(r any) bool { _, ok := r.(resolverTruck); return ok }},
+		{Root: "Mutation@fleet", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@fleet", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "Truck@fleet", Check: func(r any) bool { _, ok := r.(TruckResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	RenameTruck(ctx context.Context, input gqlmodel.RenameTruckInput) (*model.Truck, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	Node(ctx context.Context, id string) (model.Node, error)
 	Trucks(ctx context.Context, filter *gqlmodel.TruckFilter) ([]*model.Truck, error)
 	Truck(ctx context.Context, id string) (*model.Truck, error)
@@ -299,7 +299,7 @@ type resolverQuery interface {
 	EchoFilter(ctx context.Context, filter gqlmodel.TruckFilter) (string, error)
 }
 
-type resolverTruck interface {
+type TruckResolver interface {
 	LoadCount(ctx context.Context, obj *model.Truck, since *int) (int, error)
 	Failing(ctx context.Context, obj *model.Truck) (string, error)
 	NullableFailing(ctx context.Context, obj *model.Truck) (*string, error)

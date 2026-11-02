@@ -341,7 +341,7 @@ func TestListMessagesCursor_PagesThroughAFilteredListInOrder(t *testing.T) {
 	require.Equal(t, f.ids["pendingNewest"], page.Items[0].ID)
 	require.Equal(t, f.ids["pendingHour"], page.Items[1].ID)
 
-	next, err := page.NextCursor()
+	next, err := pagination.NextCursor(page)
 	require.NoError(t, err)
 	second, err := pagination.NewCursorInfo(2, next)
 	require.NoError(t, err)

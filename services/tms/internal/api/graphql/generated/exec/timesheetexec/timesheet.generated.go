@@ -35,7 +35,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_clockIn_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ClockIn(ctx, fc.Args["input"].(gqlmodel.ClockInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@timesheet").ClockIn(ctx, fc.Args["input"].(gqlmodel.ClockInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋtimesheetᚐTimeClockEntry),
 			},
@@ -48,7 +48,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_clockOut_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ClockOut(ctx, fc.Args["input"].(gqlmodel.ClockInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@timesheet").ClockOut(ctx, fc.Args["input"].(gqlmodel.ClockInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋtimesheetᚐTimeClockEntry),
 			},
@@ -61,7 +61,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_recordTimeEntry_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordTimeEntry(ctx, fc.Args["input"].(gqlmodel.RecordTimeEntryInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@timesheet").RecordTimeEntry(ctx, fc.Args["input"].(gqlmodel.RecordTimeEntryInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋtimesheetᚐTimeClockEntry),
 			},
@@ -73,7 +73,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteTimeEntry_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteTimeEntry(ctx, fc.Args["input"].(gqlmodel.DeleteTimeEntryInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@timesheet").DeleteTimeEntry(ctx, fc.Args["input"].(gqlmodel.DeleteTimeEntryInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -86,7 +86,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_transitionTimesheet_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").TransitionTimesheet(ctx, fc.Args["input"].(gqlmodel.TransitionTimesheetInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@timesheet").TransitionTimesheet(ctx, fc.Args["input"].(gqlmodel.TransitionTimesheetInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTimesheet2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋtimesheetᚐTimesheet),
 			},
@@ -99,7 +99,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_generatePayrollExport_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").GeneratePayrollExport(ctx, fc.Args["input"].(gqlmodel.GeneratePayrollExportInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@timesheet").GeneratePayrollExport(ctx, fc.Args["input"].(gqlmodel.GeneratePayrollExportInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPayrollExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋtimesheetᚐPayrollExport),
 			},
@@ -112,7 +112,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_voidPayrollExport_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").VoidPayrollExport(ctx, fc.Args["input"].(gqlmodel.VoidPayrollExportInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@timesheet").VoidPayrollExport(ctx, fc.Args["input"].(gqlmodel.VoidPayrollExportInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPayrollExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋtimesheetᚐPayrollExport),
 			},
@@ -357,7 +357,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_timesheets_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Timesheets(ctx, fc.Args["filter"].(*gqlmodel.TimesheetFilterInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@timesheet").Timesheets(ctx, fc.Args["filter"].(*gqlmodel.TimesheetFilterInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTimesheet2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋtimesheetᚐTimesheetᚄ),
 			},
@@ -371,7 +371,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_timesheet_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Timesheet(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@timesheet").Timesheet(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNTimesheet2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋtimesheetᚐTimesheet),
 			},
@@ -385,7 +385,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_timeClockEntries_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").TimeClockEntries(ctx, fc.Args["workerId"].(string), fc.Args["from"].(*int), fc.Args["to"].(*int), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@timesheet").TimeClockEntries(ctx, fc.Args["workerId"].(string), fc.Args["from"].(*int), fc.Args["to"].(*int), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNTimeClockEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋtimesheetᚐTimeClockEntryᚄ),
 			},
@@ -398,7 +398,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_openTimeClockEntry_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").OpenTimeClockEntry(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@timesheet").OpenTimeClockEntry(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋtimesheetᚐTimeClockEntry),
 			},
@@ -412,7 +412,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_openTimeClockEntries_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").OpenTimeClockEntries(ctx, fc.Args["teamOnly"].(*bool), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@timesheet").OpenTimeClockEntries(ctx, fc.Args["teamOnly"].(*bool), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNTimeClockEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋtimesheetᚐTimeClockEntryᚄ),
 			},
@@ -426,7 +426,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_payrollExports_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PayrollExports(ctx, fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@timesheet").PayrollExports(ctx, fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNPayrollExport2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋtimesheetᚐPayrollExportᚄ),
 			},
@@ -440,7 +440,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_payrollExport_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PayrollExport(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@timesheet").PayrollExport(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNPayrollExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋtimesheetᚐPayrollExport),
 			},
@@ -454,7 +454,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_payrollExportRows_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PayrollExportRows(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@timesheet").PayrollExportRows(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNPayrollExportRow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋtimesheetserviceᚐPayrollExportRowᚄ),
 			},
@@ -844,12 +844,12 @@ var Shard = &gqlexec.Shard{
 		{Name: "VoidPayrollExportInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputVoidPayrollExportInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@timesheet", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@timesheet", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	ClockIn(ctx context.Context, input gqlmodel.ClockInput) (*timesheet.TimeClockEntry, error)
 	ClockOut(ctx context.Context, input gqlmodel.ClockInput) (*timesheet.TimeClockEntry, error)
 	RecordTimeEntry(ctx context.Context, input gqlmodel.RecordTimeEntryInput) (*timesheet.TimeClockEntry, error)
@@ -859,7 +859,7 @@ type resolverMutation interface {
 	VoidPayrollExport(ctx context.Context, input gqlmodel.VoidPayrollExportInput) (*timesheet.PayrollExport, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	Timesheets(ctx context.Context, filter *gqlmodel.TimesheetFilterInput) ([]*timesheet.Timesheet, error)
 	Timesheet(ctx context.Context, id string) (*timesheet.Timesheet, error)
 	TimeClockEntries(ctx context.Context, workerID string, from *int, to *int, limit *int) ([]*timesheet.TimeClockEntry, error)

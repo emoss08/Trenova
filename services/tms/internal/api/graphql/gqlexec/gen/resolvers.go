@@ -26,9 +26,8 @@ const (
 type resolverLayout struct {
 	Data        *codegen.Data
 	CoreImport  string
-	ExecImport  string
 	Domains     []*resolverDomain
-	Entries     []*rootEntry
+	Parts       []*rootPart
 	domainIndex map[string]*resolverDomain
 }
 
@@ -36,6 +35,7 @@ type resolverDomain struct {
 	Shard      string
 	Package    string
 	ImportPath string
+	ExecImport string
 	Dir        string
 	StubFile   string
 	CoreImport string
@@ -50,21 +50,12 @@ type resolverType struct {
 	Fields []*codegen.Field
 }
 
-type rootEntry struct {
-	Accessor string
-	Iface    string
-	Field    string
-	Type     string
-	Parts    []*rootPart
-}
-
 type rootPart struct {
 	Domain *resolverDomain
 	Alias  string
-}
-
-func (e *rootEntry) Composite() bool {
-	return len(e.Parts) > 1
+	Type   string
+	Iface  string
+	Key    string
 }
 
 func buildResolverLayout(data *codegen.Data) *resolverLayout {
@@ -72,7 +63,6 @@ func buildResolverLayout(data *codegen.Data) *resolverLayout {
 	l := &resolverLayout{
 		Data:        data,
 		CoreImport:  path.Join(cfg.Resolver.ImportPath(), coreResolverPackage),
-		ExecImport:  cfg.Exec.ImportPath(),
 		domainIndex: make(map[string]*resolverDomain),
 	}
 
@@ -89,10 +79,7 @@ func buildResolverLayout(data *codegen.Data) *resolverLayout {
 	}
 
 	for _, obj := range objects {
-		entry := &rootEntry{Accessor: templates.UcFirst(obj.Name), Type: resolverTypeName(obj)}
-		entry.Iface = entry.Type
-		entry.Field = templates.LcFirst(entry.Accessor)
-
+		typ := resolverTypeName(obj)
 		for _, f := range obj.Fields {
 			if !f.IsResolver {
 				continue
@@ -102,24 +89,23 @@ func buildResolverLayout(data *codegen.Data) *resolverLayout {
 				pos = f.Position
 			}
 			d := l.domain(cfg, pos)
-			t, ok := d.typeIndex[entry.Type]
+			t, ok := d.typeIndex[typ]
 			if !ok {
-				t = &resolverType{Object: obj, Name: entry.Type}
-				d.typeIndex[entry.Type] = t
+				t = &resolverType{Object: obj, Name: typ}
+				d.typeIndex[typ] = t
 				d.Types = append(d.Types, t)
-				entry.Parts = append(entry.Parts, &rootPart{
+				l.Parts = append(l.Parts, &rootPart{
 					Domain: d,
 					Alias:  d.Shard + templates.UcFirst(obj.Name),
+					Type:   typ,
+					Iface:  resolverIfaceName(obj.Name),
+					Key:    resolverKey(obj.Name, d.Shard),
 				})
 			}
 			t.Fields = append(t.Fields, f)
 		}
-
-		sort.Slice(entry.Parts, func(i, j int) bool {
-			return entry.Parts[i].Domain.Shard < entry.Parts[j].Domain.Shard
-		})
-		l.Entries = append(l.Entries, entry)
 	}
+	sort.Slice(l.Parts, func(i, j int) bool { return l.Parts[i].Key < l.Parts[j].Key })
 
 	for _, d := range l.domainIndex {
 		sort.Slice(d.Types, func(i, j int) bool { return d.Types[i].Name < d.Types[j].Name })
@@ -158,6 +144,7 @@ func (l *resolverLayout) domain(cfg *config.Config, pos *ast.Position) *resolver
 		Shard:      shard,
 		Package:    pkg,
 		ImportPath: path.Join(cfg.Resolver.ImportPath(), pkg),
+		ExecImport: path.Join(cfg.Exec.ImportPath(), shardSuffix, shard+shardSuffix),
 		Dir:        filepath.Join(cfg.Resolver.Dir(), pkg),
 		StubFile:   stub,
 		CoreImport: l.CoreImport,

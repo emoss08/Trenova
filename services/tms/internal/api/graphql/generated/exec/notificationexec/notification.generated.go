@@ -31,7 +31,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_markNotificationsRead_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").MarkNotificationsRead(ctx, fc.Args["ids"].([]string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@notification").MarkNotificationsRead(ctx, fc.Args["ids"].([]string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -43,7 +43,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_markNotificationsUnread_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").MarkNotificationsUnread(ctx, fc.Args["ids"].([]string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@notification").MarkNotificationsUnread(ctx, fc.Args["ids"].([]string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -53,7 +53,7 @@ var Shard = &gqlexec.Shard{
 				IsResolver: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").MarkAllNotificationsRead(ctx)
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@notification").MarkAllNotificationsRead(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -65,7 +65,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_dismissNotifications_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DismissNotifications(ctx, fc.Args["ids"].([]string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@notification").DismissNotifications(ctx, fc.Args["ids"].([]string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -77,7 +77,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_restoreNotifications_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RestoreNotifications(ctx, fc.Args["ids"].([]string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@notification").RestoreNotifications(ctx, fc.Args["ids"].([]string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -389,7 +389,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_notifications_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Notifications(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["filter"].(*gqlmodel.NotificationFilterInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@notification").Notifications(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["filter"].(*gqlmodel.NotificationFilterInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNNotificationConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐNotificationConnection),
 			},
@@ -400,7 +400,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").NotificationUnreadCount(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@notification").NotificationUnreadCount(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
@@ -410,12 +410,12 @@ var Shard = &gqlexec.Shard{
 		{Name: "NotificationFilterInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputNotificationFilterInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@notification", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@notification", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	MarkNotificationsRead(ctx context.Context, ids []string) (bool, error)
 	MarkNotificationsUnread(ctx context.Context, ids []string) (bool, error)
 	MarkAllNotificationsRead(ctx context.Context) (bool, error)
@@ -423,7 +423,7 @@ type resolverMutation interface {
 	RestoreNotifications(ctx context.Context, ids []string) (bool, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	Notifications(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.NotificationFilterInput) (*gqlmodel.NotificationConnection, error)
 	NotificationUnreadCount(ctx context.Context) (int, error)
 }

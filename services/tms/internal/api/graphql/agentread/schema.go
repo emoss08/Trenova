@@ -16,7 +16,7 @@ const workerLimit = 32
 // validated against those operations at startup.
 func newSchema(
 	shards []*gqlexec.Shard,
-	resolvers map[string]func() any,
+	resolvers map[string]any,
 	ops []Operation,
 ) Schema {
 	reg, err := gqlexec.Compile(shards)

@@ -159,7 +159,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carriercapacity.Posting)
-					return gqlexec.Resolver[resolverCarrierCapacityPosting](ec, "CarrierCapacityPosting").Rate(ctx, obj)
+					return gqlexec.Resolver[CarrierCapacityPostingResolver](ec, "CarrierCapacityPosting@carriercapacity").Rate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -339,7 +339,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createCarrierCapacityPosting_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateCarrierCapacityPosting(ctx, fc.Args["input"].(gqlmodel.CarrierCapacityPostingInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@carriercapacity").CreateCarrierCapacityPosting(ctx, fc.Args["input"].(gqlmodel.CarrierCapacityPostingInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierCapacityPosting2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarriercapacityᚐPosting),
 			},
@@ -352,7 +352,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateCarrierCapacityPosting_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateCarrierCapacityPosting(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.CarrierCapacityPostingInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@carriercapacity").UpdateCarrierCapacityPosting(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.CarrierCapacityPostingInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierCapacityPosting2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarriercapacityᚐPosting),
 			},
@@ -364,7 +364,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteCarrierCapacityPosting_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteCarrierCapacityPosting(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@carriercapacity").DeleteCarrierCapacityPosting(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -380,7 +380,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_carrierCapacityPostings_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierCapacityPostings(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["carrierId"].(*string), fc.Args["openOnly"].(*bool))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@carriercapacity").CarrierCapacityPostings(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["carrierId"].(*string), fc.Args["openOnly"].(*bool))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierCapacityPostingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierCapacityPostingConnection),
 			},
@@ -393,7 +393,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_carrierCapacityPosting_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierCapacityPosting(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@carriercapacity").CarrierCapacityPosting(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOCarrierCapacityPosting2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarriercapacityᚐPosting),
 			},
@@ -403,23 +403,23 @@ var Shard = &gqlexec.Shard{
 		{Name: "CarrierCapacityPostingInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCarrierCapacityPostingInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "CarrierCapacityPosting", Check: func(r any) bool { _, ok := r.(resolverCarrierCapacityPosting); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "CarrierCapacityPosting@carriercapacity", Check: func(r any) bool { _, ok := r.(CarrierCapacityPostingResolver); return ok }},
+		{Root: "Mutation@carriercapacity", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@carriercapacity", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverCarrierCapacityPosting interface {
+type CarrierCapacityPostingResolver interface {
 	Rate(ctx context.Context, obj *carriercapacity.Posting) (*string, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateCarrierCapacityPosting(ctx context.Context, input gqlmodel.CarrierCapacityPostingInput) (*carriercapacity.Posting, error)
 	UpdateCarrierCapacityPosting(ctx context.Context, id string, version int, input gqlmodel.CarrierCapacityPostingInput) (*carriercapacity.Posting, error)
 	DeleteCarrierCapacityPosting(ctx context.Context, id string, version int) (bool, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	CarrierCapacityPostings(ctx context.Context, input gqlmodel.DataTableConnectionInput, carrierID *string, openOnly *bool) (*gqlmodel.CarrierCapacityPostingConnection, error)
 	CarrierCapacityPosting(ctx context.Context, id string) (*carriercapacity.Posting, error)
 }

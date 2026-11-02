@@ -85,7 +85,7 @@ func trailerConnectionToModel(
 ) (*gqlmodel.TrailerConnection, error) {
 	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
-		result,
+		result.EdgeCursors,
 		func(node *trailer.Trailer, cursor string) *gqlmodel.TrailerEdge {
 			return &gqlmodel.TrailerEdge{
 				Node:   node,

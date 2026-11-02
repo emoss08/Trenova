@@ -651,7 +651,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
-					return gqlexec.Resolver[resolverAgentDefinition](ec, "AgentDefinition").Template(ctx, obj)
+					return gqlexec.Resolver[AgentDefinitionResolver](ec, "AgentDefinition@agentdefinition").Template(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagenttemplateᚐTemplate),
 			},
@@ -693,7 +693,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
-					return gqlexec.Resolver[resolverAgentDefinition](ec, "AgentDefinition").ToolTiers(ctx, obj)
+					return gqlexec.Resolver[AgentDefinitionResolver](ec, "AgentDefinition@agentdefinition").ToolTiers(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNJSON2map),
 			},
@@ -784,7 +784,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
-					return gqlexec.Resolver[resolverAgentDefinition](ec, "AgentDefinition").EventKinds(ctx, obj)
+					return gqlexec.Resolver[AgentDefinitionResolver](ec, "AgentDefinition@agentdefinition").EventKinds(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
 			},
@@ -844,7 +844,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
-					return gqlexec.Resolver[resolverAgentDefinition](ec, "AgentDefinition").MonthlyBudgetUsd(ctx, obj)
+					return gqlexec.Resolver[AgentDefinitionResolver](ec, "AgentDefinition@agentdefinition").MonthlyBudgetUsd(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -866,7 +866,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
-					return gqlexec.Resolver[resolverAgentDefinition](ec, "AgentDefinition").ToolDailyLimits(ctx, obj)
+					return gqlexec.Resolver[AgentDefinitionResolver](ec, "AgentDefinition@agentdefinition").ToolDailyLimits(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNJSON2map),
 			},
@@ -977,7 +977,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "AgentDefinition",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
-					return gqlexec.Resolver[resolverAgentDefinition](ec, "AgentDefinition").Delegates(ctx, obj)
+					return gqlexec.Resolver[AgentDefinitionResolver](ec, "AgentDefinition@agentdefinition").Delegates(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinitionᚄ),
 			},
@@ -1008,7 +1008,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "Role",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
-					return gqlexec.Resolver[resolverAgentDefinition](ec, "AgentDefinition").AccessRoles(ctx, obj)
+					return gqlexec.Resolver[AgentDefinitionResolver](ec, "AgentDefinition@agentdefinition").AccessRoles(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNRole2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋrbacᚐRoleᚄ),
 			},
@@ -1021,7 +1021,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "AgentStarter",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
-					return gqlexec.Resolver[resolverAgentDefinition](ec, "AgentDefinition").Starters(ctx, obj)
+					return gqlexec.Resolver[AgentDefinitionResolver](ec, "AgentDefinition@agentdefinition").Starters(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentStarter2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentstarterᚐStarterᚄ),
 			},
@@ -1051,7 +1051,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
-					return gqlexec.Resolver[resolverAgentDefinition](ec, "AgentDefinition").PendingProposals(ctx, obj)
+					return gqlexec.Resolver[AgentDefinitionResolver](ec, "AgentDefinition@agentdefinition").PendingProposals(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
@@ -1063,7 +1063,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
-					return gqlexec.Resolver[resolverAgentDefinition](ec, "AgentDefinition").OpenRuns(ctx, obj)
+					return gqlexec.Resolver[AgentDefinitionResolver](ec, "AgentDefinition@agentdefinition").OpenRuns(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
@@ -1315,7 +1315,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdraftports.AgentDraft)
-					return gqlexec.Resolver[resolverAgentDraft](ec, "AgentDraft").EventKinds(ctx, obj)
+					return gqlexec.Resolver[AgentDraftResolver](ec, "AgentDraft@agentdefinition").EventKinds(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
 			},
@@ -1347,7 +1347,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdraftports.AgentDraft)
-					return gqlexec.Resolver[resolverAgentDraft](ec, "AgentDraft").ToolTiers(ctx, obj)
+					return gqlexec.Resolver[AgentDraftResolver](ec, "AgentDraft@agentdefinition").ToolTiers(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNJSON2map),
 			},
@@ -1524,7 +1524,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentlint.Finding)
-					return gqlexec.Resolver[resolverAgentInstructionFinding](ec, "AgentInstructionFinding").Resource(ctx, obj)
+					return gqlexec.Resolver[AgentInstructionFindingResolver](ec, "AgentInstructionFinding@agentdefinition").Resource(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -1546,7 +1546,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentlint.Finding)
-					return gqlexec.Resolver[resolverAgentInstructionFinding](ec, "AgentInstructionFinding").Operation(ctx, obj)
+					return gqlexec.Resolver[AgentInstructionFindingResolver](ec, "AgentInstructionFinding@agentdefinition").Operation(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -1741,7 +1741,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_keepAgentTestPrompt_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").KeepAgentTestPrompt(ctx, fc.Args["agentId"].(string), fc.Args["prompt"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agentdefinition").KeepAgentTestPrompt(ctx, fc.Args["agentId"].(string), fc.Args["prompt"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentTestPrompt2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagenttestpromptᚐTestPrompt),
 			},
@@ -1753,7 +1753,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteAgentTestPrompt_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteAgentTestPrompt(ctx, fc.Args["agentId"].(string), fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agentdefinition").DeleteAgentTestPrompt(ctx, fc.Args["agentId"].(string), fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -1766,7 +1766,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_setAgentAccess_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetAgentAccess(ctx, fc.Args["agentId"].(string), fc.Args["input"].(gqlmodel.SetAgentAccessInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agentdefinition").SetAgentAccess(ctx, fc.Args["agentId"].(string), fc.Args["input"].(gqlmodel.SetAgentAccessInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinition),
 			},
@@ -1779,7 +1779,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_setAgentUnattendedRole_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetAgentUnattendedRole(ctx, fc.Args["agentId"].(string), fc.Args["roleId"].(*string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agentdefinition").SetAgentUnattendedRole(ctx, fc.Args["agentId"].(string), fc.Args["roleId"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinition),
 			},
@@ -1792,7 +1792,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_setRoleAgentAccess_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetRoleAgentAccess(ctx, fc.Args["roleId"].(string), fc.Args["agentIds"].([]string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agentdefinition").SetRoleAgentAccess(ctx, fc.Args["roleId"].(string), fc.Args["agentIds"].([]string))
 				},
 				Marshal: gqlexec.Marshal(marshalNRole2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋrbacᚐRole),
 			},
@@ -1805,7 +1805,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateAgentCapabilities_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateAgentCapabilities(ctx, fc.Args["agentId"].(string), fc.Args["input"].(gqlmodel.UpdateAgentCapabilitiesInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agentdefinition").UpdateAgentCapabilities(ctx, fc.Args["agentId"].(string), fc.Args["input"].(gqlmodel.UpdateAgentCapabilitiesInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentCapabilities2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentcapabilityportsᚐAgentCapabilities),
 			},
@@ -1818,7 +1818,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_draftAgentFromDescription_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DraftAgentFromDescription(ctx, fc.Args["description"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agentdefinition").DraftAgentFromDescription(ctx, fc.Args["description"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentDraft2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentdraftportsᚐAgentDraft),
 			},
@@ -1831,7 +1831,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_tightenAgentInstructions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").TightenAgentInstructions(ctx, fc.Args["instructions"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agentdefinition").TightenAgentInstructions(ctx, fc.Args["instructions"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentInstructionsTightened2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentdraftportsᚐTightenedAgentInstructions),
 			},
@@ -1874,7 +1874,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
-					return gqlexec.Resolver[resolverMyAgent](ec, "MyAgent").Template(ctx, obj)
+					return gqlexec.Resolver[MyAgentResolver](ec, "MyAgent@agentdefinition").Template(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagenttemplateᚐTemplate),
 			},
@@ -1927,7 +1927,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "AgentStarter",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
-					return gqlexec.Resolver[resolverMyAgent](ec, "MyAgent").Starters(ctx, obj)
+					return gqlexec.Resolver[MyAgentResolver](ec, "MyAgent@agentdefinition").Starters(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentStarter2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentstarterᚐStarterᚄ),
 			},
@@ -1940,7 +1940,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "MyAgent",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
-					return gqlexec.Resolver[resolverMyAgent](ec, "MyAgent").Delegates(ctx, obj)
+					return gqlexec.Resolver[MyAgentResolver](ec, "MyAgent@agentdefinition").Delegates(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNMyAgent2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinitionᚄ),
 			},
@@ -2055,7 +2055,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentDefinitions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentDefinitions(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentdefinition").AgentDefinitions(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentDefinitionConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentDefinitionConnection),
 			},
@@ -2069,7 +2069,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentInstructionLint_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentInstructionLint(ctx, fc.Args["input"].(gqlmodel.AgentInstructionLintInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentdefinition").AgentInstructionLint(ctx, fc.Args["input"].(gqlmodel.AgentInstructionLintInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentInstructionFinding2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentlintᚐFindingᚄ),
 			},
@@ -2083,7 +2083,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentShadowReport_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentShadowReport(ctx, fc.Args["agentId"].(string), fc.Args["days"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentdefinition").AgentShadowReport(ctx, fc.Args["agentId"].(string), fc.Args["days"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentShadowReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentshadowᚐReport),
 			},
@@ -2096,7 +2096,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentDefinition_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentDefinition(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentdefinition").AgentDefinition(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinition),
 			},
@@ -2110,7 +2110,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentDefinitionVersions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentDefinitionVersions(ctx, fc.Args["agentId"].(string), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentdefinition").AgentDefinitionVersions(ctx, fc.Args["agentId"].(string), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentDefinitionVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentversionᚐDefinitionVersionᚄ),
 			},
@@ -2124,7 +2124,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentDefinitionVersionDraft_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentDefinitionVersionDraft(ctx, fc.Args["agentId"].(string), fc.Args["version"].(int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentdefinition").AgentDefinitionVersionDraft(ctx, fc.Args["agentId"].(string), fc.Args["version"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinition),
 			},
@@ -2138,7 +2138,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_myAgents_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").MyAgents(ctx, fc.Args["input"].(gqlmodel.MyAgentsInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentdefinition").MyAgents(ctx, fc.Args["input"].(gqlmodel.MyAgentsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNMyAgentConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMyAgentConnection),
 			},
@@ -2152,7 +2152,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_myAgentMatch_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").MyAgentMatch(ctx, fc.Args["input"].(gqlmodel.MyAgentMatchInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentdefinition").MyAgentMatch(ctx, fc.Args["input"].(gqlmodel.MyAgentMatchInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNMyAgentMatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMyAgentMatch),
 			},
@@ -2166,7 +2166,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_suggestedAgentAudience_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").SuggestedAgentAudience(ctx, fc.Args["agentId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentdefinition").SuggestedAgentAudience(ctx, fc.Args["agentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentAudienceSuggestion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentAudienceSuggestion),
 			},
@@ -2180,7 +2180,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentAccessPreview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentAccessPreview(ctx, fc.Args["input"].(gqlmodel.AgentAccessPreviewInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentdefinition").AgentAccessPreview(ctx, fc.Args["input"].(gqlmodel.AgentAccessPreviewInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentAccessPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentAccessPreview),
 			},
@@ -2194,7 +2194,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentTestPrompts_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentTestPrompts(ctx, fc.Args["agentId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentdefinition").AgentTestPrompts(ctx, fc.Args["agentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentTestPrompt2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagenttestpromptᚐTestPromptᚄ),
 			},
@@ -2208,7 +2208,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentCapabilities_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentCapabilities(ctx, fc.Args["agentId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentdefinition").AgentCapabilities(ctx, fc.Args["agentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentCapabilities2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentcapabilityportsᚐAgentCapabilities),
 			},
@@ -2219,7 +2219,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentDraftingAvailable(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentdefinition").AgentDraftingAvailable(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -2236,16 +2236,16 @@ var Shard = &gqlexec.Shard{
 		{Name: "UpdateAgentCapabilitiesInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateAgentCapabilitiesInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "AgentDefinition", Check: func(r any) bool { _, ok := r.(resolverAgentDefinition); return ok }},
-		{Root: "AgentDraft", Check: func(r any) bool { _, ok := r.(resolverAgentDraft); return ok }},
-		{Root: "AgentInstructionFinding", Check: func(r any) bool { _, ok := r.(resolverAgentInstructionFinding); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "MyAgent", Check: func(r any) bool { _, ok := r.(resolverMyAgent); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "AgentDefinition@agentdefinition", Check: func(r any) bool { _, ok := r.(AgentDefinitionResolver); return ok }},
+		{Root: "AgentDraft@agentdefinition", Check: func(r any) bool { _, ok := r.(AgentDraftResolver); return ok }},
+		{Root: "AgentInstructionFinding@agentdefinition", Check: func(r any) bool { _, ok := r.(AgentInstructionFindingResolver); return ok }},
+		{Root: "Mutation@agentdefinition", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "MyAgent@agentdefinition", Check: func(r any) bool { _, ok := r.(MyAgentResolver); return ok }},
+		{Root: "Query@agentdefinition", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverAgentDefinition interface {
+type AgentDefinitionResolver interface {
 	Template(ctx context.Context, obj *agentdefinition.Definition) (*agenttemplate.Template, error)
 	ToolTiers(ctx context.Context, obj *agentdefinition.Definition) (map[string]any, error)
 	EventKinds(ctx context.Context, obj *agentdefinition.Definition) ([]string, error)
@@ -2258,17 +2258,17 @@ type resolverAgentDefinition interface {
 	OpenRuns(ctx context.Context, obj *agentdefinition.Definition) (int, error)
 }
 
-type resolverAgentDraft interface {
+type AgentDraftResolver interface {
 	EventKinds(ctx context.Context, obj *agentdraftports.AgentDraft) ([]string, error)
 	ToolTiers(ctx context.Context, obj *agentdraftports.AgentDraft) (map[string]any, error)
 }
 
-type resolverAgentInstructionFinding interface {
+type AgentInstructionFindingResolver interface {
 	Resource(ctx context.Context, obj *agentlint.Finding) (string, error)
 	Operation(ctx context.Context, obj *agentlint.Finding) (string, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	KeepAgentTestPrompt(ctx context.Context, agentID string, prompt string) (*agenttestprompt.TestPrompt, error)
 	DeleteAgentTestPrompt(ctx context.Context, agentID string, id string) (bool, error)
 	SetAgentAccess(ctx context.Context, agentID string, input gqlmodel.SetAgentAccessInput) (*agentdefinition.Definition, error)
@@ -2279,13 +2279,13 @@ type resolverMutation interface {
 	TightenAgentInstructions(ctx context.Context, instructions string) (*agentdraftports.TightenedAgentInstructions, error)
 }
 
-type resolverMyAgent interface {
+type MyAgentResolver interface {
 	Template(ctx context.Context, obj *agentdefinition.Definition) (*agenttemplate.Template, error)
 	Starters(ctx context.Context, obj *agentdefinition.Definition) ([]*agentstarter.Starter, error)
 	Delegates(ctx context.Context, obj *agentdefinition.Definition) ([]*agentdefinition.Definition, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	AgentDefinitions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentDefinitionConnection, error)
 	AgentInstructionLint(ctx context.Context, input gqlmodel.AgentInstructionLintInput) ([]*agentlint.Finding, error)
 	AgentShadowReport(ctx context.Context, agentID string, days *int) (*agentshadow.Report, error)

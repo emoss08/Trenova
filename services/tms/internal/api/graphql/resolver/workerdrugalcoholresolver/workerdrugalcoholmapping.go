@@ -343,7 +343,7 @@ func randomPoolCursorConnectionToModel(
 ) (*gqlmodel.DOTRandomPoolConnection, error) {
 	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
-		result,
+		result.EdgeCursors,
 		func(node *dotrandom.DOTRandomPool, cursor string) *gqlmodel.DOTRandomPoolEdge {
 			return &gqlmodel.DOTRandomPoolEdge{Node: node, Cursor: cursor}
 		},

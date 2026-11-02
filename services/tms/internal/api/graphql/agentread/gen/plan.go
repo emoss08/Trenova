@@ -15,22 +15,12 @@ const (
 )
 
 type executorPlan struct {
-	Shards     []shardImport
-	Imports    []importLine
-	Params     []paramField
-	Core       string
-	Deps       []depsBlock
-	Objects    []*objectResolver
-	Composites []*compositePlan
-}
-
-// compositePlan is an object the read executor builds as a composite, as
-// the full root does, of the included packages' shares only.
-type compositePlan struct {
-	Object  string
-	Var     string
-	Type    string
-	Members []*rootResolver
+	Shards  []shardImport
+	Imports []importLine
+	Params  []paramField
+	Core    string
+	Deps    []depsBlock
+	Parts   []*partResolver
 }
 
 type shardImport struct {
@@ -96,7 +86,7 @@ func planExecutor(schema *ast.Schema, opts *options, bindings []*binding) (*exec
 	if err != nil {
 		return nil, err
 	}
-	p.addResolvers(shards, required)
+	p.addResolvers(required)
 	p.use(w.services.core)
 	p.addDeps()
 	p.addParams()
@@ -129,48 +119,19 @@ func (p *planner) addShards(generatedDir string, shards []string) ([]string, err
 	return sortedKeys(required), nil
 }
 
-// addResolvers binds every resolver root a shard asks for: a composite
-// (Query, Mutation, or an object whose resolvers span schema files) of the
-// included packages' shares, and any other object's resolver as the full
+// addResolvers binds every resolver a shard asks for, each built as the full
 // root builds it.
-func (p *planner) addResolvers(shards, required []string) {
-	for _, root := range required {
-		if p.w.composites[root] {
-			p.addComposite(shards, root)
-			continue
-		}
-		resolver, ok := p.w.objects[root]
+func (p *planner) addResolvers(required []string) {
+	for _, key := range required {
+		part, ok := p.w.parts[key]
 		if !ok {
-			p.problems = append(p.problems, "no resolver root builds "+root)
+			p.problems = append(p.problems, "no resolver root builds "+key)
 			continue
 		}
-		p.plan.Objects = append(p.plan.Objects, resolver)
-		p.deps[resolver.Deps] = struct{}{}
-		p.packages[resolver.Package] = struct{}{}
+		p.plan.Parts = append(p.plan.Parts, part)
+		p.deps[part.Deps] = struct{}{}
+		p.packages[part.Package] = struct{}{}
 	}
-}
-
-func (p *planner) addComposite(shards []string, root string) {
-	lower := strings.ToLower(root[:1]) + root[1:]
-	composite := &compositePlan{
-		Object: root,
-		Var:    lower,
-		Type:   lower + "Resolver",
-	}
-	for _, shard := range shards {
-		resolver, ok := p.w.roots[shard+root]
-		if !ok {
-			continue
-		}
-		composite.Members = append(composite.Members, resolver)
-		p.deps[resolver.Deps] = struct{}{}
-		p.packages[resolver.Package] = struct{}{}
-	}
-	if len(composite.Members) == 0 {
-		p.problems = append(p.problems, "no included package builds a share of "+root)
-		return
-	}
-	p.plan.Composites = append(p.plan.Composites, composite)
 }
 
 // use records the Params fields and packages an expression copied from

@@ -37,7 +37,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_routingGuides_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").RoutingGuides(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@routingguide").RoutingGuides(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNRoutingGuideConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRoutingGuideConnection),
 			},
@@ -50,7 +50,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_routingGuide_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").RoutingGuide(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@routingguide").RoutingGuide(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalORoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐRoutingGuide),
 			},
@@ -63,7 +63,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_matchRoutingGuide_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").MatchRoutingGuide(ctx, fc.Args["input"].(gqlmodel.MatchRoutingGuideInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@routingguide").MatchRoutingGuide(ctx, fc.Args["input"].(gqlmodel.MatchRoutingGuideInput))
 				},
 				Marshal: gqlexec.Marshal(marshalORoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐRoutingGuide),
 			},
@@ -383,7 +383,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuideEntry)
-					return gqlexec.Resolver[resolverRoutingGuideEntry](ec, "RoutingGuideEntry").Rate(ctx, obj)
+					return gqlexec.Resolver[RoutingGuideEntryResolver](ec, "RoutingGuideEntry@routingguide").Rate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -463,18 +463,18 @@ var Shard = &gqlexec.Shard{
 		{Name: "MatchRoutingGuideInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputMatchRoutingGuideInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "RoutingGuideEntry", Check: func(r any) bool { _, ok := r.(resolverRoutingGuideEntry); return ok }},
+		{Root: "Query@routingguide", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "RoutingGuideEntry@routingguide", Check: func(r any) bool { _, ok := r.(RoutingGuideEntryResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	RoutingGuides(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RoutingGuideConnection, error)
 	RoutingGuide(ctx context.Context, id string) (*tender.RoutingGuide, error)
 	MatchRoutingGuide(ctx context.Context, input gqlmodel.MatchRoutingGuideInput) (*tender.RoutingGuide, error)
 }
 
-type resolverRoutingGuideEntry interface {
+type RoutingGuideEntryResolver interface {
 	Rate(ctx context.Context, obj *tender.RoutingGuideEntry) (string, error)
 }
 

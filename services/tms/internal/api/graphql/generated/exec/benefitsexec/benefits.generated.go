@@ -309,7 +309,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createBenefitPlan_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateBenefitPlan(ctx, fc.Args["input"].(gqlmodel.BenefitPlanInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@benefits").CreateBenefitPlan(ctx, fc.Args["input"].(gqlmodel.BenefitPlanInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNBenefitPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitPlan),
 			},
@@ -322,7 +322,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateBenefitPlan_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateBenefitPlan(ctx, fc.Args["input"].(gqlmodel.UpdateBenefitPlanInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@benefits").UpdateBenefitPlan(ctx, fc.Args["input"].(gqlmodel.UpdateBenefitPlanInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNBenefitPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitPlan),
 			},
@@ -335,7 +335,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_enrollBenefit_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").EnrollBenefit(ctx, fc.Args["input"].(gqlmodel.EnrollBenefitInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@benefits").EnrollBenefit(ctx, fc.Args["input"].(gqlmodel.EnrollBenefitInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerBenefitEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐWorkerBenefitEnrollment),
 			},
@@ -348,7 +348,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_endBenefitEnrollment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").EndBenefitEnrollment(ctx, fc.Args["input"].(gqlmodel.EndBenefitEnrollmentInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@benefits").EndBenefitEnrollment(ctx, fc.Args["input"].(gqlmodel.EndBenefitEnrollmentInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerBenefitEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐWorkerBenefitEnrollment),
 			},
@@ -364,7 +364,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_benefitPlans_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").BenefitPlans(ctx, fc.Args["activeOnly"].(*bool), fc.Args["planYear"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@benefits").BenefitPlans(ctx, fc.Args["activeOnly"].(*bool), fc.Args["planYear"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNBenefitPlan2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitPlanᚄ),
 			},
@@ -378,7 +378,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_benefitPlan_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").BenefitPlan(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@benefits").BenefitPlan(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBenefitPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitPlan),
 			},
@@ -392,7 +392,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerBenefitEnrollments_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerBenefitEnrollments(ctx, fc.Args["workerId"].(string), fc.Args["openOnly"].(*bool))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@benefits").WorkerBenefitEnrollments(ctx, fc.Args["workerId"].(string), fc.Args["openOnly"].(*bool))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerBenefitEnrollment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐWorkerBenefitEnrollmentᚄ),
 			},
@@ -406,7 +406,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_benefitEnrollments_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").BenefitEnrollments(ctx, fc.Args["planId"].(*string), fc.Args["statuses"].([]paybenefit.BenefitEnrollmentStatus), fc.Args["openOnly"].(*bool), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@benefits").BenefitEnrollments(ctx, fc.Args["planId"].(*string), fc.Args["statuses"].([]paybenefit.BenefitEnrollmentStatus), fc.Args["openOnly"].(*bool), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerBenefitEnrollment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐWorkerBenefitEnrollmentᚄ),
 			},
@@ -420,7 +420,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_benefitCosts_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").BenefitCosts(ctx, fc.Args["planYear"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@benefits").BenefitCosts(ctx, fc.Args["planYear"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNBenefitCostRow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋportsᚋdriverpayportsᚐBenefitCostRowᚄ),
 			},
@@ -434,7 +434,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerTotalCompensation_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerTotalCompensation(ctx, fc.Args["workerId"].(string), fc.Args["planYear"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@benefits").WorkerTotalCompensation(ctx, fc.Args["workerId"].(string), fc.Args["planYear"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNTotalCompensation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋbenefitsserviceᚐTotalCompensation),
 			},
@@ -448,7 +448,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_myTotalCompensation_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").MyTotalCompensation(ctx, fc.Args["planYear"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@benefits").MyTotalCompensation(ctx, fc.Args["planYear"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNTotalCompensation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋbenefitsserviceᚐTotalCompensation),
 			},
@@ -604,7 +604,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*paybenefit.WorkerBenefitEnrollment)
-					return gqlexec.Resolver[resolverWorkerBenefitEnrollment](ec, "WorkerBenefitEnrollment").EffectiveTo(ctx, obj)
+					return gqlexec.Resolver[WorkerBenefitEnrollmentResolver](ec, "WorkerBenefitEnrollment@benefits").EffectiveTo(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -635,7 +635,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*paybenefit.WorkerBenefitEnrollment)
-					return gqlexec.Resolver[resolverWorkerBenefitEnrollment](ec, "WorkerBenefitEnrollment").RecurringDeductionID(ctx, obj)
+					return gqlexec.Resolver[WorkerBenefitEnrollmentResolver](ec, "WorkerBenefitEnrollment@benefits").RecurringDeductionID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -706,20 +706,20 @@ var Shard = &gqlexec.Shard{
 		{Name: "UpdateBenefitPlanInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateBenefitPlanInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "WorkerBenefitEnrollment", Check: func(r any) bool { _, ok := r.(resolverWorkerBenefitEnrollment); return ok }},
+		{Root: "Mutation@benefits", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@benefits", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "WorkerBenefitEnrollment@benefits", Check: func(r any) bool { _, ok := r.(WorkerBenefitEnrollmentResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateBenefitPlan(ctx context.Context, input gqlmodel.BenefitPlanInput) (*paybenefit.BenefitPlan, error)
 	UpdateBenefitPlan(ctx context.Context, input gqlmodel.UpdateBenefitPlanInput) (*paybenefit.BenefitPlan, error)
 	EnrollBenefit(ctx context.Context, input gqlmodel.EnrollBenefitInput) (*paybenefit.WorkerBenefitEnrollment, error)
 	EndBenefitEnrollment(ctx context.Context, input gqlmodel.EndBenefitEnrollmentInput) (*paybenefit.WorkerBenefitEnrollment, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	BenefitPlans(ctx context.Context, activeOnly *bool, planYear *int) ([]*paybenefit.BenefitPlan, error)
 	BenefitPlan(ctx context.Context, id string) (*paybenefit.BenefitPlan, error)
 	WorkerBenefitEnrollments(ctx context.Context, workerID string, openOnly *bool) ([]*paybenefit.WorkerBenefitEnrollment, error)
@@ -729,7 +729,7 @@ type resolverQuery interface {
 	MyTotalCompensation(ctx context.Context, planYear *int) (*benefitsservice.TotalCompensation, error)
 }
 
-type resolverWorkerBenefitEnrollment interface {
+type WorkerBenefitEnrollmentResolver interface {
 	EffectiveTo(ctx context.Context, obj *paybenefit.WorkerBenefitEnrollment) (*int, error)
 	RecurringDeductionID(ctx context.Context, obj *paybenefit.WorkerBenefitEnrollment) (*string, error)
 }

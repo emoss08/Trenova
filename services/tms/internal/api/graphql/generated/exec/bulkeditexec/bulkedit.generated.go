@@ -301,7 +301,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_startBulkEdit_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").StartBulkEdit(ctx, fc.Args["input"].(gqlmodel.BulkEditInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@bulkedit").StartBulkEdit(ctx, fc.Args["input"].(gqlmodel.BulkEditInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNBulkEditJob2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkEditJob),
 			},
@@ -314,7 +314,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_undoMyBulkEdit_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UndoMyBulkEdit(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@bulkedit").UndoMyBulkEdit(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBulkEditJob2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkEditJob),
 			},
@@ -330,7 +330,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_bulkEditFields_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").BulkEditFields(ctx, fc.Args["resource"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@bulkedit").BulkEditFields(ctx, fc.Args["resource"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBulkEditField2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkEditFieldᚄ),
 			},
@@ -344,7 +344,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_previewBulkEdit_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PreviewBulkEdit(ctx, fc.Args["input"].(gqlmodel.BulkEditInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@bulkedit").PreviewBulkEdit(ctx, fc.Args["input"].(gqlmodel.BulkEditInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNBulkEditPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkEditPreview),
 			},
@@ -357,7 +357,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_myBulkEdit_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").MyBulkEdit(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@bulkedit").MyBulkEdit(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOBulkEditJob2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkEditJob),
 			},
@@ -371,7 +371,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_myBulkEdits_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").MyBulkEdits(ctx, fc.Args["resource"].(*string), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@bulkedit").MyBulkEdits(ctx, fc.Args["resource"].(*string), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNBulkEditJob2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkEditJobᚄ),
 			},
@@ -382,17 +382,17 @@ var Shard = &gqlexec.Shard{
 		{Name: "BulkEditSelectionInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputBulkEditSelectionInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@bulkedit", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@bulkedit", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	StartBulkEdit(ctx context.Context, input gqlmodel.BulkEditInput) (*gqlmodel.BulkEditJob, error)
 	UndoMyBulkEdit(ctx context.Context, id string) (*gqlmodel.BulkEditJob, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	BulkEditFields(ctx context.Context, resource string) ([]*gqlmodel.BulkEditField, error)
 	PreviewBulkEdit(ctx context.Context, input gqlmodel.BulkEditInput) (*gqlmodel.BulkEditPreview, error)
 	MyBulkEdit(ctx context.Context, id string) (*gqlmodel.BulkEditJob, error)

@@ -102,7 +102,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*distanceprofile.DistanceProfile)
-					return gqlexec.Resolver[resolverDistanceProfile](ec, "DistanceProfile").Provider(ctx, obj)
+					return gqlexec.Resolver[DistanceProfileResolver](ec, "DistanceProfile@distanceprofile").Provider(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -334,7 +334,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_distanceProfiles_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DistanceProfiles(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@distanceprofile").DistanceProfiles(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDistanceProfileConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDistanceProfileConnection),
 			},
@@ -347,23 +347,23 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_distanceProfile_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DistanceProfile(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@distanceprofile").DistanceProfile(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalODistanceProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋdistanceprofileᚐDistanceProfile),
 			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "DistanceProfile", Check: func(r any) bool { _, ok := r.(resolverDistanceProfile); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "DistanceProfile@distanceprofile", Check: func(r any) bool { _, ok := r.(DistanceProfileResolver); return ok }},
+		{Root: "Query@distanceprofile", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverDistanceProfile interface {
+type DistanceProfileResolver interface {
 	Provider(ctx context.Context, obj *distanceprofile.DistanceProfile) (string, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	DistanceProfiles(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DistanceProfileConnection, error)
 	DistanceProfile(ctx context.Context, id string) (*distanceprofile.DistanceProfile, error)
 }

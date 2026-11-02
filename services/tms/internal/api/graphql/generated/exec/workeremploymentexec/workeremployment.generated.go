@@ -37,7 +37,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_recordWorkerEmploymentEvent_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordWorkerEmploymentEvent(ctx, fc.Args["input"].(gqlmodel.RecordWorkerEmploymentEventInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workeremployment").RecordWorkerEmploymentEvent(ctx, fc.Args["input"].(gqlmodel.RecordWorkerEmploymentEventInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNRecordWorkerEmploymentEventPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeremploymentserviceᚐRecordResult),
 			},
@@ -50,7 +50,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_amendWorkerEmploymentEvent_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AmendWorkerEmploymentEvent(ctx, fc.Args["input"].(gqlmodel.AmendWorkerEmploymentEventInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workeremployment").AmendWorkerEmploymentEvent(ctx, fc.Args["input"].(gqlmodel.AmendWorkerEmploymentEventInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentEvent),
 			},
@@ -66,7 +66,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerEmploymentEvents_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerEmploymentEvents(ctx, fc.Args["workerId"].(string), fc.Args["kinds"].([]employment.EmploymentEventKind))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workeremployment").WorkerEmploymentEvents(ctx, fc.Args["workerId"].(string), fc.Args["kinds"].([]employment.EmploymentEventKind))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentEvent2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentEventᚄ),
 			},
@@ -80,7 +80,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerEmploymentEvent_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerEmploymentEvent(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workeremployment").WorkerEmploymentEvent(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentEvent),
 			},
@@ -178,7 +178,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workeremploymentservice.CascadeSummary)
-					return gqlexec.Resolver[resolverWorkerEmploymentCascade](ec, "WorkerEmploymentCascade").PTOPaidOutDays(ctx, obj)
+					return gqlexec.Resolver[WorkerEmploymentCascadeResolver](ec, "WorkerEmploymentCascade@workeremployment").PTOPaidOutDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -190,7 +190,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workeremploymentservice.CascadeSummary)
-					return gqlexec.Resolver[resolverWorkerEmploymentCascade](ec, "WorkerEmploymentCascade").PTOForfeitedDays(ctx, obj)
+					return gqlexec.Resolver[WorkerEmploymentCascadeResolver](ec, "WorkerEmploymentCascade@workeremployment").PTOForfeitedDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -313,7 +313,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "WorkerEmploymentValue",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*employment.WorkerEmploymentEvent)
-					return gqlexec.Resolver[resolverWorkerEmploymentEvent](ec, "WorkerEmploymentEvent").FromValues(ctx, obj)
+					return gqlexec.Resolver[WorkerEmploymentEventResolver](ec, "WorkerEmploymentEvent@workeremployment").FromValues(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentValue2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerEmploymentValueᚄ),
 			},
@@ -326,7 +326,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "WorkerEmploymentValue",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*employment.WorkerEmploymentEvent)
-					return gqlexec.Resolver[resolverWorkerEmploymentEvent](ec, "WorkerEmploymentEvent").ToValues(ctx, obj)
+					return gqlexec.Resolver[WorkerEmploymentEventResolver](ec, "WorkerEmploymentEvent@workeremployment").ToValues(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentValue2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerEmploymentValueᚄ),
 			},
@@ -337,7 +337,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*employment.WorkerEmploymentEvent)
-					return gqlexec.Resolver[resolverWorkerEmploymentEvent](ec, "WorkerEmploymentEvent").DocumentID(ctx, obj)
+					return gqlexec.Resolver[WorkerEmploymentEventResolver](ec, "WorkerEmploymentEvent@workeremployment").DocumentID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -358,7 +358,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*employment.WorkerEmploymentEvent)
-					return gqlexec.Resolver[resolverWorkerEmploymentEvent](ec, "WorkerEmploymentEvent").RecordedByID(ctx, obj)
+					return gqlexec.Resolver[WorkerEmploymentEventResolver](ec, "WorkerEmploymentEvent@workeremployment").RecordedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -379,7 +379,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*employment.WorkerEmploymentEvent)
-					return gqlexec.Resolver[resolverWorkerEmploymentEvent](ec, "WorkerEmploymentEvent").AmendedByID(ctx, obj)
+					return gqlexec.Resolver[WorkerEmploymentEventResolver](ec, "WorkerEmploymentEvent@workeremployment").AmendedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -470,29 +470,29 @@ var Shard = &gqlexec.Shard{
 		{Name: "RecordWorkerEmploymentEventInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRecordWorkerEmploymentEventInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "WorkerEmploymentCascade", Check: func(r any) bool { _, ok := r.(resolverWorkerEmploymentCascade); return ok }},
-		{Root: "WorkerEmploymentEvent", Check: func(r any) bool { _, ok := r.(resolverWorkerEmploymentEvent); return ok }},
+		{Root: "Mutation@workeremployment", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@workeremployment", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "WorkerEmploymentCascade@workeremployment", Check: func(r any) bool { _, ok := r.(WorkerEmploymentCascadeResolver); return ok }},
+		{Root: "WorkerEmploymentEvent@workeremployment", Check: func(r any) bool { _, ok := r.(WorkerEmploymentEventResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	RecordWorkerEmploymentEvent(ctx context.Context, input gqlmodel.RecordWorkerEmploymentEventInput) (*workeremploymentservice.RecordResult, error)
 	AmendWorkerEmploymentEvent(ctx context.Context, input gqlmodel.AmendWorkerEmploymentEventInput) (*employment.WorkerEmploymentEvent, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	WorkerEmploymentEvents(ctx context.Context, workerID string, kinds []employment.EmploymentEventKind) ([]*employment.WorkerEmploymentEvent, error)
 	WorkerEmploymentEvent(ctx context.Context, id string) (*employment.WorkerEmploymentEvent, error)
 }
 
-type resolverWorkerEmploymentCascade interface {
+type WorkerEmploymentCascadeResolver interface {
 	PTOPaidOutDays(ctx context.Context, obj *workeremploymentservice.CascadeSummary) (string, error)
 	PTOForfeitedDays(ctx context.Context, obj *workeremploymentservice.CascadeSummary) (string, error)
 }
 
-type resolverWorkerEmploymentEvent interface {
+type WorkerEmploymentEventResolver interface {
 	FromValues(ctx context.Context, obj *employment.WorkerEmploymentEvent) ([]*gqlmodel.WorkerEmploymentValue, error)
 	ToValues(ctx context.Context, obj *employment.WorkerEmploymentEvent) ([]*gqlmodel.WorkerEmploymentValue, error)
 	DocumentID(ctx context.Context, obj *employment.WorkerEmploymentEvent) (*string, error)

@@ -34,7 +34,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_serviceFailureReasonCodes_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ServiceFailureReasonCodes(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@servicefailurereasoncode").ServiceFailureReasonCodes(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNServiceFailureReasonCodeConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐServiceFailureReasonCodeConnection),
 			},
@@ -47,7 +47,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_serviceFailureReasonCode_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ServiceFailureReasonCode(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@servicefailurereasoncode").ServiceFailureReasonCode(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOServiceFailureReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐReasonCode),
 			},
@@ -320,11 +320,11 @@ var Shard = &gqlexec.Shard{
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Query@servicefailurereasoncode", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	ServiceFailureReasonCodes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ServiceFailureReasonCodeConnection, error)
 	ServiceFailureReasonCode(ctx context.Context, id string) (*servicefailure.ReasonCode, error)
 }

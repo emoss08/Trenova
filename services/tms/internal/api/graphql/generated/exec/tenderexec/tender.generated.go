@@ -32,7 +32,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_tender_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Tender(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@tender").Tender(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐTender),
 			},
@@ -46,7 +46,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_tendersByShipment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").TendersByShipment(ctx, fc.Args["shipmentId"].(string), fc.Args["shipmentMoveId"].(*string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@tender").TendersByShipment(ctx, fc.Args["shipmentId"].(string), fc.Args["shipmentMoveId"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNTender2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐTenderᚄ),
 			},
@@ -59,7 +59,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_liveTenderByMove_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").LiveTenderByMove(ctx, fc.Args["moveId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@tender").LiveTenderByMove(ctx, fc.Args["moveId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐTender),
 			},
@@ -294,7 +294,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "RoutingGuide",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
-					return gqlexec.Resolver[resolverTender](ec, "Tender").RoutingGuide(ctx, obj)
+					return gqlexec.Resolver[TenderResolver](ec, "Tender@tender").RoutingGuide(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalORoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐRoutingGuide),
 			},
@@ -388,7 +388,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
-					return gqlexec.Resolver[resolverTenderOffer](ec, "TenderOffer").Rate(ctx, obj)
+					return gqlexec.Resolver[TenderOfferResolver](ec, "TenderOffer@tender").Rate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -466,7 +466,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
-					return gqlexec.Resolver[resolverTenderOffer](ec, "TenderOffer").ResponseSource(ctx, obj)
+					return gqlexec.Resolver[TenderOfferResolver](ec, "TenderOffer@tender").ResponseSource(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTenderResponseSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐResponseSource),
 			},
@@ -534,7 +534,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
-					return gqlexec.Resolver[resolverTenderOffer](ec, "TenderOffer").CounterRate(ctx, obj)
+					return gqlexec.Resolver[TenderOfferResolver](ec, "TenderOffer@tender").CounterRate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -564,7 +564,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
-					return gqlexec.Resolver[resolverTenderOffer](ec, "TenderOffer").CounterMarginPercent(ctx, obj)
+					return gqlexec.Resolver[TenderOfferResolver](ec, "TenderOffer@tender").CounterMarginPercent(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -604,7 +604,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
-					return gqlexec.Resolver[resolverTenderOffer](ec, "TenderOffer").AgreedRate(ctx, obj)
+					return gqlexec.Resolver[TenderOfferResolver](ec, "TenderOffer@tender").AgreedRate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -688,28 +688,28 @@ var Shard = &gqlexec.Shard{
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "Tender", Check: func(r any) bool { _, ok := r.(resolverTender); return ok }},
-		{Root: "TenderOffer", Check: func(r any) bool { _, ok := r.(resolverTenderOffer); return ok }},
+		{Root: "Query@tender", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "TenderOffer@tender", Check: func(r any) bool { _, ok := r.(TenderOfferResolver); return ok }},
+		{Root: "Tender@tender", Check: func(r any) bool { _, ok := r.(TenderResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	Tender(ctx context.Context, id string) (*tender.Tender, error)
 	TendersByShipment(ctx context.Context, shipmentID string, shipmentMoveID *string) ([]*tender.Tender, error)
 	LiveTenderByMove(ctx context.Context, moveID string) (*tender.Tender, error)
 }
 
-type resolverTender interface {
-	RoutingGuide(ctx context.Context, obj *tender.Tender) (*tender.RoutingGuide, error)
-}
-
-type resolverTenderOffer interface {
+type TenderOfferResolver interface {
 	Rate(ctx context.Context, obj *tender.TenderOffer) (string, error)
 	ResponseSource(ctx context.Context, obj *tender.TenderOffer) (*tender.ResponseSource, error)
 	CounterRate(ctx context.Context, obj *tender.TenderOffer) (*string, error)
 	CounterMarginPercent(ctx context.Context, obj *tender.TenderOffer) (*string, error)
 	AgreedRate(ctx context.Context, obj *tender.TenderOffer) (string, error)
+}
+
+type TenderResolver interface {
+	RoutingGuide(ctx context.Context, obj *tender.Tender) (*tender.RoutingGuide, error)
 }
 
 var (

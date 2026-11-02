@@ -370,7 +370,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fleetsafety.FleetSafetyRank)
-					return gqlexec.Resolver[resolverFleetSafetyRank](ec, "FleetSafetyRank").FleetCodeID(ctx, obj)
+					return gqlexec.Resolver[FleetSafetyRankResolver](ec, "FleetSafetyRank@fleetsafety").FleetCodeID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -474,7 +474,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fleetsafety.FleetSafetyTerminal)
-					return gqlexec.Resolver[resolverFleetSafetyTerminal](ec, "FleetSafetyTerminal").FleetCodeID(ctx, obj)
+					return gqlexec.Resolver[FleetSafetyTerminalResolver](ec, "FleetSafetyTerminal@fleetsafety").FleetCodeID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -641,7 +641,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_recordSafetyViolation_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordSafetyViolation(ctx, fc.Args["input"].(gqlmodel.RecordSafetyViolationInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fleetsafety").RecordSafetyViolation(ctx, fc.Args["input"].(gqlmodel.RecordSafetyViolationInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerSafetyViolation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋfleetsafetyᚐWorkerSafetyViolation),
 			},
@@ -654,7 +654,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateSafetyViolation_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateSafetyViolation(ctx, fc.Args["input"].(gqlmodel.UpdateSafetyViolationInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fleetsafety").UpdateSafetyViolation(ctx, fc.Args["input"].(gqlmodel.UpdateSafetyViolationInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerSafetyViolation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋfleetsafetyᚐWorkerSafetyViolation),
 			},
@@ -666,7 +666,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteSafetyViolation_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteSafetyViolation(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fleetsafety").DeleteSafetyViolation(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -682,7 +682,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_fleetSafety_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FleetSafety(ctx, fc.Args["input"].(*gqlmodel.FleetSafetyInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fleetsafety").FleetSafety(ctx, fc.Args["input"].(*gqlmodel.FleetSafetyInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFleetSafety2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋfleetsafetyᚐFleetSafety),
 			},
@@ -696,7 +696,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerSafetyViolations_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerSafetyViolations(ctx, fc.Args["safetyEventId"].(*string), fc.Args["workerId"].(*string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fleetsafety").WorkerSafetyViolations(ctx, fc.Args["safetyEventId"].(*string), fc.Args["workerId"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerSafetyViolation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋfleetsafetyᚐWorkerSafetyViolationᚄ),
 			},
@@ -839,28 +839,28 @@ var Shard = &gqlexec.Shard{
 		{Name: "UpdateSafetyViolationInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateSafetyViolationInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "FleetSafetyRank", Check: func(r any) bool { _, ok := r.(resolverFleetSafetyRank); return ok }},
-		{Root: "FleetSafetyTerminal", Check: func(r any) bool { _, ok := r.(resolverFleetSafetyTerminal); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "FleetSafetyRank@fleetsafety", Check: func(r any) bool { _, ok := r.(FleetSafetyRankResolver); return ok }},
+		{Root: "FleetSafetyTerminal@fleetsafety", Check: func(r any) bool { _, ok := r.(FleetSafetyTerminalResolver); return ok }},
+		{Root: "Mutation@fleetsafety", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@fleetsafety", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverFleetSafetyRank interface {
+type FleetSafetyRankResolver interface {
 	FleetCodeID(ctx context.Context, obj *fleetsafety.FleetSafetyRank) (*string, error)
 }
 
-type resolverFleetSafetyTerminal interface {
+type FleetSafetyTerminalResolver interface {
 	FleetCodeID(ctx context.Context, obj *fleetsafety.FleetSafetyTerminal) (*string, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	RecordSafetyViolation(ctx context.Context, input gqlmodel.RecordSafetyViolationInput) (*fleetsafety.WorkerSafetyViolation, error)
 	UpdateSafetyViolation(ctx context.Context, input gqlmodel.UpdateSafetyViolationInput) (*fleetsafety.WorkerSafetyViolation, error)
 	DeleteSafetyViolation(ctx context.Context, id string) (bool, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	FleetSafety(ctx context.Context, input *gqlmodel.FleetSafetyInput) (*fleetsafety.FleetSafety, error)
 	WorkerSafetyViolations(ctx context.Context, safetyEventID *string, workerID *string) ([]*fleetsafety.WorkerSafetyViolation, error)
 }

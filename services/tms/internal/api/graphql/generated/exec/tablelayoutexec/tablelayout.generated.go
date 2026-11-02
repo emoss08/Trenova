@@ -28,7 +28,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_saveMyTableLayout_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SaveMyTableLayout(ctx, fc.Args["input"].(gqlmodel.TableLayoutInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@tablelayout").SaveMyTableLayout(ctx, fc.Args["input"].(gqlmodel.TableLayoutInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTableLayout2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTableLayout),
 			},
@@ -40,7 +40,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_resetMyTableLayout_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ResetMyTableLayout(ctx, fc.Args["resource"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@tablelayout").ResetMyTableLayout(ctx, fc.Args["resource"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -55,7 +55,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_myTableLayout_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").MyTableLayout(ctx, fc.Args["resource"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@tablelayout").MyTableLayout(ctx, fc.Args["resource"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOTableLayout2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTableLayout),
 			},
@@ -107,17 +107,17 @@ var Shard = &gqlexec.Shard{
 		{Name: "TableLayoutInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputTableLayoutInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@tablelayout", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@tablelayout", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	SaveMyTableLayout(ctx context.Context, input gqlmodel.TableLayoutInput) (*gqlmodel.TableLayout, error)
 	ResetMyTableLayout(ctx context.Context, resource string) (bool, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	MyTableLayout(ctx context.Context, resource string) (*gqlmodel.TableLayout, error)
 }
 

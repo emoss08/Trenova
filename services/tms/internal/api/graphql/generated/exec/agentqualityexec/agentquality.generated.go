@@ -199,7 +199,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentquality.EvalCase)
-					return gqlexec.Resolver[resolverAgentEvalCase](ec, "AgentEvalCase").History(ctx, obj)
+					return gqlexec.Resolver[AgentEvalCaseResolver](ec, "AgentEvalCase@agentquality").History(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNJSON2ᚕmapᚄ),
 			},
@@ -210,7 +210,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentquality.EvalCase)
-					return gqlexec.Resolver[resolverAgentEvalCase](ec, "AgentEvalCase").PageContext(ctx, obj)
+					return gqlexec.Resolver[AgentEvalCaseResolver](ec, "AgentEvalCase@agentquality").PageContext(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -222,7 +222,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentquality.EvalCase)
-					return gqlexec.Resolver[resolverAgentEvalCase](ec, "AgentEvalCase").Mentions(ctx, obj)
+					return gqlexec.Resolver[AgentEvalCaseResolver](ec, "AgentEvalCase@agentquality").Mentions(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNJSON2ᚕmapᚄ),
 			},
@@ -234,7 +234,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentquality.EvalCase)
-					return gqlexec.Resolver[resolverAgentEvalCase](ec, "AgentEvalCase").SubjectType(ctx, obj)
+					return gqlexec.Resolver[AgentEvalCaseResolver](ec, "AgentEvalCase@agentquality").SubjectType(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -265,7 +265,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentquality.EvalCase)
-					return gqlexec.Resolver[resolverAgentEvalCase](ec, "AgentEvalCase").ToolFixtures(ctx, obj)
+					return gqlexec.Resolver[AgentEvalCaseResolver](ec, "AgentEvalCase@agentquality").ToolFixtures(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNJSON2ᚕmapᚄ),
 			},
@@ -277,7 +277,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentquality.EvalCase)
-					return gqlexec.Resolver[resolverAgentEvalCase](ec, "AgentEvalCase").Expected(ctx, obj)
+					return gqlexec.Resolver[AgentEvalCaseResolver](ec, "AgentEvalCase@agentquality").Expected(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNJSON2map),
 			},
@@ -298,7 +298,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentquality.EvalCase)
-					return gqlexec.Resolver[resolverAgentEvalCase](ec, "AgentEvalCase").Redaction(ctx, obj)
+					return gqlexec.Resolver[AgentEvalCaseResolver](ec, "AgentEvalCase@agentquality").Redaction(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -319,7 +319,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentquality.EvalCase)
-					return gqlexec.Resolver[resolverAgentEvalCase](ec, "AgentEvalCase").CapturedFingerprint(ctx, obj)
+					return gqlexec.Resolver[AgentEvalCaseResolver](ec, "AgentEvalCase@agentquality").CapturedFingerprint(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -647,7 +647,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityAgent)
-					return gqlexec.Resolver[resolverAgentQualityAgent](ec, "AgentQualityAgent").ID(ctx, obj)
+					return gqlexec.Resolver[AgentQualityAgentResolver](ec, "AgentQualityAgent@agentquality").ID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNID2string),
 			},
@@ -834,7 +834,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitycontrol.Control)
-					return gqlexec.Resolver[resolverAgentQualityControl](ec, "AgentQualityControl").ID(ctx, obj)
+					return gqlexec.Resolver[AgentQualityControlResolver](ec, "AgentQualityControl@agentquality").ID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -886,7 +886,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitycontrol.Control)
-					return gqlexec.Resolver[resolverAgentQualityControl](ec, "AgentQualityControl").NightlyBudgetUsd(ctx, obj)
+					return gqlexec.Resolver[AgentQualityControlResolver](ec, "AgentQualityControl@agentquality").NightlyBudgetUsd(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -898,7 +898,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitycontrol.Control)
-					return gqlexec.Resolver[resolverAgentQualityControl](ec, "AgentQualityControl").MonthlyBudgetUsd(ctx, obj)
+					return gqlexec.Resolver[AgentQualityControlResolver](ec, "AgentQualityControl@agentquality").MonthlyBudgetUsd(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1284,7 +1284,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitysuite.SuiteRun)
-					return gqlexec.Resolver[resolverAgentSuiteRun](ec, "AgentSuiteRun").AgentName(ctx, obj)
+					return gqlexec.Resolver[AgentSuiteRunResolver](ec, "AgentSuiteRun@agentquality").AgentName(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -1305,7 +1305,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitysuite.SuiteRun)
-					return gqlexec.Resolver[resolverAgentSuiteRun](ec, "AgentSuiteRun").Fingerprint(ctx, obj)
+					return gqlexec.Resolver[AgentSuiteRunResolver](ec, "AgentSuiteRun@agentquality").Fingerprint(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -1328,7 +1328,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "AgentFingerprintChange",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitysuite.SuiteRun)
-					return gqlexec.Resolver[resolverAgentSuiteRun](ec, "AgentSuiteRun").FingerprintChanges(ctx, obj)
+					return gqlexec.Resolver[AgentSuiteRunResolver](ec, "AgentSuiteRun@agentquality").FingerprintChanges(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentFingerprintChange2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentFingerprintChangeᚄ),
 			},
@@ -1340,7 +1340,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitysuite.SuiteRun)
-					return gqlexec.Resolver[resolverAgentSuiteRun](ec, "AgentSuiteRun").ChangeSummary(ctx, obj)
+					return gqlexec.Resolver[AgentSuiteRunResolver](ec, "AgentSuiteRun@agentquality").ChangeSummary(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -1477,7 +1477,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitysuite.SuiteRun)
-					return gqlexec.Resolver[resolverAgentSuiteRun](ec, "AgentSuiteRun").CostUsd(ctx, obj)
+					return gqlexec.Resolver[AgentSuiteRunResolver](ec, "AgentSuiteRun@agentquality").CostUsd(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1701,7 +1701,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentWorstRatedAnswer)
-					return gqlexec.Resolver[resolverAgentWorstRatedAnswer](ec, "AgentWorstRatedAnswer").ID(ctx, obj)
+					return gqlexec.Resolver[AgentWorstRatedAnswerResolver](ec, "AgentWorstRatedAnswer@agentquality").ID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNID2string),
 			},
@@ -1890,7 +1890,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createAgentEvalCase_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateAgentEvalCase(ctx, fc.Args["input"].(gqlmodel.CreateAgentEvalCaseInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agentquality").CreateAgentEvalCase(ctx, fc.Args["input"].(gqlmodel.CreateAgentEvalCaseInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentEvalCaseCapture2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentEvalCaseCapture),
 			},
@@ -1903,7 +1903,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateAgentEvalCase_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateAgentEvalCase(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.UpdateAgentEvalCaseInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agentquality").UpdateAgentEvalCase(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.UpdateAgentEvalCaseInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentEvalCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐEvalCase),
 			},
@@ -1916,7 +1916,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_setAgentEvalCaseStatus_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetAgentEvalCaseStatus(ctx, fc.Args["id"].(string), fc.Args["status"].(agentquality.CaseStatus))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agentquality").SetAgentEvalCaseStatus(ctx, fc.Args["id"].(string), fc.Args["status"].(agentquality.CaseStatus))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentEvalCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐEvalCase),
 			},
@@ -1929,7 +1929,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_replayAgentEvalCase_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReplayAgentEvalCase(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agentquality").ReplayAgentEvalCase(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentevaluationᚐEvaluation),
 			},
@@ -1942,7 +1942,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_runAgentSuite_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RunAgentSuite(ctx, fc.Args["agentDefinitionId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agentquality").RunAgentSuite(ctx, fc.Args["agentDefinitionId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualitysuiteᚐSuiteRun),
 			},
@@ -1955,7 +1955,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateAgentQualityControl_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateAgentQualityControl(ctx, fc.Args["input"].(gqlmodel.UpdateAgentQualityControlInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agentquality").UpdateAgentQualityControl(ctx, fc.Args["input"].(gqlmodel.UpdateAgentQualityControlInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentQualityControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualitycontrolᚐControl),
 			},
@@ -1971,7 +1971,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentEvalCases_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentEvalCases(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentquality").AgentEvalCases(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentEvalCaseConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentEvalCaseConnection),
 			},
@@ -1984,7 +1984,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentEvalCase_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentEvalCase(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentquality").AgentEvalCase(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentEvalCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐEvalCase),
 			},
@@ -1998,7 +1998,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentQualityOverview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentQualityOverview(ctx, fc.Args["window"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentquality").AgentQualityOverview(ctx, fc.Args["window"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentQualityOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentqualityportsᚐAgentQualityOverview),
 			},
@@ -2012,7 +2012,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentQuality_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentQuality(ctx, fc.Args["agentDefinitionId"].(string), fc.Args["window"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentquality").AgentQuality(ctx, fc.Args["agentDefinitionId"].(string), fc.Args["window"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentQuality2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentqualityportsᚐAgentQualityDetail),
 			},
@@ -2026,7 +2026,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentQualityAgentConnection_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentQualityAgentConnection(ctx, fc.Args["window"].(*int), fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentquality").AgentQualityAgentConnection(ctx, fc.Args["window"].(*int), fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentQualityAgentConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentQualityAgentConnection),
 			},
@@ -2040,7 +2040,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentWorstRatedAnswerConnection_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentWorstRatedAnswerConnection(ctx, fc.Args["agentDefinitionId"].(*string), fc.Args["window"].(*int), fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentquality").AgentWorstRatedAnswerConnection(ctx, fc.Args["agentDefinitionId"].(*string), fc.Args["window"].(*int), fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentWorstRatedAnswerConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentWorstRatedAnswerConnection),
 			},
@@ -2054,7 +2054,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentSuiteRunConnection_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentSuiteRunConnection(ctx, fc.Args["agentDefinitionId"].(*string), fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentquality").AgentSuiteRunConnection(ctx, fc.Args["agentDefinitionId"].(*string), fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentSuiteRunConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentSuiteRunConnection),
 			},
@@ -2067,7 +2067,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentSuiteRun_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentSuiteRun(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentquality").AgentSuiteRun(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualitysuiteᚐSuiteRun),
 			},
@@ -2081,7 +2081,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentSuiteRunCaseConnection_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentSuiteRunCaseConnection(ctx, fc.Args["suiteRunId"].(string), fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentquality").AgentSuiteRunCaseConnection(ctx, fc.Args["suiteRunId"].(string), fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentSuiteRunCaseConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentSuiteRunCaseConnection),
 			},
@@ -2093,7 +2093,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "AgentQualityControl",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentQualityControl(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentquality").AgentQualityControl(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentQualityControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualitycontrolᚐControl),
 			},
@@ -2109,17 +2109,17 @@ var Shard = &gqlexec.Shard{
 		{Name: "UpdateAgentQualityControlInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateAgentQualityControlInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "AgentEvalCase", Check: func(r any) bool { _, ok := r.(resolverAgentEvalCase); return ok }},
-		{Root: "AgentQualityAgent", Check: func(r any) bool { _, ok := r.(resolverAgentQualityAgent); return ok }},
-		{Root: "AgentQualityControl", Check: func(r any) bool { _, ok := r.(resolverAgentQualityControl); return ok }},
-		{Root: "AgentSuiteRun", Check: func(r any) bool { _, ok := r.(resolverAgentSuiteRun); return ok }},
-		{Root: "AgentWorstRatedAnswer", Check: func(r any) bool { _, ok := r.(resolverAgentWorstRatedAnswer); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "AgentEvalCase@agentquality", Check: func(r any) bool { _, ok := r.(AgentEvalCaseResolver); return ok }},
+		{Root: "AgentQualityAgent@agentquality", Check: func(r any) bool { _, ok := r.(AgentQualityAgentResolver); return ok }},
+		{Root: "AgentQualityControl@agentquality", Check: func(r any) bool { _, ok := r.(AgentQualityControlResolver); return ok }},
+		{Root: "AgentSuiteRun@agentquality", Check: func(r any) bool { _, ok := r.(AgentSuiteRunResolver); return ok }},
+		{Root: "AgentWorstRatedAnswer@agentquality", Check: func(r any) bool { _, ok := r.(AgentWorstRatedAnswerResolver); return ok }},
+		{Root: "Mutation@agentquality", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@agentquality", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverAgentEvalCase interface {
+type AgentEvalCaseResolver interface {
 	History(ctx context.Context, obj *agentquality.EvalCase) ([]map[string]any, error)
 	PageContext(ctx context.Context, obj *agentquality.EvalCase) (map[string]any, error)
 	Mentions(ctx context.Context, obj *agentquality.EvalCase) ([]map[string]any, error)
@@ -2130,17 +2130,17 @@ type resolverAgentEvalCase interface {
 	CapturedFingerprint(ctx context.Context, obj *agentquality.EvalCase) (map[string]any, error)
 }
 
-type resolverAgentQualityAgent interface {
+type AgentQualityAgentResolver interface {
 	ID(ctx context.Context, obj *agentqualityports.AgentQualityAgent) (string, error)
 }
 
-type resolverAgentQualityControl interface {
+type AgentQualityControlResolver interface {
 	ID(ctx context.Context, obj *agentqualitycontrol.Control) (*string, error)
 	NightlyBudgetUsd(ctx context.Context, obj *agentqualitycontrol.Control) (string, error)
 	MonthlyBudgetUsd(ctx context.Context, obj *agentqualitycontrol.Control) (string, error)
 }
 
-type resolverAgentSuiteRun interface {
+type AgentSuiteRunResolver interface {
 	AgentName(ctx context.Context, obj *agentqualitysuite.SuiteRun) (string, error)
 	Fingerprint(ctx context.Context, obj *agentqualitysuite.SuiteRun) (map[string]any, error)
 	FingerprintChanges(ctx context.Context, obj *agentqualitysuite.SuiteRun) ([]*gqlmodel.AgentFingerprintChange, error)
@@ -2148,11 +2148,11 @@ type resolverAgentSuiteRun interface {
 	CostUsd(ctx context.Context, obj *agentqualitysuite.SuiteRun) (string, error)
 }
 
-type resolverAgentWorstRatedAnswer interface {
+type AgentWorstRatedAnswerResolver interface {
 	ID(ctx context.Context, obj *agentqualityports.AgentWorstRatedAnswer) (string, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateAgentEvalCase(ctx context.Context, input gqlmodel.CreateAgentEvalCaseInput) (*gqlmodel.AgentEvalCaseCapture, error)
 	UpdateAgentEvalCase(ctx context.Context, id string, input gqlmodel.UpdateAgentEvalCaseInput) (*agentquality.EvalCase, error)
 	SetAgentEvalCaseStatus(ctx context.Context, id string, status agentquality.CaseStatus) (*agentquality.EvalCase, error)
@@ -2161,7 +2161,7 @@ type resolverMutation interface {
 	UpdateAgentQualityControl(ctx context.Context, input gqlmodel.UpdateAgentQualityControlInput) (*agentqualitycontrol.Control, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	AgentEvalCases(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentEvalCaseConnection, error)
 	AgentEvalCase(ctx context.Context, id string) (*agentquality.EvalCase, error)
 	AgentQualityOverview(ctx context.Context, window *int) (*agentqualityports.AgentQualityOverview, error)
