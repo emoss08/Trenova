@@ -1,8 +1,9 @@
 import { LinkedRecordLink } from "@/components/linked-record-link";
 import { recordPath } from "@/config/record-links";
+import { dwellText, shipmentMiles, stopRows, type StopRow } from "@/lib/billing-queue-stops";
 import type { BillingQueueShipment } from "@/lib/graphql/billing-queue";
 import { billingQueue } from "@/lib/queries/billing-queue";
-import { dwellText, shipmentMiles, stopRows, type StopRow } from "@/lib/billing-queue-stops";
+import { useQuery } from "@tanstack/react-query";
 import { Lock01Icon } from "@trenova/shared/components/icons";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { useCanReadKind } from "@trenova/shared/hooks/use-can-read-kind";
@@ -13,7 +14,6 @@ import { formatTariffValue } from "@trenova/shared/lib/tariff-value";
 import { cn } from "@trenova/shared/lib/utils";
 import type { BillingQueueItem } from "@trenova/shared/types/billing-queue";
 import type { TariffWireValue } from "@trenova/shared/types/tariff";
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 import { BillingQueueRatedBy, ratedByName } from "./billing-queue-rated-by";
 import { BillingQueueShipmentTabSkeleton, STOP_GRID } from "./billing-queue-shipment-tab-skeleton";
@@ -23,12 +23,6 @@ const TIME = { hour: "numeric", minute: "2-digit" } as const;
 const DATE_TIME = { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" } as const;
 const EMPTY = "—";
 
-/**
- * The shipment as billing checks the charges against it, read-only: each stop with its
- * scheduled window, when the driver arrived and left and the time on site; the load's
- * references, equipment, driver and freight; and how it was rated. The shipment is read
- * when the tab opens. Changing any of it happens on the shipment.
- */
 export default function BillingQueueShipmentTab({ item }: { item: BillingQueueItem }) {
   const t = useT();
   const canRead = useCanReadKind("shipment");
@@ -41,13 +35,13 @@ export default function BillingQueueShipmentTab({ item }: { item: BillingQueueIt
   if (!canRead) {
     return (
       <div
-        className="text-foreground-muted flex flex-col items-center gap-2 px-4 py-12 text-center text-sm"
+        className="flex flex-col items-center gap-2 px-4 py-12 text-center text-sm text-foreground-muted"
         data-testid="billing-queue-shipment-locked"
       >
-        <span className="border-border flex size-8 items-center justify-center rounded-full border">
+        <span className="flex size-8 items-center justify-center rounded-full border border-border">
           <Lock01Icon className="size-3.5" aria-hidden />
         </span>
-        <p className="text-foreground font-medium">{t("You don't have access to shipments")}</p>
+        <p className="font-medium text-foreground">{t("You don't have access to shipments")}</p>
         <p className="max-w-90">
           {t(
             "The route, PRO and charges above are still yours to bill. An administrator can grant shipment access to see the stops and load.",
@@ -61,7 +55,7 @@ export default function BillingQueueShipmentTab({ item }: { item: BillingQueueIt
   }
   if (isError || !data) {
     return (
-      <p className="text-foreground-muted py-12 text-center text-sm" role="alert">
+      <p className="py-12 text-center text-sm text-foreground-muted" role="alert">
         {t("The shipment couldn't be loaded. Open the tab again to retry.")}
       </p>
     );
@@ -91,7 +85,7 @@ function SectionHeader({
 
   return (
     <div className="flex items-baseline gap-2">
-      <h3 className="text-foreground text-sm font-semibold">{title}</h3>
+      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
       {detail ? <span className="text-foreground-muted text-xs">{detail}</span> : null}
       <span className="flex-1" />
       {editPath ? (
@@ -265,10 +259,10 @@ function Load({
         <DescriptionItem label={t("Miles")} numeric valueClassName="font-mono">
           {miles.loaded || miles.empty
             ? t(
-                "{0} loaded · {1} empty",
-                miles.loaded.toLocaleString(),
-                miles.empty.toLocaleString(),
-              )
+              "{0} loaded · {1} empty",
+              miles.loaded.toLocaleString(),
+              miles.empty.toLocaleString(),
+            )
             : EMPTY}
         </DescriptionItem>
         {temperature ? (

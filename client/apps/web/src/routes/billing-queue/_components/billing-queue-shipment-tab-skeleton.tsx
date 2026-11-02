@@ -25,11 +25,6 @@ const FACT_WIDTHS = [
   "w-20",
 ] as const;
 
-/**
- * The Shipment tab while its code or its shipment loads, drawn as the tab lays out: the
- * stops table with its three columns of times, the load's facts in three columns, and how
- * the shipment was rated.
- */
 export function BillingQueueShipmentTabSkeleton() {
   const t = useT();
 
@@ -41,8 +36,8 @@ export function BillingQueueShipmentTabSkeleton() {
             <Skeleton className="h-3 w-12" />
             <Skeleton className="h-2.5 w-40" />
           </div>
-          <div className="border-border rounded-md border">
-            <div className={`${STOP_GRID} border-border h-8 border-b px-3`}>
+          <div className="rounded-md border border-border">
+            <div className={`${STOP_GRID} h-8 border-b border-border px-3`}>
               <span />
               <Skeleton className="h-2.5 w-10" />
               <Skeleton className="h-2.5 w-16" />
@@ -69,7 +64,7 @@ export function BillingQueueShipmentTabSkeleton() {
 
         <section className="flex flex-col gap-2">
           <Skeleton className="h-3 w-10" />
-          <div className="border-border grid grid-cols-2 gap-x-6 gap-y-3 rounded-md border px-3.5 py-3 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-3 rounded-md border border-border px-3.5 py-3 md:grid-cols-3">
             {FACT_WIDTHS.map((width, index) => (
               <span key={index} className="flex flex-col gap-1.5">
                 <Skeleton className="h-2.5 w-14" />
@@ -81,7 +76,7 @@ export function BillingQueueShipmentTabSkeleton() {
 
         <section className="flex flex-col gap-2">
           <Skeleton className="h-3 w-28" />
-          <div className="border-border flex items-center gap-2.5 rounded-md border px-3.5 py-2.5">
+          <div className="flex items-center gap-2.5 rounded-md border border-border px-3.5 py-2.5">
             <span className="flex flex-1 flex-col gap-1.5">
               <Skeleton className="h-3 w-72" />
               <Skeleton className="h-2.5 w-96 max-w-full" />
