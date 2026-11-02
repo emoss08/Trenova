@@ -230,6 +230,12 @@ usual and reporting what it would have reused; `GOCUT_MODE=active` skips those c
 reuse would link stale code, so it is for local hot reload only: tests, lint, CI and release
 builds never take it.
 
+On the keel v0.5.0 tree (4 cores, Go 1.27.1, the watch flags), gocut in active mode with its
+default 10% verify sample takes an exported function added to `domain/shipment` from 82 s to 30 s
+(median of three), the same edit inserted mid-file from 82 s to 31 s, and a line added inside an
+unexported function in `shipment.go` from 80 s to 29 s. It reused all 1,041 recompiled packages,
+and every shadow comparison and verified reuse was byte-identical to the compiler's output.
+
 Each main registers its edition separately; see "Server seams" in [editions.md](editions.md).
 
 ### Why `WorkerOptions` live in the jobs package
