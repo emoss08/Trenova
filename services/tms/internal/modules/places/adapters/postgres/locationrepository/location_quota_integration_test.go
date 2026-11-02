@@ -64,7 +64,7 @@ func TestCreateRefusesALocationPastTheQuota(t *testing.T) {
 	require.True(t, errortypes.IsQuotaExceededError(err))
 
 	var written int64
-	require.NoError(t, admin.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(admin).QueryRow(ctx,
 		"SELECT count(*) FROM locations WHERE organization_id = $1 AND business_unit_id = $2 AND code = $3",
 		info.OrgID.String(), info.BuID.String(), entity.Code,
 	).Scan(&written))

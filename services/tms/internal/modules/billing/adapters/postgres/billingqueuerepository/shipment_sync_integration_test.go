@@ -46,10 +46,10 @@ func setupSyncFixture(t *testing.T) *syncFixture {
 	t.Cleanup(cleanup)
 
 	var orgID, buID, shipmentID, payerID pulid.ID
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		"SELECT id, business_unit_id FROM organizations ORDER BY id LIMIT 1",
 	).Scan(&orgID, &buID))
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		`SELECT id, COALESCE(bill_to_customer_id, customer_id) FROM shipments
 		WHERE organization_id = $1 AND business_unit_id = $2 ORDER BY created_at ASC LIMIT 1`,
 		orgID, buID,
@@ -124,7 +124,7 @@ func (f *syncFixture) shipmentRow(t *testing.T) syncShipmentRow {
 	t.Helper()
 
 	var row syncShipmentRow
-	require.NoError(t, f.db.Pool().QueryRow(f.ctx,
+	require.NoError(t, keel.Pool(f.db).QueryRow(f.ctx,
 		"SELECT billing_transfer_status, transferred_to_billing_at FROM shipments WHERE id = $1",
 		f.shipmentID,
 	).Scan(&row.BillingTransferStatus, &row.TransferredToBillingAt))

@@ -5,6 +5,7 @@ package accountingsyncrepository
 import (
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingconnectionrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingdriftrepository"
@@ -619,7 +620,7 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 	start, err := source.ScopeStart(ctx, tenant)
 	require.NoError(t, err)
 	var earliest int64
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		`SELECT COALESCE(MIN(start_date), 0) FROM fiscal_periods
 		WHERE organization_id = $1 AND business_unit_id = $2 AND status IN ('Open', 'Locked')`,
 		org.ID.String(),

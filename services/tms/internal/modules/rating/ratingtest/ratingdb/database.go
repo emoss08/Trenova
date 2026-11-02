@@ -48,14 +48,14 @@ func NewDatabase(t *testing.T) *Database {
 func (d *Database) Exec(t *testing.T, sql string, args ...any) {
 	t.Helper()
 
-	_, err := d.Admin.Pool().Exec(t.Context(), sql, args...)
+	_, err := keel.Pool(d.Admin).Exec(t.Context(), sql, args...)
 	require.NoError(t, err)
 }
 
 func Value[T any](t *testing.T, d *Database, sql string, args ...any) T {
 	t.Helper()
 
-	rows, err := d.Admin.Pool().Query(t.Context(), sql, args...)
+	rows, err := keel.Pool(d.Admin).Query(t.Context(), sql, args...)
 	require.NoError(t, err)
 
 	value, err := pgx.CollectExactlyOneRow(rows, pgx.RowTo[T])
