@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edicommunicationprofilerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/ediinboundfilerepository"
@@ -432,7 +433,7 @@ func TestCarrierEDIChannelsByPartner(t *testing.T) {
 
 	conn := postgres.NewTestConnection(db)
 
-	rows, err := db.Pool().
+	rows, err := keel.Pool(db).
 		Query(ctx, `SELECT id, organization_id, business_unit_id, name FROM carriers
 		WHERE organization_id = (SELECT organization_id FROM carriers GROUP BY organization_id HAVING COUNT(*) >= 2 ORDER BY organization_id LIMIT 1)
 		ORDER BY name ASC LIMIT 2`)

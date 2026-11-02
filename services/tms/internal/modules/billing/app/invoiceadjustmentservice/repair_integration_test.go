@@ -5,6 +5,7 @@ package invoiceadjustmentservice
 import (
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalrepairservice"
@@ -201,7 +202,7 @@ func (h *integrationHarness) forgetCustomerLedgerLines(t *testing.T, creditMemoI
 func (h *integrationHarness) execSQL(t *testing.T, sql string, args ...any) {
 	t.Helper()
 
-	_, err := h.db.Pool().Exec(h.ctx, sql, args...)
+	_, err := keel.Pool(h.db).Exec(h.ctx, sql, args...)
 	require.NoError(t, err)
 }
 
@@ -222,7 +223,7 @@ func (h *integrationHarness) seededPaidSettlement(t *testing.T) (pulid.ID, int64
 
 	var id pulid.ID
 	var netPayMinor int64
-	require.NoError(t, h.db.Pool().QueryRow(h.ctx,
+	require.NoError(t, keel.Pool(h.db).QueryRow(h.ctx,
 		`SELECT id, net_pay_minor FROM driver_settlements
 		WHERE organization_id = $1 AND business_unit_id = $2 AND status = 'Paid'
 			AND paid_journal_batch_id IS NULL
@@ -250,7 +251,7 @@ func (h *integrationHarness) settlementPaymentJournal(
 	t.Helper()
 
 	var batchID *pulid.ID
-	require.NoError(t, h.db.Pool().QueryRow(h.ctx,
+	require.NoError(t, keel.Pool(h.db).QueryRow(h.ctx,
 		`SELECT paid_journal_batch_id FROM driver_settlements
 		WHERE organization_id = $1 AND business_unit_id = $2 AND id = $3`,
 		h.orgID, h.buID, settlementID,
@@ -261,7 +262,7 @@ func (h *integrationHarness) settlementPaymentJournal(
 
 	row := &creditMemoJournalRow{SourceEventType: "DriverSettlementPaid"}
 	var journalEntryID pulid.ID
-	require.NoError(t, h.db.Pool().QueryRow(h.ctx,
+	require.NoError(t, keel.Pool(h.db).QueryRow(h.ctx,
 		`SELECT status, journal_entry_id FROM journal_sources
 		WHERE organization_id = $1 AND business_unit_id = $2 AND journal_batch_id = $3
 			AND source_object_type = 'DriverSettlement' AND source_object_id = $4
@@ -343,7 +344,7 @@ func TestWriteOffJournalIsStampedWhenItIsWrittenNotOnItsAccountingDate(t *testin
 
 	var journalAccountingDate int64
 	var postedAt *int64
-	require.NoError(t, h.db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(h.db).QueryRow(ctx,
 		`SELECT accounting_date, posted_at FROM journal_entries
 		WHERE organization_id = $1 AND business_unit_id = $2 AND reference_id = $3 LIMIT 1`,
 		h.orgID, h.buID, adjustment.ID.String(),

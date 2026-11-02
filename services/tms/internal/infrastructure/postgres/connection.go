@@ -216,9 +216,8 @@ func (c *Connection) connect(ctx context.Context) error {
 	c.tenantKeel = tenant
 
 	if c.settings.registerStats && c.metrics != nil && c.metrics.Database != nil {
-		pool := tenant.Pool()
 		c.metrics.Database.RegisterPoolStats(
-			func() platformmetrics.PoolStats { return poolStats(pool) },
+			func() platformmetrics.PoolStats { return poolStats(tenant.Stat()) },
 		)
 	}
 
@@ -241,7 +240,7 @@ func (c *Connection) connect(ctx context.Context) error {
 	c.logger.Info(
 		ctx, "Database connection established",
 		zap.String("database", c.databaseConfig.Name),
-		zap.Int32("max_conns", tenant.Pool().Config().MaxConns),
+		zap.Int32("max_conns", tenant.Stat().MaxConns()),
 		zap.Int("tenant_concurrency", c.settings.tenantConcurrency),
 		zap.Bool("result_cache", cache != nil),
 		zap.Bool("result_cache_shared", cache != nil && cache.Shared != nil),
@@ -274,7 +273,7 @@ func (c *Connection) openPool(ctx context.Context, opts *dbpool.Options) (*keel.
 		return nil, err
 	}
 
-	slow.pool = db.Pool()
+	slow.stat = db.Stat
 
 	return db, nil
 }

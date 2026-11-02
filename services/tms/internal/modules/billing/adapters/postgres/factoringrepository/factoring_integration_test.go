@@ -57,12 +57,12 @@ func setupFactoringEnv(t *testing.T) *factoringEnv {
 	t.Cleanup(cleanup)
 
 	var orgID, buID pulid.ID
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		"SELECT id, business_unit_id FROM organizations ORDER BY id LIMIT 1",
 	).Scan(&orgID, &buID))
 
 	var shipmentID, customerID pulid.ID
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		"SELECT id, customer_id FROM shipments WHERE organization_id = $1 AND business_unit_id = $2 ORDER BY id LIMIT 1",
 		orgID, buID,
 	).
@@ -71,11 +71,11 @@ func setupFactoringEnv(t *testing.T) *factoringEnv {
 	var stateID pulid.ID
 	require.NoError(
 		t,
-		db.Pool().QueryRow(ctx, "SELECT id FROM us_states ORDER BY id LIMIT 1").Scan(&stateID),
+		keel.Pool(db).QueryRow(ctx, "SELECT id FROM us_states ORDER BY id LIMIT 1").Scan(&stateID),
 	)
 
 	var docTypeID pulid.ID
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		"SELECT id FROM document_types WHERE organization_id = $1 AND business_unit_id = $2 ORDER BY id LIMIT 1",
 		orgID, buID,
 	).

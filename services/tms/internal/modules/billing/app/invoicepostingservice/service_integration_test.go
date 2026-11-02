@@ -249,7 +249,7 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 		TotalDebit    int64
 		TotalCredit   int64
 	}
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		`SELECT reference_type, reference_id, total_debit, total_credit
 		FROM journal_entries WHERE reference_id = $1 LIMIT 1`,
 		entity.ID.String(),
@@ -263,7 +263,7 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 		SourceEventType string
 		Status          string
 	}
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		"SELECT source_event_type, status FROM journal_sources WHERE source_object_id = $1 LIMIT 1",
 		entity.ID.String(),
 	).Scan(&source.SourceEventType, &source.Status))
@@ -450,11 +450,11 @@ func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T)
 	require.Equal(t, invoice.StatusPosted, posted.Status)
 
 	var entryCount, sourceCount int64
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		"SELECT count(*) FROM journal_entries WHERE reference_id = $1", entity.ID.String(),
 	).Scan(&entryCount))
 	assert.Equal(t, int64(0), entryCount)
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		"SELECT count(*) FROM journal_sources WHERE source_object_id = $1", entity.ID.String(),
 	).Scan(&sourceCount))
 	assert.Equal(t, int64(0), sourceCount)
@@ -470,7 +470,7 @@ func lookupInvoiceGLAccount(
 	t.Helper()
 
 	var id pulid.ID
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		"SELECT id FROM gl_accounts WHERE organization_id = $1 AND business_unit_id = $2 AND account_code = $3 LIMIT 1",
 		orgID, buID, accountCode,
 	).
@@ -486,19 +486,19 @@ func seededInvoiceFixture(
 	t.Helper()
 
 	var org seededInvoiceOrg
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		"SELECT id, business_unit_id FROM organizations ORDER BY id LIMIT 1",
 	).Scan(&org.ID, &org.BusinessUnitID))
 
 	var user seededInvoiceUser
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		"SELECT id FROM users WHERE current_organization_id = $1 AND business_unit_id = $2 ORDER BY id LIMIT 1",
 		org.ID, org.BusinessUnitID,
 	).
 		Scan(&user.ID))
 
 	var shp seededInvoiceShipment
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		`SELECT id, customer_id, COALESCE(pro_number, ''), COALESCE(bol, '') FROM shipments
 		WHERE organization_id = $1 AND business_unit_id = $2 ORDER BY id LIMIT 1`,
 		org.ID, org.BusinessUnitID,
