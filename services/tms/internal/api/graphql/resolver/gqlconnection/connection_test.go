@@ -26,7 +26,7 @@ func TestEntityCursorEdges_UsesTheResultsEdgeCursors(t *testing.T) {
 		EdgeCursors: []string{"first", "second"},
 	}
 
-	edges, err := EntityCursorEdges(items, result, testEdge)
+	edges, err := EntityCursorEdges(items, result.EdgeCursors, testEdge)
 	require.NoError(t, err)
 	require.Len(t, edges, 2)
 	assert.Equal(t, "TRC-1", edges[0].Node)
@@ -46,7 +46,7 @@ func TestEntityCursorEdges_RefusesARowWithoutACursor(t *testing.T) {
 		EdgeCursors: []string{"only-one"},
 	}
 
-	_, err := EntityCursorEdges(items, result, testEdge)
+	_, err := EntityCursorEdges(items, result.EdgeCursors, testEdge)
 	require.ErrorIs(t, err, pagination.ErrNoEdgeCursor)
 
 	_, err = EntityCursorEdges(items, nil, testEdge)

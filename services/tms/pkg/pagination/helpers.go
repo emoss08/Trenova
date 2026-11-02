@@ -131,7 +131,7 @@ func CursorList[T any](
 
 	endCursor := ""
 	if last := len(result.Items) - 1; last >= 0 {
-		endCursor, _ = result.EdgeCursorAt(last)
+		endCursor, _ = result.EdgeCursors.EdgeCursorAt(last)
 	}
 
 	count := len(result.Items)

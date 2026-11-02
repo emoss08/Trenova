@@ -693,7 +693,7 @@ func CursorPage[T any](
 	result *pagination.CursorListResult[T],
 	row func(T) any,
 ) (Page, error) {
-	next, err := result.NextCursor()
+	next, err := pagination.NextCursor(result)
 	if err != nil {
 		return Page{}, fmt.Errorf("encode the next page's cursor: %w", err)
 	}

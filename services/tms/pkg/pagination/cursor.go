@@ -74,24 +74,26 @@ type CursorListResult[T any] struct {
 	HasNextPage     bool
 	TotalCount      *int
 	TotalCountExact bool
-	EdgeCursors     []string
+	EdgeCursors     EdgeCursors
 	Fuzzy           bool
 }
 
-func (r *CursorListResult[T]) EdgeCursorAt(index int) (string, bool) {
-	if index < 0 || index >= len(r.EdgeCursors) {
+type EdgeCursors []string
+
+func (c EdgeCursors) EdgeCursorAt(index int) (string, bool) {
+	if index < 0 || index >= len(c) {
 		return "", false
 	}
 
-	return r.EdgeCursors[index], true
+	return c[index], true
 }
 
-func (r *CursorListResult[T]) NextCursor() (string, error) {
+func NextCursor[T any](r *CursorListResult[T]) (string, error) {
 	if !r.HasNextPage || len(r.Items) == 0 {
 		return "", nil
 	}
 
-	cursor, ok := r.EdgeCursorAt(len(r.Items) - 1)
+	cursor, ok := r.EdgeCursors.EdgeCursorAt(len(r.Items) - 1)
 	if !ok {
 		return "", ErrNoEdgeCursor
 	}

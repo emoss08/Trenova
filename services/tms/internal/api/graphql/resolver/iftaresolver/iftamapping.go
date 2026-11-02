@@ -23,7 +23,7 @@ func iftaTaxRateCursorConnectionToModel(
 ) (*gqlmodel.IFTATaxRateConnection, error) {
 	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
-		result,
+		result.EdgeCursors,
 		func(node *ifta.TaxRate, cursor string) *gqlmodel.IFTATaxRateEdge {
 			return &gqlmodel.IFTATaxRateEdge{Node: node, Cursor: cursor}
 		},
@@ -51,7 +51,7 @@ func iftaMileageEntryCursorConnectionToModel(
 ) (*gqlmodel.IFTAJurisdictionMileageEntryConnection, error) {
 	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
-		result,
+		result.EdgeCursors,
 		func(
 			node *ifta.JurisdictionMileageEntry,
 			cursor string,
@@ -82,7 +82,7 @@ func iftaReturnCursorConnectionToModel(
 ) (*gqlmodel.IFTAReturnConnection, error) {
 	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
-		result,
+		result.EdgeCursors,
 		func(node *ifta.Return, cursor string) *gqlmodel.IFTAReturnEdge {
 			return &gqlmodel.IFTAReturnEdge{Node: node, Cursor: cursor}
 		},

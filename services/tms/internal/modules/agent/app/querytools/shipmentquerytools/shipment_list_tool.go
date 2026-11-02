@@ -898,7 +898,7 @@ func (t *shipmentListTool) search(
 	if err != nil {
 		return nil, querytool.RefuseStaleCursor(err)
 	}
-	next, err := result.NextCursor()
+	next, err := pagination.NextCursor(result)
 	if err != nil {
 		return nil, fmt.Errorf("encode the next page's cursor: %w", err)
 	}

@@ -32,7 +32,7 @@ func EntityCursorConnection[TNode pagination.CursorEntity, TEdge any](
 
 	edges, err := EntityCursorEdges(
 		result.Items,
-		result,
+		result.EdgeCursors,
 		build,
 	)
 	if err != nil {
