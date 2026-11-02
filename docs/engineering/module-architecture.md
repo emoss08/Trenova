@@ -411,7 +411,7 @@ These designs did this at scale before they were changed:
 | `pagination.EncodeCursorFromEntity*`, `ExtractCursorValues` | four generic encoders, called by `CursorListResult[T].NextCursor`, in each of the 707 packages that mention a `CursorListResult` | the encoders take `any`; they only ever used reflection and type assertions on the item |
 | `auditservice.SensitiveDataManager`, the RLS scope reporter behind `postgres.Connection` | `sync.Map`'s generic internals in every package that reaches a service or a repository | mutex-guarded maps |
 | `*lru.Cache` / `*expirable.LRU` fields in the template engine, the rate table cache and six other packages | golang-lru's cache, list and entry methods, about 17 KB in each of 30 packages | fields typed `lrucache.Cache[K, V]` from `shared/lrucache`, built with `lrucache.New` or `lrucache.NewExpirable` |
-| keel's `Handle[T]` and `Query[T]` structs, one instantiation per table | a wrapper for every method of both per table in each package that could see the table, which relation accessors make almost every repository and `*db` package: `recordversionrepository`, 728 lines, compiled 18,814 functions, 18,660 of them keel wrappers for the 197 tables it could see; the repositories and `*db` packages were 56% of the compiler CPU of a cold `cmd/api` watch build (430 s wall, 3,977 CPU-seconds on 14 cores) | keel's `Query[T]`/`Handle[T]` are generic interfaces; `keel gen` emits a concrete `<Plural>Table`/`<Plural>Query` per table, compiled once in its `*db` package, over keel's non-generic `TableBase` and `QueryCore`; `Page[T]` has no methods. A cold `cmd/api` watch build now takes 2,192 compiler CPU-seconds (from 3,977) and at most 210 s wall on the same 14-core machine (from 430 s): the repositories fell from 1,407 to 327 CPU-seconds and the `*db` packages from 836 to 373, while the linker output shrank from 343 MB to 306 MB. |
+| keel's `Handle[T]` and `Query[T]` structs, one instantiation per table | a wrapper for every method of both per table in each package that could see the table, which relation accessors make almost every repository and `*db` package: `recordversionrepository`, 728 lines, compiled 18,814 functions, 18,660 of them keel wrappers for the 197 tables it could see; the repositories and `*db` packages were 56% of the compiler CPU of a cold `cmd/api` watch build (430 s wall, 3,977 CPU-seconds on 14 cores) | keel's `Query[T]`/`Handle[T]` are generic interfaces; `keel gen` emits a concrete `<Plural>Table`/`<Plural>Query` per table, compiled once in its `*db` package, over keel's non-generic `TableBase` and `QueryCore`; `Page[T]` has no methods. A cold `cmd/api` watch build now takes 2,192 compiler CPU-seconds (from 3,977) and at most 210 s wall on the same 14-core machine (from 430 s): the repositories fell from 1,407 to 327 CPU-seconds and the `*db` packages from 836 to 373, while the linker output shrank from 343 MB to 306 MB. `recordversionrepository` now compiles 360 functions, 209 of them generic: the pgx pool's `puddle` and `atomic.Pointer` instantiations every package holding a `*keel.DB` compiles. A reload after an exported function is added to `domain/shipment` fell from 181 s to 82 s, and the link of every reload from 11.4 s to 7.8 s ("Measured results"). |
 
 go-redis did it to every package that holds a `*redis.Client` or a `redis.UniversalClient`, at
 about 0.7 seconds each. `baseClient` kept a `weak.Pointer[Client]`, and because `Client` embeds
@@ -584,6 +584,34 @@ first-party packages recompiled. The three runs of each cell agreed within a few
 The runs and the script that summarises them are reproducible with `task build-bench -- --target
 <cli|api> --mode air` on each tree; compare medians of several warm runs, since single runs on
 this machine varied by up to 2x.
+
+### keel v0.5.0 generic-interface tables
+
+Measured on 2026-11-02 with `task build-bench -- --target api --mode air` on a 4-core cloud
+machine (15 GB) with Go 1.27.1, comparing `master` at `f869bfaf9` with the keel v0.5.0
+migration. Both trees were built with the same flags, the new watch flags
+(`-gcflags=all=-dwarf=false`, first-party `-N -l -dwarf=false`, `-ldflags=-s -w`), so the
+difference is the code. Each cell is the median of two warm runs after a first run on an empty
+benchmark cache; the first run is in brackets where it differed (it recompiles more, because
+nothing of the probe edit's neighbours is cached yet). Packages recompiled are in parentheses.
+
+| Edit | `master` | keel v0.5.0 |
+|---|---|---|
+| Cold build | 6m40s to 7m22s | 4m44s |
+| S1 no-op rebuild | 1.4s | 1.4s |
+| S2 unexported func in `shipmentwrite` | 14.0s (3) | 10.4s (3) |
+| S3 unexported func in `shipmentresolver` | 16.6s (3) | 12.7s (3) |
+| S4 exported func in `domain/shipment` | 3m1s (797) [3m37s, 1,042] | 1m22s (797) [1m31s, 1,042] |
+| S5 exported type beside `ShipmentRepository` | 46.4s (255) | 32.9s (255) |
+| S6 exported func in `agentroster` | 15.8s (8) | 13.0s (8) |
+| Link | 11.0s to 11.8s | 7.7s to 8.2s (10.3s after S4) |
+| Binary | 344 MB | 321 MB |
+
+The same packages recompile on both trees: the change is what each of them compiles. The
+repositories and `*db` packages that S4 and S5 recompile no longer compile keel's methods for
+every table they can see, which halves S4 and takes 30% off S5. The link is about 3.5 s faster
+on every reload: it no longer reads the same per-table wrappers from hundreds of object files
+and deduplicates them, and the binary is 23 MB smaller.
 
 ## Not done yet
 
