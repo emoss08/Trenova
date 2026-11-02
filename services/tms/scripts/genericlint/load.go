@@ -50,6 +50,15 @@ func load(ctx context.Context, dir string) ([]*packages.Package, error) {
 	return linted, nil
 }
 
+func loadedPackages(pkgs []*packages.Package) map[string]bool {
+	loaded := make(map[string]bool)
+	packages.Visit(pkgs, nil, func(pkg *packages.Package) {
+		loaded[pkg.PkgPath] = true
+	})
+
+	return loaded
+}
+
 func parseDeclarations(fset *token.FileSet, filename string, src []byte) (*ast.File, error) {
 	file, err := parser.ParseFile(fset, filename, src, parser.SkipObjectResolution)
 	if file == nil {

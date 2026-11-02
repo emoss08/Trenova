@@ -102,7 +102,7 @@ func (a *allowlist) match(key string) *allowEntry {
 	return nil
 }
 
-func (a *allowlist) filter(findings []finding) []string {
+func (a *allowlist) filter(findings []finding, loaded map[string]bool) []string {
 	problems := slices.Clone(a.problems)
 	for _, f := range findings {
 		if entry := a.match(f.key()); entry != nil {
@@ -112,7 +112,7 @@ func (a *allowlist) filter(findings []finding) []string {
 		problems = append(problems, f.String())
 	}
 	for _, entry := range a.entries {
-		if !entry.used {
+		if !entry.used && loaded[originPackage(entry.key)] {
 			problems = append(problems, fmt.Sprintf(
 				"%s:%d: %s matches nothing; remove it (or rewrite the file with -write-allow)",
 				a.path,
@@ -123,6 +123,19 @@ func (a *allowlist) filter(findings []finding) []string {
 	}
 
 	return problems
+}
+
+func originPackage(key string) string {
+	fields := strings.Fields(key)
+	if len(fields) != allowFields {
+		return ""
+	}
+	origin := fields[2]
+	if i := strings.LastIndex(origin, "."); i > 0 {
+		return origin[:i]
+	}
+
+	return origin
 }
 
 func (a *allowlist) write(findings []finding) (int, error) {

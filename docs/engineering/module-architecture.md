@@ -451,8 +451,9 @@ every type of another module, as the compiler does, so a `sync.Map` field is rep
 checked where it is declared. Each finding gives the file and line, the identifier, the
 instantiation, its method count and the type it was reached through. Accepted findings are listed
 in `scripts/genericlint/allow.txt`, one `<package path> <identifier> <origin type> # reason` per
-line; an entry that matches nothing fails as stale, and `-write-allow` rewrites the file from the
-current findings, keeping existing reasons and writing `# TODO reason` for new ones, which a
+line; an entry that matches nothing fails as stale unless the build loads no package of its origin
+type (a standard-library package only some Go releases have, such as Go 1.27's
+`internal/nettest`), and `-write-allow` rewrites the file from the current findings, keeping existing reasons and writing `# TODO reason` for new ones, which a
 reviewer replaces before merging.
 
 ## Build benchmark
