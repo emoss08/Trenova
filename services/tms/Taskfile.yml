@@ -45,19 +45,36 @@ vars:
   GO_JOBS: '{{if eq .LOW_RESOURCE "true"}}{{.LOW_RESOURCE_JOBS}}{{end}}'
   GO_TEST_JOBS: '{{.GO_JOBS | default "4"}}'
   AIR_FLAGS: '{{if .GO_JOBS}}--build.delay 2000{{end}}'
-  # gocut, for hot reload only: `task run-watch GOCUT=/path/to/gocut` (or
-  # run-worker-watch, or export GOCUT) runs the watch build's tools through
-  # gocut with -toolexec. gocut reuses a package's previous compile when
-  # nothing the package uses from a changed dependency changed. It runs in
-  # shadow mode (compiles anyway and reports what it would have reused) unless
+  GOCUT_WATCH_FLAGS: '{{if .GO_JOBS}}--delay 2000{{end}}'
+  # gocut builds the local binaries (the watch tasks and build-cli, so run,
+  # run-worker and every task that runs the CLI) through -toolexec. gocut
+  # reuses a package's previous compile when nothing the package uses from a
+  # changed dependency changed. The binary is the release build of the gocut
+  # repository checked out beside this one (GOCUT_DIR, built with
+  # `cargo build --release`), else gocut on PATH. GOCUT=/path/to/gocut picks
+  # another binary and GOCUT=off builds without it. It runs in shadow mode
+  # (compiles anyway and reports what it would have reused) unless
   # GOCUT_MODE=active, which skips those compiles. Tests, lint, CI and release
   # builds never use it.
-  GOCUT: '{{.GOCUT | default ""}}'
+  GOCUT_DIR: '{{.GOCUT_DIR | default (print .REPO_DIR "/../gocut")}}'
+  GOCUT:
+    sh: >-
+      if [ "${GOCUT:-}" = off ]; then echo off;
+      elif [ -n "${GOCUT:-}" ]; then echo "$GOCUT";
+      elif [ -x "{{.GOCUT_DIR}}/target/release/gocut" ]; then realpath "{{.GOCUT_DIR}}/target/release/gocut";
+      else command -v gocut || true; fi
+  GOCUT_FLAG: "{{if and .GOCUT (ne .GOCUT \"off\")}} -toolexec '{{.GOCUT}}'{{end}}"
+  # The hot-reload loop is `gocut watch` whenever gocut builds (see GOCUT above),
+  # else air with .air.toml. gocut watch interrupts a running build when a newer
+  # change arrives, so builds never overlap, stops the build and the server when
+  # it exits, rebuilds only for files the binary is built from (--pkg, shared/
+  # included), keeps the server running when the new binary is identical, and
+  # restarts it without a build when config/ changes (--restart).
+  GOCUT_WATCH: '{{if and .GOCUT (ne .GOCUT "off")}}true{{end}}'
   # The one build command of every hot-reload task (run-watch, watch,
-  # run-worker-watch); .air.toml explains the flags. Each task appends -o and
-  # its main package.
+  # run-worker-watch). Each task appends -o and its main package.
   WATCH_BUILD: >-
-    go build {{.GO_TAG_FLAG}}{{if .GOCUT}} -toolexec '{{.GOCUT}}'{{end}}
+    go build {{.GO_TAG_FLAG}}{{.GOCUT_FLAG}}
     -gcflags=all=-dwarf=false
     -gcflags='github.com/emoss08/trenova/...=-N -l -dwarf=false'
     -ldflags='-s -w'
@@ -100,7 +117,7 @@ tasks:
     desc: Build the unified CLI tool
     cmds:
       - mkdir -p {{.BUILD_DIR}}
-      - go build -buildvcs=false {{.GO_TAG_FLAG}} -o {{.CLI_PATH}} ./cmd/cli
+      - go build -buildvcs=false {{.GO_TAG_FLAG}}{{.GOCUT_FLAG}} -o {{.CLI_PATH}} ./cmd/cli
 
   build-devdb:
     desc: Build trenova-devdb, the development database tool (migrations, seeds, templates, volume data, reset)
@@ -115,11 +132,17 @@ tasks:
       - "{{.CLI_PATH}} api run"
 
   run-watch:
-    desc: Run the API server with hot reload (GOCUT=/path/to/gocut to build through gocut)
+    desc: Run the API server with hot reload, through gocut watch when gocut is found (GOCUT=off for air)
     cmds:
       - >-
+        {{if .GOCUT_WATCH}}
+        '{{.GOCUT}}' watch {{.GOCUT_WATCH_FLAGS}}
+        --pkg ./cmd/api --bin ./tmp/trenova-api --restart config
+        --build "{{.WATCH_BUILD}} -o ./tmp/trenova-api ./cmd/api"
+        {{else}}
         air {{.AIR_FLAGS}}
         --build.cmd "{{.WATCH_BUILD}} -o ./tmp/trenova-api ./cmd/api"
+        {{end}}
 
   build-bench:
     desc: "Measure rebuild times after representative edits (task build-bench -- --target cli --mode air)"
@@ -127,12 +150,18 @@ tasks:
       - ./scripts/buildbench/buildbench.sh {{.CLI_ARGS}}
 
   run-worker-watch:
-    desc: Run the worker service with hot reload (GOCUT=/path/to/gocut to build through gocut)
+    desc: Run the worker service with hot reload, through gocut watch when gocut is found (GOCUT=off for air)
     cmds:
       - >-
+        {{if .GOCUT_WATCH}}
+        '{{.GOCUT}}' watch {{.GOCUT_WATCH_FLAGS}}
+        --pkg ./cmd/worker --bin ./tmp/trenova-worker --restart config
+        --build "{{.WATCH_BUILD}} -o ./tmp/trenova-worker ./cmd/worker"
+        {{else}}
         air {{.AIR_FLAGS}}
         --build.cmd "{{.WATCH_BUILD}} -o ./tmp/trenova-worker ./cmd/worker"
         --build.bin "./tmp/trenova-worker"
+        {{end}}
 
   run-worker:
     desc: Run the worker service
@@ -570,11 +599,9 @@ tasks:
       - go list -json -m all | nancy sleuth
 
   watch:
-    desc: Run API with hot reload
+    desc: Run API with hot reload (same as run-watch)
     cmds:
-      - >-
-        air {{.AIR_FLAGS}}
-        --build.cmd "{{.WATCH_BUILD}} -o ./tmp/trenova-api ./cmd/api"
+      - task: run-watch
 
   watch-ui:
     desc: Run frontend with hot reload

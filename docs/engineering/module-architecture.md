@@ -200,7 +200,7 @@ asks for it without the tag in every graph.
 
 | Binary | Graph | Watch task |
 |---|---|---|
-| `cmd/api` | `core.OptionsFor(e)` + `apiapp.OptionsFor(e)` | `task run-watch` (`.air.toml`, build command `WATCH_BUILD`) |
+| `cmd/api` | `core.OptionsFor(e)` + `apiapp.OptionsFor(e)` | `task run-watch` (`gocut watch`, or air with `.air.toml`; build command `WATCH_BUILD`) |
 | `cmd/worker` | `core.OptionsFor(e)` + `workerapp.Modules()` + `workerapp.OptionsFor(e)`; `--queues` limits task queues | `task run-worker-watch` |
 | `cmd/cli` | `bootstrap.Options()` (core plus `workerapp.Modules()`), with `apiapp` for `api run` or `workerapp` for `worker run` | none; the production image runs it |
 
@@ -213,7 +213,7 @@ module; `workerapp.OptionsFor` adds the worker runtime (`temporaljobs.WorkerModu
 `WorkerOptions`.
 
 `run-watch`, `watch` and `run-worker-watch` build with one command, `WATCH_BUILD` in
-`services/tms/Taskfile.yml`, passed to air with `--build.cmd`:
+`services/tms/Taskfile.yml`, passed to `gocut watch --build` (or air's `--build.cmd`):
 `-gcflags=all=-dwarf=false -gcflags='github.com/emoss08/trenova/...=-N -l -dwarf=false'` and
 `-ldflags='-s -w'`. `-N -l` keeps a private edit from changing a package's export data, so it
 recompiles only its direct importers; `-s -w` leaves out the symbol table and DWARF, which only a
@@ -222,13 +222,27 @@ debugger reads, and shortens the link on every reload; and since the link drops 
 because the last `-gcflags` pattern a package matches wins. The binaries run unoptimised code, so
 do not benchmark against them.
 
-`task run-watch GOCUT=/path/to/gocut` (and `run-worker-watch`) adds `-toolexec <gocut>` to the
-watch build. gocut is a local `go build -toolexec` wrapper that reuses a package's previous
+The watch tasks (`run-watch`, `watch`, `run-worker-watch`) and `build-cli` (so `run`,
+`run-worker` and every task that runs the CLI) build with `-toolexec <gocut>` when gocut is
+found: the release build of the gocut repository checked out beside this one
+(`../gocut/target/release/gocut`, from `cargo build --release`; `GOCUT_DIR` moves it), else
+`gocut` on `PATH`. `GOCUT=/path/to/gocut` picks another binary and `GOCUT=off` builds without it.
+gocut is a local `go build -toolexec` wrapper that reuses a package's previous
 compile when nothing the package uses from a changed dependency changed, which cuts the
 recompiles an exported edit ripples through. It runs in shadow mode by default, compiling as
 usual and reporting what it would have reused; `GOCUT_MODE=active` skips those compiles. A wrong
 reuse would link stale code, so it is for local hot reload only: tests, lint, CI and release
 builds never take it.
+
+When gocut is found, the watch tasks also run the reload loop with `gocut watch` instead of air
+(`GOCUT=off` goes back to air and `.air.toml`). A change during a build interrupts that build's
+process group before the next build starts, so builds never pile up, and stopping the task stops
+the build and the server, which air left running. It rebuilds only for files the binary is built
+from: after each successful build, `go list -deps` on `--pkg ./cmd/api` (or `./cmd/worker`) lists
+the binary's packages, `shared/` included, so an edit to a package the binary does not import is
+ignored. A change under `config/`, which the binaries read at startup, restarts the server
+without a build (`--restart config`). A build whose binary is identical to the running one keeps
+the server running, and a failed build stops it. The gocut README documents its flags.
 
 On the keel v0.5.0 tree (4 cores, Go 1.27.1, the watch flags), gocut in active mode with its
 default 10% verify sample takes an exported function added to `domain/shipment` from 82 s to 30 s
