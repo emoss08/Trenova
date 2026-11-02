@@ -441,6 +441,13 @@ volume generator, not the query: give the table the rows and status mix producti
   under the cap, and read newest first only when the match is broader, with `CustomPlan` so the
   planner weighs that term: a common one walks the recency index, a rare one sorts its matches
   (`shipmentlistreadrepository.MatchOrderReferences`).
+- **A date window filter on a list paged in another order** (items delivered this week, oldest
+  queued first) has no index that gives both. Name the window's fields in
+  `listquery.Request.Window` with a cap: a capped count of the window decides the read. A window
+  that fits pages the rows `id IN (<the window> LIMIT cap+1)` returns, a sort the plan guard
+  bounds by that `Limit`; a larger one pages in the list's own order with `CustomPlan`, its end
+  written as `NOT (col >= $to)` so the generic plan does not price the window as the 0.5% a
+  closed range reads as, and walks the order's index instead (`billingqueuerepository.shipmentWindow`).
 - **A read scoped to explicit ids** is bounded by them: drop the `LIMIT` when the ids fit in the
   page (`dispatchconsolerepository.boundedByMoveIDs`), or truncate in Go when a row per id is not
   guaranteed, rather than sorting a handful of rows under a `LIMIT` over a large table.
