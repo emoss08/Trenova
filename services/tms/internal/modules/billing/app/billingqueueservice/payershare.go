@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingpayershare"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -20,7 +21,7 @@ func (s *Service) attachPayerShare(
 	item *billingqueue.BillingQueueItem,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	if item == nil || item.Shipment == nil || item.BillType != billingqueue.BillTypeInvoice {
+	if item == nil || item.Shipment == nil || item.BillType != billingvocab.BillTypeInvoice {
 		return nil
 	}
 	payerID := item.BillToCustomerID

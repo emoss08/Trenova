@@ -4,10 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
-	"strings"
-
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -21,6 +18,8 @@ import (
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+	"slices"
+	"strings"
 )
 
 const (
@@ -208,7 +207,7 @@ func (s *Service) billedInvoices(
 	billed := make([]billedLines, 0, len(invoices))
 	for _, entity := range invoices {
 		if entity == nil || entity.Status == invoice.StatusVoided ||
-			entity.BillType == billingqueue.BillTypeCreditMemo {
+			entity.BillType == billingvocab.BillTypeCreditMemo {
 			continue
 		}
 

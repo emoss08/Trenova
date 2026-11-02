@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
@@ -504,7 +505,7 @@ func (r *repository) RefreshQueueSnapshots(
 			if _, err = bq.Where(
 				bq.ShipmentID.Eq(shipmentID),
 				bq.BillToCustomerID.Eq(share.PayerID),
-				bq.BillType.Eq(billingqueue.BillTypeInvoice),
+				bq.BillType.Eq(billingvocab.BillTypeInvoice),
 				bq.Status.NotIn(billingqueue.StatusPosted, billingqueue.StatusCanceled),
 			).Update(ctx, db,
 				bq.AllocatedTotalAmount.To(share.TotalAmount),

@@ -43,6 +43,68 @@ const actionFieldsItem = {
   updatedAt: 1_700_000_000,
 };
 
+/**
+ * `billingqueue.AdjustmentContext` as Go serializes it: a rebill's decimals are strings and its
+ * accounting date unix seconds. The REST item carries the replacement lines themselves; the
+ * GraphQL action fields carry `replacementLineCount` (BillingQueueAdjustmentRebill).
+ */
+describe("billingQueueItemSchema.adjustmentContext", () => {
+  const rebill = {
+    subtotalAmount: "1250.50",
+    otherAmount: "185.00",
+    totalAmount: "1435.50",
+    accountingDate: 1_780_416_000,
+  };
+
+  it("counts the replacement lines a REST item carries", () => {
+    const parsed = billingQueueItemSchema.parse({
+      ...actionFieldsItem,
+      adjustmentContext: {
+        rebill: { ...rebill, replacementLines: [{ id: "il_1" }, { id: "il_2" }] },
+      },
+    });
+
+    expect(parsed.adjustmentContext).toEqual({
+      rebill: {
+        subtotalAmount: 1250.5,
+        otherAmount: 185,
+        totalAmount: 1435.5,
+        accountingDate: 1_780_416_000,
+        lineCount: 2,
+      },
+      memo: null,
+    });
+  });
+
+  it("takes the line count the GraphQL action fields select", () => {
+    const parsed = billingQueueItemSchema.parse({
+      ...actionFieldsItem,
+      adjustmentContext: { rebill: { ...rebill, replacementLineCount: 3 }, memo: null },
+    });
+
+    expect(parsed.adjustmentContext.rebill?.lineCount).toBe(3);
+  });
+
+  it("reads an item with no adjustment as neither a rebill nor a memo", () => {
+    expect(billingQueueItemSchema.parse(actionFieldsItem).adjustmentContext).toEqual({
+      rebill: null,
+      memo: null,
+    });
+  });
+
+  it("reads a memo's kind and who raised it", () => {
+    const parsed = billingQueueItemSchema.parse({
+      ...actionFieldsItem,
+      adjustmentContext: { memo: { kind: "Manual", raisedById: "usr_raiser" } },
+    });
+
+    expect(parsed.adjustmentContext).toEqual({
+      rebill: null,
+      memo: { kind: "Manual", raisedById: "usr_raiser" },
+    });
+  });
+});
+
 describe("billingQueueItemSchema.billToCustomer", () => {
   it("accepts the customer reference the GraphQL action fragments select", () => {
     const parsed = billingQueueItemSchema.parse(actionFieldsItem);
@@ -249,7 +311,7 @@ describe("billingQueueItemSchema.shipmentId", () => {
     shipmentId: null,
     billType: "DebitMemo",
     allocatedTotalAmount: "0",
-    adjustmentContext: { memo: true, memoKind: "LateCharge" },
+    adjustmentContext: { memo: { kind: "LateCharge", raisedById: "usr_raiser" } },
   };
 
   it("parses a memo item whose shipment id is null", () => {

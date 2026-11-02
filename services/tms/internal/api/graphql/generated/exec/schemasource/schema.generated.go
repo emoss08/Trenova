@@ -28295,8 +28295,8 @@ type BillingQueueItem {
   rebillStrategy: String
   requiresReplacementReview: Boolean!
   rerateVariancePercent: Decimal!
-  "Adjustment context contains invoice-adjustment workflow payloads and serialized provider/domain snapshots, so it remains intentionally open-ended."
-  adjustmentContext: JSON!
+  "What an adjustment or memo item bills from: the rebill it prices, or the memo it raises."
+  adjustmentContext: BillingQueueAdjustmentContext!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -29424,6 +29424,36 @@ extend type Mutation {
   resolveShipmentComment(shipmentId: ID!, commentId: ID!): ShipmentComment!
   unresolveShipmentComment(shipmentId: ID!, commentId: ID!): ShipmentComment!
   acknowledgeShipmentComment(shipmentId: ID!, commentId: ID!): ShipmentComment!
+}
+
+"""
+What an adjustment or memo queue item bills from. Each part is null when it does not apply: a
+credit-and-rebill item carries its rebill, a memo item its memo.
+"""
+type BillingQueueAdjustmentContext {
+  rebill: BillingQueueAdjustmentRebill
+  memo: BillingQueueAdjustmentMemo
+}
+
+"The replacement invoice a credit-and-rebill prices, as the adjustment previewed it."
+type BillingQueueAdjustmentRebill {
+  "How many lines the replacement invoice bills."
+  replacementLineCount: Int!
+  "The replacement's freight lines summed."
+  subtotalAmount: Decimal!
+  "The replacement's accessorial lines summed."
+  otherAmount: Decimal!
+  "What the replacement invoice comes to."
+  totalAmount: Decimal!
+  "The accounting date the replacement invoice takes."
+  accountingDate: Timestamp!
+}
+
+"A memo a queue item bills."
+type BillingQueueAdjustmentMemo {
+  kind: InvoiceMemoKind!
+  "Who raised the memo; someone else approves and posts it."
+  raisedById: ID
 }
 `, BuiltIn: false},
 	{Name: "../schema/shipment_board.graphqls", Input: `"Where a shipment sits on the board. Derived from its status alone, so it sorts, filters and groups as a column."

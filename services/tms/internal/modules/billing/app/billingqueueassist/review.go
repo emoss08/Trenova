@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueassist/reviewprompt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueuereview"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/deliveryread"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -137,7 +138,7 @@ func (s *Service) gatherEvidence(
 		return nil, err
 	}
 	if !billingqueuereview.IsReviewable(item.Status) ||
-		item.BillType != billingqueue.BillTypeInvoice ||
+		item.BillType != billingvocab.BillTypeInvoice ||
 		item.Review == nil ||
 		item.ShipmentID.IsNil() {
 		return nil, nil

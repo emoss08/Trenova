@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceaction"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevalidation"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -79,7 +80,7 @@ func newApprovalHarness(
 		BusinessUnitID: h.buID,
 		ShipmentID:     h.shipmentID,
 		Status:         billingqueue.StatusApproved,
-		BillType:       billingqueue.BillTypeInvoice,
+		BillType:       billingvocab.BillTypeInvoice,
 		Number:         "INV-1001",
 		Shipment:       queueShipment,
 	}

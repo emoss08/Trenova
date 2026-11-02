@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceaction"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevalidation"
 	"github.com/emoss08/trenova/internal/modules/billing/billingtest/invoiceservicetest"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -68,7 +68,7 @@ func TestPreviewMemoBuildsTheMemoWithoutMintingANumberOrWriting(t *testing.T) {
 		),
 	}
 
-	req := memoRequest(tenantInfo, customerID, billingqueue.BillTypeCreditMemo)
+	req := memoRequest(tenantInfo, customerID, billingvocab.BillTypeCreditMemo)
 	req.InvoiceDate = 1_700_000_000
 	memo, err := svc.PreviewMemo(t.Context(), req)
 

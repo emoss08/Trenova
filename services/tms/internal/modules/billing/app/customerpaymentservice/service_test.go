@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
@@ -43,7 +43,7 @@ func TestValidatorRejectsOverApplication(t *testing.T) {
 		BusinessUnitID:     buID,
 		CustomerID:         customerID,
 		Status:             invoice.StatusPosted,
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		TotalAmountMinor:   10000,
 		AppliedAmountMinor: 0,
 	}
@@ -107,7 +107,7 @@ func TestPostAndApplyUsesRevenueForCashBasis(t *testing.T) {
 		BusinessUnitID:     buID,
 		CustomerID:         pulid.MustNew("cus_"),
 		Status:             invoice.StatusPosted,
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		TotalAmount:        decimal.NewFromInt(100),
 		TotalAmountMinor:   10000,
 		AppliedAmount:      decimal.Zero,
@@ -330,7 +330,7 @@ func TestApplyUnappliedUsesUnappliedCashReclassification(t *testing.T) {
 			BusinessUnitID:     buID,
 			CustomerID:         storedPayment.CustomerID,
 			Status:             invoice.StatusPosted,
-			BillType:           billingqueue.BillTypeInvoice,
+			BillType:           billingvocab.BillTypeInvoice,
 			TotalAmount:        decimal.NewFromInt(50),
 			TotalAmountMinor:   5000,
 			AppliedAmount:      decimal.Zero,
@@ -452,7 +452,7 @@ func TestReverseCreatesReversingPaymentEntry(t *testing.T) {
 			BusinessUnitID:     buID,
 			CustomerID:         storedPayment.CustomerID,
 			Status:             invoice.StatusPosted,
-			BillType:           billingqueue.BillTypeInvoice,
+			BillType:           billingvocab.BillTypeInvoice,
 			TotalAmount:        decimal.NewFromInt(100),
 			TotalAmountMinor:   10000,
 			AppliedAmount:      decimal.RequireFromString("100.00"),
@@ -561,7 +561,7 @@ func TestPostAndApplyRecognizesShortPay(t *testing.T) {
 		BusinessUnitID:     buID,
 		CustomerID:         pulid.MustNew("cus_"),
 		Status:             invoice.StatusPosted,
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		TotalAmount:        decimal.NewFromInt(100),
 		TotalAmountMinor:   10000,
 		AppliedAmount:      decimal.Zero,

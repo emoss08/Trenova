@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptbatch/bankreceiptbatchdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
@@ -302,7 +303,7 @@ func createPostedCustomerPayment(
 		BillToCustomerID: env.shipment.CustomerID,
 		Number:           "INV-" + referenceNumber,
 		Status:           billingqueue.StatusPosted,
-		BillType:         billingqueue.BillTypeInvoice,
+		BillType:         billingvocab.BillTypeInvoice,
 	}
 	err := billingqueuedb.BillingQueueItems.Create(env.ctx, env.db, queue)
 	require.NoError(t, err)
@@ -316,7 +317,7 @@ func createPostedCustomerPayment(
 			ShipmentID:         env.shipment.ID,
 			CustomerID:         env.shipment.CustomerID,
 			Number:             queue.Number,
-			BillType:           billingqueue.BillTypeInvoice,
+			BillType:           billingvocab.BillTypeInvoice,
 			Status:             invoice.StatusPosted,
 			PostedAt:           &postedAt,
 			PaymentTerm:        invoice.PaymentTermNet30,

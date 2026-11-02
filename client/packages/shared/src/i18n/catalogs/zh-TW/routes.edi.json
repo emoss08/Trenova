@@ -420,6 +420,7 @@
   "SHA-384": "SHA-384",
   "SHA-512": "SHA-512",
   "ST {0}": "ST {0}",
+  "Same": "相同",
   "Samples": "範例",
   "Samples {0} reads": "{0} 讀取的範例",
   "Save a password in the Secrets tab before activating this profile.": "啟用此設定檔前，請先在「密鑰」分頁中儲存密碼。",

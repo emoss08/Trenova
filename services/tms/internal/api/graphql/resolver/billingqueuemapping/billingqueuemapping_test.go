@@ -3,7 +3,10 @@ package billingqueuemapping
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +31,7 @@ func TestBillingQueueItemToModel_MapsTypedBillingQueueItem(t *testing.T) {
 		AssignedBillerID:          &assignedBillerID,
 		Number:                    "BQI-1001",
 		Status:                    billingqueue.StatusException,
-		BillType:                  billingqueue.BillTypeCreditMemo,
+		BillType:                  billingvocab.BillTypeCreditMemo,
 		ExceptionReasonCode:       &exceptionReason,
 		ReviewNotes:               "needs review",
 		ExceptionNotes:            "unresolved service failure",
@@ -40,8 +43,14 @@ func TestBillingQueueItemToModel_MapsTypedBillingQueueItem(t *testing.T) {
 		SourceInvoiceID:           &sourceInvoiceID,
 		RequiresReplacementReview: true,
 		RerateVariancePercent:     decimal.RequireFromString("2.500000"),
-		AdjustmentContext: map[string]any{
-			"source": "serviceFailure214",
+		AdjustmentContext: billingqueue.AdjustmentContext{
+			Rebill: &billingqueue.AdjustmentRebill{
+				ReplacementLines: []*invoice.InvoiceLine{{}, {}},
+				SubtotalAmount:   decimal.RequireFromString("1250.5"),
+				OtherAmount:      decimal.RequireFromString("185"),
+				TotalAmount:      decimal.RequireFromString("1435.5"),
+				AccountingDate:   1780416000,
+			},
 		},
 		Version:   7,
 		CreatedAt: 1780415777,
@@ -52,16 +61,47 @@ func TestBillingQueueItemToModel_MapsTypedBillingQueueItem(t *testing.T) {
 	require.NotNil(t, model)
 	assert.Equal(t, "BQI-1001", model.Number)
 	assert.Equal(t, billingqueue.StatusException, model.Status)
-	assert.Equal(t, billingqueue.BillTypeCreditMemo, model.BillType)
+	assert.Equal(t, billingvocab.BillTypeCreditMemo, model.BillType)
 	assert.Equal(t, billingqueue.ExceptionServiceFailure, *model.ExceptionReasonCode)
 	assert.Equal(t, assignedBillerID.String(), *model.AssignedBillerID)
 	assert.Equal(t, canceledByID.String(), *model.CanceledByID)
 	assert.Equal(t, sourceInvoiceID.String(), *model.SourceInvoiceID)
 	assert.Equal(t, "2.5", model.RerateVariancePercent)
-	assert.Equal(t, "serviceFailure214", model.AdjustmentContext["source"])
+	require.NotNil(t, model.AdjustmentContext.Rebill)
+	assert.Equal(t, gqlmodel.BillingQueueAdjustmentRebill{
+		ReplacementLineCount: 2,
+		SubtotalAmount:       "1250.50",
+		OtherAmount:          "185.00",
+		TotalAmount:          "1435.50",
+		AccountingDate:       1780416000,
+	}, *model.AdjustmentContext.Rebill)
+	assert.Nil(t, model.AdjustmentContext.Memo)
 	assert.Equal(t, 7, model.Version)
 	assert.Equal(t, 1780415777, model.CreatedAt)
 	assert.Equal(t, 1780415888, model.UpdatedAt)
+}
+
+func TestBillingQueueItemToModel_MapsAMemoAndWhoRaisedIt(t *testing.T) {
+	t.Parallel()
+
+	raisedBy := pulid.MustNew("usr_")
+	model, err := BillingQueueItemToModel(t.Context(), &billingqueue.BillingQueueItem{
+		ID:                    pulid.MustNew("bqi_"),
+		OrganizationID:        pulid.MustNew("org_"),
+		BusinessUnitID:        pulid.MustNew("bu_"),
+		Status:                billingqueue.StatusApproved,
+		BillType:              billingvocab.BillTypeCreditMemo,
+		RerateVariancePercent: decimal.Zero,
+		AdjustmentContext: billingqueue.AdjustmentContext{
+			Memo: &billingqueue.AdjustmentMemo{Kind: invoice.MemoKindManual, RaisedByID: raisedBy},
+		},
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, model.AdjustmentContext.Memo)
+	assert.Equal(t, invoice.MemoKindManual, model.AdjustmentContext.Memo.Kind)
+	assert.Equal(t, raisedBy.String(), *model.AdjustmentContext.Memo.RaisedByID)
+	assert.Nil(t, model.AdjustmentContext.Rebill)
 }
 
 func TestBillingQueueItemToModel_DefaultsNilAdjustmentContext(t *testing.T) {
@@ -73,14 +113,13 @@ func TestBillingQueueItemToModel_DefaultsNilAdjustmentContext(t *testing.T) {
 		BusinessUnitID:        pulid.MustNew("bu_"),
 		ShipmentID:            pulid.MustNew("shp_"),
 		Status:                billingqueue.StatusReadyForReview,
-		BillType:              billingqueue.BillTypeInvoice,
+		BillType:              billingvocab.BillTypeInvoice,
 		RerateVariancePercent: decimal.Zero,
 	})
 	require.NoError(t, err)
 
 	require.NotNil(t, model)
-	assert.NotNil(t, model.AdjustmentContext)
-	assert.Empty(t, model.AdjustmentContext)
+	assert.Equal(t, &gqlmodel.BillingQueueAdjustmentContext{}, model.AdjustmentContext)
 }
 
 func TestRequiredBillingQueueItemToModel_RejectsNilItem(t *testing.T) {

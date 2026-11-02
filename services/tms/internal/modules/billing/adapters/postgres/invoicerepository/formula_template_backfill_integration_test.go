@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -64,7 +65,7 @@ func TestFormulaTemplateBackfillNamesTheTemplateEachFreightLineWasRatedWith(t *t
 		BillToCustomerID: customerID,
 		Number:           "INV-BACKFILL-1",
 		Status:           billingqueue.StatusApproved,
-		BillType:         billingqueue.BillTypeInvoice,
+		BillType:         billingvocab.BillTypeInvoice,
 	}
 	require.NoError(t, billingqueuedb.BillingQueueItems.Create(ctx, db, queue))
 
@@ -75,7 +76,7 @@ func TestFormulaTemplateBackfillNamesTheTemplateEachFreightLineWasRatedWith(t *t
 		ShipmentID:         shipmentID,
 		CustomerID:         customerID,
 		Number:             queue.Number,
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		Status:             invoice.StatusDraft,
 		PaymentTerm:        invoice.PaymentTermNet30,
 		CurrencyCode:       "USD",

@@ -3,9 +3,7 @@ package invoicecreationservice
 import (
 	"context"
 	"errors"
-	"fmt"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceassembly"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicelines"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepacket"
@@ -729,17 +727,6 @@ func orderNumberFromOrder(ord *order.Order) string {
 	return ord.OrderNumber
 }
 
-type adjustmentInvoiceContext struct {
-	ReplacementLines   []*invoice.InvoiceLine `json:"replacementLines"`
-	SubtotalAmount     decimal.Decimal        `json:"subtotalAmount"`
-	OtherAmount        decimal.Decimal        `json:"otherAmount"`
-	TotalAmount        decimal.Decimal        `json:"totalAmount"`
-	AccountingDate     int64                  `json:"accountingDate"`
-	SourceInvoiceID    pulid.ID               `json:"sourceInvoiceId"`
-	CorrectionGroupID  pulid.ID               `json:"correctionGroupId"`
-	SourceAdjustmentID pulid.ID               `json:"sourceAdjustmentId"`
-}
-
 func (s *Service) adjustmentOriginEntity(
 	ctx context.Context,
 	p *buildInvoiceParams,
@@ -771,21 +758,12 @@ func (s *Service) buildAdjustmentOriginInvoiceEntity(
 	cus *customer.Customer,
 	control *billingcontrol.BillingControl,
 ) (*invoice.Invoice, error) {
-	if len(item.AdjustmentContext) == 0 {
-		return nil, errNothingToBill
+	rebill := item.AdjustmentContext.Rebill
+	if rebill == nil {
+		rebill = &billingqueue.AdjustmentRebill{}
 	}
 
-	raw, err := sonic.Marshal(item.AdjustmentContext)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %w", errNothingToBill, err)
-	}
-
-	var adjustment adjustmentInvoiceContext
-	if err = sonic.Unmarshal(raw, &adjustment); err != nil {
-		return nil, fmt.Errorf("%w: %w", errNothingToBill, err)
-	}
-
-	invoiceDate := adjustment.AccountingDate
+	invoiceDate := rebill.AccountingDate
 	if invoiceDate == 0 {
 		invoiceDate = timeutils.NowUnix()
 	}
@@ -793,11 +771,12 @@ func (s *Service) buildAdjustmentOriginInvoiceEntity(
 	if paymentTerm == "" {
 		paymentTerm = invoice.PaymentTermNet30
 	}
-	lines := adjustment.ReplacementLines
+	lines := rebill.ReplacementLines
 	if len(lines) == 0 {
 		if shp == nil {
 			return nil, errNothingToBill
 		}
+		var err error
 		lines, err = invoicelines.ForShipment(ctx, item.BillType, shp, 1)
 		if err != nil {
 			return nil, err
@@ -826,9 +805,9 @@ func (s *Service) buildAdjustmentOriginInvoiceEntity(
 		AppliedAmount:             decimal.Zero,
 		SettlementStatus:          invoice.SettlementStatusUnpaid,
 		DisputeStatus:             invoice.DisputeStatusNone,
-		CorrectionGroupID:         adjustment.CorrectionGroupID,
-		SupersedesInvoiceID:       adjustment.SourceInvoiceID,
-		SourceInvoiceAdjustmentID: adjustment.SourceAdjustmentID,
+		CorrectionGroupID:         pulid.ConvertFromPtr(item.CorrectionGroupID),
+		SupersedesInvoiceID:       pulid.ConvertFromPtr(item.SourceInvoiceID),
+		SourceInvoiceAdjustmentID: pulid.ConvertFromPtr(item.SourceInvoiceAdjustmentID),
 		Lines:                     lines,
 		RatingNotes:               invoicelines.RatingNotes(shp),
 	}

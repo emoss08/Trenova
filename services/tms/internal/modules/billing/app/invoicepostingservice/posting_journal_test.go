@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceaction"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceledger"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevalidation"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/testutil"
@@ -31,17 +31,17 @@ func TestInvoicePostingSourceEvent(t *testing.T) {
 	assert.Equal(
 		t,
 		accountingcontrol.JournalSourceEventInvoicePosted,
-		invoiceledger.SourceEvent(billingqueue.BillTypeInvoice),
+		invoiceledger.SourceEvent(billingvocab.BillTypeInvoice),
 	)
 	assert.Equal(
 		t,
 		accountingcontrol.JournalSourceEventCreditMemoPosted,
-		invoiceledger.SourceEvent(billingqueue.BillTypeCreditMemo),
+		invoiceledger.SourceEvent(billingvocab.BillTypeCreditMemo),
 	)
 	assert.Equal(
 		t,
 		accountingcontrol.JournalSourceEventDebitMemoPosted,
-		invoiceledger.SourceEvent(billingqueue.BillTypeDebitMemo),
+		invoiceledger.SourceEvent(billingvocab.BillTypeDebitMemo),
 	)
 }
 
@@ -153,7 +153,7 @@ func TestCreateInvoiceJournalPostingBuildsCreditMemoPolarity(t *testing.T) {
 		BusinessUnitID:   buID,
 		CustomerID:       pulid.MustNew("cus_"),
 		Number:           "CM-1001",
-		BillType:         billingqueue.BillTypeCreditMemo,
+		BillType:         billingvocab.BillTypeCreditMemo,
 		TotalAmountMinor: -13500,
 		PostedAt:         &now,
 	}, testutil.NewSessionActor(userID, orgID, buID))
@@ -213,7 +213,7 @@ func TestCreateInvoiceJournalPostingSkipsWhenRecognitionPolicyDoesNotAllowInvoic
 			ID:               pulid.MustNew("inv_"),
 			OrganizationID:   orgID,
 			BusinessUnitID:   buID,
-			BillType:         billingqueue.BillTypeInvoice,
+			BillType:         billingvocab.BillTypeInvoice,
 			TotalAmountMinor: 10000,
 			PostedAt:         &now,
 		},
@@ -259,7 +259,7 @@ func TestCreateInvoiceJournalPostingSkipsWhenAutoPostDisabled(t *testing.T) {
 			ID:               pulid.MustNew("inv_"),
 			OrganizationID:   orgID,
 			BusinessUnitID:   buID,
-			BillType:         billingqueue.BillTypeInvoice,
+			BillType:         billingvocab.BillTypeInvoice,
 			TotalAmountMinor: 10000,
 			PostedAt:         &now,
 		},

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -26,7 +27,7 @@ func (f *holdFixture) returnToReview(t *testing.T) (*billingqueue.BillingQueueIt
 func TestUpdateStatus_ReturningAnApprovedItemToReviewDiscardsItsDraft(t *testing.T) {
 	t.Parallel()
 
-	f := newHoldFixture(t, billingqueue.BillTypeInvoice)
+	f := newHoldFixture(t, billingvocab.BillTypeInvoice)
 	f.item.Status = billingqueue.StatusApproved
 	f.item.Number = "INV-1001"
 	f.item.Version = 3
@@ -68,7 +69,7 @@ func TestUpdateStatus_ReturningAnApprovedItemToReviewDiscardsItsDraft(t *testing
 func TestUpdateStatus_ReturningToReviewIsRefusedWhenTheInvoiceIsPosted(t *testing.T) {
 	t.Parallel()
 
-	f := newHoldFixture(t, billingqueue.BillTypeInvoice)
+	f := newHoldFixture(t, billingvocab.BillTypeInvoice)
 	f.item.Status = billingqueue.StatusApproved
 	f.expectRead()
 	refused := errortypes.NewValidationError(
@@ -91,7 +92,7 @@ func TestUpdateStatus_ReturningToReviewIsRefusedWhenTheInvoiceIsPosted(t *testin
 func TestUpdateStatus_MovingIntoReviewFromElsewhereLeavesInvoicesAlone(t *testing.T) {
 	t.Parallel()
 
-	f := newHoldFixture(t, billingqueue.BillTypeInvoice)
+	f := newHoldFixture(t, billingvocab.BillTypeInvoice)
 	f.item.Status = billingqueue.StatusOnHold
 	f.expectRead()
 	f.repo.EXPECT().

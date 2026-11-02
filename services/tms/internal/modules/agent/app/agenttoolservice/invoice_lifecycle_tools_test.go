@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -413,7 +413,7 @@ func TestCreateInvoiceMemo_PreviewsTheMemoAndNeverPostsIt(t *testing.T) {
 	t.Parallel()
 
 	memo := lifecycleDraft("")
-	memo.BillType = billingqueue.BillTypeCreditMemo
+	memo.BillType = billingvocab.BillTypeCreditMemo
 	memo.Scope = invoice.ScopeMemo
 	memo.TotalAmount = decimal.RequireFromString("-75.50")
 	memo.TotalAmountMinor = -7550
@@ -422,7 +422,7 @@ func TestCreateInvoiceMemo_PreviewsTheMemoAndNeverPostsIt(t *testing.T) {
 	customerID := pulid.MustNew("cus_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		toolparams.ParamCustomerID: customerID.String(),
-		"billType":                 string(billingqueue.BillTypeCreditMemo),
+		"billType":                 string(billingvocab.BillTypeCreditMemo),
 		toolparams.ParamReason:     "Goodwill credit after a late delivery",
 		"invoiceDate":              "2026-09-25",
 		"lines": []any{
@@ -469,7 +469,7 @@ func TestCreateInvoiceMemo_PreviewsTheMemoAndNeverPostsIt(t *testing.T) {
 
 	bad := agenttoolstest.ExecuteParams(map[string]any{
 		toolparams.ParamCustomerID: customerID.String(),
-		"billType":                 string(billingqueue.BillTypeInvoice),
+		"billType":                 string(billingvocab.BillTypeInvoice),
 		toolparams.ParamReason:     "x",
 		"lines": []any{
 			map[string]any{"description": "y", toolparams.ParamAmount: "1"},

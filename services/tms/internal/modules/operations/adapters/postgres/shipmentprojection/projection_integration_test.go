@@ -30,6 +30,8 @@ type projection struct {
 	HasActiveAssignment   bool
 	Version               int64
 	UpdatedAt             int64
+	PickupAt              *int64
+	DeliveryAt            *int64
 }
 
 func newHarness(t *testing.T) *harness {
@@ -66,6 +68,12 @@ func (h *harness) arrive(t *testing.T, stop *shipment.Stop, at int64) {
 		at, string(shipmentvocab.StopStatusCompleted), stop.ID.String())
 }
 
+func (h *harness) schedule(t *testing.T, stop *shipment.Stop, at int64) {
+	t.Helper()
+	h.exec(t, `UPDATE stops SET scheduled_window_start = $1, scheduled_window_end = $1 WHERE id = $2`,
+		at, stop.ID.String())
+}
+
 func (h *harness) read(t *testing.T) projection {
 	t.Helper()
 
@@ -75,6 +83,8 @@ func (h *harness) read(t *testing.T) projection {
 		sp.HasActiveAssignment,
 		sp.Version,
 		sp.UpdatedAt,
+		sp.PickupAt,
+		sp.DeliveryAt,
 	).Where(sp.ID.Eq(h.graph.Shipment.ID)))
 	require.NoError(t, err)
 	require.Len(t, rows, 1)
@@ -207,4 +217,65 @@ func TestRefreshAcrossTenants_RefreshesUnderASystemScope(t *testing.T) {
 	got := h.read(t)
 	require.NotNil(t, got.LastDeliveryArrivalAt)
 	assert.Equal(t, int64(7_000), *got.LastDeliveryArrivalAt)
+}
+
+func TestRefresh_StoresTheFirstPickupWindowAndWhenTheLastDeliveryLands(t *testing.T) {
+	h := newHarness(t)
+	first, second := h.graph.Moves[0], h.graph.Moves[1]
+
+	h.schedule(t, first.Stops[0], 1_000)
+	h.schedule(t, first.Stops[1], 2_000)
+	h.schedule(t, second.Stops[0], 3_000)
+	h.schedule(t, second.Stops[1], 4_000)
+	require.NoError(t, shipmentprojection.Refresh(h.ctx, h.db, h.graph.Shipment.ID))
+	got := h.read(t)
+	require.NotNil(t, got.PickupAt)
+	require.NotNil(t, got.DeliveryAt)
+	assert.Equal(t, int64(1_000), *got.PickupAt, "first pickup of the first move")
+	assert.Equal(t, int64(4_000), *got.DeliveryAt, "last delivery, scheduled until it arrives")
+
+	// The last delivery's arrival replaces its schedule; a pickup's arrival does
+	// not move the pickup time, which is the scheduled window.
+	h.arrive(t, second.Stops[1], 4_500)
+	h.arrive(t, first.Stops[0], 9_000)
+	require.NoError(t, shipmentprojection.Refresh(h.ctx, h.db, h.graph.Shipment.ID))
+	got = h.read(t)
+	assert.Equal(t, int64(1_000), *got.PickupAt)
+	assert.Equal(t, int64(4_500), *got.DeliveryAt)
+
+	// A canceled delivery stop hands the delivery time to the previous move's.
+	h.exec(t, `UPDATE stops SET status = $1 WHERE id = $2`,
+		string(shipmentvocab.StopStatusCanceled), second.Stops[1].ID.String())
+	require.NoError(t, shipmentprojection.RefreshMoves(h.ctx, h.db, second.ID))
+	got = h.read(t)
+	assert.Equal(t, int64(1_000), *got.PickupAt)
+	assert.Equal(t, int64(2_000), *got.DeliveryAt)
+
+	// A canceled move takes its stops with it: the pickup moves to the second
+	// move, and no live delivery stop is left.
+	h.exec(t, `UPDATE shipment_moves SET status = $1 WHERE id = $2`,
+		string(shipmentvocab.MoveStatusCanceled), first.ID.String())
+	require.NoError(t, shipmentprojection.RefreshMoves(h.ctx, h.db, first.ID))
+	got = h.read(t)
+	require.NotNil(t, got.PickupAt)
+	assert.Equal(t, int64(3_000), *got.PickupAt)
+	assert.Nil(t, got.DeliveryAt)
+}
+
+func TestRefreshAcrossTenants_StoresThePickupAndDeliveryTimes(t *testing.T) {
+	h := newHarness(t)
+
+	h.schedule(t, h.graph.Moves[0].Stops[0], 1_500)
+	h.schedule(t, h.graph.Moves[1].Stops[1], 8_000)
+	system := dbscope.WithSystem(context.Background(), "refresh shipment projections in a test")
+	require.NoError(
+		t,
+		shipmentprojection.RefreshAcrossTenants(system, h.db, h.graph.Shipment.ID),
+	)
+
+	got := h.read(t)
+	require.NotNil(t, got.PickupAt)
+	require.NotNil(t, got.DeliveryAt)
+	assert.Equal(t, int64(1_500), *got.PickupAt)
+	assert.Equal(t, int64(8_000), *got.DeliveryAt)
 }

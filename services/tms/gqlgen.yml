@@ -1684,7 +1684,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer.ValidationFailure
   BillType:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.BillType
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab.BillType
   FreightTerms:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab.FreightTerms

@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/billingtest"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 
@@ -93,7 +94,7 @@ func TestImportAndMatchBankReceiptToCustomerPayment(t *testing.T) {
 		BillToCustomerID: shp.CustomerID,
 		Number:           "INV-BR-1",
 		Status:           billingqueue.StatusPosted,
-		BillType:         billingqueue.BillTypeInvoice,
+		BillType:         billingvocab.BillTypeInvoice,
 	}
 	err = billingqueuedb.BillingQueueItems.Create(ctx, db, queue)
 	require.NoError(t, err)
@@ -107,7 +108,7 @@ func TestImportAndMatchBankReceiptToCustomerPayment(t *testing.T) {
 			ShipmentID:         shp.ID,
 			CustomerID:         shp.CustomerID,
 			Number:             queue.Number,
-			BillType:           billingqueue.BillTypeInvoice,
+			BillType:           billingvocab.BillTypeInvoice,
 			Status:             invoice.StatusPosted,
 			PostedAt:           &postedAt,
 			PaymentTerm:        invoice.PaymentTermNet30,

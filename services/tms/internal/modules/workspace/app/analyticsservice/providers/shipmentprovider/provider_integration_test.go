@@ -6,6 +6,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
@@ -65,7 +66,6 @@ func newProviderFixture(t *testing.T) *providerFixture {
 
 	return &providerFixture{
 		provider: &Provider{
-			l:            zap.NewNop(),
 			db:           conn,
 			dispatchRepo: deps.dispatch,
 			dispatchConsole: dispatchconsolerepository.New(
@@ -113,8 +113,16 @@ func TestGetAnalyticsDataRunsEveryCardQuery(t *testing.T) {
 		GetByOrgID(mock.Anything, mock.Anything).
 		Return(&dispatchcontrol.DispatchControl{ServiceFailureTarget: &target}, nil)
 
-	data, err := f.provider.GetAnalyticsData(f.ctx, f.options(""))
+	// The provider's thirteen card queries go to the database in one round trip;
+	// the dispatch counts are the board summary's one batch. The on-time target
+	// and the costing control come from the mocks.
+	ctx := keel.Budget(f.ctx)
+	data, err := f.provider.GetAnalyticsData(ctx, f.options(""))
 	require.NoError(t, err)
+
+	report, ok := keel.BudgetReportFrom(ctx)
+	require.True(t, ok)
+	assert.Equal(t, 2, report.RoundTrips)
 
 	for _, key := range []string{
 		"activeShipments", "onTimePercent", "revenueToday", "emptyMilePercent", "atRisk",

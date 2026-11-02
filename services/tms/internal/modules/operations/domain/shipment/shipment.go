@@ -144,6 +144,8 @@ type Shipment struct {
 	CreatedAt             int64  `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt             int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
 	LastDeliveryArrivalAt *int64 `json:"-"         keel:"last_delivery_arrival_at,readonly,noselect"`
+	PickupAt              *int64 `json:"-"         keel:"pickup_at,readonly,noselect"`
+	DeliveryAt            *int64 `json:"-"         keel:"delivery_at,readonly,noselect"`
 	HasActiveAssignment   bool   `json:"-"         keel:"has_active_assignment,readonly,noselect"`
 
 	BusinessUnit        *tenant.BusinessUnit             `json:"businessUnit,omitempty"`

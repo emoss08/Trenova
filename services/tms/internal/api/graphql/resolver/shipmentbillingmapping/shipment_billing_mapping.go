@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/billingqueuemapping"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -256,9 +256,9 @@ func CandidateIDsToModel(
 	}
 }
 
-func ParseBillType(value *billingqueue.BillType) billingqueue.BillType {
+func ParseBillType(value *billingvocab.BillType) billingvocab.BillType {
 	if value == nil || *value == "" {
-		return billingqueue.BillTypeInvoice
+		return billingvocab.BillTypeInvoice
 	}
 	return *value
 }

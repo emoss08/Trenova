@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueactivity"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueuereadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -134,7 +135,7 @@ func TestTransferToBillingItemsCreatesOneItemPerPayer(t *testing.T) {
 
 	repo := billingqueueportsmock.NewMockBillingQueueRepository(t)
 	repo.EXPECT().
-		ExistsByShipmentPayerAndType(mock.Anything, tenantInfo, shp.ID, mock.Anything, billingqueue.BillTypeInvoice).
+		ExistsByShipmentPayerAndType(mock.Anything, tenantInfo, shp.ID, mock.Anything, billingvocab.BillTypeInvoice).
 		Return(false, nil).
 		Twice()
 	var created []*billingqueue.BillingQueueItem
@@ -179,7 +180,7 @@ func TestTransferToBillingItemsCreatesOneItemPerPayer(t *testing.T) {
 		t.Context(),
 		&billingqueueports.TransferToBillingRequest{
 			ShipmentID: shp.ID,
-			BillType:   billingqueue.BillTypeInvoice,
+			BillType:   billingvocab.BillTypeInvoice,
 			TenantInfo: tenantInfo,
 		},
 		&permissionports.RequestActor{
@@ -238,11 +239,11 @@ func TestTransferToBillingItemsRefusesWhenAPayerIsAlreadyQueued(t *testing.T) {
 
 	repo := billingqueueportsmock.NewMockBillingQueueRepository(t)
 	repo.EXPECT().
-		ExistsByShipmentPayerAndType(mock.Anything, tenantInfo, shp.ID, shp.CustomerID, billingqueue.BillTypeInvoice).
+		ExistsByShipmentPayerAndType(mock.Anything, tenantInfo, shp.ID, shp.CustomerID, billingvocab.BillTypeInvoice).
 		Return(false, nil).
 		Once()
 	repo.EXPECT().
-		ExistsByShipmentPayerAndType(mock.Anything, tenantInfo, shp.ID, amd, billingqueue.BillTypeInvoice).
+		ExistsByShipmentPayerAndType(mock.Anything, tenantInfo, shp.ID, amd, billingvocab.BillTypeInvoice).
 		Return(true, nil).
 		Once()
 
@@ -252,7 +253,7 @@ func TestTransferToBillingItemsRefusesWhenAPayerIsAlreadyQueued(t *testing.T) {
 		t.Context(),
 		&billingqueueports.TransferToBillingRequest{
 			ShipmentID: shp.ID,
-			BillType:   billingqueue.BillTypeInvoice,
+			BillType:   billingvocab.BillTypeInvoice,
 			TenantInfo: tenantInfo,
 		},
 		&permissionports.RequestActor{},
@@ -279,7 +280,7 @@ func TestTransferToBillingItemsRequiresAReadyToInvoiceShipment(t *testing.T) {
 
 	_, err := svc.TransferToBillingItems(t.Context(), &billingqueueports.TransferToBillingRequest{
 		ShipmentID: shp.ID,
-		BillType:   billingqueue.BillTypeInvoice,
+		BillType:   billingvocab.BillTypeInvoice,
 		TenantInfo: tenantInfo,
 	}, &permissionports.RequestActor{})
 	require.Error(t, err)
@@ -339,7 +340,7 @@ func TestTransferToBillingItemsSkipsAPayerWhoOwesNothing(t *testing.T) {
 
 	repo := billingqueueportsmock.NewMockBillingQueueRepository(t)
 	repo.EXPECT().
-		ExistsByShipmentPayerAndType(mock.Anything, tenantInfo, shp.ID, amd, billingqueue.BillTypeInvoice).
+		ExistsByShipmentPayerAndType(mock.Anything, tenantInfo, shp.ID, amd, billingvocab.BillTypeInvoice).
 		Return(false, nil).
 		Once()
 	var created []*billingqueue.BillingQueueItem
@@ -383,7 +384,7 @@ func TestTransferToBillingItemsSkipsAPayerWhoOwesNothing(t *testing.T) {
 		t.Context(),
 		&billingqueueports.TransferToBillingRequest{
 			ShipmentID: shp.ID,
-			BillType:   billingqueue.BillTypeInvoice,
+			BillType:   billingvocab.BillTypeInvoice,
 			TenantInfo: tenantInfo,
 		},
 		&permissionports.RequestActor{
@@ -411,7 +412,7 @@ func transferringService(
 
 	repo := billingqueueportsmock.NewMockBillingQueueRepository(t)
 	repo.EXPECT().
-		ExistsByShipmentPayerAndType(mock.Anything, tenantInfo, shp.ID, mock.Anything, billingqueue.BillTypeInvoice).
+		ExistsByShipmentPayerAndType(mock.Anything, tenantInfo, shp.ID, mock.Anything, billingvocab.BillTypeInvoice).
 		Return(false, nil).
 		Twice()
 	repo.EXPECT().
@@ -468,7 +469,7 @@ func TestTransferToBillingItemsReusesTheCallersDetailedShipment(t *testing.T) {
 		t.Context(),
 		&billingqueueports.TransferToBillingRequest{
 			ShipmentID:       shp.ID,
-			BillType:         billingqueue.BillTypeInvoice,
+			BillType:         billingvocab.BillTypeInvoice,
 			TenantInfo:       tenantInfo,
 			DetailedShipment: shp,
 		},
@@ -501,7 +502,7 @@ func TestTransferToBillingItemsReloadsAShipmentFromAnotherTenant(t *testing.T) {
 		t.Context(),
 		&billingqueueports.TransferToBillingRequest{
 			ShipmentID:       shp.ID,
-			BillType:         billingqueue.BillTypeInvoice,
+			BillType:         billingvocab.BillTypeInvoice,
 			TenantInfo:       tenantInfo,
 			DetailedShipment: &foreign,
 		},

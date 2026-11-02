@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/billingtest"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
@@ -103,7 +104,7 @@ func (f *walkBackFixture) fullSum(asOf int64, weeks int) []int64 {
 
 func (f *walkBackFixture) post(
 	number string,
-	billType billingqueue.BillType,
+	billType billingvocab.BillType,
 	total, invoiceDate int64,
 	dueDate *int64,
 ) *invoice.Invoice {
@@ -156,7 +157,7 @@ func (f *walkBackFixture) post(
 	require.NoError(t, err)
 	history := &asOfHistory{
 		id:          inv.ID,
-		receivable:  billType != billingqueue.BillTypeCreditMemo,
+		receivable:  billType != billingvocab.BillTypeCreditMemo,
 		invoiceDate: invoiceDate,
 		totalMinor:  total * 100,
 	}
@@ -359,16 +360,16 @@ func TestOpenAsOfWalkBackMatchesFullSum(t *testing.T) {
 		before[asOf] = read(asOf)
 	}
 
-	memo := f.post("CM-WB-MEMO", billingqueue.BillTypeCreditMemo, 500, ago(30), nil)
+	memo := f.post("CM-WB-MEMO", billingvocab.BillTypeCreditMemo, 500, ago(30), nil)
 
-	across := f.post("INV-WB-ACROSS", billingqueue.BillTypeInvoice, 1000, ago(20), at(ago(16)))
+	across := f.post("INV-WB-ACROSS", billingvocab.BillTypeInvoice, 1000, ago(20), at(ago(16)))
 	f.pay("PAY-WB-ACROSS-1", across, 30_000, 0, ago(18), nil)
 	f.pay("PAY-WB-ACROSS-2", across, 20_000, 0, ago(10), nil)
 	f.pay("PAY-WB-ACROSS-SHORT", across, 15_000, 5_000, ago(4), nil)
 
 	reversedIn := f.post(
 		"INV-WB-REVERSED-IN",
-		billingqueue.BillTypeInvoice,
+		billingvocab.BillTypeInvoice,
 		800,
 		ago(9),
 		at(ago(5)),
@@ -378,7 +379,7 @@ func TestOpenAsOfWalkBackMatchesFullSum(t *testing.T) {
 
 	reversedAcross := f.post(
 		"INV-WB-REVERSED-ACROSS",
-		billingqueue.BillTypeInvoice,
+		billingvocab.BillTypeInvoice,
 		600,
 		ago(25),
 		at(ago(21)),
@@ -388,28 +389,28 @@ func TestOpenAsOfWalkBackMatchesFullSum(t *testing.T) {
 
 	oldReversal := f.post(
 		"INV-WB-OLD-REVERSAL",
-		billingqueue.BillTypeInvoice,
+		billingvocab.BillTypeInvoice,
 		500,
 		ago(30),
 		at(ago(26)),
 	)
 	f.pay("PAY-WB-OLD-REVERSAL", oldReversal, 50_000, 0, ago(28), at(ago(26)))
 
-	credited := f.post("INV-WB-CREDIT", billingqueue.BillTypeInvoice, 400, ago(16), nil)
+	credited := f.post("INV-WB-CREDIT", billingvocab.BillTypeInvoice, 400, ago(16), nil)
 	f.credit(memo, credited, 15_000, ago(14), at(ago(8)))
 	f.credit(memo, credited, 5_000, exactly(5), at(ago(2)))
 	f.credit(memo, credited, 10_000, ago(11), nil)
 
-	factored := f.post("INV-WB-FACTORED", billingqueue.BillTypeInvoice, 900, ago(11), at(ago(7)))
+	factored := f.post("INV-WB-FACTORED", billingvocab.BillTypeInvoice, 900, ago(11), at(ago(7)))
 	f.factor(factored, "fsi_wb_funded", -90_000, ago(6))
 	f.factor(factored, "fsi_wb_recourse", 40_000, ago(2))
 
-	boundary := f.post("INV-WB-BOUNDARY", billingqueue.BillTypeInvoice, 300, exactly(12), nil)
+	boundary := f.post("INV-WB-BOUNDARY", billingvocab.BillTypeInvoice, 300, exactly(12), nil)
 	f.pay("PAY-WB-BOUNDARY", boundary, 30_000, 0, exactly(12), nil)
 
 	boundaryReversal := f.post(
 		"INV-WB-BOUNDARY-REVERSAL",
-		billingqueue.BillTypeInvoice,
+		billingvocab.BillTypeInvoice,
 		200,
 		ago(15),
 		at(ago(11)),
@@ -417,16 +418,16 @@ func TestOpenAsOfWalkBackMatchesFullSum(t *testing.T) {
 	f.pay("PAY-WB-BOUNDARY-REVERSED", boundaryReversal, 20_000, 0, ago(14), at(exactly(12)))
 	f.pay("PAY-WB-BOUNDARY-REPAID", boundaryReversal, 20_000, 0, exactly(9), nil)
 
-	voided := f.post("INV-WB-VOIDED", billingqueue.BillTypeInvoice, 700, ago(8), at(ago(4)))
+	voided := f.post("INV-WB-VOIDED", billingvocab.BillTypeInvoice, 700, ago(8), at(ago(4)))
 	f.pay("PAY-WB-VOIDED", voided, 70_000, 0, ago(6), at(ago(4)))
 	f.void(voided, ago(3))
 
-	debit := f.post("DM-WB-NEW", billingqueue.BillTypeDebitMemo, 250, ago(2), at(exactly(-2)))
+	debit := f.post("DM-WB-NEW", billingvocab.BillTypeDebitMemo, 250, ago(2), at(exactly(-2)))
 	f.pay("PAY-WB-DEBIT", debit, 5_000, 0, ago(1), nil)
 
 	reversedLate := f.post(
 		"INV-WB-REVERSED-LATE",
-		billingqueue.BillTypeInvoice,
+		billingvocab.BillTypeInvoice,
 		350,
 		ago(20),
 		at(ago(16)),

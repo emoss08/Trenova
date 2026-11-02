@@ -420,6 +420,7 @@
   "SHA-384": "SHA-384",
   "SHA-512": "SHA-512",
   "ST {0}": "ST {0}",
+  "Same": "Igual",
   "Samples": "Muestras",
   "Samples {0} reads": "Muestras que lee {0}",
   "Save a password in the Secrets tab before activating this profile.": "Guarde una contraseña en la pestaña Secretos antes de activar este perfil.",

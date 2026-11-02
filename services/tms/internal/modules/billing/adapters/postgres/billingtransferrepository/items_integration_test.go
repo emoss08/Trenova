@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer/billingtransferdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -67,7 +68,7 @@ func TestRecordItemOutcomesWritesEveryOutcomeOfAFlush(t *testing.T) {
 		RequestedByID:  userID,
 		Status:         billingtransfer.RunStatusRunning,
 		Scope:          billingtransfer.RunScopeSelected,
-		BillType:       billingqueue.BillTypeInvoice,
+		BillType:       billingvocab.BillTypeInvoice,
 		TotalCount:     len(shipments),
 		QueuedAt:       timeutils.NowUnix(),
 	})

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -28,7 +29,7 @@ func TestGuardItemRatingReview_RefusesToInvoiceAHeldRating(t *testing.T) {
 
 	held := heldRating()
 	err := guardItemRatingReview(
-		&billingqueue.BillingQueueItem{BillType: billingqueue.BillTypeInvoice},
+		&billingqueue.BillingQueueItem{BillType: billingvocab.BillTypeInvoice},
 		held,
 	)
 
@@ -44,8 +45,8 @@ func TestGuardItemRatingReview_LetsACreditMemoAndAnApprovedRatingThrough(t *test
 	_, err := shipmentrating.ApproveReview(approved.RatingDetail, pulid.MustNew("usr_"), 1)
 	require.NoError(t, err)
 
-	invoiceItem := &billingqueue.BillingQueueItem{BillType: billingqueue.BillTypeInvoice}
-	creditItem := &billingqueue.BillingQueueItem{BillType: billingqueue.BillTypeCreditMemo}
+	invoiceItem := &billingqueue.BillingQueueItem{BillType: billingvocab.BillTypeInvoice}
+	creditItem := &billingqueue.BillingQueueItem{BillType: billingvocab.BillTypeCreditMemo}
 
 	require.NoError(t, guardItemRatingReview(creditItem, heldRating()))
 	require.NoError(t, guardItemRatingReview(invoiceItem, approved))

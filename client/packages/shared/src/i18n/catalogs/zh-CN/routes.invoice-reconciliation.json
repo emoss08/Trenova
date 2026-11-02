@@ -10,6 +10,5 @@
   "Line-level credit and rebill values that created the exception.": "造成此例外的明细层级贷记与重新开单金额。",
   "Pick an exception from the list to trace it back to the adjustment and invoices it came from.": "请从列表中选择一笔例外，以回溯其来源的调整与发票。",
   "Rebill queue item": "重新开单队列项目",
-  "Replacement invoice": "替代发票",
   "Search invoice, customer, exception reason...": "搜索发票、客户、例外原因..."
 }

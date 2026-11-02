@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -20,7 +21,7 @@ func TestListConnection_FindsAnItemByItsShipmentsProNumber(t *testing.T) {
 	t.Parallel()
 
 	f := setupSyncFixture(t)
-	item := f.createItem(t, "BQ-SEARCH-1", billingqueue.StatusReadyForReview, billingqueue.BillTypeInvoice)
+	item := f.createItem(t, "BQ-SEARCH-1", billingqueue.StatusReadyForReview, billingvocab.BillTypeInvoice)
 	var proNumber string
 	require.NoError(t, keel.Pool(f.db).QueryRow(f.ctx,
 		"SELECT pro_number FROM shipments WHERE id = $1", f.shipmentID,
@@ -49,7 +50,7 @@ func TestListConnection_NarrowsToAShipmentsCustomerAndDeliveryDate(t *testing.T)
 	t.Parallel()
 
 	f := setupSyncFixture(t)
-	item := f.createItem(t, "BQ-FILTER-1", billingqueue.StatusReadyForReview, billingqueue.BillTypeInvoice)
+	item := f.createItem(t, "BQ-FILTER-1", billingqueue.StatusReadyForReview, billingvocab.BillTypeInvoice)
 	delivered := int64(1_793_000_000)
 	var customerID pulid.ID
 	require.NoError(t, keel.Pool(f.db).QueryRow(f.ctx,

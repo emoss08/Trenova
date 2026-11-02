@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/billingtest/invoiceservicetest"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -44,7 +44,7 @@ func TestReconciliationExpectedTotalUsesThePayersShareOnASplitInvoice(t *testing
 
 	entity := &invoice.Invoice{
 		Scope:       invoice.ScopeShipment,
-		BillType:    billingqueue.BillTypeInvoice,
+		BillType:    billingvocab.BillTypeInvoice,
 		CustomerID:  amd,
 		IsSplitBill: true,
 		ShipmentID:  leg.ID,
@@ -57,7 +57,7 @@ func TestReconciliationExpectedTotalUsesThePayersShareOnASplitInvoice(t *testing
 		"AMD owes 40% of the leg, not all of it",
 	)
 
-	entity.BillType = billingqueue.BillTypeCreditMemo
+	entity.BillType = billingvocab.BillTypeCreditMemo
 	assert.True(
 		t,
 		expectedTotal(t,
@@ -76,7 +76,7 @@ func TestReconciliationExpectedTotalUsesTheLegTotalOnAnOrdinaryInvoice(t *testin
 
 	entity := &invoice.Invoice{
 		Scope:      invoice.ScopeShipment,
-		BillType:   billingqueue.BillTypeInvoice,
+		BillType:   billingvocab.BillTypeInvoice,
 		CustomerID: leg.CustomerID,
 		ShipmentID: leg.ID,
 	}
@@ -110,7 +110,7 @@ func TestReconciliationExpectedTotalAddsUnattributedLinesOnWiderScopes(t *testin
 
 	entity := &invoice.Invoice{
 		Scope:       invoice.ScopeOrder,
-		BillType:    billingqueue.BillTypeInvoice,
+		BillType:    billingvocab.BillTypeInvoice,
 		CustomerID:  amd,
 		IsSplitBill: true,
 		Lines: []*invoice.InvoiceLine{

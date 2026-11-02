@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueuereview"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
@@ -262,9 +263,8 @@ func (g *billingPhase) bilQueueItem(
 		AllocatedTotalAmount:  total,
 		Number:                number,
 		Status:                status,
-		BillType:              billingqueue.BillTypeInvoice,
+		BillType:              billingvocab.BillTypeInvoice,
 		RerateVariancePercent: decimal.Zero,
-		AdjustmentContext:     map[string]any{},
 		CreatedAt:             transfer,
 		UpdatedAt:             transfer,
 	}
@@ -528,7 +528,7 @@ func (g *billingPhase) bilInvoice(
 		Detail:             customer.InvoiceDetailDetailed,
 		SectionBy:          customer.InvoiceSectionKeyShipment,
 		Number:             entity.Number,
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		Status:             invoice.StatusDraft,
 		PaymentTerm:        term,
 		CurrencyCode:       money.DefaultCurrencyCode,
@@ -709,12 +709,10 @@ func (g *billingPhase) bilCreditMemo(
 		AssignedBillerID:      &raisedBy,
 		Number:                number,
 		Status:                billingqueue.StatusPosted,
-		BillType:              billingqueue.BillTypeCreditMemo,
+		BillType:              billingvocab.BillTypeCreditMemo,
 		RerateVariancePercent: decimal.Zero,
-		AdjustmentContext: map[string]any{
-			"memo":       true,
-			"memoKind":   string(invoice.MemoKindManual),
-			"raisedById": raisedBy.String(),
+		AdjustmentContext: billingqueue.AdjustmentContext{
+			Memo: &billingqueue.AdjustmentMemo{Kind: invoice.MemoKindManual, RaisedByID: raisedBy},
 		},
 		CreatedAt: memoDate,
 		UpdatedAt: memoDate,
@@ -746,7 +744,7 @@ func (g *billingPhase) bilCreditMemo(
 		Detail:             customer.InvoiceDetailDetailed,
 		SectionBy:          customer.InvoiceSectionKeyShipment,
 		Number:             number,
-		BillType:           billingqueue.BillTypeCreditMemo,
+		BillType:           billingvocab.BillTypeCreditMemo,
 		Status:             invoice.StatusPosted,
 		PaymentTerm:        target.PaymentTerm,
 		CurrencyCode:       money.DefaultCurrencyCode,

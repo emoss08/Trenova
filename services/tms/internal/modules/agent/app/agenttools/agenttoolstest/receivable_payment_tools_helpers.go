@@ -1,7 +1,7 @@
 package agenttoolstest
 
 import (
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -12,7 +12,7 @@ func ReceivableInvoice(number string, totalMinor, appliedMinor int64) *invoice.I
 		ID:                 pulid.MustNew("inv_"),
 		Number:             number,
 		Status:             invoice.StatusPosted,
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		CurrencyCode:       "USD",
 		TotalAmount:        decimal.NewFromInt(totalMinor / 100),
 		TotalAmountMinor:   totalMinor,

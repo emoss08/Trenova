@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -186,7 +187,7 @@ func restoreShipments(
 		stillBilled := false
 		for _, other := range otherInvoices[legID] {
 			if other == nil || other.ID == entity.ID || other.Status != invoice.StatusPosted ||
-				other.BillType == billingqueue.BillTypeCreditMemo {
+				other.BillType == billingvocab.BillTypeCreditMemo {
 				continue
 			}
 			stillBilled = true

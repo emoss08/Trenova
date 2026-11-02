@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -203,7 +204,7 @@ type BillingQueueRepository interface {
 		tenantInfo pagination.TenantInfo,
 		shipmentID pulid.ID,
 		payerID pulid.ID,
-		billType billingqueue.BillType,
+		billType billingvocab.BillType,
 	) (bool, error)
 	ListActiveInvoiceItemsByShipmentIDs(
 		ctx context.Context,

@@ -2,16 +2,15 @@ package billingtransferservice
 
 import (
 	"context"
-	"time"
-
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"time"
 )
 
 const (
@@ -91,7 +90,7 @@ func (s *Service) StartAutomatic(
 		TenantInfo:                  tenantInfo,
 		Scope:                       billingtransfer.RunScopeAutomatic,
 		ShipmentIDs:                 shipmentIDs,
-		BillType:                    billingqueue.BillTypeInvoice,
+		BillType:                    billingvocab.BillTypeInvoice,
 		MarkCompletedReadyToInvoice: true,
 	})
 	if errortypes.IsConflictError(err) {

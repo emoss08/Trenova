@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingnumber"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -221,16 +222,13 @@ func (s *Engine) createCreditMemoQueueItem(
 		AllocatedTotalAmountMinor: intutils.Abs(sourceInvoice.TotalAmountMinor),
 		Number:                    number,
 		Status:                    billingqueue.StatusPosted,
-		BillType:                  billingqueue.BillTypeCreditMemo,
+		BillType:                  billingvocab.BillTypeCreditMemo,
 		IsAdjustmentOrigin:        true,
 		SourceInvoiceID:           &sourceInvoice.ID,
 		SourceInvoiceAdjustmentID: &adjustment.ID,
 		CorrectionGroupID:         &adjustment.CorrectionGroupID,
 		RequiresReplacementReview: preview.RequiresReplacementInvoiceReview,
 		RerateVariancePercent:     decimal.Zero,
-		AdjustmentContext: map[string]any{
-			"kind": adjustment.Kind,
-		},
 	})
 }
 
@@ -266,7 +264,7 @@ func (s *Engine) createCreditMemoInvoice(
 		OrderNumber:               sourceInvoice.OrderNumber,
 		CustomerID:                sourceInvoice.CustomerID,
 		Number:                    item.Number,
-		BillType:                  billingqueue.BillTypeCreditMemo,
+		BillType:                  billingvocab.BillTypeCreditMemo,
 		Status:                    invoice.StatusPosted,
 		PaymentTerm:               sourceInvoice.PaymentTerm,
 		CurrencyCode:              sourceInvoice.CurrencyCode,
@@ -325,7 +323,7 @@ func (s *Engine) createReplacementQueueItem(
 			OrgID: adjustment.OrganizationID,
 			BuID:  adjustment.BusinessUnitID,
 		},
-		BillType: billingqueue.BillTypeInvoice,
+		BillType: billingvocab.BillTypeInvoice,
 		PayerID:  sourceInvoice.CustomerID,
 	})
 	if err != nil {
@@ -342,7 +340,7 @@ func (s *Engine) createReplacementQueueItem(
 		AllocatedTotalAmountMinor: money.MinorUnits(preview.RebillTotalAmount.Abs()),
 		Number:                    number,
 		Status:                    replacementQueueStatus(preview.RequiresReplacementInvoiceReview),
-		BillType:                  billingqueue.BillTypeInvoice,
+		BillType:                  billingvocab.BillTypeInvoice,
 		IsAdjustmentOrigin:        true,
 		SourceInvoiceID:           &sourceInvoice.ID,
 		SourceInvoiceAdjustmentID: &adjustment.ID,
@@ -351,15 +349,14 @@ func (s *Engine) createReplacementQueueItem(
 		RebillStrategy:            string(adjustment.RebillStrategy),
 		RequiresReplacementReview: preview.RequiresReplacementInvoiceReview,
 		RerateVariancePercent:     preview.RerateVariancePercent,
-		AdjustmentContext: map[string]any{
-			"replacementLines":   lines,
-			"subtotalAmount":     sumInvoiceLines(lines, invoice.InvoiceLineTypeFreight),
-			"otherAmount":        sumInvoiceLines(lines, invoice.InvoiceLineTypeAccessorial),
-			"totalAmount":        preview.RebillTotalAmount,
-			"accountingDate":     preview.AccountingDate,
-			"sourceInvoiceId":    sourceInvoice.ID,
-			"correctionGroupId":  group.ID,
-			"sourceAdjustmentId": adjustment.ID,
+		AdjustmentContext: billingqueue.AdjustmentContext{
+			Rebill: &billingqueue.AdjustmentRebill{
+				ReplacementLines: lines,
+				SubtotalAmount:   sumInvoiceLines(lines, invoice.InvoiceLineTypeFreight),
+				OtherAmount:      sumInvoiceLines(lines, invoice.InvoiceLineTypeAccessorial),
+				TotalAmount:      preview.RebillTotalAmount,
+				AccountingDate:   preview.AccountingDate,
+			},
 		},
 	})
 }

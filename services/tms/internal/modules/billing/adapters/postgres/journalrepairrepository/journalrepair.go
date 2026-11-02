@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
@@ -74,7 +74,7 @@ func (r *repository) ListUnjournaledAdjustmentMemos(
 			memos, err := inv.AllTenants().
 				Where(
 					inv.IsAdjustmentArtifact.IsTrue(),
-					inv.BillType.Eq(billingqueue.BillTypeCreditMemo),
+					inv.BillType.Eq(billingvocab.BillTypeCreditMemo),
 					inv.Status.Eq(invoice.StatusPosted),
 					inv.SourceInvoiceAdjustmentID.IsNotNull(),
 					keel.NotExists(ledgerLine),

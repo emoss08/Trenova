@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevalidation"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
@@ -127,7 +128,7 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 		BillToCustomerID: shp.CustomerID,
 		Number:           "INV-1001",
 		Status:           billingqueue.StatusApproved,
-		BillType:         billingqueue.BillTypeInvoice,
+		BillType:         billingvocab.BillTypeInvoice,
 	}
 	require.NoError(t, billingqueuedb.BillingQueueItems.Create(ctx, db, queue))
 
@@ -138,7 +139,7 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 		ShipmentID:         shp.ID,
 		CustomerID:         shp.CustomerID,
 		Number:             queue.Number,
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		Status:             invoice.StatusDraft,
 		PaymentTerm:        invoice.PaymentTermNet30,
 		CurrencyCode:       "USD",
@@ -356,7 +357,7 @@ func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T)
 		BillToCustomerID: shp.CustomerID,
 		Number:           "INV-1002",
 		Status:           billingqueue.StatusApproved,
-		BillType:         billingqueue.BillTypeInvoice,
+		BillType:         billingvocab.BillTypeInvoice,
 	}
 	require.NoError(t, billingqueuedb.BillingQueueItems.Create(ctx, db, queue))
 	entity, err := invoiceRepo.Create(
@@ -368,7 +369,7 @@ func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T)
 			ShipmentID:         shp.ID,
 			CustomerID:         shp.CustomerID,
 			Number:             queue.Number,
-			BillType:           billingqueue.BillTypeInvoice,
+			BillType:           billingvocab.BillTypeInvoice,
 			Status:             invoice.StatusDraft,
 			PaymentTerm:        invoice.PaymentTermNet30,
 			CurrencyCode:       "USD",

@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
@@ -351,7 +351,7 @@ func TestReverseCustomerPayment_PreviewAndPersonOnly(t *testing.T) {
 
 func creditApplicationPlan() *customerpaymentports.CreditMemoApplicationPreview {
 	memo := agenttoolstest.ReceivableInvoice("CM-12", -8000, 0)
-	memo.BillType = billingqueue.BillTypeCreditMemo
+	memo.BillType = billingvocab.BillTypeCreditMemo
 	memoAfter := *memo
 	memoAfter.AppliedAmountMinor = 3000
 	target := agenttoolstest.ReceivableInvoice("INV-78", 10000, 0)

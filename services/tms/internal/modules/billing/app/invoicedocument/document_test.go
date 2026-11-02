@@ -1,12 +1,7 @@
 package invoicedocument
 
 import (
-	"image"
-	"image/color"
-	"strings"
-	"testing"
-
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -19,6 +14,10 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
+	"image"
+	"image/color"
+	"strings"
+	"testing"
 )
 
 func TestBuildInvoicePDFDataMapsBillToAndRemitSeparately(t *testing.T) {
@@ -372,7 +371,7 @@ func testInvoiceForPDF(invoiceID, orgID, buID pulid.ID) *invoice.Invoice {
 		ShipmentID:         pulid.MustNew("shp_"),
 		CustomerID:         pulid.MustNew("cus_"),
 		Number:             "INV-1001",
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		Status:             invoice.StatusDraft,
 		PaymentTerm:        invoice.PaymentTermNet30,
 		CurrencyCode:       "USD",

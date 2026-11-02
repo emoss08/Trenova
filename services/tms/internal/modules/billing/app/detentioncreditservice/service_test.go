@@ -4,9 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"testing"
-
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -21,6 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	"testing"
 )
 
 type fakeInvoices struct {
@@ -153,7 +152,7 @@ func newFixture() *fixture {
 		ID:           pulid.MustNew("inv_"),
 		Number:       "INV-20931",
 		Status:       invoice.StatusPosted,
-		BillType:     billingqueue.BillTypeInvoice,
+		BillType:     billingvocab.BillTypeInvoice,
 		CurrencyCode: "USD",
 		Lines: []*invoice.InvoiceLine{
 			{ID: pulid.MustNew("invl_"), Amount: decimal.RequireFromString("1500")},
@@ -163,7 +162,7 @@ func newFixture() *fixture {
 	memo := &invoice.Invoice{
 		ID:       pulid.MustNew("inv_"),
 		Number:   "CM-00012",
-		BillType: billingqueue.BillTypeCreditMemo,
+		BillType: billingvocab.BillTypeCreditMemo,
 	}
 
 	f := &fixture{

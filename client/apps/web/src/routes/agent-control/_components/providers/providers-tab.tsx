@@ -50,7 +50,6 @@ import {
   toggleTask,
   uncovered,
 } from "./provider-model";
-import { NovaProvider } from "./nova-provider";
 import { ProviderRouting } from "./provider-routing";
 import { ProvidersEmpty } from "./providers-empty";
 import { ProvidersBodySkeleton } from "./providers-skeleton";
@@ -308,11 +307,6 @@ export default function ProvidersTab() {
       patch.mutate({ provider, input: { tasks: toggleTask(provider.tasks, task) } }),
     [patch],
   );
-  // Choosing a provider for Nova takes Nova from the one that had it.
-  const chooseNova = useCallback(
-    (provider: AIProviderRow) => patch.mutate({ provider, input: { nova: true } }),
-    [patch],
-  );
   const setEnabled = useCallback(
     (provider: AIProviderRow, enabled: boolean) =>
       patch.mutate({
@@ -566,18 +560,6 @@ export default function ProvidersTab() {
           </Button>
         )}
       </div>
-      {catalog && (
-        <NovaProvider
-          providers={providers}
-          model={catalog.nova.model}
-          novaPlatforms={catalog.nova.platforms}
-          canChoose={canUpdate}
-          canAdd={canCreate}
-          choosing={patch.isPending}
-          onChoose={chooseNova}
-          onAdd={() => followPreset("anthropic")}
-        />
-      )}
       <section className="sec chain-s">
         <SecH
           t={t("The chain")}

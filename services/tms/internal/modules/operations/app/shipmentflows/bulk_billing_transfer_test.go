@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -171,13 +172,13 @@ func (f *bulkTransferFixture) expectQueued(
 		BusinessUnitID: f.buID,
 		ShipmentID:     entity.ID,
 		Status:         billingqueue.StatusReadyForReview,
-		BillType:       billingqueue.BillTypeInvoice,
+		BillType:       billingvocab.BillTypeInvoice,
 		Number:         "INV-" + entity.ProNumber,
 	}
 	f.billingQueue.EXPECT().
 		TransferToBillingItems(mock.Anything, mock.MatchedBy(func(req *billingqueueports.TransferToBillingRequest) bool {
 			return req.ShipmentID == entity.ID &&
-				req.BillType == billingqueue.BillTypeInvoice &&
+				req.BillType == billingvocab.BillTypeInvoice &&
 				req.TenantInfo == f.tenant() &&
 				req.DetailedShipment == entity
 		}), mock.Anything).
@@ -233,7 +234,7 @@ func TestBulkTransferToBilling_ReportsEachShipmentsOutcomeInRequestOrder(t *test
 		t.Context(),
 		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs: []pulid.ID{clean.ID, missingDocs.ID, alreadyQueued.ID},
-			BillType:    billingqueue.BillTypeInvoice,
+			BillType:    billingvocab.BillTypeInvoice,
 		},
 		f.actor(),
 	)
@@ -310,7 +311,7 @@ func TestBulkTransferToBilling_MarksCompletedShipmentsReadyBeforeTransferring(t 
 		t.Context(),
 		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs:                 []pulid.ID{completed.ID},
-			BillType:                    billingqueue.BillTypeInvoice,
+			BillType:                    billingvocab.BillTypeInvoice,
 			MarkCompletedReadyToInvoice: true,
 		},
 		f.actor(),
@@ -337,7 +338,7 @@ func TestBulkTransferToBilling_LeavesCompletedShipmentsAloneWithoutOptIn(t *test
 		t.Context(),
 		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs: []pulid.ID{completed.ID},
-			BillType:    billingqueue.BillTypeInvoice,
+			BillType:    billingvocab.BillTypeInvoice,
 		},
 		f.actor(),
 	)
@@ -368,7 +369,7 @@ func TestBulkTransferToBilling_DoesNotMarkCompletedShipmentsThatFailReadiness(t 
 		t.Context(),
 		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs:                 []pulid.ID{completed.ID},
-			BillType:                    billingqueue.BillTypeInvoice,
+			BillType:                    billingvocab.BillTypeInvoice,
 			MarkCompletedReadyToInvoice: true,
 		},
 		f.actor(),
@@ -407,7 +408,7 @@ func TestBulkTransferToBilling_ReportsMissingShipmentsAndKeepsGoing(t *testing.T
 		t.Context(),
 		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs: []pulid.ID{missingID, clean.ID},
-			BillType:    billingqueue.BillTypeInvoice,
+			BillType:    billingvocab.BillTypeInvoice,
 		},
 		f.actor(),
 	)
@@ -442,7 +443,7 @@ func TestBulkTransferToBilling_ReportsAQueueConflictAsAlreadyTransferred(t *test
 		t.Context(),
 		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs: []pulid.ID{raced.ID},
-			BillType:    billingqueue.BillTypeInvoice,
+			BillType:    billingvocab.BillTypeInvoice,
 		},
 		f.actor(),
 	)
@@ -470,7 +471,7 @@ func TestBulkTransferToBilling_TransfersADuplicatedIDOnce(t *testing.T) {
 		t.Context(),
 		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs: []pulid.ID{clean.ID, clean.ID},
-			BillType:    billingqueue.BillTypeInvoice,
+			BillType:    billingvocab.BillTypeInvoice,
 		},
 		f.actor(),
 	)
@@ -502,7 +503,7 @@ func TestBulkTransferToBilling_RejectsEmptyAndOversizedRequests(t *testing.T) {
 				t.Context(),
 				&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 					ShipmentIDs: ids,
-					BillType:    billingqueue.BillTypeInvoice,
+					BillType:    billingvocab.BillTypeInvoice,
 				},
 				f.actor(),
 			)
@@ -634,7 +635,7 @@ func TestBulkTransferToBilling_ReportsEachOutcomeAsItHappens(t *testing.T) {
 		t.Context(),
 		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs: []pulid.ID{first.ID, second.ID, missing.ID},
-			BillType:    billingqueue.BillTypeInvoice,
+			BillType:    billingvocab.BillTypeInvoice,
 			OnResult: func(result shipmentbillingports.BulkTransferToBillingResult) {
 				reported = append(reported, result)
 			},
@@ -699,7 +700,7 @@ func TestBulkTransferToBilling_SuppressesExceptionNotificationsWhenAsked(t *test
 		t.Context(),
 		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs:                    []pulid.ID{missingDocs.ID},
-			BillType:                       billingqueue.BillTypeInvoice,
+			BillType:                       billingvocab.BillTypeInvoice,
 			SuppressExceptionNotifications: true,
 		},
 		f.actor(),
@@ -752,7 +753,7 @@ func TestBulkTransferToBilling_ReadsTheBillingPolicyOncePerRun(t *testing.T) {
 		t.Context(),
 		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs: ids,
-			BillType:    billingqueue.BillTypeInvoice,
+			BillType:    billingvocab.BillTypeInvoice,
 		},
 		f.actor(),
 	)
@@ -795,7 +796,7 @@ func TestBulkTransferToBilling_DoesNotShareThePolicyAcrossRuns(t *testing.T) {
 			t.Context(),
 			&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 				ShipmentIDs: []pulid.ID{entity.ID},
-				BillType:    billingqueue.BillTypeInvoice,
+				BillType:    billingvocab.BillTypeInvoice,
 			},
 			f.actor(),
 		)

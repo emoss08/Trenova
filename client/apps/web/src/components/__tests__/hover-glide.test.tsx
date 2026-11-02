@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { RailGlideGroup } from "../rail-hover-glide";
+import { HoverGlideGroup } from "../hover-glide";
 
 afterEach(cleanup);
 
@@ -21,17 +21,17 @@ function place(
 
 function renderGroup() {
   const view = render(
-    <RailGlideGroup>
-      <button type="button" data-rail-tile>
+    <HoverGlideGroup>
+      <button type="button" data-glide-target>
         <svg data-testid="shipments-icon" />
         Shipments
       </button>
       <hr data-testid="rule" />
-      <button type="button" data-rail-tile>
+      <button type="button" data-glide-target>
         Billing
       </button>
       <button type="button">Account</button>
-    </RailGlideGroup>,
+    </HoverGlideGroup>,
   );
   const group = view.container.firstElementChild as HTMLElement;
   place(group, { left: 100, top: 200, width: 48, height: 400 });
@@ -47,7 +47,7 @@ function renderGroup() {
     width: 32,
     height: 32,
   });
-  const glide = group.querySelector('[data-slot="rail-glide"]') as HTMLElement;
+  const glide = group.querySelector('[data-slot="hover-glide"]') as HTMLElement;
   return { group, glide };
 }
 
@@ -55,7 +55,7 @@ function renderGroup() {
  * The rail draws one hover background per group and moves it: hovering a
  * tile puts it there, hovering the next slides it across, leaving fades it.
  */
-describe("the rail hover glide", () => {
+describe("the hover glide", () => {
   it("appears in place over the first tile the pointer reaches", () => {
     const { glide } = renderGroup();
     expect(glide).toHaveAttribute("data-state", "hidden");

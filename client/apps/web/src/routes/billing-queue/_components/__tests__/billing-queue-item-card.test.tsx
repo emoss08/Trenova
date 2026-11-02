@@ -35,11 +35,11 @@ function item(overrides: Partial<BillingQueueRow> = {}): BillingQueueRow {
   } as unknown as BillingQueueRow;
 }
 
-function renderCard(value: BillingQueueRow) {
+function renderCard(value: BillingQueueRow, isSelected = false) {
   return render(
     <BillingQueueItemCard
       item={value}
-      isSelected={false}
+      isSelected={isSelected}
       onClick={vi.fn()}
       onAssignBiller={vi.fn()}
       onHold={vi.fn()}
@@ -47,6 +47,26 @@ function renderCard(value: BillingQueueRow) {
     />,
   );
 }
+
+// The list lights items as the module rail lights its tiles: hover is the list's glide, and
+// the open item is filled as the rail fills the module you are in.
+describe("BillingQueueItemCard in the list", () => {
+  it("fills the open item as the module rail fills the module you are in", () => {
+    const { container } = renderCard(item(), true);
+
+    const card = container.querySelector("[data-glide-target]");
+    expect(card).toHaveClass("bg-nav-active", "text-nav-active-foreground");
+    expect(screen.getByRole("button", { current: true })).toBeInTheDocument();
+  });
+
+  it("leaves a closed item unfilled, with no hover fill of its own, for the list's glide", () => {
+    const { container } = renderCard(item());
+
+    const card = container.querySelector("[data-glide-target]");
+    expect(card).not.toHaveClass("bg-nav-active");
+    expect(card?.className).not.toMatch(/hover:bg-/u);
+  });
+});
 
 describe("BillingQueueItemCard payer", () => {
   it("bills the shipment's own customer for the whole amount by default", () => {

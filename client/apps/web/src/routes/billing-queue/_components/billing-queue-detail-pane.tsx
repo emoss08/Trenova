@@ -1,20 +1,26 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import AuditTab from "@/components/audit-tab";
 import { PlainBillingQueueStatusBadge } from "@trenova/shared/components/status-badge";
-import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { LinkedRecordLink } from "@/components/linked-record-link";
 import { recordPath } from "@/config/record-links";
 import { useCanReadKind } from "@trenova/shared/hooks/use-can-read-kind";
-import { exceptionReasonLabels } from "@/lib/choices";
+import { exceptionReasonLabels, rebillStrategyChoices } from "@/lib/choices";
 import { billingQueue } from "@/lib/queries/billing-queue";
 import { shipment as shipmentQueries } from "@/lib/queries/shipment";
 import { getDestinationLocation, getOriginLocation } from "@/lib/shipment-utils";
 import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { useNow } from "@trenova/shared/hooks/use-now";
-import { formatCompactAge, formatUnixInUserTimezone } from "@trenova/shared/lib/date";
+import {
+  formatCompactAge,
+  formatUnixDateMedium,
+  formatUnixInUserTimezone,
+} from "@trenova/shared/lib/date";
+import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
+import { AnimatePresence, m } from "motion/react";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { CommentsTabSkeleton } from "@/routes/shipment/_components/comments/comments-skeleton";
 import type { BillingQueueItem, ExceptionReasonCode } from "@trenova/shared/types/billing-queue";
@@ -22,10 +28,12 @@ import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,
   ChevronDownIcon,
+  InfoCircleIcon,
   LinkExternal01Icon,
   RefreshCw02Icon,
 } from "@trenova/shared/components/icons";
-import { lazy, Suspense, useState } from "react";
+import { formatNumber } from "@trenova/shared/i18n/format";
+import { lazy, Suspense, useId, useState } from "react";
 import { Link } from "react-router";
 import { billingQueueItemLabel } from "@/lib/billing-queue-label";
 import { shipmentDocumentsQuery } from "../billing-queue-queries";
@@ -33,6 +41,7 @@ import { BillingQueueActionBar } from "./billing-queue-action-bar";
 import { BillingQueueAssignDialog } from "./billing-queue-assign-dialog";
 import { BillingQueueChargesTab } from "./billing-queue-charges-tab";
 import { BillingQueueDetentionHolds } from "./billing-queue-detention-holds";
+import { BillingQueueNotice } from "./billing-queue-notice";
 import { BillingQueueDocumentsTab } from "./billing-queue-documents-tab";
 import { BillingQueueInvoiceTab } from "./billing-queue-invoice-tab";
 import { BillingQueueRatingReviewHold } from "./billing-queue-rating-review-hold";
@@ -279,21 +288,21 @@ function ItemNotices({ item }: { item: BillingQueueItem }) {
   return (
     <div className="flex flex-col gap-2">
       {billingNotes ? (
-        <Alert size="sm" variant="info">
-          <AlertTriangleIcon />
+        <BillingQueueNotice>
+          <InfoCircleIcon />
           <AlertTitle>{t("Billing notes")}</AlertTitle>
           <AlertDescription>{billingNotes}</AlertDescription>
-        </Alert>
+        </BillingQueueNotice>
       ) : null}
       {item.exceptionReasonCode ? (
-        <Alert size="sm" variant="destructive">
+        <BillingQueueNotice>
           <AlertTriangleIcon />
           <AlertTitle>
             {exceptionReasonLabels[item.exceptionReasonCode as ExceptionReasonCode] ??
               item.exceptionReasonCode}
           </AlertTitle>
           {item.exceptionNotes ? <AlertDescription>{item.exceptionNotes}</AlertDescription> : null}
-        </Alert>
+        </BillingQueueNotice>
       ) : null}
       <BillingQueueDetentionHolds holds={item.detentionHolds} />
       <BillingQueueRatingReviewHold hold={item.ratingReviewHold} />
@@ -400,98 +409,134 @@ function TabCount({ value }: { value: number | undefined }) {
   return <span className="text-foreground-subtle font-mono">{value}</span>;
 }
 
+const DETAILS_FOLD = { duration: 0.22, ease: [0.4, 0, 0.2, 1] } as const;
+
+/**
+ * The item rebills an invoice that was adjusted: how the replacement is priced, how far a rerate
+ * moved it, whether it waits on a replacement review, and the invoices it came from. The
+ * replacement the adjustment priced (its total, subtotals, lines and accounting date) opens in
+ * place behind "Details".
+ */
 function AdjustmentOriginNotice({ item }: { item: BillingQueueItem }) {
   const t = useT();
   const [expanded, setExpanded] = useState(false);
+  const detailsId = useId();
+  const rebill = item.adjustmentContext.rebill;
+  const strategy = rebillStrategyChoices.find((choice) => choice.value === item.rebillStrategy);
+  const variance =
+    item.rerateVariancePercent != null && Number(item.rerateVariancePercent) !== 0
+      ? Number(item.rerateVariancePercent)
+      : null;
 
   return (
-    <div className="border-info-border bg-info-subtle overflow-hidden rounded-md border">
-      <button
-        type="button"
-        className="flex w-full items-center gap-2.5 px-3 py-2 text-left"
-        onClick={() => setExpanded((prev) => !prev)}
-      >
-        <RefreshCw02Icon className="text-info-foreground size-3.5 shrink-0" />
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="text-info-foreground text-xs font-medium">
-            {t("Adjustment-origin rebill")}
-          </span>
-          {item.rebillStrategy ? (
-            <span className="bg-info-subtle text-info-foreground rounded-md px-1.5 py-0.5 text-2xs font-medium">
-              {item.rebillStrategy}
-            </span>
-          ) : null}
-          {item.requiresReplacementReview ? (
-            <span className="bg-warning-subtle text-warning-foreground rounded-md px-1.5 py-0.5 text-2xs font-medium">
-              {t("Review required")}
-            </span>
-          ) : null}
-        </div>
-        <div className="flex items-center gap-1.5">
-          {item.sourceInvoiceId ? (
-            <LinkedRecordLink
-              kind="invoice"
-              id={item.sourceInvoiceId}
-              className="text-info-foreground text-2xs font-medium hover:underline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {t("Original")}
-            </LinkedRecordLink>
-          ) : null}
-          {item.sourceCreditMemoInvoiceId ? (
-            <LinkedRecordLink
-              kind="invoice"
-              id={item.sourceCreditMemoInvoiceId}
-              className="text-info-foreground text-2xs font-medium hover:underline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {t("Credit memo")}
-            </LinkedRecordLink>
-          ) : null}
-          <ChevronDownIcon
-            className={cn(
-              "text-info-foreground/50 size-3.5 transition-transform duration-150",
-              expanded && "rotate-180",
+    <BillingQueueNotice data-testid="billing-queue-adjustment-origin">
+      <RefreshCw02Icon />
+      <AlertTitle>{t("Rebills an adjusted invoice")}</AlertTitle>
+      <AlertDescription>
+        {strategy ? (
+          <p>
+            <span className="text-foreground font-medium">{t(strategy.label)}</span>
+            <span aria-hidden="true"> · </span>
+            {t(strategy.description)}
+          </p>
+        ) : null}
+        {variance !== null ? (
+          <p>
+            {t(
+              "Rerated {0}% from the original invoice",
+              formatNumber(variance, { maximumFractionDigits: 2, signDisplay: "always" }),
             )}
-          />
-        </div>
-      </button>
-      {expanded ? (
-        <div className="border-info-border text-2xs flex flex-wrap gap-x-5 gap-y-1 border-t px-3 py-2">
-          {item.sourceInvoiceAdjustmentId ? (
-            <span className="text-muted-foreground">
-              {t("Adjustment")}{" "}
-              <span className="text-foreground font-medium">
-                {item.sourceInvoiceAdjustmentId.slice(0, 12)}
-              </span>
-            </span>
+          </p>
+        ) : null}
+        {item.requiresReplacementReview ? (
+          <p className="font-medium">
+            {t("Needs a replacement review before its invoice is created")}
+          </p>
+        ) : null}
+        {item.sourceInvoiceId || item.sourceCreditMemoInvoiceId || rebill ? (
+          <p className="flex w-full flex-wrap items-center gap-x-3 gap-y-1">
+            {item.sourceInvoiceId ? (
+              <LinkedRecordLink
+                kind="invoice"
+                id={item.sourceInvoiceId}
+                className="ui-focus-ring text-brand rounded-control font-medium underline-offset-2 hover:underline"
+              >
+                {t("Original invoice")}
+              </LinkedRecordLink>
+            ) : null}
+            {item.sourceCreditMemoInvoiceId ? (
+              <LinkedRecordLink
+                kind="invoice"
+                id={item.sourceCreditMemoInvoiceId}
+                className="ui-focus-ring text-brand rounded-control font-medium underline-offset-2 hover:underline"
+              >
+                {t("Credit memo")}
+              </LinkedRecordLink>
+            ) : null}
+            {rebill ? (
+              <button
+                type="button"
+                aria-expanded={expanded}
+                aria-controls={detailsId}
+                onClick={() => setExpanded((open) => !open)}
+                className="ui-focus-ring rounded-control text-foreground-muted hover:text-foreground ml-auto inline-flex items-center gap-1 font-medium transition-colors"
+              >
+                {expanded ? t("Hide details") : t("Details")}
+                <ChevronDownIcon
+                  className={cn(
+                    "size-3.5 transition-transform duration-200",
+                    expanded && "rotate-180",
+                  )}
+                />
+              </button>
+            ) : null}
+          </p>
+        ) : null}
+        <AnimatePresence initial={false}>
+          {rebill && expanded ? (
+            <m.div
+              key="details"
+              id={detailsId}
+              className="w-full overflow-hidden"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{
+                height: "auto",
+                opacity: 1,
+                transition: { height: DETAILS_FOLD, opacity: { duration: 0.16, delay: 0.06 } },
+              }}
+              exit={{
+                height: 0,
+                opacity: 0,
+                transition: { height: DETAILS_FOLD, opacity: { duration: 0.12 } },
+              }}
+            >
+              <DescriptionList
+                layout="inline"
+                aria-label={t("Replacement invoice")}
+                className="border-info-border mt-1.5 border-t pt-1.5"
+              >
+                <DescriptionItem label={t("Replacement total")} numeric valueClassName="text-xs">
+                  {formatCurrency(rebill.totalAmount ?? 0)}
+                </DescriptionItem>
+                <DescriptionItem label={t("Freight")} numeric valueClassName="text-xs">
+                  {formatCurrency(rebill.subtotalAmount ?? 0)}
+                </DescriptionItem>
+                <DescriptionItem label={t("Accessorials")} numeric valueClassName="text-xs">
+                  {formatCurrency(rebill.otherAmount ?? 0)}
+                </DescriptionItem>
+                <DescriptionItem label={t("Lines")} numeric valueClassName="text-xs">
+                  {t("{0, plural, one {# line} other {# lines}}", rebill.lineCount)}
+                </DescriptionItem>
+                {rebill.accountingDate > 0 ? (
+                  <DescriptionItem label={t("Accounting date")} valueClassName="text-xs">
+                    {formatUnixDateMedium(rebill.accountingDate)}
+                  </DescriptionItem>
+                ) : null}
+              </DescriptionList>
+            </m.div>
           ) : null}
-          {item.correctionGroupId ? (
-            <span className="text-muted-foreground">
-              {t("Group")}{" "}
-              <span className="text-foreground font-medium">
-                {item.correctionGroupId.slice(0, 12)}
-              </span>
-            </span>
-          ) : null}
-          {item.rerateVariancePercent != null ? (
-            <span className="text-muted-foreground">
-              {t("Rerate variance")}{" "}
-              <span className="text-foreground font-medium">
-                {Number(item.rerateVariancePercent).toFixed(2)}%
-              </span>
-            </span>
-          ) : null}
-          {item.requiresReplacementReview ? (
-            <span className="text-muted-foreground">
-              {t("Replacement review")}{" "}
-              <span className="text-foreground font-medium">
-                {t("Required before invoice creation")}
-              </span>
-            </span>
-          ) : null}
-        </div>
-      ) : null}
-    </div>
+        </AnimatePresence>
+      </AlertDescription>
+    </BillingQueueNotice>
   );
 }

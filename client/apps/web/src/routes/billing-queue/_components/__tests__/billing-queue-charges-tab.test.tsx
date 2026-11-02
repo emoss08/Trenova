@@ -421,6 +421,41 @@ describe("BillingQueueChargesTab editing a line in place", () => {
     ]);
   });
 
+  it("saves a quantity past three digits, up to what a charge's unit column holds", async () => {
+    const user = userEvent.setup();
+    updateCharges.mockResolvedValueOnce(queueItem({ payer: "acme" }));
+    renderTab(queueItem({ payer: "acme" }));
+
+    await user.click(screen.getByRole("button", { name: "Edit Detention Fee" }));
+    const quantity = screen.getByRole("textbox", { name: "Quantity" });
+    await user.clear(quantity);
+    await user.type(quantity, "32768");
+    expect(quantity).toHaveValue("3276");
+
+    await user.clear(quantity);
+    await user.type(quantity, "32767");
+    expect(quantity).toHaveValue("32767");
+    await user.click(screen.getByRole("button", { name: "Save line" }));
+
+    await waitFor(() => expect(updateCharges).toHaveBeenCalledTimes(1));
+    expect(updateCharges.mock.calls[0]![1].additionalCharges[0].unit).toBe(32_767);
+  });
+
+  it("saves a rate well past $100,000", async () => {
+    const user = userEvent.setup();
+    updateCharges.mockResolvedValueOnce(queueItem({ payer: "acme" }));
+    renderTab(queueItem({ payer: "acme" }));
+
+    await user.click(screen.getByRole("button", { name: "Edit Detention Fee" }));
+    const rate = screen.getByRole("textbox", { name: "Rate" });
+    await user.clear(rate);
+    await user.type(rate, "250000");
+    await user.click(screen.getByRole("button", { name: "Save line" }));
+
+    await waitFor(() => expect(updateCharges).toHaveBeenCalledTimes(1));
+    expect(updateCharges.mock.calls[0]![1].additionalCharges[0].amount).toBe(250_000);
+  });
+
   it("refuses a quantity under one without saving", async () => {
     const user = userEvent.setup();
     renderTab(queueItem({ payer: "acme" }));

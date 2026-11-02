@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringservicetest"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -103,7 +103,7 @@ func TestEvaluateFirstTimeWithoutAgreementOrNotice(t *testing.T) {
 		CustomerID:         pulid.MustNew("cus_"),
 		Number:             "INV-1",
 		Status:             invoice.StatusPosted,
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		PostedAt:           &posted,
 		TotalAmountMinor:   100000,
 		FactoringCompanyID: &factorID,

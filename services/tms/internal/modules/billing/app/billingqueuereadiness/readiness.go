@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueuereview"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -258,7 +259,7 @@ func (s *Reviewer) GuardOpenIssues(
 	item *billingqueue.BillingQueueItem,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	if s.reviewRepo == nil || item.BillType == billingqueue.BillTypeCreditMemo {
+	if s.reviewRepo == nil || item.BillType == billingvocab.BillTypeCreditMemo {
 		return nil
 	}
 	open, err := s.reviewRepo.CountOpenIssues(ctx, tenantInfo, item.ID)
@@ -1087,7 +1088,7 @@ func unbilledReceipts(
 	item *billingqueue.BillingQueueItem,
 	docs []*document.Document,
 ) []*billingqueuereview.UnbilledReceipt {
-	if item.Shipment == nil || item.BillType != billingqueue.BillTypeInvoice {
+	if item.Shipment == nil || item.BillType != billingvocab.BillTypeInvoice {
 		return nil
 	}
 
@@ -1121,7 +1122,7 @@ func unbilledReceipts(
 }
 
 func missingPONumber(item *billingqueue.BillingQueueItem) bool {
-	if item.BillType != billingqueue.BillTypeInvoice || strings.TrimSpace(item.PONumber) != "" {
+	if item.BillType != billingvocab.BillTypeInvoice || strings.TrimSpace(item.PONumber) != "" {
 		return false
 	}
 	cus := item.BillToCustomer

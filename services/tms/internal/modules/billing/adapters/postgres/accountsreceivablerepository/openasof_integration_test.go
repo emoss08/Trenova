@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/billingtest"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
@@ -73,7 +74,7 @@ func TestOpenAsOfFollowsEverySettlementSource(t *testing.T) {
 
 	post := func(
 		number string,
-		billType billingqueue.BillType,
+		billType billingvocab.BillType,
 		total int64,
 		invoiceDate int64,
 		dueDate *int64,
@@ -189,10 +190,10 @@ func TestOpenAsOfFollowsEverySettlementSource(t *testing.T) {
 		backdate("customer_payment_applications", application.ID, appliedAt)
 	}
 
-	factored := post("INV-ASOF-FACTORED", billingqueue.BillTypeInvoice, 1000, before(10),
+	factored := post("INV-ASOF-FACTORED", billingvocab.BillTypeInvoice, 1000, before(10),
 		int64PtrAR(asOf-6*secondsPerWeek))
-	memo := post("CM-ASOF-FACTORED", billingqueue.BillTypeCreditMemo, 100, before(11), nil)
-	reopened := post("DM-ASOF-REOPENED", billingqueue.BillTypeDebitMemo, 500, before(3),
+	memo := post("CM-ASOF-FACTORED", billingvocab.BillTypeCreditMemo, 100, before(11), nil)
+	reopened := post("DM-ASOF-REOPENED", billingvocab.BillTypeDebitMemo, 500, before(3),
 		int64PtrAR(asOf+4*secondsPerWeek))
 
 	pay("PAY-ASOF-PARTIAL", factored, 40_000, before(8), nil)

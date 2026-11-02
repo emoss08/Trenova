@@ -2,9 +2,7 @@ package invoicedisputeservice
 
 import (
 	"context"
-	"testing"
-
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
@@ -24,6 +22,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	"testing"
 )
 
 type fakeDisputeDB struct{}
@@ -63,7 +62,7 @@ func newDisputeFixture(t *testing.T) *disputeFixture {
 		CustomerID:       pulid.MustNew("cus_"),
 		Number:           "INV-9",
 		Status:           invoice.StatusPosted,
-		BillType:         billingqueue.BillTypeInvoice,
+		BillType:         billingvocab.BillTypeInvoice,
 		TotalAmount:      decimal.NewFromInt(100),
 		TotalAmountMinor: 10000,
 		DisputeStatus:    invoice.DisputeStatusNone,
@@ -203,7 +202,7 @@ func TestOpenDisputeInvoiceRules(t *testing.T) {
 		},
 		{
 			"credit memo",
-			func(inv *invoice.Invoice) { inv.BillType = billingqueue.BillTypeCreditMemo },
+			func(inv *invoice.Invoice) { inv.BillType = billingvocab.BillTypeCreditMemo },
 			"10",
 			"invoices and debit memos",
 		},

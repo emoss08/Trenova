@@ -875,7 +875,9 @@ total. Output, per charge:
 ```json
 {"charges": [{"method": "Percent", "allocated": "60", "remaining": "40", "complete": false,
   "over": false, "mixedMethods": false, "duplicatePayers": false, "missingPayers": false,
-  "problem": {"message": "Percents must add up to 100"}, "valid": false}]}
+  "problem": {"message": "Percents must add up to 100"}, "valid": false,
+  "shares": [{"amount": "692.63", "percent": "60"}, null], "fills": ["100", "40"],
+  "even": ["50", "50"]}]}
 ```
 
 - `method` is the first row's (`Percent` when it is not `Amount`); `mixedMethods` when any row
@@ -891,6 +893,22 @@ total. Output, per charge:
   up to the charge". No rows is no problem (the whole charge goes to the default payer), and
   amount rows against an unknown total are not judged on their sum. `valid` is
   `problem == null`.
+- `shares` is aligned with the request's `allocations`: what each row bills, so the editor can
+  show a percent row's cents and an amount row's percent. A complete, valid split shows
+  `allocation.split`'s own shares (the last row carries the rounding). Otherwise each row is
+  priced as the split prices every row but the last: a percent row's `amount` is
+  `total × percent / 100` half to even to cents (`null` when the total is unknown), an amount
+  row's is its cents and its `percent` is `amount × 100 / total` at six places (`null` when the
+  total is zero or unknown). A `null` row, or one with no positive percent or amount yet, is
+  `null`.
+- `fills` is aligned the same way: the value each row needs for the rows to add up, its percent
+  plus what is left of 100 or its cents plus the cents left of the charge (so an over-allocated
+  split fills by taking the excess off). `null` for a `null` row, a result that is not positive
+  or above 100%, and amount rows of an unknown total.
+- `even` splits the charge evenly across the rows: every row but the last gets the even share
+  cut toward zero to hundredths of a percent or to the cent, and the last gets the rest, so the
+  values add up exactly. `null` for a `null` row, and every entry `null` for amount rows when the
+  total is unknown or not positive.
 
 #### `allocation.chargeTotal`
 

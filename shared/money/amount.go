@@ -8,6 +8,8 @@ import (
 
 const DefaultCurrencyCode = "USD"
 
+var MaxStoredAmount = decimal.RequireFromString("999999999999999.9999")
+
 type Amount struct {
 	CurrencyCode string
 	Minor        int64

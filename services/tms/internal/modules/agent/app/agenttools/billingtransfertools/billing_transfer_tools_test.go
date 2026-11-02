@@ -11,8 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -225,7 +225,7 @@ func TestTransferToBilling_TransfersASmallSetInTheCall(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, []pulid.ID{first, second}, planner.requested.ShipmentIDs)
-	assert.Equal(t, billingqueue.BillTypeDebitMemo, planner.requested.BillType)
+	assert.Equal(t, billingvocab.BillTypeDebitMemo, planner.requested.BillType)
 	assert.False(t, planner.requested.MarkCompletedReadyToInvoice)
 	assert.Nil(t, runs.started)
 	assert.Equal(t, "1 of 2 transferred; refused: PRO-2 RateValidation", result.Name)

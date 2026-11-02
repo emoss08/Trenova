@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceaction"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevalidation"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -42,7 +43,7 @@ func TestBuildInvoiceEntityUsesTenantFallbackAndSignsCreditMemoAmounts(t *testin
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		ShipmentID:     pulid.MustNew("shp_"),
-		BillType:       billingqueue.BillTypeCreditMemo,
+		BillType:       billingvocab.BillTypeCreditMemo,
 		Number:         "CM-1001",
 	}
 	shp := &shipment.Shipment{
@@ -119,7 +120,7 @@ func TestBuildInvoiceEntityDerivesAccessorialTotalsFromLines(t *testing.T) {
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		ShipmentID:     pulid.MustNew("shp_"),
-		BillType:       billingqueue.BillTypeInvoice,
+		BillType:       billingvocab.BillTypeInvoice,
 		Number:         "INV-1001",
 	}
 	shp := &shipment.Shipment{
@@ -196,7 +197,7 @@ func TestCreateFromApprovedBillingQueueItemReusesExpandedQueueShipment(t *testin
 		BusinessUnitID: buID,
 		ShipmentID:     shipmentID,
 		Status:         billingqueue.StatusApproved,
-		BillType:       billingqueue.BillTypeInvoice,
+		BillType:       billingvocab.BillTypeInvoice,
 		Number:         "INV-1001",
 		Shipment:       queueShipment,
 	}

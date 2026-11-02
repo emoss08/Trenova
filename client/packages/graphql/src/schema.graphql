@@ -7409,6 +7409,38 @@ enum BillType {
   Invoice
 }
 
+"""
+What an adjustment or memo queue item bills from. Each part is null when it does not apply: a
+credit-and-rebill item carries its rebill, a memo item its memo.
+"""
+type BillingQueueAdjustmentContext {
+  memo: BillingQueueAdjustmentMemo
+  rebill: BillingQueueAdjustmentRebill
+}
+
+"""A memo a queue item bills."""
+type BillingQueueAdjustmentMemo {
+  kind: InvoiceMemoKind!
+  """Who raised the memo; someone else approves and posts it."""
+  raisedById: ID
+}
+
+"""
+The replacement invoice a credit-and-rebill prices, as the adjustment previewed it.
+"""
+type BillingQueueAdjustmentRebill {
+  """The accounting date the replacement invoice takes."""
+  accountingDate: Timestamp!
+  """The replacement's accessorial lines summed."""
+  otherAmount: Decimal!
+  """How many lines the replacement invoice bills."""
+  replacementLineCount: Int!
+  """The replacement's freight lines summed."""
+  subtotalAmount: Decimal!
+  """What the replacement invoice comes to."""
+  totalAmount: Decimal!
+}
+
 """What Nova made of an item it reviewed."""
 enum BillingQueueAgentVerdict {
   Agrees
@@ -7451,9 +7483,9 @@ enum BillingQueueHoldReasonCode {
 
 type BillingQueueItem {
   """
-  Adjustment context contains invoice-adjustment workflow payloads and serialized provider/domain snapshots, so it remains intentionally open-ended.
+  What an adjustment or memo item bills from: the rebill it prices, or the memo it raises.
   """
-  adjustmentContext: JSON!
+  adjustmentContext: BillingQueueAdjustmentContext!
   agentReviewedAt: Timestamp
   agentSummary: String
   """

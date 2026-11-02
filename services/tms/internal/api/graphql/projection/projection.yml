@@ -237,8 +237,6 @@ virtuals:
     - agent
     - provider
     - otherProvider
-  ExtractionRollout:
-    - serving
   AccountingDriftFinding:
     - directions
     - pushed

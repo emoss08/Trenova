@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringaction"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
@@ -820,7 +820,7 @@ func invoiceFacts(inv *invoice.Invoice) factoringreadiness.InvoiceFacts {
 	facts := factoringreadiness.InvoiceFacts{
 		Posted:           inv.Status == invoice.StatusPosted,
 		Voided:           inv.Status == invoice.StatusVoided,
-		CreditMemo:       inv.BillType == billingqueue.BillTypeCreditMemo,
+		CreditMemo:       inv.BillType == billingvocab.BillTypeCreditMemo,
 		Excluded:         inv.FactoringOverride.Excludes(),
 		OpenBalanceMinor: inv.OpenBalanceMinor(),
 	}

@@ -2,9 +2,7 @@ package invoicelines
 
 import (
 	"context"
-	"strings"
-
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -15,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
+	"strings"
 )
 
 const (
@@ -22,8 +21,8 @@ const (
 	AccessorialDescription = "Accessorial charge"
 )
 
-func SignedAmount(billType billingqueue.BillType, amount decimal.Decimal) decimal.Decimal {
-	if billType == billingqueue.BillTypeCreditMemo {
+func SignedAmount(billType billingvocab.BillType, amount decimal.Decimal) decimal.Decimal {
+	if billType == billingvocab.BillTypeCreditMemo {
 		return amount.Neg()
 	}
 
@@ -33,7 +32,7 @@ func SignedAmount(billType billingqueue.BillType, amount decimal.Decimal) decima
 // ForShipment emits the lines that bill a shipment in full to one payer.
 func ForShipment(
 	ctx context.Context,
-	billType billingqueue.BillType,
+	billType billingvocab.BillType,
 	shp *shipment.Shipment,
 	startLineNumber int,
 ) ([]*invoice.InvoiceLine, error) {
@@ -53,7 +52,7 @@ func ForShipment(
 // partial share carries the percent it bills on the line and in its description,
 // so the invoice reads correctly on its own.
 func ForShipmentShare(
-	billType billingqueue.BillType,
+	billType billingvocab.BillType,
 	shp *shipment.Shipment,
 	share *chargeallocation.PayerShare,
 	startLineNumber int,
@@ -92,7 +91,7 @@ func ForShipmentShare(
 // charge. Order charges carry no leg attribution, which is what puts them in the
 // trailing section when the invoice is rendered.
 func ForOrderChargeShare(
-	billType billingqueue.BillType,
+	billType billingvocab.BillType,
 	charge *chargeallocation.AllocatedCharge,
 	lineNumber int,
 ) *invoice.InvoiceLine {
@@ -136,7 +135,7 @@ func stampShare(line *invoice.InvoiceLine, charge *chargeallocation.AllocatedCha
 }
 
 func freightLines(
-	billType billingqueue.BillType,
+	billType billingvocab.BillType,
 	shp *shipment.Shipment,
 	charge *chargeallocation.AllocatedCharge,
 	startLineNumber int,
@@ -204,7 +203,7 @@ func itemized(
 }
 
 func accessorialLine(
-	billType billingqueue.BillType,
+	billType billingvocab.BillType,
 	shp *shipment.Shipment,
 	allocated *chargeallocation.AllocatedCharge,
 	freight decimal.Decimal,

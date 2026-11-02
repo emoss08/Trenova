@@ -45,7 +45,12 @@ import type {
   ReassignChargeInput,
 } from "@trenova/shared/types/billing-queue";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import type { AdditionalCharge } from "@trenova/shared/types/shipment";
+import {
+  MAX_ADDITIONAL_CHARGE_RATE,
+  MAX_ADDITIONAL_CHARGE_UNIT,
+  maxAdditionalChargeRateText,
+  type AdditionalCharge,
+} from "@trenova/shared/types/shipment";
 import {
   accessorialChargeMethodSchema,
   type AccessorialChargeMethod,
@@ -75,10 +80,6 @@ import { BillingQueueRatedBy, ratedByName } from "./billing-queue-rated-by";
 import { useInvalidateBillingQueue } from "./use-billing-queue-invalidate";
 
 const GRID = "grid grid-cols-[minmax(0,1fr)_4.5rem_7rem_11rem_8rem_1.875rem] items-center gap-2";
-
-/** The most a line bills by hand: up to 999 units at up to $99,999.99 each. */
-const MAX_LINE_QUANTITY = 999;
-const MAX_LINE_RATE = 99_999.99;
 
 function getChargeWarnings(
   freightCharge: number,
@@ -519,7 +520,10 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
           <span />
         </div>
 
-        <AnimatePresence initial={false}>
+        {/* No `initial={false}`: motion keeps it in a key's presence for good, which blocks
+            the editor opening and the line folding back on every charge loaded with the tab.
+            ViewRow skips its own entrance instead. */}
+        <AnimatePresence>
           {rows.map((row) =>
             editingKey === row.key && row.editable ? (
               <LineEditor
@@ -582,7 +586,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
           />
         ))}
 
-        <AnimatePresence initial={false}>
+        <AnimatePresence>
           {showAddEditor ? (
             <LineEditor
               key="new-line"
@@ -847,8 +851,12 @@ function ViewRow({
           </span>
           <span className="text-foreground-muted truncate text-xs">{row.basis}</span>
         </span>
-        <span className="text-right font-mono">{row.qty}</span>
-        <span className="text-right font-mono">{row.rate}</span>
+        <span className="truncate text-right font-mono" title={row.qty}>
+          {row.qty}
+        </span>
+        <span className="truncate text-right font-mono" title={row.rate}>
+          {row.rate}
+        </span>
         <span className="text-foreground-muted truncate">{row.payer}</span>
         <span className="flex min-w-0 flex-col items-end">
           <span
@@ -893,9 +901,14 @@ const editLineSchema = z.object({
   accessorialChargeId: z.string().min(1, { error: () => translate("Required") }),
   billToCustomerId: z.string().min(1, { error: () => translate("Required") }),
   method: accessorialChargeMethodSchema,
-  unit: z.string().refine((value) => /^\d+$/u.test(value.trim()) && Number(value) >= 1, {
-    error: () => translate("Must be at least 1"),
-  }),
+  unit: z
+    .string()
+    .refine((value) => /^\d+$/u.test(value.trim()) && Number(value) >= 1, {
+      error: () => translate("Must be at least 1"),
+    })
+    .refine((value) => Number(value) <= MAX_ADDITIONAL_CHARGE_UNIT, {
+      error: () => translate("Must be at most {0}", MAX_ADDITIONAL_CHARGE_UNIT.toLocaleString()),
+    }),
   amount: z
     .string()
     .refine(
@@ -903,7 +916,10 @@ const editLineSchema = z.object({
       {
         error: () => translate("Must be positive"),
       },
-    ),
+    )
+    .refine((value) => Number(value) <= MAX_ADDITIONAL_CHARGE_RATE, {
+      error: () => translate("Must be at most {0}", maxAdditionalChargeRateText()),
+    }),
 });
 type EditLineValues = z.infer<typeof editLineSchema>;
 
@@ -1099,7 +1115,7 @@ function LineEditor({
               valueType="string"
               aria-label={t("Quantity")}
               placeholder="1"
-              max={MAX_LINE_QUANTITY}
+              max={MAX_ADDITIONAL_CHARGE_UNIT}
               stepper={false}
               disabled={percentage}
               inputClassName="text-right font-mono"
@@ -1113,7 +1129,7 @@ function LineEditor({
               aria-label={percentage ? t("Percent of line haul") : t("Rate")}
               placeholder="0.00"
               decimalScale={4}
-              max={percentage ? 100 : MAX_LINE_RATE}
+              max={percentage ? 100 : MAX_ADDITIONAL_CHARGE_RATE}
               stepper={false}
               inputClassName="text-right font-mono"
             />

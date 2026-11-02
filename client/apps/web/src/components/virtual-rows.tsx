@@ -1,4 +1,5 @@
 "use no memo";
+import { HoverGlideGroup } from "@/components/hover-glide";
 import { useDeferredMeasure } from "@/hooks/use-deferred-measure";
 import { ScrollArea, type ScrollAreaMaskVariant } from "@trenova/shared/components/ui/scroll-area";
 import { cn } from "@trenova/shared/lib/utils";
@@ -56,6 +57,11 @@ type VirtualRowsProps = {
   /** Drawn after the last row, inside the scroll container: a "loading more" line. */
   footer?: ReactNode;
   /**
+   * One hover background that glides between rows marked `data-glide-target`, as the module
+   * rail's does, drawn inside the scrolled body so it scrolls with the row it sits on.
+   */
+  hoverGlide?: boolean;
+  /**
    * Scrolls the rows inside a `ScrollArea` whose edges fade into this surface,
    * so the list shows there is more above or below it.
    */
@@ -99,6 +105,7 @@ export function VirtualRows({
   onEndReached,
   endReachedThreshold = 5,
   footer,
+  hoverGlide = false,
   mask,
   maskClassName,
   maskHeight,
@@ -184,7 +191,7 @@ export function VirtualRows({
     return empty ? <>{empty}</> : null;
   }
 
-  const body = (
+  const rowsBody = (
     <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
       {items.map((item) => {
         const pinned = rows[item.index].sticky === true && item.index === activeSticky.current;
@@ -201,6 +208,11 @@ export function VirtualRows({
         );
       })}
     </div>
+  );
+  const body = hoverGlide ? (
+    <HoverGlideGroup className="w-full">{rowsBody}</HoverGlideGroup>
+  ) : (
+    rowsBody
   );
 
   if (mask !== undefined) {

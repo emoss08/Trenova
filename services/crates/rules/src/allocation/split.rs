@@ -259,7 +259,10 @@ fn percent_shares(
 
 /// What percent of the charge an amount share is: shopspring's `amount × 100 / total`, rounded
 /// to six places.
-fn amount_percent(amount: Decimal, total: Decimal) -> Result<Option<Decimal>, RequestError> {
+pub(crate) fn amount_percent(
+    amount: Decimal,
+    total: Decimal,
+) -> Result<Option<Decimal>, RequestError> {
     if total.is_zero() {
         return Ok(None);
     }

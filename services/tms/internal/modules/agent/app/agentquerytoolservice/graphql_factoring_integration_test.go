@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringsubmissionservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
@@ -263,7 +264,7 @@ func postFactoredInvoice(
 	queue := &billingqueue.BillingQueueItem{
 		OrganizationID: org, BusinessUnitID: bu, OrderID: orderID,
 		BillToCustomerID: customerID, Number: number, Status: billingqueue.StatusPosted,
-		BillType: billingqueue.BillTypeInvoice,
+		BillType: billingvocab.BillTypeInvoice,
 	}
 	require.NoError(
 		t,
@@ -276,7 +277,7 @@ func postFactoredInvoice(
 	inv, err := repos.invoices.Create(ctx, &invoice.Invoice{
 		OrganizationID: org, BusinessUnitID: bu, BillingQueueItemID: queue.ID,
 		OrderID: orderID, CustomerID: customerID, FactoringCompanyID: &factorID,
-		Number: number, BillType: billingqueue.BillTypeInvoice, Status: invoice.StatusPosted,
+		Number: number, BillType: billingvocab.BillTypeInvoice, Status: invoice.StatusPosted,
 		PostedAt: &posted, PaymentTerm: invoice.PaymentTermNet30, CurrencyCode: "USD",
 		InvoiceDate: posted, DueDate: &due, BillToName: "Factored " + suffix,
 		SubtotalAmount: amount, OtherAmount: decimal.Zero, TotalAmount: amount,

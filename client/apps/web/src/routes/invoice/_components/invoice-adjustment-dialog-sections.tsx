@@ -29,6 +29,7 @@ import {
 } from "@trenova/shared/components/icons";
 import type { Control, FieldErrors, UseFormClearErrors, UseFormSetValue } from "react-hook-form";
 import { formatUnixDate } from "@trenova/shared/lib/date";
+import { rebillStrategyChoices } from "@/lib/choices";
 
 export type EditableLine = {
   originalLineId: string;
@@ -68,28 +69,6 @@ const adjustmentTypes: {
     label: "Full reversal",
     description: "Reverse all charges on this invoice",
     icon: <RefreshCcw01Icon className="size-4" />,
-  },
-];
-
-const rebillStrategies: {
-  value: RebillStrategy;
-  label: string;
-  description: string;
-}[] = [
-  {
-    value: "CloneExact",
-    label: "Clone exact",
-    description: "Copy original line amounts",
-  },
-  {
-    value: "Rerate",
-    label: "Rerate",
-    description: "Recalculate from current rates",
-  },
-  {
-    value: "Manual",
-    label: "Manual",
-    description: "Set rebill amounts manually",
   },
 ];
 
@@ -162,7 +141,7 @@ export function InvoiceAdjustmentTypeSelector({
         <div className="space-y-1.5">
           <p className="text-muted-foreground text-xs font-medium">{t("Rebill strategy")}</p>
           <div className="border-border bg-muted/50 flex gap-1 rounded-lg border p-1">
-            {rebillStrategies.map((strategy) => {
+            {rebillStrategyChoices.map((strategy) => {
               const isSelected = rebillStrategy === strategy.value;
               return (
                 <button

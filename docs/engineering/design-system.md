@@ -386,6 +386,12 @@ Motion answers an action. Nothing on a working screen moves on its own: no
 looping shimmer on a badge, no pulsing glow, no floating sparkle. A global
 `prefers-reduced-motion` rule collapses every animation and transition to a cut.
 
+A keyed list whose items swap what they render (a row turning into its editor) never
+takes `<AnimatePresence initial={false}>`: motion keeps that `false` in the presence of
+every key from the first render, so anything mounted under those keys later skips its
+entrance. Leave the list's `initial` alone and give each item `initial={false}` unless it
+is entering (`billing-queue-charges-tab.tsx`, `ViewRow`).
+
 ## Focus
 
 One ring, three utilities. Never assemble a ring out of `focus-visible:ring-*`,
@@ -422,7 +428,9 @@ the left edge (`module-rail.tsx`): the organization mark at the top, one tile pe
 module in its domain with hairlines between domains, then notifications, settings
 and the user at the bottom. The tile you are in is filled `--nav-active`; hover is one
 `--surface-hover` background per group of tiles that slides from tile to tile
-(`rail-hover-glide.tsx`) rather than a hover fill on each. A count on a tile's
+(`HoverGlideGroup`, `components/hover-glide.tsx`) rather than a hover fill on each. A list
+that should feel the same marks its rows `data-glide-target` and drops their own hover fill;
+a virtual list passes `hoverGlide` to `VirtualRows` (the billing queue's sidebar). A count on a tile's
 corner is how much work waits behind that module, in the attention tone. `G` then a module's letter
 (`rail-shortcuts.ts`) jumps there from anywhere; the letter shows in the tile's
 tooltip.

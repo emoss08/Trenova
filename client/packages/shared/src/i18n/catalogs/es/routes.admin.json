@@ -739,7 +739,7 @@
   "Make primary": "Marcar como principal",
   "Making this the default takes it off the one that had it.": "Al hacer este el predeterminado, se le quita al que lo tenía.",
   "Manage SCIM tokens, group-to-role mappings, and provisioning audit events.": "Gestione los tokens SCIM, las asignaciones de grupo a rol y los eventos de auditoría de aprovisionamiento.",
-  "Manage automatic routing, document type assignment, and optional AI-assisted extraction. AI toggles here depend on an enabled AI provider that serves document work.": "Gestiona el enrutamiento automático, la asignación del tipo de documento y la extracción asistida por IA opcional. Las opciones de IA aquí dependen de un proveedor de IA habilitado que atienda tareas de documentos.",
+  "Manage automatic routing, document type assignment, and optional AI-assisted extraction. AI toggles here depend on Nova, which runs on the provider chosen for it in Agent Control.": "Administra el enrutamiento automático, la asignación de tipos de documento y la extracción opcional asistida por IA. Los interruptores de IA aquí dependen de Nova, que se ejecuta en el proveedor elegido para ella en Control de agentes.",
   "Manage business-unit routing policy used by distance calculations": "Gestione la política de rutas de la unidad de negocio que utilizan los cálculos de distancia",
   "Manage memberships": "Gestionar membresías",
   "Manage roles and permissions for your organization": "Gestione los roles y permisos de su organización",

@@ -1,7 +1,8 @@
 import { linkedRecordSchema } from "@trenova/shared/lib/linked-record";
 import { z } from "zod";
 import { accessorialChargeMethodSchema } from "./accessorial-charge";
-import { billTypeSchema, billingQueueItemSchema } from "./billing-queue";
+import { billTypeSchema } from "./billing-queue";
+import { invoiceMemoKindSchema } from "./invoice-memo-kind";
 import { customerPaymentTermSchema, customerSchema } from "./customer";
 import { documentSchema } from "./document";
 import { emailMessageSchema } from "./email";
@@ -45,9 +46,6 @@ export type InvoiceSendStatus = z.infer<typeof invoiceSendStatusSchema>;
 /** What happens to the freight behind a voided invoice. */
 export const invoiceVoidDispositionSchema = z.enum(["Rebill", "DoNotRebill"]);
 export type InvoiceVoidDisposition = z.infer<typeof invoiceVoidDispositionSchema>;
-
-export const invoiceMemoKindSchema = z.enum(["Manual", "LateCharge"]);
-export type InvoiceMemoKind = z.infer<typeof invoiceMemoKindSchema>;
 
 /** Where the outbound EDI 210 for an invoice stands, separately from email. */
 export const invoiceEdiSendStatusSchema = z.enum([
@@ -524,9 +522,6 @@ export const invoiceSchema = z.object({
   version: z.number(),
   createdAt: z.number(),
   updatedAt: z.number(),
-  billingQueueItem: linkedRecordSchema("billing_queue", billingQueueItemSchema)
-    .nullish()
-    .transform((value) => value ?? undefined),
   shipment: linkedRecordSchema("shipment", shipmentSchema)
     .nullish()
     .transform((value) => value ?? undefined),

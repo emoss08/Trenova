@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalposting"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
@@ -63,11 +63,11 @@ type Result struct {
 	LedgerRecorded bool
 }
 
-func SourceEvent(billType billingqueue.BillType) accountingcontrol.JournalSourceEventType {
+func SourceEvent(billType billingvocab.BillType) accountingcontrol.JournalSourceEventType {
 	switch billType { //nolint:exhaustive // every other bill type posts as an invoice
-	case billingqueue.BillTypeCreditMemo:
+	case billingvocab.BillTypeCreditMemo:
 		return accountingcontrol.JournalSourceEventCreditMemoPosted
-	case billingqueue.BillTypeDebitMemo:
+	case billingvocab.BillTypeDebitMemo:
 		return accountingcontrol.JournalSourceEventDebitMemoPosted
 	default:
 		return accountingcontrol.JournalSourceEventInvoicePosted
@@ -200,7 +200,7 @@ func journalRequest(
 	entity := req.Invoice
 	debitAccountID := control.DefaultARAccountID
 	creditAccountID := control.DefaultRevenueAccountID
-	if entity.BillType == billingqueue.BillTypeCreditMemo {
+	if entity.BillType == billingvocab.BillTypeCreditMemo {
 		debitAccountID, creditAccountID = creditAccountID, debitAccountID
 	}
 	description := fmt.Sprintf("Invoice posted for %s", entity.Number)
@@ -230,11 +230,11 @@ func journalRequest(
 	}
 }
 
-func ledgerAmount(billType billingqueue.BillType, total, amount int64) int64 {
+func ledgerAmount(billType billingvocab.BillType, total, amount int64) int64 {
 	switch billType { //nolint:exhaustive // other bill types keep the document's own sign
-	case billingqueue.BillTypeCreditMemo:
+	case billingvocab.BillTypeCreditMemo:
 		return -amount
-	case billingqueue.BillTypeDebitMemo:
+	case billingvocab.BillTypeDebitMemo:
 		return amount
 	default:
 		return total

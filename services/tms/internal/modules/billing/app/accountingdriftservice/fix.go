@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
@@ -486,9 +486,9 @@ func (s *Service) postMemo(
 	actor *permissionports.RequestActor,
 ) (pulid.ID, error) {
 	tenant := plan.finding.TenantInfo()
-	billType := billingqueue.BillTypeDebitMemo
+	billType := billingvocab.BillTypeDebitMemo
 	if plan.fixObject == accountingdrift.DriftFixCreditMemo {
-		billType = billingqueue.BillTypeCreditMemo
+		billType = billingvocab.BillTypeCreditMemo
 	}
 	memo, err := s.memos.CreateMemo(ctx, &invoiceports.CreateMemoRequest{
 		TenantInfo: tenant,
@@ -507,7 +507,7 @@ func (s *Service) postMemo(
 		return pulid.Nil, err
 	}
 	applied := min(plan.amountMinor, plan.invoice.BalanceDueMinor)
-	if billType != billingqueue.BillTypeCreditMemo || applied <= 0 {
+	if billType != billingvocab.BillTypeCreditMemo || applied <= 0 {
 		return memo.ID, nil
 	}
 	if _, err = s.payments.ApplyCreditMemo(ctx, &customerpaymentports.ApplyCreditMemoRequest{

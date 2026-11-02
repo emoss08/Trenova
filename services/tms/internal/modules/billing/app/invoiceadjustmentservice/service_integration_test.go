@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentengine"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/invoiceadjustmentjobs/invoiceadjustmentcontract"
@@ -1452,7 +1453,7 @@ func (h *integrationHarness) createPostedInvoice(
 		BillToCustomerID:      h.customerID,
 		Number:                fmt.Sprintf("INV-%03d", h.nextNumber),
 		Status:                billingqueue.StatusPosted,
-		BillType:              billingqueue.BillTypeInvoice,
+		BillType:              billingvocab.BillTypeInvoice,
 		RerateVariancePercent: decimal.Zero,
 	})
 	require.NoError(t, err)
@@ -1479,7 +1480,7 @@ func (h *integrationHarness) createPostedInvoice(
 		ShipmentID:         h.shipmentID,
 		CustomerID:         h.customerID,
 		Number:             item.Number,
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		Status:             invoice.StatusPosted,
 		PaymentTerm:        invoice.PaymentTermNet30,
 		CurrencyCode:       "USD",

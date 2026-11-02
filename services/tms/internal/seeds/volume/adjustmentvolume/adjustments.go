@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -256,7 +257,7 @@ func (g *adjustmentPhase) adjCollect() *adjPools {
 	for _, r := range g.Shipments {
 		inv := r.Invoice
 		if inv == nil || inv.Status != invoice.StatusPosted || inv.IsCreditMemo() ||
-			inv.BillType != billingqueue.BillTypeInvoice || len(inv.Lines) == 0 ||
+			inv.BillType != billingvocab.BillTypeInvoice || len(inv.Lines) == 0 ||
 			inv.FactoringCompanyID != nil || inv.DisputeStatus == invoice.DisputeStatusDisputed {
 			continue
 		}
@@ -1335,14 +1336,13 @@ func (g *adjustmentPhase) adjExecute(
 		AllocatedTotalAmount:      source.TotalAmount.Abs(),
 		Number:                    p.memoNumber,
 		Status:                    billingqueue.StatusPosted,
-		BillType:                  billingqueue.BillTypeCreditMemo,
+		BillType:                  billingvocab.BillTypeCreditMemo,
 		IsAdjustmentOrigin:        true,
 		SourceInvoiceID:           volumegen.Ptr(source.ID),
 		SourceInvoiceAdjustmentID: volumegen.Ptr(adj.ID),
 		CorrectionGroupID:         volumegen.Ptr(group.ID),
 		RequiresReplacementReview: pv.review,
 		RerateVariancePercent:     decimal.Zero,
-		AdjustmentContext:         map[string]any{"kind": req.kind},
 		CreatedAt:                 at,
 		UpdatedAt:                 at,
 	}
@@ -1370,7 +1370,7 @@ func (g *adjustmentPhase) adjExecute(
 		Detail:                    source.Detail,
 		SectionBy:                 source.SectionBy,
 		Number:                    memoItem.Number,
-		BillType:                  billingqueue.BillTypeCreditMemo,
+		BillType:                  billingvocab.BillTypeCreditMemo,
 		Status:                    invoice.StatusPosted,
 		PaymentTerm:               source.PaymentTerm,
 		CurrencyCode:              source.CurrencyCode,
@@ -1548,7 +1548,7 @@ func (g *adjustmentPhase) adjRebill(
 		AllocatedTotalAmount:      pv.rebill.Abs(),
 		Number:                    p.rebillNumber,
 		Status:                    status,
-		BillType:                  billingqueue.BillTypeInvoice,
+		BillType:                  billingvocab.BillTypeInvoice,
 		IsAdjustmentOrigin:        true,
 		SourceInvoiceID:           volumegen.Ptr(source.ID),
 		SourceInvoiceAdjustmentID: volumegen.Ptr(adj.ID),
@@ -1557,21 +1557,20 @@ func (g *adjustmentPhase) adjRebill(
 		RebillStrategy:            string(adj.RebillStrategy),
 		RequiresReplacementReview: pv.review,
 		RerateVariancePercent:     decimal.Zero,
-		AdjustmentContext: map[string]any{
-			"replacementLines": jsonutils.MustToJSON(map[string]any{"lines": pv.replacementLines})["lines"],
-			"subtotalAmount": ledgervolume.Sum(
-				pv.replacementLines,
-				invoice.InvoiceLineTypeFreight,
-			),
-			"otherAmount": ledgervolume.Sum(
-				pv.replacementLines,
-				invoice.InvoiceLineTypeAccessorial,
-			),
-			"totalAmount":        pv.rebill,
-			"accountingDate":     pv.accountingDate,
-			"sourceInvoiceId":    source.ID,
-			"correctionGroupId":  group.ID,
-			"sourceAdjustmentId": adj.ID,
+		AdjustmentContext: billingqueue.AdjustmentContext{
+			Rebill: &billingqueue.AdjustmentRebill{
+				ReplacementLines: pv.replacementLines,
+				SubtotalAmount: ledgervolume.Sum(
+					pv.replacementLines,
+					invoice.InvoiceLineTypeFreight,
+				),
+				OtherAmount: ledgervolume.Sum(
+					pv.replacementLines,
+					invoice.InvoiceLineTypeAccessorial,
+				),
+				TotalAmount:    pv.rebill,
+				AccountingDate: pv.accountingDate,
+			},
 		},
 		CreatedAt: at,
 		UpdatedAt: at,
@@ -1590,7 +1589,7 @@ func (g *adjustmentPhase) adjRebill(
 		Detail:             source.Detail,
 		SectionBy:          source.SectionBy,
 		Number:             item.Number,
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		Status:             invoice.StatusDraft,
 		PaymentTerm:        source.PaymentTerm,
 		CurrencyCode:       source.CurrencyCode,

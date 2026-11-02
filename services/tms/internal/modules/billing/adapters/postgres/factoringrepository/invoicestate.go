@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
@@ -280,7 +280,7 @@ func openFactoredInvoices(inv *invoicedb.InvoicesTable) keel.Pred {
 	return keel.And(
 		inv.Status.Eq(invoice.StatusPosted),
 		inv.FactoringCompanyID.IsNotNull(),
-		inv.BillType.Ne(billingqueue.BillTypeCreditMemo),
+		inv.BillType.Ne(billingvocab.BillTypeCreditMemo),
 		keel.Int64Of(inv.TotalAmountMinor).GtExpr(inv.AppliedAmountMinor),
 	)
 }

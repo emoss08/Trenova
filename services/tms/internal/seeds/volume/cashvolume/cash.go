@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem/bankreceiptworkitemdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/collection"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/collection/collectiondb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
@@ -1070,8 +1071,8 @@ func (g *cashPhase) cashLateCharges(ctx context.Context, st *cashState) error {
 			continue
 		}
 		if inv.due == 0 || inv.disputed || inv.memoKind == string(invoice.MemoKindLateCharge) ||
-			(inv.billType != string(billingqueue.BillTypeInvoice) &&
-				inv.billType != string(billingqueue.BillTypeDebitMemo)) {
+			(inv.billType != string(billingvocab.BillTypeInvoice) &&
+				inv.billType != string(billingvocab.BillTypeDebitMemo)) {
 			continue
 		}
 		overdueStart := latecharge.OverdueStart(inv.due, profile.GracePeriodDays)
@@ -1163,12 +1164,13 @@ func (g *cashPhase) cashLateCharges(ctx context.Context, st *cashState) error {
 			BillToCustomerID:      m.customer.ID,
 			Number:                numbers[i],
 			Status:                billingqueue.StatusApproved,
-			BillType:              billingqueue.BillTypeDebitMemo,
+			BillType:              billingvocab.BillTypeDebitMemo,
 			RerateVariancePercent: decimal.Zero,
-			AdjustmentContext: map[string]any{
-				"memo":       true,
-				"memoKind":   string(invoice.MemoKindLateCharge),
-				"raisedById": actor.String(),
+			AdjustmentContext: billingqueue.AdjustmentContext{
+				Memo: &billingqueue.AdjustmentMemo{
+					Kind:       invoice.MemoKindLateCharge,
+					RaisedByID: actor,
+				},
 			},
 			CreatedAt: m.asOf,
 			UpdatedAt: m.asOf,
@@ -1185,7 +1187,7 @@ func (g *cashPhase) cashLateCharges(ctx context.Context, st *cashState) error {
 			Detail:             customer.InvoiceDetailDetailed,
 			SectionBy:          customer.InvoiceSectionKeyShipment,
 			Number:             numbers[i],
-			BillType:           billingqueue.BillTypeDebitMemo,
+			BillType:           billingvocab.BillTypeDebitMemo,
 			Status:             invoice.StatusDraft,
 			PaymentTerm:        term,
 			CurrencyCode:       money.DefaultCurrencyCode,
@@ -1304,7 +1306,7 @@ func (g *cashPhase) cashLateCharges(ctx context.Context, st *cashState) error {
 				id:          memo.ID,
 				number:      memo.Number,
 				customer:    m.customer,
-				billType:    string(billingqueue.BillTypeDebitMemo),
+				billType:    string(billingvocab.BillTypeDebitMemo),
 				memoKind:    string(invoice.MemoKindLateCharge),
 				total:       memo.TotalAmountMinor,
 				invoiceDate: postedAt,

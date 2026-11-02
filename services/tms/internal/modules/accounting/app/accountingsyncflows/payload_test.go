@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
@@ -439,7 +439,7 @@ func TestCreditMemoDocumentSendsPositiveAmountsWithoutTermsOrDueDate(t *testing.
 	}, "qb-term-30")
 	memo := h.postedInvoice(customerID, invoiceSpec{
 		number:   "CM-1",
-		billType: billingqueue.BillTypeCreditMemo,
+		billType: billingvocab.BillTypeCreditMemo,
 		lines:    []*invoice.InvoiceLine{freightLine("-300.00")},
 	})
 	record := h.enqueueInvoice(t, memo)
@@ -465,7 +465,7 @@ func TestDebitMemoIsSentAsItsOwnKind(t *testing.T) {
 	h.confirm(freightTarget(), "qb-item-freight")
 	memo := h.postedInvoice(
 		customerID,
-		invoiceSpec{number: "DM-1", billType: billingqueue.BillTypeDebitMemo},
+		invoiceSpec{number: "DM-1", billType: billingvocab.BillTypeDebitMemo},
 	)
 	record := h.enqueueInvoice(t, memo)
 
@@ -495,7 +495,7 @@ func (h *harness) adjustmentMemo(
 	h.adjustments.mu.Unlock()
 	memo := h.postedInvoice(customerID, invoiceSpec{
 		number:   "CM-" + original.Number,
-		billType: billingqueue.BillTypeCreditMemo,
+		billType: billingvocab.BillTypeCreditMemo,
 		date:     mayTenth,
 		lines:    []*invoice.InvoiceLine{freightLine("-1500.00")},
 	})
@@ -1013,7 +1013,7 @@ func TestCreditApplicationLinksTheInvoiceAndTheCreditMemo(t *testing.T) {
 	target := h.postedInvoice(customerID, invoiceSpec{number: "INV-1"})
 	memo := h.postedInvoice(customerID, invoiceSpec{
 		number:   "CM-1",
-		billType: billingqueue.BillTypeCreditMemo,
+		billType: billingvocab.BillTypeCreditMemo,
 		lines:    []*invoice.InvoiceLine{freightLine("-250")},
 	})
 	h.syncedInvoiceRecord(target, "qb-inv-1")

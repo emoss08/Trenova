@@ -2,6 +2,7 @@ package shipmentbillingtransfer
 
 import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentbillingreadiness"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -13,7 +14,7 @@ const unexpectedBillingTransferMessage = "The shipment could not be transferred 
 
 type billingTransferAttemptParams struct {
 	ShipmentID                  pulid.ID
-	BillType                    billingqueue.BillType
+	BillType                    billingvocab.BillType
 	MarkCompletedReadyToInvoice bool
 	Actor                       *permissionports.RequestActor
 	SuppressExceptionNotices    bool

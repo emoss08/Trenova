@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevoid"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -260,12 +261,12 @@ func TestReleaseDoNotRebillKeepsALegAnotherPayersInvoiceStillBills(t *testing.T)
 				{
 					ID:       pulid.MustNew("inv_"),
 					Status:   invoice.StatusPosted,
-					BillType: billingqueue.BillTypeCreditMemo,
+					BillType: billingvocab.BillTypeCreditMemo,
 				},
 				{
 					ID:       pulid.MustNew("inv_"),
 					Status:   invoice.StatusPosted,
-					BillType: billingqueue.BillTypeInvoice,
+					BillType: billingvocab.BillTypeInvoice,
 				},
 			},
 		}, nil).

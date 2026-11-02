@@ -3301,6 +3301,8 @@ var shipmentsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`, Report: &reportDimEpoch},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`, Report: &reportDimEpoch},
 		{Name: "last_delivery_arrival_at", Quoted: `"last_delivery_arrival_at"`, Field: "LastDeliveryArrivalAt", Kind: schema.KindInt64, Flags: schema.FlagReadOnly | schema.FlagNoSelect | schema.FlagNullable, Label: `Last Delivery Arrival At`, Report: &reportDimEpochHidden},
+		{Name: "pickup_at", Quoted: `"pickup_at"`, Field: "PickupAt", Kind: schema.KindInt64, Flags: schema.FlagReadOnly | schema.FlagNoSelect | schema.FlagNullable, Label: `Pickup At`, Report: &reportDimEpochHidden},
+		{Name: "delivery_at", Quoted: `"delivery_at"`, Field: "DeliveryAt", Kind: schema.KindInt64, Flags: schema.FlagReadOnly | schema.FlagNoSelect | schema.FlagNullable, Label: `Delivery At`, Report: &reportDimEpochHidden},
 		{Name: "has_active_assignment", Quoted: `"has_active_assignment"`, Field: "HasActiveAssignment", Kind: schema.KindBool, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Has Active Assignment`, Report: &reportDimBoolHidden},
 	},
 	Relations: []schema.Relation{
@@ -3415,6 +3417,8 @@ type ShipmentsTable struct {
 	CreatedAt                 keel.Int64Col
 	UpdatedAt                 keel.Int64Col
 	LastDeliveryArrivalAt     keel.Int64Col
+	PickupAt                  keel.Int64Col
+	DeliveryAt                keel.Int64Col
 	HasActiveAssignment       keel.BoolCol
 }
 
@@ -3484,7 +3488,9 @@ var Shipments = &ShipmentsTable{
 	CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 60}},
 	UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 61}},
 	LastDeliveryArrivalAt:     keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 62}},
-	HasActiveAssignment:       keel.BoolCol{Col: keel.Col{Ref: &shipmentsRef, Index: 63}},
+	PickupAt:                  keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 63}},
+	DeliveryAt:                keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 64}},
+	HasActiveAssignment:       keel.BoolCol{Col: keel.Col{Ref: &shipmentsRef, Index: 65}},
 }
 
 // BuildShipments builds the table of shipments for ref. Generated relation and alias methods call it.
@@ -3554,7 +3560,9 @@ func BuildShipments(r *keel.Ref) *ShipmentsTable {
 		CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 60}},
 		UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 61}},
 		LastDeliveryArrivalAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 62}},
-		HasActiveAssignment:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 63}},
+		PickupAt:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 63}},
+		DeliveryAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 64}},
+		HasActiveAssignment:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 65}},
 	}
 }
 
@@ -4157,6 +4165,10 @@ func ptrShipment(p unsafe.Pointer, c int32) any {
 	case 62:
 		return &r.LastDeliveryArrivalAt
 	case 63:
+		return &r.PickupAt
+	case 64:
+		return &r.DeliveryAt
+	case 65:
 		return &r.HasActiveAssignment
 	}
 	return nil
@@ -4415,6 +4427,16 @@ func valueShipment(p unsafe.Pointer, c int32) any {
 		}
 		return *r.LastDeliveryArrivalAt
 	case 63:
+		if r.PickupAt == nil {
+			return nil
+		}
+		return *r.PickupAt
+	case 64:
+		if r.DeliveryAt == nil {
+			return nil
+		}
+		return *r.DeliveryAt
+	case 65:
 		return r.HasActiveAssignment
 	}
 	return nil

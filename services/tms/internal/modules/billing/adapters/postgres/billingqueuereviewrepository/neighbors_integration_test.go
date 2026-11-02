@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/jackc/pgx/v5"
 
@@ -66,7 +67,7 @@ func TestGetNeighborsWalksTheQueueInItsOwnOrder(t *testing.T) {
 			ShipmentID:       shp.ID,
 			BillToCustomerID: shp.PayerID,
 			Status:           statuses[i],
-			BillType:         billingqueue.BillTypeInvoice,
+			BillType:         billingvocab.BillTypeInvoice,
 			Number:           fmt.Sprintf("BQ-NB-%d", i),
 		}
 		require.NoError(t, billingqueuedb.BillingQueueItems.Create(ctx, db, item))

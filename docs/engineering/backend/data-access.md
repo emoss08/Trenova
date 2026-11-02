@@ -482,11 +482,21 @@ volume generator, not the query: give the table the rows and status mix producti
   the window start, read by an index on (tenant, creation time), instead of summing every change
   ever made ("History in one pass" in [scale.md](scale.md)).
 - **A value derived from child rows that a list filters, counts or sorts by** (a shipment's last
-  delivered arrival, whether it has a live assignment) is a stored column on the parent, tagged
+  delivered arrival, its first pickup and last delivery times, whether it has a live assignment)
+  is a stored column on the parent, tagged
   `readonly,noselect` so no `Save` overwrites it, recomputed by one set-based `UPDATE` in the
   transaction of every write to its inputs and backfilled in its migration
   (`shipmentprojection.Refresh`, which keeps `version` and `updated_at`). Call the refresh from the
   repository method that writes the child rows, never from a service, so every caller is covered.
+- **A count or total over a whole scope** (`count(*) FILTER (WHERE …)` per quick filter, a
+  card's figures) never hides a correlated subquery in a `FILTER`: Postgres runs it once per row
+  for each aggregate that names it, never shared between the count and the total, so it costs
+  rows × aggregates index probes. Read a stored column (above), or test membership in an
+  uncorrelated set, `sp.ID.InQuery(…)`, which the planner builds once and probes by hash per row
+  and turns into a semi-join in a `WHERE` (`shipmentpredicate.DetentionCondition`). The same
+  holds for a `LATERAL` per parent ahead of a filter or a `LIMIT`: filter and order by the stored
+  column, so the lateral runs only for the rows returned
+  (`shipmentboardrepository.NextUncoveredPickup`).
 - **A column copied from one related row that a list filters by** (a service failure's stop
   location) is stored on the child, tagged `readonly,noselect`, and kept by triggers: a `BEFORE
   INSERT` on the child reads it by key, and an `AFTER UPDATE OF col … WHEN (OLD.col IS DISTINCT

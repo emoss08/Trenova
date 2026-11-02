@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -161,7 +162,7 @@ func (e *factoringEnv) postInvoice(
 		BillToCustomerID: e.customerID,
 		Number:           number,
 		Status:           billingqueue.StatusPosted,
-		BillType:         billingqueue.BillTypeInvoice,
+		BillType:         billingvocab.BillTypeInvoice,
 	}
 	require.NoError(t, billingqueuedb.BillingQueueItems.Create(e.ctx, e.db, queue))
 
@@ -176,7 +177,7 @@ func (e *factoringEnv) postInvoice(
 		CustomerID:         e.customerID,
 		FactoringCompanyID: factorID,
 		Number:             number,
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		Status:             invoice.StatusPosted,
 		PostedAt:           &postedAt,
 		PaymentTerm:        invoice.PaymentTermNet30,

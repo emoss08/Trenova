@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceaction"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
@@ -26,7 +27,7 @@ func creditMemo(orgID pulid.ID, total int64) *invoice.Invoice {
 		OrganizationID:     orgID,
 		BillingQueueItemID: pulid.MustNew("bqi_"),
 		Scope:              invoice.ScopeMemo,
-		BillType:           billingqueue.BillTypeCreditMemo,
+		BillType:           billingvocab.BillTypeCreditMemo,
 		TotalAmount:        decimal.NewFromInt(total),
 	}
 }
@@ -62,7 +63,7 @@ func TestMemoNeedsApproval(t *testing.T) {
 	))
 
 	debit := creditMemo(orgID, 750)
-	debit.BillType = billingqueue.BillTypeDebitMemo
+	debit.BillType = billingvocab.BillTypeDebitMemo
 	assert.False(
 		t,
 		memoNeedsApproval(thresholdControl(500, false), debit),
@@ -119,8 +120,10 @@ func TestGuardMemoPosterKeepsTheRaiserFromPostingWhenSeparationIsRequired(t *tes
 	queue.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(&billingqueue.BillingQueueItem{
-			ID:                memo.BillingQueueItemID,
-			AdjustmentContext: map[string]any{MemoRaisedByKey: raiser.String()},
+			ID: memo.BillingQueueItemID,
+			AdjustmentContext: billingqueue.AdjustmentContext{
+				Memo: &billingqueue.AdjustmentMemo{Kind: invoice.MemoKindManual, RaisedByID: raiser},
+			},
 		}, nil).
 		Twice()
 	svc := &Service{

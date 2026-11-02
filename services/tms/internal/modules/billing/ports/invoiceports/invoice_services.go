@@ -2,8 +2,7 @@ package invoiceports
 
 import (
 	"context"
-
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
@@ -102,7 +101,7 @@ type CreateMemoRequest struct {
 	ID                 pulid.ID
 	TenantInfo         pagination.TenantInfo
 	CustomerID         pulid.ID
-	BillType           billingqueue.BillType
+	BillType           billingvocab.BillType
 	Lines              []*CreateMemoLineInput
 	ReferenceInvoiceID pulid.ID
 	Reason             string

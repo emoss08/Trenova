@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringservicetest"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
@@ -138,7 +138,7 @@ func (h *submissionHarness) readyInvoice(number string, totalMinor int64) *invoi
 		CustomerID:         h.customerID,
 		Number:             number,
 		Status:             invoice.StatusPosted,
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		CurrencyCode:       "USD",
 		InvoiceDate:        factoringservicetest.Now - 86400,
 		DueDate:            &due,

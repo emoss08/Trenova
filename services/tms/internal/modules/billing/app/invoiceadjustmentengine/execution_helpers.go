@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalposting"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -43,7 +44,7 @@ func (s *Engine) createReplacementDraftInvoice(
 		ShipmentID:         sourceInvoice.ShipmentID,
 		CustomerID:         sourceInvoice.CustomerID,
 		Number:             item.Number,
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		Status:             invoice.StatusDraft,
 		PaymentTerm:        sourceInvoice.PaymentTerm,
 		CurrencyCode:       sourceInvoice.CurrencyCode,

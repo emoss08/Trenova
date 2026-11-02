@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
@@ -67,7 +67,7 @@ func accrualControl() *accountingcontrol.AccountingControl {
 	}
 }
 
-func memo(billType billingqueue.BillType, total int64) *invoice.Invoice {
+func memo(billType billingvocab.BillType, total int64) *invoice.Invoice {
 	postedAt := int64(1_700_000_000)
 	return &invoice.Invoice{
 		ID:               pulid.MustNew("inv_"),
@@ -112,24 +112,24 @@ func TestSourceEventFollowsTheBillType(t *testing.T) {
 	assert.Equal(
 		t,
 		accountingcontrol.JournalSourceEventInvoicePosted,
-		SourceEvent(billingqueue.BillTypeInvoice),
+		SourceEvent(billingvocab.BillTypeInvoice),
 	)
 	assert.Equal(
 		t,
 		accountingcontrol.JournalSourceEventCreditMemoPosted,
-		SourceEvent(billingqueue.BillTypeCreditMemo),
+		SourceEvent(billingvocab.BillTypeCreditMemo),
 	)
 	assert.Equal(
 		t,
 		accountingcontrol.JournalSourceEventDebitMemoPosted,
-		SourceEvent(billingqueue.BillTypeDebitMemo),
+		SourceEvent(billingvocab.BillTypeDebitMemo),
 	)
 }
 
 func TestACreditMemoPostsRevenueAgainstARAndACreditLedgerLine(t *testing.T) {
 	t.Parallel()
 
-	entity := memo(billingqueue.BillTypeCreditMemo, -4_500)
+	entity := memo(billingvocab.BillTypeCreditMemo, -4_500)
 	related := pulid.MustNew("inv_")
 	periods := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	periods.EXPECT().
@@ -184,7 +184,7 @@ func TestACreditMemoPostsRevenueAgainstARAndACreditLedgerLine(t *testing.T) {
 func TestLedgerOnlyRecordsTheLineWithoutAJournal(t *testing.T) {
 	t.Parallel()
 
-	entity := memo(billingqueue.BillTypeCreditMemo, -800)
+	entity := memo(billingvocab.BillTypeCreditMemo, -800)
 	ledger := &capturedLedger{}
 
 	result, err := poster(
@@ -220,7 +220,7 @@ func TestNothingIsPostedWhenRevenueIsNotRecognizedOnInvoicePost(t *testing.T) {
 		journalentryportsmock.NewMockJournalPostingRepository(t),
 		ledger,
 	).Post(t.Context(), &Request{
-		Invoice: memo(billingqueue.BillTypeCreditMemo, -800),
+		Invoice: memo(billingvocab.BillTypeCreditMemo, -800),
 		ActorID: pulid.MustNew("usr_"),
 	})
 	require.ErrorIs(t, err, ErrNoLedgerEntry)
@@ -238,7 +238,7 @@ func TestADebitMemoRaisesTheLedger(t *testing.T) {
 		journalentryportsmock.NewMockJournalPostingRepository(t),
 		ledger,
 	).Post(t.Context(), &Request{
-		Invoice:    memo(billingqueue.BillTypeDebitMemo, 300),
+		Invoice:    memo(billingvocab.BillTypeDebitMemo, 300),
 		ActorID:    pulid.MustNew("usr_"),
 		LedgerOnly: true,
 	})

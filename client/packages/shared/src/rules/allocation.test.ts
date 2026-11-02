@@ -78,6 +78,69 @@ describe("allocationRemainders", () => {
     );
   });
 
+  it("bills a percent row's cents while it is typed, and nothing for a null or empty row", () => {
+    chargesCase(
+      "remainder shares: a percent row being typed bills its cents, a null or empty row nothing",
+      remainderOutput,
+    );
+  });
+
+  it("shows a complete split's own shares, the last row carrying the rounding", () => {
+    chargesCase(
+      "remainder shares: a complete split shows the split's own shares, the last row carrying the rounding",
+      remainderOutput,
+    );
+  });
+
+  it("shows an amount row's percent of the charge", () => {
+    chargesCase(
+      "remainder shares: an amount row bills its cents and shows its percent of the charge",
+      remainderOutput,
+    );
+  });
+
+  it("shows a percent row of an unknown charge without cents", () => {
+    chargesCase(
+      "remainder shares: a percent row of an unknown charge has a percent but no cents",
+      remainderOutput,
+    );
+  });
+
+  it("fills a half-typed percent split from either row and splits it in halves", () => {
+    chargesCase(
+      "remainder fills and even: a half-typed percent split fills from either row and splits in halves",
+      remainderOutput,
+    );
+  });
+
+  it("splits three rows evenly to the hundredth, the last taking the rest", () => {
+    chargesCase(
+      "remainder fills and even: three rows split evenly to the hundredth, the last taking the rest",
+      remainderOutput,
+    );
+  });
+
+  it("fills and splits amounts to the cents of a sub-cent charge", () => {
+    chargesCase(
+      "remainder fills and even: amounts fill and split to the cents of a sub-cent charge",
+      remainderOutput,
+    );
+  });
+
+  it("fills an over-allocated split by taking the excess off the row", () => {
+    chargesCase(
+      "remainder fills: an over-allocated split fills by taking the excess off the row",
+      remainderOutput,
+    );
+  });
+
+  it("neither fills nor splits amount rows of an unknown charge", () => {
+    chargesCase(
+      "remainder fills and even: amount rows of an unknown charge cannot be filled or split",
+      remainderOutput,
+    );
+  });
+
   it("accepts no rows and a full 100%, and refuses 99.99% and a zero row", () => {
     chargesCase(
       "remainder (TS allocationsValid): empty is valid, 99.99 is not, 100 is, a zero row is not",

@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceassembly"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -172,7 +173,7 @@ func (s *Service) createSingleShipmentInvoices(
 				BillToCustomerID:     plan.Share.PayerID,
 				AllocatedTotalAmount: plan.Share.TotalAmount,
 				Status:               billingqueue.StatusApproved,
-				BillType:             billingqueue.BillTypeInvoice,
+				BillType:             billingvocab.BillTypeInvoice,
 				Number:               plan.Number,
 			})
 			if txErr != nil {
@@ -647,7 +648,7 @@ func (s *Service) createLegQueueItems(
 			BillToCustomerID:     bucket.PayerID,
 			AllocatedTotalAmount: allocated,
 			Status:               billingqueue.StatusApproved,
-			BillType:             billingqueue.BillTypeInvoice,
+			BillType:             billingvocab.BillTypeInvoice,
 			Number:               itemNumber,
 		})
 		if err != nil {

@@ -2,6 +2,7 @@ import { linkedRecordSchema } from "@trenova/shared/lib/linked-record";
 import { z } from "zod";
 import { billTypeSchema } from "./bill-type";
 import { billingQueueStatusSchema } from "./billing-queue-status";
+import { invoiceMemoKindSchema } from "./invoice-memo-kind";
 import {
   decimalStringSchema,
   nullableEnumSchema,
@@ -343,6 +344,37 @@ export const billingQueueRatedBySchema = z.object({
 });
 export type BillingQueueRatedBy = z.infer<typeof billingQueueRatedBySchema>;
 
+/**
+ * The replacement invoice a credit-and-rebill prices. The REST item carries its replacement
+ * lines and the GraphQL action fields only their count; both read as `lineCount`.
+ */
+const billingQueueAdjustmentRebillSchema = z
+  .object({
+    replacementLines: z.array(z.unknown()).nullish(),
+    replacementLineCount: z.number().int().nullish(),
+    subtotalAmount: decimalStringSchema,
+    otherAmount: decimalStringSchema,
+    totalAmount: decimalStringSchema,
+    accountingDate: z.number(),
+  })
+  .transform(({ replacementLines, replacementLineCount, ...rebill }) => ({
+    ...rebill,
+    lineCount: replacementLineCount ?? replacementLines?.length ?? 0,
+  }));
+
+/** A memo a queue item bills, and who raised it. */
+const billingQueueAdjustmentMemoSchema = z.object({
+  kind: invoiceMemoKindSchema,
+  raisedById: nullableStringSchema,
+});
+
+/** What an adjustment or memo item bills from; each part is null when it does not apply. */
+export const billingQueueAdjustmentContextSchema = z.object({
+  rebill: billingQueueAdjustmentRebillSchema.nullish().transform((value) => value ?? null),
+  memo: billingQueueAdjustmentMemoSchema.nullish().transform((value) => value ?? null),
+});
+export type BillingQueueAdjustmentContext = z.infer<typeof billingQueueAdjustmentContextSchema>;
+
 export const billingQueueItemSchema = z.object({
   id: z.string(),
   organizationId: z.string(),
@@ -373,7 +405,7 @@ export const billingQueueItemSchema = z.object({
   rebillStrategy: nullableStringSchema,
   requiresReplacementReview: z.boolean().default(false),
   rerateVariancePercent: decimalStringSchema.nullish().default(0),
-  adjustmentContext: z.record(z.string(), z.unknown()).default({}),
+  adjustmentContext: billingQueueAdjustmentContextSchema.default({ rebill: null, memo: null }),
   version: z.number(),
   createdAt: z.number(),
   updatedAt: z.number(),

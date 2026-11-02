@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -160,7 +161,7 @@ func deliveryToInvoice(windowStart, priorStart int64) keel.Query[*invoice.Invoic
 		sp.BusinessUnitID.EqCol(inv.BusinessUnitID),
 	).Where(
 		inv.CreatedAt.Gte(priorStart),
-		inv.BillType.Eq(billingqueue.BillTypeInvoice),
+		inv.BillType.Eq(billingvocab.BillTypeInvoice),
 		inv.IsAdjustmentArtifact.IsFalse(),
 		inv.Status.Ne(invoice.StatusVoided),
 		sp.LastDeliveryArrivalAt.IsNotNull(),

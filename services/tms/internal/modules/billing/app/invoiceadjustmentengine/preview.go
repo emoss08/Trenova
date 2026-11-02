@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicelines"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -490,7 +490,7 @@ func (s *Engine) rerateLeg(
 	}
 
 	legLines := invoicelines.ForShipmentShare(
-		billingqueue.BillTypeInvoice,
+		billingvocab.BillTypeInvoice,
 		shp,
 		share,
 		len(result.lines)+1,

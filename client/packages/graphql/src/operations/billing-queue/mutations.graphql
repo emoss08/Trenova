@@ -30,7 +30,19 @@ fragment BillingQueueActionFields on BillingQueueItem {
   rebillStrategy
   requiresReplacementReview
   rerateVariancePercent
-  adjustmentContext
+  adjustmentContext {
+    rebill {
+      replacementLineCount
+      subtotalAmount
+      otherAmount
+      totalAmount
+      accountingDate
+    }
+    memo {
+      kind
+      raisedById
+    }
+  }
   version
   createdAt
   updatedAt

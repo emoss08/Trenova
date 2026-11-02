@@ -3,7 +3,6 @@ package shipmentprovider
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math"
 	"time"
@@ -31,14 +30,9 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
-	"go.uber.org/zap"
 )
 
-var (
-	_ kernelports.AnalyticsPageProvider = (*Provider)(nil)
-
-	errUnexpectedRows = errors.New("shipment analytics query returned an unexpected row count")
-)
+var _ kernelports.AnalyticsPageProvider = (*Provider)(nil)
 
 const laneHeatmapInclude = "laneHeatmap"
 const tomorrowsPickupsInclude = "tomorrowsPickups"
@@ -50,7 +44,6 @@ type ProviderParams struct {
 	fx.In
 
 	DB              *postgres.Connection
-	Logger          *zap.Logger
 	DispatchRepo    dispatchcontrolports.DispatchControlRepository
 	DispatchConsole dispatchboardports.DispatchConsoleRepository
 	CostingService  *costingservice.Service
@@ -59,7 +52,6 @@ type ProviderParams struct {
 }
 
 type Provider struct {
-	l               *zap.Logger
 	db              *postgres.Connection
 	dispatchRepo    dispatchcontrolports.DispatchControlRepository
 	dispatchConsole dispatchboardports.DispatchConsoleRepository
@@ -117,7 +109,6 @@ type tomorrowsPickupsRequest struct {
 
 func NewProvider(p ProviderParams) *Provider {
 	return &Provider{
-		l:               p.Logger.Named("analyticsprovider.shipment"),
 		db:              p.DB,
 		dispatchRepo:    p.DispatchRepo,
 		dispatchConsole: p.DispatchConsole,
@@ -152,157 +143,178 @@ func (p *Provider) analyticsData(
 	ctx context.Context,
 	opts *kernelports.AnalyticsRequestOptions,
 ) (kernelports.AnalyticsData, error) {
-	log := p.l.With(zap.String("operation", "GetAnalyticsData"), zap.Any("opts", opts))
-
 	tz := timeutils.NormalizeTimezone(opts.Timezone)
 
-	if opts.Include == tomorrowsPickupsInclude {
-		tomorrowsPickups, err := p.getTomorrowsPickups(ctx, tomorrowsPickupsRequest{
+	switch opts.Include {
+	case tomorrowsPickupsInclude:
+		return p.readTomorrowsPickups(ctx, tomorrowsPickupsRequest{
 			tz:     tz,
 			limit:  opts.Limit,
 			offset: opts.Offset,
 		})
+	case laneHeatmapInclude:
+		return p.readLaneHeatmap(ctx, opts.WindowDays)
+	case kernelports.AnalyticsIncludeMetrics:
+		return p.readCards(ctx, opts, tz, false)
+	default:
+		return p.readCards(ctx, opts, tz, true)
+	}
+}
+
+func (p *Provider) readTomorrowsPickups(
+	ctx context.Context,
+	req tomorrowsPickupsRequest,
+) (kernelports.AnalyticsData, error) {
+	start, q, err := tomorrowsPickups(req)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := dbtx.Read(ctx, p.db, func(ctx context.Context) ([]tomorrowPickupRow, error) {
+		return keel.Into[tomorrowPickupRow](ctx, p.db.Keel(ctx), q)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("read tomorrow's pickups: %w", err)
+	}
+
+	return kernelports.AnalyticsData{
+		"tomorrowsPickups": buildTomorrowsPickupsCard(start, rows),
+	}, nil
+}
+
+func (p *Provider) readLaneHeatmap(
+	ctx context.Context,
+	windowDays int,
+) (kernelports.AnalyticsData, error) {
+	days, q := laneHeatmapRead(timeutils.NowUnix(), windowDays)
+
+	rows, err := dbtx.Read(ctx, p.db, func(ctx context.Context) ([]laneStateRow, error) {
+		return keel.Into[laneStateRow](ctx, p.db.Keel(ctx), q)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("read lane heatmap: %w", err)
+	}
+
+	return kernelports.AnalyticsData{
+		"laneHeatmap": buildLaneHeatmapCard(days, rows),
+	}, nil
+}
+
+// cardRows are the rows one batch reads for the page's cards.
+type cardRows struct {
+	active          activeShipmentsRow
+	hourlyShipments []hourlyMetricRow
+	onTime          onTimeRow
+	revenue         revenueTodayRow
+	hourlyRevenue   []hourlyMetricRow
+	emptyMile       emptyMileRow
+	atRisk          atRiskRow
+	unassigned      unassignedRow
+	ready           readyToDispatchRow
+
+	detention   []detentionRow
+	customerMix []customerMixRow
+	pickups     []tomorrowPickupRow
+	lanes       []laneStateRow
+}
+
+// readCards reads the metric cards and, for the full page, the lists beside
+// them. The provider's own queries go to the database in one batch, in one
+// read-only transaction, so those cards show one snapshot and cost one round
+// trip rather than a transaction per card. The on-time target, the fleet
+// profitability summary and the dispatch counts are read by their owners in
+// their own transactions: reading the costing control creates its defaults the
+// first time, which a read-only transaction would refuse.
+func (p *Provider) readCards(
+	ctx context.Context,
+	opts *kernelports.AnalyticsRequestOptions,
+	tz string,
+	full bool,
+) (kernelports.AnalyticsData, error) {
+	window, err := shipmentAnalyticsWindow(tz)
+	if err != nil {
+		return nil, fmt.Errorf("load timezone %q: %w", tz, err)
+	}
+
+	var rows cardRows
+	items := []keel.BatchItem{
+		keel.IntoValue(activeShipmentsQuery(window), &rows.active),
+		keel.IntoSlice(hourlyShipmentsQuery(window, tz), &rows.hourlyShipments),
+		keel.IntoValue(onTimeQuery(window), &rows.onTime),
+		keel.IntoValue(revenueTodayQuery(window), &rows.revenue),
+		keel.IntoSlice(hourlyRevenueQuery(window, tz), &rows.hourlyRevenue),
+		keel.IntoValue(emptyMileQuery(window), &rows.emptyMile),
+		keel.IntoValue(atRiskQuery(window), &rows.atRisk),
+		keel.IntoValue(unassignedQuery(window), &rows.unassigned),
+		keel.IntoValue(readyToDispatchQuery(window), &rows.ready),
+	}
+
+	var pickupsStart time.Time
+	var laneDays int
+	if full {
+		var pickups keel.Query[*shipment.Stop]
+		pickupsStart, pickups, err = tomorrowsPickups(tomorrowsPickupsRequest{tz: tz})
 		if err != nil {
-			log.Error("failed to get tomorrow's pickups", zap.Error(err))
 			return nil, err
 		}
 
-		return kernelports.AnalyticsData{
-			"tomorrowsPickups": tomorrowsPickups,
-		}, nil
+		var lanes keel.Projection
+		laneDays, lanes = laneHeatmapRead(window.Now, opts.WindowDays)
+		currentStart, previousStart := customerMixWindow(window.Now)
+
+		items = append(items,
+			keel.IntoSlice(detentionWatchlistQuery(window.Now), &rows.detention),
+			keel.IntoSlice(
+				customerMixQuery(window.Now, currentStart, previousStart),
+				&rows.customerMix,
+			),
+			keel.IntoSlice(pickups, &rows.pickups),
+			keel.IntoSlice(lanes, &rows.lanes),
+		)
 	}
 
-	if opts.Include == kernelports.AnalyticsIncludeMetrics {
-		return p.getMetricCards(ctx, opts, tz, log)
+	if err = dbtx.ReadErr(ctx, p.db, func(ctx context.Context) error {
+		return keel.Batch(ctx, p.db.Keel(ctx), items...)
+	}); err != nil {
+		return nil, fmt.Errorf("read shipment analytics cards: %w", err)
 	}
 
-	laneHeatmap, err := p.getLaneHeatmap(ctx, opts.WindowDays)
-	if err != nil {
-		log.Error("failed to get lane heatmap", zap.Error(err))
-		return nil, err
-	}
-
-	if opts.Include == laneHeatmapInclude {
-		return kernelports.AnalyticsData{
-			"laneHeatmap": laneHeatmap,
-		}, nil
-	}
-
-	return p.getFullAnalyticsData(ctx, opts, tz, laneHeatmap, log)
-}
-
-func (p *Provider) getFullAnalyticsData(
-	ctx context.Context,
-	opts *kernelports.AnalyticsRequestOptions,
-	tz string,
-	laneHeatmap *LaneHeatmapCard,
-	log *zap.Logger,
-) (kernelports.AnalyticsData, error) {
-	data, err := p.getMetricCards(ctx, opts, tz, log)
-	if err != nil {
-		return nil, err
-	}
-
-	detentionWatchlist, err := p.getDetentionWatchlist(ctx)
-	if err != nil {
-		log.Error("failed to get detention watchlist", zap.Error(err))
-		return nil, err
-	}
-
-	customerMix, err := p.getCustomerMix(ctx)
-	if err != nil {
-		log.Error("failed to get customer mix", zap.Error(err))
-		return nil, err
-	}
-
-	tomorrowsPickups, err := p.getTomorrowsPickups(ctx, tomorrowsPickupsRequest{
-		tz:    tz,
-		limit: defaultTomorrowsPickupsLimit,
+	control, err := p.dispatchRepo.GetByOrgID(ctx, dispatchcontrolports.GetDispatchControlRequest{
+		TenantInfo: pagination.TenantInfo{OrgID: opts.OrgID, BuID: opts.BuID},
 	})
 	if err != nil {
-		log.Error("failed to get tomorrow's pickups", zap.Error(err))
-		return nil, err
-	}
-
-	data["detentionWatchlist"] = detentionWatchlist
-	data["customerMix"] = customerMix
-	data["tomorrowsPickups"] = tomorrowsPickups
-	data["laneHeatmap"] = laneHeatmap
-
-	return data, nil
-}
-
-func (p *Provider) getMetricCards(
-	ctx context.Context,
-	opts *kernelports.AnalyticsRequestOptions,
-	tz string,
-	log *zap.Logger,
-) (kernelports.AnalyticsData, error) {
-	activeShipments, err := p.getActiveShipments(ctx, tz)
-	if err != nil {
-		log.Error("failed to get active shipments", zap.Error(err))
-		return nil, err
-	}
-
-	revenue, err := p.getRevenueToday(ctx, tz)
-	if err != nil {
-		log.Error("failed to get revenue today", zap.Error(err))
-		return nil, err
-	}
-
-	onTime, err := p.getOnTimePercent(ctx, opts.OrgID, opts.BuID, tz)
-	if err != nil {
-		log.Error("failed to get on-time percent", zap.Error(err))
-		return nil, err
-	}
-
-	emptyMile, err := p.getEmptyMilePercent(ctx, tz)
-	if err != nil {
-		log.Error("failed to get empty mile percent", zap.Error(err))
-		return nil, err
-	}
-
-	atRisk, err := p.getAtRisk(ctx, tz)
-	if err != nil {
-		log.Error("failed to get at-risk shipments", zap.Error(err))
-		return nil, err
-	}
-
-	unassigned, err := p.getUnassigned(ctx, tz)
-	if err != nil {
-		log.Error("failed to get unassigned shipments", zap.Error(err))
-		return nil, err
-	}
-
-	readyToDispatch, err := p.getReadyToDispatch(ctx, tz)
-	if err != nil {
-		log.Error("failed to get ready to dispatch", zap.Error(err))
 		return nil, err
 	}
 
 	profitability, err := p.getProfitability(ctx, opts.OrgID, opts.BuID)
 	if err != nil {
-		log.Error("failed to get profitability summary", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("read profitability summary: %w", err)
 	}
 
 	dispatch, err := p.getDispatch(ctx, opts, tz)
 	if err != nil {
-		log.Error("failed to get dispatch counts", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("read dispatch counts: %w", err)
 	}
 
-	return kernelports.AnalyticsData{
-		"activeShipments":  activeShipments,
-		"onTimePercent":    onTime,
-		"revenueToday":     revenue,
-		"emptyMilePercent": emptyMile,
-		"atRisk":           atRisk,
-		"unassigned":       unassigned,
-		"readyToDispatch":  readyToDispatch,
+	data := kernelports.AnalyticsData{
+		"activeShipments":  activeShipmentsCard(rows.active, rows.hourlyShipments),
+		"onTimePercent":    onTimeCard(rows.onTime, control.ServiceFailureTarget),
+		"revenueToday":     revenueTodayCard(rows.revenue, rows.hourlyRevenue),
+		"emptyMilePercent": emptyMileCard(rows.emptyMile),
+		"atRisk":           atRiskCard(rows.atRisk),
+		"unassigned":       unassignedCard(rows.unassigned),
+		"readyToDispatch":  readyToDispatchCard(rows.ready),
 		"profitability":    profitability,
 		"dispatch":         dispatch,
-	}, nil
+	}
+	if full {
+		data["detentionWatchlist"] = detentionWatchlistCard(rows.detention)
+		data["customerMix"] = buildCustomerMixCard(rows.customerMix)
+		data["tomorrowsPickups"] = buildTomorrowsPickupsCard(pickupsStart, rows.pickups)
+		data["laneHeatmap"] = buildLaneHeatmapCard(laneDays, rows.lanes)
+	}
+
+	return data, nil
 }
 
 // dispatchWindowSeconds is the day ahead the dispatch counts cover, the
@@ -461,31 +473,6 @@ type readyToDispatchRow struct {
 	DriverReady      int
 }
 
-func queryOne[T any](ctx context.Context, db *keel.DB, p keel.Projection) (T, error) {
-	var zero T
-	rows, err := keel.Into[T](ctx, db, p)
-	if err != nil {
-		return zero, err
-	}
-	if len(rows) != 1 {
-		return zero, fmt.Errorf("%w: expected one row, got %d", errUnexpectedRows, len(rows))
-	}
-
-	return rows[0], nil
-}
-
-func queryAll[T any](ctx context.Context, db *keel.DB, p keel.Projection) ([]T, error) {
-	rows, err := keel.Into[T](ctx, db, p)
-	if err != nil {
-		return nil, err
-	}
-	if rows == nil {
-		rows = []T{}
-	}
-
-	return rows, nil
-}
-
 func within(c keel.Int64Col, from, to int64) keel.Pred {
 	return keel.And(c.Gte(from), c.Lte(to))
 }
@@ -528,39 +515,21 @@ func hourlyShipmentsQuery(window analyticsWindow, tz string) keel.Query[*shipmen
 		Order(hour.Asc())
 }
 
-func (p *Provider) getActiveShipments(
-	ctx context.Context,
-	tz string,
-) (*ActiveShipmentsCard, error) {
-	return dbtx.Read(ctx, p.db, func(ctx context.Context) (*ActiveShipmentsCard, error) {
-		window, err := shipmentAnalyticsWindow(tz)
-		if err != nil {
-			return nil, fmt.Errorf("load timezone %q: %w", tz, err)
-		}
-
-		db := p.db.Keel(ctx)
-		result, err := queryOne[activeShipmentsRow](ctx, db, activeShipmentsQuery(window))
-		if err != nil {
-			return nil, err
-		}
-
-		hourlyRows, err := queryAll[hourlyMetricRow](ctx, db, hourlyShipmentsQuery(window, tz))
-		if err != nil {
-			return nil, err
-		}
-
-		return &ActiveShipmentsCard{
-			Count:               result.TotalActive,
-			ChangeFromYesterday: result.CreatedToday - result.CreatedYesterday,
-			Sparkline:           zeroFilledSparkline(hourlyRows, false),
-			Breakdown: &ActiveShipmentsBreakdown{
-				InTransit: result.InTransit,
-				AtRisk:    result.AtRisk,
-				Loading:   result.Loading,
-				Done:      result.Done,
-			},
-		}, nil
-	})
+func activeShipmentsCard(
+	result activeShipmentsRow,
+	hourly []hourlyMetricRow,
+) *ActiveShipmentsCard {
+	return &ActiveShipmentsCard{
+		Count:               result.TotalActive,
+		ChangeFromYesterday: result.CreatedToday - result.CreatedYesterday,
+		Sparkline:           zeroFilledSparkline(hourly, false),
+		Breakdown: &ActiveShipmentsBreakdown{
+			InTransit: result.InTransit,
+			AtRisk:    result.AtRisk,
+			Loading:   result.Loading,
+			Done:      result.Done,
+		},
+	}
 }
 
 func onTimeQuery(window analyticsWindow) keel.Query[*shipment.Stop] {
@@ -589,46 +558,18 @@ func onTimeQuery(window analyticsWindow) keel.Query[*shipment.Stop] {
 	)
 }
 
-func (p *Provider) getOnTimePercent(
-	ctx context.Context,
-	orgID, buID pulid.ID,
-	tz string,
-) (*OnTimeCard, error) {
-	return dbtx.Write(ctx, p.db, func(ctx context.Context) (*OnTimeCard, error) {
-		window, err := shipmentAnalyticsWindow(tz)
-		if err != nil {
-			return nil, fmt.Errorf("load timezone %q: %w", tz, err)
-		}
-
-		result, err := queryOne[onTimeRow](ctx, p.db.Keel(ctx), onTimeQuery(window))
-		if err != nil {
-			return nil, err
-		}
-
-		var target *float64
-		control, controlErr := p.dispatchRepo.GetByOrgID(
-			ctx,
-			dispatchcontrolports.GetDispatchControlRequest{
-				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
-			},
-		)
-		if controlErr != nil {
-			return nil, controlErr
-		}
-		target = control.ServiceFailureTarget
-
-		return &OnTimeCard{
-			Percent:     percent(result.OnTime, result.Total),
-			OnTimeCount: result.OnTime,
-			TotalCount:  result.Total,
-			Target:      target,
-			DeltaPp: roundTenth(
-				percent(result.OnTime, result.Total) -
-					percent(result.YesterdayOnTime, result.YesterdayTotal),
-			),
-			SevenDayPercent: percent(result.SevenDayOnTime, result.SevenDayTotal),
-		}, nil
-	})
+func onTimeCard(result onTimeRow, target *float64) *OnTimeCard {
+	return &OnTimeCard{
+		Percent:     percent(result.OnTime, result.Total),
+		OnTimeCount: result.OnTime,
+		TotalCount:  result.Total,
+		Target:      target,
+		DeltaPp: roundTenth(
+			percent(result.OnTime, result.Total) -
+				percent(result.YesterdayOnTime, result.YesterdayTotal),
+		),
+		SevenDayPercent: percent(result.SevenDayOnTime, result.SevenDayTotal),
+	}
 }
 
 func revenueTodayQuery(window analyticsWindow) keel.Query[*shipment.Shipment] {
@@ -664,34 +605,13 @@ func hourlyRevenueQuery(window analyticsWindow, tz string) keel.Query[*shipment.
 		Order(hour.Asc())
 }
 
-func (p *Provider) getRevenueToday(
-	ctx context.Context,
-	tz string,
-) (*RevenueTodayCard, error) {
-	return dbtx.Write(ctx, p.db, func(ctx context.Context) (*RevenueTodayCard, error) {
-		window, err := shipmentAnalyticsWindow(tz)
-		if err != nil {
-			return nil, fmt.Errorf("load timezone %q: %w", tz, err)
-		}
-
-		db := p.db.Keel(ctx)
-		result, err := queryOne[revenueTodayRow](ctx, db, revenueTodayQuery(window))
-		if err != nil {
-			return nil, err
-		}
-
-		hourlyRows, err := queryAll[hourlyMetricRow](ctx, db, hourlyRevenueQuery(window, tz))
-		if err != nil {
-			return nil, err
-		}
-
-		return &RevenueTodayCard{
-			Total:     roundCents(result.Amount),
-			Sparkline: zeroFilledSparkline(hourlyRows, true),
-			DeltaPct:  percentChange(result.Amount, result.YesterdayAmount),
-			RPM:       rpm(result.Amount, result.Miles),
-		}, nil
-	})
+func revenueTodayCard(result revenueTodayRow, hourly []hourlyMetricRow) *RevenueTodayCard {
+	return &RevenueTodayCard{
+		Total:     roundCents(result.Amount),
+		Sparkline: zeroFilledSparkline(hourly, true),
+		DeltaPct:  percentChange(result.Amount, result.YesterdayAmount),
+		RPM:       rpm(result.Amount, result.Miles),
+	}
 }
 
 func emptyMileQuery(window analyticsWindow) keel.Query[*shipment.ShipmentMove] {
@@ -712,31 +632,16 @@ func emptyMileQuery(window analyticsWindow) keel.Query[*shipment.ShipmentMove] {
 	)
 }
 
-func (p *Provider) getEmptyMilePercent(
-	ctx context.Context,
-	tz string,
-) (*EmptyMileCard, error) {
-	return dbtx.Read(ctx, p.db, func(ctx context.Context) (*EmptyMileCard, error) {
-		window, err := shipmentAnalyticsWindow(tz)
-		if err != nil {
-			return nil, fmt.Errorf("load timezone %q: %w", tz, err)
-		}
+func emptyMileCard(result emptyMileRow) *EmptyMileCard {
+	pct := ratioPercent(result.EmptyMiles, result.TotalMiles)
+	yesterdayPct := ratioPercent(result.YesterdayEmptyMiles, result.YesterdayTotalMiles)
 
-		result, err := queryOne[emptyMileRow](ctx, p.db.Keel(ctx), emptyMileQuery(window))
-		if err != nil {
-			return nil, err
-		}
-
-		pct := ratioPercent(result.EmptyMiles, result.TotalMiles)
-		yesterdayPct := ratioPercent(result.YesterdayEmptyMiles, result.YesterdayTotalMiles)
-
-		return &EmptyMileCard{
-			Percent:    pct,
-			EmptyMiles: roundCents(result.EmptyMiles),
-			TotalMiles: roundCents(result.TotalMiles),
-			DeltaPp:    roundTenth(pct - yesterdayPct),
-		}, nil
-	})
+	return &EmptyMileCard{
+		Percent:    pct,
+		EmptyMiles: roundCents(result.EmptyMiles),
+		TotalMiles: roundCents(result.TotalMiles),
+		DeltaPp:    roundTenth(pct - yesterdayPct),
+	}
 }
 
 func atRiskQuery(window analyticsWindow) keel.Query[*shipment.Shipment] {
@@ -777,29 +682,14 @@ func atRiskQuery(window analyticsWindow) keel.Query[*shipment.Shipment] {
 	)
 }
 
-func (p *Provider) getAtRisk(
-	ctx context.Context,
-	tz string,
-) (*AtRiskCard, error) {
-	return dbtx.Write(ctx, p.db, func(ctx context.Context) (*AtRiskCard, error) {
-		window, err := shipmentAnalyticsWindow(tz)
-		if err != nil {
-			return nil, fmt.Errorf("load timezone %q: %w", tz, err)
-		}
-
-		result, err := queryOne[atRiskRow](ctx, p.db.Keel(ctx), atRiskQuery(window))
-		if err != nil {
-			return nil, err
-		}
-
-		return &AtRiskCard{
-			Count:   result.Count,
-			Delta:   result.CreatedToday - result.CreatedYesterday,
-			ETASlip: result.ETASlip,
-			Weather: result.Weather,
-			Reefer:  result.Reefer,
-		}, nil
-	})
+func atRiskCard(result atRiskRow) *AtRiskCard {
+	return &AtRiskCard{
+		Count:   result.Count,
+		Delta:   result.CreatedToday - result.CreatedYesterday,
+		ETASlip: result.ETASlip,
+		Weather: result.Weather,
+		Reefer:  result.Reefer,
+	}
 }
 
 func unassignedQuery(window analyticsWindow) keel.Query[*shipment.Shipment] {
@@ -816,27 +706,12 @@ func unassignedQuery(window analyticsWindow) keel.Query[*shipment.Shipment] {
 	)
 }
 
-func (p *Provider) getUnassigned(
-	ctx context.Context,
-	tz string,
-) (*UnassignedCard, error) {
-	return dbtx.Write(ctx, p.db, func(ctx context.Context) (*UnassignedCard, error) {
-		window, err := shipmentAnalyticsWindow(tz)
-		if err != nil {
-			return nil, fmt.Errorf("load timezone %q: %w", tz, err)
-		}
-
-		result, err := queryOne[unassignedRow](ctx, p.db.Keel(ctx), unassignedQuery(window))
-		if err != nil {
-			return nil, err
-		}
-
-		return &UnassignedCard{
-			Count:          result.Count,
-			Delta:          result.CreatedToday - result.CreatedYesterday,
-			RevenueWaiting: roundCents(result.RevenueWaiting),
-		}, nil
-	})
+func unassignedCard(result unassignedRow) *UnassignedCard {
+	return &UnassignedCard{
+		Count:          result.Count,
+		Delta:          result.CreatedToday - result.CreatedYesterday,
+		RevenueWaiting: roundCents(result.RevenueWaiting),
+	}
 }
 
 func readyToDispatchQuery(window analyticsWindow) keel.Query[*shipment.Shipment] {
@@ -875,32 +750,13 @@ func readyToDispatchQuery(window analyticsWindow) keel.Query[*shipment.Shipment]
 		Where(sp.Status.In(activeStatuses...))
 }
 
-func (p *Provider) getReadyToDispatch(
-	ctx context.Context,
-	tz string,
-) (*ReadyToDispatchCard, error) {
-	return dbtx.Write(ctx, p.db, func(ctx context.Context) (*ReadyToDispatchCard, error) {
-		window, err := shipmentAnalyticsWindow(tz)
-		if err != nil {
-			return nil, fmt.Errorf("load timezone %q: %w", tz, err)
-		}
-
-		result, err := queryOne[readyToDispatchRow](
-			ctx,
-			p.db.Keel(ctx),
-			readyToDispatchQuery(window),
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		return &ReadyToDispatchCard{
-			Count:       result.Count,
-			Delta:       result.CreatedToday - result.CreatedYesterday,
-			Unassigned:  result.Unassigned,
-			DriverReady: result.DriverReady,
-		}, nil
-	})
+func readyToDispatchCard(result readyToDispatchRow) *ReadyToDispatchCard {
+	return &ReadyToDispatchCard{
+		Count:       result.Count,
+		Delta:       result.CreatedToday - result.CreatedYesterday,
+		Unassigned:  result.Unassigned,
+		DriverReady: result.DriverReady,
+	}
 }
 
 type detentionRow struct {
@@ -934,30 +790,19 @@ func detentionWatchlistQuery(now int64) keel.Query[*shipment.Stop] {
 		Limit(detentionWatchlistLimit)
 }
 
-func (p *Provider) getDetentionWatchlist(ctx context.Context) (*DetentionWatchlistCard, error) {
-	return dbtx.Write(ctx, p.db, func(ctx context.Context) (*DetentionWatchlistCard, error) {
-		rows, err := queryAll[detentionRow](
-			ctx,
-			p.db.Keel(ctx),
-			detentionWatchlistQuery(timeutils.NowUnix()),
-		)
-		if err != nil {
-			return nil, err
-		}
+func detentionWatchlistCard(rows []detentionRow) *DetentionWatchlistCard {
+	items := make([]*DetentionWatchlistItem, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, &DetentionWatchlistItem{
+			ShipmentID:   row.ShipmentID,
+			Customer:     row.Customer,
+			DwellSeconds: row.DwellSeconds,
+			DwellLabel:   formatDwell(row.DwellSeconds),
+			Tone:         detentionTone(row.DwellSeconds),
+		})
+	}
 
-		items := make([]*DetentionWatchlistItem, 0, len(rows))
-		for _, row := range rows {
-			items = append(items, &DetentionWatchlistItem{
-				ShipmentID:   row.ShipmentID,
-				Customer:     row.Customer,
-				DwellSeconds: row.DwellSeconds,
-				DwellLabel:   formatDwell(row.DwellSeconds),
-				Tone:         detentionTone(row.DwellSeconds),
-			})
-		}
-
-		return &DetentionWatchlistCard{Items: items}, nil
-	})
+	return &DetentionWatchlistCard{Items: items}
 }
 
 func customerMixQuery(now, currentStart, previousStart int64) keel.Query[*shipment.Shipment] {
@@ -988,23 +833,13 @@ func customerMixQuery(now, currentStart, previousStart int64) keel.Query[*shipme
 		Limit(customerMixLimit)
 }
 
-func (p *Provider) getCustomerMix(ctx context.Context) (*CustomerMixCard, error) {
-	return dbtx.Write(ctx, p.db, func(ctx context.Context) (*CustomerMixCard, error) {
-		now := timeutils.NowUnix()
-		currentStart := now - int64(customerMixWindowDays)*24*60*60
-		previousStart := currentStart - int64(customerMixWindowDays)*24*60*60
+// customerMixWindow is the start of the current and of the previous customer
+// mix windows ending now.
+func customerMixWindow(now int64) (currentStart, previousStart int64) {
+	window := int64(customerMixWindowDays) * 24 * 60 * 60
+	currentStart = now - window
 
-		rows, err := queryAll[customerMixRow](
-			ctx,
-			p.db.Keel(ctx),
-			customerMixQuery(now, currentStart, previousStart),
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		return buildCustomerMixCard(rows), nil
-	})
+	return currentStart, currentStart - window
 }
 
 func placeLabel(loc *locationdb.LocationsTable) keel.StringExpr {
@@ -1075,74 +910,43 @@ func tomorrowsPickupsQuery(from, to int64, limit, offset int) keel.Query[*shipme
 		Offset(offset)
 }
 
-func (p *Provider) getTomorrowsPickups(
-	ctx context.Context,
+// tomorrowsPickups is the start of tomorrow in the reader's timezone and the
+// query for the pickups scheduled in that day.
+func tomorrowsPickups(
 	req tomorrowsPickupsRequest,
-) (*TomorrowsPickupsCard, error) {
-	return dbtx.Write(ctx, p.db, func(ctx context.Context) (*TomorrowsPickupsCard, error) {
-		loc, err := time.LoadLocation(req.tz)
-		if err != nil {
-			return nil, fmt.Errorf("load timezone %q: %w", req.tz, err)
-		}
+) (time.Time, keel.Query[*shipment.Stop], error) {
+	loc, err := time.LoadLocation(req.tz)
+	if err != nil {
+		return time.Time{}, nil, fmt.Errorf("load timezone %q: %w", req.tz, err)
+	}
 
-		limit := req.limit
-		if limit <= 0 {
-			limit = defaultTomorrowsPickupsLimit
-		}
+	limit := req.limit
+	if limit <= 0 {
+		limit = defaultTomorrowsPickupsLimit
+	}
 
-		now := time.Now().In(loc)
-		tomorrow := now.AddDate(0, 0, 1)
-		tomorrowStart := time.Date(
-			tomorrow.Year(),
-			tomorrow.Month(),
-			tomorrow.Day(),
-			0,
-			0,
-			0,
-			0,
-			loc,
-		)
-		tomorrowEnd := tomorrowStart.AddDate(0, 0, 1)
+	tomorrow := time.Now().In(loc).AddDate(0, 0, 1)
+	start := time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 0, 0, 0, 0, loc)
+	end := start.AddDate(0, 0, 1)
 
-		rows, err := queryAll[tomorrowPickupRow](
-			ctx,
-			p.db.Keel(ctx),
-			tomorrowsPickupsQuery(tomorrowStart.Unix(), tomorrowEnd.Unix(), limit, req.offset),
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		return buildTomorrowsPickupsCard(tomorrowStart, rows), nil
-	})
+	return start, tomorrowsPickupsQuery(start.Unix(), end.Unix(), limit, req.offset), nil
 }
 
-func (p *Provider) getLaneHeatmap(ctx context.Context, windowDays int) (*LaneHeatmapCard, error) {
-	return dbtx.Read(ctx, p.db, func(ctx context.Context) (*LaneHeatmapCard, error) {
-		if windowDays == 0 {
-			windowDays = defaultLaneHeatmapWindowDays
-		}
+// laneHeatmapRead is the heatmap's window in days and the query for the lanes
+// of the shipments created in it.
+func laneHeatmapRead(now int64, windowDays int) (int, keel.Projection) {
+	if windowDays == 0 {
+		windowDays = defaultLaneHeatmapWindowDays
+	}
 
-		now := timeutils.NowUnix()
-		windowStart := now - int64(windowDays)*24*60*60
+	s := shipmentdb.Shipments
 
-		s := shipmentdb.Shipments
-		rows, err := keel.Into[laneStateRow](
-			ctx,
-			p.db.Keel(ctx),
-			lanequery.New(lanequery.Options{
-				Shipments: []keel.Pred{
-					s.CreatedAt.Gte(windowStart),
-					s.CreatedAt.Lte(now),
-					s.Status.Ne(shipmentvocab.StatusCanceled),
-				},
-			}),
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		return buildLaneHeatmapCard(windowDays, rows), nil
+	return windowDays, lanequery.New(lanequery.Options{
+		Shipments: []keel.Pred{
+			s.CreatedAt.Gte(now - int64(windowDays)*24*60*60),
+			s.CreatedAt.Lte(now),
+			s.Status.Ne(shipmentvocab.StatusCanceled),
+		},
 	})
 }
 

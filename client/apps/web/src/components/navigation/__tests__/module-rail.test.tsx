@@ -116,15 +116,15 @@ describe("the module rail", () => {
   it("lights a hovered module tile with the rail's shared hover background", () => {
     const { container } = renderRail(false);
     const nav = screen.getByRole("navigation", { name: "Modules" });
-    const glide = nav.querySelector('[data-slot="rail-glide"]');
+    const glide = nav.querySelector('[data-slot="hover-glide"]');
     expect(glide).toHaveAttribute("data-state", "hidden");
 
     fireEvent.pointerOver(screen.getByRole("link", { name: "Billing" }));
 
     expect(glide).toHaveAttribute("data-state", "shown");
-    expect(container.querySelectorAll('[data-slot="rail-glide"][data-state="shown"]')).toHaveLength(
-      1,
-    );
+    expect(
+      container.querySelectorAll('[data-slot="hover-glide"][data-state="shown"]'),
+    ).toHaveLength(1);
   });
 
   it("opens a module's pages on hover only while the panel is folded", () => {

@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -172,7 +172,7 @@ func (h *harness) invoice(
 		BusinessUnitID:     h.tenant.BuID,
 		CustomerID:         h.customerID,
 		Number:             number,
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		Status:             invoice.StatusPosted,
 		CurrencyCode:       "USD",
 		TotalAmountMinor:   totalMinor,
@@ -187,7 +187,7 @@ func (h *harness) invoice(
 
 func (h *harness) creditMemo(number string, creditMinor int64, externalID string) *invoice.Invoice {
 	memo := h.invoice(number, -creditMinor, 0, "")
-	memo.BillType = billingqueue.BillTypeCreditMemo
+	memo.BillType = billingvocab.BillTypeCreditMemo
 	h.records.rows = h.records.rows[:len(h.records.rows)-1]
 	h.syncedDocument(accountingsync.SyncObjectCreditMemo, memo.ID, number, externalID)
 	return memo

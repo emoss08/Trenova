@@ -29,6 +29,49 @@ func TestRefreshQuery_ReadsTheLastDeliveredArrivalByMoveAndStopSequence(t *testi
 	assert.Contains(t, sql, `ORDER BY prj_dsm."sequence" DESC, prj_stp."sequence" DESC LIMIT 1`)
 }
 
+func TestRefreshQuery_ReadsWhenTheLastDeliveryLandsByMoveAndStopSequence(t *testing.T) {
+	t.Parallel()
+
+	sql, _ := keeltest.Render(
+		t,
+		refreshQuery(shipmentdb.Shipments.ID.In(pulid.ID("shp_1")), scopedTenant),
+	)
+
+	assert.Contains(
+		t,
+		sql,
+		`s."delivery_at" IS DISTINCT FROM (SELECT coalesce(prj_dts."actual_arrival", prj_dts."scheduled_window_start")`,
+	)
+	assert.Contains(t, sql, `JOIN "shipment_moves" prj_dtm`)
+	assert.Contains(t, sql, `prj_dtm."shipment_id" = s."id"`)
+	assert.Contains(t, sql, `prj_dtm."status" <> 'Canceled'`)
+	assert.Contains(t, sql, `prj_dts."status" <> 'Canceled'`)
+	assert.Contains(t, sql, `prj_dts."type" IN ('Delivery', 'SplitDelivery')`)
+	assert.Contains(t, sql, `ORDER BY prj_dtm."sequence" DESC, prj_dts."sequence" DESC LIMIT 1`)
+	assert.NotContains(t, sql, `prj_dts."actual_arrival" IS NOT NULL`)
+}
+
+func TestRefreshQuery_ReadsTheFirstPickupWindowByMoveAndStopSequence(t *testing.T) {
+	t.Parallel()
+
+	sql, _ := keeltest.Render(
+		t,
+		refreshQuery(shipmentdb.Shipments.ID.In(pulid.ID("shp_1")), scopedTenant),
+	)
+
+	assert.Contains(
+		t,
+		sql,
+		`s."pickup_at" IS DISTINCT FROM (SELECT prj_pts."scheduled_window_start"`,
+	)
+	assert.Contains(t, sql, `JOIN "shipment_moves" prj_ptm`)
+	assert.Contains(t, sql, `prj_ptm."shipment_id" = s."id"`)
+	assert.Contains(t, sql, `prj_ptm."status" <> 'Canceled'`)
+	assert.Contains(t, sql, `prj_pts."status" <> 'Canceled'`)
+	assert.Contains(t, sql, `prj_pts."type" IN ('Pickup', 'SplitPickup')`)
+	assert.Contains(t, sql, `ORDER BY prj_ptm."sequence" ASC, prj_pts."sequence" ASC LIMIT 1`)
+}
+
 func TestRefreshQuery_FlagsALiveAssignmentOnAMoveStillRunning(t *testing.T) {
 	t.Parallel()
 
@@ -75,6 +118,10 @@ func TestRefreshQuery_AcrossTenantsCorrelatesEveryTableByTenant(t *testing.T) {
 	assert.Contains(t, sql, `prj_stp."business_unit_id" = s."business_unit_id"`)
 	assert.Contains(t, sql, `prj_asm."organization_id" = s."organization_id"`)
 	assert.Contains(t, sql, `prj_a."business_unit_id" = s."business_unit_id"`)
+	assert.Contains(t, sql, `prj_dts."organization_id" = s."organization_id"`)
+	assert.Contains(t, sql, `prj_dtm."business_unit_id" = s."business_unit_id"`)
+	assert.Contains(t, sql, `prj_pts."business_unit_id" = s."business_unit_id"`)
+	assert.Contains(t, sql, `prj_ptm."organization_id" = s."organization_id"`)
 	assert.NotContains(t, sql, `s."organization_id" = $`)
 }
 

@@ -34,7 +34,7 @@ export type TuneUpLabels = {
 };
 
 /** Splits a translated sentence on its one {0} placeholder so the name it holds can be bold. */
-function titled(template: string, strong: string): TuneUpTitlePart[] {
+export function titled(template: string, strong: string): TuneUpTitlePart[] {
   const [before, after = ""] = template.split("{0}");
   return [
     ...(before ? [{ text: before }] : []),

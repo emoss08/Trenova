@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edimessagerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -100,7 +101,7 @@ func seedMessageListFixture(t *testing.T) (context.Context, *messageListFixture)
 		BillToCustomerID: shipment.CustomerID,
 		Number:           "INV-EDI-LIST-1",
 		Status:           billingqueue.StatusPosted,
-		BillType:         billingqueue.BillTypeInvoice,
+		BillType:         billingvocab.BillTypeInvoice,
 	}
 	require.NoError(t, create(ctx, db, queue))
 	inv := &invoice.Invoice{
@@ -110,7 +111,7 @@ func seedMessageListFixture(t *testing.T) (context.Context, *messageListFixture)
 		ShipmentID:         shipment.ID,
 		CustomerID:         shipment.CustomerID,
 		Number:             queue.Number,
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		Status:             invoice.StatusPosted,
 		PaymentTerm:        invoice.PaymentTermNet30,
 		CurrencyCode:       "USD",

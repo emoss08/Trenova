@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -13,8 +14,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
-
-const MemoRaisedByKey = "raisedById"
 
 // A standalone credit memo takes money off a customer's balance just as an
 // invoice adjustment does, so it answers to the same approval policy. One the
@@ -28,7 +27,7 @@ func memoNeedsApproval(
 ) bool {
 	if control == nil || entity == nil ||
 		entity.Scope != invoice.ScopeMemo ||
-		entity.BillType != billingqueue.BillTypeCreditMemo {
+		entity.BillType != billingvocab.BillTypeCreditMemo {
 		return false
 	}
 
@@ -119,10 +118,9 @@ func memoRaisedBy(item *billingqueue.BillingQueueItem) pulid.ID {
 	if item == nil {
 		return pulid.Nil
 	}
-	raw, ok := item.AdjustmentContext[MemoRaisedByKey].(string)
-	if !ok {
+	if item.AdjustmentContext.Memo == nil {
 		return pulid.Nil
 	}
 
-	return pulid.ID(raw)
+	return item.AdjustmentContext.Memo.RaisedByID
 }

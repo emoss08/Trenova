@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
@@ -124,7 +124,6 @@ func invoiceDetail() keel.Query[*invoice.Invoice] {
 		inv.ShipperCustomer(),
 		inv.FactoringCompany(),
 		inv.Shipment(),
-		inv.BillingQueueItem(),
 		inv.PDFDocument().DocumentType(),
 		lines.Order(lines.LineNumber.Asc()),
 	)
@@ -227,7 +226,7 @@ func (r *repository) NetBilledByCharge(
 				il.AdditionalChargeID.In(req.ChargeIDs...),
 				inv.Status.Ne(invoice.StatusVoided),
 				keel.Or(
-					inv.BillType.Ne(billingqueue.BillTypeCreditMemo),
+					inv.BillType.Ne(billingvocab.BillTypeCreditMemo),
 					adj.Kind.In(
 						invoiceadjustment.KindCreditOnly,
 						invoiceadjustment.KindCreditRebill,
@@ -433,7 +432,7 @@ func reconciliationDiscrepancies(
 	))
 
 	sign := keel.CaseNumeric().
-		When(inv.BillType.Eq(billingqueue.BillTypeCreditMemo), keel.Numeric(int64(-1))).
+		When(inv.BillType.Eq(billingvocab.BillTypeCreditMemo), keel.Numeric(int64(-1))).
 		Else(keel.Numeric(int64(1)))
 	orderPart := keel.CaseNumeric().
 		When(inv.OrderID.IsNotNull(), keel.NumericOf(orderTotal).Coalesce(0)).

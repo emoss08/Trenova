@@ -127,6 +127,22 @@ describe("BillingQueueReassignChargeDialog", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  // A split opens in half with its second payer still to choose. That is work in progress,
+  // so the dialog says nothing until a save is tried, and then refuses it.
+  it("asks for the second payer only once a save is tried", async () => {
+    const user = userEvent.setup();
+    renderDialog({ payer: "peak", lineIndex: 0, other: true });
+
+    await user.click(screen.getByRole("button", { name: "Split between payers" }));
+
+    expect(screen.queryByText("Every row needs a payer")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Save payers" }));
+
+    expect(await screen.findByText("Every row needs a payer")).toBeInTheDocument();
+    expect(reassignCharge).not.toHaveBeenCalled();
+  });
+
   // Freight is named by kind alone, and a row already dividing it keeps its id
   // so the server updates it rather than inserting a duplicate payer.
   it("sends the freight split with the ids of the rows it already has", async () => {

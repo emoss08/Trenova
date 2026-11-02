@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevalidation"
 	"github.com/emoss08/trenova/internal/modules/billing/billingtest/invoiceservicetest"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -95,7 +96,7 @@ func newPostFixture(t *testing.T) *postFixture {
 		InvoiceDate:        1_700_000_000,
 		BillToName:         "Acme Logistics",
 		Status:             invoice.StatusDraft,
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		SubtotalAmount:     decimal.RequireFromString("1250.00"),
 		TotalAmount:        decimal.RequireFromString("1250.00"),
 		TotalAmountMinor:   125000,

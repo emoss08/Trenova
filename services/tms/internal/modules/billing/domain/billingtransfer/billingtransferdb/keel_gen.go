@@ -35,7 +35,7 @@ var billingTransferRunsTable = schema.Table{
 		{Name: "scope", Quoted: `"scope"`, Field: "Scope", Kind: schema.KindString, Flags: 0, Label: `Scope`, JSON: `scope`, Enum: enumRunScope[:]},
 		{Name: "search_query", Quoted: `"search_query"`, Field: "SearchQuery", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Search Query`, JSON: `searchQuery`},
 		{Name: "shipment_status", Quoted: `"shipment_status"`, Field: "ShipmentStatus", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Shipment Status`, JSON: `shipmentStatus`, Enum: enumShipmentvocabStatus[:]},
-		{Name: "bill_type", Quoted: `"bill_type"`, Field: "BillType", Kind: schema.KindString, Flags: 0, Label: `Bill Type`, JSON: `billType`, Enum: enumBillingqueueBillType[:]},
+		{Name: "bill_type", Quoted: `"bill_type"`, Field: "BillType", Kind: schema.KindString, Flags: 0, Label: `Bill Type`, JSON: `billType`, Enum: enumBillingvocabBillType[:]},
 		{Name: "mark_completed_ready_to_invoice", Quoted: `"mark_completed_ready_to_invoice"`, Field: "MarkCompletedReadyToInvoice", Kind: schema.KindBool, Flags: 0, Label: `Mark Completed Ready To Invoice`, JSON: `markCompletedReadyToInvoice`},
 		{Name: "total_count", Quoted: `"total_count"`, Field: "TotalCount", Kind: schema.KindInt64, Flags: 0, Label: `Total Count`, JSON: `totalCount`},
 		{Name: "processed_count", Quoted: `"processed_count"`, Field: "ProcessedCount", Kind: schema.KindInt64, Flags: 0, Label: `Processed Count`, JSON: `processedCount`},
@@ -94,7 +94,7 @@ type BillingTransferRunsTable struct {
 	Scope                       RunScopeCol
 	SearchQuery                 keel.StringCol
 	ShipmentStatus              keelkinds.ShipmentvocabStatusCol
-	BillType                    billingqueuedb.BillTypeCol
+	BillType                    keelkinds.BillingvocabBillTypeCol
 	MarkCompletedReadyToInvoice keel.BoolCol
 	TotalCount                  keel.Int64Col
 	ProcessedCount              keel.Int64Col
@@ -129,7 +129,7 @@ var BillingTransferRuns = &BillingTransferRunsTable{
 	Scope:                       RunScopeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 6}}},
 	SearchQuery:                 keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 7}},
 	ShipmentStatus:              keelkinds.ShipmentvocabStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 8}}},
-	BillType:                    billingqueuedb.BillTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 9}}},
+	BillType:                    keelkinds.BillingvocabBillTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 9}}},
 	MarkCompletedReadyToInvoice: keel.BoolCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 10}},
 	TotalCount:                  keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 11}},
 	ProcessedCount:              keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 12}},
@@ -165,7 +165,7 @@ func BuildBillingTransferRuns(r *keel.Ref) *BillingTransferRunsTable {
 		Scope:                       RunScopeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		SearchQuery:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		ShipmentStatus:              keelkinds.ShipmentvocabStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		BillType:                    billingqueuedb.BillTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		BillType:                    keelkinds.BillingvocabBillTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		MarkCompletedReadyToInvoice: keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
 		TotalCount:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		ProcessedCount:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
@@ -1382,12 +1382,6 @@ func init() {
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.
 const intIs64 = unsafe.Sizeof(int(0)) - 8
 
-var enumBillingqueueBillType = [...]schema.EnumValue{
-	{Value: `Invoice`, Label: `Invoice`},
-	{Value: `CreditMemo`, Label: `Credit Memo`},
-	{Value: `DebitMemo`, Label: `Debit Memo`},
-}
-
 var enumBillingqueueStatus = [...]schema.EnumValue{
 	{Value: `ReadyForReview`, Label: `Ready For Review`},
 	{Value: `InReview`, Label: `In Review`},
@@ -1397,6 +1391,12 @@ var enumBillingqueueStatus = [...]schema.EnumValue{
 	{Value: `SentBackToOps`, Label: `Sent Back To Ops`},
 	{Value: `Exception`, Label: `Exception`},
 	{Value: `Canceled`, Label: `Canceled`},
+}
+
+var enumBillingvocabBillType = [...]schema.EnumValue{
+	{Value: `Invoice`, Label: `Invoice`},
+	{Value: `CreditMemo`, Label: `Credit Memo`},
+	{Value: `DebitMemo`, Label: `Debit Memo`},
 }
 
 var enumFailureCode = [...]schema.EnumValue{

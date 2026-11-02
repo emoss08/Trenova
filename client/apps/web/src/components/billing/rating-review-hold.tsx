@@ -19,6 +19,8 @@ export type RatingReviewHoldProps = {
   approvedAt?: number | null;
   approvedByName?: string | null;
   onApproved?: (shipment: Shipment) => void;
+  /** The waiting notice's tone: amber where it stands alone, the host's notice tone elsewhere. */
+  variant?: "warning" | "info";
 };
 
 /**
@@ -33,6 +35,7 @@ export function RatingReviewHold({
   approvedAt,
   approvedByName,
   onApproved,
+  variant = "warning",
 }: RatingReviewHoldProps) {
   const t = useT();
   const { allowed: canApprove } = usePermission(Resource.BillingQueue, Operation.Update);
@@ -78,7 +81,7 @@ export function RatingReviewHold({
   }
 
   return (
-    <Alert size="sm" variant="warning" data-testid="rating-review-hold">
+    <Alert size="sm" variant={variant} data-testid="rating-review-hold">
       <Flag01Icon />
       <AlertTitle>
         {t(

@@ -3,7 +3,7 @@ package accountingsync
 import (
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 )
 
 type SyncObjectType string
@@ -453,27 +453,27 @@ func AllSyncAttemptOutcomes() []SyncAttemptOutcome {
 	}
 }
 
-func SyncObjectTypeForBill(billType billingqueue.BillType) SyncObjectType {
+func SyncObjectTypeForBill(billType billingvocab.BillType) SyncObjectType {
 	switch billType {
-	case billingqueue.BillTypeCreditMemo:
+	case billingvocab.BillTypeCreditMemo:
 		return SyncObjectCreditMemo
-	case billingqueue.BillTypeDebitMemo:
+	case billingvocab.BillTypeDebitMemo:
 		return SyncObjectDebitMemo
-	case billingqueue.BillTypeInvoice:
+	case billingvocab.BillTypeInvoice:
 		return SyncObjectInvoice
 	default:
 		return SyncObjectInvoice
 	}
 }
 
-func (t SyncObjectType) BillType() (billingqueue.BillType, bool) {
+func (t SyncObjectType) BillType() (billingvocab.BillType, bool) {
 	switch t {
 	case SyncObjectInvoice:
-		return billingqueue.BillTypeInvoice, true
+		return billingvocab.BillTypeInvoice, true
 	case SyncObjectCreditMemo:
-		return billingqueue.BillTypeCreditMemo, true
+		return billingvocab.BillTypeCreditMemo, true
 	case SyncObjectDebitMemo:
-		return billingqueue.BillTypeDebitMemo, true
+		return billingvocab.BillTypeDebitMemo, true
 	case SyncObjectCustomer,
 		SyncObjectCustomerPayment,
 		SyncObjectCreditApplication,
@@ -492,13 +492,13 @@ func (t SyncObjectType) BillType() (billingqueue.BillType, bool) {
 	}
 }
 
-func PostedSourceEvent(billType billingqueue.BillType) SyncSourceEvent {
+func PostedSourceEvent(billType billingvocab.BillType) SyncSourceEvent {
 	switch billType {
-	case billingqueue.BillTypeCreditMemo:
+	case billingvocab.BillTypeCreditMemo:
 		return SyncSourceCreditMemoPosted
-	case billingqueue.BillTypeDebitMemo:
+	case billingvocab.BillTypeDebitMemo:
 		return SyncSourceDebitMemoPosted
-	case billingqueue.BillTypeInvoice:
+	case billingvocab.BillTypeInvoice:
 		return SyncSourceInvoicePosted
 	default:
 		return SyncSourceInvoicePosted

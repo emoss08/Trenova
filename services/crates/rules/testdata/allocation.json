@@ -464,6 +464,107 @@
       "output": {"totals": ["125.00125"]}
     },
     {
+      "name": "remainder shares: a percent row being typed bills its cents, a null or empty row nothing",
+      "op": "allocation.remainder",
+      "input": {"charges": [{"total": "1154.38", "allocations": [
+        {"billToCustomerId": "a", "method": "Percent", "percent": "60"},
+        null,
+        {"billToCustomerId": "b", "method": "Percent"}
+      ]}]},
+      "output": {"charges": [{"complete": false, "shares": [
+        {"amount": "692.63", "percent": "60"},
+        null,
+        null
+      ]}]}
+    },
+    {
+      "name": "remainder shares: a complete split shows the split's own shares, the last row carrying the rounding",
+      "op": "allocation.remainder",
+      "input": {"charges": [{"total": "100", "allocations": [
+        {"billToCustomerId": "a", "method": "Percent", "percent": "33.333333"},
+        {"billToCustomerId": "b", "method": "Percent", "percent": "33.333333"},
+        {"billToCustomerId": "c", "method": "Percent", "percent": "33.333334"}
+      ]}]},
+      "output": {"charges": [{"complete": true, "valid": true, "shares": [
+        {"amount": "33.33", "percent": "33.333333"},
+        {"amount": "33.33", "percent": "33.333333"},
+        {"amount": "33.34", "percent": "33.333334"}
+      ]}]}
+    },
+    {
+      "name": "remainder shares: an amount row bills its cents and shows its percent of the charge",
+      "op": "allocation.remainder",
+      "input": {"charges": [{"total": "200", "allocations": [
+        {"billToCustomerId": "a", "method": "Amount", "amount": "50.005"}
+      ]}]},
+      "output": {"charges": [{"complete": false, "shares": [{"amount": "50", "percent": "25"}]}]}
+    },
+    {
+      "name": "remainder shares: a percent row of an unknown charge has a percent but no cents",
+      "op": "allocation.remainder",
+      "input": {"charges": [{"allocations": [
+        {"billToCustomerId": "a", "method": "Percent", "percent": "40"}
+      ]}]},
+      "output": {"charges": [{"shares": [{"amount": null, "percent": "40"}]}]}
+    },
+    {
+      "name": "remainder fills and even: a half-typed percent split fills from either row and splits in halves",
+      "op": "allocation.remainder",
+      "input": {"charges": [{"total": "1154.38", "allocations": [
+        {"billToCustomerId": "a", "method": "Percent", "percent": "60"},
+        {"billToCustomerId": "b", "method": "Percent"}
+      ]}]},
+      "output": {"charges": [{"fills": ["100", "40"], "even": ["50", "50"]}]}
+    },
+    {
+      "name": "remainder fills and even: three rows split evenly to the hundredth, the last taking the rest",
+      "op": "allocation.remainder",
+      "input": {"charges": [{"total": "100", "allocations": [
+        {"billToCustomerId": "a", "method": "Percent", "percent": "10"},
+        null,
+        {"billToCustomerId": "b", "method": "Percent", "percent": "10"},
+        {"billToCustomerId": "c", "method": "Percent", "percent": "10"}
+      ]}]},
+      "output": {"charges": [{"fills": ["80", null, "80", "80"], "even": ["33.33", null, "33.33", "33.34"]}]}
+    },
+    {
+      "name": "remainder fills and even: amounts fill and split to the cents of a sub-cent charge",
+      "op": "allocation.remainder",
+      "input": {"charges": [
+        {"total": "1000.005", "allocations": [
+          {"billToCustomerId": "a", "method": "Amount", "amount": "600"},
+          {"billToCustomerId": "b", "method": "Amount"}
+        ]},
+        {"total": "100.01", "allocations": [
+          {"billToCustomerId": "a", "method": "Amount", "amount": "10"},
+          {"billToCustomerId": "b", "method": "Amount", "amount": "10"},
+          {"billToCustomerId": "c", "method": "Amount", "amount": "10"}
+        ]}
+      ]},
+      "output": {"charges": [
+        {"fills": ["1000", "400"], "even": ["500", "500"]},
+        {"fills": ["80.01", "80.01", "80.01"], "even": ["33.33", "33.33", "33.35"]}
+      ]}
+    },
+    {
+      "name": "remainder fills: an over-allocated split fills by taking the excess off the row",
+      "op": "allocation.remainder",
+      "input": {"charges": [{"total": "100", "allocations": [
+        {"billToCustomerId": "a", "method": "Percent", "percent": "70"},
+        {"billToCustomerId": "b", "method": "Percent", "percent": "50"}
+      ]}]},
+      "output": {"charges": [{"over": true, "fills": ["50", "30"]}]}
+    },
+    {
+      "name": "remainder fills and even: amount rows of an unknown charge cannot be filled or split",
+      "op": "allocation.remainder",
+      "input": {"charges": [{"allocations": [
+        {"billToCustomerId": "a", "method": "Amount", "amount": "60"},
+        {"billToCustomerId": "b", "method": "Amount"}
+      ]}]},
+      "output": {"charges": [{"fills": [null, null], "even": [null, null]}]}
+    },
+    {
       "name": "remainder: what is left of 100%, and when a split is over",
       "op": "allocation.remainder",
       "input": {"charges": [

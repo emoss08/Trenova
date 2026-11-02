@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
@@ -482,14 +483,13 @@ func (s *ReceivablesSeed) ensureInvoice(
 	total := freight.Add(fuel)
 
 	queue := &billingqueue.BillingQueueItem{
-		OrganizationID:    refs.orgID,
-		BusinessUnitID:    refs.buID,
-		ShipmentID:        shp.ID,
-		BillToCustomerID:  cus.ID,
-		Number:            spec.number,
-		Status:            billingqueue.StatusPosted,
-		BillType:          billingqueue.BillTypeInvoice,
-		AdjustmentContext: map[string]any{},
+		OrganizationID:   refs.orgID,
+		BusinessUnitID:   refs.buID,
+		ShipmentID:       shp.ID,
+		BillToCustomerID: cus.ID,
+		Number:           spec.number,
+		Status:           billingqueue.StatusPosted,
+		BillType:         billingvocab.BillTypeInvoice,
 	}
 	if err = billingqueuedb.BillingQueueItems.Create(ctx, db, queue); err != nil {
 		return false, fmt.Errorf("insert billing queue item: %w", err)
@@ -502,7 +502,7 @@ func (s *ReceivablesSeed) ensureInvoice(
 		ShipmentID:         shp.ID,
 		CustomerID:         cus.ID,
 		Number:             spec.number,
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		Status:             invoice.StatusPosted,
 		Scope:              invoice.ScopeShipment,
 		ShipmentCount:      1,
@@ -816,10 +816,9 @@ func (s *ReceivablesSeed) ensureCreditMemo(
 		BillToCustomerID: target.CustomerID,
 		Number:           spec.number,
 		Status:           billingqueue.StatusPosted,
-		BillType:         billingqueue.BillTypeCreditMemo,
-		AdjustmentContext: map[string]any{
-			"memo":     true,
-			"memoKind": string(invoice.MemoKindManual),
+		BillType:         billingvocab.BillTypeCreditMemo,
+		AdjustmentContext: billingqueue.AdjustmentContext{
+			Memo: &billingqueue.AdjustmentMemo{Kind: invoice.MemoKindManual},
 		},
 	}
 	if err = billingqueuedb.BillingQueueItems.Create(ctx, db, queue); err != nil {
@@ -832,7 +831,7 @@ func (s *ReceivablesSeed) ensureCreditMemo(
 		BillingQueueItemID: queue.ID,
 		CustomerID:         target.CustomerID,
 		Number:             spec.number,
-		BillType:           billingqueue.BillTypeCreditMemo,
+		BillType:           billingvocab.BillTypeCreditMemo,
 		Status:             invoice.StatusPosted,
 		Scope:              invoice.ScopeMemo,
 		PostedAt:           &memoDate,

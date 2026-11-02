@@ -1,13 +1,12 @@
 package customerpaymentservice
 
 import (
-	"testing"
-
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"testing"
 )
 
 func TestValidateCreditTargetRefusesAnotherCurrency(t *testing.T) {
@@ -15,11 +14,11 @@ func TestValidateCreditTargetRefusesAnotherCurrency(t *testing.T) {
 
 	customerID := pulid.MustNew("cus_")
 	memo := &invoice.Invoice{
-		CustomerID: customerID, BillType: billingqueue.BillTypeCreditMemo,
+		CustomerID: customerID, BillType: billingvocab.BillTypeCreditMemo,
 		Status: invoice.StatusPosted, CurrencyCode: "CAD", TotalAmountMinor: -5_000,
 	}
 	target := &invoice.Invoice{
-		Number: "INV-9", CustomerID: customerID, BillType: billingqueue.BillTypeInvoice,
+		Number: "INV-9", CustomerID: customerID, BillType: billingvocab.BillTypeInvoice,
 		Status: invoice.StatusPosted, CurrencyCode: "USD", TotalAmountMinor: 10_000,
 	}
 

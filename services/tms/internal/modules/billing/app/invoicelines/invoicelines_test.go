@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicelines"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -25,7 +25,7 @@ import (
 
 func forShipment(
 	t *testing.T,
-	billType billingqueue.BillType,
+	billType billingvocab.BillType,
 	shp *shipment.Shipment,
 	start int,
 ) []*invoice.InvoiceLine {
@@ -110,7 +110,7 @@ func TestForShipmentNamesEachAccessorialAndHowItWasCalculated(t *testing.T) {
 	)
 	shp.RatingDetail = &shipment.RatingDetail{FormulaTemplateName: "Per Mile"}
 
-	lines := forShipment(t, billingqueue.BillTypeInvoice, shp, 4)
+	lines := forShipment(t, billingvocab.BillTypeInvoice, shp, 4)
 	require.Len(t, lines, 4)
 
 	freight := lines[0]
@@ -174,7 +174,7 @@ func TestForShipmentFallsBackWhenTheAccessorialIsMissingOrStale(t *testing.T) {
 		},
 	)
 
-	lines := forShipment(t, billingqueue.BillTypeInvoice, shp, 1)
+	lines := forShipment(t, billingvocab.BillTypeInvoice, shp, 1)
 	require.Len(t, lines, 3)
 
 	for _, line := range lines[1:] {
@@ -196,7 +196,7 @@ func TestForShipmentUsesTheCodeWhenAnAccessorialHasNoDescription(t *testing.T) {
 		Unit:                1,
 	})
 
-	lines := forShipment(t, billingqueue.BillTypeInvoice, shp, 1)
+	lines := forShipment(t, billingvocab.BillTypeInvoice, shp, 1)
 
 	assert.Equal(t, "TONU", lines[1].Description)
 }
@@ -213,7 +213,7 @@ func TestForShipmentNegatesCreditMemoAmountsButNotRates(t *testing.T) {
 		Unit:                2,
 	})
 
-	lines := forShipment(t, billingqueue.BillTypeCreditMemo, shp, 1)
+	lines := forShipment(t, billingvocab.BillTypeCreditMemo, shp, 1)
 
 	assert.True(t, lines[0].Amount.Equal(dec("-2450")))
 	assert.True(t, lines[1].Amount.Equal(dec("-150")))
@@ -230,7 +230,7 @@ func TestForShipmentNamesTheFormulaFromTheLoadedTemplate(t *testing.T) {
 	shp.FormulaTemplate = &formulatemplate.FormulaTemplate{ID: templateID, Name: "Flat Rate"}
 	shp.FreightLines = nil
 
-	lines := forShipment(t, billingqueue.BillTypeInvoice, shp, 1)
+	lines := forShipment(t, billingvocab.BillTypeInvoice, shp, 1)
 
 	assert.Equal(t, "Flat Rate", lines[0].FormulaTemplateName)
 	assert.Equal(t, templateID, lines[0].FormulaTemplateID)
@@ -250,7 +250,7 @@ func TestForShipmentKeepsTheTemplateTheRatingUsed(t *testing.T) {
 	shp.FormulaTemplateID = assignedSince
 	shp.FormulaTemplate = &formulatemplate.FormulaTemplate{ID: assignedSince, Name: "Per CWT"}
 
-	freight := forShipment(t, billingqueue.BillTypeInvoice, shp, 1)[0]
+	freight := forShipment(t, billingvocab.BillTypeInvoice, shp, 1)[0]
 
 	assert.Equal(t, ratedWith, freight.FormulaTemplateID)
 	assert.Equal(t, "Per Mile", freight.FormulaTemplateName)
@@ -284,7 +284,7 @@ func TestForShipmentNamesTheTemplateOfALegacyRatingByItsName(t *testing.T) {
 				Name: tt.assigned,
 			}
 
-			freight := forShipment(t, billingqueue.BillTypeInvoice, shp, 1)[0]
+			freight := forShipment(t, billingvocab.BillTypeInvoice, shp, 1)[0]
 
 			assert.Equal(t, tt.wantID, freight.FormulaTemplateID)
 			assert.Equal(t, "Per Mile", freight.FormulaTemplateName)
@@ -301,7 +301,7 @@ func TestForShipmentLeavesOutATemplateIDThatIsNotOne(t *testing.T) {
 		FormulaTemplateName: "Per Mile",
 	}
 
-	freight := forShipment(t, billingqueue.BillTypeInvoice, shp, 1)[0]
+	freight := forShipment(t, billingvocab.BillTypeInvoice, shp, 1)[0]
 
 	assert.True(t, freight.FormulaTemplateID.IsNil())
 	assert.Equal(t, "Per Mile", freight.FormulaTemplateName)
@@ -328,7 +328,7 @@ func TestForShipmentNamesNoTemplateForAccessorialLines(t *testing.T) {
 		FormulaTemplateName: "Per Mile",
 	}
 
-	lines := forShipment(t, billingqueue.BillTypeInvoice, shp, 1)
+	lines := forShipment(t, billingvocab.BillTypeInvoice, shp, 1)
 	require.Len(t, lines, 2)
 
 	assert.Equal(t, templateID, lines[0].FormulaTemplateID)
@@ -430,7 +430,7 @@ func TestForShipmentBillsOneLinePerFreightLine(t *testing.T) {
 		{Label: "Minimum charge adjustment", Amount: dec("150")},
 	}
 
-	lines := forShipment(t, billingqueue.BillTypeInvoice, shp, 1)
+	lines := forShipment(t, billingvocab.BillTypeInvoice, shp, 1)
 
 	require.Len(t, lines, 2)
 	assert.Equal(t, "Linehaul", lines[0].Description)
@@ -462,7 +462,7 @@ func TestForShipmentSplitsAPartialFreightShareAcrossTheLinesToTheCent(t *testing
 		Partial:     true,
 	}}}
 
-	lines := invoicelines.ForShipmentShare(billingqueue.BillTypeInvoice, shp, share, 1)
+	lines := invoicelines.ForShipmentShare(billingvocab.BillTypeInvoice, shp, share, 1)
 
 	require.Len(t, lines, 2)
 	total := lines[0].Amount.Add(lines[1].Amount)
@@ -478,7 +478,7 @@ func TestForShipmentBillsAShipmentWithoutFreightLinesAsOneLine(t *testing.T) {
 	shp := testShipment()
 	shp.FreightLines = nil
 
-	lines := forShipment(t, billingqueue.BillTypeInvoice, shp, 1)
+	lines := forShipment(t, billingvocab.BillTypeInvoice, shp, 1)
 
 	require.Len(t, lines, 1)
 	assert.Equal(t, invoicelines.FreightDescription, lines[0].Description)
@@ -507,7 +507,7 @@ func TestForShipmentItemizesATariffAccessorial(t *testing.T) {
 		RateUnit:            "$/stop",
 	})
 
-	lines := forShipment(t, billingqueue.BillTypeInvoice, shp, 1)
+	lines := forShipment(t, billingvocab.BillTypeInvoice, shp, 1)
 
 	require.Len(t, lines, 2)
 	accessorial := lines[1]

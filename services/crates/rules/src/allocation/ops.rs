@@ -8,7 +8,10 @@ use crate::allocation::input::SplitInput;
 use crate::allocation::input::dec;
 use crate::allocation::rebalance::Rebalance;
 use crate::allocation::rebalance::rebalance as rebalance_charge;
+use crate::allocation::remainder::even_split;
+use crate::allocation::remainder::fills;
 use crate::allocation::remainder::measure;
+use crate::allocation::remainder::row_shares;
 use crate::allocation::split::Method;
 use crate::allocation::split::resolve;
 use crate::allocation::split::rows_of;
@@ -126,6 +129,15 @@ struct RemainderOut {
     missing_payers: bool,
     problem: Option<Message>,
     valid: bool,
+    shares: Vec<Option<RowShareOut>>,
+    fills: Vec<Option<Dec>>,
+    even: Vec<Option<Dec>>,
+}
+
+#[derive(Serialize)]
+struct RowShareOut {
+    amount: Option<Dec>,
+    percent: Option<Dec>,
 }
 
 #[derive(Serialize)]
@@ -144,8 +156,27 @@ pub fn remainder(input: &RawValue) -> OpResult {
             (None, Some(_)) => Some(total_of(charge, base)?),
             (None, None) => None,
         };
-        let rows: Vec<_> = charge.rows().map(|(_, row)| row).collect();
+        let indexed: Vec<_> = charge.rows().collect();
+        let rows: Vec<_> = indexed.iter().map(|(_, row)| *row).collect();
         let state = measure(&rows, total)?;
+        let slots = charge.allocations.len();
+        let shares = row_shares(&indexed, slots, total, &state)?
+            .into_iter()
+            .map(|share| {
+                share.map(|share| RowShareOut {
+                    amount: share.amount.map(dec),
+                    percent: share.percent.map(dec),
+                })
+            })
+            .collect();
+        let fills = fills(&indexed, slots, total, state.method)?
+            .into_iter()
+            .map(|fill| fill.map(dec))
+            .collect();
+        let even = even_split(&indexed, slots, total, state.method)?
+            .into_iter()
+            .map(|share| share.map(dec))
+            .collect();
         charges.push(RemainderOut {
             method: state.method.name(),
             allocated: dec(state.allocated),
@@ -157,6 +188,9 @@ pub fn remainder(input: &RawValue) -> OpResult {
             missing_payers: state.missing_payers,
             valid: state.problem.is_none(),
             problem: state.problem,
+            shares,
+            fills,
+            even,
         });
     }
     encode(&RemaindersOut { charges })

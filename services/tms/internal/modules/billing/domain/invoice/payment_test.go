@@ -1,18 +1,17 @@
 package invoice
 
 import (
-	"testing"
-
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestApplyPaymentMinorUpdatesSettlementState(t *testing.T) {
 	t.Parallel()
 
 	entity := &Invoice{
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		TotalAmount:        decimal.NewFromInt(100),
 		TotalAmountMinor:   10000,
 		AppliedAmount:      decimal.Zero,
@@ -36,7 +35,7 @@ func TestRemovePaymentMinorUpdatesSettlementState(t *testing.T) {
 	t.Parallel()
 
 	entity := &Invoice{
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		TotalAmount:        decimal.NewFromInt(100),
 		TotalAmountMinor:   10000,
 		AppliedAmount:      decimal.RequireFromString("100.00"),

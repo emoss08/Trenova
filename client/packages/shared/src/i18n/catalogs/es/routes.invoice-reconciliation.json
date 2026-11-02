@@ -10,6 +10,5 @@
   "Line-level credit and rebill values that created the exception.": "Valores de abono y refacturación a nivel de línea que originaron la excepción.",
   "Pick an exception from the list to trace it back to the adjustment and invoices it came from.": "Elija una excepción de la lista para rastrearla hasta el ajuste y las facturas de las que proviene.",
   "Rebill queue item": "Refacturar el elemento de la cola",
-  "Replacement invoice": "Factura sustitutiva",
   "Search invoice, customer, exception reason...": "Buscar factura, cliente, motivo de la excepción..."
 }

@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -166,8 +166,8 @@ func (v *Validator) ValidatePostAndApply( //nolint:cyclop,funlen,gocyclo // lega
 			me.WithIndex("applications", idx).
 				Add("invoiceId", errortypes.ErrInvalidOperation, "Only posted invoices can accept customer payments")
 		}
-		if inv.BillType != billingqueue.BillTypeInvoice &&
-			inv.BillType != billingqueue.BillTypeDebitMemo {
+		if inv.BillType != billingvocab.BillTypeInvoice &&
+			inv.BillType != billingvocab.BillTypeDebitMemo {
 			me.WithIndex("applications", idx).
 				Add("invoiceId", errortypes.ErrInvalidOperation, "Customer payments only support invoices and debit memos in this slice")
 		}
@@ -349,8 +349,8 @@ func (v *Validator) ValidateApplyUnapplied( //nolint:cyclop,funlen,gocyclo // le
 			me.WithIndex("applications", idx).
 				Add("invoiceId", errortypes.ErrInvalidOperation, "Only posted invoices can accept customer payment application")
 		}
-		if inv.BillType != billingqueue.BillTypeInvoice &&
-			inv.BillType != billingqueue.BillTypeDebitMemo {
+		if inv.BillType != billingvocab.BillTypeInvoice &&
+			inv.BillType != billingvocab.BillTypeDebitMemo {
 			me.WithIndex("applications", idx).
 				Add("invoiceId", errortypes.ErrInvalidOperation, "Customer payments only support invoices and debit memos in this slice")
 		}

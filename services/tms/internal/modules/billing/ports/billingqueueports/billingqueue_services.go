@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -16,7 +17,7 @@ import (
 
 type TransferToBillingRequest struct {
 	ShipmentID pulid.ID
-	BillType   billingqueue.BillType
+	BillType   billingvocab.BillType
 	TenantInfo pagination.TenantInfo
 	// AutoApprove clears every new item straight through the queue, for freight
 	// that passed every billing requirement and whose payers all asked for clean
@@ -81,9 +82,7 @@ type UpdateChargesRequest struct {
 	// changes a charge that is split by amount: the split is rewritten as
 	// percentages that keep each payer's proportion.
 	ConvertAmountSplitsToPercent bool
-	// ExpandShipmentDetails returns the saved item as GetByID expands it, so a
-	// caller showing the item draws it from the save instead of reading it again.
-	ExpandShipmentDetails bool
+	ExpandShipmentDetails        bool
 }
 
 // ChargeUpdatePreview is a billing queue item's shipment before and after a

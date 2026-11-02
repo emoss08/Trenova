@@ -82,13 +82,24 @@ func TestQuickFilterCondition_DeliveringTodayUsesLocalDay(t *testing.T) {
 
 	day := LocalDayOf(basis.Now, basis.Location)
 	assert.Equal(t, int64(24*60*60), day.End-day.Start)
-	assert.Contains(t, args, int64(1791262800))
-	assert.Contains(t, args, int64(1791349200))
-	assert.Contains(t, sql, "int8range(")
-	assert.Contains(t, sql, `coalesce(qf_stp."actual_arrival", qf_stp."scheduled_window_start")`)
-	assert.Contains(t, sql, `ORDER BY qf_sm."sequence" DESC, qf_stp."sequence" DESC LIMIT 1`)
-	assert.Contains(t, sql, `qf_sm."shipment_id" = s."id"`)
-	assert.Contains(t, sql, `qf_stp."type" IN ('Delivery', 'SplitDelivery')`)
+	assert.Contains(t, sql, `s."status" <> 'Canceled'`)
+	assert.Contains(t, sql, `s."delivery_at" >= $3`)
+	assert.Contains(t, sql, `s."delivery_at" < $4`)
+	assert.Equal(t, []any{int64(1791262800), int64(1791349200)}, args[2:4])
+}
+
+func TestQuickFilterCondition_DeliveryFiltersReadTheStoredDeliveryTime(t *testing.T) {
+	t.Parallel()
+
+	basis := quickFilterTestBasis(t)
+	for _, spec := range []quickfilter.QuickFilterSpec{
+		quickfilter.Quick(quickfilter.QuickFilterDeliveringToday),
+		quickfilter.DeliveryHourFilter(14),
+	} {
+		sql, _ := renderQuickFilter(t, basis, spec)
+		assert.NotContains(t, sql, `"stops"`, spec.Filter)
+		assert.NotContains(t, sql, `"shipment_moves"`, spec.Filter)
+	}
 }
 
 func TestQuickFilterCondition_DeliveryHourIsOneLocalHour(t *testing.T) {
@@ -99,8 +110,7 @@ func TestQuickFilterCondition_DeliveryHourIsOneLocalHour(t *testing.T) {
 
 	start := LocalHourStart(basis.Now, basis.Location, 14)
 	assert.Equal(t, time.Date(2026, 10, 6, 14, 0, 0, 0, basis.Location).Unix(), start)
-	assert.Contains(t, args, int64(1791313200))
-	assert.Contains(t, args, int64(1791316800))
+	assert.Equal(t, []any{int64(1791313200), int64(1791316800)}, args[2:4])
 }
 
 func TestQuickFilterCondition_PickupWindowBounds(t *testing.T) {
@@ -108,18 +118,27 @@ func TestQuickFilterCondition_PickupWindowBounds(t *testing.T) {
 
 	basis := quickFilterTestBasis(t)
 	now := basis.Now.Unix()
+	uncovered := shipmentvocab.StageNeedsCoverage.Rank()
 
 	end := 120
 	soon, soonArgs := renderQuickFilter(t, basis, quickfilter.PickupWindowFilter(0, &end))
-	assert.Contains(t, soon, "::bigint, ")
-	assert.Contains(t, soon, `ORDER BY qf_sm."sequence" ASC, qf_stp."sequence" ASC LIMIT 1`)
-	assert.Contains(t, soon, `qf_stp."type" IN ('Pickup', 'SplitPickup')`)
-	upper := now + 120*60
-	assert.Contains(t, soonArgs, upper)
+	assert.Contains(t, soon, `s."stage_rank" = $3`)
+	assert.Contains(t, soon, `s."pickup_at" IS NOT NULL`)
+	assert.Contains(t, soon, `s."pickup_at" < $4`)
+	assert.NotContains(t, soon, `s."pickup_at" >=`)
+	assert.NotContains(t, soon, `"stops"`)
+	assert.Equal(t, []any{uncovered, now + 120*60}, soonArgs[2:4])
 
-	_, laterArgs := renderQuickFilter(t, basis, quickfilter.PickupWindowFilter(360, nil))
-	lower := now + 360*60
-	assert.Contains(t, laterArgs, lower)
+	later, laterArgs := renderQuickFilter(t, basis, quickfilter.PickupWindowFilter(360, nil))
+	assert.Contains(t, later, `s."pickup_at" >= $4`)
+	assert.NotContains(t, later, `s."pickup_at" <`)
+	assert.Equal(t, []any{uncovered, now + 360*60}, laterArgs[2:4])
+
+	both := 600
+	window, windowArgs := renderQuickFilter(t, basis, quickfilter.PickupWindowFilter(120, &both))
+	assert.Contains(t, window, `s."pickup_at" >= $4`)
+	assert.Contains(t, window, `s."pickup_at" < $5`)
+	assert.Equal(t, []any{uncovered, now + 120*60, now + 600*60}, windowArgs[2:5])
 }
 
 func TestQuickFilterCondition_LowMarginMatchesEstimator(t *testing.T) {
@@ -154,10 +173,10 @@ func TestQuickFilterCondition_DetentionFollowsTheEngine(t *testing.T) {
 		basis,
 		quickfilter.Quick(quickfilter.QuickFilterDetention),
 	)
-	assert.Contains(t, dwell, `coalesce(qf_dw."actual_arrival", $3) > $4`)
-	assert.Contains(t, dwell, `coalesce(qf_dw."actual_departure", $5) = $6`)
-	assert.Contains(t, dwell, `coalesce(qf_dw."count_detention_override", $7)`)
-	assert.Equal(t, []any{0, int64(0), 0, int64(0), true}, dwellArgs[2:7])
+	assert.Contains(t, dwell, `s."id" IN (SELECT qf_dwm."shipment_id" FROM "stops" qf_dw`)
+	assert.Contains(t, dwell, `qf_dw."actual_arrival" > 0`)
+	assert.Contains(t, dwell, `(qf_dw."actual_departure" IS NULL OR qf_dw."actual_departure" = 0)`)
+	assert.Contains(t, dwell, `coalesce(qf_dw."count_detention_override", $`)
 	assert.Contains(t, dwellArgs, basis.Now.Unix()-30*60)
 
 	basis.Detention.UsePolicyEngine = true
@@ -166,9 +185,27 @@ func TestQuickFilterCondition_DetentionFollowsTheEngine(t *testing.T) {
 		basis,
 		quickfilter.Quick(quickfilter.QuickFilterDetention),
 	)
-	assert.Contains(t, engine, `"detention_occurrences" qf_do`)
-	assert.Contains(t, engine, `qf_do."shipment_id" = s."id"`)
+	assert.Contains(
+		t,
+		engine,
+		`s."id" IN (SELECT qf_do."shipment_id" FROM "detention_occurrences" qf_do`,
+	)
 	assert.Contains(t, engineArgs, basis.Now.Unix())
+}
+
+// A count over every shipment in scope builds the detention set once and probes
+// it per row only when the set does not depend on the row: neither form may
+// refer to the outer shipment.
+func TestQuickFilterCondition_DetentionSetIsNotCorrelated(t *testing.T) {
+	t.Parallel()
+
+	basis := quickFilterTestBasis(t)
+	dwell, _ := renderQuickFilter(t, basis, quickfilter.Quick(quickfilter.QuickFilterDetention))
+	assert.NotContains(t, dwell, `= s."id"`)
+
+	basis.Detention.UsePolicyEngine = true
+	engine, _ := renderQuickFilter(t, basis, quickfilter.Quick(quickfilter.QuickFilterDetention))
+	assert.NotContains(t, engine, `= s."id"`)
 }
 
 func TestQuickFilterCondition_ReeferAndReadyToBill(t *testing.T) {

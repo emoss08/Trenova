@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevalidation"
 	"github.com/emoss08/trenova/internal/modules/billing/billingtest/invoiceservicetest"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
@@ -35,7 +36,7 @@ import (
 func memoRequest(
 	tenantInfo pagination.TenantInfo,
 	customerID pulid.ID,
-	billType billingqueue.BillType,
+	billType billingvocab.BillType,
 ) *invoiceports.CreateMemoRequest {
 	return &invoiceports.CreateMemoRequest{
 		TenantInfo: tenantInfo,
@@ -66,7 +67,7 @@ func TestValidateMemoRequest(t *testing.T) {
 	}{
 		{
 			name:    "an ordinary invoice is not a memo",
-			mutate:  func(req *invoiceports.CreateMemoRequest) { req.BillType = billingqueue.BillTypeInvoice },
+			mutate:  func(req *invoiceports.CreateMemoRequest) { req.BillType = billingvocab.BillTypeInvoice },
 			wantErr: "credit memo or a debit memo",
 		},
 		{
@@ -134,7 +135,7 @@ func TestValidateMemoRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			req := memoRequest(tenantInfo, customerID, billingqueue.BillTypeCreditMemo)
+			req := memoRequest(tenantInfo, customerID, billingvocab.BillTypeCreditMemo)
 			tt.mutate(req)
 			multiErr := validateMemoRequest(req)
 			require.NotNil(t, multiErr)
@@ -147,14 +148,14 @@ func TestValidateMemoRequest(t *testing.T) {
 		assert.Nil(
 			t,
 			validateMemoRequest(
-				memoRequest(tenantInfo, customerID, billingqueue.BillTypeDebitMemo),
+				memoRequest(tenantInfo, customerID, billingvocab.BillTypeDebitMemo),
 			),
 		)
 	})
 
 	t.Run("the largest amount and both quantity limits pass", func(t *testing.T) {
 		t.Parallel()
-		req := memoRequest(tenantInfo, customerID, billingqueue.BillTypeCreditMemo)
+		req := memoRequest(tenantInfo, customerID, billingvocab.BillTypeCreditMemo)
 		req.Lines[0].Amount = decimal.RequireFromString("999999999.99")
 		req.Lines[0].Quantity = decimal.RequireFromString("0.0001")
 		req.Lines[1].Quantity = decimal.RequireFromString("999999999.9999")
@@ -163,7 +164,7 @@ func TestValidateMemoRequest(t *testing.T) {
 
 	t.Run("an amount error names the line it belongs to", func(t *testing.T) {
 		t.Parallel()
-		req := memoRequest(tenantInfo, customerID, billingqueue.BillTypeCreditMemo)
+		req := memoRequest(tenantInfo, customerID, billingvocab.BillTypeCreditMemo)
 		req.Lines[1].Amount = decimal.RequireFromString("1000000000")
 		multiErr := validateMemoRequest(req)
 		require.NotNil(t, multiErr)
@@ -179,7 +180,7 @@ func TestMemoAtEveryLimitFitsItsColumns(t *testing.T) {
 	req := memoRequest(
 		pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 		pulid.MustNew("cus_"),
-		billingqueue.BillTypeDebitMemo,
+		billingvocab.BillTypeDebitMemo,
 	)
 	req.Lines = make([]*invoiceports.CreateMemoLineInput, maxMemoLines)
 	for idx := range req.Lines {
@@ -216,7 +217,7 @@ func TestValidateMemoReference(t *testing.T) {
 			repo: invoiceportsmock.NewMockInvoiceRepository(t),
 			rec:  invoiceaction.NewRecorder(invoiceaction.RecorderParams{Logger: zap.NewNop()}),
 		}
-		req := memoRequest(tenantInfo, cus.ID, billingqueue.BillTypeCreditMemo)
+		req := memoRequest(tenantInfo, cus.ID, billingvocab.BillTypeCreditMemo)
 		require.NoError(t, svc.validateMemoReference(t.Context(), req, cus))
 	})
 
@@ -232,7 +233,7 @@ func TestValidateMemoReference(t *testing.T) {
 			repo: repo,
 			rec:  invoiceaction.NewRecorder(invoiceaction.RecorderParams{Logger: zap.NewNop()}),
 		}
-		req := memoRequest(tenantInfo, cus.ID, billingqueue.BillTypeCreditMemo)
+		req := memoRequest(tenantInfo, cus.ID, billingvocab.BillTypeCreditMemo)
 		req.ReferenceInvoiceID = referenceID
 		err := svc.validateMemoReference(t.Context(), req, cus)
 		require.Error(t, err)
@@ -251,7 +252,7 @@ func TestValidateMemoReference(t *testing.T) {
 			repo: repo,
 			rec:  invoiceaction.NewRecorder(invoiceaction.RecorderParams{Logger: zap.NewNop()}),
 		}
-		req := memoRequest(tenantInfo, cus.ID, billingqueue.BillTypeCreditMemo)
+		req := memoRequest(tenantInfo, cus.ID, billingvocab.BillTypeCreditMemo)
 		req.ReferenceInvoiceID = referenceID
 		err := svc.validateMemoReference(t.Context(), req, cus)
 		require.Error(t, err)
@@ -374,7 +375,7 @@ func TestCreateMemoBuildsASignedCreditMemoOnItsOwnQueueItem(t *testing.T) {
 		}).
 		Once()
 
-	req := memoRequest(f.tenantInfo, f.customerID, billingqueue.BillTypeCreditMemo)
+	req := memoRequest(f.tenantInfo, f.customerID, billingvocab.BillTypeCreditMemo)
 	req.InvoiceDate = 1_700_000_000
 	req.Memo = "  Approved by AR lead  "
 
@@ -432,7 +433,7 @@ func TestCreateMemoDebitMemoIsPositiveAndDueByTerm(t *testing.T) {
 		}).
 		Once()
 
-	req := memoRequest(f.tenantInfo, f.customerID, billingqueue.BillTypeDebitMemo)
+	req := memoRequest(f.tenantInfo, f.customerID, billingvocab.BillTypeDebitMemo)
 	req.InvoiceDate = 1_700_000_000
 	req.MemoKind = invoice.MemoKindLateCharge
 
@@ -465,7 +466,7 @@ func TestCreateMemoAutoPostGoesThroughPost(t *testing.T) {
 		Return(nil, errors.New("ledger unavailable")).
 		Once()
 
-	req := memoRequest(f.tenantInfo, f.customerID, billingqueue.BillTypeDebitMemo)
+	req := memoRequest(f.tenantInfo, f.customerID, billingvocab.BillTypeDebitMemo)
 	req.AutoPost = true
 
 	_, err := f.svc.CreateMemo(t.Context(), req, f.actor)

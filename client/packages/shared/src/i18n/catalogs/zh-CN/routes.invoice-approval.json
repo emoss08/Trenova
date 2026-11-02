@@ -14,6 +14,7 @@
   "Policy-controlled": "由政策管控",
   "Policy: {0}": "政策：{0}",
   "Reconciliation exception": "核对例外",
+  "Replacement review": "替代单据审查",
   "Review policy-controlled invoice adjustments awaiting finance approval.": "审查受政策管控、待财务批准的发票调整。",
   "Search invoice, customer, reason...": "搜索发票、客户、原因...",
   "The approval queue could not be read. Check your connection and reload the page.": "无法读取审批队列。请检查网络连接并重新加载页面。",

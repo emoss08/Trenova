@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
@@ -51,7 +51,7 @@ type Invoice struct {
 	SectionBy                 customer.InvoiceSectionKey `json:"sectionBy"                 keel:"section_by"`
 	OffCycleReason            string                     `json:"offCycleReason"            keel:"off_cycle_reason,nullzero"`
 	Number                    string                     `json:"number"                    keel:"number,label=Invoice Number"`
-	BillType                  billingqueue.BillType      `json:"billType"                  keel:"bill_type"`
+	BillType                  billingvocab.BillType      `json:"billType"                  keel:"bill_type"`
 	Status                    Status                     `json:"status"                    keel:"status"`
 	PaymentTerm               PaymentTerm                `json:"paymentTerm"               keel:"payment_term"`
 	CurrencyCode              string                     `json:"currencyCode"              keel:"currency_code"`
@@ -125,7 +125,6 @@ type Invoice struct {
 	CreatedAt                 int64                      `json:"createdAt"                 keel:"created_at,autocreate"`
 	UpdatedAt                 int64                      `json:"updatedAt"                 keel:"updated_at,autoupdate"`
 
-	BillingQueueItem *billingqueue.BillingQueueItem     `json:"billingQueueItem,omitempty" keel:"belongs:billing_queue_item_id,noreport"`
 	Shipment         *shipment.Shipment                 `json:"shipment,omitempty"         keel:"belongs:shipment_id"`
 	Order            *order.Order                       `json:"order,omitempty"            keel:"belongs:order_id"`
 	Customer         *customer.Customer                 `json:"customer,omitempty"         keel:"belongs:customer_id"`
@@ -295,9 +294,9 @@ func (i *Invoice) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&i.BillType,
 			validation.Required.Error("Bill type is required"),
 			validation.In(
-				billingqueue.BillTypeInvoice,
-				billingqueue.BillTypeCreditMemo,
-				billingqueue.BillTypeDebitMemo,
+				billingvocab.BillTypeInvoice,
+				billingvocab.BillTypeCreditMemo,
+				billingvocab.BillTypeDebitMemo,
 			).Error("Invalid bill type"),
 		),
 		validation.Field(&i.Status,
@@ -334,7 +333,7 @@ func (i *Invoice) Validate(multiErr *errortypes.MultiError) {
 
 	i.validateScope(multiErr)
 
-	if i.BillType == billingqueue.BillTypeCreditMemo {
+	if i.BillType == billingvocab.BillTypeCreditMemo {
 		if i.TotalAmount.GreaterThan(decimal.Zero) {
 			multiErr.Add(
 				"totalAmount",
@@ -411,8 +410,8 @@ func (i *Invoice) validateScope(multiErr *errortypes.MultiError) {
 			)
 		}
 	case ScopeMemo:
-		if i.BillType != billingqueue.BillTypeCreditMemo &&
-			i.BillType != billingqueue.BillTypeDebitMemo {
+		if i.BillType != billingvocab.BillTypeCreditMemo &&
+			i.BillType != billingvocab.BillTypeDebitMemo {
 			multiErr.Add(
 				"billType",
 				errortypes.ErrInvalid,
@@ -450,13 +449,13 @@ func (i *Invoice) validateScope(multiErr *errortypes.MultiError) {
 // IsOpen reports whether the invoice still carries a balance a customer owes.
 func (i *Invoice) IsOpen() bool {
 	return i != nil && i.Status == StatusPosted &&
-		(i.BillType == billingqueue.BillTypeInvoice ||
-			i.BillType == billingqueue.BillTypeDebitMemo) &&
+		(i.BillType == billingvocab.BillTypeInvoice ||
+			i.BillType == billingvocab.BillTypeDebitMemo) &&
 		i.OpenBalanceMinor() > 0
 }
 
 func (i *Invoice) IsCreditMemo() bool {
-	return i != nil && i.BillType == billingqueue.BillTypeCreditMemo
+	return i != nil && i.BillType == billingvocab.BillTypeCreditMemo
 }
 
 // CreditTotalMinor is the credit a memo carries, as a positive figure.
@@ -543,7 +542,7 @@ func (i *Invoice) LegShipmentIDs() []pulid.ID {
 }
 
 func (i *Invoice) OpenBalanceAmount() decimal.Decimal {
-	if i.BillType == billingqueue.BillTypeCreditMemo || i.Status == StatusVoided {
+	if i.BillType == billingvocab.BillTypeCreditMemo || i.Status == StatusVoided {
 		return decimal.Zero
 	}
 
@@ -571,7 +570,7 @@ func (i *Invoice) SyncMinorAmounts() {
 }
 
 func (i *Invoice) OpenBalanceMinor() int64 {
-	if i.BillType == billingqueue.BillTypeCreditMemo || i.Status == StatusVoided {
+	if i.BillType == billingvocab.BillTypeCreditMemo || i.Status == StatusVoided {
 		return 0
 	}
 	openBalance := i.TotalAmountMinor - i.AppliedAmountMinor

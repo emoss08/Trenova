@@ -68,9 +68,8 @@ func memoQueueItem(
 		Status:           billingqueue.StatusApproved,
 		BillType:         req.BillType,
 		Number:           number,
-		AdjustmentContext: map[string]any{
-			"memo":     true,
-			"memoKind": string(memoKindOrDefault(req.MemoKind)),
+		AdjustmentContext: billingqueue.AdjustmentContext{
+			Memo: &billingqueue.AdjustmentMemo{Kind: memoKindOrDefault(req.MemoKind)},
 		},
 	}
 }

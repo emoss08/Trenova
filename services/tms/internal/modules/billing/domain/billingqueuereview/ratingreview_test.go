@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
@@ -22,7 +23,7 @@ func reviewedItem(reviews ...string) *billingqueue.BillingQueueItem {
 		ID:         pulid.MustNew("bqi_"),
 		ShipmentID: shipmentID,
 		Status:     billingqueue.StatusInReview,
-		BillType:   billingqueue.BillTypeInvoice,
+		BillType:   billingvocab.BillTypeInvoice,
 		Shipment: &shipment.Shipment{
 			ID: shipmentID,
 			RatingDetail: &shipment.RatingDetail{
@@ -57,7 +58,7 @@ func TestNewRatingReviewHold_HoldsNothingWhenNothingBills(t *testing.T) {
 	require.NoError(t, err)
 
 	credit := reviewedItem("Holiday pickup")
-	credit.BillType = billingqueue.BillTypeCreditMemo
+	credit.BillType = billingvocab.BillTypeCreditMemo
 
 	posted := reviewedItem("Holiday pickup")
 	posted.Status = billingqueue.StatusPosted

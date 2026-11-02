@@ -48,6 +48,7 @@
   "Colour a value when it crosses a threshold, so an exception is visible without reading every number. The first matching rule wins.": "Colorea un valor cuando cruza un umbral, de modo que una excepción sea visible sin leer todas las cifras. Prevalece la primera regla coincidente.",
   "Column name": "Nombre de la columna",
   "Column names": "Nombres de las columnas",
+  "Comparison": "Comparación",
   "Copying...": "Copiando...",
   "Create schedule": "Crear una programación",
   "Custom cron cadence — the expression is validated when you save.": "Cadencia cron personalizada: la expresión se valida al guardar.",

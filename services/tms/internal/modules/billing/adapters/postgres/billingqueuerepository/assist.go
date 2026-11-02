@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -225,7 +226,7 @@ func (r *repository) RecentCustomerInvoices(
 				Where(
 					inv.CustomerID.Eq(customerID),
 					inv.Status.Eq(invoice.StatusPosted),
-					inv.BillType.Eq(billingqueue.BillTypeInvoice),
+					inv.BillType.Eq(billingvocab.BillTypeInvoice),
 					inv.IsAdjustmentArtifact.IsFalse(),
 				).
 				Order(inv.InvoiceDate.Desc(), inv.ID.Desc()).

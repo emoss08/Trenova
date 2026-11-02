@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingnumber"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -22,7 +22,7 @@ func (s *Service) generateInvoiceNumber(
 ) (string, error) {
 	return s.numberer().Next(ctx, &billingnumber.Request{
 		TenantInfo: tenantInfo,
-		BillType:   billingqueue.BillTypeInvoice,
+		BillType:   billingvocab.BillTypeInvoice,
 		Profile:    profile,
 	})
 }

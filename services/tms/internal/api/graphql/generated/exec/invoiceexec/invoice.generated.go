@@ -9,7 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicechargegroup"
@@ -223,7 +223,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoice.Invoice)
 					return obj.BillType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐBillType),
+				Marshal: gqlexec.Marshal(marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingvocabᚐBillType),
 			},
 			{
 				Name:     "status",
@@ -1903,7 +1903,7 @@ func unmarshalInputCreateMemoInput(ctx context.Context, ec *gqlexec.Exec, obj an
 			it.CustomerID = data
 		case "billType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billType"))
-			data, err := unmarshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐBillType(ctx, ec, v)
+			data, err := unmarshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingvocabᚐBillType(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -2061,9 +2061,9 @@ func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exe
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
 
-func unmarshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐBillType(ctx context.Context, ec *gqlexec.Exec, v any) (billingqueue.BillType, error) {
+func unmarshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingvocabᚐBillType(ctx context.Context, ec *gqlexec.Exec, v any) (billingvocab.BillType, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := billingqueue.BillType(tmp)
+	res := billingvocab.BillType(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -2165,7 +2165,7 @@ func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐBillType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v billingqueue.BillType) graphql.Marshaler {
+func marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingvocabᚐBillType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v billingvocab.BillType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

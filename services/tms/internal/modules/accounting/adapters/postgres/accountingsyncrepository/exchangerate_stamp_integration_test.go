@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -60,7 +61,7 @@ func TestExchangeRateStamps_LandOnTheDocumentTheyName(t *testing.T) {
 		BillToCustomerID: shp.CustomerID,
 		Number:           "INV-FX-1",
 		Status:           billingqueue.StatusPosted,
-		BillType:         billingqueue.BillTypeInvoice,
+		BillType:         billingvocab.BillTypeInvoice,
 	}
 	err := billingqueuedb.BillingQueueItems.Create(ctx, db, queue)
 	require.NoError(t, err)
@@ -72,7 +73,7 @@ func TestExchangeRateStamps_LandOnTheDocumentTheyName(t *testing.T) {
 		ShipmentID:         shp.ID,
 		CustomerID:         shp.CustomerID,
 		Number:             "INV-FX-1",
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		Status:             invoice.StatusPosted,
 		PostedAt:           &posted,
 		PaymentTerm:        invoice.PaymentTermNet30,

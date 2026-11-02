@@ -123,10 +123,13 @@ export function BillingQueueItemCard({
   return (
     <ContextMenu>
       <ContextMenuTrigger>
+        {/* The hover background is the list's glide, not the card's own; the open item is
+            filled as the module rail fills the module you are in. */}
         <div
+          data-glide-target
           className={cn(
             "mx-1.5 flex items-start gap-2 rounded-md p-2 text-sm transition-colors",
-            isSelected ? "bg-surface-selected" : "hover:bg-surface-hover",
+            isSelected && "bg-nav-active text-nav-active-foreground",
           )}
         >
           {onCheckedChange ? (

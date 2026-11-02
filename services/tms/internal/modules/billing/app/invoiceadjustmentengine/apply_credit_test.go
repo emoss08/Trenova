@@ -2,9 +2,7 @@ package invoiceadjustmentengine
 
 import (
 	"context"
-	"testing"
-
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
@@ -16,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"testing"
 )
 
 type recordingCreditApplier struct {
@@ -40,12 +39,12 @@ func creditFixture(
 	}
 	source := &invoice.Invoice{
 		ID: pulid.MustNew("inv_"), OrganizationID: orgID, BusinessUnitID: buID,
-		BillType: billingqueue.BillTypeInvoice, Status: invoice.StatusPosted,
+		BillType: billingvocab.BillTypeInvoice, Status: invoice.StatusPosted,
 		TotalAmountMinor: sourceTotal, AppliedAmountMinor: sourceApplied,
 	}
 	memo := &invoice.Invoice{
 		ID: pulid.MustNew("inv_"), OrganizationID: orgID, BusinessUnitID: buID,
-		BillType: billingqueue.BillTypeCreditMemo, Status: invoice.StatusPosted,
+		BillType: billingvocab.BillTypeCreditMemo, Status: invoice.StatusPosted,
 		TotalAmountMinor: -creditTotal, InvoiceDate: 1_700_000_000,
 	}
 

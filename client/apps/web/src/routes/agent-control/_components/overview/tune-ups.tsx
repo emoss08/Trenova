@@ -19,6 +19,7 @@ import { toast } from "@trenova/shared/components/ui/toast";
 import { Ic } from "../kit/ic";
 import { SecH } from "../kit/layout";
 import { Mark, Tile } from "../kit/marks";
+import { NovaTuneUp, useNovaTuneUp } from "./nova-tune-up";
 import { TuneUpsSkeleton } from "./overview-skeleton";
 import { tuneUpCopy, type TuneUpLabels, type TuneUpTone } from "./tune-up-copy";
 import { invalidateAIControlCounts } from "./use-ai-control-stats";
@@ -46,19 +47,21 @@ const KIND_ICON = {
  * Changes to how AI is set up that the last 30 days of runs argue for: a tool people keep
  * approving, a provider that keeps catching another's failures, an agent ready to leave
  * shadow, a task nothing serves, an agent nobody asks. Applying makes the change; putting
- * one away keeps it from being suggested again for 30 days. Operational work stays in
- * Watchtower.
+ * one away keeps it from being suggested again for 30 days. Getting Nova running comes
+ * first and is never put away. Operational work stays in Watchtower.
  */
 export function TuneUps() {
   const t = useT();
   const tuneUpsQuery = useQuery(aiControl.tuneUps());
   const items = tuneUpsQuery.data?.items ?? [];
+  const nova = useNovaTuneUp();
+  const count = items.length + (nova ? 1 : 0);
 
   return (
     <section className="sec">
       <SecH
         t={t("Tune-ups")}
-        n={items.length || null}
+        n={count || null}
         r={
           <span className="sh2-n">
             {t("From the last {0} days of runs", tuneUpsQuery.data?.windowDays ?? 30)}
@@ -67,7 +70,7 @@ export function TuneUps() {
       />
       {tuneUpsQuery.isLoading ? (
         <TuneUpsSkeleton />
-      ) : items.length === 0 ? (
+      ) : count === 0 ? (
         <div className="clr">
           <span className="clr-i">
             <Ic n="check" s={16} w={2.4} />
@@ -83,6 +86,7 @@ export function TuneUps() {
         </div>
       ) : (
         <div className="nds">
+          {nova && <NovaTuneUp setup={nova} />}
           {items.map((tuneUp) => (
             <TuneUpRow key={tuneUp.id} tuneUp={tuneUp} />
           ))}

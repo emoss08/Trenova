@@ -2,12 +2,14 @@ package platformmetrics
 
 import (
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func TestNewDatabase_Disabled(t *testing.T) {
@@ -117,4 +119,30 @@ func TestDatabase_RegisterRuntimeStatsDisabled(t *testing.T) {
 	families, err := registry.Gather()
 	require.NoError(t, err)
 	assert.Empty(t, families)
+}
+
+// A slow request or query logs the pool as it stands. pgxpool's wait counters
+// cover the pool's whole life, so beside one request they would read as that
+// request's wait; they are left to the metrics.
+func TestPoolStatsFieldsLogThePoolsCurrentStateOnly(t *testing.T) {
+	t.Parallel()
+
+	enc := zapcore.NewMapObjectEncoder()
+	for _, field := range PoolStatsFields(PoolStats{
+		Open:         10,
+		InUse:        3,
+		Idle:         7,
+		MaxOpen:      100,
+		WaitCount:    10,
+		WaitDuration: time.Second,
+	}) {
+		field.AddTo(enc)
+	}
+
+	assert.Equal(t, map[string]any{
+		"db_pool_open":     int64(10),
+		"db_pool_in_use":   int64(3),
+		"db_pool_idle":     int64(7),
+		"db_pool_max_open": int64(100),
+	}, enc.Fields)
 }

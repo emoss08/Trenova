@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
@@ -32,7 +32,7 @@ func TestValidatorValidateCreateRejectsHeaderLineTotalMismatch(t *testing.T) {
 		ShipmentID:         pulid.MustNew("shp_"),
 		CustomerID:         pulid.MustNew("cus_"),
 		Number:             "INV-1001",
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		Status:             invoice.StatusDraft,
 		PaymentTerm:        invoice.PaymentTermNet30,
 		CurrencyCode:       "USD",
@@ -80,7 +80,7 @@ func TestValidatorValidatePost_BlocksLockedPeriodPosting(t *testing.T) {
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		ShipmentID:     pulid.MustNew("shp_"),
-		BillType:       billingqueue.BillTypeInvoice,
+		BillType:       billingvocab.BillTypeInvoice,
 		TotalAmount:    decimal.NewFromInt(100),
 	}
 
@@ -131,7 +131,7 @@ func TestValidatorValidatePostRequiresDefaultLedgerAccounts(t *testing.T) {
 		ID:             pulid.MustNew("inv_"),
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-		BillType:       billingqueue.BillTypeInvoice,
+		BillType:       billingvocab.BillTypeInvoice,
 	}
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
@@ -169,7 +169,7 @@ func TestValidatorValidatePostRequiresFiscalPeriod(t *testing.T) {
 		ID:             pulid.MustNew("inv_"),
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-		BillType:       billingqueue.BillTypeInvoice,
+		BillType:       billingvocab.BillTypeInvoice,
 	}
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().

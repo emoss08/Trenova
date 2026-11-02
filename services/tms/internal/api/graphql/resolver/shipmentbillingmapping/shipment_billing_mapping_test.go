@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
@@ -25,7 +26,7 @@ func TestBulkTransferToBillingToModel(t *testing.T) {
 		ShipmentID: transferredID,
 		Number:     "INV-100",
 		Status:     billingqueue.StatusApproved,
-		BillType:   billingqueue.BillTypeInvoice,
+		BillType:   billingvocab.BillTypeInvoice,
 	}
 	policyErr := errortypes.NewValidationError(
 		"billingReadiness",

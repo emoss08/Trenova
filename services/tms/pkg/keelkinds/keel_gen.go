@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -329,6 +330,43 @@ func (c AitaskTaskCol) Between(lo, hi aitask.Task) keel.Pred {
 func (c AitaskTaskCol) To(v aitask.Task) keel.Assignment { return c.StringCol.To(string(v)) }
 func (c AitaskTaskCol) In(vs ...aitask.Task) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
 func (c AitaskTaskCol) NotIn(vs ...aitask.Task) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// BillingvocabBillTypeCol is a column of billingvocab.BillType values.
+type BillingvocabBillTypeCol struct{ keel.StringCol }
+
+func (c BillingvocabBillTypeCol) Eq(v billingvocab.BillType) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c BillingvocabBillTypeCol) Ne(v billingvocab.BillType) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c BillingvocabBillTypeCol) Gt(v billingvocab.BillType) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c BillingvocabBillTypeCol) Gte(v billingvocab.BillType) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c BillingvocabBillTypeCol) Lt(v billingvocab.BillType) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c BillingvocabBillTypeCol) Lte(v billingvocab.BillType) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c BillingvocabBillTypeCol) IsDistinctFrom(v billingvocab.BillType) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c BillingvocabBillTypeCol) Between(lo, hi billingvocab.BillType) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c BillingvocabBillTypeCol) To(v billingvocab.BillType) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c BillingvocabBillTypeCol) In(vs ...billingvocab.BillType) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c BillingvocabBillTypeCol) NotIn(vs ...billingvocab.BillType) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
@@ -40,7 +40,7 @@ func TestPreviewPostAndApply_IsWhatPostAndApplyRecords(t *testing.T) {
 		CustomerID:         customerID,
 		Number:             "INV-1001",
 		Status:             invoice.StatusPosted,
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		TotalAmount:        decimal.NewFromInt(100),
 		TotalAmountMinor:   10000,
 		AppliedAmountMinor: 2000,

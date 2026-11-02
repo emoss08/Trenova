@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -73,7 +74,7 @@ type FindBillingQueueDuplicatesRequest struct {
 	ItemID           pulid.ID
 	ShipmentID       pulid.ID
 	BillToCustomerID pulid.ID
-	BillType         billingqueue.BillType
+	BillType         billingvocab.BillType
 	InvoiceID        pulid.ID
 }
 

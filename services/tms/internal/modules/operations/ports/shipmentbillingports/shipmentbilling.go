@@ -3,6 +3,7 @@ package shipmentbillingports
 import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -93,7 +94,7 @@ type ShipmentBillingReadiness struct {
 
 type TransferShipmentToBillingRequest struct {
 	ShipmentID pulid.ID              `json:"shipmentId"`
-	BillType   billingqueue.BillType `json:"billType"`
+	BillType   billingvocab.BillType `json:"billType"`
 }
 
 const MaxBulkTransferToBillingShipments = 100
@@ -118,7 +119,7 @@ const BillingTransferFailureUnexpected = billingtransfer.FailureUnexpected
 
 type BulkTransferShipmentToBillingRequest struct {
 	ShipmentIDs                 []pulid.ID            `json:"shipmentIds"`
-	BillType                    billingqueue.BillType `json:"billType"`
+	BillType                    billingvocab.BillType `json:"billType"`
 	MarkCompletedReadyToInvoice bool                  `json:"markCompletedReadyToInvoice"`
 
 	// OnResult is called as each shipment is answered for, before the whole

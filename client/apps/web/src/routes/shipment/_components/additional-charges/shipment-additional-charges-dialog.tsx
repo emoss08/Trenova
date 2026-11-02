@@ -18,7 +18,11 @@ import { accessorialChargeMethodChoices } from "@/lib/choices";
 import type { SelectOption as GraphQLSelectOption } from "@/lib/graphql/select-options";
 import { useRules } from "@trenova/shared/hooks/use-rules";
 import { chargeTotals } from "@trenova/shared/rules/allocation";
-import type { Shipment } from "@trenova/shared/types/shipment";
+import {
+  MAX_ADDITIONAL_CHARGE_RATE,
+  MAX_ADDITIONAL_CHARGE_UNIT,
+  type Shipment,
+} from "@trenova/shared/types/shipment";
 import { useRef } from "react";
 import { type Control, type FieldValues, useFormContext, useWatch } from "react-hook-form";
 
@@ -134,6 +138,7 @@ export function AdditionalChargeDialog({
               name={`additionalCharges.${index}.unit`}
               label={t("Unit")}
               rules={{ required: true, min: 1 }}
+              max={MAX_ADDITIONAL_CHARGE_UNIT}
               placeholder={t("Unit")}
               description={t(
                 "Quantity of units this charge applies to (number of pallets, hours of detention, etc.)",
@@ -161,6 +166,7 @@ export function AdditionalChargeDialog({
               label={t("Amount")}
               decimalScale={2}
               rules={{ required: true, min: 1 }}
+              max={MAX_ADDITIONAL_CHARGE_RATE}
               placeholder={t("Amount")}
               sideText={t("USD")}
               description={t(

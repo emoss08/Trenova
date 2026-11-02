@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentpredicate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
@@ -154,4 +155,84 @@ func TestQuickFilterTotalsIsOneQuery(t *testing.T) {
 	assert.Contains(t, sql, `ARRAY[count(*) FILTER (WHERE s."stage_rank" = `)
 	assert.Contains(t, sql, `ARRAY[CAST(coalesce(sum(s."total_charge_amount") FILTER (WHERE `)
 	assert.Contains(t, sql, ` AS text)]`)
+}
+
+// The briefing and the watchlist total these filters over every shipment in
+// scope. A subquery tied to the shipment row would run once per shipment for
+// each count and each total; every filter here reads a stored column or tests
+// membership in a set built once.
+func TestQuickFilterTotalsNeverTieASubqueryToTheShipment(t *testing.T) {
+	t.Parallel()
+
+	end := 120
+	specs := []quickfilter.QuickFilterSpec{
+		quickfilter.Quick(quickfilter.QuickFilterDeliveringToday),
+		quickfilter.DeliveryHourFilter(14),
+		quickfilter.Quick(quickfilter.QuickFilterMoving),
+		quickfilter.Quick(quickfilter.QuickFilterLate),
+		quickfilter.Quick(quickfilter.QuickFilterUncovered),
+		quickfilter.Quick(quickfilter.QuickFilterDetention),
+		quickfilter.Quick(quickfilter.QuickFilterReadyToBill),
+		quickfilter.PickupWindowFilter(0, &end),
+		quickfilter.PickupWindowFilter(end, nil),
+	}
+
+	for _, policyEngine := range []bool{false, true} {
+		scope := testScope()
+		scope.Options.QuickFilterBasis.Detention.UsePolicyEngine = policyEngine
+
+		q, err := scoped(scope)
+		require.NoError(t, err)
+		totals, err := quickFilterTotalsQuery(q, scope.Options.QuickFilterBasis, specs)
+		require.NoError(t, err)
+
+		sql, _ := keeltest.Render(t, totals)
+		assert.NotContains(t, sql, `= s."id"`, "policy engine %v", policyEngine)
+		assert.Contains(t, sql, `s."delivery_at" >= `)
+		assert.Contains(t, sql, `s."pickup_at" < `)
+		assert.Contains(t, sql, `s."id" IN (SELECT `)
+	}
+}
+
+func TestDeliveriesTodayFiltersAndOrdersByTheStoredDeliveryTime(t *testing.T) {
+	t.Parallel()
+
+	basis := testScope().Options.QuickFilterBasis
+	q, err := deliveriesTodayQuery(basis)
+	require.NoError(t, err)
+
+	sql, args := keeltest.Render(t, q)
+	day := shipmentpredicate.LocalDayOf(basis.Now, basis.Location)
+	assert.Contains(t, sql, `s."delivery_at" >= $`)
+	assert.Contains(t, sql, `s."delivery_at" < $`)
+	assert.Contains(t, sql, `ORDER BY s."delivery_at" ASC, s."id" ASC`)
+	assert.Contains(t, args, day.Start)
+	assert.Contains(t, args, day.End)
+
+	_, err = deliveriesTodayQuery(nil)
+	require.ErrorIs(t, err, shipmentpredicate.ErrQuickFilterBasisMissing)
+}
+
+func TestNextUncoveredPickupReadsTheSoonestStoredPickupTime(t *testing.T) {
+	t.Parallel()
+
+	now := int64(1_791_318_600)
+	sql, args := keeltest.Render(t, nextUncoveredPickupQuery(now))
+	assert.Contains(t, sql, `s."stage_rank" = $`)
+	assert.Contains(t, sql, `s."pickup_at" >= $`)
+	assert.Contains(t, sql, `ORDER BY s."pickup_at" ASC, s."id" ASC LIMIT 1`)
+	assert.Contains(t, args, now)
+}
+
+func TestDwellingStopsReadFromTheStopsAndJoinTheirShipments(t *testing.T) {
+	t.Parallel()
+
+	now := int64(1_791_318_600)
+	sql, args := keeltest.Render(t, dwellingStopsQuery(now, 30))
+	assert.Contains(t, sql, `FROM "stops" dw JOIN "shipment_moves" dw_sm ON`)
+	assert.Contains(t, sql, `JOIN "shipments" `)
+	assert.NotContains(t, sql, "LATERAL")
+	assert.Contains(t, sql, `dw."actual_arrival" > 0`)
+	assert.Contains(t, sql, `ORDER BY dw."actual_arrival" ASC, dw."id" ASC LIMIT 1000`)
+	assert.Contains(t, args, now-30*60)
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -46,8 +47,8 @@ var (
 		string(billingqueue.StatusPosted), string(billingqueue.StatusCanceled),
 	}
 	billTypes = []string{
-		string(billingqueue.BillTypeInvoice), string(billingqueue.BillTypeCreditMemo),
-		string(billingqueue.BillTypeDebitMemo),
+		string(billingvocab.BillTypeInvoice), string(billingvocab.BillTypeCreditMemo),
+		string(billingvocab.BillTypeDebitMemo),
 	}
 	exceptionReasonCodes = []string{
 		string(billingqueue.ExceptionMissingDocumentation),

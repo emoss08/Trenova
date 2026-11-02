@@ -2,8 +2,7 @@ package invoiceservicetest
 
 import (
 	"context"
-
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -59,7 +58,7 @@ func (f Fixture) Invoice(status invoice.Status) *invoice.Invoice {
 		CustomerID:         pulid.MustNew("cus_"),
 		Scope:              invoice.ScopeShipment,
 		Number:             "INV-2001",
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		Status:             status,
 		PaymentTerm:        invoice.PaymentTermNet30,
 		CurrencyCode:       "USD",

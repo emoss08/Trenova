@@ -243,13 +243,17 @@ func (m *Database) PoolStats() (PoolStats, bool) {
 	return m.stats(), true
 }
 
+// PoolStatsFields are the pool's state at the moment a slow request or query is
+// logged. The wait counters are left out: pgxpool counts them over the pool's
+// life, so beside one request they read as that request's wait when they are
+// the sum of every wait since the process started. They are exported as
+// counters (trenova_db_pool_*), and a wait that held up a request is logged by
+// keel's slow-wait log with its stack.
 func PoolStatsFields(stats PoolStats) []zap.Field {
 	return []zap.Field{
 		zap.Int("db_pool_open", stats.Open),
 		zap.Int("db_pool_in_use", stats.InUse),
 		zap.Int("db_pool_idle", stats.Idle),
-		zap.Int64("db_pool_wait_count", stats.WaitCount),
-		zap.Duration("db_pool_wait_duration", stats.WaitDuration),
 		zap.Int("db_pool_max_open", stats.MaxOpen),
 	}
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceaction"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -38,7 +39,7 @@ func (s *Service) guardItemDetentionHolds(
 	tenantInfo pagination.TenantInfo,
 	item *billingqueue.BillingQueueItem,
 ) error {
-	if item == nil || item.ShipmentID.IsNil() || item.BillType == billingqueue.BillTypeCreditMemo {
+	if item == nil || item.ShipmentID.IsNil() || item.BillType == billingvocab.BillTypeCreditMemo {
 		return nil
 	}
 
@@ -46,7 +47,7 @@ func (s *Service) guardItemDetentionHolds(
 }
 
 func guardItemRatingReview(item *billingqueue.BillingQueueItem, entity *shipment.Shipment) error {
-	if item == nil || item.BillType == billingqueue.BillTypeCreditMemo || entity == nil {
+	if item == nil || item.BillType == billingvocab.BillTypeCreditMemo || entity == nil {
 		return nil
 	}
 

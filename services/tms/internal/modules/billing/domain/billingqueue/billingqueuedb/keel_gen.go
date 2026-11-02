@@ -40,7 +40,7 @@ var billingQueueItemsTable = schema.Table{
 		{Name: "assigned_biller_id", Quoted: `"assigned_biller_id"`, Field: "AssignedBillerID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Assigned Biller ID`, JSON: `assignedBillerId`},
 		{Name: "number", Quoted: `"number"`, Field: "Number", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Number`, JSON: `number`},
 		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumStatus[:]},
-		{Name: "bill_type", Quoted: `"bill_type"`, Field: "BillType", Kind: schema.KindString, Flags: 0, Label: `Bill Type`, JSON: `billType`, Enum: enumBillType[:]},
+		{Name: "bill_type", Quoted: `"bill_type"`, Field: "BillType", Kind: schema.KindString, Flags: 0, Label: `Bill Type`, JSON: `billType`, Enum: enumBillingvocabBillType[:]},
 		{Name: "exception_reason_code", Quoted: `"exception_reason_code"`, Field: "ExceptionReasonCode", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Exception Reason Code`, JSON: `exceptionReasonCode`, Enum: enumExceptionReasonCode[:]},
 		{Name: "review_notes", Quoted: `"review_notes"`, Field: "ReviewNotes", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Review Notes`, JSON: `reviewNotes`},
 		{Name: "exception_notes", Quoted: `"exception_notes"`, Field: "ExceptionNotes", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Exception Notes`, JSON: `exceptionNotes`},
@@ -125,7 +125,7 @@ type BillingQueueItemsTable struct {
 	AssignedBillerID          keelkinds.PulidIDCol
 	Number                    keel.StringCol
 	Status                    StatusCol
-	BillType                  BillTypeCol
+	BillType                  keelkinds.BillingvocabBillTypeCol
 	ExceptionReasonCode       ExceptionReasonCodeCol
 	ReviewNotes               keel.StringCol
 	ExceptionNotes            keel.StringCol
@@ -183,7 +183,7 @@ var BillingQueueItems = &BillingQueueItemsTable{
 	AssignedBillerID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 8}}},
 	Number:                    keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 9}},
 	Status:                    StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 10}}},
-	BillType:                  BillTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 11}}},
+	BillType:                  keelkinds.BillingvocabBillTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 11}}},
 	ExceptionReasonCode:       ExceptionReasonCodeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 12}}},
 	ReviewNotes:               keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 13}},
 	ExceptionNotes:            keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 14}},
@@ -242,7 +242,7 @@ func BuildBillingQueueItems(r *keel.Ref) *BillingQueueItemsTable {
 		AssignedBillerID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		Number:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		Status:                    StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		BillType:                  BillTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		BillType:                  keelkinds.BillingvocabBillTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		ExceptionReasonCode:       ExceptionReasonCodeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		ReviewNotes:               keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
 		ExceptionNotes:            keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
@@ -934,9 +934,6 @@ func valueBillingQueueItem(p unsafe.Pointer, c int32) any {
 	case 32:
 		return r.RerateVariancePercent
 	case 33:
-		if r.AdjustmentContext == nil {
-			return keel.EmptyJSONObject
-		}
 		return r.AdjustmentContext
 	case 34:
 		return string(r.Lane)
@@ -2223,7 +2220,7 @@ var enumAgentVerdict = [...]schema.EnumValue{
 	{Value: `Concern`, Label: `Concern`},
 }
 
-var enumBillType = [...]schema.EnumValue{
+var enumBillingvocabBillType = [...]schema.EnumValue{
 	{Value: `Invoice`, Label: `Invoice`},
 	{Value: `CreditMemo`, Label: `Credit Memo`},
 	{Value: `DebitMemo`, Label: `Debit Memo`},
@@ -2323,29 +2320,6 @@ func (c AgentVerdictCol) In(vs ...billingqueue.AgentVerdict) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
 func (c AgentVerdictCol) NotIn(vs ...billingqueue.AgentVerdict) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// BillTypeCol is a column of billingqueue.BillType values.
-type BillTypeCol struct{ keel.StringCol }
-
-func (c BillTypeCol) Eq(v billingqueue.BillType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c BillTypeCol) Ne(v billingqueue.BillType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c BillTypeCol) Gt(v billingqueue.BillType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c BillTypeCol) Gte(v billingqueue.BillType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c BillTypeCol) Lt(v billingqueue.BillType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c BillTypeCol) Lte(v billingqueue.BillType) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c BillTypeCol) IsDistinctFrom(v billingqueue.BillType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c BillTypeCol) Between(lo, hi billingqueue.BillType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c BillTypeCol) To(v billingqueue.BillType) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c BillTypeCol) In(vs ...billingqueue.BillType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c BillTypeCol) NotIn(vs ...billingqueue.BillType) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 

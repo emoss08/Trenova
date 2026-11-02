@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceaction"
 	"github.com/emoss08/trenova/internal/modules/billing/billingtest/invoiceservicetest"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
@@ -34,7 +35,7 @@ func builderParams(scope invoice.Scope, legs ...*shipment.Shipment) *buildInvoic
 			OrganizationID: pulid.MustNew("org_"),
 			BusinessUnitID: pulid.MustNew("bu_"),
 			Number:         "INV-1",
-			BillType:       billingqueue.BillTypeInvoice,
+			BillType:       billingvocab.BillTypeInvoice,
 		},
 		Scope:    scope,
 		Customer: &customer.Customer{ID: pulid.MustNew("cus_"), Name: "Acme Foods"},

@@ -13,6 +13,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -40,7 +41,7 @@ func New(
 
 type Request struct {
 	TenantInfo pagination.TenantInfo
-	BillType   billingqueue.BillType
+	BillType   billingvocab.BillType
 	// Profile is the payer's billing profile when the caller already holds it;
 	// otherwise PayerID is looked up.
 	Profile *customer.CustomerBillingProfile
@@ -51,11 +52,11 @@ type Request struct {
 func (n Numberer) Next(ctx context.Context, req *Request) (string, error) {
 	orgID, buID := req.TenantInfo.OrgID, req.TenantInfo.BuID
 	switch req.BillType {
-	case billingqueue.BillTypeCreditMemo:
+	case billingvocab.BillTypeCreditMemo:
 		return n.generator.GenerateCreditMemoNumber(ctx, orgID, buID, "", "")
-	case billingqueue.BillTypeDebitMemo:
+	case billingvocab.BillTypeDebitMemo:
 		return n.generator.GenerateDebitMemoNumber(ctx, orgID, buID, "", "")
-	case billingqueue.BillTypeInvoice:
+	case billingvocab.BillTypeInvoice:
 		return n.invoiceNumber(ctx, req)
 	default:
 		return "", errortypes.NewValidationError(

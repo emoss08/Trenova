@@ -465,6 +465,7 @@
   "Expired before a decision": "Venció antes de una decisión",
   "Expired without a decision": "Venció sin una decisión",
   "Expires in {0, plural, one {# day} other {# days}}": "Vence en {0, plural, one {# día} other {# días}}",
+  "Exported": "Exportado",
   "FUEL": "COMB",
   "FY": "EF",
   "Factored": "Factorizada",

@@ -110,6 +110,23 @@ export type AllocationRemainder = {
   /** The first reason the rows cannot be saved. */
   readonly problem: CatalogMessage | null;
   readonly valid: boolean;
+  /**
+   * What each row bills, aligned with the request's `allocations`: the split's own shares once
+   * it is complete, otherwise each row priced on its own. Null for a row with nothing yet.
+   */
+  readonly shares: readonly (AllocationRowShare | null)[];
+  /** What each row needs for the rows to add up; null where it cannot take the rest. */
+  readonly fills: readonly (DecimalString | null)[];
+  /** The charge split evenly across the rows, the last taking the rest; null where it cannot be. */
+  readonly even: readonly (DecimalString | null)[];
+};
+
+/** One row's cents and percent while its split is being typed. */
+export type AllocationRowShare = {
+  /** Null for a percent row of a charge whose total is unknown. */
+  readonly amount: DecimalString | null;
+  /** Null for an amount row of a zero or unknown charge. */
+  readonly percent: DecimalString | null;
 };
 
 export type AllocationChargeTotals = {

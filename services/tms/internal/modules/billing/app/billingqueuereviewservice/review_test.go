@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -260,7 +261,7 @@ func newReviewWorld(t *testing.T, status billingqueue.Status) *reviewWorld {
 		ShipmentID:           shp.ID,
 		BillToCustomerID:     cus.ID,
 		Status:               status,
-		BillType:             billingqueue.BillTypeInvoice,
+		BillType:             billingvocab.BillTypeInvoice,
 		Number:               "INV-24101",
 		AssignedBillerID:     &biller,
 		AssignedBiller:       &tenant.User{ID: biller, Name: "Avery Lane"},

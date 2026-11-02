@@ -3,9 +3,7 @@ package latechargeservice
 import (
 	"context"
 	"errors"
-	"testing"
-
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -25,6 +23,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	"testing"
 )
 
 const day = int64(86400)
@@ -267,7 +266,7 @@ func TestAssessRaisesOneLateChargeMemoPerCustomer(t *testing.T) {
 		CreateMemo(mock.Anything, mock.MatchedBy(func(req *invoiceports.CreateMemoRequest) bool {
 			memoID = req.ID
 			return req.CustomerID == amd.CustomerID &&
-				req.BillType == billingqueue.BillTypeDebitMemo &&
+				req.BillType == billingvocab.BillTypeDebitMemo &&
 				req.MemoKind == invoice.MemoKindLateCharge &&
 				req.AutoPost &&
 				req.InvoiceDate == asOf &&

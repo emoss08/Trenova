@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -21,7 +21,7 @@ func TestInvoiceDaysPastDue(t *testing.T) {
 	open := func() *invoice.Invoice {
 		return &invoice.Invoice{
 			Status:           invoice.StatusPosted,
-			BillType:         billingqueue.BillTypeInvoice,
+			BillType:         billingvocab.BillTypeInvoice,
 			TotalAmountMinor: 10000,
 			DueDate:          &due,
 		}
@@ -38,7 +38,7 @@ func TestInvoiceDaysPastDue(t *testing.T) {
 	)
 
 	memo := open()
-	memo.BillType = billingqueue.BillTypeCreditMemo
+	memo.BillType = billingvocab.BillTypeCreditMemo
 	assert.Nil(t, invoiceDaysPastDue(memo, due+10*secondsPerDay), "credit memos are never past due")
 
 	noDue := open()
@@ -76,7 +76,7 @@ func TestCreateMemoRequestFromInput(t *testing.T) {
 
 	req, err := createMemoRequestFromInput(&gqlmodel.CreateMemoInput{
 		CustomerID:         customerID.String(),
-		BillType:           billingqueue.BillTypeDebitMemo,
+		BillType:           billingvocab.BillTypeDebitMemo,
 		ReferenceInvoiceID: ptr(referenceID.String()),
 		Reason:             "Returned cheque fee",
 		InvoiceDate:        &invoiceDate,
@@ -97,7 +97,7 @@ func TestCreateMemoRequestFromInput(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, tenantInfo, req.TenantInfo)
 	assert.Equal(t, customerID, req.CustomerID)
-	assert.Equal(t, billingqueue.BillTypeDebitMemo, req.BillType)
+	assert.Equal(t, billingvocab.BillTypeDebitMemo, req.BillType)
 	assert.Equal(t, referenceID, req.ReferenceInvoiceID)
 	assert.Equal(t, "Returned cheque fee", req.Reason)
 	assert.Equal(t, int64(invoiceDate), req.InvoiceDate)
@@ -117,7 +117,7 @@ func TestCreateMemoRequestFromInputRejectsBadIDs(t *testing.T) {
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_")}
 
 	_, err := createMemoRequestFromInput(
-		&gqlmodel.CreateMemoInput{CustomerID: "nope", BillType: billingqueue.BillTypeCreditMemo},
+		&gqlmodel.CreateMemoInput{CustomerID: "nope", BillType: billingvocab.BillTypeCreditMemo},
 		tenantInfo,
 	)
 	require.Error(t, err)
@@ -125,7 +125,7 @@ func TestCreateMemoRequestFromInputRejectsBadIDs(t *testing.T) {
 
 	_, err = createMemoRequestFromInput(&gqlmodel.CreateMemoInput{
 		CustomerID:         pulid.MustNew("cus_").String(),
-		BillType:           billingqueue.BillTypeCreditMemo,
+		BillType:           billingvocab.BillTypeCreditMemo,
 		ReferenceInvoiceID: ptr("nope"),
 	}, tenantInfo)
 	require.Error(t, err)
@@ -133,7 +133,7 @@ func TestCreateMemoRequestFromInputRejectsBadIDs(t *testing.T) {
 
 	req, err := createMemoRequestFromInput(&gqlmodel.CreateMemoInput{
 		CustomerID:         pulid.MustNew("cus_").String(),
-		BillType:           billingqueue.BillTypeCreditMemo,
+		BillType:           billingvocab.BillTypeCreditMemo,
 		ReferenceInvoiceID: ptr(""),
 	}, tenantInfo)
 	require.NoError(t, err)

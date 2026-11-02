@@ -2,6 +2,7 @@ package customerpaymentservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
@@ -54,7 +54,7 @@ func newCreditMemoFixture(t *testing.T) *creditMemoFixture {
 		CustomerID:         f.customerID,
 		Number:             "CM-1",
 		Status:             invoice.StatusPosted,
-		BillType:           billingqueue.BillTypeCreditMemo,
+		BillType:           billingvocab.BillTypeCreditMemo,
 		TotalAmount:        decimal.NewFromInt(-80),
 		TotalAmountMinor:   -8000,
 		AppliedAmount:      decimal.Zero,
@@ -68,7 +68,7 @@ func newCreditMemoFixture(t *testing.T) *creditMemoFixture {
 		CustomerID:         f.customerID,
 		Number:             "INV-1",
 		Status:             invoice.StatusPosted,
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		TotalAmount:        decimal.NewFromInt(100),
 		TotalAmountMinor:   10000,
 		AppliedAmount:      decimal.Zero,
@@ -196,7 +196,7 @@ func TestApplyCreditMemoSourceMustBeAPostedCreditMemoWithCreditLeft(t *testing.T
 	}{
 		{
 			"an invoice is not a credit memo",
-			func(m *invoice.Invoice) { m.BillType = billingqueue.BillTypeInvoice },
+			func(m *invoice.Invoice) { m.BillType = billingvocab.BillTypeInvoice },
 			"Only a credit memo",
 		},
 		{
@@ -274,7 +274,7 @@ func TestApplyCreditMemoTargetRules(t *testing.T) {
 		},
 		{
 			"a credit memo target",
-			func(inv *invoice.Invoice) { inv.BillType = billingqueue.BillTypeCreditMemo },
+			func(inv *invoice.Invoice) { inv.BillType = billingvocab.BillTypeCreditMemo },
 			1000,
 			"invoices and debit memos only",
 		},
@@ -313,7 +313,7 @@ func TestApplyCreditMemoSettlesInvoicesAndRecordsApplications(t *testing.T) {
 		CustomerID:       f.customerID,
 		Number:           "DM-2",
 		Status:           invoice.StatusPosted,
-		BillType:         billingqueue.BillTypeDebitMemo,
+		BillType:         billingvocab.BillTypeDebitMemo,
 		TotalAmount:      decimal.NewFromInt(30),
 		TotalAmountMinor: 3000,
 		SettlementStatus: invoice.SettlementStatusUnpaid,

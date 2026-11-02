@@ -39,11 +39,6 @@ func BillingQueueItemToModel(ctx context.Context,
 		return nil, err
 	}
 
-	adjustmentContext := item.AdjustmentContext
-	if adjustmentContext == nil {
-		adjustmentContext = map[string]any{}
-	}
-
 	return &gqlmodel.BillingQueueItem{
 		ID:                        item.ID.String(),
 		OrganizationID:            item.OrganizationID.String(),
@@ -73,7 +68,7 @@ func BillingQueueItemToModel(ctx context.Context,
 		RebillStrategy:            gqlscalar.StringPtrFromValue(item.RebillStrategy),
 		RequiresReplacementReview: item.RequiresReplacementReview,
 		RerateVariancePercent:     item.RerateVariancePercent.String(),
-		AdjustmentContext:         adjustmentContext,
+		AdjustmentContext:         adjustmentContextToModel(item.AdjustmentContext),
 		Version:                   int(item.Version),
 		CreatedAt:                 int(item.CreatedAt),
 		UpdatedAt:                 int(item.UpdatedAt),
@@ -188,4 +183,27 @@ func BillingQueueItemConnectionToModel(
 		TotalCount:      page.TotalCount,
 		TotalCountExact: page.TotalCountExact,
 	}, nil
+}
+
+func adjustmentContextToModel(
+	value billingqueue.AdjustmentContext,
+) *gqlmodel.BillingQueueAdjustmentContext {
+	model := &gqlmodel.BillingQueueAdjustmentContext{}
+	if rebill := value.Rebill; rebill != nil {
+		model.Rebill = &gqlmodel.BillingQueueAdjustmentRebill{
+			ReplacementLineCount: len(rebill.ReplacementLines),
+			SubtotalAmount:       rebill.SubtotalAmount.StringFixed(2),
+			OtherAmount:          rebill.OtherAmount.StringFixed(2),
+			TotalAmount:          rebill.TotalAmount.StringFixed(2),
+			AccountingDate:       int(rebill.AccountingDate),
+		}
+	}
+	if memo := value.Memo; memo != nil {
+		model.Memo = &gqlmodel.BillingQueueAdjustmentMemo{
+			Kind:       memo.Kind,
+			RaisedByID: gqlid.IDPtr(memo.RaisedByID),
+		}
+	}
+
+	return model
 }

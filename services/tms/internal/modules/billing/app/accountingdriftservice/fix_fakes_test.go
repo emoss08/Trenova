@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
@@ -221,7 +221,7 @@ func (f *fakeInvoices) CreateMemo(
 	}
 	objectType := accountingsync.SyncObjectDebitMemo
 	source := accountingsync.SyncSourceDebitMemoPosted
-	if req.BillType == billingqueue.BillTypeCreditMemo {
+	if req.BillType == billingvocab.BillTypeCreditMemo {
 		objectType = accountingsync.SyncObjectCreditMemo
 		source = accountingsync.SyncSourceCreditMemoPosted
 	}

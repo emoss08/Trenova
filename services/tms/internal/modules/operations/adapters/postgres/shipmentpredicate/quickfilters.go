@@ -30,8 +30,6 @@ const (
 	secondsPerMinute = int64(60)
 	secondsPerHour   = int64(3600)
 
-	quickStopAlias   = "qf_stp"
-	quickMoveAlias   = "qf_sm"
 	quickDwellAlias  = "qf_dw"
 	quickDwellMove   = "qf_dwm"
 	quickMilesAlias  = "qf_mi"
@@ -185,41 +183,38 @@ func QuickFilterCondition(
 	}
 }
 
+// deliveryWithin matches shipments that deliver in [start, end). It reads the
+// delivery time shipmentprojection stores on the shipment, so a count over
+// every shipment in scope is a column comparison per row, not a search for
+// each shipment's last delivery stop.
 func deliveryWithin(start, end int64) keel.Pred {
 	sp := shipmentdb.Shipments
-	st := shipmentdb.Stops.As(quickStopAlias)
-	delivery := LastDeliveryStop(
-		st,
-		shipmentdb.ShipmentMoves.As(quickMoveAlias),
-	).Pick(DeliveryAt(st))
 
 	return keel.And(
 		sp.Status.Ne(shipmentvocab.StatusCanceled),
-		keel.Int8Range(keel.Int64(start), keel.Int64(end)).
-			Covers(keel.Int64Of(keel.Scalar(delivery))),
+		sp.DeliveryAt.Gte(start),
+		sp.DeliveryAt.Lt(end),
 	)
 }
 
+// pickupWindowCondition matches uncovered shipments whose first pickup is
+// scheduled in [now+start, now+end): an unset or zero start leaves the window
+// open behind, an unset end open ahead. It reads the pickup time
+// shipmentprojection stores on the shipment.
 func pickupWindowCondition(now int64, spec quickfilter.QuickFilterSpec) keel.Pred {
-	st := shipmentdb.Stops.As(quickStopAlias)
-	pickup := FirstPickupStop(st, shipmentdb.ShipmentMoves.As(quickMoveAlias)).
-		Pick(st.ScheduledWindowStart)
-
-	var lower, upper *int64
+	sp := shipmentdb.Shipments
+	preds := []keel.Pred{
+		StageCondition(shipmentvocab.StageNeedsCoverage),
+		sp.PickupAt.IsNotNull(),
+	}
 	if start := int64(*spec.WindowStartMinutes); start > 0 {
-		value := now + start*secondsPerMinute
-		lower = &value
+		preds = append(preds, sp.PickupAt.Gte(now+start*secondsPerMinute))
 	}
 	if spec.WindowEndMinutes != nil {
-		value := now + int64(*spec.WindowEndMinutes)*secondsPerMinute
-		upper = &value
+		preds = append(preds, sp.PickupAt.Lt(now+int64(*spec.WindowEndMinutes)*secondsPerMinute))
 	}
 
-	return keel.And(
-		StageCondition(shipmentvocab.StageNeedsCoverage),
-		keel.Int8Range(keel.Int64Ptr(lower), keel.Int64Ptr(upper)).
-			Covers(keel.Int64Of(keel.Scalar(pickup))),
-	)
+	return keel.And(preds...)
 }
 
 func reeferCondition() keel.Pred {
@@ -271,40 +266,53 @@ func lowMarginCondition(margin *shipmentports.ShipmentMarginBasis) keel.Pred {
 	return keel.Exists(miles)
 }
 
+// DetentionCondition matches shipments in detention: those with an open,
+// unbilled occurrence past its free time under the policy engine, otherwise
+// those with a stop dwelling past the threshold. Both are a membership test
+// against one uncorrelated set (the open occurrences, the dwelling stops), so a
+// count over every shipment in scope builds the set once and probes it per
+// row, and a filtered list reads it as a semi-join.
 func DetentionCondition(now int64, basis *shipmentports.ShipmentDetentionBasis) keel.Pred {
 	sp := shipmentdb.Shipments
 
 	if basis.UsePolicyEngine {
 		dto := detentiondb.DetentionOccurrences.As(quickDetention)
-		return keel.Exists(dto.Where(
-			dto.ShipmentID.EqCol(sp.ID),
+		return sp.ID.InQuery(dto.Pick(dto.ShipmentID).Where(
 			dto.IsOpen.IsTrue(),
 			dto.Status.Ne(detention.OccurrenceStatusBilled),
 			dto.FreeTimeExpiresAt.Lte(now),
 		))
 	}
 
-	return keel.Exists(DwellingStops(
+	sm := shipmentdb.ShipmentMoves.As(quickDwellMove)
+
+	return sp.ID.InQuery(DwellingStops(
 		shipmentdb.Stops.As(quickDwellAlias),
-		shipmentdb.ShipmentMoves.As(quickDwellMove),
+		sm,
 		now,
 		basis.ThresholdMinutes,
-	))
+	).Pick(sm.ShipmentID))
 }
 
+// DwellingStops are the stops sitting at a facility past the detention
+// threshold: arrived, not departed, not excluded from detention, on a live
+// move. The query is not tied to a shipment; callers join or match
+// sm.ShipmentID. The arrival and departure tests are written as
+// idx_stops_arrived_open's predicate, with inline constants, so the planner
+// reads the dwelling stops from that index.
 func DwellingStops(
 	st *shipmentdb.StopsTable,
 	sm *shipmentdb.ShipmentMovesTable,
 	now, thresholdMinutes int64,
 ) keel.Query[*shipment.Stop] {
-	sp := shipmentdb.Shipments
-
 	return st.Join(sm, sm.ID.EqCol(st.ShipmentMoveID)).Where(
-		sm.ShipmentID.EqCol(sp.ID),
 		sm.Status.Ne(shipmentvocab.MoveStatusCanceled),
 		st.Status.Ne(shipmentvocab.StopStatusCanceled),
-		st.ActualArrival.Coalesce(0).Gt(0),
-		st.ActualDeparture.Coalesce(0).Eq(0),
+		keel.Int64Of(st.ActualArrival).GtExpr(keel.ConstInt64(0)),
+		keel.Or(
+			st.ActualDeparture.IsNull(),
+			keel.Int64Of(st.ActualDeparture).EqExpr(keel.ConstInt64(0)),
+		),
 		st.CountDetentionOverride.Coalesce(true),
 		st.ActualArrival.Lte(now-thresholdMinutes*secondsPerMinute),
 	)

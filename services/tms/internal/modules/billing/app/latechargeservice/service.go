@@ -3,11 +3,7 @@ package latechargeservice
 import (
 	"context"
 	"fmt"
-	"slices"
-	"strings"
-	"time"
-
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -30,6 +26,9 @@ import (
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+	"slices"
+	"strings"
+	"time"
 )
 
 type Params struct {
@@ -415,7 +414,7 @@ func (s *Service) raiseMemo(
 			ID:               memoID,
 			TenantInfo:       tenantInfo,
 			CustomerID:       plan.result.CustomerID,
-			BillType:         billingqueue.BillTypeDebitMemo,
+			BillType:         billingvocab.BillTypeDebitMemo,
 			Lines:            memoLines(plan.result.Lines),
 			Reason:           "Late charges assessed as of " + formatDate(inserted[0].AsOfDate),
 			InvoiceDate:      inserted[0].AsOfDate,

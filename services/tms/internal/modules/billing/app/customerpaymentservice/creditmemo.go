@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
@@ -178,7 +178,7 @@ func (s *Service) validateCreditApplications(
 func validateCreditMemoSource(memo *invoice.Invoice) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	switch {
-	case memo.BillType != billingqueue.BillTypeCreditMemo:
+	case memo.BillType != billingvocab.BillTypeCreditMemo:
 		multiErr.Add("creditMemoId", errortypes.ErrInvalid, "Only a credit memo can be applied")
 	case memo.Status != invoice.StatusPosted:
 		multiErr.Add(
@@ -230,7 +230,7 @@ func validateCreditTarget(
 			errortypes.ErrInvalidOperation,
 			"Only posted invoices can take a credit",
 		)
-	case target.BillType != billingqueue.BillTypeInvoice && target.BillType != billingqueue.BillTypeDebitMemo:
+	case target.BillType != billingvocab.BillTypeInvoice && target.BillType != billingvocab.BillTypeDebitMemo:
 		entry.Add(
 			"invoiceId",
 			errortypes.ErrInvalidOperation,

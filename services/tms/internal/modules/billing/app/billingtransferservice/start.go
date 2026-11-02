@@ -2,9 +2,8 @@ package billingtransferservice
 
 import (
 	"context"
-
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingtransferjobs/billingtransfercontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -32,7 +31,7 @@ type StartRunRequest struct {
 	SearchQuery string
 
 	ShipmentStatus              shipmentvocab.Status
-	BillType                    billingqueue.BillType
+	BillType                    billingvocab.BillType
 	MarkCompletedReadyToInvoice bool
 }
 
@@ -110,7 +109,7 @@ func (s *Service) buildRun(req *StartRunRequest) (*billingtransfer.BillingTransf
 
 	billType := req.BillType
 	if billType == "" {
-		billType = billingqueue.BillTypeInvoice
+		billType = billingvocab.BillTypeInvoice
 	}
 
 	run := &billingtransfer.BillingTransferRun{

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -108,7 +109,7 @@ func newSplitShipment() *splitShipment {
 			ShipmentID:       shipmentID,
 			BillToCustomerID: payer,
 			Status:           billingqueue.StatusInReview,
-			BillType:         billingqueue.BillTypeInvoice,
+			BillType:         billingvocab.BillTypeInvoice,
 			Number:           number,
 		}
 	}

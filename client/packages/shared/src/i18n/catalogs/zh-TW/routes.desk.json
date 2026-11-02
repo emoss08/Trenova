@@ -465,6 +465,7 @@
   "Expired before a decision": "未作決定即已逾期",
   "Expired without a decision": "未經決定即已逾期",
   "Expires in {0, plural, one {# day} other {# days}}": "{0, plural, one {# 天} other {# 天}}後到期",
+  "Exported": "匯出時間",
   "FUEL": "燃料",
   "FY": "年度",
   "Factored": "已保理",

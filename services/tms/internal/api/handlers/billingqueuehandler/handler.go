@@ -414,9 +414,7 @@ type updateChargesRequest struct {
 	// ConvertAmountSplitsToPercent retries an edit that was refused because it
 	// left an amount split that no longer adds up.
 	ConvertAmountSplitsToPercent bool `json:"convertAmountSplitsToPercent"`
-	// ExpandShipmentDetails answers with the saved item as the item's GET expands
-	// it, so a caller showing the item draws it from the save.
-	ExpandShipmentDetails bool `json:"expandShipmentDetails"`
+	ExpandShipmentDetails        bool `json:"expandShipmentDetails"`
 }
 
 // @Summary Update charges on a billing queue item

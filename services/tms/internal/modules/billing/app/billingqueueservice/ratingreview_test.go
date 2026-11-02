@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -69,7 +70,7 @@ func (f *holdFixture) heldForReview(t *testing.T, reviews ...string) *shipment.S
 func TestUpdateStatus_RefusesApprovalWhileTheTariffHoldsTheRatingForReview(t *testing.T) {
 	t.Parallel()
 
-	f := newHoldFixture(t, billingqueue.BillTypeInvoice)
+	f := newHoldFixture(t, billingvocab.BillTypeInvoice)
 	f.expectRead()
 	f.expectHolds()
 	f.heldForReview(t, "Holiday pickup")
@@ -90,7 +91,7 @@ func TestUpdateStatus_RefusesApprovalWhileTheTariffHoldsTheRatingForReview(t *te
 func TestUpdateStatus_ApprovesOnceTheReviewedRatingIsApproved(t *testing.T) {
 	t.Parallel()
 
-	f := newHoldFixture(t, billingqueue.BillTypeInvoice)
+	f := newHoldFixture(t, billingvocab.BillTypeInvoice)
 	f.expectRead()
 	f.expectHolds()
 	held := f.heldForReview(t, "Holiday pickup")
@@ -116,7 +117,7 @@ func TestUpdateStatus_ApprovesOnceTheReviewedRatingIsApproved(t *testing.T) {
 func TestUpdateStatus_CreditMemoApprovalIsNeverHeldForARatingReview(t *testing.T) {
 	t.Parallel()
 
-	f := newHoldFixture(t, billingqueue.BillTypeCreditMemo)
+	f := newHoldFixture(t, billingvocab.BillTypeCreditMemo)
 	f.expectRead()
 	shipments := shipmentportsmock.NewMockShipmentRepository(t)
 	f.svc.shipmentRepo = shipments
@@ -141,7 +142,7 @@ func TestUpdateStatus_CreditMemoApprovalIsNeverHeldForARatingReview(t *testing.T
 func TestAutoApprove_LeavesARatingHeldForReviewInReview(t *testing.T) {
 	t.Parallel()
 
-	f := newHoldFixture(t, billingqueue.BillTypeInvoice)
+	f := newHoldFixture(t, billingvocab.BillTypeInvoice)
 	f.expectHolds()
 	f.heldForReview(t, "Holiday pickup")
 
@@ -155,7 +156,7 @@ func TestAutoApprove_LeavesARatingHeldForReviewInReview(t *testing.T) {
 func TestGetByID_ShowsTheRatingReviewHoldingTheItem(t *testing.T) {
 	t.Parallel()
 
-	f := newHoldFixture(t, billingqueue.BillTypeInvoice)
+	f := newHoldFixture(t, billingvocab.BillTypeInvoice)
 	f.expectRead()
 	f.expectHolds()
 	f.heldForReview(t, "Holiday pickup", "Liftgate on a dock")

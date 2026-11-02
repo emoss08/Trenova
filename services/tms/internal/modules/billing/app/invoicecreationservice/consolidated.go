@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceassembly"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicelines"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -315,7 +316,7 @@ func validateConsolidatedQueueItems(
 		}
 		delete(legIDs, item.ShipmentID)
 
-		if item.BillType != billingqueue.BillTypeInvoice || item.IsAdjustmentOrigin {
+		if item.BillType != billingvocab.BillTypeInvoice || item.IsAdjustmentOrigin {
 			return errortypes.NewValidationError(
 				"billingQueueItemIds",
 				errortypes.ErrInvalid,

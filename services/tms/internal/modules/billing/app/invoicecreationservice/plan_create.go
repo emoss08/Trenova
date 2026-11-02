@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceassembly"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicelines"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
@@ -35,7 +36,7 @@ func (s *Service) checkPayer(
 		tenantInfo,
 		shp.ID,
 		share.PayerID,
-		billingqueue.BillTypeInvoice,
+		billingvocab.BillTypeInvoice,
 	)
 	if err != nil {
 		return nil, err
@@ -120,7 +121,7 @@ func (s *Service) planOrderInvoices(
 				req.TenantInfo,
 				leg.ID,
 				bucket.PayerID,
-				billingqueue.BillTypeInvoice,
+				billingvocab.BillTypeInvoice,
 			)
 			if existsErr != nil {
 				return nil, existsErr
@@ -274,7 +275,7 @@ func unnumberedAnchor(
 		OrderID:          leg.OrderID,
 		BillToCustomerID: payerID,
 		Status:           billingqueue.StatusApproved,
-		BillType:         billingqueue.BillTypeInvoice,
+		BillType:         billingvocab.BillTypeInvoice,
 		Number:           invoiceassembly.UnnumberedInvoice,
 	}
 	if share != nil {

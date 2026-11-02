@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentadditionalchargerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentcommodityrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmoverepository"
@@ -90,7 +91,7 @@ func (f *syncFixture) createItem(
 	t *testing.T,
 	number string,
 	status billingqueue.Status,
-	billType billingqueue.BillType,
+	billType billingvocab.BillType,
 ) *billingqueue.BillingQueueItem {
 	t.Helper()
 
@@ -145,7 +146,7 @@ func TestShipmentMirrorsItsBillingQueueItem(t *testing.T) {
 		t,
 		"BQ-SYNC-0001",
 		billingqueue.StatusReadyForReview,
-		billingqueue.BillTypeInvoice,
+		billingvocab.BillTypeInvoice,
 	)
 
 	row := f.shipmentRow(t)
@@ -170,7 +171,7 @@ func TestShipmentFollowsItsLatestInvoiceItem(t *testing.T) {
 		t,
 		"BQ-SYNC-0101",
 		billingqueue.StatusPosted,
-		billingqueue.BillTypeInvoice,
+		billingvocab.BillTypeInvoice,
 	)
 	requireTransferStatus(t, f.shipmentRow(t), billingqueue.StatusPosted)
 
@@ -178,7 +179,7 @@ func TestShipmentFollowsItsLatestInvoiceItem(t *testing.T) {
 		t,
 		"BQ-SYNC-0102",
 		billingqueue.StatusReadyForReview,
-		billingqueue.BillTypeInvoice,
+		billingvocab.BillTypeInvoice,
 	)
 	row := f.shipmentRow(t)
 	requireTransferStatus(t, row, billingqueue.StatusReadyForReview)
@@ -194,8 +195,8 @@ func TestShipmentFollowsItsLatestInvoiceItem(t *testing.T) {
 func TestCreditMemoItemsDoNotMoveTheShipment(t *testing.T) {
 	f := setupSyncFixture(t)
 
-	f.createItem(t, "BQ-SYNC-0201", billingqueue.StatusInReview, billingqueue.BillTypeInvoice)
-	f.createItem(t, "BQ-SYNC-0202", billingqueue.StatusPosted, billingqueue.BillTypeCreditMemo)
+	f.createItem(t, "BQ-SYNC-0201", billingqueue.StatusInReview, billingvocab.BillTypeInvoice)
+	f.createItem(t, "BQ-SYNC-0202", billingqueue.StatusPosted, billingvocab.BillTypeCreditMemo)
 
 	requireTransferStatus(t, f.shipmentRow(t), billingqueue.StatusInReview)
 }
@@ -203,7 +204,7 @@ func TestCreditMemoItemsDoNotMoveTheShipment(t *testing.T) {
 func TestShipmentWritesCannotOverwriteTheMirror(t *testing.T) {
 	f := setupSyncFixture(t)
 
-	f.createItem(t, "BQ-SYNC-0301", billingqueue.StatusInReview, billingqueue.BillTypeInvoice)
+	f.createItem(t, "BQ-SYNC-0301", billingqueue.StatusInReview, billingvocab.BillTypeInvoice)
 	transferredAt := f.shipmentRow(t).TransferredToBillingAt
 
 	entity, err := f.shipmentRepo.GetByID(f.ctx, &shipmentports.GetShipmentByIDRequest{

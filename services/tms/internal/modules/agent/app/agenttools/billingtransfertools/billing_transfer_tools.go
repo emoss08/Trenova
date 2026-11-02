@@ -16,8 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransfercriteria"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
@@ -172,15 +172,15 @@ func (t *TransferToBillingTool) Policy() agenttoolports.ToolPolicy {
 	}
 }
 
-var transferBillTypes = agenttoolschema.Source("billingQueue.billType", []billingqueue.BillType{
-	billingqueue.BillTypeInvoice,
-	billingqueue.BillTypeCreditMemo,
-	billingqueue.BillTypeDebitMemo,
+var transferBillTypes = agenttoolschema.Source("billingQueue.billType", []billingvocab.BillType{
+	billingvocab.BillTypeInvoice,
+	billingvocab.BillTypeCreditMemo,
+	billingvocab.BillTypeDebitMemo,
 })
 
 type transferRequest struct {
 	shipmentIDs []pulid.ID
-	billType    billingqueue.BillType
+	billType    billingvocab.BillType
 	markReady   bool
 	all         bool
 	criteria    billingtransfercriteria.Criteria
@@ -198,12 +198,12 @@ func (t *TransferToBillingTool) request(
 	}
 
 	request := transferRequest{
-		billType:  billingqueue.BillTypeInvoice,
+		billType:  billingvocab.BillTypeInvoice,
 		markReady: toolparams.OptionalBool(params.Params, paramMarkCompletedReady),
 		all:       toolparams.OptionalBool(params.Params, paramAllTransferable),
 	}
 	if raw := toolparams.OptionalString(params.Params, toolparams.ParamBillType); raw != "" {
-		request.billType = billingqueue.BillType(raw)
+		request.billType = billingvocab.BillType(raw)
 		if !isBillType(request.billType) {
 			return transferRequest{}, fmt.Errorf(
 				"billType %q is not one of %s", raw, strings.Join(transferBillTypes.Names(), ", "),
@@ -367,10 +367,10 @@ func (t *TransferToBillingTool) transferable(
 	return ids, going, nil
 }
 
-func isBillType(billType billingqueue.BillType) bool {
+func isBillType(billType billingvocab.BillType) bool {
 	switch billType {
-	case billingqueue.BillTypeInvoice, billingqueue.BillTypeCreditMemo,
-		billingqueue.BillTypeDebitMemo:
+	case billingvocab.BillTypeInvoice, billingvocab.BillTypeCreditMemo,
+		billingvocab.BillTypeDebitMemo:
 		return true
 	default:
 		return false

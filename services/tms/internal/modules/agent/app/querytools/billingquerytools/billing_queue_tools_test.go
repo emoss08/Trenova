@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/fieldgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -97,7 +98,7 @@ func queueItem(status billingqueue.Status) *billingqueue.BillingQueueItem {
 		BillToCustomerID:     pulid.MustNew("cus_"),
 		Number:               "INV-2044",
 		Status:               status,
-		BillType:             billingqueue.BillTypeInvoice,
+		BillType:             billingvocab.BillTypeInvoice,
 		AssignedBillerID:     &billerID,
 		ExceptionReasonCode:  &reason,
 		ExceptionNotes:       "The POD is illegible",

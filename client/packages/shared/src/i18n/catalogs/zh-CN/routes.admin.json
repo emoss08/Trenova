@@ -739,7 +739,7 @@
   "Make primary": "设为主要",
   "Making this the default takes it off the one that had it.": "设为默认后,原来的默认配置会被取消。",
   "Manage SCIM tokens, group-to-role mappings, and provisioning audit events.": "管理 SCIM 令牌、群组到角色的映射，以及预配审计事件。",
-  "Manage automatic routing, document type assignment, and optional AI-assisted extraction. AI toggles here depend on an enabled AI provider that serves document work.": "管理自动路由、文档类型分配以及可选的 AI 辅助提取。此处的 AI 开关取决于已启用且支持文档任务的 AI 提供方。",
+  "Manage automatic routing, document type assignment, and optional AI-assisted extraction. AI toggles here depend on Nova, which runs on the provider chosen for it in Agent Control.": "管理自动分派、文档类型分配，以及可选的 AI 辅助提取。此处的 AI 开关取决于 Nova，Nova 会在智能体控制中为它选择的提供商上运行。",
   "Manage business-unit routing policy used by distance calculations": "管理距离计算所使用的业务单元路线策略",
   "Manage memberships": "管理成员资格",
   "Manage roles and permissions for your organization": "管理贵组织的角色与权限",

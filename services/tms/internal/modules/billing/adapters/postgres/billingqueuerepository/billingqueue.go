@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingqueueprojection"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
@@ -427,7 +428,7 @@ func shipmentTransferSync(
 			Pick(bq.ShipmentID, bq.Status, bq.CreatedAt).
 			Where(
 				bq.ShipmentID.In(shipmentIDs...),
-				bq.BillType.Eq(billingqueue.BillTypeInvoice),
+				bq.BillType.Eq(billingvocab.BillTypeInvoice),
 			).
 			Order(
 				bq.ShipmentID.Asc(),
@@ -558,7 +559,7 @@ func (r *repository) ExistsByShipmentPayerAndType(
 	_ pagination.TenantInfo,
 	shipmentID pulid.ID,
 	payerID pulid.ID,
-	billType billingqueue.BillType,
+	billType billingvocab.BillType,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		bq := billingqueuedb.BillingQueueItems
@@ -587,7 +588,7 @@ func (r *repository) ListActiveInvoiceItemsByShipmentIDs(
 			bq := billingqueuedb.BillingQueueItems
 			items, err := bq.Where(
 				bq.ShipmentID.In(req.ShipmentIDs...),
-				bq.BillType.Eq(billingqueue.BillTypeInvoice),
+				bq.BillType.Eq(billingvocab.BillTypeInvoice),
 				bq.Status.NotIn(billingqueue.StatusPosted, billingqueue.StatusCanceled),
 			).Order(bq.ShipmentID.Asc(), bq.CreatedAt.Asc()).All(ctx, r.db.Keel(ctx))
 			if err != nil {

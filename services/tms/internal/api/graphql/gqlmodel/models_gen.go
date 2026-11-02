@@ -55,6 +55,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
@@ -1804,6 +1805,34 @@ type BenefitPlanInput struct {
 	Status            *domaintypes.Status        `json:"status,omitempty"`
 }
 
+// What an adjustment or memo queue item bills from. Each part is null when it does not apply: a
+// credit-and-rebill item carries its rebill, a memo item its memo.
+type BillingQueueAdjustmentContext struct {
+	Rebill *BillingQueueAdjustmentRebill `json:"rebill,omitempty"`
+	Memo   *BillingQueueAdjustmentMemo   `json:"memo,omitempty"`
+}
+
+// A memo a queue item bills.
+type BillingQueueAdjustmentMemo struct {
+	Kind invoice.MemoKind `json:"kind"`
+	// Who raised the memo; someone else approves and posts it.
+	RaisedByID *string `json:"raisedById,omitempty"`
+}
+
+// The replacement invoice a credit-and-rebill prices, as the adjustment previewed it.
+type BillingQueueAdjustmentRebill struct {
+	// How many lines the replacement invoice bills.
+	ReplacementLineCount int `json:"replacementLineCount"`
+	// The replacement's freight lines summed.
+	SubtotalAmount string `json:"subtotalAmount"`
+	// The replacement's accessorial lines summed.
+	OtherAmount string `json:"otherAmount"`
+	// What the replacement invoice comes to.
+	TotalAmount string `json:"totalAmount"`
+	// The accounting date the replacement invoice takes.
+	AccountingDate int `json:"accountingDate"`
+}
+
 type BillingQueueAssignInput struct {
 	BillerID string `json:"billerId"`
 }
@@ -1832,7 +1861,7 @@ type BillingQueueItem struct {
 	AssignedBillerID          *string                           `json:"assignedBillerId,omitempty"`
 	Number                    string                            `json:"number"`
 	Status                    billingqueue.Status               `json:"status"`
-	BillType                  billingqueue.BillType             `json:"billType"`
+	BillType                  billingvocab.BillType             `json:"billType"`
 	ExceptionReasonCode       *billingqueue.ExceptionReasonCode `json:"exceptionReasonCode,omitempty"`
 	ReviewNotes               string                            `json:"reviewNotes"`
 	ExceptionNotes            string                            `json:"exceptionNotes"`
@@ -1849,14 +1878,14 @@ type BillingQueueItem struct {
 	RebillStrategy            *string                           `json:"rebillStrategy,omitempty"`
 	RequiresReplacementReview bool                              `json:"requiresReplacementReview"`
 	RerateVariancePercent     string                            `json:"rerateVariancePercent"`
-	// Adjustment context contains invoice-adjustment workflow payloads and serialized provider/domain snapshots, so it remains intentionally open-ended.
-	AdjustmentContext map[string]any `json:"adjustmentContext"`
-	Version           int            `json:"version"`
-	CreatedAt         int            `json:"createdAt"`
-	UpdatedAt         int            `json:"updatedAt"`
-	Shipment          *Shipment      `json:"shipment,omitempty"`
-	AssignedBiller    *tenant.User   `json:"assignedBiller,omitempty"`
-	CanceledBy        *tenant.User   `json:"canceledBy,omitempty"`
+	// What an adjustment or memo item bills from: the rebill it prices, or the memo it raises.
+	AdjustmentContext *BillingQueueAdjustmentContext `json:"adjustmentContext"`
+	Version           int                            `json:"version"`
+	CreatedAt         int                            `json:"createdAt"`
+	UpdatedAt         int                            `json:"updatedAt"`
+	Shipment          *Shipment                      `json:"shipment,omitempty"`
+	AssignedBiller    *tenant.User                   `json:"assignedBiller,omitempty"`
+	CanceledBy        *tenant.User                   `json:"canceledBy,omitempty"`
 	// Where the item sits in the queue's working order; the server keeps it current.
 	Lane           billingqueue.Lane            `json:"lane"`
 	HoldReasonCode *billingqueue.HoldReasonCode `json:"holdReasonCode,omitempty"`
@@ -1920,7 +1949,7 @@ type BillingTransferRun struct {
 	ID                          string                    `json:"id"`
 	Status                      billingtransfer.RunStatus `json:"status"`
 	Scope                       billingtransfer.RunScope  `json:"scope"`
-	BillType                    billingqueue.BillType     `json:"billType"`
+	BillType                    billingvocab.BillType     `json:"billType"`
 	MarkCompletedReadyToInvoice bool                      `json:"markCompletedReadyToInvoice"`
 	// The search a scope-AllMatching run replayed to find its shipments.
 	SearchQuery    *string         `json:"searchQuery,omitempty"`
@@ -2939,7 +2968,7 @@ type CreateFuelPurchaseImportInput struct {
 type CreateMemoInput struct {
 	CustomerID string `json:"customerId"`
 	// CreditMemo or DebitMemo.
-	BillType           billingqueue.BillType `json:"billType"`
+	BillType           billingvocab.BillType `json:"billType"`
 	Lines              []*MemoLineInput      `json:"lines"`
 	ReferenceInvoiceID *string               `json:"referenceInvoiceId,omitempty"`
 	Reason             string                `json:"reason"`
@@ -9952,7 +9981,7 @@ type ShipmentBriefingSegment struct {
 
 type ShipmentBulkTransferToBillingInput struct {
 	ShipmentIds []string               `json:"shipmentIds"`
-	BillType    *billingqueue.BillType `json:"billType,omitempty"`
+	BillType    *billingvocab.BillType `json:"billType,omitempty"`
 	// Mark Completed shipments Ready to Invoice before transferring them, when their readiness allows it.
 	MarkCompletedReadyToInvoice *bool `json:"markCompletedReadyToInvoice,omitempty"`
 }
@@ -11283,7 +11312,7 @@ type ShipmentTransferOwnershipInput struct {
 
 type ShipmentTransferToBillingInput struct {
 	ShipmentID string                 `json:"shipmentId"`
-	BillType   *billingqueue.BillType `json:"billType,omitempty"`
+	BillType   *billingvocab.BillType `json:"billType,omitempty"`
 }
 
 type ShipmentTransferToBillingResult struct {
@@ -11496,7 +11525,7 @@ type StartBillingTransferRunInput struct {
 	Query *string `json:"query,omitempty"`
 	// Narrow to Completed or ReadyToInvoice shipments.
 	Status   *ShipmentStatus        `json:"status,omitempty"`
-	BillType *billingqueue.BillType `json:"billType,omitempty"`
+	BillType *billingvocab.BillType `json:"billType,omitempty"`
 	// Mark Completed shipments Ready to Invoice before transferring them, when their readiness allows it.
 	MarkCompletedReadyToInvoice *bool `json:"markCompletedReadyToInvoice,omitempty"`
 }

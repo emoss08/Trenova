@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +22,7 @@ func TestValidateConsolidatedQueueItems(t *testing.T) {
 			ID:         pulid.MustNew("bqi_"),
 			ShipmentID: leg.ID,
 			Status:     billingqueue.StatusApproved,
-			BillType:   billingqueue.BillTypeInvoice,
+			BillType:   billingvocab.BillTypeInvoice,
 		}
 	}
 
@@ -98,7 +99,7 @@ func TestValidateConsolidatedQueueItems(t *testing.T) {
 			name: "credit memo item",
 			items: func() []*billingqueue.BillingQueueItem {
 				memo := approved(legB)
-				memo.BillType = billingqueue.BillTypeCreditMemo
+				memo.BillType = billingvocab.BillTypeCreditMemo
 				return []*billingqueue.BillingQueueItem{approved(legA), memo}
 			},
 			wantErr: true,

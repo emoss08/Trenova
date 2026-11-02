@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingqueuerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/billingcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/userrepository"
@@ -335,7 +335,7 @@ func TestBulkTransferToBillingIntegration_QueriesPerShipment(t *testing.T) {
 		h.ctx,
 		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs:                    ids,
-			BillType:                       billingqueue.BillTypeInvoice,
+			BillType:                       billingvocab.BillTypeInvoice,
 			MarkCompletedReadyToInvoice:    true,
 			SuppressExceptionNotifications: true,
 		},

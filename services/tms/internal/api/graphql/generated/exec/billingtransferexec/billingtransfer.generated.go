@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -96,7 +97,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.BillType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐBillType),
+				Marshal: gqlexec.Marshal(marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingvocabᚐBillType),
 			},
 			{
 				Name:     "markCompletedReadyToInvoice",
@@ -842,7 +843,7 @@ func unmarshalInputStartBillingTransferRunInput(ctx context.Context, ec *gqlexec
 			it.Status = data
 		case "billType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billType"))
-			data, err := unmarshalOBillType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐBillType(ctx, ec, v)
+			data, err := unmarshalOBillType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingvocabᚐBillType(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -890,12 +891,12 @@ func unmarshalNStartBillingTransferRunInput2githubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOBillType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐBillType(ctx context.Context, ec *gqlexec.Exec, v any) (*billingqueue.BillType, error) {
+func unmarshalOBillType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingvocabᚐBillType(ctx context.Context, ec *gqlexec.Exec, v any) (*billingvocab.BillType, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := billingqueue.BillType(tmp)
+	res := billingvocab.BillType(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -946,7 +947,7 @@ func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐBillType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v billingqueue.BillType) graphql.Marshaler {
+func marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingvocabᚐBillType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v billingvocab.BillType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

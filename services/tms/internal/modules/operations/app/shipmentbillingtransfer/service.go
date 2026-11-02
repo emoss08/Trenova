@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -345,7 +346,7 @@ func (s *Service) autoTransferToBillingQueue(
 ) {
 	if _, err := s.TransferToBilling(ctx, &shipmentbillingports.TransferShipmentToBillingRequest{
 		ShipmentID: entity.ID,
-		BillType:   billingqueue.BillTypeInvoice,
+		BillType:   billingvocab.BillTypeInvoice,
 	}, actor); err != nil {
 		s.l.Warn("failed to auto-transfer shipment to billing queue",
 			zap.String("shipmentId", entity.ID.String()),
@@ -737,7 +738,7 @@ func (s *Service) attemptBillingTransfer(
 
 	billType := p.BillType
 	if billType == "" {
-		billType = billingqueue.BillTypeInvoice
+		billType = billingvocab.BillTypeInvoice
 	}
 
 	transferred, err := s.billingQueueService.TransferToBillingItems(

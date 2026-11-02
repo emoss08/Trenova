@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
@@ -33,6 +35,9 @@ import (
 var Shard = &gqlexec.Shard{
 	Name: "shipment",
 	Objects: []*gqlexec.Object{
+		{Name: "BillingQueueAdjustmentContext", Implementors: []string{"BillingQueueAdjustmentContext"}},
+		{Name: "BillingQueueAdjustmentMemo", Implementors: []string{"BillingQueueAdjustmentMemo"}},
+		{Name: "BillingQueueAdjustmentRebill", Implementors: []string{"BillingQueueAdjustmentRebill"}},
 		{Name: "BillingQueueItem", Implementors: []string{"BillingQueueItem"}},
 		{Name: "CarrierAssignment", Implementors: []string{"CarrierAssignment"}},
 		{Name: "CarrierAssignmentAccessorial", Implementors: []string{"CarrierAssignmentAccessorial"}},
@@ -132,11 +137,106 @@ var Shard = &gqlexec.Shard{
 		{Name: "TrackingEvent", Implementors: []string{"TrackingEvent"}},
 	},
 	Fields: []gqlexec.Fields{
+		{Object: "BillingQueueAdjustmentContext", Fields: []*gqlexec.Field{
+			{
+				Name:      "rebill",
+				HasChild:  true,
+				ChildType: "BillingQueueAdjustmentRebill",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueAdjustmentContext)
+					return obj.Rebill, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOBillingQueueAdjustmentRebill2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueAdjustmentRebill),
+			},
+			{
+				Name:      "memo",
+				HasChild:  true,
+				ChildType: "BillingQueueAdjustmentMemo",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueAdjustmentContext)
+					return obj.Memo, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOBillingQueueAdjustmentMemo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueAdjustmentMemo),
+			},
+		}},
+		{Object: "BillingQueueAdjustmentMemo", Fields: []*gqlexec.Field{
+			{
+				Name:     "kind",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueAdjustmentMemo)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoiceMemoKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐMemoKind),
+			},
+			{
+				Name:     "raisedById",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueAdjustmentMemo)
+					return obj.RaisedByID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+		}},
+		{Object: "BillingQueueAdjustmentRebill", Fields: []*gqlexec.Field{
+			{
+				Name:     "replacementLineCount",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueAdjustmentRebill)
+					return obj.ReplacementLineCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "subtotalAmount",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueAdjustmentRebill)
+					return obj.SubtotalAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "otherAmount",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueAdjustmentRebill)
+					return obj.OtherAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "totalAmount",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueAdjustmentRebill)
+					return obj.TotalAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "accountingDate",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueAdjustmentRebill)
+					return obj.AccountingDate, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+		}},
 		{Object: "BillingQueueItem", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.ID, nil
@@ -146,7 +246,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.OrganizationID, nil
@@ -156,7 +256,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.BusinessUnitID, nil
@@ -165,7 +265,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "shipmentId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.ShipmentID, nil
@@ -174,7 +274,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "orderId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.OrderID, nil
@@ -184,7 +284,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "billToCustomerId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.BillToCustomerID, nil
@@ -194,7 +294,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "allocatedTotalAmount",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.AllocatedTotalAmount, nil
@@ -213,7 +313,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "assignedBillerId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.AssignedBillerID, nil
@@ -223,7 +323,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "number",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.Number, nil
@@ -233,7 +333,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.Status, nil
@@ -243,16 +343,16 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "billType",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.BillType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐBillType),
+				Marshal: gqlexec.Marshal(marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingvocabᚐBillType),
 			},
 			{
 				Name:     "exceptionReasonCode",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.ExceptionReasonCode, nil
@@ -262,7 +362,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reviewNotes",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.ReviewNotes, nil
@@ -272,7 +372,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "exceptionNotes",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.ExceptionNotes, nil
@@ -281,7 +381,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "reviewStartedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.ReviewStartedAt, nil
@@ -290,7 +390,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "reviewCompletedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.ReviewCompletedAt, nil
@@ -299,7 +399,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "canceledById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.CanceledByID, nil
@@ -308,7 +408,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "canceledAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.CanceledAt, nil
@@ -318,7 +418,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cancelReason",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.CancelReason, nil
@@ -328,7 +428,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isAdjustmentOrigin",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.IsAdjustmentOrigin, nil
@@ -337,7 +437,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "sourceInvoiceId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.SourceInvoiceID, nil
@@ -346,7 +446,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "sourceInvoiceAdjustmentId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.SourceInvoiceAdjustmentID, nil
@@ -355,7 +455,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "sourceCreditMemoInvoiceId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.SourceCreditMemoInvoiceID, nil
@@ -364,7 +464,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "correctionGroupId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.CorrectionGroupID, nil
@@ -373,7 +473,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "rebillStrategy",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.RebillStrategy, nil
@@ -383,7 +483,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "requiresReplacementReview",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.RequiresReplacementReview, nil
@@ -393,7 +493,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rerateVariancePercent",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.RerateVariancePercent, nil
@@ -401,19 +501,20 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
 			{
-				Name:     "adjustmentContext",
-				NonNull:  true,
-				ChildErr: errNoChild8,
+				Name:      "adjustmentContext",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "BillingQueueAdjustmentContext",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.AdjustmentContext, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNJSON2map),
+				Marshal: gqlexec.Marshal(marshalNBillingQueueAdjustmentContext2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueAdjustmentContext),
 			},
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.Version, nil
@@ -423,7 +524,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.CreatedAt, nil
@@ -433,7 +534,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.UpdatedAt, nil
@@ -492,7 +593,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "poNumber",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.PoNumber, nil
@@ -510,7 +611,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "agentSummary",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.AgentSummary, nil
@@ -519,7 +620,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "agentReviewedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.AgentReviewedAt, nil
@@ -541,7 +642,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.ID, nil
@@ -551,7 +652,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.BusinessUnitID, nil
@@ -561,7 +662,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.OrganizationID, nil
@@ -571,7 +672,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentMoveId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.ShipmentMoveID, nil
@@ -581,7 +682,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "carrierId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.CarrierID, nil
@@ -613,7 +714,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return gqlexec.Resolver[CarrierAssignmentResolver](ec, "CarrierAssignment@shipment").BaseRate(ctx, obj)
@@ -625,7 +726,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return gqlexec.Resolver[CarrierAssignmentResolver](ec, "CarrierAssignment@shipment").BaseAmount(ctx, obj)
@@ -637,7 +738,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return gqlexec.Resolver[CarrierAssignmentResolver](ec, "CarrierAssignment@shipment").FuelSurcharge(ctx, obj)
@@ -649,7 +750,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return gqlexec.Resolver[CarrierAssignmentResolver](ec, "CarrierAssignment@shipment").AccessorialTotal(ctx, obj)
@@ -661,7 +762,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return gqlexec.Resolver[CarrierAssignmentResolver](ec, "CarrierAssignment@shipment").TotalCost(ctx, obj)
@@ -671,7 +772,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "currencyCode",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.CurrencyCode, nil
@@ -680,7 +781,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "proNumber",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.ProNumber, nil
@@ -689,7 +790,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "externalDriverName",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.ExternalDriverName, nil
@@ -698,7 +799,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "externalDriverPhone",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.ExternalDriverPhone, nil
@@ -707,7 +808,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "externalTractorNumber",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.ExternalTractorNumber, nil
@@ -716,7 +817,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "externalTrailerNumber",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.ExternalTrailerNumber, nil
@@ -725,7 +826,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "assignedById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.AssignedByID, nil
@@ -734,7 +835,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "confirmedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.ConfirmedAt, nil
@@ -743,7 +844,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "canceledAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.CanceledAt, nil
@@ -752,7 +853,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "cancellationReason",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.CancellationReason, nil
@@ -762,7 +863,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.Version, nil
@@ -772,7 +873,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.CreatedAt, nil
@@ -782,7 +883,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.UpdatedAt, nil
@@ -814,7 +915,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignmentAccessorial)
 					return obj.ID, nil
@@ -824,7 +925,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignmentAccessorial)
 					return obj.BusinessUnitID, nil
@@ -834,7 +935,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignmentAccessorial)
 					return obj.OrganizationID, nil
@@ -844,7 +945,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "carrierAssignmentId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignmentAccessorial)
 					return obj.CarrierAssignmentID, nil
@@ -853,7 +954,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "accessorialChargeId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignmentAccessorial)
 					return obj.AccessorialChargeID, nil
@@ -863,7 +964,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "description",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignmentAccessorial)
 					return obj.Description, nil
@@ -875,7 +976,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignmentAccessorial)
 					return gqlexec.Resolver[CarrierAssignmentAccessorialResolver](ec, "CarrierAssignmentAccessorial@shipment").Amount(ctx, obj)
@@ -885,7 +986,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignmentAccessorial)
 					return obj.Version, nil
@@ -895,7 +996,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignmentAccessorial)
 					return obj.CreatedAt, nil
@@ -905,7 +1006,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.CarrierAssignmentAccessorial)
 					return obj.UpdatedAt, nil
@@ -917,7 +1018,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ChargeAllocation)
 					return obj.ID, nil
@@ -927,7 +1028,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ChargeAllocation)
 					return obj.OrganizationID, nil
@@ -937,7 +1038,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ChargeAllocation)
 					return obj.BusinessUnitID, nil
@@ -946,7 +1047,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "shipmentId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ChargeAllocation)
 					return obj.ShipmentID, nil
@@ -955,7 +1056,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "additionalChargeId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ChargeAllocation)
 					return obj.AdditionalChargeID, nil
@@ -964,7 +1065,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "orderChargeId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ChargeAllocation)
 					return obj.OrderChargeID, nil
@@ -984,7 +1085,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "billToCustomerId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ChargeAllocation)
 					return obj.BillToCustomerID, nil
@@ -1005,7 +1106,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "percent",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ChargeAllocation)
 					return gqlexec.Resolver[ChargeAllocationResolver](ec, "ChargeAllocation@shipment").Percent(ctx, obj)
@@ -1016,7 +1117,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "amount",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ChargeAllocation)
 					return gqlexec.Resolver[ChargeAllocationResolver](ec, "ChargeAllocation@shipment").Amount(ctx, obj)
@@ -1026,7 +1127,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "sequence",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ChargeAllocation)
 					return obj.Sequence, nil
@@ -1035,7 +1136,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "invoiceId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ChargeAllocation)
 					return obj.InvoiceID, nil
@@ -1044,7 +1145,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "invoicedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ChargeAllocation)
 					return obj.InvoicedAt, nil
@@ -1054,7 +1155,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ChargeAllocation)
 					return obj.Version, nil
@@ -1064,7 +1165,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ChargeAllocation)
 					return obj.CreatedAt, nil
@@ -1074,7 +1175,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ChargeAllocation)
 					return obj.UpdatedAt, nil
@@ -1096,7 +1197,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "started",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.JurisdictionMilesBackfillResult)
 					return obj.Started, nil
@@ -1106,7 +1207,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "dryRun",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.JurisdictionMilesBackfillResult)
 					return obj.DryRun, nil
@@ -1116,7 +1217,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "unattributedMoves",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.JurisdictionMilesBackfillResult)
 					return obj.UnattributedMoves, nil
@@ -1126,7 +1227,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "unattributedMiles",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.JurisdictionMilesBackfillResult)
 					return obj.UnattributedMiles, nil
@@ -1135,7 +1236,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "workflowId",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.JurisdictionMilesBackfillResult)
 					return obj.WorkflowID, nil
@@ -1395,7 +1496,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "deleteShipmentComment",
 				NonNull:    true,
 				IsResolver: true,
-				ChildErr:   errNoChild7,
+				ChildErr:   errNoChild9,
 				Args:       field_Mutation_deleteShipmentComment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
@@ -1654,7 +1755,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.ID, nil
@@ -1686,7 +1787,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.BusinessUnitID, nil
@@ -1696,7 +1797,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.OrganizationID, nil
@@ -1705,7 +1806,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "sourceDocumentId",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.SourceDocumentID, nil
@@ -1715,7 +1816,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "serviceTypeId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.ServiceTypeID, nil
@@ -1725,7 +1826,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentTypeId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.ShipmentTypeID, nil
@@ -1735,7 +1836,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "customerId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.CustomerID, nil
@@ -1744,7 +1845,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "billToCustomerId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.BillToCustomerID, nil
@@ -1763,7 +1864,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "tractorTypeId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.TractorTypeID, nil
@@ -1772,7 +1873,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "trailerTypeId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.TrailerTypeID, nil
@@ -1781,7 +1882,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "ownerId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.OwnerID, nil
@@ -1790,7 +1891,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "enteredById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.EnteredByID, nil
@@ -1799,7 +1900,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "canceledById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.CanceledByID, nil
@@ -1808,7 +1909,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "formulaTemplateId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.FormulaTemplateID, nil
@@ -1817,7 +1918,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "consolidationGroupId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.ConsolidationGroupID, nil
@@ -1826,7 +1927,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "orderId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.OrderID, nil
@@ -1837,7 +1938,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "orderNumber",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild2,
+				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return gqlexec.Resolver[ShipmentResolver](ec, "Shipment@shipment").OrderNumber(ctx, obj)
@@ -1898,7 +1999,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "proNumber",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.ProNumber, nil
@@ -1907,7 +2008,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "bol",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.BOL, nil
@@ -1916,7 +2017,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "externalReference",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.ExternalReference, nil
@@ -1926,7 +2027,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cancelReason",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.CancelReason, nil
@@ -1936,7 +2037,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "otherChargeAmount",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.OtherChargeAmount, nil
@@ -1946,7 +2047,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "freightChargeAmount",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.FreightChargeAmount, nil
@@ -1956,7 +2057,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "tariffInputs",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.TariffInputs, nil
@@ -1976,7 +2077,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalChargeAmount",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.TotalChargeAmount, nil
@@ -1985,7 +2086,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "pieces",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.Pieces, nil
@@ -1994,7 +2095,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "weight",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.Weight, nil
@@ -2003,7 +2104,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "temperatureMin",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.TemperatureMin, nil
@@ -2012,7 +2113,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "temperatureMax",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.TemperatureMax, nil
@@ -2021,7 +2122,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "actualDeliveryDate",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.ActualDeliveryDate, nil
@@ -2030,7 +2131,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "actualShipDate",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.ActualShipDate, nil
@@ -2039,7 +2140,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "canceledAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.CanceledAt, nil
@@ -2048,7 +2149,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "billingTransferStatus",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.BillingTransferStatus, nil
@@ -2057,7 +2158,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "transferredToBillingAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.TransferredToBillingAt, nil
@@ -2066,7 +2167,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "markedReadyToBillAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.MarkedReadyToBillAt, nil
@@ -2075,7 +2176,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "billedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.BilledAt, nil
@@ -2085,7 +2186,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "fuelSurchargeLocked",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.FuelSurchargeLocked, nil
@@ -2105,7 +2206,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "autoRated",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.AutoRated, nil
@@ -2114,7 +2215,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "autoRatedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.AutoRatedAt, nil
@@ -2123,7 +2224,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "rateAgreementId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.RateAgreementID, nil
@@ -2132,7 +2233,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "rateAgreementRuleId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.RateAgreementRuleID, nil
@@ -2141,7 +2242,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "rateQuoteId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.RateQuoteID, nil
@@ -2150,7 +2251,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "rateOverrideAmount",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.RateOverrideAmount, nil
@@ -2159,7 +2260,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "rateOverrideReason",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.RateOverrideReason, nil
@@ -2168,7 +2269,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "rateOverrideAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.RateOverrideAt, nil
@@ -2178,7 +2279,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rateLocked",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.RateLocked, nil
@@ -2188,7 +2289,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.Version, nil
@@ -2198,7 +2299,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.CreatedAt, nil
@@ -2208,7 +2309,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.UpdatedAt, nil
@@ -2317,7 +2418,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAccessorialCharge)
 					return obj.ID, nil
@@ -2327,7 +2428,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAccessorialCharge)
 					return obj.BusinessUnitID, nil
@@ -2337,7 +2438,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAccessorialCharge)
 					return obj.OrganizationID, nil
@@ -2347,7 +2448,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "code",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAccessorialCharge)
 					return obj.Code, nil
@@ -2357,7 +2458,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "description",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAccessorialCharge)
 					return obj.Description, nil
@@ -2367,7 +2468,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild24,
+				ChildErr: errNoChild25,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAccessorialCharge)
 					return obj.Status, nil
@@ -2377,7 +2478,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "method",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAccessorialCharge)
 					return obj.Method, nil
@@ -2387,7 +2488,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rateUnit",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAccessorialCharge)
 					return obj.RateUnit, nil
@@ -2397,7 +2498,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "amount",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAccessorialCharge)
 					return obj.Amount, nil
@@ -2407,7 +2508,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAccessorialCharge)
 					return obj.Version, nil
@@ -2417,7 +2518,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAccessorialCharge)
 					return obj.CreatedAt, nil
@@ -2427,7 +2528,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAccessorialCharge)
 					return obj.UpdatedAt, nil
@@ -2439,7 +2540,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "count",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentActiveShipments)
 					return obj.Count, nil
@@ -2449,7 +2550,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "changeFromYesterday",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentActiveShipments)
 					return obj.ChangeFromYesterday, nil
@@ -2483,7 +2584,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "inTransit",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentActiveShipmentsBreakdown)
 					return obj.InTransit, nil
@@ -2493,7 +2594,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "atRisk",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentActiveShipmentsBreakdown)
 					return obj.AtRisk, nil
@@ -2503,7 +2604,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "loading",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentActiveShipmentsBreakdown)
 					return obj.Loading, nil
@@ -2513,7 +2614,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "done",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentActiveShipmentsBreakdown)
 					return obj.Done, nil
@@ -2524,7 +2625,7 @@ var Shard = &gqlexec.Shard{
 		{Object: "ShipmentAdditionalCharge", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
 					return obj.ID, nil
@@ -2534,7 +2635,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
 					return obj.BusinessUnitID, nil
@@ -2544,7 +2645,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
 					return obj.OrganizationID, nil
@@ -2554,7 +2655,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
 					return obj.ShipmentID, nil
@@ -2564,7 +2665,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "accessorialChargeId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
 					return obj.AccessorialChargeID, nil
@@ -2574,7 +2675,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isSystemGenerated",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
 					return obj.IsSystemGenerated, nil
@@ -2584,7 +2685,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "method",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
 					return obj.Method, nil
@@ -2594,7 +2695,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "amount",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
 					return obj.Amount, nil
@@ -2604,7 +2705,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "unit",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
 					return obj.Unit, nil
@@ -2613,7 +2714,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "fuelSurchargeProgramId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
 					return obj.FuelSurchargeProgramID, nil
@@ -2622,7 +2723,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "fuelSurchargeDetail",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
 					return obj.FuelSurchargeDetail, nil
@@ -2632,7 +2733,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isDetention",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
 					return obj.IsDetention, nil
@@ -2642,7 +2743,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isTariff",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
 					return obj.IsTariff, nil
@@ -2652,7 +2753,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "label",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
 					return obj.Label, nil
@@ -2661,7 +2762,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "quantity",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
 					return obj.Quantity, nil
@@ -2670,7 +2771,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "rate",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
 					return obj.Rate, nil
@@ -2680,7 +2781,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rateUnit",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
 					return obj.RateUnit, nil
@@ -2690,7 +2791,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
 					return obj.Version, nil
@@ -2700,7 +2801,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
 					return obj.CreatedAt, nil
@@ -2710,7 +2811,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
 					return obj.UpdatedAt, nil
@@ -2732,7 +2833,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "page",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAnalytics)
 					return obj.Page, nil
@@ -2873,7 +2974,7 @@ var Shard = &gqlexec.Shard{
 		{Object: "ShipmentAssignment", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignment)
 					return obj.ID, nil
@@ -2883,7 +2984,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignment)
 					return obj.BusinessUnitID, nil
@@ -2893,7 +2994,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignment)
 					return obj.OrganizationID, nil
@@ -2902,7 +3003,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "shipmentMoveId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignment)
 					return obj.ShipmentMoveID, nil
@@ -2911,7 +3012,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "primaryWorkerId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignment)
 					return obj.PrimaryWorkerID, nil
@@ -2920,7 +3021,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "tractorId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignment)
 					return obj.TractorID, nil
@@ -2929,7 +3030,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "trailerId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignment)
 					return obj.TrailerID, nil
@@ -2938,7 +3039,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "secondaryWorkerId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignment)
 					return obj.SecondaryWorkerID, nil
@@ -2948,7 +3049,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild25,
+				ChildErr: errNoChild26,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignment)
 					return obj.Status, nil
@@ -2957,7 +3058,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "archivedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignment)
 					return obj.ArchivedAt, nil
@@ -2967,7 +3068,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignment)
 					return obj.Version, nil
@@ -2977,7 +3078,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignment)
 					return obj.CreatedAt, nil
@@ -2987,7 +3088,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignment)
 					return obj.UpdatedAt, nil
@@ -3039,7 +3140,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignmentEvent)
 					return obj.ID, nil
@@ -3049,7 +3150,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignmentEvent)
 					return obj.OrganizationID, nil
@@ -3059,7 +3160,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignmentEvent)
 					return obj.BusinessUnitID, nil
@@ -3069,7 +3170,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignmentEvent)
 					return obj.ShipmentID, nil
@@ -3079,7 +3180,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "type",
 				NonNull:  true,
-				ChildErr: errNoChild26,
+				ChildErr: errNoChild27,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignmentEvent)
 					return obj.Type, nil
@@ -3089,7 +3190,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "severity",
 				NonNull:  true,
-				ChildErr: errNoChild27,
+				ChildErr: errNoChild28,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignmentEvent)
 					return obj.Severity, nil
@@ -3099,7 +3200,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "actorType",
 				NonNull:  true,
-				ChildErr: errNoChild28,
+				ChildErr: errNoChild29,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignmentEvent)
 					return obj.ActorType, nil
@@ -3108,7 +3209,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "actorId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignmentEvent)
 					return obj.ActorID, nil
@@ -3118,7 +3219,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "actorLabel",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignmentEvent)
 					return obj.ActorLabel, nil
@@ -3128,7 +3229,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "summary",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignmentEvent)
 					return obj.Summary, nil
@@ -3138,7 +3239,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "metadata",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignmentEvent)
 					return obj.Metadata, nil
@@ -3148,7 +3249,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "occurredAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignmentEvent)
 					return obj.OccurredAt, nil
@@ -3157,7 +3258,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "correlationId",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignmentEvent)
 					return obj.CorrelationID, nil
@@ -3186,7 +3287,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "moveId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignmentEvent)
 					return obj.MoveID, nil
@@ -3195,7 +3296,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "assignmentId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignmentEvent)
 					return obj.AssignmentID, nil
@@ -3204,7 +3305,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "primaryWorkerId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignmentEvent)
 					return obj.PrimaryWorkerID, nil
@@ -3213,7 +3314,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "secondaryWorkerId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignmentEvent)
 					return obj.SecondaryWorkerID, nil
@@ -3222,7 +3323,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "tractorId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignmentEvent)
 					return obj.TractorID, nil
@@ -3231,7 +3332,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "trailerId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignmentEvent)
 					return obj.TrailerID, nil
@@ -3240,7 +3341,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "driverName",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAssignmentEvent)
 					return obj.DriverName, nil
@@ -3252,7 +3353,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "count",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAtRisk)
 					return obj.Count, nil
@@ -3262,7 +3363,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "delta",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAtRisk)
 					return obj.Delta, nil
@@ -3272,7 +3373,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "etaSlip",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAtRisk)
 					return obj.EtaSlip, nil
@@ -3282,7 +3383,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "weather",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAtRisk)
 					return obj.Weather, nil
@@ -3292,7 +3393,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reefer",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAtRisk)
 					return obj.Reefer, nil
@@ -3328,7 +3429,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "axle",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAxleWeight)
 					return obj.Axle, nil
@@ -3338,7 +3439,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "weight",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAxleWeight)
 					return obj.Weight, nil
@@ -3348,7 +3449,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "limit",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAxleWeight)
 					return obj.Limit, nil
@@ -3358,7 +3459,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "percentage",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAxleWeight)
 					return obj.Percentage, nil
@@ -3368,7 +3469,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "compliant",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAxleWeight)
 					return obj.Compliant, nil
@@ -3380,7 +3481,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "documentId",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingIneligibleDocument)
 					return obj.DocumentID, nil
@@ -3390,7 +3491,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "standing",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingIneligibleDocument)
 					return obj.Standing, nil
@@ -3402,7 +3503,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "payerId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingPayerReadiness)
 					return obj.PayerID, nil
@@ -3412,7 +3513,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "payerName",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingPayerReadiness)
 					return obj.PayerName, nil
@@ -3422,7 +3523,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "payerCode",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingPayerReadiness)
 					return obj.PayerCode, nil
@@ -3432,7 +3533,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isPrimary",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingPayerReadiness)
 					return obj.IsPrimary, nil
@@ -3442,7 +3543,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shareAmount",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingPayerReadiness)
 					return obj.ShareAmount, nil
@@ -3452,7 +3553,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "creditStatus",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingPayerReadiness)
 					return obj.CreditStatus, nil
@@ -3462,7 +3563,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "creditHold",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingPayerReadiness)
 					return obj.CreditHold, nil
@@ -3472,7 +3573,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shouldAutoApproveBilling",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingPayerReadiness)
 					return obj.ShouldAutoApproveBilling, nil
@@ -3484,7 +3585,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentId",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingReadiness)
 					return obj.ShipmentID, nil
@@ -3570,7 +3671,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "canMarkReadyToInvoice",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingReadiness)
 					return obj.CanMarkReadyToInvoice, nil
@@ -3580,7 +3681,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shouldAutoMarkReadyToInvoice",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingReadiness)
 					return obj.ShouldAutoMarkReadyToInvoice, nil
@@ -3590,7 +3691,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shouldAutoTransferToBilling",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingReadiness)
 					return obj.ShouldAutoTransferToBilling, nil
@@ -3600,7 +3701,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shouldAutoApproveBilling",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingReadiness)
 					return obj.ShouldAutoApproveBilling, nil
@@ -3623,7 +3724,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentBillingRequirementEnforcement",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingReadinessPolicy)
 					return obj.ShipmentBillingRequirementEnforcement, nil
@@ -3633,7 +3734,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rateValidationEnforcement",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingReadinessPolicy)
 					return obj.RateValidationEnforcement, nil
@@ -3643,7 +3744,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "billingExceptionDisposition",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingReadinessPolicy)
 					return obj.BillingExceptionDisposition, nil
@@ -3653,7 +3754,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "notifyOnBillingExceptions",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingReadinessPolicy)
 					return obj.NotifyOnBillingExceptions, nil
@@ -3663,7 +3764,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "readyToBillAssignmentMode",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingReadinessPolicy)
 					return obj.ReadyToBillAssignmentMode, nil
@@ -3673,7 +3774,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "billingQueueTransferMode",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingReadinessPolicy)
 					return obj.BillingQueueTransferMode, nil
@@ -3685,7 +3786,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "documentTypeId",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingRequirement)
 					return obj.DocumentTypeID, nil
@@ -3695,7 +3796,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "documentTypeCode",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingRequirement)
 					return obj.DocumentTypeCode, nil
@@ -3705,7 +3806,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "documentTypeName",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingRequirement)
 					return obj.DocumentTypeName, nil
@@ -3715,7 +3816,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "satisfied",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingRequirement)
 					return obj.Satisfied, nil
@@ -3725,7 +3826,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "documentCount",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingRequirement)
 					return obj.DocumentCount, nil
@@ -3735,7 +3836,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "documentIds",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingRequirement)
 					return obj.DocumentIds, nil
@@ -3758,7 +3859,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "payerId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingSplitSummary)
 					return obj.PayerID, nil
@@ -3768,7 +3869,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "payerName",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingSplitSummary)
 					return obj.PayerName, nil
@@ -3778,7 +3879,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "payerCode",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingSplitSummary)
 					return obj.PayerCode, nil
@@ -3788,7 +3889,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isPrimary",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingSplitSummary)
 					return obj.IsPrimary, nil
@@ -3798,7 +3899,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "freightAmount",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingSplitSummary)
 					return obj.FreightAmount, nil
@@ -3808,7 +3909,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "accessorialAmount",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingSplitSummary)
 					return obj.AccessorialAmount, nil
@@ -3818,7 +3919,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalAmount",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingSplitSummary)
 					return obj.TotalAmount, nil
@@ -3828,7 +3929,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isSplit",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingSplitSummary)
 					return obj.IsSplit, nil
@@ -3840,7 +3941,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "ids",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingTransferCandidateIds)
 					return obj.Ids, nil
@@ -3850,7 +3951,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCount",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingTransferCandidateIds)
 					return obj.TotalCount, nil
@@ -3860,7 +3961,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "truncated",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingTransferCandidateIds)
 					return obj.Truncated, nil
@@ -3872,7 +3973,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "field",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingValidation)
 					return obj.Field, nil
@@ -3882,7 +3983,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "code",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingValidation)
 					return obj.Code, nil
@@ -3892,7 +3993,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "message",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingValidation)
 					return obj.Message, nil
@@ -3904,7 +4005,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "code",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingWarning)
 					return obj.Code, nil
@@ -3914,7 +4015,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "message",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingWarning)
 					return obj.Message, nil
@@ -3935,7 +4036,7 @@ var Shard = &gqlexec.Shard{
 		{Object: "ShipmentBillingWarningContext", Fields: []*gqlexec.Field{
 			{
 				Name:     "documentTypeId",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingWarningContext)
 					return obj.DocumentTypeID, nil
@@ -3944,7 +4045,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "documentTypeCode",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingWarningContext)
 					return obj.DocumentTypeCode, nil
@@ -3953,7 +4054,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "documentTypeName",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingWarningContext)
 					return obj.DocumentTypeName, nil
@@ -3962,7 +4063,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "documentCount",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingWarningContext)
 					return obj.DocumentCount, nil
@@ -3971,7 +4072,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "requirementCount",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingWarningContext)
 					return obj.RequirementCount, nil
@@ -3980,7 +4081,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "missingRequirementCount",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingWarningContext)
 					return obj.MissingRequirementCount, nil
@@ -3989,7 +4090,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "serviceFailureIds",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingWarningContext)
 					return obj.ServiceFailureIds, nil
@@ -3998,7 +4099,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "unresolvedCount",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingWarningContext)
 					return obj.UnresolvedCount, nil
@@ -4021,7 +4122,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCount",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBulkTransferToBillingResponse)
 					return obj.TotalCount, nil
@@ -4031,7 +4132,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "successCount",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBulkTransferToBillingResponse)
 					return obj.SuccessCount, nil
@@ -4041,7 +4142,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "errorCount",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBulkTransferToBillingResponse)
 					return obj.ErrorCount, nil
@@ -4053,7 +4154,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBulkTransferToBillingResult)
 					return obj.ShipmentID, nil
@@ -4062,7 +4163,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "proNumber",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBulkTransferToBillingResult)
 					return obj.ProNumber, nil
@@ -4072,7 +4173,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "success",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBulkTransferToBillingResult)
 					return obj.Success, nil
@@ -4082,7 +4183,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "markedReadyToInvoice",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBulkTransferToBillingResult)
 					return obj.MarkedReadyToInvoice, nil
@@ -4112,7 +4213,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "failureCode",
-				ChildErr: errNoChild30,
+				ChildErr: errNoChild31,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBulkTransferToBillingResult)
 					return obj.FailureCode, nil
@@ -4121,7 +4222,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "error",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBulkTransferToBillingResult)
 					return obj.Error, nil
@@ -4155,7 +4256,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCarrierEvent)
 					return obj.ID, nil
@@ -4165,7 +4266,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCarrierEvent)
 					return obj.OrganizationID, nil
@@ -4175,7 +4276,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCarrierEvent)
 					return obj.BusinessUnitID, nil
@@ -4185,7 +4286,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCarrierEvent)
 					return obj.ShipmentID, nil
@@ -4195,7 +4296,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "type",
 				NonNull:  true,
-				ChildErr: errNoChild26,
+				ChildErr: errNoChild27,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCarrierEvent)
 					return obj.Type, nil
@@ -4205,7 +4306,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "severity",
 				NonNull:  true,
-				ChildErr: errNoChild27,
+				ChildErr: errNoChild28,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCarrierEvent)
 					return obj.Severity, nil
@@ -4215,7 +4316,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "actorType",
 				NonNull:  true,
-				ChildErr: errNoChild28,
+				ChildErr: errNoChild29,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCarrierEvent)
 					return obj.ActorType, nil
@@ -4224,7 +4325,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "actorId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCarrierEvent)
 					return obj.ActorID, nil
@@ -4234,7 +4335,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "actorLabel",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCarrierEvent)
 					return obj.ActorLabel, nil
@@ -4244,7 +4345,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "summary",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCarrierEvent)
 					return obj.Summary, nil
@@ -4254,7 +4355,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "metadata",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCarrierEvent)
 					return obj.Metadata, nil
@@ -4264,7 +4365,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "occurredAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCarrierEvent)
 					return obj.OccurredAt, nil
@@ -4273,7 +4374,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "correlationId",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCarrierEvent)
 					return obj.CorrelationID, nil
@@ -4302,7 +4403,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "moveId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCarrierEvent)
 					return obj.MoveID, nil
@@ -4311,7 +4412,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "carrierId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCarrierEvent)
 					return obj.CarrierID, nil
@@ -4320,7 +4421,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "carrierName",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCarrierEvent)
 					return obj.CarrierName, nil
@@ -4329,7 +4430,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCost",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCarrierEvent)
 					return obj.TotalCost, nil
@@ -4338,7 +4439,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "reason",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCarrierEvent)
 					return obj.Reason, nil
@@ -4347,7 +4448,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "proNumber",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCarrierEvent)
 					return obj.ProNumber, nil
@@ -4359,7 +4460,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.ID, nil
@@ -4368,7 +4469,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "businessUnitId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.BusinessUnitID, nil
@@ -4377,7 +4478,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "organizationId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.OrganizationID, nil
@@ -4387,7 +4488,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.ShipmentID, nil
@@ -4396,7 +4497,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "userId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.UserID, nil
@@ -4405,7 +4506,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "parentCommentId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.ParentCommentID, nil
@@ -4415,7 +4516,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "replyCount",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.ReplyCount, nil
@@ -4425,7 +4526,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "comment",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.Comment, nil
@@ -4434,7 +4535,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "body",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.Body, nil
@@ -4444,7 +4545,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "type",
 				NonNull:  true,
-				ChildErr: errNoChild31,
+				ChildErr: errNoChild32,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.Type, nil
@@ -4454,7 +4555,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "visibility",
 				NonNull:  true,
-				ChildErr: errNoChild32,
+				ChildErr: errNoChild33,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.Visibility, nil
@@ -4464,7 +4565,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "priority",
 				NonNull:  true,
-				ChildErr: errNoChild33,
+				ChildErr: errNoChild34,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.Priority, nil
@@ -4474,7 +4575,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "source",
 				NonNull:  true,
-				ChildErr: errNoChild34,
+				ChildErr: errNoChild35,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.Source, nil
@@ -4483,7 +4584,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "metadata",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.Metadata, nil
@@ -4492,7 +4593,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "editedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.EditedAt, nil
@@ -4501,7 +4602,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "pinnedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.PinnedAt, nil
@@ -4510,7 +4611,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "pinnedById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.PinnedByID, nil
@@ -4519,7 +4620,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "resolvedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.ResolvedAt, nil
@@ -4528,7 +4629,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "resolvedById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.ResolvedByID, nil
@@ -4538,7 +4639,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "requiresAcknowledgment",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.RequiresAcknowledgment, nil
@@ -4547,7 +4648,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "deletedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.DeletedAt, nil
@@ -4557,7 +4658,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.Version, nil
@@ -4567,7 +4668,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.CreatedAt, nil
@@ -4577,7 +4678,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.UpdatedAt, nil
@@ -4587,7 +4688,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "mentionedUserIds",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.MentionedUserIds, nil
@@ -4659,7 +4760,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentAcknowledgment)
 					return obj.ID, nil
@@ -4669,7 +4770,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "commentId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentAcknowledgment)
 					return obj.CommentID, nil
@@ -4679,7 +4780,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "userId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentAcknowledgment)
 					return obj.UserID, nil
@@ -4689,7 +4790,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "acknowledgedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentAcknowledgment)
 					return obj.AcknowledgedAt, nil
@@ -4711,7 +4812,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "documentId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentAttachment)
 					return obj.DocumentID, nil
@@ -4721,7 +4822,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "fileName",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentAttachment)
 					return obj.FileName, nil
@@ -4730,7 +4831,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "originalName",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentAttachment)
 					return obj.OriginalName, nil
@@ -4740,7 +4841,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "fileSize",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentAttachment)
 					return obj.FileSize, nil
@@ -4750,7 +4851,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "mimeType",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentAttachment)
 					return obj.MimeType, nil
@@ -4759,7 +4860,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "previewUrl",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentAttachment)
 					return obj.PreviewURL, nil
@@ -4769,7 +4870,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "downloadUrl",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentAttachment)
 					return obj.DownloadURL, nil
@@ -4779,7 +4880,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentAttachment)
 					return obj.CreatedAt, nil
@@ -4812,7 +4913,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentConnection)
 					return obj.TotalCount, nil
@@ -4822,7 +4923,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentConnection)
 					return obj.TotalCountExact, nil
@@ -4834,7 +4935,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "count",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentCountResponse)
 					return obj.Count, nil
@@ -4857,7 +4958,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentEdge)
 					return obj.Cursor, nil
@@ -4869,7 +4970,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentEvent)
 					return obj.ID, nil
@@ -4879,7 +4980,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentEvent)
 					return obj.OrganizationID, nil
@@ -4889,7 +4990,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentEvent)
 					return obj.BusinessUnitID, nil
@@ -4899,7 +5000,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentEvent)
 					return obj.ShipmentID, nil
@@ -4909,7 +5010,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "type",
 				NonNull:  true,
-				ChildErr: errNoChild26,
+				ChildErr: errNoChild27,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentEvent)
 					return obj.Type, nil
@@ -4919,7 +5020,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "severity",
 				NonNull:  true,
-				ChildErr: errNoChild27,
+				ChildErr: errNoChild28,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentEvent)
 					return obj.Severity, nil
@@ -4929,7 +5030,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "actorType",
 				NonNull:  true,
-				ChildErr: errNoChild28,
+				ChildErr: errNoChild29,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentEvent)
 					return obj.ActorType, nil
@@ -4938,7 +5039,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "actorId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentEvent)
 					return obj.ActorID, nil
@@ -4948,7 +5049,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "actorLabel",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentEvent)
 					return obj.ActorLabel, nil
@@ -4958,7 +5059,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "summary",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentEvent)
 					return obj.Summary, nil
@@ -4968,7 +5069,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "metadata",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentEvent)
 					return obj.Metadata, nil
@@ -4978,7 +5079,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "occurredAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentEvent)
 					return obj.OccurredAt, nil
@@ -4987,7 +5088,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "correlationId",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentEvent)
 					return obj.CorrelationID, nil
@@ -5016,7 +5117,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "commentId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentEvent)
 					return obj.CommentID, nil
@@ -5025,7 +5126,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "commentBody",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentEvent)
 					return obj.CommentBody, nil
@@ -5034,7 +5135,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "commentType",
-				ChildErr: errNoChild31,
+				ChildErr: errNoChild32,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentEvent)
 					return obj.CommentType, nil
@@ -5043,7 +5144,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "commentVisibility",
-				ChildErr: errNoChild32,
+				ChildErr: errNoChild33,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentEvent)
 					return obj.CommentVisibility, nil
@@ -5052,7 +5153,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "commentPriority",
-				ChildErr: errNoChild33,
+				ChildErr: errNoChild34,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentEvent)
 					return obj.CommentPriority, nil
@@ -5062,7 +5163,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "mentionedUserIds",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentEvent)
 					return obj.MentionedUserIds, nil
@@ -5074,7 +5175,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentMention)
 					return obj.ID, nil
@@ -5084,7 +5185,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "commentId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentMention)
 					return obj.CommentID, nil
@@ -5094,7 +5195,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "mentionedUserId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentMention)
 					return obj.MentionedUserID, nil
@@ -5103,7 +5204,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "organizationId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentMention)
 					return obj.OrganizationID, nil
@@ -5112,7 +5213,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "businessUnitId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentMention)
 					return obj.BusinessUnitID, nil
@@ -5121,7 +5222,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "shipmentId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentMention)
 					return obj.ShipmentID, nil
@@ -5131,7 +5232,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommentMention)
 					return obj.CreatedAt, nil
@@ -5152,7 +5253,7 @@ var Shard = &gqlexec.Shard{
 		{Object: "ShipmentCommodity", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodity)
 					return obj.ID, nil
@@ -5162,7 +5263,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodity)
 					return obj.BusinessUnitID, nil
@@ -5172,7 +5273,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodity)
 					return obj.OrganizationID, nil
@@ -5182,7 +5283,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodity)
 					return obj.ShipmentID, nil
@@ -5192,7 +5293,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "commodityId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodity)
 					return obj.CommodityID, nil
@@ -5202,7 +5303,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "pieces",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodity)
 					return obj.Pieces, nil
@@ -5212,7 +5313,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "weight",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodity)
 					return obj.Weight, nil
@@ -5221,7 +5322,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "lengthFeet",
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodity)
 					return obj.LengthFeet, nil
@@ -5230,7 +5331,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "widthFeet",
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodity)
 					return obj.WidthFeet, nil
@@ -5239,7 +5340,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "heightFeet",
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodity)
 					return obj.HeightFeet, nil
@@ -5249,7 +5350,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodity)
 					return obj.Version, nil
@@ -5259,7 +5360,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodity)
 					return obj.CreatedAt, nil
@@ -5269,7 +5370,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodity)
 					return obj.UpdatedAt, nil
@@ -5291,7 +5392,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodityDetail)
 					return obj.ID, nil
@@ -5301,7 +5402,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodityDetail)
 					return obj.BusinessUnitID, nil
@@ -5311,7 +5412,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodityDetail)
 					return obj.OrganizationID, nil
@@ -5320,7 +5421,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "hazardousMaterialId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodityDetail)
 					return obj.HazardousMaterialID, nil
@@ -5330,7 +5431,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild24,
+				ChildErr: errNoChild25,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodityDetail)
 					return obj.Status, nil
@@ -5340,7 +5441,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodityDetail)
 					return obj.Name, nil
@@ -5350,7 +5451,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "description",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodityDetail)
 					return obj.Description, nil
@@ -5359,7 +5460,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "minTemperature",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodityDetail)
 					return obj.MinTemperature, nil
@@ -5368,7 +5469,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "maxTemperature",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodityDetail)
 					return obj.MaxTemperature, nil
@@ -5377,7 +5478,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "weightPerUnit",
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodityDetail)
 					return obj.WeightPerUnit, nil
@@ -5386,7 +5487,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "linearFeetPerUnit",
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodityDetail)
 					return obj.LinearFeetPerUnit, nil
@@ -5395,7 +5496,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "maxQuantityPerShipment",
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodityDetail)
 					return obj.MaxQuantityPerShipment, nil
@@ -5405,7 +5506,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "freightClass",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodityDetail)
 					return obj.FreightClass, nil
@@ -5415,7 +5516,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "loadingInstructions",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodityDetail)
 					return obj.LoadingInstructions, nil
@@ -5425,7 +5526,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "stackable",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodityDetail)
 					return obj.Stackable, nil
@@ -5435,7 +5536,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "fragile",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodityDetail)
 					return obj.Fragile, nil
@@ -5445,7 +5546,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodityDetail)
 					return obj.Version, nil
@@ -5455,7 +5556,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodityDetail)
 					return obj.CreatedAt, nil
@@ -5465,7 +5566,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCommodityDetail)
 					return obj.UpdatedAt, nil
@@ -5498,7 +5599,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentConnection)
 					return obj.TotalCount, nil
@@ -5508,7 +5609,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentConnection)
 					return obj.TotalCountExact, nil
@@ -5520,7 +5621,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "applied",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRate)
 					return obj.Applied, nil
@@ -5530,7 +5631,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "outcome",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRate)
 					return obj.Outcome, nil
@@ -5539,7 +5640,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "agreementId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRate)
 					return obj.AgreementID, nil
@@ -5549,7 +5650,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "agreementName",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRate)
 					return obj.AgreementName, nil
@@ -5558,7 +5659,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "ruleId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRate)
 					return obj.RuleID, nil
@@ -5568,7 +5669,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "ruleLabel",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRate)
 					return obj.RuleLabel, nil
@@ -5577,7 +5678,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "formulaTemplateId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRate)
 					return obj.FormulaTemplateID, nil
@@ -5587,7 +5688,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "formulaTemplateName",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRate)
 					return obj.FormulaTemplateName, nil
@@ -5597,7 +5698,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "templateVersion",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRate)
 					return obj.TemplateVersion, nil
@@ -5607,7 +5708,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "inputs",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRate)
 					return obj.Inputs, nil
@@ -5617,7 +5718,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "refusal",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRate)
 					return obj.Refusal, nil
@@ -5638,7 +5739,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "freightAmount",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRate)
 					return obj.FreightAmount, nil
@@ -5648,7 +5749,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "otherChargeAmount",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRate)
 					return obj.OtherChargeAmount, nil
@@ -5658,7 +5759,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalChargeAmount",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRate)
 					return obj.TotalChargeAmount, nil
@@ -5668,7 +5769,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "previousFreightAmount",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRate)
 					return obj.PreviousFreightAmount, nil
@@ -5689,7 +5790,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "explanation",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRate)
 					return obj.Explanation, nil
@@ -5701,7 +5802,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "accessorialChargeId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRateCharge)
 					return obj.AccessorialChargeID, nil
@@ -5711,7 +5812,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "code",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRateCharge)
 					return obj.Code, nil
@@ -5721,7 +5822,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "description",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRateCharge)
 					return obj.Description, nil
@@ -5731,7 +5832,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "owner",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRateCharge)
 					return obj.Owner, nil
@@ -5741,7 +5842,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "label",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRateCharge)
 					return obj.Label, nil
@@ -5751,7 +5852,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "amount",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRateCharge)
 					return obj.Amount, nil
@@ -5760,7 +5861,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "quantity",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRateCharge)
 					return obj.Quantity, nil
@@ -5769,7 +5870,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "rate",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRateCharge)
 					return obj.Rate, nil
@@ -5779,7 +5880,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rateUnit",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRateCharge)
 					return obj.RateUnit, nil
@@ -5791,7 +5892,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return obj.ID, nil
@@ -5801,7 +5902,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return obj.BusinessUnitID, nil
@@ -5811,7 +5912,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return obj.OrganizationID, nil
@@ -5821,7 +5922,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "stateId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return obj.StateID, nil
@@ -5831,7 +5932,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild24,
+				ChildErr: errNoChild25,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return obj.Status, nil
@@ -5841,7 +5942,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "code",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return obj.Code, nil
@@ -5851,7 +5952,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return obj.Name, nil
@@ -5861,7 +5962,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "addressLine1",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return obj.AddressLine1, nil
@@ -5871,7 +5972,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "addressLine2",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return obj.AddressLine2, nil
@@ -5881,7 +5982,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "city",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return obj.City, nil
@@ -5891,7 +5992,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "postalCode",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return obj.PostalCode, nil
@@ -5901,7 +6002,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isGeocoded",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return obj.IsGeocoded, nil
@@ -5910,7 +6011,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "longitude",
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return obj.Longitude, nil
@@ -5919,7 +6020,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "latitude",
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return obj.Latitude, nil
@@ -5929,7 +6030,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "placeId",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return obj.PlaceID, nil
@@ -5939,7 +6040,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "externalId",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return obj.ExternalID, nil
@@ -5949,7 +6050,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "allowConsolidation",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return obj.AllowConsolidation, nil
@@ -5959,7 +6060,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "exclusiveConsolidation",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return obj.ExclusiveConsolidation, nil
@@ -5969,7 +6070,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "consolidationPriority",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return obj.ConsolidationPriority, nil
@@ -5979,7 +6080,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return obj.Version, nil
@@ -5989,7 +6090,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return obj.CreatedAt, nil
@@ -5999,7 +6100,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return obj.UpdatedAt, nil
@@ -6023,7 +6124,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "windowDays",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomerMix)
 					return obj.WindowDays, nil
@@ -6046,7 +6147,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "customerId",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomerMixEntry)
 					return obj.CustomerID, nil
@@ -6056,7 +6157,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomerMixEntry)
 					return obj.Name, nil
@@ -6066,7 +6167,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "revenue",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomerMixEntry)
 					return obj.Revenue, nil
@@ -6076,7 +6177,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "share",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomerMixEntry)
 					return obj.Share, nil
@@ -6086,7 +6187,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "loads",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomerMixEntry)
 					return obj.Loads, nil
@@ -6096,7 +6197,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "trend",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomerMixEntry)
 					return obj.Trend, nil
@@ -6121,7 +6222,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentId",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDetentionWatchlistItem)
 					return obj.ShipmentID, nil
@@ -6130,7 +6231,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "customer",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDetentionWatchlistItem)
 					return obj.Customer, nil
@@ -6140,7 +6241,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "dwellLabel",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDetentionWatchlistItem)
 					return obj.DwellLabel, nil
@@ -6150,7 +6251,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "tone",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDetentionWatchlistItem)
 					return obj.Tone, nil
@@ -6162,7 +6263,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "moves",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDispatchCounts)
 					return obj.Moves, nil
@@ -6172,7 +6273,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "late",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDispatchCounts)
 					return obj.Late, nil
@@ -6182,7 +6283,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "dueNow",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDispatchCounts)
 					return obj.DueNow, nil
@@ -6192,7 +6293,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "dueToday",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDispatchCounts)
 					return obj.DueToday, nil
@@ -6202,7 +6303,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "uncovered",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDispatchCounts)
 					return obj.Uncovered, nil
@@ -6213,7 +6314,7 @@ var Shard = &gqlexec.Shard{
 		{Object: "ShipmentDistanceMoveResult", Fields: []*gqlexec.Field{
 			{
 				Name:     "moveId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDistanceMoveResult)
 					return obj.MoveID, nil
@@ -6223,7 +6324,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "moveIndex",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDistanceMoveResult)
 					return obj.MoveIndex, nil
@@ -6233,7 +6334,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "distance",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDistanceMoveResult)
 					return obj.Distance, nil
@@ -6243,7 +6344,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "source",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDistanceMoveResult)
 					return obj.Source, nil
@@ -6252,7 +6353,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "provider",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDistanceMoveResult)
 					return obj.Provider, nil
@@ -6261,7 +6362,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "routingType",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDistanceMoveResult)
 					return obj.RoutingType, nil
@@ -6270,7 +6371,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "dataVersion",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDistanceMoveResult)
 					return obj.DataVersion, nil
@@ -6279,7 +6380,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "distanceUnits",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDistanceMoveResult)
 					return obj.DistanceUnits, nil
@@ -6288,7 +6389,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "distanceProfileId",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDistanceMoveResult)
 					return obj.DistanceProfileID, nil
@@ -6297,7 +6398,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "distanceProfileName",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDistanceMoveResult)
 					return obj.DistanceProfileName, nil
@@ -6306,7 +6407,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "warnings",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDistanceMoveResult)
 					return obj.Warnings, nil
@@ -6316,7 +6417,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "calculatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDistanceMoveResult)
 					return obj.CalculatedAt, nil
@@ -6327,7 +6428,7 @@ var Shard = &gqlexec.Shard{
 		{Object: "ShipmentDistanceResponse", Fields: []*gqlexec.Field{
 			{
 				Name:     "shipmentId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDistanceResponse)
 					return obj.ShipmentID, nil
@@ -6337,7 +6438,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalDistance",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDistanceResponse)
 					return obj.TotalDistance, nil
@@ -6360,7 +6461,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "workflowId",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDuplicateResponse)
 					return obj.WorkflowID, nil
@@ -6370,7 +6471,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "runId",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDuplicateResponse)
 					return obj.RunID, nil
@@ -6380,7 +6481,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "taskQueue",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDuplicateResponse)
 					return obj.TaskQueue, nil
@@ -6390,7 +6491,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDuplicateResponse)
 					return obj.Status, nil
@@ -6400,7 +6501,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "submittedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDuplicateResponse)
 					return obj.SubmittedAt, nil
@@ -6423,7 +6524,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentEdge)
 					return obj.Cursor, nil
@@ -6435,7 +6536,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "percent",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentEmptyMile)
 					return obj.Percent, nil
@@ -6445,7 +6546,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "emptyMiles",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentEmptyMile)
 					return obj.EmptyMiles, nil
@@ -6455,7 +6556,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalMiles",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentEmptyMile)
 					return obj.TotalMiles, nil
@@ -6465,7 +6566,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "deltaPp",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentEmptyMile)
 					return obj.DeltaPp, nil
@@ -6476,7 +6577,7 @@ var Shard = &gqlexec.Shard{
 		{Object: "ShipmentEventShipmentReference", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentEventShipmentReference)
 					return obj.ID, nil
@@ -6485,7 +6586,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "proNumber",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentEventShipmentReference)
 					return obj.ProNumber, nil
@@ -6497,7 +6598,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFormulaTemplate)
 					return obj.ID, nil
@@ -6507,7 +6608,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFormulaTemplate)
 					return obj.OrganizationID, nil
@@ -6517,7 +6618,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFormulaTemplate)
 					return obj.BusinessUnitID, nil
@@ -6527,7 +6628,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFormulaTemplate)
 					return obj.Name, nil
@@ -6537,7 +6638,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "description",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFormulaTemplate)
 					return obj.Description, nil
@@ -6547,7 +6648,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "source",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFormulaTemplate)
 					return obj.Source, nil
@@ -6557,7 +6658,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFormulaTemplate)
 					return obj.Status, nil
@@ -6567,7 +6668,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "testCount",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFormulaTemplate)
 					return obj.TestCount, nil
@@ -6576,7 +6677,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "metadata",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFormulaTemplate)
 					return obj.Metadata, nil
@@ -6586,7 +6687,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFormulaTemplate)
 					return obj.Version, nil
@@ -6595,7 +6696,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "sourceTemplateId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFormulaTemplate)
 					return obj.SourceTemplateID, nil
@@ -6604,7 +6705,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "sourceVersionNumber",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFormulaTemplate)
 					return obj.SourceVersionNumber, nil
@@ -6614,7 +6715,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "currentVersionNumber",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFormulaTemplate)
 					return obj.CurrentVersionNumber, nil
@@ -6624,7 +6725,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFormulaTemplate)
 					return obj.CreatedAt, nil
@@ -6634,7 +6735,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFormulaTemplate)
 					return obj.UpdatedAt, nil
@@ -6646,7 +6747,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "label",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFreightLine)
 					return obj.Label, nil
@@ -6655,7 +6756,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "quantity",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFreightLine)
 					return obj.Quantity, nil
@@ -6665,7 +6766,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "quantityUnit",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFreightLine)
 					return obj.QuantityUnit, nil
@@ -6674,7 +6775,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "rate",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFreightLine)
 					return obj.Rate, nil
@@ -6684,7 +6785,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rateUnit",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFreightLine)
 					return obj.RateUnit, nil
@@ -6694,7 +6795,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "amount",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFreightLine)
 					return obj.Amount, nil
@@ -6706,7 +6807,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "commodityAId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHazmatZone)
 					return obj.CommodityAId, nil
@@ -6716,7 +6817,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "commodityBId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHazmatZone)
 					return obj.CommodityBId, nil
@@ -6726,7 +6827,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "commodityAName",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHazmatZone)
 					return obj.CommodityAName, nil
@@ -6736,7 +6837,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "commodityBName",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHazmatZone)
 					return obj.CommodityBName, nil
@@ -6746,7 +6847,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "ruleName",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHazmatZone)
 					return obj.RuleName, nil
@@ -6756,7 +6857,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "segregationType",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHazmatZone)
 					return obj.SegregationType, nil
@@ -6765,7 +6866,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "requiredDistanceFeet",
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHazmatZone)
 					return obj.RequiredDistanceFeet, nil
@@ -6775,7 +6876,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "actualDistanceFeet",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHazmatZone)
 					return obj.ActualDistanceFeet, nil
@@ -6785,7 +6886,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "satisfied",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHazmatZone)
 					return obj.Satisfied, nil
@@ -6797,7 +6898,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHoldEvent)
 					return obj.ID, nil
@@ -6807,7 +6908,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHoldEvent)
 					return obj.OrganizationID, nil
@@ -6817,7 +6918,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHoldEvent)
 					return obj.BusinessUnitID, nil
@@ -6827,7 +6928,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHoldEvent)
 					return obj.ShipmentID, nil
@@ -6837,7 +6938,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "type",
 				NonNull:  true,
-				ChildErr: errNoChild26,
+				ChildErr: errNoChild27,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHoldEvent)
 					return obj.Type, nil
@@ -6847,7 +6948,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "severity",
 				NonNull:  true,
-				ChildErr: errNoChild27,
+				ChildErr: errNoChild28,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHoldEvent)
 					return obj.Severity, nil
@@ -6857,7 +6958,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "actorType",
 				NonNull:  true,
-				ChildErr: errNoChild28,
+				ChildErr: errNoChild29,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHoldEvent)
 					return obj.ActorType, nil
@@ -6866,7 +6967,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "actorId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHoldEvent)
 					return obj.ActorID, nil
@@ -6876,7 +6977,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "actorLabel",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHoldEvent)
 					return obj.ActorLabel, nil
@@ -6886,7 +6987,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "summary",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHoldEvent)
 					return obj.Summary, nil
@@ -6896,7 +6997,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "metadata",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHoldEvent)
 					return obj.Metadata, nil
@@ -6906,7 +7007,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "occurredAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHoldEvent)
 					return obj.OccurredAt, nil
@@ -6915,7 +7016,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "correlationId",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHoldEvent)
 					return obj.CorrelationID, nil
@@ -6944,7 +7045,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "holdId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHoldEvent)
 					return obj.HoldID, nil
@@ -6953,7 +7054,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "holdType",
-				ChildErr: errNoChild35,
+				ChildErr: errNoChild36,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHoldEvent)
 					return obj.HoldType, nil
@@ -6962,7 +7063,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "holdSeverity",
-				ChildErr: errNoChild36,
+				ChildErr: errNoChild37,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHoldEvent)
 					return obj.HoldSeverity, nil
@@ -6971,7 +7072,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "holdSource",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHoldEvent)
 					return obj.HoldSource, nil
@@ -6983,7 +7084,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "windowDays",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLaneHeatmap)
 					return obj.WindowDays, nil
@@ -7004,7 +7105,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "total",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLaneHeatmap)
 					return obj.Total, nil
@@ -7016,7 +7117,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "origin",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLaneHeatmapCell)
 					return obj.Origin, nil
@@ -7026,7 +7127,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "destination",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLaneHeatmapCell)
 					return obj.Destination, nil
@@ -7036,7 +7137,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "count",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLaneHeatmapCell)
 					return obj.Count, nil
@@ -7048,7 +7149,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLifecycleEvent)
 					return obj.ID, nil
@@ -7058,7 +7159,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLifecycleEvent)
 					return obj.OrganizationID, nil
@@ -7068,7 +7169,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLifecycleEvent)
 					return obj.BusinessUnitID, nil
@@ -7078,7 +7179,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLifecycleEvent)
 					return obj.ShipmentID, nil
@@ -7088,7 +7189,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "type",
 				NonNull:  true,
-				ChildErr: errNoChild26,
+				ChildErr: errNoChild27,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLifecycleEvent)
 					return obj.Type, nil
@@ -7098,7 +7199,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "severity",
 				NonNull:  true,
-				ChildErr: errNoChild27,
+				ChildErr: errNoChild28,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLifecycleEvent)
 					return obj.Severity, nil
@@ -7108,7 +7209,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "actorType",
 				NonNull:  true,
-				ChildErr: errNoChild28,
+				ChildErr: errNoChild29,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLifecycleEvent)
 					return obj.ActorType, nil
@@ -7117,7 +7218,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "actorId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLifecycleEvent)
 					return obj.ActorID, nil
@@ -7127,7 +7228,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "actorLabel",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLifecycleEvent)
 					return obj.ActorLabel, nil
@@ -7137,7 +7238,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "summary",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLifecycleEvent)
 					return obj.Summary, nil
@@ -7147,7 +7248,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "metadata",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLifecycleEvent)
 					return obj.Metadata, nil
@@ -7157,7 +7258,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "occurredAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLifecycleEvent)
 					return obj.OccurredAt, nil
@@ -7166,7 +7267,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "correlationId",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLifecycleEvent)
 					return obj.CorrelationID, nil
@@ -7195,7 +7296,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "proNumber",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLifecycleEvent)
 					return obj.ProNumber, nil
@@ -7204,7 +7305,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "previousStatus",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLifecycleEvent)
 					return obj.PreviousStatus, nil
@@ -7213,7 +7314,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "newStatus",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLifecycleEvent)
 					return obj.NewStatus, nil
@@ -7222,7 +7323,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "reason",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLifecycleEvent)
 					return obj.Reason, nil
@@ -7234,7 +7335,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "commodityId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingCommodity)
 					return obj.CommodityID, nil
@@ -7244,7 +7345,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "commodityName",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingCommodity)
 					return obj.CommodityName, nil
@@ -7254,7 +7355,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "positionFeet",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingCommodity)
 					return obj.PositionFeet, nil
@@ -7264,7 +7365,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "lengthFeet",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingCommodity)
 					return obj.LengthFeet, nil
@@ -7274,7 +7375,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "weight",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingCommodity)
 					return obj.Weight, nil
@@ -7284,7 +7385,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "pieces",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingCommodity)
 					return obj.Pieces, nil
@@ -7294,7 +7395,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "stackable",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingCommodity)
 					return obj.Stackable, nil
@@ -7304,7 +7405,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "fragile",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingCommodity)
 					return obj.Fragile, nil
@@ -7314,7 +7415,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isHazmat",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingCommodity)
 					return obj.IsHazmat, nil
@@ -7323,7 +7424,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "hazmatClass",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingCommodity)
 					return obj.HazmatClass, nil
@@ -7332,7 +7433,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "minTemp",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingCommodity)
 					return obj.MinTemp, nil
@@ -7341,7 +7442,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "maxTemp",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingCommodity)
 					return obj.MaxTemp, nil
@@ -7350,7 +7451,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "loadingInstructions",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingCommodity)
 					return obj.LoadingInstructions, nil
@@ -7360,7 +7461,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "estimatedLength",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingCommodity)
 					return obj.EstimatedLength, nil
@@ -7369,7 +7470,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "stopNumber",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingCommodity)
 					return obj.StopNumber, nil
@@ -7381,7 +7482,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "trailerLengthFeet",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingOptimizationResponse)
 					return obj.TrailerLengthFeet, nil
@@ -7391,7 +7492,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalLinearFeet",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingOptimizationResponse)
 					return obj.TotalLinearFeet, nil
@@ -7401,7 +7502,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalWeight",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingOptimizationResponse)
 					return obj.TotalWeight, nil
@@ -7411,7 +7512,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "maxWeight",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingOptimizationResponse)
 					return obj.MaxWeight, nil
@@ -7421,7 +7522,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "linearFeetUtil",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingOptimizationResponse)
 					return obj.LinearFeetUtil, nil
@@ -7431,7 +7532,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "weightUtil",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingOptimizationResponse)
 					return obj.WeightUtil, nil
@@ -7441,7 +7542,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "utilizationScore",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingOptimizationResponse)
 					return obj.UtilizationScore, nil
@@ -7451,7 +7552,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "utilizationGrade",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingOptimizationResponse)
 					return obj.UtilizationGrade, nil
@@ -7525,7 +7626,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "aiAnalysis",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingOptimizationResponse)
 					return obj.AiAnalysis, nil
@@ -7537,7 +7638,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "type",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingRecommendation)
 					return obj.Type, nil
@@ -7547,7 +7648,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "priority",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingRecommendation)
 					return obj.Priority, nil
@@ -7557,7 +7658,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "title",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingRecommendation)
 					return obj.Title, nil
@@ -7567,7 +7668,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "description",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingRecommendation)
 					return obj.Description, nil
@@ -7576,7 +7677,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "impact",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingRecommendation)
 					return obj.Impact, nil
@@ -7585,7 +7686,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "commodityIds",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingRecommendation)
 					return obj.CommodityIds, nil
@@ -7597,7 +7698,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "type",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingWarning)
 					return obj.Type, nil
@@ -7607,7 +7708,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "message",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingWarning)
 					return obj.Message, nil
@@ -7617,7 +7718,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "severity",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingWarning)
 					return obj.Severity, nil
@@ -7626,7 +7727,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "commodityIds",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentLoadingWarning)
 					return obj.CommodityIds, nil
@@ -7637,7 +7738,7 @@ var Shard = &gqlexec.Shard{
 		{Object: "ShipmentMove", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.ID, nil
@@ -7647,7 +7748,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.BusinessUnitID, nil
@@ -7657,7 +7758,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.OrganizationID, nil
@@ -7666,7 +7767,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "shipmentId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.ShipmentID, nil
@@ -7676,7 +7777,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild37,
+				ChildErr: errNoChild38,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.Status, nil
@@ -7686,7 +7787,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "coverageType",
 				NonNull:  true,
-				ChildErr: errNoChild38,
+				ChildErr: errNoChild39,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.CoverageType, nil
@@ -7696,7 +7797,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "loaded",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.Loaded, nil
@@ -7706,7 +7807,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "sequence",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.Sequence, nil
@@ -7715,7 +7816,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "distance",
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.Distance, nil
@@ -7724,7 +7825,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "distanceSource",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.DistanceSource, nil
@@ -7733,7 +7834,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "distanceProvider",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.DistanceProvider, nil
@@ -7742,7 +7843,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "distanceCalculatedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.DistanceCalculatedAt, nil
@@ -7751,7 +7852,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "distanceRouteSignature",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.DistanceRouteSignature, nil
@@ -7760,7 +7861,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "distanceDataVersion",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.DistanceDataVersion, nil
@@ -7769,7 +7870,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "distanceRoutingType",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.DistanceRoutingType, nil
@@ -7778,7 +7879,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "distanceUnits",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.DistanceUnits, nil
@@ -7787,7 +7888,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "distanceMetadata",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.DistanceMetadata, nil
@@ -7797,7 +7898,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.Version, nil
@@ -7807,7 +7908,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.CreatedAt, nil
@@ -7817,7 +7918,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.UpdatedAt, nil
@@ -7873,7 +7974,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMoveEvent)
 					return obj.ID, nil
@@ -7883,7 +7984,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMoveEvent)
 					return obj.OrganizationID, nil
@@ -7893,7 +7994,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMoveEvent)
 					return obj.BusinessUnitID, nil
@@ -7903,7 +8004,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMoveEvent)
 					return obj.ShipmentID, nil
@@ -7913,7 +8014,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "type",
 				NonNull:  true,
-				ChildErr: errNoChild26,
+				ChildErr: errNoChild27,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMoveEvent)
 					return obj.Type, nil
@@ -7923,7 +8024,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "severity",
 				NonNull:  true,
-				ChildErr: errNoChild27,
+				ChildErr: errNoChild28,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMoveEvent)
 					return obj.Severity, nil
@@ -7933,7 +8034,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "actorType",
 				NonNull:  true,
-				ChildErr: errNoChild28,
+				ChildErr: errNoChild29,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMoveEvent)
 					return obj.ActorType, nil
@@ -7942,7 +8043,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "actorId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMoveEvent)
 					return obj.ActorID, nil
@@ -7952,7 +8053,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "actorLabel",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMoveEvent)
 					return obj.ActorLabel, nil
@@ -7962,7 +8063,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "summary",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMoveEvent)
 					return obj.Summary, nil
@@ -7972,7 +8073,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "metadata",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMoveEvent)
 					return obj.Metadata, nil
@@ -7982,7 +8083,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "occurredAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMoveEvent)
 					return obj.OccurredAt, nil
@@ -7991,7 +8092,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "correlationId",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMoveEvent)
 					return obj.CorrelationID, nil
@@ -8020,7 +8121,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "moveId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMoveEvent)
 					return obj.MoveID, nil
@@ -8029,7 +8130,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "stopId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMoveEvent)
 					return obj.StopID, nil
@@ -8038,7 +8139,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "previousStatus",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMoveEvent)
 					return obj.PreviousStatus, nil
@@ -8047,7 +8148,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "newStatus",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMoveEvent)
 					return obj.NewStatus, nil
@@ -8059,7 +8160,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ShipmentMoveJurisdictionMile)
 					return obj.ID, nil
@@ -8069,7 +8170,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentMoveId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ShipmentMoveJurisdictionMile)
 					return obj.ShipmentMoveID, nil
@@ -8079,7 +8180,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ShipmentMoveJurisdictionMile)
 					return obj.ShipmentID, nil
@@ -8089,7 +8190,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "countryCode",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ShipmentMoveJurisdictionMile)
 					return obj.CountryCode, nil
@@ -8099,7 +8200,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "jurisdictionCode",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ShipmentMoveJurisdictionMile)
 					return obj.JurisdictionCode, nil
@@ -8109,7 +8210,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "sequence",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ShipmentMoveJurisdictionMile)
 					return obj.Sequence, nil
@@ -8119,7 +8220,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "distance",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ShipmentMoveJurisdictionMile)
 					return obj.Distance, nil
@@ -8129,7 +8230,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "distanceUnits",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ShipmentMoveJurisdictionMile)
 					return obj.DistanceUnits, nil
@@ -8140,7 +8241,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "tollDistance",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild29,
+				ChildErr:   errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ShipmentMoveJurisdictionMile)
 					return gqlexec.Resolver[ShipmentMoveJurisdictionMileResolver](ec, "ShipmentMoveJurisdictionMile@shipment").TollDistance(ctx, obj)
@@ -8151,7 +8252,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "ferryDistance",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild29,
+				ChildErr:   errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ShipmentMoveJurisdictionMile)
 					return gqlexec.Resolver[ShipmentMoveJurisdictionMileResolver](ec, "ShipmentMoveJurisdictionMile@shipment").FerryDistance(ctx, obj)
@@ -8161,7 +8262,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "loaded",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ShipmentMoveJurisdictionMile)
 					return obj.Loaded, nil
@@ -8173,7 +8274,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild2,
+				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ShipmentMoveJurisdictionMile)
 					return gqlexec.Resolver[ShipmentMoveJurisdictionMileResolver](ec, "ShipmentMoveJurisdictionMile@shipment").Source(ctx, obj)
@@ -8182,7 +8283,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "provider",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ShipmentMoveJurisdictionMile)
 					return obj.Provider, nil
@@ -8191,7 +8292,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "dataVersion",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ShipmentMoveJurisdictionMile)
 					return obj.DataVersion, nil
@@ -8201,7 +8302,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "calculatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.ShipmentMoveJurisdictionMile)
 					return obj.CalculatedAt, nil
@@ -8213,7 +8314,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "percent",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentOnTime)
 					return obj.Percent, nil
@@ -8223,7 +8324,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "onTimeCount",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentOnTime)
 					return obj.OnTimeCount, nil
@@ -8233,7 +8334,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCount",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentOnTime)
 					return obj.TotalCount, nil
@@ -8242,7 +8343,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "target",
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentOnTime)
 					return obj.Target, nil
@@ -8252,7 +8353,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "deltaPp",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentOnTime)
 					return obj.DeltaPp, nil
@@ -8262,7 +8363,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "sevenDayPercent",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentOnTime)
 					return obj.SevenDayPercent, nil
@@ -8274,7 +8375,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentOwnershipEvent)
 					return obj.ID, nil
@@ -8284,7 +8385,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentOwnershipEvent)
 					return obj.OrganizationID, nil
@@ -8294,7 +8395,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentOwnershipEvent)
 					return obj.BusinessUnitID, nil
@@ -8304,7 +8405,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentOwnershipEvent)
 					return obj.ShipmentID, nil
@@ -8314,7 +8415,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "type",
 				NonNull:  true,
-				ChildErr: errNoChild26,
+				ChildErr: errNoChild27,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentOwnershipEvent)
 					return obj.Type, nil
@@ -8324,7 +8425,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "severity",
 				NonNull:  true,
-				ChildErr: errNoChild27,
+				ChildErr: errNoChild28,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentOwnershipEvent)
 					return obj.Severity, nil
@@ -8334,7 +8435,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "actorType",
 				NonNull:  true,
-				ChildErr: errNoChild28,
+				ChildErr: errNoChild29,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentOwnershipEvent)
 					return obj.ActorType, nil
@@ -8343,7 +8444,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "actorId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentOwnershipEvent)
 					return obj.ActorID, nil
@@ -8353,7 +8454,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "actorLabel",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentOwnershipEvent)
 					return obj.ActorLabel, nil
@@ -8363,7 +8464,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "summary",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentOwnershipEvent)
 					return obj.Summary, nil
@@ -8373,7 +8474,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "metadata",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentOwnershipEvent)
 					return obj.Metadata, nil
@@ -8383,7 +8484,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "occurredAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentOwnershipEvent)
 					return obj.OccurredAt, nil
@@ -8392,7 +8493,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "correlationId",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentOwnershipEvent)
 					return obj.CorrelationID, nil
@@ -8421,7 +8522,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "proNumber",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentOwnershipEvent)
 					return obj.ProNumber, nil
@@ -8430,7 +8531,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "previousOwnerId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentOwnershipEvent)
 					return obj.PreviousOwnerID, nil
@@ -8439,7 +8540,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "newOwnerId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentOwnershipEvent)
 					return obj.NewOwnerID, nil
@@ -8451,7 +8552,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentPreviousRateSummary)
 					return obj.ShipmentID, nil
@@ -8461,7 +8562,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "proNumber",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentPreviousRateSummary)
 					return obj.ProNumber, nil
@@ -8471,7 +8572,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "customerId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentPreviousRateSummary)
 					return obj.CustomerID, nil
@@ -8481,7 +8582,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "serviceTypeId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentPreviousRateSummary)
 					return obj.ServiceTypeID, nil
@@ -8491,7 +8592,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentTypeId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentPreviousRateSummary)
 					return obj.ShipmentTypeID, nil
@@ -8500,7 +8601,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "formulaTemplateId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentPreviousRateSummary)
 					return obj.FormulaTemplateID, nil
@@ -8510,7 +8611,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "freightChargeAmount",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentPreviousRateSummary)
 					return obj.FreightChargeAmount, nil
@@ -8520,7 +8621,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "otherChargeAmount",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentPreviousRateSummary)
 					return obj.OtherChargeAmount, nil
@@ -8530,7 +8631,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalChargeAmount",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentPreviousRateSummary)
 					return obj.TotalChargeAmount, nil
@@ -8539,7 +8640,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "pieces",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentPreviousRateSummary)
 					return obj.Pieces, nil
@@ -8548,7 +8649,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "weight",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentPreviousRateSummary)
 					return obj.Weight, nil
@@ -8558,7 +8659,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentPreviousRateSummary)
 					return obj.CreatedAt, nil
@@ -8581,7 +8682,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "total",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentPreviousRatesResponse)
 					return obj.Total, nil
@@ -8591,7 +8692,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalExact",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentPreviousRatesResponse)
 					return obj.TotalExact, nil
@@ -8603,7 +8704,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "avgCpm",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentProfitabilityAnalytics)
 					return obj.AvgCpm, nil
@@ -8612,7 +8713,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "avgMarginPct",
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentProfitabilityAnalytics)
 					return obj.AvgMarginPct, nil
@@ -8622,7 +8723,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "hasMargin",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentProfitabilityAnalytics)
 					return obj.HasMargin, nil
@@ -8631,7 +8732,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "unprofitableCount",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentProfitabilityAnalytics)
 					return obj.UnprofitableCount, nil
@@ -8641,7 +8742,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentCount",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentProfitabilityAnalytics)
 					return obj.ShipmentCount, nil
@@ -8651,7 +8752,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalMiles",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentProfitabilityAnalytics)
 					return obj.TotalMiles, nil
@@ -8663,7 +8764,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "formulaTemplateId",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return obj.FormulaTemplateID, nil
@@ -8673,7 +8774,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "formulaTemplateName",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return obj.FormulaTemplateName, nil
@@ -8683,7 +8784,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "ratedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return obj.RatedAt, nil
@@ -8693,7 +8794,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "versionNumber",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return obj.VersionNumber, nil
@@ -8713,7 +8814,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "refusal",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return obj.Refusal, nil
@@ -8734,7 +8835,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "inputs",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return obj.Inputs, nil
@@ -8756,7 +8857,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "trace",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild8,
+				ChildErr:   errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return gqlexec.Resolver[ShipmentRatingDetailResolver](ec, "ShipmentRatingDetail@shipment").Trace(ctx, obj)
@@ -8766,7 +8867,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rateQuoteId",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return obj.RateQuoteID, nil
@@ -8776,7 +8877,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "agreementId",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return obj.AgreementID, nil
@@ -8786,7 +8887,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "agreementName",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return obj.AgreementName, nil
@@ -8796,7 +8897,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "ruleId",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return obj.RuleID, nil
@@ -8806,7 +8907,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "ruleLabel",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return obj.RuleLabel, nil
@@ -8816,7 +8917,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "source",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return obj.Source, nil
@@ -8826,7 +8927,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "explanation",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return obj.Explanation, nil
@@ -8836,7 +8937,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "awaitingReview",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return obj.AwaitingReview, nil
@@ -8858,7 +8959,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reviews",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingReviewApproval)
 					return obj.Reviews, nil
@@ -8868,7 +8969,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "approvedById",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingReviewApproval)
 					return obj.ApprovedByID, nil
@@ -8878,7 +8979,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "approvedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingReviewApproval)
 					return obj.ApprovedAt, nil
@@ -8902,7 +9003,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "code",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingSkip)
 					return obj.Code, nil
@@ -8912,7 +9013,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "source",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingSkip)
 					return obj.Source, nil
@@ -8924,7 +9025,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "count",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentReadyToDispatch)
 					return obj.Count, nil
@@ -8934,7 +9035,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "delta",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentReadyToDispatch)
 					return obj.Delta, nil
@@ -8944,7 +9045,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "unassigned",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentReadyToDispatch)
 					return obj.Unassigned, nil
@@ -8954,7 +9055,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "driverReady",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentReadyToDispatch)
 					return obj.DriverReady, nil
@@ -8966,7 +9067,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "total",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRevenueToday)
 					return obj.Total, nil
@@ -8987,7 +9088,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "deltaPct",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRevenueToday)
 					return obj.DeltaPct, nil
@@ -8997,7 +9098,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rpm",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRevenueToday)
 					return obj.Rpm, nil
@@ -9009,7 +9110,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "hasUnresolved",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentServiceFailureBillingContext)
 					return obj.HasUnresolved, nil
@@ -9019,7 +9120,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "unresolvedCount",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentServiceFailureBillingContext)
 					return obj.UnresolvedCount, nil
@@ -9029,7 +9130,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "serviceFailureIds",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentServiceFailureBillingContext)
 					return obj.ServiceFailureIds, nil
@@ -9041,7 +9142,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "hour",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentSparklinePoint)
 					return obj.Hour, nil
@@ -9051,7 +9152,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "value",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentSparklinePoint)
 					return obj.Value, nil
@@ -9062,7 +9163,7 @@ var Shard = &gqlexec.Shard{
 		{Object: "ShipmentStop", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.ID, nil
@@ -9072,7 +9173,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.BusinessUnitID, nil
@@ -9082,7 +9183,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.OrganizationID, nil
@@ -9091,7 +9192,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "shipmentMoveId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.ShipmentMoveID, nil
@@ -9101,7 +9202,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "locationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.LocationID, nil
@@ -9111,7 +9212,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild39,
+				ChildErr: errNoChild40,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.Status, nil
@@ -9121,7 +9222,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "type",
 				NonNull:  true,
-				ChildErr: errNoChild40,
+				ChildErr: errNoChild41,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.Type, nil
@@ -9131,7 +9232,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "scheduleType",
 				NonNull:  true,
-				ChildErr: errNoChild41,
+				ChildErr: errNoChild42,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.ScheduleType, nil
@@ -9141,7 +9242,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "sequence",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.Sequence, nil
@@ -9150,7 +9251,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "pieces",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.Pieces, nil
@@ -9159,7 +9260,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "weight",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.Weight, nil
@@ -9169,7 +9270,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "scheduledWindowStart",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.ScheduledWindowStart, nil
@@ -9178,7 +9279,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "scheduledWindowEnd",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.ScheduledWindowEnd, nil
@@ -9187,7 +9288,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "actualArrival",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.ActualArrival, nil
@@ -9196,7 +9297,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "actualDeparture",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.ActualDeparture, nil
@@ -9205,7 +9306,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "countLateOverride",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.CountLateOverride, nil
@@ -9214,7 +9315,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "countDetentionOverride",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.CountDetentionOverride, nil
@@ -9224,7 +9325,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "addressLine",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.AddressLine, nil
@@ -9234,7 +9335,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.Version, nil
@@ -9244,7 +9345,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.CreatedAt, nil
@@ -9254,7 +9355,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.UpdatedAt, nil
@@ -9276,7 +9377,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "positionFeet",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStopDivider)
 					return obj.PositionFeet, nil
@@ -9286,7 +9387,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "stopNumber",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStopDivider)
 					return obj.StopNumber, nil
@@ -9296,7 +9397,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "label",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStopDivider)
 					return obj.Label, nil
@@ -9308,7 +9409,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.ID, nil
@@ -9318,7 +9419,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.OrganizationID, nil
@@ -9328,7 +9429,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.BusinessUnitID, nil
@@ -9338,7 +9439,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.ShipmentID, nil
@@ -9348,7 +9449,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "type",
 				NonNull:  true,
-				ChildErr: errNoChild26,
+				ChildErr: errNoChild27,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.Type, nil
@@ -9358,7 +9459,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "severity",
 				NonNull:  true,
-				ChildErr: errNoChild27,
+				ChildErr: errNoChild28,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.Severity, nil
@@ -9368,7 +9469,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "actorType",
 				NonNull:  true,
-				ChildErr: errNoChild28,
+				ChildErr: errNoChild29,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.ActorType, nil
@@ -9377,7 +9478,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "actorId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.ActorID, nil
@@ -9387,7 +9488,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "actorLabel",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.ActorLabel, nil
@@ -9397,7 +9498,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "summary",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.Summary, nil
@@ -9407,7 +9508,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "metadata",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.Metadata, nil
@@ -9417,7 +9518,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "occurredAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.OccurredAt, nil
@@ -9426,7 +9527,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "correlationId",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.CorrelationID, nil
@@ -9455,7 +9556,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "tenderId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.TenderID, nil
@@ -9464,7 +9565,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "offerId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.OfferID, nil
@@ -9473,7 +9574,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "moveId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.MoveID, nil
@@ -9482,7 +9583,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "carrierName",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.CarrierName, nil
@@ -9491,7 +9592,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "rank",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.Rank, nil
@@ -9500,7 +9601,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "channel",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.Channel, nil
@@ -9509,7 +9610,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "source",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.Source, nil
@@ -9518,7 +9619,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "reason",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.Reason, nil
@@ -9527,7 +9628,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "action",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.Action, nil
@@ -9536,7 +9637,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "mode",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.Mode, nil
@@ -9545,7 +9646,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "error",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.Error, nil
@@ -9555,7 +9656,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reasons",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.Reasons, nil
@@ -9565,7 +9666,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "warnings",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.Warnings, nil
@@ -9577,7 +9678,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentId",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTomorrowPickup)
 					return obj.ShipmentID, nil
@@ -9587,7 +9688,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "proNumber",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTomorrowPickup)
 					return obj.ProNumber, nil
@@ -9597,7 +9698,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "pickupWindowStart",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTomorrowPickup)
 					return obj.PickupWindowStart, nil
@@ -9606,7 +9707,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "customer",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTomorrowPickup)
 					return obj.Customer, nil
@@ -9615,7 +9716,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "origin",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTomorrowPickup)
 					return obj.Origin, nil
@@ -9624,7 +9725,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "destination",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTomorrowPickup)
 					return obj.Destination, nil
@@ -9633,7 +9734,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "driver",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTomorrowPickup)
 					return obj.Driver, nil
@@ -9643,7 +9744,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTomorrowPickup)
 					return obj.Status, nil
@@ -9655,7 +9756,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "date",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTomorrowsPickups)
 					return obj.Date, nil
@@ -9678,7 +9779,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "freightChargeAmount",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTotalsResponse)
 					return obj.FreightChargeAmount, nil
@@ -9688,7 +9789,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "otherChargeAmount",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTotalsResponse)
 					return obj.OtherChargeAmount, nil
@@ -9698,7 +9799,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalChargeAmount",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTotalsResponse)
 					return obj.TotalChargeAmount, nil
@@ -9744,7 +9845,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "allowMoveRemovals",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentUIPolicy)
 					return obj.AllowMoveRemovals, nil
@@ -9754,7 +9855,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "checkForDuplicateBols",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentUIPolicy)
 					return obj.CheckForDuplicateBols, nil
@@ -9764,7 +9865,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "checkHazmatSegregation",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentUIPolicy)
 					return obj.CheckHazmatSegregation, nil
@@ -9774,7 +9875,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "maxShipmentWeightLimit",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentUIPolicy)
 					return obj.MaxShipmentWeightLimit, nil
@@ -9783,7 +9884,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "profile",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentUIPolicy)
 					return obj.Profile, nil
@@ -9795,7 +9896,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "count",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentUnassignedAnalytics)
 					return obj.Count, nil
@@ -9805,7 +9906,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "delta",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentUnassignedAnalytics)
 					return obj.Delta, nil
@@ -9815,7 +9916,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "revenueWaiting",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentUnassignedAnalytics)
 					return obj.RevenueWaiting, nil
@@ -9827,7 +9928,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "valid",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentValidationResponse)
 					return obj.Valid, nil
@@ -9839,7 +9940,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "currency",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffBill)
 					return obj.Currency, nil
@@ -9860,7 +9961,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "notes",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffBill)
 					return obj.Notes, nil
@@ -9870,7 +9971,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reviews",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffBill)
 					return obj.Reviews, nil
@@ -9880,7 +9981,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "freightTotal",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffBill)
 					return obj.FreightTotal, nil
@@ -9890,7 +9991,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "accessorialTotal",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffBill)
 					return obj.AccessorialTotal, nil
@@ -9900,7 +10001,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "total",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffBill)
 					return obj.Total, nil
@@ -9922,7 +10023,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "currency",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffBillExchange)
 					return obj.Currency, nil
@@ -9932,7 +10033,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rate",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffBillExchange)
 					return obj.Rate, nil
@@ -9944,7 +10045,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "kind",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffBillLine)
 					return obj.Kind, nil
@@ -9954,7 +10055,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "label",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffBillLine)
 					return obj.Label, nil
@@ -9964,7 +10065,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "code",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffBillLine)
 					return obj.Code, nil
@@ -9973,7 +10074,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "quantity",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffBillLine)
 					return obj.Quantity, nil
@@ -9983,7 +10084,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "quantityUnit",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffBillLine)
 					return obj.QuantityUnit, nil
@@ -9992,7 +10093,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "rate",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffBillLine)
 					return obj.Rate, nil
@@ -10002,7 +10103,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rateUnit",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffBillLine)
 					return obj.RateUnit, nil
@@ -10012,7 +10113,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "amount",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffBillLine)
 					return obj.Amount, nil
@@ -10032,7 +10133,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "on",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffBillLine)
 					return obj.On, nil
@@ -10044,7 +10145,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "label",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffChoice)
 					return obj.Label, nil
@@ -10054,7 +10155,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "kind",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffChoice)
 					return obj.Kind, nil
@@ -10064,7 +10165,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "currency",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffChoice)
 					return obj.Currency, nil
@@ -10073,7 +10174,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "chosen",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffChoice)
 					return obj.Chosen, nil
@@ -10096,7 +10197,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "label",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffChoiceOption)
 					return obj.Label, nil
@@ -10106,7 +10207,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffChoiceOption)
 					return obj.Status, nil
@@ -10115,7 +10216,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "subtotal",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffChoiceOption)
 					return obj.Subtotal, nil
@@ -10124,7 +10225,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "refusal",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffChoiceOption)
 					return obj.Refusal, nil
@@ -10136,7 +10237,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "kind",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffLineLimit)
 					return obj.Kind, nil
@@ -10146,7 +10247,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "computed",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TariffLineLimit)
 					return obj.Computed, nil
@@ -10158,7 +10259,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.ID, nil
@@ -10168,7 +10269,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.ShipmentID, nil
@@ -10178,7 +10279,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentMoveId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.ShipmentMoveID, nil
@@ -10188,7 +10289,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "stopId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.StopID, nil
@@ -10198,7 +10299,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "source",
 				NonNull:  true,
-				ChildErr: errNoChild42,
+				ChildErr: errNoChild43,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.Source, nil
@@ -10208,7 +10309,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "kind",
 				NonNull:  true,
-				ChildErr: errNoChild43,
+				ChildErr: errNoChild44,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.Kind, nil
@@ -10218,7 +10319,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "matchMethod",
 				NonNull:  true,
-				ChildErr: errNoChild44,
+				ChildErr: errNoChild45,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.MatchMethod, nil
@@ -10228,7 +10329,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "eventAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.EventAt, nil
@@ -10238,7 +10339,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "receivedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.ReceivedAt, nil
@@ -10247,7 +10348,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "latitude",
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.Latitude, nil
@@ -10256,7 +10357,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "longitude",
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.Longitude, nil
@@ -10265,7 +10366,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "sourceStatus",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.SourceStatus, nil
@@ -10274,7 +10375,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "rawReference",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.RawReference, nil
@@ -10283,7 +10384,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "reportedById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.ReportedByID, nil
@@ -10293,7 +10394,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "outcome",
 				NonNull:  true,
-				ChildErr: errNoChild45,
+				ChildErr: errNoChild46,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.Outcome, nil
@@ -10302,7 +10403,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "outcomeReason",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.OutcomeReason, nil
@@ -10447,16 +10548,16 @@ type ShipmentResolver interface {
 }
 
 var (
-	errNoChild0  = errors.New("field of type ID does not have child fields")
-	errNoChild1  = errors.New("field of type Decimal does not have child fields")
-	errNoChild2  = errors.New("field of type String does not have child fields")
-	errNoChild3  = errors.New("field of type BillingQueueStatus does not have child fields")
-	errNoChild4  = errors.New("field of type BillType does not have child fields")
-	errNoChild5  = errors.New("field of type BillingQueueExceptionReasonCode does not have child fields")
-	errNoChild6  = errors.New("field of type Timestamp does not have child fields")
-	errNoChild7  = errors.New("field of type Boolean does not have child fields")
-	errNoChild8  = errors.New("field of type JSON does not have child fields")
-	errNoChild9  = errors.New("field of type Int does not have child fields")
+	errNoChild0  = errors.New("field of type InvoiceMemoKind does not have child fields")
+	errNoChild1  = errors.New("field of type ID does not have child fields")
+	errNoChild2  = errors.New("field of type Int does not have child fields")
+	errNoChild3  = errors.New("field of type Decimal does not have child fields")
+	errNoChild4  = errors.New("field of type Timestamp does not have child fields")
+	errNoChild5  = errors.New("field of type String does not have child fields")
+	errNoChild6  = errors.New("field of type BillingQueueStatus does not have child fields")
+	errNoChild7  = errors.New("field of type BillType does not have child fields")
+	errNoChild8  = errors.New("field of type BillingQueueExceptionReasonCode does not have child fields")
+	errNoChild9  = errors.New("field of type Boolean does not have child fields")
 	errNoChild10 = errors.New("field of type BillingQueueLane does not have child fields")
 	errNoChild11 = errors.New("field of type BillingQueueHoldReasonCode does not have child fields")
 	errNoChild12 = errors.New("field of type BillingQueueAgentVerdict does not have child fields")
@@ -10471,28 +10572,29 @@ var (
 	errNoChild21 = errors.New("field of type ShipmentStatus does not have child fields")
 	errNoChild22 = errors.New("field of type ShipmentTenderStatus does not have child fields")
 	errNoChild23 = errors.New("field of type ShipmentEntryMethod does not have child fields")
-	errNoChild24 = errors.New("field of type EntityStatus does not have child fields")
-	errNoChild25 = errors.New("field of type AssignmentStatus does not have child fields")
-	errNoChild26 = errors.New("field of type ShipmentEventType does not have child fields")
-	errNoChild27 = errors.New("field of type ShipmentEventSeverity does not have child fields")
-	errNoChild28 = errors.New("field of type ShipmentEventActorType does not have child fields")
-	errNoChild29 = errors.New("field of type Float does not have child fields")
-	errNoChild30 = errors.New("field of type ShipmentBillingTransferFailureCode does not have child fields")
-	errNoChild31 = errors.New("field of type ShipmentCommentType does not have child fields")
-	errNoChild32 = errors.New("field of type ShipmentCommentVisibility does not have child fields")
-	errNoChild33 = errors.New("field of type ShipmentCommentPriority does not have child fields")
-	errNoChild34 = errors.New("field of type ShipmentCommentSource does not have child fields")
-	errNoChild35 = errors.New("field of type HoldType does not have child fields")
-	errNoChild36 = errors.New("field of type HoldSeverity does not have child fields")
-	errNoChild37 = errors.New("field of type MoveStatus does not have child fields")
-	errNoChild38 = errors.New("field of type MoveCoverageType does not have child fields")
-	errNoChild39 = errors.New("field of type StopStatus does not have child fields")
-	errNoChild40 = errors.New("field of type StopType does not have child fields")
-	errNoChild41 = errors.New("field of type StopScheduleType does not have child fields")
-	errNoChild42 = errors.New("field of type TrackingEventSource does not have child fields")
-	errNoChild43 = errors.New("field of type StopVisitKind does not have child fields")
-	errNoChild44 = errors.New("field of type TrackingMatchMethod does not have child fields")
-	errNoChild45 = errors.New("field of type TrackingEventOutcome does not have child fields")
+	errNoChild24 = errors.New("field of type JSON does not have child fields")
+	errNoChild25 = errors.New("field of type EntityStatus does not have child fields")
+	errNoChild26 = errors.New("field of type AssignmentStatus does not have child fields")
+	errNoChild27 = errors.New("field of type ShipmentEventType does not have child fields")
+	errNoChild28 = errors.New("field of type ShipmentEventSeverity does not have child fields")
+	errNoChild29 = errors.New("field of type ShipmentEventActorType does not have child fields")
+	errNoChild30 = errors.New("field of type Float does not have child fields")
+	errNoChild31 = errors.New("field of type ShipmentBillingTransferFailureCode does not have child fields")
+	errNoChild32 = errors.New("field of type ShipmentCommentType does not have child fields")
+	errNoChild33 = errors.New("field of type ShipmentCommentVisibility does not have child fields")
+	errNoChild34 = errors.New("field of type ShipmentCommentPriority does not have child fields")
+	errNoChild35 = errors.New("field of type ShipmentCommentSource does not have child fields")
+	errNoChild36 = errors.New("field of type HoldType does not have child fields")
+	errNoChild37 = errors.New("field of type HoldSeverity does not have child fields")
+	errNoChild38 = errors.New("field of type MoveStatus does not have child fields")
+	errNoChild39 = errors.New("field of type MoveCoverageType does not have child fields")
+	errNoChild40 = errors.New("field of type StopStatus does not have child fields")
+	errNoChild41 = errors.New("field of type StopType does not have child fields")
+	errNoChild42 = errors.New("field of type StopScheduleType does not have child fields")
+	errNoChild43 = errors.New("field of type TrackingEventSource does not have child fields")
+	errNoChild44 = errors.New("field of type StopVisitKind does not have child fields")
+	errNoChild45 = errors.New("field of type TrackingMatchMethod does not have child fields")
+	errNoChild46 = errors.New("field of type TrackingEventOutcome does not have child fields")
 )
 
 func marshalAbstractShipmentEvent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v any) graphql.Marshaler {
@@ -11548,7 +11650,7 @@ func unmarshalInputShipmentBulkTransferToBillingInput(ctx context.Context, ec *g
 			it.ShipmentIds = data
 		case "billType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billType"))
-			data, err := unmarshalOBillType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐBillType(ctx, ec, v)
+			data, err := unmarshalOBillType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingvocabᚐBillType(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -13064,7 +13166,7 @@ func unmarshalInputShipmentTransferToBillingInput(ctx context.Context, ec *gqlex
 			it.ShipmentID = data
 		case "billType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billType"))
-			data, err := unmarshalOBillType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐBillType(ctx, ec, v)
+			data, err := unmarshalOBillType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingvocabᚐBillType(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -13456,12 +13558,12 @@ func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (stri
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOBillType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐBillType(ctx context.Context, ec *gqlexec.Exec, v any) (*billingqueue.BillType, error) {
+func unmarshalOBillType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingvocabᚐBillType(ctx context.Context, ec *gqlexec.Exec, v any) (*billingvocab.BillType, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := billingqueue.BillType(tmp)
+	res := billingvocab.BillType(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -13746,12 +13848,20 @@ func marshalNAssignmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi�
 	return v
 }
 
-func marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐBillType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v billingqueue.BillType) graphql.Marshaler {
+func marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingvocabᚐBillType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v billingvocab.BillType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNBillingQueueAdjustmentContext2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueAdjustmentContext(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.BillingQueueAdjustmentContext) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "BillingQueueAdjustmentContext", v)
 }
 
 func marshalNBillingQueueItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.BillingQueueItem) graphql.Marshaler {
@@ -13925,6 +14035,14 @@ func marshalNInt2int16(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 
 func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
 	res := graphql.MarshalInt64(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNInvoiceMemoKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐMemoKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v invoice.MemoKind) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
@@ -14830,6 +14948,20 @@ func marshalNTrackingMatchMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalOBillingQueueAdjustmentMemo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueAdjustmentMemo(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.BillingQueueAdjustmentMemo) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "BillingQueueAdjustmentMemo", v)
+}
+
+func marshalOBillingQueueAdjustmentRebill2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueAdjustmentRebill(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.BillingQueueAdjustmentRebill) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "BillingQueueAdjustmentRebill", v)
 }
 
 func marshalOBillingQueueAgentVerdict2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐAgentVerdict(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *billingqueue.AgentVerdict) graphql.Marshaler {

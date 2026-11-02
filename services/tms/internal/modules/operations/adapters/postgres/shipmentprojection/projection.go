@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentpredicate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -14,6 +15,10 @@ import (
 const (
 	deliveryStopAlias = "prj_stp"
 	deliveryMoveAlias = "prj_dsm"
+	deliveryAtStop    = "prj_dts"
+	deliveryAtMove    = "prj_dtm"
+	pickupAtStop      = "prj_pts"
+	pickupAtMove      = "prj_ptm"
 	assignedMoveAlias = "prj_asm"
 	assignmentAlias   = "prj_a"
 	touchedMoveAlias  = "prj_tsm"
@@ -112,6 +117,8 @@ func refreshQuery(target keel.Pred, t tenancy) keel.Query[*shipment.Shipment] {
 		target,
 		keel.Or(
 			sp.LastDeliveryArrivalAt.IsDistinctFromExpr(lastDeliveryArrival(sp, t)),
+			sp.PickupAt.IsDistinctFromExpr(pickupAt(sp, t)),
+			sp.DeliveryAt.IsDistinctFromExpr(deliveryAt(sp, t)),
 			sp.HasActiveAssignment.IsDistinctFromExpr(keel.BoolOf(hasActiveAssignment(sp, t))),
 		),
 	), t)
@@ -122,6 +129,8 @@ func refreshAssignments(t tenancy) []keel.Assignment {
 
 	return []keel.Assignment{
 		sp.LastDeliveryArrivalAt.ToExpr(lastDeliveryArrival(sp, t)),
+		sp.PickupAt.ToExpr(pickupAt(sp, t)),
+		sp.DeliveryAt.ToExpr(deliveryAt(sp, t)),
 		sp.HasActiveAssignment.ToExpr(hasActiveAssignment(sp, t)),
 		sp.Version.ToExpr(sp.Version),
 		sp.UpdatedAt.ToExpr(sp.UpdatedAt),
@@ -151,6 +160,52 @@ func lastDeliveryArrival(sp *shipmentdb.ShipmentsTable, t tenancy) keel.Int64Exp
 		Limit(1)
 
 	return keel.Int64Of(keel.Scalar(scoped(q, t)))
+}
+
+// pickupAt is when the shipment is scheduled to be picked up: the scheduled
+// window start of its first pickup stop. The pickup-window quick filters and
+// the next uncovered pickup read it from the shipment instead of finding the
+// first pickup stop of every uncovered shipment.
+func pickupAt(sp *shipmentdb.ShipmentsTable, t tenancy) keel.Int64Expr {
+	stp := shipmentdb.Stops.As(pickupAtStop)
+	sm := shipmentdb.ShipmentMoves.As(pickupAtMove)
+
+	q := shipmentpredicate.FirstPickupStop(stp, sm).
+		Pick(stp.ScheduledWindowStart).
+		Where(sameTenant(sp, stp, sm, t))
+
+	return keel.Int64Of(keel.Scalar(scoped(q, t)))
+}
+
+// deliveryAt is when the shipment delivers: the actual arrival of its last
+// delivery stop, or that stop's scheduled window start until it arrives. The
+// delivering-today and delivery-hour quick filters read it from the shipment
+// instead of finding the last delivery stop of every shipment they count.
+func deliveryAt(sp *shipmentdb.ShipmentsTable, t tenancy) keel.Int64Expr {
+	stp := shipmentdb.Stops.As(deliveryAtStop)
+	sm := shipmentdb.ShipmentMoves.As(deliveryAtMove)
+
+	q := shipmentpredicate.LastDeliveryStop(stp, sm).
+		Pick(shipmentpredicate.DeliveryAt(stp)).
+		Where(sameTenant(sp, stp, sm, t))
+
+	return keel.Int64Of(keel.Scalar(scoped(q, t)))
+}
+
+// sameTenant ties a stop and its move to the shipment's tenant when the refresh
+// runs across tenants, where row-level security does not.
+func sameTenant(
+	sp *shipmentdb.ShipmentsTable,
+	stp *shipmentdb.StopsTable,
+	sm *shipmentdb.ShipmentMovesTable,
+	t tenancy,
+) keel.Pred {
+	return keel.When(t == everyTenant, keel.And(
+		stp.OrganizationID.EqCol(sp.OrganizationID),
+		stp.BusinessUnitID.EqCol(sp.BusinessUnitID),
+		sm.OrganizationID.EqCol(sp.OrganizationID),
+		sm.BusinessUnitID.EqCol(sp.BusinessUnitID),
+	))
 }
 
 func hasActiveAssignment(sp *shipmentdb.ShipmentsTable, t tenancy) keel.Pred {

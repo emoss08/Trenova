@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceassembly"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicelines"
-	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepostingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
@@ -75,7 +75,7 @@ func (s *Service) CreateMemo(
 	var created *invoice.Invoice
 	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		queued := memoQueueItem(req, cus, number)
-		queued.AdjustmentContext[invoicepostingservice.MemoRaisedByKey] = actor.UserID.String()
+		queued.AdjustmentContext.Memo.RaisedByID = actor.UserID
 		item, txErr := s.billingQueueRepo.Create(txCtx, queued)
 		if txErr != nil {
 			return txErr
@@ -129,8 +129,8 @@ func validateMemoRequest(req *invoiceports.CreateMemoRequest) *errortypes.MultiE
 	if req.CustomerID.IsNil() {
 		multiErr.Add("customerId", errortypes.ErrRequired, "Customer is required")
 	}
-	if req.BillType != billingqueue.BillTypeCreditMemo &&
-		req.BillType != billingqueue.BillTypeDebitMemo {
+	if req.BillType != billingvocab.BillTypeCreditMemo &&
+		req.BillType != billingvocab.BillTypeDebitMemo {
 		multiErr.Add(
 			"billType",
 			errortypes.ErrInvalid,
@@ -259,9 +259,9 @@ func (s *Service) validateMemoReference(
 func (s *Service) generateMemoNumber(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	billType billingqueue.BillType,
+	billType billingvocab.BillType,
 ) (string, error) {
-	if billType == billingqueue.BillTypeCreditMemo {
+	if billType == billingvocab.BillTypeCreditMemo {
 		return s.sequenceGenerator.GenerateCreditMemoNumber(
 			ctx,
 			tenantInfo.OrgID,
@@ -361,7 +361,7 @@ func (s *Service) buildMemoEntity(
 		Memo:               strings.TrimSpace(req.Memo),
 		Lines:              lines,
 	}
-	if req.BillType == billingqueue.BillTypeCreditMemo {
+	if req.BillType == billingvocab.BillTypeCreditMemo {
 		due := invoiceDate
 		entity.DueDate = &due
 	} else {
@@ -402,8 +402,8 @@ func memoKindOrDefault(kind invoice.MemoKind) invoice.MemoKind {
 	return invoice.MemoKindManual
 }
 
-func memoAuditComment(billType billingqueue.BillType) string {
-	if billType == billingqueue.BillTypeCreditMemo {
+func memoAuditComment(billType billingvocab.BillType) string {
+	if billType == billingvocab.BillTypeCreditMemo {
 		return "Credit memo created"
 	}
 

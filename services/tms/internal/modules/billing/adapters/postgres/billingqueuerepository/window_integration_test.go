@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -69,7 +70,7 @@ func (f *syncFixture) queueDelivered(
 		ShipmentID:       s.id,
 		BillToCustomerID: s.payerID,
 		Status:           billingqueue.StatusReadyForReview,
-		BillType:         billingqueue.BillTypeInvoice,
+		BillType:         billingvocab.BillTypeInvoice,
 		Number:           number,
 	})
 	require.NoError(t, err)

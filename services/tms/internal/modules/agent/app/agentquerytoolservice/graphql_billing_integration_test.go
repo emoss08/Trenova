@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicequeryservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -114,7 +115,7 @@ func (b *billingSeed) invoice(
 	queue := &billingqueue.BillingQueueItem{
 		OrganizationID: info.OrgID, BusinessUnitID: info.BuID, ShipmentID: graph.Shipment.ID,
 		BillToCustomerID: fixture.Customer.ID, Number: "INV-" + label,
-		Status: billingqueue.StatusPosted, BillType: billingqueue.BillTypeInvoice,
+		Status: billingqueue.StatusPosted, BillType: billingvocab.BillTypeInvoice,
 	}
 	require.NoError(
 		b.t,
@@ -134,7 +135,7 @@ func (b *billingSeed) invoice(
 	return b.invoices.Create(ctx, &invoice.Invoice{
 		OrganizationID: info.OrgID, BusinessUnitID: info.BuID, BillingQueueItemID: queue.ID,
 		ShipmentID: graph.Shipment.ID, CustomerID: fixture.Customer.ID, Number: queue.Number,
-		BillType: billingqueue.BillTypeInvoice, Status: invoice.StatusPosted, PostedAt: &posted,
+		BillType: billingvocab.BillTypeInvoice, Status: invoice.StatusPosted, PostedAt: &posted,
 		PaymentTerm: invoice.PaymentTermNet30, CurrencyCode: "USD", InvoiceDate: posted,
 		DueDate: &due, ShipmentProNumber: graph.Shipment.ProNumber,
 		ShipmentBOL: graph.Shipment.BOL, BillToName: "Customer " + label,

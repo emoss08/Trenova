@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
@@ -228,7 +228,7 @@ func chargeTarget(chargeID pulid.ID) accountingsyncpush.MappingTarget {
 
 type invoiceSpec struct {
 	number   string
-	billType billingqueue.BillType
+	billType billingvocab.BillType
 	date     int64
 	currency string
 	lines    []*invoice.InvoiceLine
@@ -236,7 +236,7 @@ type invoiceSpec struct {
 
 func (h *harness) postedInvoice(customerID pulid.ID, spec invoiceSpec) *invoice.Invoice {
 	if spec.billType == "" {
-		spec.billType = billingqueue.BillTypeInvoice
+		spec.billType = billingvocab.BillTypeInvoice
 	}
 	if spec.date == 0 {
 		spec.date = aprilTenth

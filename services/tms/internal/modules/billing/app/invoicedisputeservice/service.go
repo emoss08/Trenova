@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
@@ -456,7 +456,7 @@ func validateDisputableInvoice(
 			errortypes.ErrInvalidOperation,
 			"Only a posted invoice can be disputed",
 		)
-	case inv.BillType != billingqueue.BillTypeInvoice && inv.BillType != billingqueue.BillTypeDebitMemo:
+	case inv.BillType != billingvocab.BillTypeInvoice && inv.BillType != billingvocab.BillTypeDebitMemo:
 		multiErr.Add(
 			"invoiceId",
 			errortypes.ErrInvalidOperation,

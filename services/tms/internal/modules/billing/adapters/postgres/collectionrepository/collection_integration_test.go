@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/billingtest"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -281,7 +282,7 @@ func (e *nonRecourseEnv) postInvoice(
 		BillToCustomerID: e.customerID,
 		Number:           number,
 		Status:           billingqueue.StatusPosted,
-		BillType:         billingqueue.BillTypeInvoice,
+		BillType:         billingvocab.BillTypeInvoice,
 	}
 	require.NoError(t, billingqueuedb.BillingQueueItems.Create(e.ctx, e.db, queue))
 
@@ -296,7 +297,7 @@ func (e *nonRecourseEnv) postInvoice(
 		CustomerID:         e.customerID,
 		FactoringCompanyID: factorID,
 		Number:             number,
-		BillType:           billingqueue.BillTypeInvoice,
+		BillType:           billingvocab.BillTypeInvoice,
 		Status:             invoice.StatusPosted,
 		PostedAt:           &postedAt,
 		PaymentTerm:        invoice.PaymentTermNet30,

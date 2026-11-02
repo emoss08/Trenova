@@ -16,16 +16,15 @@ export function BillingQueueRatingReviewHold({ hold }: { hold: RatingReviewHoldV
   }
 
   return (
-    <div className="shrink-0 px-4 pt-2" data-testid="billing-queue-rating-review-hold">
-      <RatingReviewHold
-        shipmentId={hold.shipmentId}
-        reasons={hold.reasons}
-        awaiting
-        onApproved={() => {
-          invalidate();
-          void queryClient.invalidateQueries({ queryKey: ["shipment"] });
-        }}
-      />
-    </div>
+    <RatingReviewHold
+      shipmentId={hold.shipmentId}
+      reasons={hold.reasons}
+      awaiting
+      variant="info"
+      onApproved={() => {
+        invalidate();
+        void queryClient.invalidateQueries({ queryKey: ["shipment"] });
+      }}
+    />
   );
 }

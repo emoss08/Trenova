@@ -3,7 +3,7 @@ package receivablesql
 import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/factoringsql"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -14,7 +14,7 @@ import (
 const SecondsPerDay = int64(86400)
 
 func ReceivableBillType(inv *invoicedb.InvoicesTable) keel.Pred {
-	return inv.BillType.In(billingqueue.BillTypeInvoice, billingqueue.BillTypeDebitMemo)
+	return inv.BillType.In(billingvocab.BillTypeInvoice, billingvocab.BillTypeDebitMemo)
 }
 
 func Receivable(inv *invoicedb.InvoicesTable) keel.Pred {

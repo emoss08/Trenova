@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -253,7 +254,7 @@ func (_c *MockBillingQueueRepository_Create_Call) RunAndReturn(run func(ctx cont
 }
 
 // ExistsByShipmentPayerAndType provides a mock function for the type MockBillingQueueRepository
-func (_mock *MockBillingQueueRepository) ExistsByShipmentPayerAndType(ctx context.Context, tenantInfo pagination.TenantInfo, shipmentID pulid.ID, payerID pulid.ID, billType billingqueue.BillType) (bool, error) {
+func (_mock *MockBillingQueueRepository) ExistsByShipmentPayerAndType(ctx context.Context, tenantInfo pagination.TenantInfo, shipmentID pulid.ID, payerID pulid.ID, billType billingvocab.BillType) (bool, error) {
 	ret := _mock.Called(ctx, tenantInfo, shipmentID, payerID, billType)
 
 	if len(ret) == 0 {
@@ -262,15 +263,15 @@ func (_mock *MockBillingQueueRepository) ExistsByShipmentPayerAndType(ctx contex
 
 	var r0 bool
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID, billingqueue.BillType) (bool, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID, billingvocab.BillType) (bool, error)); ok {
 		return returnFunc(ctx, tenantInfo, shipmentID, payerID, billType)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID, billingqueue.BillType) bool); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID, billingvocab.BillType) bool); ok {
 		r0 = returnFunc(ctx, tenantInfo, shipmentID, payerID, billType)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID, billingqueue.BillType) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID, billingvocab.BillType) error); ok {
 		r1 = returnFunc(ctx, tenantInfo, shipmentID, payerID, billType)
 	} else {
 		r1 = ret.Error(1)
@@ -288,12 +289,12 @@ type MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call struct {
 //   - tenantInfo pagination.TenantInfo
 //   - shipmentID pulid.ID
 //   - payerID pulid.ID
-//   - billType billingqueue.BillType
+//   - billType billingvocab.BillType
 func (_e *MockBillingQueueRepository_Expecter) ExistsByShipmentPayerAndType(ctx any, tenantInfo any, shipmentID any, payerID any, billType any) *MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call {
 	return &MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call{Call: _e.mock.On("ExistsByShipmentPayerAndType", ctx, tenantInfo, shipmentID, payerID, billType)}
 }
 
-func (_c *MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, shipmentID pulid.ID, payerID pulid.ID, billType billingqueue.BillType)) *MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call {
+func (_c *MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, shipmentID pulid.ID, payerID pulid.ID, billType billingvocab.BillType)) *MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -311,9 +312,9 @@ func (_c *MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call) Run(run 
 		if args[3] != nil {
 			arg3 = args[3].(pulid.ID)
 		}
-		var arg4 billingqueue.BillType
+		var arg4 billingvocab.BillType
 		if args[4] != nil {
-			arg4 = args[4].(billingqueue.BillType)
+			arg4 = args[4].(billingvocab.BillType)
 		}
 		run(
 			arg0,
@@ -331,7 +332,7 @@ func (_c *MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call) Return(b
 	return _c
 }
 
-func (_c *MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, shipmentID pulid.ID, payerID pulid.ID, billType billingqueue.BillType) (bool, error)) *MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call {
+func (_c *MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, shipmentID pulid.ID, payerID pulid.ID, billType billingvocab.BillType) (bool, error)) *MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call {
 	_c.Call.Return(run)
 	return _c
 }

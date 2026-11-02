@@ -7,9 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentpredicate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"go.uber.org/zap"
 )
@@ -36,38 +38,12 @@ func (r *Repository) ListDeliveriesToday(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*shipmentboardports.ShipmentDeliveryRow, error) {
-			today, err := shipmentpredicate.QuickFilterCondition(
-				req.Basis,
-				quickfilter.Quick(quickfilter.QuickFilterDeliveringToday),
-			)
+			q, err := deliveriesTodayQuery(req.Basis)
 			if err != nil {
 				return nil, err
 			}
 
-			sp := shipmentdb.Shipments
-			ld := shipmentdb.Stops.As(deliveryAlias)
-			loc := locationdb.Locations.As(deliveryLocationAlias)
-			delivery := shipmentpredicate.LastDeliveryStop(
-				ld,
-				shipmentdb.ShipmentMoves.As(deliveryMoveAlias),
-			).Pick(ld.ID, ld.LocationID, ld.ActualArrival, ld.ScheduledWindowStart, ld.ScheduledWindowEnd)
-			deliveryAt := shipmentpredicate.DeliveryAt(ld)
-
-			rows, err := keel.Into[shipmentboardports.ShipmentDeliveryRow](ctx, r.db.Keel(ctx), sp.
-				JoinLateral(delivery).
-				LeftJoin(loc, loc.ID.EqCol(ld.LocationID)).
-				Pick(
-					sp.ID,
-					sp.ProNumber,
-					sp.StageRank,
-					sp.Customer().Name,
-					loc.City.Coalesce(""),
-					deliveryAt,
-					ld.ActualArrival,
-					ld.ScheduledWindowEnd.Coalesce(ld.ScheduledWindowStart),
-				).
-				Where(today).
-				Order(keel.Asc(deliveryAt)))
+			rows, err := keel.Into[shipmentboardports.ShipmentDeliveryRow](ctx, r.db.Keel(ctx), q)
 			if err != nil {
 				r.l.Error("failed to list deliveries today", zap.Error(err))
 				return nil, err
@@ -78,6 +54,45 @@ func (r *Repository) ListDeliveriesToday(
 	)
 }
 
+// deliveriesTodayQuery lists the shipments delivering today in delivery order.
+// The day and the order read the delivery time stored on the shipment, so the
+// last delivery stop is looked up only for the shipments listed.
+func deliveriesTodayQuery(
+	basis *shipmentports.ShipmentQuickFilterBasis,
+) (keel.Query[*shipment.Shipment], error) {
+	today, err := shipmentpredicate.QuickFilterCondition(
+		basis,
+		quickfilter.Quick(quickfilter.QuickFilterDeliveringToday),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	sp := shipmentdb.Shipments
+	ld := shipmentdb.Stops.As(deliveryAlias)
+	loc := locationdb.Locations.As(deliveryLocationAlias)
+	delivery := shipmentpredicate.LastDeliveryStop(
+		ld,
+		shipmentdb.ShipmentMoves.As(deliveryMoveAlias),
+	).Pick(ld.ID, ld.LocationID, ld.ActualArrival, ld.ScheduledWindowStart, ld.ScheduledWindowEnd)
+
+	return sp.
+		JoinLateral(delivery).
+		LeftJoin(loc, loc.ID.EqCol(ld.LocationID)).
+		Pick(
+			sp.ID,
+			sp.ProNumber,
+			sp.StageRank,
+			sp.Customer().Name,
+			loc.City.Coalesce(""),
+			shipmentpredicate.DeliveryAt(ld),
+			ld.ActualArrival,
+			ld.ScheduledWindowEnd.Coalesce(ld.ScheduledWindowStart),
+		).
+		Where(today).
+		Order(sp.DeliveryAt.Asc(), sp.ID.Asc()), nil
+}
+
 func (r *Repository) NextUncoveredPickup(
 	ctx context.Context,
 	req *shipmentboardports.ShipmentWatchlistRequest,
@@ -86,38 +101,11 @@ func (r *Repository) NextUncoveredPickup(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*shipmentboardports.ShipmentPickupRow, error) {
-			sp := shipmentdb.Shipments
-			fp := shipmentdb.Stops.As(pickupAlias)
-			fpLoc := locationdb.Locations.As(pickupLocationAlias)
-			ld := shipmentdb.Stops.As(deliveryAlias)
-			ldLoc := locationdb.Locations.As(deliveryLocationAlias)
-
-			pickup := shipmentpredicate.FirstPickupStop(
-				fp,
-				shipmentdb.ShipmentMoves.As(pickupMoveAlias),
-			).Pick(fp.ID, fp.LocationID, fp.ScheduledWindowStart)
-			delivery := shipmentpredicate.LastDeliveryStop(
-				ld,
-				shipmentdb.ShipmentMoves.As(deliveryMoveAlias),
-			).Pick(ld.ID, ld.LocationID)
-
-			rows, err := keel.Into[shipmentboardports.ShipmentPickupRow](ctx, r.db.Keel(ctx), sp.
-				JoinLateral(pickup).
-				LeftJoin(fpLoc, fpLoc.ID.EqCol(fp.LocationID)).
-				LeftJoinLateral(delivery).
-				LeftJoin(ldLoc, ldLoc.ID.EqCol(ld.LocationID)).
-				Pick(
-					sp.ID,
-					fp.ScheduledWindowStart,
-					fpLoc.City.Coalesce(""),
-					ldLoc.City.Coalesce(""),
-				).
-				Where(
-					shipmentpredicate.StageCondition(shipmentvocab.StageNeedsCoverage),
-					fp.ScheduledWindowStart.Gte(req.Basis.Now.Unix()),
-				).
-				Order(fp.ScheduledWindowStart.Asc(), sp.ID.Asc()).
-				Limit(1))
+			rows, err := keel.Into[shipmentboardports.ShipmentPickupRow](
+				ctx,
+				r.db.Keel(ctx),
+				nextUncoveredPickupQuery(req.Basis.Now.Unix()),
+			)
 			if err != nil {
 				r.l.Error("failed to read next uncovered pickup", zap.Error(err))
 				return nil, err
@@ -129,6 +117,44 @@ func (r *Repository) NextUncoveredPickup(
 			return &rows[0], nil
 		},
 	)
+}
+
+// nextUncoveredPickupQuery reads the uncovered shipment picked up soonest after
+// now. It filters and orders by the pickup time stored on the shipment, so the
+// stage and pickup index yields the one row and its stops are looked up once.
+func nextUncoveredPickupQuery(now int64) keel.Query[*shipment.Shipment] {
+	sp := shipmentdb.Shipments
+	fp := shipmentdb.Stops.As(pickupAlias)
+	fpLoc := locationdb.Locations.As(pickupLocationAlias)
+	ld := shipmentdb.Stops.As(deliveryAlias)
+	ldLoc := locationdb.Locations.As(deliveryLocationAlias)
+
+	pickup := shipmentpredicate.FirstPickupStop(
+		fp,
+		shipmentdb.ShipmentMoves.As(pickupMoveAlias),
+	).Pick(fp.ID, fp.LocationID, fp.ScheduledWindowStart)
+	delivery := shipmentpredicate.LastDeliveryStop(
+		ld,
+		shipmentdb.ShipmentMoves.As(deliveryMoveAlias),
+	).Pick(ld.ID, ld.LocationID)
+
+	return sp.
+		JoinLateral(pickup).
+		LeftJoin(fpLoc, fpLoc.ID.EqCol(fp.LocationID)).
+		LeftJoinLateral(delivery).
+		LeftJoin(ldLoc, ldLoc.ID.EqCol(ld.LocationID)).
+		Pick(
+			sp.ID,
+			fp.ScheduledWindowStart,
+			fpLoc.City.Coalesce(""),
+			ldLoc.City.Coalesce(""),
+		).
+		Where(
+			shipmentpredicate.StageCondition(shipmentvocab.StageNeedsCoverage),
+			sp.PickupAt.Gte(now),
+		).
+		Order(sp.PickupAt.Asc(), sp.ID.Asc()).
+		Limit(1)
 }
 
 func (r *Repository) ListDwellingStops(
@@ -143,28 +169,11 @@ func (r *Repository) ListDwellingStops(
 				return nil, shipmentpredicate.ErrQuickFilterDetentionMissing
 			}
 
-			sp := shipmentdb.Shipments
-			dw := shipmentdb.Stops.As(dwellAlias)
-			loc := locationdb.Locations.As(dwellLocationAlias)
-			dwelling := shipmentpredicate.DwellingStops(
-				dw,
-				shipmentdb.ShipmentMoves.As(dwellMoveAlias),
-				req.Basis.Now.Unix(),
-				req.Basis.Detention.ThresholdMinutes,
-			).Pick(dw.ID, dw.ShipmentMoveID, dw.LocationID, dw.ActualArrival)
-
-			rows, err := keel.Into[shipmentboardports.ShipmentDwellRow](ctx, r.db.Keel(ctx), sp.
-				JoinLateral(dwelling).
-				LeftJoin(loc, loc.ID.EqCol(dw.LocationID)).
-				Pick(
-					sp.ID,
-					dw.ShipmentMoveID,
-					dw.ID,
-					loc.Name.Coalesce(""),
-					dw.ActualArrival,
-				).
-				Order(dw.ActualArrival.Asc(), dw.ID.Asc()).
-				Limit(maxDwellingStops))
+			rows, err := keel.Into[shipmentboardports.ShipmentDwellRow](
+				ctx,
+				r.db.Keel(ctx),
+				dwellingStopsQuery(req.Basis.Now.Unix(), req.Basis.Detention.ThresholdMinutes),
+			)
 			if err != nil {
 				r.l.Error("failed to list dwelling stops", zap.Error(err))
 				return nil, err
@@ -173,6 +182,30 @@ func (r *Repository) ListDwellingStops(
 			return pointers(rows), nil
 		},
 	)
+}
+
+// dwellingStopsQuery lists the stops dwelling past the threshold, longest
+// first. It reads from the dwelling stops, a small set the stops index holds,
+// and joins their shipments, rather than searching every shipment's stops for
+// one that is dwelling.
+func dwellingStopsQuery(now, thresholdMinutes int64) keel.Query[*shipment.Stop] {
+	sp := shipmentdb.Shipments
+	dw := shipmentdb.Stops.As(dwellAlias)
+	dwm := shipmentdb.ShipmentMoves.As(dwellMoveAlias)
+	loc := locationdb.Locations.As(dwellLocationAlias)
+
+	return shipmentpredicate.DwellingStops(dw, dwm, now, thresholdMinutes).
+		Join(sp, sp.ID.EqCol(dwm.ShipmentID)).
+		LeftJoin(loc, loc.ID.EqCol(dw.LocationID)).
+		Pick(
+			sp.ID,
+			dw.ShipmentMoveID,
+			dw.ID,
+			loc.Name.Coalesce(""),
+			dw.ActualArrival,
+		).
+		Order(dw.ActualArrival.Asc(), dw.ID.Asc()).
+		Limit(maxDwellingStops)
 }
 
 func (r *Repository) ListReadyToBillCustomers(

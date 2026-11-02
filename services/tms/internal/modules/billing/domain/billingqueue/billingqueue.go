@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -24,59 +25,59 @@ var (
 type BillingQueueItem struct {
 	keel.Table `keel:"billing_queue_items"`
 
-	ID                        pulid.ID             `json:"id"                        keel:"id,pk,autoid:bqi_"`
-	OrganizationID            pulid.ID             `json:"organizationId"            keel:"organization_id,pk,tenant"`
-	BusinessUnitID            pulid.ID             `json:"businessUnitId"            keel:"business_unit_id,pk,tenant"`
-	ShipmentID                pulid.ID             `json:"shipmentId"                keel:"shipment_id,nullzero"`
-	OrderID                   pulid.ID             `json:"orderId"                   keel:"order_id,nullzero"`
-	BillToCustomerID          pulid.ID             `json:"billToCustomerId"          keel:"bill_to_customer_id"`
-	AllocatedTotalAmount      decimal.Decimal      `json:"allocatedTotalAmount"      keel:"allocated_total_amount"`
-	AllocatedTotalAmountMinor int64                `json:"allocatedTotalAmountMinor" keel:"allocated_total_amount_minor"`
-	AssignedBillerID          *pulid.ID            `json:"assignedBillerId"          keel:"assigned_biller_id"`
-	Number                    string               `json:"number"                    keel:"number,nullzero"`
-	Status                    Status               `json:"status"                    keel:"status"`
-	BillType                  BillType             `json:"billType"                  keel:"bill_type"`
-	ExceptionReasonCode       *ExceptionReasonCode `json:"exceptionReasonCode"       keel:"exception_reason_code"`
-	ReviewNotes               string               `json:"reviewNotes"               keel:"review_notes,nullzero"`
-	ExceptionNotes            string               `json:"exceptionNotes"            keel:"exception_notes,nullzero"`
-	ReviewStartedAt           *int64               `json:"reviewStartedAt"           keel:"review_started_at"`
-	ReviewCompletedAt         *int64               `json:"reviewCompletedAt"         keel:"review_completed_at"`
-	CanceledByID              *pulid.ID            `json:"canceledById"              keel:"canceled_by_id"`
-	CanceledAt                *int64               `json:"canceledAt"                keel:"canceled_at"`
-	CancelReason              string               `json:"cancelReason"              keel:"cancel_reason,nullzero"`
-	HoldReasonCode            *HoldReasonCode      `json:"holdReasonCode"            keel:"hold_reason_code"`
-	HeldAt                    *int64               `json:"heldAt"                    keel:"held_at"`
-	HeldByID                  *pulid.ID            `json:"heldById"                  keel:"held_by_id"`
-	StatusBeforeHold          *Status              `json:"statusBeforeHold"          keel:"status_before_hold"`
-	IsAdjustmentOrigin        bool                 `json:"isAdjustmentOrigin"        keel:"is_adjustment_origin"`
-	InvoiceID                 pulid.ID             `json:"invoiceId"                 keel:"invoice_id,nullzero"`
-	SourceInvoiceID           *pulid.ID            `json:"sourceInvoiceId"           keel:"source_invoice_id"`
-	SourceInvoiceAdjustmentID *pulid.ID            `json:"sourceInvoiceAdjustmentId" keel:"source_invoice_adjustment_id"`
-	SourceCreditMemoInvoiceID *pulid.ID            `json:"sourceCreditMemoInvoiceId" keel:"source_credit_memo_invoice_id"`
-	CorrectionGroupID         *pulid.ID            `json:"correctionGroupId"         keel:"correction_group_id"`
-	RebillStrategy            string               `json:"rebillStrategy"            keel:"rebill_strategy,nullzero"`
-	RequiresReplacementReview bool                 `json:"requiresReplacementReview" keel:"requires_replacement_review"`
-	RerateVariancePercent     decimal.Decimal      `json:"rerateVariancePercent"     keel:"rerate_variance_percent"`
-	AdjustmentContext         map[string]any       `json:"adjustmentContext"         keel:"adjustment_context,jsonb"`
-	Lane                      Lane                 `json:"lane"                      keel:"lane,readonly"`
-	CheckedAt                 *int64               `json:"checkedAt"                 keel:"checked_at,readonly"`
-	PONumber                  string               `json:"poNumber"                  keel:"po_number,nullzero"`
-	InvoiceMemo               string               `json:"invoiceMemo"               keel:"invoice_memo,nullzero"`
-	PaymentTerm               string               `json:"paymentTerm"               keel:"payment_term,nullzero"`
-	InvoiceDate               *int64               `json:"invoiceDate"               keel:"invoice_date"`
-	PacketDocumentIDs         []pulid.ID           `json:"packetDocumentIds"         keel:"packet_document_ids,jsonb"`
-	AgentVerdict              *AgentVerdict        `json:"agentVerdict"              keel:"agent_verdict"`
-	AgentSummary              string               `json:"agentSummary"              keel:"agent_summary,nullzero"`
-	AgentReviewedAt           *int64               `json:"agentReviewedAt"           keel:"agent_reviewed_at"`
-	AgentReads                []AgentRead          `json:"agentReads"                keel:"agent_reads,jsonb"`
-	AgentReviewHash           string               `json:"-"                         keel:"agent_review_hash,nullzero"`
-	Version                   int64                `json:"version"                   keel:"version,version"`
-	CreatedAt                 int64                `json:"createdAt"                 keel:"created_at,autocreate"`
-	UpdatedAt                 int64                `json:"updatedAt"                 keel:"updated_at,autoupdate"`
-	SearchVector              string               `json:"-"                         keel:"search_vector,tsvector,readonly,noselect"`
-	ShipmentCustomerID        pulid.ID             `json:"-"                         keel:"shipment_customer_id,nullzero,readonly,noselect"`
-	ShipmentDeliveredAt       *int64               `json:"-"                         keel:"shipment_delivered_at,readonly,noselect"`
-	ShipmentShippedAt         *int64               `json:"-"                         keel:"shipment_shipped_at,readonly,noselect"`
+	ID                        pulid.ID              `json:"id"                        keel:"id,pk,autoid:bqi_"`
+	OrganizationID            pulid.ID              `json:"organizationId"            keel:"organization_id,pk,tenant"`
+	BusinessUnitID            pulid.ID              `json:"businessUnitId"            keel:"business_unit_id,pk,tenant"`
+	ShipmentID                pulid.ID              `json:"shipmentId"                keel:"shipment_id,nullzero"`
+	OrderID                   pulid.ID              `json:"orderId"                   keel:"order_id,nullzero"`
+	BillToCustomerID          pulid.ID              `json:"billToCustomerId"          keel:"bill_to_customer_id"`
+	AllocatedTotalAmount      decimal.Decimal       `json:"allocatedTotalAmount"      keel:"allocated_total_amount"`
+	AllocatedTotalAmountMinor int64                 `json:"allocatedTotalAmountMinor" keel:"allocated_total_amount_minor"`
+	AssignedBillerID          *pulid.ID             `json:"assignedBillerId"          keel:"assigned_biller_id"`
+	Number                    string                `json:"number"                    keel:"number,nullzero"`
+	Status                    Status                `json:"status"                    keel:"status"`
+	BillType                  billingvocab.BillType `json:"billType"                  keel:"bill_type"`
+	ExceptionReasonCode       *ExceptionReasonCode  `json:"exceptionReasonCode"       keel:"exception_reason_code"`
+	ReviewNotes               string                `json:"reviewNotes"               keel:"review_notes,nullzero"`
+	ExceptionNotes            string                `json:"exceptionNotes"            keel:"exception_notes,nullzero"`
+	ReviewStartedAt           *int64                `json:"reviewStartedAt"           keel:"review_started_at"`
+	ReviewCompletedAt         *int64                `json:"reviewCompletedAt"         keel:"review_completed_at"`
+	CanceledByID              *pulid.ID             `json:"canceledById"              keel:"canceled_by_id"`
+	CanceledAt                *int64                `json:"canceledAt"                keel:"canceled_at"`
+	CancelReason              string                `json:"cancelReason"              keel:"cancel_reason,nullzero"`
+	HoldReasonCode            *HoldReasonCode       `json:"holdReasonCode"            keel:"hold_reason_code"`
+	HeldAt                    *int64                `json:"heldAt"                    keel:"held_at"`
+	HeldByID                  *pulid.ID             `json:"heldById"                  keel:"held_by_id"`
+	StatusBeforeHold          *Status               `json:"statusBeforeHold"          keel:"status_before_hold"`
+	IsAdjustmentOrigin        bool                  `json:"isAdjustmentOrigin"        keel:"is_adjustment_origin"`
+	InvoiceID                 pulid.ID              `json:"invoiceId"                 keel:"invoice_id,nullzero"`
+	SourceInvoiceID           *pulid.ID             `json:"sourceInvoiceId"           keel:"source_invoice_id"`
+	SourceInvoiceAdjustmentID *pulid.ID             `json:"sourceInvoiceAdjustmentId" keel:"source_invoice_adjustment_id"`
+	SourceCreditMemoInvoiceID *pulid.ID             `json:"sourceCreditMemoInvoiceId" keel:"source_credit_memo_invoice_id"`
+	CorrectionGroupID         *pulid.ID             `json:"correctionGroupId"         keel:"correction_group_id"`
+	RebillStrategy            string                `json:"rebillStrategy"            keel:"rebill_strategy,nullzero"`
+	RequiresReplacementReview bool                  `json:"requiresReplacementReview" keel:"requires_replacement_review"`
+	RerateVariancePercent     decimal.Decimal       `json:"rerateVariancePercent"     keel:"rerate_variance_percent"`
+	AdjustmentContext         AdjustmentContext     `json:"adjustmentContext"         keel:"adjustment_context,jsonb"`
+	Lane                      Lane                  `json:"lane"                      keel:"lane,readonly"`
+	CheckedAt                 *int64                `json:"checkedAt"                 keel:"checked_at,readonly"`
+	PONumber                  string                `json:"poNumber"                  keel:"po_number,nullzero"`
+	InvoiceMemo               string                `json:"invoiceMemo"               keel:"invoice_memo,nullzero"`
+	PaymentTerm               string                `json:"paymentTerm"               keel:"payment_term,nullzero"`
+	InvoiceDate               *int64                `json:"invoiceDate"               keel:"invoice_date"`
+	PacketDocumentIDs         []pulid.ID            `json:"packetDocumentIds"         keel:"packet_document_ids,jsonb"`
+	AgentVerdict              *AgentVerdict         `json:"agentVerdict"              keel:"agent_verdict"`
+	AgentSummary              string                `json:"agentSummary"              keel:"agent_summary,nullzero"`
+	AgentReviewedAt           *int64                `json:"agentReviewedAt"           keel:"agent_reviewed_at"`
+	AgentReads                []AgentRead           `json:"agentReads"                keel:"agent_reads,jsonb"`
+	AgentReviewHash           string                `json:"-"                         keel:"agent_review_hash,nullzero"`
+	Version                   int64                 `json:"version"                   keel:"version,version"`
+	CreatedAt                 int64                 `json:"createdAt"                 keel:"created_at,autocreate"`
+	UpdatedAt                 int64                 `json:"updatedAt"                 keel:"updated_at,autoupdate"`
+	SearchVector              string                `json:"-"                         keel:"search_vector,tsvector,readonly,noselect"`
+	ShipmentCustomerID        pulid.ID              `json:"-"                         keel:"shipment_customer_id,nullzero,readonly,noselect"`
+	ShipmentDeliveredAt       *int64                `json:"-"                         keel:"shipment_delivered_at,readonly,noselect"`
+	ShipmentShippedAt         *int64                `json:"-"                         keel:"shipment_shipped_at,readonly,noselect"`
 
 	Shipment       *shipment.Shipment `json:"shipment,omitempty"       keel:"belongs:shipment_id"`
 	BillToCustomer *customer.Customer `json:"billToCustomer,omitempty" keel:"belongs:bill_to_customer_id"`
@@ -145,7 +146,7 @@ func (b *BillingQueueItem) BeforeCreate(ctx context.Context) error {
 		b.Status = StatusReadyForReview
 	}
 	if b.BillType == "" {
-		b.BillType = BillTypeInvoice
+		b.BillType = billingvocab.BillTypeInvoice
 	}
 	if b.PacketDocumentIDs == nil {
 		b.PacketDocumentIDs = []pulid.ID{}

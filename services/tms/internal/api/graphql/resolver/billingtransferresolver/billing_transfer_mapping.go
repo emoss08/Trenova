@@ -4,8 +4,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -170,9 +170,9 @@ func billingTransferShipmentStatus(status *gqlmodel.ShipmentStatus) shipmentvoca
 	return shipmentvocab.Status(*status)
 }
 
-func billingTransferBillType(billType *billingqueue.BillType) billingqueue.BillType {
+func billingTransferBillType(billType *billingvocab.BillType) billingvocab.BillType {
 	if billType == nil {
-		return billingqueue.BillTypeInvoice
+		return billingvocab.BillTypeInvoice
 	}
 
 	return *billType

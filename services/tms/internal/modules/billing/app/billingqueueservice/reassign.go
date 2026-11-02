@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -98,7 +99,7 @@ func (s *Service) planReassignCharge(
 	if err != nil {
 		return nil, nil, err
 	}
-	if item.BillType != billingqueue.BillTypeInvoice || item.ShipmentID.IsNil() {
+	if item.BillType != billingvocab.BillTypeInvoice || item.ShipmentID.IsNil() {
 		return nil, nil, errortypes.NewValidationError(
 			"itemId",
 			errortypes.ErrInvalidOperation,
@@ -418,7 +419,7 @@ func (s *Service) applyReassignment(
 	for _, share := range plan.toCreate {
 		number, numberErr := s.generateBillingNumber(
 			ctx,
-			billingqueue.BillTypeInvoice,
+			billingvocab.BillTypeInvoice,
 			req.TenantInfo,
 			share.PayerID,
 		)
@@ -433,7 +434,7 @@ func (s *Service) applyReassignment(
 			BillToCustomerID:     share.PayerID,
 			AllocatedTotalAmount: share.TotalAmount,
 			Status:               billingqueue.StatusReadyForReview,
-			BillType:             billingqueue.BillTypeInvoice,
+			BillType:             billingvocab.BillTypeInvoice,
 			Number:               number,
 		}
 		entity.SyncAllocatedMinor()

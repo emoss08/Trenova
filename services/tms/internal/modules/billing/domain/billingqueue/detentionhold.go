@@ -3,6 +3,7 @@ package billingqueue
 import (
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -59,7 +60,7 @@ func (h *RatingReviewHold) Summary() string {
 
 func HeldForRatingReview(item *BillingQueueItem) bool {
 	return item != nil && item.ShipmentID.IsNotNil() &&
-		item.BillType != BillTypeCreditMemo &&
+		item.BillType != billingvocab.BillTypeCreditMemo &&
 		!IsTerminalStatus(item.Status)
 }
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingnumber"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -75,7 +76,7 @@ func TestInvoiceNumberTakesThePayersPrefix(t *testing.T) {
 		t.Context(),
 		&billingnumber.Request{
 			TenantInfo: tenantInfo,
-			BillType:   billingqueue.BillTypeInvoice,
+			BillType:   billingvocab.BillTypeInvoice,
 			PayerID:    payerID,
 		},
 	)
@@ -102,14 +103,14 @@ func TestInvoiceNumberFallsBackToTheTenantDefault(t *testing.T) {
 	)
 
 	number, err := numberer.Next(t.Context(), &billingnumber.Request{
-		TenantInfo: tenantInfo, BillType: billingqueue.BillTypeInvoice, PayerID: pulid.MustNew("cus_"),
+		TenantInfo: tenantInfo, BillType: billingvocab.BillTypeInvoice, PayerID: pulid.MustNew("cus_"),
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "INV-0001", number)
 
 	number, err = numberer.Next(t.Context(), &billingnumber.Request{
 		TenantInfo: tenantInfo,
-		BillType:   billingqueue.BillTypeInvoice,
+		BillType:   billingvocab.BillTypeInvoice,
 		Profile: &customer.CustomerBillingProfile{
 			InvoiceNumberFormat: customer.InvoiceNumberFormatDefault,
 		},
@@ -126,7 +127,7 @@ func TestForItemRenumbersForTheItemsPayer(t *testing.T) {
 		OrganizationID:   pulid.MustNew("org_"),
 		BusinessUnitID:   pulid.MustNew("bu_"),
 		BillToCustomerID: pulid.MustNew("cus_"),
-		BillType:         billingqueue.BillTypeInvoice,
+		BillType:         billingvocab.BillTypeInvoice,
 	}
 	customers := customerportsmock.NewMockCustomerRepository(t)
 	customers.EXPECT().

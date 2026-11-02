@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
@@ -123,7 +124,7 @@ func (s *Service) AutoApprove(
 	if err != nil {
 		return nil, err
 	}
-	if item.Lane != billingqueue.LaneReady || item.BillType != billingqueue.BillTypeInvoice {
+	if item.Lane != billingqueue.LaneReady || item.BillType != billingvocab.BillTypeInvoice {
 		return &billingqueueports.AutoApproveOutcome{Reason: "Not ready"}, nil
 	}
 

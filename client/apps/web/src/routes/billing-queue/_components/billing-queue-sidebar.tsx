@@ -404,6 +404,7 @@ export function BillingQueueSidebar({
           mask="card"
           className="min-h-0 flex-1"
           aria-label={t("Billing queue")}
+          hoverGlide
           handleRef={listHandle}
         />
       )}

@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/billingtest"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -98,7 +99,7 @@ func TestPostAndApplyCreatesPaymentApplicationJournalAndSettlementUpdate(t *test
 		BillToCustomerID: shp.CustomerID,
 		Number:           "INV-PAY-1",
 		Status:           billingqueue.StatusPosted,
-		BillType:         billingqueue.BillTypeInvoice,
+		BillType:         billingvocab.BillTypeInvoice,
 	}
 	err = billingqueuedb.BillingQueueItems.Create(ctx, db, queue)
 	require.NoError(t, err)
@@ -112,7 +113,7 @@ func TestPostAndApplyCreatesPaymentApplicationJournalAndSettlementUpdate(t *test
 			ShipmentID:         shp.ID,
 			CustomerID:         shp.CustomerID,
 			Number:             queue.Number,
-			BillType:           billingqueue.BillTypeInvoice,
+			BillType:           billingvocab.BillTypeInvoice,
 			Status:             invoice.StatusPosted,
 			PostedAt:           &postedAt,
 			PaymentTerm:        invoice.PaymentTermNet30,
@@ -271,7 +272,7 @@ func TestPostAndApplySupportsUnappliedCash(t *testing.T) {
 		BillToCustomerID: shp.CustomerID,
 		Number:           "INV-PAY-2",
 		Status:           billingqueue.StatusPosted,
-		BillType:         billingqueue.BillTypeInvoice,
+		BillType:         billingvocab.BillTypeInvoice,
 	}
 	err = billingqueuedb.BillingQueueItems.Create(ctx, db, queue)
 	require.NoError(t, err)
@@ -285,7 +286,7 @@ func TestPostAndApplySupportsUnappliedCash(t *testing.T) {
 			ShipmentID:         shp.ID,
 			CustomerID:         shp.CustomerID,
 			Number:             queue.Number,
-			BillType:           billingqueue.BillTypeInvoice,
+			BillType:           billingvocab.BillTypeInvoice,
 			Status:             invoice.StatusPosted,
 			PostedAt:           &postedAt,
 			PaymentTerm:        invoice.PaymentTermNet30,
@@ -442,7 +443,7 @@ func TestApplyUnappliedLaterCreatesReclassificationEntry(t *testing.T) {
 		BillToCustomerID: shp.CustomerID,
 		Number:           "INV-PAY-3",
 		Status:           billingqueue.StatusPosted,
-		BillType:         billingqueue.BillTypeInvoice,
+		BillType:         billingvocab.BillTypeInvoice,
 	}
 	queue2 := &billingqueue.BillingQueueItem{
 		OrganizationID:   org.ID,
@@ -451,7 +452,7 @@ func TestApplyUnappliedLaterCreatesReclassificationEntry(t *testing.T) {
 		BillToCustomerID: shp.CustomerID,
 		Number:           "INV-PAY-4",
 		Status:           billingqueue.StatusPosted,
-		BillType:         billingqueue.BillTypeInvoice,
+		BillType:         billingvocab.BillTypeInvoice,
 	}
 	require.NoError(t, billingqueuedb.BillingQueueItems.Create(ctx, db, queue1))
 	require.NoError(t, billingqueuedb.BillingQueueItems.Create(ctx, db, queue2))
@@ -465,7 +466,7 @@ func TestApplyUnappliedLaterCreatesReclassificationEntry(t *testing.T) {
 			ShipmentID:         shp.ID,
 			CustomerID:         shp.CustomerID,
 			Number:             queue1.Number,
-			BillType:           billingqueue.BillTypeInvoice,
+			BillType:           billingvocab.BillTypeInvoice,
 			Status:             invoice.StatusPosted,
 			PostedAt:           &postedAt,
 			PaymentTerm:        invoice.PaymentTermNet30,
@@ -503,7 +504,7 @@ func TestApplyUnappliedLaterCreatesReclassificationEntry(t *testing.T) {
 			ShipmentID:         shp.ID,
 			CustomerID:         shp.CustomerID,
 			Number:             queue2.Number,
-			BillType:           billingqueue.BillTypeInvoice,
+			BillType:           billingvocab.BillTypeInvoice,
 			Status:             invoice.StatusPosted,
 			PostedAt:           &postedAt,
 			PaymentTerm:        invoice.PaymentTermNet30,
@@ -675,7 +676,7 @@ func TestReversePaymentRestoresInvoiceAndBalances(t *testing.T) {
 		BillToCustomerID: shp.CustomerID,
 		Number:           "INV-PAY-5",
 		Status:           billingqueue.StatusPosted,
-		BillType:         billingqueue.BillTypeInvoice,
+		BillType:         billingvocab.BillTypeInvoice,
 	}
 	err = billingqueuedb.BillingQueueItems.Create(ctx, db, queue)
 	require.NoError(t, err)
@@ -689,7 +690,7 @@ func TestReversePaymentRestoresInvoiceAndBalances(t *testing.T) {
 			ShipmentID:         shp.ID,
 			CustomerID:         shp.CustomerID,
 			Number:             queue.Number,
-			BillType:           billingqueue.BillTypeInvoice,
+			BillType:           billingvocab.BillTypeInvoice,
 			Status:             invoice.StatusPosted,
 			PostedAt:           &postedAt,
 			PaymentTerm:        invoice.PaymentTermNet30,
@@ -874,7 +875,7 @@ func TestPostAndApplyRecognizesShortPayAndSettlesInvoice(t *testing.T) {
 		BillToCustomerID: shp.CustomerID,
 		Number:           "INV-SP-1",
 		Status:           billingqueue.StatusPosted,
-		BillType:         billingqueue.BillTypeInvoice,
+		BillType:         billingvocab.BillTypeInvoice,
 	}
 	err = billingqueuedb.BillingQueueItems.Create(ctx, db, queue)
 	require.NoError(t, err)
@@ -888,7 +889,7 @@ func TestPostAndApplyRecognizesShortPayAndSettlesInvoice(t *testing.T) {
 			ShipmentID:         shp.ID,
 			CustomerID:         shp.CustomerID,
 			Number:             queue.Number,
-			BillType:           billingqueue.BillTypeInvoice,
+			BillType:           billingvocab.BillTypeInvoice,
 			Status:             invoice.StatusPosted,
 			PostedAt:           &postedAt,
 			PaymentTerm:        invoice.PaymentTermNet30,
@@ -1035,7 +1036,7 @@ func TestListAndGetCustomerPayments(t *testing.T) {
 		BillToCustomerID: shp.CustomerID,
 		Number:           "INV-PAY-LIST-1",
 		Status:           billingqueue.StatusPosted,
-		BillType:         billingqueue.BillTypeInvoice,
+		BillType:         billingvocab.BillTypeInvoice,
 	}
 	err = billingqueuedb.BillingQueueItems.Create(ctx, db, queue)
 	require.NoError(t, err)
@@ -1049,7 +1050,7 @@ func TestListAndGetCustomerPayments(t *testing.T) {
 			ShipmentID:         shp.ID,
 			CustomerID:         shp.CustomerID,
 			Number:             queue.Number,
-			BillType:           billingqueue.BillTypeInvoice,
+			BillType:           billingvocab.BillTypeInvoice,
 			Status:             invoice.StatusPosted,
 			PostedAt:           &postedAt,
 			PaymentTerm:        invoice.PaymentTermNet30,

@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -84,9 +84,9 @@ var ErrOrderOrShipments = errors.New(
 		"shipmentIds of it to bill",
 )
 
-var memoBillTypes = agenttoolschema.Source("invoice.memoBillType", []billingqueue.BillType{
-	billingqueue.BillTypeCreditMemo,
-	billingqueue.BillTypeDebitMemo,
+var memoBillTypes = agenttoolschema.Source("invoice.memoBillType", []billingvocab.BillType{
+	billingvocab.BillTypeCreditMemo,
+	billingvocab.BillTypeDebitMemo,
 })
 
 var voidDispositions = agenttoolschema.Source("invoice.voidDisposition", []invoice.VoidDisposition{

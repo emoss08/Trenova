@@ -1,6 +1,6 @@
 import { recordPath } from "@/config/record-links";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
-import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { DetentionHold } from "@trenova/shared/types/billing-queue";
 import type { BillingHoldReason } from "@trenova/shared/types/detention";
@@ -8,6 +8,7 @@ import { ClockStopwatchIcon } from "@trenova/shared/components/icons";
 import { LockedReference } from "@trenova/shared/components/withheld-value";
 import { useCanReadKind } from "@trenova/shared/hooks/use-can-read-kind";
 import { Link } from "react-router";
+import { BillingQueueNotice } from "./billing-queue-notice";
 
 function holdReasonLabel(t: TranslateFn, reason: BillingHoldReason): string {
   switch (reason) {
@@ -35,50 +36,48 @@ export function BillingQueueDetentionHolds({ holds }: { holds: DetentionHold[] }
   }
 
   return (
-    <div className="shrink-0 px-4 pt-2">
-      <Alert size="sm" variant="warning" data-testid="billing-queue-detention-holds">
-        <ClockStopwatchIcon />
-        <AlertTitle>
+    <BillingQueueNotice data-testid="billing-queue-detention-holds">
+      <ClockStopwatchIcon />
+      <AlertTitle>
+        {t(
+          "{0, plural, one {# detention charge needs approval} other {# detention charges need approval}}",
+          holds.length,
+        )}
+      </AlertTitle>
+      <AlertDescription>
+        <p>
           {t(
-            "{0, plural, one {# detention charge needs approval} other {# detention charges need approval}}",
-            holds.length,
+            "This item cannot be approved until each charge is approved or waived on the detention desk.",
           )}
-        </AlertTitle>
-        <AlertDescription>
-          <p>
-            {t(
-              "This item cannot be approved until each charge is approved or waived on the detention desk.",
-            )}
-          </p>
-          <ul className="grid w-full gap-0.5">
-            {holds.map((hold) => (
-              <li
-                key={hold.occurrenceId}
-                className="flex flex-wrap items-baseline justify-between gap-x-3"
-              >
-                {canReadDetention ? (
-                  <Link
-                    to={recordPath("detention_occurrence", hold.occurrenceId)}
-                    className="ui-focus-ring text-brand rounded-control underline-offset-2 hover:underline"
-                  >
-                    {hold.locationName || t("Detention charge")}
-                  </Link>
-                ) : (
-                  <LockedReference kind="detention">
-                    {hold.locationName || t("Detention charge")}
-                  </LockedReference>
-                )}
-                <span className="flex items-baseline gap-2">
-                  <span className="tabular-nums">
-                    {formatCurrency(hold.billableAmount ?? 0, hold.currency)}
-                  </span>
-                  <span>{holdReasonLabel(t, hold.reason)}</span>
+        </p>
+        <ul className="grid w-full gap-0.5">
+          {holds.map((hold) => (
+            <li
+              key={hold.occurrenceId}
+              className="flex flex-wrap items-baseline justify-between gap-x-3"
+            >
+              {canReadDetention ? (
+                <Link
+                  to={recordPath("detention_occurrence", hold.occurrenceId)}
+                  className="ui-focus-ring text-brand rounded-control underline-offset-2 hover:underline"
+                >
+                  {hold.locationName || t("Detention charge")}
+                </Link>
+              ) : (
+                <LockedReference kind="detention">
+                  {hold.locationName || t("Detention charge")}
+                </LockedReference>
+              )}
+              <span className="flex items-baseline gap-2">
+                <span className="tabular-nums">
+                  {formatCurrency(hold.billableAmount ?? 0, hold.currency)}
                 </span>
-              </li>
-            ))}
-          </ul>
-        </AlertDescription>
-      </Alert>
-    </div>
+                <span>{holdReasonLabel(t, hold.reason)}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </AlertDescription>
+    </BillingQueueNotice>
   );
 }

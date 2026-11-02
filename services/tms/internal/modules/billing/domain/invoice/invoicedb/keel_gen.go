@@ -9,8 +9,6 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/schema"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
@@ -2438,7 +2436,7 @@ var invoicesTable = schema.Table{
 		{Name: "section_by", Quoted: `"section_by"`, Field: "SectionBy", Kind: schema.KindString, Flags: 0, Label: `Section By`, JSON: `sectionBy`, Enum: enumCustomerInvoiceSectionKey[:], Report: &reportDimEnum},
 		{Name: "off_cycle_reason", Quoted: `"off_cycle_reason"`, Field: "OffCycleReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Off Cycle Reason`, JSON: `offCycleReason`, Report: &reportDimString},
 		{Name: "number", Quoted: `"number"`, Field: "Number", Kind: schema.KindString, Flags: 0, Label: `Invoice Number`, JSON: `number`, Report: &reportDimString},
-		{Name: "bill_type", Quoted: `"bill_type"`, Field: "BillType", Kind: schema.KindString, Flags: 0, Label: `Bill Type`, JSON: `billType`, Enum: enumBillingqueueBillType[:], Report: &reportDimEnum},
+		{Name: "bill_type", Quoted: `"bill_type"`, Field: "BillType", Kind: schema.KindString, Flags: 0, Label: `Bill Type`, JSON: `billType`, Enum: enumBillingvocabBillType[:], Report: &reportDimEnum},
 		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumStatus[:], Report: &reportDimEnum},
 		{Name: "payment_term", Quoted: `"payment_term"`, Field: "PaymentTerm", Kind: schema.KindString, Flags: 0, Label: `Payment Term`, JSON: `paymentTerm`, Enum: enumPaymentTerm[:], Report: &reportDimEnum},
 		{Name: "currency_code", Quoted: `"currency_code"`, Field: "CurrencyCode", Kind: schema.KindString, Flags: 0, Label: `Currency Code`, JSON: `currencyCode`, Report: &reportDimString},
@@ -2513,7 +2511,6 @@ var invoicesTable = schema.Table{
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
-		{Name: "BillingQueueItem", Alias: "bqi", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Billing Queue Item`, JSON: `billingQueueItem`, NoReport: true},
 		{Name: "Shipment", Alias: "s", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Shipment`, JSON: `shipment`},
 		{Name: "Order", Alias: "o", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Order`, JSON: `order`},
 		{Name: "Customer", Alias: "c", Kind: schema.BelongsTo, Local: []int32{6}, Remote: []int32{0}, Label: `Customer`, JSON: `customer`},
@@ -2567,7 +2564,7 @@ type InvoicesTable struct {
 	SectionBy                 customerdb.InvoiceSectionKeyCol
 	OffCycleReason            keel.StringCol
 	Number                    keel.StringCol
-	BillType                  billingqueuedb.BillTypeCol
+	BillType                  keelkinds.BillingvocabBillTypeCol
 	Status                    StatusCol
 	PaymentTerm               PaymentTermCol
 	CurrencyCode              keel.StringCol
@@ -2661,7 +2658,7 @@ var Invoices = &InvoicesTable{
 	SectionBy:                 customerdb.InvoiceSectionKeyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 13}}},
 	OffCycleReason:            keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 14}},
 	Number:                    keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 15}},
-	BillType:                  billingqueuedb.BillTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 16}}},
+	BillType:                  keelkinds.BillingvocabBillTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 16}}},
 	Status:                    StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 17}}},
 	PaymentTerm:               PaymentTermCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 18}}},
 	CurrencyCode:              keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 19}},
@@ -2756,7 +2753,7 @@ func BuildInvoices(r *keel.Ref) *InvoicesTable {
 		SectionBy:                 customerdb.InvoiceSectionKeyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		OffCycleReason:            keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		Number:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
-		BillType:                  billingqueuedb.BillTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		BillType:                  keelkinds.BillingvocabBillTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
 		Status:                    StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
 		PaymentTerm:               PaymentTermCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		CurrencyCode:              keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
@@ -2840,53 +2837,48 @@ func (t *InvoicesTable) As(alias string) *InvoicesTable {
 	return keel.Alias(t.Ref, alias, BuildInvoices)
 }
 
-// BillingQueueItem is the belongs relation.
-func (t *InvoicesTable) BillingQueueItem() *billingqueuedb.BillingQueueItemsTable {
-	return keel.Path(t.Ref, 0, billingqueuedb.BuildBillingQueueItems)
-}
-
 // Shipment is the belongs relation.
 func (t *InvoicesTable) Shipment() *shipmentdb.ShipmentsTable {
-	return keel.Path(t.Ref, 1, shipmentdb.BuildShipments)
+	return keel.Path(t.Ref, 0, shipmentdb.BuildShipments)
 }
 
 // OrderRel is the belongs relation.
 func (t *InvoicesTable) OrderRel() *orderdb.OrdersTable {
-	return keel.Path(t.Ref, 2, orderdb.BuildOrders)
+	return keel.Path(t.Ref, 1, orderdb.BuildOrders)
 }
 
 // Customer is the belongs relation.
 func (t *InvoicesTable) Customer() *customerdb.CustomersTable {
-	return keel.Path(t.Ref, 3, customerdb.BuildCustomers)
+	return keel.Path(t.Ref, 2, customerdb.BuildCustomers)
 }
 
 // ShipperCustomer is the belongs relation.
 func (t *InvoicesTable) ShipperCustomer() *customerdb.CustomersTable {
-	return keel.Path(t.Ref, 4, customerdb.BuildCustomers)
+	return keel.Path(t.Ref, 3, customerdb.BuildCustomers)
 }
 
 // FactoringCompany is the belongs relation.
 func (t *InvoicesTable) FactoringCompany() *factoringcompanydb.FactoringCompaniesTable {
-	return keel.Path(t.Ref, 5, factoringcompanydb.BuildFactoringCompanies)
+	return keel.Path(t.Ref, 4, factoringcompanydb.BuildFactoringCompanies)
 }
 
 // ReferenceInvoice is the belongs relation.
-func (t *InvoicesTable) ReferenceInvoice() *InvoicesTable { return keel.Path(t.Ref, 6, BuildInvoices) }
+func (t *InvoicesTable) ReferenceInvoice() *InvoicesTable { return keel.Path(t.Ref, 5, BuildInvoices) }
 
 // PDFDocument is the belongs relation.
 func (t *InvoicesTable) PDFDocument() *documentdb.DocumentsTable {
-	return keel.Path(t.Ref, 7, documentdb.BuildDocuments)
+	return keel.Path(t.Ref, 6, documentdb.BuildDocuments)
 }
 
 // Lines is the many relation.
-func (t *InvoicesTable) Lines() *InvoiceLinesTable { return keel.Path(t.Ref, 8, BuildInvoiceLines) }
+func (t *InvoicesTable) Lines() *InvoiceLinesTable { return keel.Path(t.Ref, 7, BuildInvoiceLines) }
 
 // Attachments is the many relation.
-func (t *InvoicesTable) Attachments() *AttachmentsTable { return keel.Path(t.Ref, 9, BuildAttachments) }
+func (t *InvoicesTable) Attachments() *AttachmentsTable { return keel.Path(t.Ref, 8, BuildAttachments) }
 
 // EmailAttempts is the many relation.
 func (t *InvoicesTable) EmailAttempts() *EmailAttemptsTable {
-	return keel.Path(t.Ref, 10, BuildEmailAttempts)
+	return keel.Path(t.Ref, 9, BuildEmailAttempts)
 }
 
 // Get returns the invoices row with the given key, or keel.ErrNotFound.
@@ -3792,26 +3784,24 @@ func attachInvoice(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	r := (*invoice.Invoice)(p)
 	switch rel {
 	case 0:
-		r.BillingQueueItem = (*billingqueue.BillingQueueItem)(child)
-	case 1:
 		r.Shipment = (*shipment.Shipment)(child)
-	case 2:
+	case 1:
 		r.Order = (*order.Order)(child)
-	case 3:
+	case 2:
 		r.Customer = (*customer.Customer)(child)
-	case 4:
+	case 3:
 		r.ShipperCustomer = (*customer.Customer)(child)
-	case 5:
+	case 4:
 		r.FactoringCompany = (*factoringcompany.FactoringCompany)(child)
-	case 6:
+	case 5:
 		r.ReferenceInvoice = (*invoice.Invoice)(child)
-	case 7:
+	case 6:
 		r.PDFDocument = (*document.Document)(child)
-	case 8:
+	case 7:
 		r.Lines = append(r.Lines, (*invoice.InvoiceLine)(child))
-	case 9:
+	case 8:
 		r.Attachments = append(r.Attachments, (*invoice.Attachment)(child))
-	case 10:
+	case 9:
 		r.EmailAttempts = append(r.EmailAttempts, (*invoice.EmailAttempt)(child))
 	}
 }
@@ -4549,17 +4539,16 @@ func init() {
 	emailAttemptAttachmentsTable.Relations[0].Target = EmailAttemptsSchema()
 	emailAttemptAttachmentsTable.Relations[1].Target = documentdb.DocumentsSchema()
 	emailAttemptAttachmentsTable.Relations[2].Target = DocumentShareTokensSchema()
-	invoicesTable.Relations[0].Target = billingqueuedb.BillingQueueItemsSchema()
-	invoicesTable.Relations[1].Target = shipmentdb.ShipmentsSchema()
-	invoicesTable.Relations[2].Target = orderdb.OrdersSchema()
+	invoicesTable.Relations[0].Target = shipmentdb.ShipmentsSchema()
+	invoicesTable.Relations[1].Target = orderdb.OrdersSchema()
+	invoicesTable.Relations[2].Target = customerdb.CustomersSchema()
 	invoicesTable.Relations[3].Target = customerdb.CustomersSchema()
-	invoicesTable.Relations[4].Target = customerdb.CustomersSchema()
-	invoicesTable.Relations[5].Target = factoringcompanydb.FactoringCompaniesSchema()
-	invoicesTable.Relations[6].Target = InvoicesSchema()
-	invoicesTable.Relations[7].Target = documentdb.DocumentsSchema()
-	invoicesTable.Relations[8].Target = InvoiceLinesSchema()
-	invoicesTable.Relations[9].Target = AttachmentsSchema()
-	invoicesTable.Relations[10].Target = EmailAttemptsSchema()
+	invoicesTable.Relations[4].Target = factoringcompanydb.FactoringCompaniesSchema()
+	invoicesTable.Relations[5].Target = InvoicesSchema()
+	invoicesTable.Relations[6].Target = documentdb.DocumentsSchema()
+	invoicesTable.Relations[7].Target = InvoiceLinesSchema()
+	invoicesTable.Relations[8].Target = AttachmentsSchema()
+	invoicesTable.Relations[9].Target = EmailAttemptsSchema()
 	invoiceLinesTable.Relations[0].Target = InvoicesSchema()
 }
 
@@ -4579,7 +4568,7 @@ var enumAttachmentDeliveryMethod = [...]schema.EnumValue{
 	{Value: `Failed`, Label: `Failed`},
 }
 
-var enumBillingqueueBillType = [...]schema.EnumValue{
+var enumBillingvocabBillType = [...]schema.EnumValue{
 	{Value: `Invoice`, Label: `Invoice`},
 	{Value: `CreditMemo`, Label: `Credit Memo`},
 	{Value: `DebitMemo`, Label: `Debit Memo`},

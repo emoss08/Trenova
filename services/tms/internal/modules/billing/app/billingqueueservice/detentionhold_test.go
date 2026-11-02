@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -36,7 +37,7 @@ type holdFixture struct {
 	svc        *Service
 }
 
-func newHoldFixture(t *testing.T, billType billingqueue.BillType) *holdFixture {
+func newHoldFixture(t *testing.T, billType billingvocab.BillType) *holdFixture {
 	t.Helper()
 
 	tenantInfo := pagination.TenantInfo{
@@ -130,7 +131,7 @@ func (f *holdFixture) approve(t *testing.T) (*billingqueue.BillingQueueItem, err
 func TestUpdateStatus_RefusesApprovalWhileADetentionChargeAwaitsApproval(t *testing.T) {
 	t.Parallel()
 
-	f := newHoldFixture(t, billingqueue.BillTypeInvoice)
+	f := newHoldFixture(t, billingvocab.BillTypeInvoice)
 	held := f.heldCharge()
 	f.expectRead()
 	f.expectHolds(held)
@@ -153,7 +154,7 @@ func TestUpdateStatus_RefusesApprovalWhileADetentionChargeAwaitsApproval(t *test
 func TestUpdateStatus_ApprovesWhenNoDetentionChargeIsHeld(t *testing.T) {
 	t.Parallel()
 
-	f := newHoldFixture(t, billingqueue.BillTypeInvoice)
+	f := newHoldFixture(t, billingvocab.BillTypeInvoice)
 	f.expectRead()
 	f.expectHolds()
 	f.repo.EXPECT().
@@ -178,7 +179,7 @@ func TestUpdateStatus_ApprovesWhenNoDetentionChargeIsHeld(t *testing.T) {
 func TestUpdateStatus_CreditMemoApprovalIsNeverHeldByDetention(t *testing.T) {
 	t.Parallel()
 
-	f := newHoldFixture(t, billingqueue.BillTypeCreditMemo)
+	f := newHoldFixture(t, billingvocab.BillTypeCreditMemo)
 	f.expectRead()
 	f.repo.EXPECT().
 		Update(mock.Anything, mock.AnythingOfType("*billingqueue.BillingQueueItem")).
@@ -201,7 +202,7 @@ func TestUpdateStatus_CreditMemoApprovalIsNeverHeldByDetention(t *testing.T) {
 func TestAutoApprove_LeavesAHeldItemInReviewWithoutFailing(t *testing.T) {
 	t.Parallel()
 
-	f := newHoldFixture(t, billingqueue.BillTypeInvoice)
+	f := newHoldFixture(t, billingvocab.BillTypeInvoice)
 	f.expectHolds(f.heldCharge())
 
 	result := f.svc.autoApprove(t.Context(), f.item, f.tenantInfo, userActor(f.tenantInfo))
@@ -215,7 +216,7 @@ func TestAutoApprove_LeavesAHeldItemInReviewWithoutFailing(t *testing.T) {
 func TestGetByID_ListsTheDetentionChargesHoldingTheItem(t *testing.T) {
 	t.Parallel()
 
-	f := newHoldFixture(t, billingqueue.BillTypeInvoice)
+	f := newHoldFixture(t, billingvocab.BillTypeInvoice)
 	held := f.heldCharge()
 	held.LocationName = "Riverside DC"
 	f.expectRead()

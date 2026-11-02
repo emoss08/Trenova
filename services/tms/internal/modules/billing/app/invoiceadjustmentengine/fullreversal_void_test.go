@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -129,7 +130,7 @@ func TestVoidReversedInvoiceHonoursTheRequestedDispositionAndReason(t *testing.T
 			}
 			number, err := req.RenumberFn(
 				t.Context(),
-				&billingqueue.BillingQueueItem{BillType: billingqueue.BillTypeInvoice},
+				&billingqueue.BillingQueueItem{BillType: billingvocab.BillTypeInvoice},
 			)
 			return err == nil && number == "INV-2"
 		})).

@@ -1,5 +1,5 @@
 import { stubLayout } from "@/test/layout";
-import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { useEffect, useRef } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { VirtualRows, type VirtualRowsHandle } from "../virtual-rows";
@@ -36,6 +36,38 @@ describe("VirtualRows", () => {
     expect(mounted.length).toBeLessThan(40);
     expect(screen.getByText("Row 0")).toBeInTheDocument();
     expect(screen.queryByText("Row 199")).not.toBeInTheDocument();
+  });
+
+  // The billing queue's items light up as the module rail's tiles do: one background that
+  // glides to the row under the pointer, drawn in the scrolled body so it scrolls with it.
+  it("glides one hover background to the row under the pointer when asked", () => {
+    const targets = Array.from({ length: 3 }, (_, index) => ({
+      key: `row-${index}`,
+      render: () => (
+        <div data-glide-target data-testid="target">
+          Row {index}
+        </div>
+      ),
+    }));
+    const { container } = render(
+      <VirtualRows rows={targets} estimateSize={40} initialHeight={320} hoverGlide />,
+    );
+
+    const glide = container.querySelector('[data-slot="hover-glide"]') as HTMLElement;
+    expect(glide).toHaveAttribute("data-state", "hidden");
+
+    fireEvent.pointerOver(screen.getByText("Row 1"));
+
+    expect(glide).toHaveAttribute("data-state", "shown");
+    expect(glide.parentElement).toContainElement(screen.getByText("Row 1"));
+  });
+
+  it("draws no hover glide unless asked", () => {
+    const { container } = render(
+      <VirtualRows rows={rows(3)} estimateSize={40} initialHeight={320} />,
+    );
+
+    expect(container.querySelector('[data-slot="hover-glide"]')).toBeNull();
   });
 
   it("keeps a short list whole", () => {

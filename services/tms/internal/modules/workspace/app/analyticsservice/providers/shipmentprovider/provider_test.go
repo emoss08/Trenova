@@ -154,3 +154,95 @@ func TestAnalyticsQueriesRender(t *testing.T) {
 		})
 	}
 }
+
+func TestCustomerMixWindowIsTwoBackToBackThirtyDayWindows(t *testing.T) {
+	t.Parallel()
+
+	now := int64(10_000_000)
+	currentStart, previousStart := customerMixWindow(now)
+
+	assert.Equal(t, now-30*24*60*60, currentStart)
+	assert.Equal(t, now-60*24*60*60, previousStart)
+}
+
+func TestLaneHeatmapReadDefaultsToSevenDays(t *testing.T) {
+	t.Parallel()
+
+	now := int64(10_000_000)
+	days, q := laneHeatmapRead(now, 0)
+	assert.Equal(t, 7, days)
+	_, args := keeltest.Render(t, q)
+	assert.Contains(t, args, now-7*24*60*60)
+	assert.Contains(t, args, now)
+
+	days, q = laneHeatmapRead(now, 30)
+	assert.Equal(t, 30, days)
+	_, args = keeltest.Render(t, q)
+	assert.Contains(t, args, now-30*24*60*60)
+}
+
+func TestTomorrowsPickupsCoverTomorrowInTheReadersTimezone(t *testing.T) {
+	t.Parallel()
+
+	loc, err := time.LoadLocation("America/Chicago")
+	require.NoError(t, err)
+
+	start, q, err := tomorrowsPickups(tomorrowsPickupsRequest{tz: "America/Chicago"})
+	require.NoError(t, err)
+
+	tomorrow := time.Now().In(loc).AddDate(0, 0, 1)
+	assert.Equal(t, tomorrow.Format(time.DateOnly), start.In(loc).Format(time.DateOnly))
+	assert.Equal(t, 0, start.In(loc).Hour())
+	assert.Equal(t, 0, start.In(loc).Minute())
+
+	_, args := keeltest.Render(t, q)
+	assert.Contains(t, args, start.Unix())
+	assert.Contains(t, args, start.AddDate(0, 0, 1).Unix())
+
+	_, _, err = tomorrowsPickups(tomorrowsPickupsRequest{tz: "Not/AZone"})
+	require.Error(t, err)
+}
+
+func TestOnTimeCardCarriesTheTargetAndComparesWithYesterday(t *testing.T) {
+	t.Parallel()
+
+	target := 95.0
+	card := onTimeCard(onTimeRow{
+		Total:           8,
+		OnTime:          6,
+		YesterdayTotal:  4,
+		YesterdayOnTime: 4,
+		SevenDayTotal:   30,
+		SevenDayOnTime:  27,
+	}, &target)
+
+	assert.Equal(t, &OnTimeCard{
+		Percent:         75,
+		OnTimeCount:     6,
+		TotalCount:      8,
+		Target:          &target,
+		DeltaPp:         -25,
+		SevenDayPercent: 90,
+	}, card)
+
+	empty := onTimeCard(onTimeRow{}, nil)
+	assert.Equal(t, &OnTimeCard{}, empty)
+}
+
+func TestRevenueTodayCardAccumulatesTheSparkline(t *testing.T) {
+	t.Parallel()
+
+	card := revenueTodayCard(
+		revenueTodayRow{Amount: 1_500, YesterdayAmount: 1_000, Miles: 600},
+		[]hourlyMetricRow{{Hour: 1, Value: 500}, {Hour: 3, Value: 1_000}},
+	)
+
+	assert.Equal(t, 1_500.0, card.Total)
+	assert.Equal(t, 50.0, card.DeltaPct)
+	assert.Equal(t, 2.5, card.RPM)
+	require.Len(t, card.Sparkline, 24)
+	assert.Equal(t, 0.0, card.Sparkline[0].Value)
+	assert.Equal(t, 500.0, card.Sparkline[1].Value)
+	assert.Equal(t, 500.0, card.Sparkline[2].Value)
+	assert.Equal(t, 1_500.0, card.Sparkline[23].Value)
+}

@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { OrgSwitcher } from "@/components/navigation/org-switcher";
-import { RailGlideGroup } from "@/components/navigation/rail-hover-glide";
+import { HoverGlideGroup } from "@/components/hover-glide";
 import { AttentionCountBadge, ModulePageList } from "@/components/navigation/sidebar-chrome";
 import {
   moduleDisplayLabel,
@@ -135,7 +135,7 @@ function RailTile({
   const link = (
     <Link
       to={to}
-      data-rail-tile
+      data-glide-target
       aria-label={label}
       aria-current={active ? "page" : undefined}
       className={cn(TILE_CLASS, active ? TILE_ACTIVE_CLASS : TILE_REST_CLASS)}
@@ -188,7 +188,7 @@ function RailButton({
         render={
           <button
             type="button"
-            data-rail-tile
+            data-glide-target
             aria-label={label}
             aria-pressed={pressed}
             onClick={onClick}
@@ -328,7 +328,7 @@ export function ModuleRail({ panelFolded, search, fold = false, className }: Mod
         aria-label={t("Modules")}
         className="flex min-h-0 w-full flex-1 flex-col items-center gap-0.5 overflow-y-auto px-2 py-1 [scrollbar-width:none]"
       >
-        <RailGlideGroup className="flex w-full flex-col items-center gap-0.5">
+        <HoverGlideGroup className="flex w-full flex-col items-center gap-0.5">
           {home && tileFor(home)}
           {domains.map((domain) => (
             <div key={domain.id} className="flex flex-col items-center gap-0.5">
@@ -336,10 +336,10 @@ export function ModuleRail({ panelFolded, search, fold = false, className }: Mod
               {domain.modules.map(tileFor)}
             </div>
           ))}
-        </RailGlideGroup>
+        </HoverGlideGroup>
       </nav>
 
-      <RailGlideGroup className="flex shrink-0 flex-col items-center gap-0.5 pt-1 pb-2">
+      <HoverGlideGroup className="flex shrink-0 flex-col items-center gap-0.5 pt-1 pb-2">
         <DomainRule />
         {fold && <FoldTile />}
         {search && (
@@ -352,7 +352,7 @@ export function ModuleRail({ panelFolded, search, fold = false, className }: Mod
             <SearchLgIcon className="size-4" strokeWidth={1.75} />
           </RailButton>
         )}
-        <div data-rail-tile className="flex size-8">
+        <div data-glide-target className="flex size-8">
           <NotificationSheet
             className={cn(TILE_CLASS, TILE_REST_CLASS, "size-8 w-8")}
             iconClassName="size-4"
@@ -363,7 +363,7 @@ export function ModuleRail({ panelFolded, search, fold = false, className }: Mod
         <div className="flex h-8 items-center justify-center">
           <UserMenu compact />
         </div>
-      </RailGlideGroup>
+      </HoverGlideGroup>
     </div>
   );
 }

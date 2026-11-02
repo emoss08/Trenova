@@ -548,16 +548,36 @@ export const billingSplitSummaryRowSchema = z.object({
 });
 export type BillingSplitSummaryRow = z.infer<typeof billingSplitSummaryRowSchema>;
 
+/** The most units one additional charge bills: its `unit` column is a smallint. */
+export const MAX_ADDITIONAL_CHARGE_UNIT = 32_767;
+/**
+ * The most one unit of an additional charge bills: the most its numeric(19, 4) `amount`
+ * column holds that a JavaScript number still carries to the cent, with its four decimals.
+ * The server refuses more (`shipment.MaxAdditionalChargeRate`).
+ */
+export const MAX_ADDITIONAL_CHARGE_RATE = 99_999_999_999.9999;
+/** The rate cap as a message names it, every decimal shown: "99,999,999,999.9999". */
+export const maxAdditionalChargeRateText = () =>
+  MAX_ADDITIONAL_CHARGE_RATE.toLocaleString(undefined, { maximumFractionDigits: 4 });
+
 const additionalChargeBaseSchema = z.object({
   accessorialChargeId: z
     .string()
     .min(1, { error: () => translate("Accessorial Charge is required") }),
   method: accessorialChargeMethodSchema.default("Flat"),
-  amount: decimalStringSchema.default(0),
+  amount: decimalStringSchema
+    .refine((value) => value == null || value <= MAX_ADDITIONAL_CHARGE_RATE, {
+      error: () => translate("Amount must be at most {0}", maxAdditionalChargeRateText()),
+    })
+    .default(0),
   unit: z
     .number()
     .int()
     .min(1, { error: () => translate("Unit must be at least 1") })
+    .max(MAX_ADDITIONAL_CHARGE_UNIT, {
+      error: () =>
+        translate("Unit must be at most {0}", MAX_ADDITIONAL_CHARGE_UNIT.toLocaleString()),
+    })
     .default(1),
   allocations: z.array(chargeAllocationSchema).default([]),
 });

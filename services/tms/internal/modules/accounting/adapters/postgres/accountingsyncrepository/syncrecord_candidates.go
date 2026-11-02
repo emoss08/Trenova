@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -98,7 +98,7 @@ func candidateSourceFor(
 	}
 }
 
-func salesDocumentSource(billType billingqueue.BillType) *candidateSource {
+func salesDocumentSource(billType billingvocab.BillType) *candidateSource {
 	inv := invoicedb.Invoices
 	return &candidateSource{
 		query:  candidateQuery[invoice.Invoice](inv),

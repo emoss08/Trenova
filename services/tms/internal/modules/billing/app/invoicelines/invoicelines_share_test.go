@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicelines"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -72,7 +72,7 @@ func TestForShipmentSharePartialFreightCarriesItsShare(t *testing.T) {
 	share := resolution.ShareFor(shp.CustomerID)
 	require.NotNil(t, share)
 
-	lines := invoicelines.ForShipmentShare(billingqueue.BillTypeInvoice, shp, share, 1)
+	lines := invoicelines.ForShipmentShare(billingvocab.BillTypeInvoice, shp, share, 1)
 	require.Len(t, lines, 2)
 
 	freight := lines[0]
@@ -124,12 +124,12 @@ func TestForShipmentShareFullShareMatchesForShipment(t *testing.T) {
 	require.NoError(t, err)
 
 	viaShare := invoicelines.ForShipmentShare(
-		billingqueue.BillTypeInvoice,
+		billingvocab.BillTypeInvoice,
 		shp,
 		resolution.Shares[0],
 		1,
 	)
-	direct := forShipment(t, billingqueue.BillTypeInvoice, shp, 1)
+	direct := forShipment(t, billingvocab.BillTypeInvoice, shp, 1)
 	require.Len(t, viaShare, len(direct))
 	for i := range direct {
 		assert.Equal(t, direct[i].Description, viaShare[i].Description)
@@ -154,7 +154,7 @@ func TestForShipmentShareNegatesCreditMemoPartialShares(t *testing.T) {
 	require.NoError(t, err)
 
 	lines := invoicelines.ForShipmentShare(
-		billingqueue.BillTypeCreditMemo,
+		billingvocab.BillTypeCreditMemo,
 		shp,
 		resolution.ShareFor(shp.CustomerID),
 		1,
@@ -169,11 +169,11 @@ func TestForShipmentShareNegatesCreditMemoPartialShares(t *testing.T) {
 func TestForShipmentShareWithNilShipmentOrEmptyShare(t *testing.T) {
 	t.Parallel()
 
-	assert.Nil(t, invoicelines.ForShipmentShare(billingqueue.BillTypeInvoice, nil, nil, 1))
+	assert.Nil(t, invoicelines.ForShipmentShare(billingvocab.BillTypeInvoice, nil, nil, 1))
 
 	shp := testShipment()
 	lines := invoicelines.ForShipmentShare(
-		billingqueue.BillTypeInvoice,
+		billingvocab.BillTypeInvoice,
 		shp,
 		&chargeallocation.PayerShare{PayerID: pulid.MustNew("cus_")},
 		1,
@@ -188,7 +188,7 @@ func TestForOrderChargeShare(t *testing.T) {
 	allocationID := pulid.MustNew("chal_")
 
 	whole := invoicelines.ForOrderChargeShare(
-		billingqueue.BillTypeInvoice,
+		billingvocab.BillTypeInvoice,
 		&chargeallocation.AllocatedCharge{
 			Kind:          shipmentvocab.ChargeAllocationKindOrderCharge,
 			OrderChargeID: chargeID,
@@ -208,7 +208,7 @@ func TestForOrderChargeShare(t *testing.T) {
 	assert.False(t, whole.AllocationPercent.Valid)
 
 	partial := invoicelines.ForOrderChargeShare(
-		billingqueue.BillTypeCreditMemo,
+		billingvocab.BillTypeCreditMemo,
 		&chargeallocation.AllocatedCharge{
 			Kind:          shipmentvocab.ChargeAllocationKindOrderCharge,
 			OrderChargeID: chargeID,

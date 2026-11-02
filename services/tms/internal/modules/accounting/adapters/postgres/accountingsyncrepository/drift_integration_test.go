@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -222,7 +223,7 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 	createDoc := func(
 		idx int,
 		number string,
-		billType billingqueue.BillType,
+		billType billingvocab.BillType,
 		status invoice.Status,
 		total int64,
 		applied int64,
@@ -299,7 +300,7 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 	open := createDoc(
 		0,
 		"INV-DRIFT-1",
-		billingqueue.BillTypeInvoice,
+		billingvocab.BillTypeInvoice,
 		invoice.StatusPosted,
 		50_000,
 		10_000,
@@ -308,7 +309,7 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 	voided := createDoc(
 		1,
 		"INV-DRIFT-2",
-		billingqueue.BillTypeInvoice,
+		billingvocab.BillTypeInvoice,
 		invoice.StatusVoided,
 		20_000,
 		0,
@@ -317,7 +318,7 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 	memo := createDoc(
 		2,
 		"CM-DRIFT-1",
-		billingqueue.BillTypeCreditMemo,
+		billingvocab.BillTypeCreditMemo,
 		invoice.StatusPosted,
 		-5_000,
 		0,
@@ -365,7 +366,7 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 	sentMemo := createDoc(
 		2,
 		"DM-DRIFT-1",
-		billingqueue.BillTypeDebitMemo,
+		billingvocab.BillTypeDebitMemo,
 		invoice.StatusPosted,
 		7_000,
 		0,

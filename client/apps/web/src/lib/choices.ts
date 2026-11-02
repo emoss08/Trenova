@@ -72,6 +72,7 @@ import type {
   SupersededInvoiceVisibilityPolicy,
   WriteOffApprovalPolicy,
 } from "@/types/invoice-adjustment-control";
+import type { RebillStrategy } from "@/types/invoice-adjustment";
 import type { JournalReversalStatus } from "@/types/journal-reversal";
 import type { FacilityType, LocationCategoryType } from "@/types/location-category";
 import type { ManualJournalStatus } from "@/types/manual-journal";
@@ -1610,6 +1611,13 @@ export const invoiceVoidDispositionChoices = [
     description: "The billing queue items are canceled and the shipments settle as completed.",
   },
 ] satisfies ReadonlyArray<GenericSelectOption<InvoiceVoidDisposition>>;
+
+/** How a credit-and-rebill prices the replacement invoice. */
+export const rebillStrategyChoices = [
+  { value: "CloneExact", label: "Clone exact", description: "Copy original line amounts" },
+  { value: "Rerate", label: "Rerate", description: "Recalculate from current rates" },
+  { value: "Manual", label: "Manual", description: "Set rebill amounts manually" },
+] satisfies ReadonlyArray<GenericSelectOption<RebillStrategy>>;
 
 export const memoBillTypeChoices = [
   { value: "CreditMemo", label: "Credit memo" },

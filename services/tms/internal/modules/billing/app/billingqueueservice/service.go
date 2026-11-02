@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueuereadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -244,7 +245,7 @@ func (s *Service) detentionHolds(
 	item *billingqueue.BillingQueueItem,
 	tenantInfo pagination.TenantInfo,
 ) ([]*detention.DetentionOccurrence, error) {
-	if item == nil || item.ShipmentID.IsNil() || item.BillType == billingqueue.BillTypeCreditMemo ||
+	if item == nil || item.ShipmentID.IsNil() || item.BillType == billingvocab.BillTypeCreditMemo ||
 		billingqueue.IsTerminalStatus(item.Status) {
 		return nil, nil
 	}
@@ -623,7 +624,7 @@ func (s *Service) shouldAutoApprove(
 
 func (s *Service) generateBillingNumber(
 	ctx context.Context,
-	billType billingqueue.BillType,
+	billType billingvocab.BillType,
 	tenantInfo pagination.TenantInfo,
 	payerID pulid.ID,
 ) (string, error) {

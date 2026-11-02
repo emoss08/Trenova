@@ -8,10 +8,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
 )
+
+var MaxAdditionalChargeRate = decimal.RequireFromString("99999999999.9999")
 
 type AdditionalCharge struct {
 	keel.Table `keel:"additional_charges"`
@@ -75,6 +78,13 @@ func (a *AdditionalCharge) Validate(multiErr *errortypes.MultiError) {
 			validation.By(func(_ any) error {
 				if a.Amount.LessThanOrEqual(decimal.Zero) {
 					return errors.New("amount must be greater than zero")
+				}
+				if a.Amount.GreaterThan(MaxAdditionalChargeRate) {
+					return errors.New("amount must be at most 99,999,999,999.9999")
+				}
+				if a.Method == accessorialcharge.MethodPerUnit &&
+					a.Amount.Mul(decimal.NewFromInt(int64(a.Unit))).GreaterThan(money.MaxStoredAmount) {
+					return errors.New("amount times unit must be at most 999,999,999,999,999.9999")
 				}
 				return nil
 			}),

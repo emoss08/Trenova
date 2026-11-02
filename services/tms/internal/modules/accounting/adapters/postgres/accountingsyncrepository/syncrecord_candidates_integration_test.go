@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -53,7 +54,7 @@ func TestSyncRecordRepository_ListCandidatesFindsPostedDocumentsWithoutARecord(t
 			BillToCustomerID: shp.CustomerID,
 			Number:           number,
 			Status:           billingqueue.StatusPosted,
-			BillType:         billingqueue.BillTypeInvoice,
+			BillType:         billingvocab.BillTypeInvoice,
 		}
 		insertErr := billingqueuedb.BillingQueueItems.Create(ctx, db, queue)
 		require.NoError(t, insertErr)
@@ -64,7 +65,7 @@ func TestSyncRecordRepository_ListCandidatesFindsPostedDocumentsWithoutARecord(t
 			ShipmentID:         shp.ID,
 			CustomerID:         shp.CustomerID,
 			Number:             number,
-			BillType:           billingqueue.BillTypeInvoice,
+			BillType:           billingvocab.BillTypeInvoice,
 			Status:             status,
 			PostedAt:           posted,
 			PaymentTerm:        invoice.PaymentTermNet30,

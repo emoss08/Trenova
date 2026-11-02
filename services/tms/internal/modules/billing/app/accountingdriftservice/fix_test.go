@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -172,7 +172,7 @@ func TestAdjustLowersTheInvoiceWithAnAppliedCreditMemoThatNeverSyncs(t *testing.
 
 	require.Len(t, h.invoices.memos, 1)
 	memo := h.invoices.memos[0]
-	assert.Equal(t, billingqueue.BillTypeCreditMemo, memo.req.BillType)
+	assert.Equal(t, billingvocab.BillTypeCreditMemo, memo.req.BillType)
 	assert.Equal(t, inv.ID, memo.req.ReferenceInvoiceID)
 	assert.Equal(t, inv.CustomerID, memo.req.CustomerID)
 	assert.True(t, memo.req.AutoPost)
@@ -219,7 +219,7 @@ func TestAdjustRaisesTheInvoiceWithADebitMemo(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, h.invoices.memos, 1)
-	assert.Equal(t, billingqueue.BillTypeDebitMemo, h.invoices.memos[0].req.BillType)
+	assert.Equal(t, billingvocab.BillTypeDebitMemo, h.invoices.memos[0].req.BillType)
 	assert.Equal(t, "50", h.invoices.memos[0].req.Lines[0].Amount.String())
 	assert.Empty(t, h.payments.applied)
 	assert.Equal(t, accountingdrift.DriftFixDebitMemo, updated.FixObjectType)
