@@ -585,7 +585,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateCostingControl_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateCostingControl(ctx, fc.Args["input"].(gqlmodel.CostingControlInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@costing").UpdateCostingControl(ctx, fc.Args["input"].(gqlmodel.CostingControlInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCostingControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCostingControl),
 			},
@@ -598,7 +598,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateCostCategory_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateCostCategory(ctx, fc.Args["input"].(gqlmodel.CostCategoryUpdateInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@costing").UpdateCostCategory(ctx, fc.Args["input"].(gqlmodel.CostCategoryUpdateInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCostCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCostCategory),
 			},
@@ -612,7 +612,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "CostingControl",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CostingControl(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@costing").CostingControl(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNCostingControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCostingControl),
 			},
@@ -626,7 +626,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_resolvedCostProfile_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ResolvedCostProfile(ctx, fc.Args["asOfDate"].(*string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@costing").ResolvedCostProfile(ctx, fc.Args["asOfDate"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNResolvedCostProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐResolvedCostProfile),
 			},
@@ -639,7 +639,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentProfitability_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentProfitability(ctx, fc.Args["shipmentId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@costing").ShipmentProfitability(ctx, fc.Args["shipmentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOShipmentProfitability2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentProfitability),
 			},
@@ -653,7 +653,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_fleetCostSummary_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FleetCostSummary(ctx, fc.Args["startDate"].(*int), fc.Args["endDate"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@costing").FleetCostSummary(ctx, fc.Args["startDate"].(*int), fc.Args["endDate"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNFleetCostSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFleetCostSummary),
 			},
@@ -1048,17 +1048,17 @@ var Shard = &gqlexec.Shard{
 		{Name: "CostingControlInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCostingControlInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@costing", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@costing", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	UpdateCostingControl(ctx context.Context, input gqlmodel.CostingControlInput) (*gqlmodel.CostingControl, error)
 	UpdateCostCategory(ctx context.Context, input gqlmodel.CostCategoryUpdateInput) (*gqlmodel.CostCategory, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	CostingControl(ctx context.Context) (*gqlmodel.CostingControl, error)
 	ResolvedCostProfile(ctx context.Context, asOfDate *string) (*gqlmodel.ResolvedCostProfile, error)
 	ShipmentProfitability(ctx context.Context, shipmentID string) (*gqlmodel.ShipmentProfitability, error)

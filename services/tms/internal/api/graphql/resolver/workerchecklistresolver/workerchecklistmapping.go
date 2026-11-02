@@ -79,7 +79,7 @@ func checklistTemplateCursorConnectionToModel(
 ) (*gqlmodel.WorkerChecklistTemplateConnection, error) {
 	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
-		result,
+		result.EdgeCursors,
 		func(node *workerchecklist.WorkerChecklistTemplate, cursor string) *gqlmodel.WorkerChecklistTemplateEdge {
 			return &gqlmodel.WorkerChecklistTemplateEdge{Node: node, Cursor: cursor}
 		},

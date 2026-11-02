@@ -53,7 +53,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*iam.AuthEvent)
-					return gqlexec.Resolver[resolverAuthEvent](ec, "AuthEvent").UserID(ctx, obj)
+					return gqlexec.Resolver[AuthEventResolver](ec, "AuthEvent@securityactivity").UserID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -64,7 +64,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*iam.AuthEvent)
-					return gqlexec.Resolver[resolverAuthEvent](ec, "AuthEvent").IdentityProviderID(ctx, obj)
+					return gqlexec.Resolver[AuthEventResolver](ec, "AuthEvent@securityactivity").IdentityProviderID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -86,7 +86,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*iam.AuthEvent)
-					return gqlexec.Resolver[resolverAuthEvent](ec, "AuthEvent").Outcome(ctx, obj)
+					return gqlexec.Resolver[AuthEventResolver](ec, "AuthEvent@securityactivity").Outcome(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -148,7 +148,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*iam.AuthEvent)
-					return gqlexec.Resolver[resolverAuthEvent](ec, "AuthEvent").RiskOutcome(ctx, obj)
+					return gqlexec.Resolver[AuthEventResolver](ec, "AuthEvent@securityactivity").RiskOutcome(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -200,7 +200,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*iam.AuthEvent)
-					return gqlexec.Resolver[resolverAuthEvent](ec, "AuthEvent").User(ctx, obj)
+					return gqlexec.Resolver[AuthEventResolver](ec, "AuthEvent@securityactivity").User(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -370,7 +370,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*iam.ExternalIdentity)
-					return gqlexec.Resolver[resolverExternalIdentity](ec, "ExternalIdentity").User(ctx, obj)
+					return gqlexec.Resolver[ExternalIdentityResolver](ec, "ExternalIdentity@securityactivity").User(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -470,7 +470,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*iam.MFAAuthenticator)
-					return gqlexec.Resolver[resolverMFAAuthenticator](ec, "MFAAuthenticator").Type(ctx, obj)
+					return gqlexec.Resolver[MFAAuthenticatorResolver](ec, "MFAAuthenticator@securityactivity").Type(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -542,7 +542,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*iam.MFAAuthenticator)
-					return gqlexec.Resolver[resolverMFAAuthenticator](ec, "MFAAuthenticator").User(ctx, obj)
+					return gqlexec.Resolver[MFAAuthenticatorResolver](ec, "MFAAuthenticator@securityactivity").User(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -624,7 +624,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_authEvents_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AuthEvents(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@securityactivity").AuthEvents(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAuthEventConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuthEventConnection),
 			},
@@ -638,7 +638,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_riskDecisions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").RiskDecisions(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@securityactivity").RiskDecisions(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNRiskDecisionConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRiskDecisionConnection),
 			},
@@ -652,7 +652,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_externalIdentities_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ExternalIdentities(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@securityactivity").ExternalIdentities(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNExternalIdentityConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐExternalIdentityConnection),
 			},
@@ -666,7 +666,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_mfaAuthenticators_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").MfaAuthenticators(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@securityactivity").MfaAuthenticators(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNMFAAuthenticatorConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMFAAuthenticatorConnection),
 			},
@@ -680,7 +680,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_scimDirectories_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ScimDirectories(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@securityactivity").ScimDirectories(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNSCIMDirectoryConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSCIMDirectoryConnection),
 			},
@@ -703,7 +703,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*iam.RiskDecision)
-					return gqlexec.Resolver[resolverRiskDecision](ec, "RiskDecision").UserID(ctx, obj)
+					return gqlexec.Resolver[RiskDecisionResolver](ec, "RiskDecision@securityactivity").UserID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -715,7 +715,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*iam.RiskDecision)
-					return gqlexec.Resolver[resolverRiskDecision](ec, "RiskDecision").Outcome(ctx, obj)
+					return gqlexec.Resolver[RiskDecisionResolver](ec, "RiskDecision@securityactivity").Outcome(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -757,7 +757,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*iam.RiskDecision)
-					return gqlexec.Resolver[resolverRiskDecision](ec, "RiskDecision").User(ctx, obj)
+					return gqlexec.Resolver[RiskDecisionResolver](ec, "RiskDecision@securityactivity").User(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -968,15 +968,15 @@ var Shard = &gqlexec.Shard{
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "AuthEvent", Check: func(r any) bool { _, ok := r.(resolverAuthEvent); return ok }},
-		{Root: "ExternalIdentity", Check: func(r any) bool { _, ok := r.(resolverExternalIdentity); return ok }},
-		{Root: "MFAAuthenticator", Check: func(r any) bool { _, ok := r.(resolverMFAAuthenticator); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "RiskDecision", Check: func(r any) bool { _, ok := r.(resolverRiskDecision); return ok }},
+		{Root: "AuthEvent@securityactivity", Check: func(r any) bool { _, ok := r.(AuthEventResolver); return ok }},
+		{Root: "ExternalIdentity@securityactivity", Check: func(r any) bool { _, ok := r.(ExternalIdentityResolver); return ok }},
+		{Root: "MFAAuthenticator@securityactivity", Check: func(r any) bool { _, ok := r.(MFAAuthenticatorResolver); return ok }},
+		{Root: "Query@securityactivity", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "RiskDecision@securityactivity", Check: func(r any) bool { _, ok := r.(RiskDecisionResolver); return ok }},
 	},
 }
 
-type resolverAuthEvent interface {
+type AuthEventResolver interface {
 	UserID(ctx context.Context, obj *iam.AuthEvent) (*string, error)
 	IdentityProviderID(ctx context.Context, obj *iam.AuthEvent) (*string, error)
 	Outcome(ctx context.Context, obj *iam.AuthEvent) (string, error)
@@ -984,16 +984,16 @@ type resolverAuthEvent interface {
 	User(ctx context.Context, obj *iam.AuthEvent) (*tenant.User, error)
 }
 
-type resolverExternalIdentity interface {
+type ExternalIdentityResolver interface {
 	User(ctx context.Context, obj *iam.ExternalIdentity) (*tenant.User, error)
 }
 
-type resolverMFAAuthenticator interface {
+type MFAAuthenticatorResolver interface {
 	Type(ctx context.Context, obj *iam.MFAAuthenticator) (string, error)
 	User(ctx context.Context, obj *iam.MFAAuthenticator) (*tenant.User, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	AuthEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AuthEventConnection, error)
 	RiskDecisions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RiskDecisionConnection, error)
 	ExternalIdentities(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ExternalIdentityConnection, error)
@@ -1001,7 +1001,7 @@ type resolverQuery interface {
 	ScimDirectories(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.SCIMDirectoryConnection, error)
 }
 
-type resolverRiskDecision interface {
+type RiskDecisionResolver interface {
 	UserID(ctx context.Context, obj *iam.RiskDecision) (*string, error)
 	Outcome(ctx context.Context, obj *iam.RiskDecision) (string, error)
 	User(ctx context.Context, obj *iam.RiskDecision) (*tenant.User, error)

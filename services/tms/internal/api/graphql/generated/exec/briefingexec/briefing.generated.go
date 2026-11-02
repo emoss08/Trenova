@@ -254,7 +254,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*briefing.Section)
-					return gqlexec.Resolver[resolverBriefingSection](ec, "BriefingSection").Read(ctx, obj)
+					return gqlexec.Resolver[BriefingSectionResolver](ec, "BriefingSection@briefing").Read(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -321,7 +321,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_markBriefingRead_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").MarkBriefingRead(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@briefing").MarkBriefingRead(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐBriefing),
 			},
@@ -334,7 +334,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_regenerateBriefing_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RegenerateBriefing(ctx, fc.Args["input"].(gqlmodel.TodaysBriefingInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@briefing").RegenerateBriefing(ctx, fc.Args["input"].(gqlmodel.TodaysBriefingInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐBriefing),
 			},
@@ -349,7 +349,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_todaysBriefing_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").TodaysBriefing(ctx, fc.Args["input"].(gqlmodel.TodaysBriefingInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@briefing").TodaysBriefing(ctx, fc.Args["input"].(gqlmodel.TodaysBriefingInput))
 				},
 				Marshal: gqlexec.Marshal(marshalOBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐBriefing),
 			},
@@ -363,7 +363,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_briefing_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Briefing(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@briefing").Briefing(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐBriefing),
 			},
@@ -377,7 +377,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_briefings_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Briefings(ctx, fc.Args["input"].(gqlmodel.ListBriefingsInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@briefing").Briefings(ctx, fc.Args["input"].(gqlmodel.ListBriefingsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNBriefing2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐBriefingᚄ),
 			},
@@ -388,22 +388,22 @@ var Shard = &gqlexec.Shard{
 		{Name: "TodaysBriefingInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputTodaysBriefingInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "BriefingSection", Check: func(r any) bool { _, ok := r.(resolverBriefingSection); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "BriefingSection@briefing", Check: func(r any) bool { _, ok := r.(BriefingSectionResolver); return ok }},
+		{Root: "Mutation@briefing", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@briefing", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverBriefingSection interface {
+type BriefingSectionResolver interface {
 	Read(ctx context.Context, obj *briefing.Section) (string, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	MarkBriefingRead(ctx context.Context, id string) (*briefing.Briefing, error)
 	RegenerateBriefing(ctx context.Context, input gqlmodel.TodaysBriefingInput) (*briefing.Briefing, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	TodaysBriefing(ctx context.Context, input gqlmodel.TodaysBriefingInput) (*briefing.Briefing, error)
 	Briefing(ctx context.Context, id string) (*briefing.Briefing, error)
 	Briefings(ctx context.Context, input gqlmodel.ListBriefingsInput) ([]*briefing.Briefing, error)

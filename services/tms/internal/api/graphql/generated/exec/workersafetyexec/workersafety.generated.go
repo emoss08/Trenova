@@ -52,7 +52,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdiscipline.DisciplinaryLadder)
-					return gqlexec.Resolver[resolverDisciplinaryLadder](ec, "DisciplinaryLadder").HighestLevel(ctx, obj)
+					return gqlexec.Resolver[DisciplinaryLadderResolver](ec, "DisciplinaryLadder@workersafety").HighestLevel(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODisciplinaryLevel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdisciplineᚐDisciplinaryLevel),
 			},
@@ -110,7 +110,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createWorkerSafetyEvent_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateWorkerSafetyEvent(ctx, fc.Args["input"].(gqlmodel.WorkerSafetyEventInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workersafety").CreateWorkerSafetyEvent(ctx, fc.Args["input"].(gqlmodel.WorkerSafetyEventInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerSafetyEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkersafetyᚐWorkerSafetyEvent),
 			},
@@ -123,7 +123,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateWorkerSafetyEvent_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateWorkerSafetyEvent(ctx, fc.Args["input"].(gqlmodel.UpdateWorkerSafetyEventInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workersafety").UpdateWorkerSafetyEvent(ctx, fc.Args["input"].(gqlmodel.UpdateWorkerSafetyEventInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerSafetyEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkersafetyᚐWorkerSafetyEvent),
 			},
@@ -136,7 +136,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_closeWorkerSafetyEvent_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CloseWorkerSafetyEvent(ctx, fc.Args["input"].(gqlmodel.SafetyEventStatusInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workersafety").CloseWorkerSafetyEvent(ctx, fc.Args["input"].(gqlmodel.SafetyEventStatusInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerSafetyEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkersafetyᚐWorkerSafetyEvent),
 			},
@@ -149,7 +149,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_reviewWorkerSafetyEvent_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReviewWorkerSafetyEvent(ctx, fc.Args["input"].(gqlmodel.SafetyEventStatusInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workersafety").ReviewWorkerSafetyEvent(ctx, fc.Args["input"].(gqlmodel.SafetyEventStatusInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerSafetyEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkersafetyᚐWorkerSafetyEvent),
 			},
@@ -162,7 +162,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_reopenWorkerSafetyEvent_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReopenWorkerSafetyEvent(ctx, fc.Args["input"].(gqlmodel.SafetyEventStatusInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workersafety").ReopenWorkerSafetyEvent(ctx, fc.Args["input"].(gqlmodel.SafetyEventStatusInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerSafetyEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkersafetyᚐWorkerSafetyEvent),
 			},
@@ -174,7 +174,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteWorkerSafetyEvent_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteWorkerSafetyEvent(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workersafety").DeleteWorkerSafetyEvent(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -187,7 +187,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_issueDisciplinaryAction_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").IssueDisciplinaryAction(ctx, fc.Args["input"].(gqlmodel.IssueDisciplinaryActionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workersafety").IssueDisciplinaryAction(ctx, fc.Args["input"].(gqlmodel.IssueDisciplinaryActionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNIssueDisciplinaryActionPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkersafetyserviceᚐIssueActionResult),
 			},
@@ -200,7 +200,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_rescindDisciplinaryAction_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RescindDisciplinaryAction(ctx, fc.Args["input"].(gqlmodel.RescindDisciplinaryActionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workersafety").RescindDisciplinaryAction(ctx, fc.Args["input"].(gqlmodel.RescindDisciplinaryActionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerDisciplinaryAction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdisciplineᚐWorkerDisciplinaryAction),
 			},
@@ -213,7 +213,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_giveWorkerRecognition_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").GiveWorkerRecognition(ctx, fc.Args["input"].(gqlmodel.WorkerRecognitionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workersafety").GiveWorkerRecognition(ctx, fc.Args["input"].(gqlmodel.WorkerRecognitionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerRecognition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdisciplineᚐWorkerRecognition),
 			},
@@ -225,7 +225,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteWorkerRecognition_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteWorkerRecognition(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workersafety").DeleteWorkerRecognition(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -238,7 +238,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_acknowledgeMyDisciplinaryAction_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AcknowledgeMyDisciplinaryAction(ctx, fc.Args["id"].(string), fc.Args["comment"].(*string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workersafety").AcknowledgeMyDisciplinaryAction(ctx, fc.Args["id"].(string), fc.Args["comment"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerDisciplinaryAction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdisciplineᚐWorkerDisciplinaryAction),
 			},
@@ -254,7 +254,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerSafetyEvents_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerSafetyEvents(ctx, fc.Args["workerId"].(*string), fc.Args["openOnly"].(*bool), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workersafety").WorkerSafetyEvents(ctx, fc.Args["workerId"].(*string), fc.Args["openOnly"].(*bool), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerSafetyEvent2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkersafetyᚐWorkerSafetyEventᚄ),
 			},
@@ -268,7 +268,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerSafetyEvent_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerSafetyEvent(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workersafety").WorkerSafetyEvent(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerSafetyEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkersafetyᚐWorkerSafetyEvent),
 			},
@@ -282,7 +282,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerSafetyScorecard_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerSafetyScorecard(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workersafety").WorkerSafetyScorecard(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNSafetyScorecard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋsafetyscorecardᚐSafetyScorecard),
 			},
@@ -296,7 +296,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerDisciplinaryActions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerDisciplinaryActions(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workersafety").WorkerDisciplinaryActions(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerDisciplinaryAction2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdisciplineᚐWorkerDisciplinaryActionᚄ),
 			},
@@ -310,7 +310,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerDisciplinaryLadder_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerDisciplinaryLadder(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workersafety").WorkerDisciplinaryLadder(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDisciplinaryLadder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdisciplineᚐDisciplinaryLadder),
 			},
@@ -324,7 +324,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerRecognitions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerRecognitions(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workersafety").WorkerRecognitions(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerRecognition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdisciplineᚐWorkerRecognitionᚄ),
 			},
@@ -337,7 +337,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_defaultSafetyPoints_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DefaultSafetyPoints(ctx, fc.Args["kind"].(workersafety.SafetyEventKind), fc.Args["severity"].(workersafety.SafetySeverity), fc.Args["preventable"].(*bool), fc.Args["inspectionResult"].(*workersafety.InspectionResult))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workersafety").DefaultSafetyPoints(ctx, fc.Args["kind"].(workersafety.SafetyEventKind), fc.Args["severity"].(workersafety.SafetySeverity), fc.Args["preventable"].(*bool), fc.Args["inspectionResult"].(*workersafety.InspectionResult))
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
@@ -349,7 +349,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "SafetyScorecard",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").MySafetyScorecard(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workersafety").MySafetyScorecard(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNSafetyScorecard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋsafetyscorecardᚐSafetyScorecard),
 			},
@@ -361,7 +361,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "WorkerRecognition",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").MyRecognitions(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workersafety").MyRecognitions(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerRecognition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdisciplineᚐWorkerRecognitionᚄ),
 			},
@@ -373,7 +373,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "WorkerDisciplinaryAction",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").MyDisciplinaryActions(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workersafety").MyDisciplinaryActions(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerDisciplinaryAction2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdisciplineᚐWorkerDisciplinaryActionᚄ),
 			},
@@ -575,7 +575,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*safetyscorecard.SafetyScorecard)
-					return gqlexec.Resolver[resolverSafetyScorecard](ec, "SafetyScorecard").HighestDiscipline(ctx, obj)
+					return gqlexec.Resolver[SafetyScorecardResolver](ec, "SafetyScorecard@workersafety").HighestDiscipline(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODisciplinaryLevel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdisciplineᚐDisciplinaryLevel),
 			},
@@ -586,7 +586,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*safetyscorecard.SafetyScorecard)
-					return gqlexec.Resolver[resolverSafetyScorecard](ec, "SafetyScorecard").DaysSinceLastEvent(ctx, obj)
+					return gqlexec.Resolver[SafetyScorecardResolver](ec, "SafetyScorecard@workersafety").DaysSinceLastEvent(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
@@ -725,7 +725,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdiscipline.WorkerDisciplinaryAction)
-					return gqlexec.Resolver[resolverWorkerDisciplinaryAction](ec, "WorkerDisciplinaryAction").SuspensionDays(ctx, obj)
+					return gqlexec.Resolver[WorkerDisciplinaryActionResolver](ec, "WorkerDisciplinaryAction@workersafety").SuspensionDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
@@ -736,7 +736,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdiscipline.WorkerDisciplinaryAction)
-					return gqlexec.Resolver[resolverWorkerDisciplinaryAction](ec, "WorkerDisciplinaryAction").SafetyEventID(ctx, obj)
+					return gqlexec.Resolver[WorkerDisciplinaryActionResolver](ec, "WorkerDisciplinaryAction@workersafety").SafetyEventID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -757,7 +757,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdiscipline.WorkerDisciplinaryAction)
-					return gqlexec.Resolver[resolverWorkerDisciplinaryAction](ec, "WorkerDisciplinaryAction").DocumentID(ctx, obj)
+					return gqlexec.Resolver[WorkerDisciplinaryActionResolver](ec, "WorkerDisciplinaryAction@workersafety").DocumentID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -768,7 +768,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdiscipline.WorkerDisciplinaryAction)
-					return gqlexec.Resolver[resolverWorkerDisciplinaryAction](ec, "WorkerDisciplinaryAction").IssuedByID(ctx, obj)
+					return gqlexec.Resolver[WorkerDisciplinaryActionResolver](ec, "WorkerDisciplinaryAction@workersafety").IssuedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -816,7 +816,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdiscipline.WorkerDisciplinaryAction)
-					return gqlexec.Resolver[resolverWorkerDisciplinaryAction](ec, "WorkerDisciplinaryAction").RescindedByID(ctx, obj)
+					return gqlexec.Resolver[WorkerDisciplinaryActionResolver](ec, "WorkerDisciplinaryAction@workersafety").RescindedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -837,7 +837,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdiscipline.WorkerDisciplinaryAction)
-					return gqlexec.Resolver[resolverWorkerDisciplinaryAction](ec, "WorkerDisciplinaryAction").Active(ctx, obj)
+					return gqlexec.Resolver[WorkerDisciplinaryActionResolver](ec, "WorkerDisciplinaryAction@workersafety").Active(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -959,7 +959,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerdiscipline.WorkerRecognition)
-					return gqlexec.Resolver[resolverWorkerRecognition](ec, "WorkerRecognition").AwardedByID(ctx, obj)
+					return gqlexec.Resolver[WorkerRecognitionResolver](ec, "WorkerRecognition@workersafety").AwardedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1151,7 +1151,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workersafety.WorkerSafetyEvent)
-					return gqlexec.Resolver[resolverWorkerSafetyEvent](ec, "WorkerSafetyEvent").ActivePoints(ctx, obj)
+					return gqlexec.Resolver[WorkerSafetyEventResolver](ec, "WorkerSafetyEvent@workersafety").ActivePoints(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
@@ -1171,7 +1171,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workersafety.WorkerSafetyEvent)
-					return gqlexec.Resolver[resolverWorkerSafetyEvent](ec, "WorkerSafetyEvent").ShipmentID(ctx, obj)
+					return gqlexec.Resolver[WorkerSafetyEventResolver](ec, "WorkerSafetyEvent@workersafety").ShipmentID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1182,7 +1182,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workersafety.WorkerSafetyEvent)
-					return gqlexec.Resolver[resolverWorkerSafetyEvent](ec, "WorkerSafetyEvent").InspectionLevel(ctx, obj)
+					return gqlexec.Resolver[WorkerSafetyEventResolver](ec, "WorkerSafetyEvent@workersafety").InspectionLevel(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
@@ -1193,7 +1193,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workersafety.WorkerSafetyEvent)
-					return gqlexec.Resolver[resolverWorkerSafetyEvent](ec, "WorkerSafetyEvent").InspectionResult(ctx, obj)
+					return gqlexec.Resolver[WorkerSafetyEventResolver](ec, "WorkerSafetyEvent@workersafety").InspectionResult(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInspectionResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkersafetyᚐInspectionResult),
 			},
@@ -1214,7 +1214,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workersafety.WorkerSafetyEvent)
-					return gqlexec.Resolver[resolverWorkerSafetyEvent](ec, "WorkerSafetyEvent").FineAmount(ctx, obj)
+					return gqlexec.Resolver[WorkerSafetyEventResolver](ec, "WorkerSafetyEvent@workersafety").FineAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -1225,7 +1225,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workersafety.WorkerSafetyEvent)
-					return gqlexec.Resolver[resolverWorkerSafetyEvent](ec, "WorkerSafetyEvent").CostAmount(ctx, obj)
+					return gqlexec.Resolver[WorkerSafetyEventResolver](ec, "WorkerSafetyEvent@workersafety").CostAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -1236,7 +1236,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workersafety.WorkerSafetyEvent)
-					return gqlexec.Resolver[resolverWorkerSafetyEvent](ec, "WorkerSafetyEvent").DocumentID(ctx, obj)
+					return gqlexec.Resolver[WorkerSafetyEventResolver](ec, "WorkerSafetyEvent@workersafety").DocumentID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1257,7 +1257,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workersafety.WorkerSafetyEvent)
-					return gqlexec.Resolver[resolverWorkerSafetyEvent](ec, "WorkerSafetyEvent").RecordedByID(ctx, obj)
+					return gqlexec.Resolver[WorkerSafetyEventResolver](ec, "WorkerSafetyEvent@workersafety").RecordedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1278,7 +1278,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workersafety.WorkerSafetyEvent)
-					return gqlexec.Resolver[resolverWorkerSafetyEvent](ec, "WorkerSafetyEvent").ClosedByID(ctx, obj)
+					return gqlexec.Resolver[WorkerSafetyEventResolver](ec, "WorkerSafetyEvent@workersafety").ClosedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1359,7 +1359,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "WorkerSafetyViolation",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workersafety.WorkerSafetyEvent)
-					return gqlexec.Resolver[resolverWorkerSafetyEvent](ec, "WorkerSafetyEvent").Violations(ctx, obj)
+					return gqlexec.Resolver[WorkerSafetyEventResolver](ec, "WorkerSafetyEvent@workersafety").Violations(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerSafetyViolation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋfleetsafetyᚐWorkerSafetyViolationᚄ),
 			},
@@ -1374,21 +1374,21 @@ var Shard = &gqlexec.Shard{
 		{Name: "WorkerSafetyEventInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputWorkerSafetyEventInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "DisciplinaryLadder", Check: func(r any) bool { _, ok := r.(resolverDisciplinaryLadder); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "SafetyScorecard", Check: func(r any) bool { _, ok := r.(resolverSafetyScorecard); return ok }},
-		{Root: "WorkerDisciplinaryAction", Check: func(r any) bool { _, ok := r.(resolverWorkerDisciplinaryAction); return ok }},
-		{Root: "WorkerRecognition", Check: func(r any) bool { _, ok := r.(resolverWorkerRecognition); return ok }},
-		{Root: "WorkerSafetyEvent", Check: func(r any) bool { _, ok := r.(resolverWorkerSafetyEvent); return ok }},
+		{Root: "DisciplinaryLadder@workersafety", Check: func(r any) bool { _, ok := r.(DisciplinaryLadderResolver); return ok }},
+		{Root: "Mutation@workersafety", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@workersafety", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "SafetyScorecard@workersafety", Check: func(r any) bool { _, ok := r.(SafetyScorecardResolver); return ok }},
+		{Root: "WorkerDisciplinaryAction@workersafety", Check: func(r any) bool { _, ok := r.(WorkerDisciplinaryActionResolver); return ok }},
+		{Root: "WorkerRecognition@workersafety", Check: func(r any) bool { _, ok := r.(WorkerRecognitionResolver); return ok }},
+		{Root: "WorkerSafetyEvent@workersafety", Check: func(r any) bool { _, ok := r.(WorkerSafetyEventResolver); return ok }},
 	},
 }
 
-type resolverDisciplinaryLadder interface {
+type DisciplinaryLadderResolver interface {
 	HighestLevel(ctx context.Context, obj *workerdiscipline.DisciplinaryLadder) (*workerdiscipline.DisciplinaryLevel, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateWorkerSafetyEvent(ctx context.Context, input gqlmodel.WorkerSafetyEventInput) (*workersafety.WorkerSafetyEvent, error)
 	UpdateWorkerSafetyEvent(ctx context.Context, input gqlmodel.UpdateWorkerSafetyEventInput) (*workersafety.WorkerSafetyEvent, error)
 	CloseWorkerSafetyEvent(ctx context.Context, input gqlmodel.SafetyEventStatusInput) (*workersafety.WorkerSafetyEvent, error)
@@ -1402,7 +1402,7 @@ type resolverMutation interface {
 	AcknowledgeMyDisciplinaryAction(ctx context.Context, id string, comment *string) (*workerdiscipline.WorkerDisciplinaryAction, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	WorkerSafetyEvents(ctx context.Context, workerID *string, openOnly *bool, limit *int) ([]*workersafety.WorkerSafetyEvent, error)
 	WorkerSafetyEvent(ctx context.Context, id string) (*workersafety.WorkerSafetyEvent, error)
 	WorkerSafetyScorecard(ctx context.Context, workerID string) (*safetyscorecard.SafetyScorecard, error)
@@ -1415,12 +1415,12 @@ type resolverQuery interface {
 	MyDisciplinaryActions(ctx context.Context) ([]*workerdiscipline.WorkerDisciplinaryAction, error)
 }
 
-type resolverSafetyScorecard interface {
+type SafetyScorecardResolver interface {
 	HighestDiscipline(ctx context.Context, obj *safetyscorecard.SafetyScorecard) (*workerdiscipline.DisciplinaryLevel, error)
 	DaysSinceLastEvent(ctx context.Context, obj *safetyscorecard.SafetyScorecard) (*int, error)
 }
 
-type resolverWorkerDisciplinaryAction interface {
+type WorkerDisciplinaryActionResolver interface {
 	SuspensionDays(ctx context.Context, obj *workerdiscipline.WorkerDisciplinaryAction) (*int, error)
 	SafetyEventID(ctx context.Context, obj *workerdiscipline.WorkerDisciplinaryAction) (*string, error)
 	DocumentID(ctx context.Context, obj *workerdiscipline.WorkerDisciplinaryAction) (*string, error)
@@ -1429,11 +1429,11 @@ type resolverWorkerDisciplinaryAction interface {
 	Active(ctx context.Context, obj *workerdiscipline.WorkerDisciplinaryAction) (bool, error)
 }
 
-type resolverWorkerRecognition interface {
+type WorkerRecognitionResolver interface {
 	AwardedByID(ctx context.Context, obj *workerdiscipline.WorkerRecognition) (*string, error)
 }
 
-type resolverWorkerSafetyEvent interface {
+type WorkerSafetyEventResolver interface {
 	ActivePoints(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (int, error)
 	ShipmentID(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (*string, error)
 	InspectionLevel(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (*int, error)

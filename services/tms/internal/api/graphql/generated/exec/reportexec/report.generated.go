@@ -142,7 +142,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createReportDefinition_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateReportDefinition(ctx, fc.Args["input"].(gqlmodel.SaveReportDefinitionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@report").CreateReportDefinition(ctx, fc.Args["input"].(gqlmodel.SaveReportDefinitionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportDefinition),
 			},
@@ -155,7 +155,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_exportTableView_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ExportTableView(ctx, fc.Args["input"].(gqlmodel.ExportTableViewInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@report").ExportTableView(ctx, fc.Args["input"].(gqlmodel.ExportTableViewInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTableExportResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTableExportResult),
 			},
@@ -168,7 +168,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_scheduleTableView_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ScheduleTableView(ctx, fc.Args["input"].(gqlmodel.ScheduleTableViewInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@report").ScheduleTableView(ctx, fc.Args["input"].(gqlmodel.ScheduleTableViewInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTableExportResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTableExportResult),
 			},
@@ -181,7 +181,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateReportDefinition_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateReportDefinition(ctx, fc.Args["input"].(gqlmodel.UpdateReportDefinitionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@report").UpdateReportDefinition(ctx, fc.Args["input"].(gqlmodel.UpdateReportDefinitionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportDefinition),
 			},
@@ -193,7 +193,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteReportDefinition_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteReportDefinition(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@report").DeleteReportDefinition(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -206,7 +206,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_forkCannedReport_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ForkCannedReport(ctx, fc.Args["input"].(gqlmodel.ForkCannedReportInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@report").ForkCannedReport(ctx, fc.Args["input"].(gqlmodel.ForkCannedReportInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportDefinition),
 			},
@@ -219,7 +219,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_resetCannedFork_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ResetCannedFork(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@report").ResetCannedFork(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportDefinition),
 			},
@@ -232,7 +232,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_runReport_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RunReport(ctx, fc.Args["input"].(gqlmodel.RunReportInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@report").RunReport(ctx, fc.Args["input"].(gqlmodel.RunReportInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRun),
 			},
@@ -245,7 +245,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_cancelReportRun_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CancelReportRun(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@report").CancelReportRun(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRun),
 			},
@@ -258,7 +258,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createReportSchedule_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateReportSchedule(ctx, fc.Args["input"].(gqlmodel.CreateReportScheduleInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@report").CreateReportSchedule(ctx, fc.Args["input"].(gqlmodel.CreateReportScheduleInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportSchedule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportSchedule),
 			},
@@ -271,7 +271,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateReportSchedule_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateReportSchedule(ctx, fc.Args["input"].(gqlmodel.UpdateReportScheduleInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@report").UpdateReportSchedule(ctx, fc.Args["input"].(gqlmodel.UpdateReportScheduleInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportSchedule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportSchedule),
 			},
@@ -283,7 +283,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteReportSchedule_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteReportSchedule(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@report").DeleteReportSchedule(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -296,7 +296,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createReportView_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateReportView(ctx, fc.Args["input"].(gqlmodel.CreateReportViewInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@report").CreateReportView(ctx, fc.Args["input"].(gqlmodel.CreateReportViewInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportView2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportView),
 			},
@@ -309,7 +309,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateReportView_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateReportView(ctx, fc.Args["input"].(gqlmodel.UpdateReportViewInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@report").UpdateReportView(ctx, fc.Args["input"].(gqlmodel.UpdateReportViewInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportView2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportView),
 			},
@@ -321,7 +321,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteReportView_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteReportView(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@report").DeleteReportView(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -334,7 +334,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createReportDashboard_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateReportDashboard(ctx, fc.Args["input"].(gqlmodel.SaveReportDashboardInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@report").CreateReportDashboard(ctx, fc.Args["input"].(gqlmodel.SaveReportDashboardInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportDashboard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportDashboard),
 			},
@@ -347,7 +347,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateReportDashboard_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateReportDashboard(ctx, fc.Args["input"].(gqlmodel.UpdateReportDashboardInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@report").UpdateReportDashboard(ctx, fc.Args["input"].(gqlmodel.UpdateReportDashboardInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportDashboard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportDashboard),
 			},
@@ -359,7 +359,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteReportDashboard_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteReportDashboard(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@report").DeleteReportDashboard(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -373,7 +373,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "ReportCatalog",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ReportCatalog(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@report").ReportCatalog(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNReportCatalog2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportCatalog),
 			},
@@ -385,7 +385,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "CannedReport",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CannedReports(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@report").CannedReports(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNCannedReport2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCannedReportᚄ),
 			},
@@ -399,7 +399,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_reportDefinition_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ReportDefinition(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@report").ReportDefinition(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportDefinition),
 			},
@@ -413,7 +413,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_reportDefinitions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ReportDefinitions(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@report").ReportDefinitions(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportDefinitionConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportDefinitionConnection),
 			},
@@ -427,7 +427,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_reportDefinitionRevisions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ReportDefinitionRevisions(ctx, fc.Args["definitionId"].(string), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@report").ReportDefinitionRevisions(ctx, fc.Args["definitionId"].(string), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportDefinitionRevision2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportDefinitionRevisionᚄ),
 			},
@@ -441,7 +441,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_reportRun_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ReportRun(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@report").ReportRun(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRun),
 			},
@@ -455,7 +455,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_reportRunDeskCard_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ReportRunDeskCard(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@report").ReportRunDeskCard(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportRunDeskCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunDeskCard),
 			},
@@ -469,7 +469,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_reportRuns_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ReportRuns(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["filter"].(*gqlmodel.ReportRunsFilterInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@report").ReportRuns(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["filter"].(*gqlmodel.ReportRunsFilterInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportRunConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunConnection),
 			},
@@ -483,7 +483,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_previewReport_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PreviewReport(ctx, fc.Args["definition"].(map[string]any), fc.Args["params"].(map[string]any), fc.Args["supersede"].(*bool), fc.Args["cursor"].(*string), fc.Args["pageSize"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@report").PreviewReport(ctx, fc.Args["definition"].(map[string]any), fc.Args["params"].(map[string]any), fc.Args["supersede"].(*bool), fc.Args["cursor"].(*string), fc.Args["pageSize"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportPreview),
 			},
@@ -497,7 +497,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_drillThroughReport_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DrillThroughReport(ctx, fc.Args["input"].(gqlmodel.ReportDrillInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@report").DrillThroughReport(ctx, fc.Args["input"].(gqlmodel.ReportDrillInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportPreview),
 			},
@@ -511,7 +511,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_reportSchedules_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ReportSchedules(ctx, fc.Args["definitionId"].(*string), fc.Args["enabledOnly"].(*bool), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@report").ReportSchedules(ctx, fc.Args["definitionId"].(*string), fc.Args["enabledOnly"].(*bool), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportSchedule2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportScheduleᚄ),
 			},
@@ -525,7 +525,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_reportViews_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ReportViews(ctx, fc.Args["definitionId"].(*string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@report").ReportViews(ctx, fc.Args["definitionId"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportView2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportViewᚄ),
 			},
@@ -539,7 +539,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_reportView_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ReportView(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@report").ReportView(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportView2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportView),
 			},
@@ -551,7 +551,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "ReportDashboard",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ReportDashboards(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@report").ReportDashboards(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNReportDashboard2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportDashboardᚄ),
 			},
@@ -565,7 +565,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_reportDashboard_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ReportDashboard(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@report").ReportDashboard(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportDashboard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportDashboard),
 			},
@@ -2630,7 +2630,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportSchedule)
-					return gqlexec.Resolver[resolverReportSchedule](ec, "ReportSchedule").Mine(ctx, obj)
+					return gqlexec.Resolver[ReportScheduleResolver](ec, "ReportSchedule@report").Mine(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -2949,13 +2949,13 @@ var Shard = &gqlexec.Shard{
 		{Name: "UpdateReportViewInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateReportViewInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "ReportSchedule", Check: func(r any) bool { _, ok := r.(resolverReportSchedule); return ok }},
+		{Root: "Mutation@report", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@report", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "ReportSchedule@report", Check: func(r any) bool { _, ok := r.(ReportScheduleResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateReportDefinition(ctx context.Context, input gqlmodel.SaveReportDefinitionInput) (*gqlmodel.ReportDefinition, error)
 	ExportTableView(ctx context.Context, input gqlmodel.ExportTableViewInput) (*gqlmodel.TableExportResult, error)
 	ScheduleTableView(ctx context.Context, input gqlmodel.ScheduleTableViewInput) (*gqlmodel.TableExportResult, error)
@@ -2976,7 +2976,7 @@ type resolverMutation interface {
 	DeleteReportDashboard(ctx context.Context, id string) (bool, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	ReportCatalog(ctx context.Context) (*gqlmodel.ReportCatalog, error)
 	CannedReports(ctx context.Context) ([]*gqlmodel.CannedReport, error)
 	ReportDefinition(ctx context.Context, id string) (*gqlmodel.ReportDefinition, error)
@@ -2994,7 +2994,7 @@ type resolverQuery interface {
 	ReportDashboard(ctx context.Context, id string) (*gqlmodel.ReportDashboard, error)
 }
 
-type resolverReportSchedule interface {
+type ReportScheduleResolver interface {
 	Mine(ctx context.Context, obj *gqlmodel.ReportSchedule) (bool, error)
 }
 

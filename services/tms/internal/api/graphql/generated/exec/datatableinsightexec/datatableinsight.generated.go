@@ -247,7 +247,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_dataTableFacets_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DataTableFacets(ctx, fc.Args["input"].(gqlmodel.DataTableFacetInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@datatableinsight").DataTableFacets(ctx, fc.Args["input"].(gqlmodel.DataTableFacetInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDataTableFacets2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableFacets),
 			},
@@ -261,7 +261,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_dataTableAggregates_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DataTableAggregates(ctx, fc.Args["input"].(gqlmodel.DataTableAggregateInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@datatableinsight").DataTableAggregates(ctx, fc.Args["input"].(gqlmodel.DataTableAggregateInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDataTableAggregates2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableAggregates),
 			},
@@ -275,7 +275,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_dataTableSeries_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DataTableSeries(ctx, fc.Args["input"].(gqlmodel.DataTableSeriesInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@datatableinsight").DataTableSeries(ctx, fc.Args["input"].(gqlmodel.DataTableSeriesInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDataTableSeries2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableSeries),
 			},
@@ -289,7 +289,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_dataTableInsightFields_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DataTableInsightFields(ctx, fc.Args["resource"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@datatableinsight").DataTableInsightFields(ctx, fc.Args["resource"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDataTableInsightField2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableInsightFieldᚄ),
 			},
@@ -301,11 +301,11 @@ var Shard = &gqlexec.Shard{
 		{Name: "DataTableSeriesInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputDataTableSeriesInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Query@datatableinsight", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	DataTableFacets(ctx context.Context, input gqlmodel.DataTableFacetInput) (*gqlmodel.DataTableFacets, error)
 	DataTableAggregates(ctx context.Context, input gqlmodel.DataTableAggregateInput) (*gqlmodel.DataTableAggregates, error)
 	DataTableSeries(ctx context.Context, input gqlmodel.DataTableSeriesInput) (*gqlmodel.DataTableSeries, error)

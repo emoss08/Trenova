@@ -39,7 +39,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "AgentRun",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentplan.AgentPlan)
-					return gqlexec.Resolver[resolverAgentPlan](ec, "AgentPlan").Run(ctx, obj)
+					return gqlexec.Resolver[AgentPlanResolver](ec, "AgentPlan@decisions").Run(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentRun),
 			},
@@ -51,7 +51,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "PendingDecisionHold",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentplan.AgentPlan)
-					return gqlexec.Resolver[resolverAgentPlan](ec, "AgentPlan").Hold(ctx, obj)
+					return gqlexec.Resolver[AgentPlanResolver](ec, "AgentPlan@decisions").Hold(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOPendingDecisionHold2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPendingDecisionHold),
 			},
@@ -65,7 +65,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "AgentRun",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentProposal)
-					return gqlexec.Resolver[resolverAgentProposal](ec, "AgentProposal").Run(ctx, obj)
+					return gqlexec.Resolver[AgentProposalResolver](ec, "AgentProposal@decisions").Run(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentRun),
 			},
@@ -77,7 +77,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "PendingDecisionHold",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentProposal)
-					return gqlexec.Resolver[resolverAgentProposal](ec, "AgentProposal").Hold(ctx, obj)
+					return gqlexec.Resolver[AgentProposalResolver](ec, "AgentProposal@decisions").Hold(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOPendingDecisionHold2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPendingDecisionHold),
 			},
@@ -142,7 +142,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "AgentDefinition",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentRun)
-					return gqlexec.Resolver[resolverAgentRun](ec, "AgentRun").Definition(ctx, obj)
+					return gqlexec.Resolver[AgentRunResolver](ec, "AgentRun@decisions").Definition(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinition),
 			},
@@ -154,7 +154,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "AgentDefinition",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentRun)
-					return gqlexec.Resolver[resolverAgentRun](ec, "AgentRun").HandedBy(ctx, obj)
+					return gqlexec.Resolver[AgentRunResolver](ec, "AgentRun@decisions").HandedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinition),
 			},
@@ -169,7 +169,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_decideAgentProposals_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DecideAgentProposals(ctx, fc.Args["ids"].([]string), fc.Args["input"].(gqlmodel.DecideAgentProposalsInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@decisions").DecideAgentProposals(ctx, fc.Args["ids"].([]string), fc.Args["input"].(gqlmodel.DecideAgentProposalsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentProposalDecisionResult2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentProposalDecisionResultᚄ),
 			},
@@ -278,7 +278,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "PendingDecisionHold",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.PendingDecisionEdge)
-					return gqlexec.Resolver[resolverPendingDecisionEdge](ec, "PendingDecisionEdge").Hold(ctx, obj)
+					return gqlexec.Resolver[PendingDecisionEdgeResolver](ec, "PendingDecisionEdge@decisions").Hold(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOPendingDecisionHold2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPendingDecisionHold),
 			},
@@ -391,7 +391,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_pendingDecisions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PendingDecisions(ctx, fc.Args["input"].(gqlmodel.PendingDecisionsInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@decisions").PendingDecisions(ctx, fc.Args["input"].(gqlmodel.PendingDecisionsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPendingDecisionConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPendingDecisionConnection),
 			},
@@ -403,7 +403,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "PendingDecisionSummary",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PendingDecisionSummary(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@decisions").PendingDecisionSummary(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNPendingDecisionSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPendingDecisionSummary),
 			},
@@ -417,7 +417,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_recentDecisions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").RecentDecisions(ctx, fc.Args["since"].(int), fc.Args["first"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@decisions").RecentDecisions(ctx, fc.Args["since"].(int), fc.Args["first"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNRecentDecision2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRecentDecisionᚄ),
 			},
@@ -514,39 +514,39 @@ var Shard = &gqlexec.Shard{
 		{Name: "PendingDecisionsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputPendingDecisionsInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "AgentPlan", Check: func(r any) bool { _, ok := r.(resolverAgentPlan); return ok }},
-		{Root: "AgentProposal", Check: func(r any) bool { _, ok := r.(resolverAgentProposal); return ok }},
-		{Root: "AgentRun", Check: func(r any) bool { _, ok := r.(resolverAgentRun); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "PendingDecisionEdge", Check: func(r any) bool { _, ok := r.(resolverPendingDecisionEdge); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "AgentPlan@decisions", Check: func(r any) bool { _, ok := r.(AgentPlanResolver); return ok }},
+		{Root: "AgentProposal@decisions", Check: func(r any) bool { _, ok := r.(AgentProposalResolver); return ok }},
+		{Root: "AgentRun@decisions", Check: func(r any) bool { _, ok := r.(AgentRunResolver); return ok }},
+		{Root: "Mutation@decisions", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "PendingDecisionEdge@decisions", Check: func(r any) bool { _, ok := r.(PendingDecisionEdgeResolver); return ok }},
+		{Root: "Query@decisions", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverAgentPlan interface {
+type AgentPlanResolver interface {
 	Run(ctx context.Context, obj *agentplan.AgentPlan) (*agent.AgentRun, error)
 	Hold(ctx context.Context, obj *agentplan.AgentPlan) (*gqlmodel.PendingDecisionHold, error)
 }
 
-type resolverAgentProposal interface {
+type AgentProposalResolver interface {
 	Run(ctx context.Context, obj *agent.AgentProposal) (*agent.AgentRun, error)
 	Hold(ctx context.Context, obj *agent.AgentProposal) (*gqlmodel.PendingDecisionHold, error)
 }
 
-type resolverAgentRun interface {
+type AgentRunResolver interface {
 	Definition(ctx context.Context, obj *agent.AgentRun) (*agentdefinition.Definition, error)
 	HandedBy(ctx context.Context, obj *agent.AgentRun) (*agentdefinition.Definition, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	DecideAgentProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error)
 }
 
-type resolverPendingDecisionEdge interface {
+type PendingDecisionEdgeResolver interface {
 	Hold(ctx context.Context, obj *gqlmodel.PendingDecisionEdge) (*gqlmodel.PendingDecisionHold, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	PendingDecisions(ctx context.Context, input gqlmodel.PendingDecisionsInput) (*gqlmodel.PendingDecisionConnection, error)
 	PendingDecisionSummary(ctx context.Context) (*gqlmodel.PendingDecisionSummary, error)
 	RecentDecisions(ctx context.Context, since int, first *int) ([]*gqlmodel.RecentDecision, error)

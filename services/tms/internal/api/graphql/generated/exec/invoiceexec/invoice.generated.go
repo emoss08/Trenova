@@ -262,7 +262,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
-					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").ExchangeRate(ctx, obj)
+					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").ExchangeRate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -431,7 +431,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "Customer",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
-					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").ShipperCustomer(ctx, obj)
+					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").ShipperCustomer(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer),
 			},
@@ -464,7 +464,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "Invoice",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
-					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").RelatedInvoices(ctx, obj)
+					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").RelatedInvoices(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoiceᚄ),
 			},
@@ -476,7 +476,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
-					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").SubtotalAmount(ctx, obj)
+					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").SubtotalAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -488,7 +488,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
-					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").OtherAmount(ctx, obj)
+					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").OtherAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -499,7 +499,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
-					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").TotalAmount(ctx, obj)
+					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").TotalAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -511,7 +511,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
-					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").AppliedAmount(ctx, obj)
+					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").AppliedAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -656,7 +656,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild15,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
-					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").VoidDisposition(ctx, obj)
+					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").VoidDisposition(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInvoiceVoidDisposition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐVoidDisposition),
 			},
@@ -686,7 +686,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "Invoice",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
-					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").ReferenceInvoice(ctx, obj)
+					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").ReferenceInvoice(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoice),
 			},
@@ -707,7 +707,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild16,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
-					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").MemoKind(ctx, obj)
+					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").MemoKind(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInvoiceMemoKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐMemoKind),
 			},
@@ -719,7 +719,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
-					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").OpenBalance(ctx, obj)
+					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").OpenBalance(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -741,7 +741,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
-					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").CreditRemaining(ctx, obj)
+					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").CreditRemaining(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -752,7 +752,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
-					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").DaysPastDue(ctx, obj)
+					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").DaysPastDue(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
@@ -765,7 +765,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "CustomerPaymentApplication",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
-					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").PaymentApplications(ctx, obj)
+					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").PaymentApplications(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNCustomerPaymentApplication2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐApplicationᚄ),
 			},
@@ -778,7 +778,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "CreditMemoApplication",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
-					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").CreditApplications(ctx, obj)
+					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").CreditApplications(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNCreditMemoApplication2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐCreditMemoApplicationᚄ),
 			},
@@ -829,7 +829,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "InvoiceEDISendPlan",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
-					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").EDISendPlan(ctx, obj)
+					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").EDISendPlan(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceEDISendPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceportsᚐInvoiceEDISendPlan),
 			},
@@ -902,7 +902,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "InvoiceChargeGroup",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
-					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").ChargeSummary(ctx, obj)
+					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").ChargeSummary(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceChargeGroup2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicechargegroupᚐChargeGroupᚄ),
 			},
@@ -914,7 +914,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
-					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").VoidedBy(ctx, obj)
+					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").VoidedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -947,7 +947,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoicechargegroup.ChargeGroup)
-					return gqlexec.Resolver[resolverInvoiceChargeGroup](ec, "InvoiceChargeGroup").ChargeCode(ctx, obj)
+					return gqlexec.Resolver[InvoiceChargeGroupResolver](ec, "InvoiceChargeGroup@invoice").ChargeCode(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -958,7 +958,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild19,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoicechargegroup.ChargeGroup)
-					return gqlexec.Resolver[resolverInvoiceChargeGroup](ec, "InvoiceChargeGroup").ChargeMethod(ctx, obj)
+					return gqlexec.Resolver[InvoiceChargeGroupResolver](ec, "InvoiceChargeGroup@invoice").ChargeMethod(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAccessorialMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋaccessorialchargeᚐMethod),
 			},
@@ -969,7 +969,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoicechargegroup.ChargeGroup)
-					return gqlexec.Resolver[resolverInvoiceChargeGroup](ec, "InvoiceChargeGroup").RateUnit(ctx, obj)
+					return gqlexec.Resolver[InvoiceChargeGroupResolver](ec, "InvoiceChargeGroup@invoice").RateUnit(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -980,7 +980,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoicechargegroup.ChargeGroup)
-					return gqlexec.Resolver[resolverInvoiceChargeGroup](ec, "InvoiceChargeGroup").Rate(ctx, obj)
+					return gqlexec.Resolver[InvoiceChargeGroupResolver](ec, "InvoiceChargeGroup@invoice").Rate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -991,7 +991,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoicechargegroup.ChargeGroup)
-					return gqlexec.Resolver[resolverInvoiceChargeGroup](ec, "InvoiceChargeGroup").RateBasisAmount(ctx, obj)
+					return gqlexec.Resolver[InvoiceChargeGroupResolver](ec, "InvoiceChargeGroup@invoice").RateBasisAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -1003,7 +1003,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoicechargegroup.ChargeGroup)
-					return gqlexec.Resolver[resolverInvoiceChargeGroup](ec, "InvoiceChargeGroup").Quantity(ctx, obj)
+					return gqlexec.Resolver[InvoiceChargeGroupResolver](ec, "InvoiceChargeGroup@invoice").Quantity(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1014,7 +1014,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoicechargegroup.ChargeGroup)
-					return gqlexec.Resolver[resolverInvoiceChargeGroup](ec, "InvoiceChargeGroup").FormulaTemplateID(ctx, obj)
+					return gqlexec.Resolver[InvoiceChargeGroupResolver](ec, "InvoiceChargeGroup@invoice").FormulaTemplateID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1025,7 +1025,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoicechargegroup.ChargeGroup)
-					return gqlexec.Resolver[resolverInvoiceChargeGroup](ec, "InvoiceChargeGroup").FormulaTemplateName(ctx, obj)
+					return gqlexec.Resolver[InvoiceChargeGroupResolver](ec, "InvoiceChargeGroup@invoice").FormulaTemplateName(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -1057,7 +1057,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoicechargegroup.ChargeGroup)
-					return gqlexec.Resolver[resolverInvoiceChargeGroup](ec, "InvoiceChargeGroup").Amount(ctx, obj)
+					return gqlexec.Resolver[InvoiceChargeGroupResolver](ec, "InvoiceChargeGroup@invoice").Amount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1394,7 +1394,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.InvoiceLine)
-					return gqlexec.Resolver[resolverInvoiceLine](ec, "InvoiceLine").Quantity(ctx, obj)
+					return gqlexec.Resolver[InvoiceLineResolver](ec, "InvoiceLine@invoice").Quantity(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1406,7 +1406,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.InvoiceLine)
-					return gqlexec.Resolver[resolverInvoiceLine](ec, "InvoiceLine").UnitPrice(ctx, obj)
+					return gqlexec.Resolver[InvoiceLineResolver](ec, "InvoiceLine@invoice").UnitPrice(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1418,7 +1418,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.InvoiceLine)
-					return gqlexec.Resolver[resolverInvoiceLine](ec, "InvoiceLine").Amount(ctx, obj)
+					return gqlexec.Resolver[InvoiceLineResolver](ec, "InvoiceLine@invoice").Amount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1447,7 +1447,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.InvoiceLine)
-					return gqlexec.Resolver[resolverInvoiceLine](ec, "InvoiceLine").ChargeMethod(ctx, obj)
+					return gqlexec.Resolver[InvoiceLineResolver](ec, "InvoiceLine@invoice").ChargeMethod(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -1458,7 +1458,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.InvoiceLine)
-					return gqlexec.Resolver[resolverInvoiceLine](ec, "InvoiceLine").Rate(ctx, obj)
+					return gqlexec.Resolver[InvoiceLineResolver](ec, "InvoiceLine@invoice").Rate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -1478,7 +1478,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.InvoiceLine)
-					return gqlexec.Resolver[resolverInvoiceLine](ec, "InvoiceLine").AllocationPercent(ctx, obj)
+					return gqlexec.Resolver[InvoiceLineResolver](ec, "InvoiceLine@invoice").AllocationPercent(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -1540,7 +1540,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createInvoicesFromShipments_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateInvoicesFromShipments(ctx, fc.Args["shipmentIds"].([]string), fc.Args["offCycleReason"].(*string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@invoice").CreateInvoicesFromShipments(ctx, fc.Args["shipmentIds"].([]string), fc.Args["offCycleReason"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNCreateInvoicesResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceportsᚐCreateInvoicesResult),
 			},
@@ -1553,7 +1553,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createInvoicesFromOrder_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateInvoicesFromOrder(ctx, fc.Args["orderId"].(string), fc.Args["offCycleReason"].(*string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@invoice").CreateInvoicesFromOrder(ctx, fc.Args["orderId"].(string), fc.Args["offCycleReason"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNCreateInvoicesResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceportsᚐCreateInvoicesResult),
 			},
@@ -1566,7 +1566,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_voidInvoice_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").VoidInvoice(ctx, fc.Args["input"].(gqlmodel.VoidInvoiceInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@invoice").VoidInvoice(ctx, fc.Args["input"].(gqlmodel.VoidInvoiceInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNVoidInvoiceResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceportsᚐVoidInvoiceResult),
 			},
@@ -1579,7 +1579,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createMemo_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateMemo(ctx, fc.Args["input"].(gqlmodel.CreateMemoInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@invoice").CreateMemo(ctx, fc.Args["input"].(gqlmodel.CreateMemoInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoice),
 			},
@@ -1592,7 +1592,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_sendInvoiceEdi_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SendInvoiceEDI(ctx, fc.Args["invoiceId"].(string), fc.Args["force"].(*bool))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@invoice").SendInvoiceEDI(ctx, fc.Args["invoiceId"].(string), fc.Args["force"].(*bool))
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceEDISendResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceportsᚐInvoiceEDISendResult),
 			},
@@ -1608,7 +1608,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_invoices_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Invoices(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@invoice").Invoices(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐInvoiceConnection),
 			},
@@ -1621,7 +1621,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_invoice_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Invoice(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@invoice").Invoice(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoice),
 			},
@@ -1675,15 +1675,36 @@ var Shard = &gqlexec.Shard{
 		{Name: "VoidInvoiceInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputVoidInvoiceInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Invoice", Check: func(r any) bool { _, ok := r.(resolverInvoice); return ok }},
-		{Root: "InvoiceChargeGroup", Check: func(r any) bool { _, ok := r.(resolverInvoiceChargeGroup); return ok }},
-		{Root: "InvoiceLine", Check: func(r any) bool { _, ok := r.(resolverInvoiceLine); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "InvoiceChargeGroup@invoice", Check: func(r any) bool { _, ok := r.(InvoiceChargeGroupResolver); return ok }},
+		{Root: "InvoiceLine@invoice", Check: func(r any) bool { _, ok := r.(InvoiceLineResolver); return ok }},
+		{Root: "Invoice@invoice", Check: func(r any) bool { _, ok := r.(InvoiceResolver); return ok }},
+		{Root: "Mutation@invoice", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@invoice", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverInvoice interface {
+type InvoiceChargeGroupResolver interface {
+	ChargeCode(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
+	ChargeMethod(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*accessorialcharge.Method, error)
+	RateUnit(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
+	Rate(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
+	RateBasisAmount(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
+	Quantity(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (string, error)
+	FormulaTemplateID(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
+	FormulaTemplateName(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
+	Amount(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (string, error)
+}
+
+type InvoiceLineResolver interface {
+	Quantity(ctx context.Context, obj *invoice.InvoiceLine) (string, error)
+	UnitPrice(ctx context.Context, obj *invoice.InvoiceLine) (string, error)
+	Amount(ctx context.Context, obj *invoice.InvoiceLine) (string, error)
+	ChargeMethod(ctx context.Context, obj *invoice.InvoiceLine) (*string, error)
+	Rate(ctx context.Context, obj *invoice.InvoiceLine) (*string, error)
+	AllocationPercent(ctx context.Context, obj *invoice.InvoiceLine) (*string, error)
+}
+
+type InvoiceResolver interface {
 	ExchangeRate(ctx context.Context, obj *invoice.Invoice) (*string, error)
 	ShipperCustomer(ctx context.Context, obj *invoice.Invoice) (*customer.Customer, error)
 	RelatedInvoices(ctx context.Context, obj *invoice.Invoice) ([]*invoice.Invoice, error)
@@ -1704,28 +1725,7 @@ type resolverInvoice interface {
 	VoidedBy(ctx context.Context, obj *invoice.Invoice) (*tenant.User, error)
 }
 
-type resolverInvoiceChargeGroup interface {
-	ChargeCode(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
-	ChargeMethod(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*accessorialcharge.Method, error)
-	RateUnit(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
-	Rate(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
-	RateBasisAmount(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
-	Quantity(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (string, error)
-	FormulaTemplateID(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
-	FormulaTemplateName(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
-	Amount(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (string, error)
-}
-
-type resolverInvoiceLine interface {
-	Quantity(ctx context.Context, obj *invoice.InvoiceLine) (string, error)
-	UnitPrice(ctx context.Context, obj *invoice.InvoiceLine) (string, error)
-	Amount(ctx context.Context, obj *invoice.InvoiceLine) (string, error)
-	ChargeMethod(ctx context.Context, obj *invoice.InvoiceLine) (*string, error)
-	Rate(ctx context.Context, obj *invoice.InvoiceLine) (*string, error)
-	AllocationPercent(ctx context.Context, obj *invoice.InvoiceLine) (*string, error)
-}
-
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateInvoicesFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*invoiceports.CreateInvoicesResult, error)
 	CreateInvoicesFromOrder(ctx context.Context, orderID string, offCycleReason *string) (*invoiceports.CreateInvoicesResult, error)
 	VoidInvoice(ctx context.Context, input gqlmodel.VoidInvoiceInput) (*invoiceports.VoidInvoiceResult, error)
@@ -1733,7 +1733,7 @@ type resolverMutation interface {
 	SendInvoiceEDI(ctx context.Context, invoiceID string, force *bool) (*invoiceports.InvoiceEDISendResult, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	Invoices(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.InvoiceConnection, error)
 	Invoice(ctx context.Context, id string) (*invoice.Invoice, error)
 }

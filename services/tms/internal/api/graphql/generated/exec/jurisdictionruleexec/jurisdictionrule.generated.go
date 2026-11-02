@@ -182,7 +182,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*jurisdictionrule.JurisdictionRule)
-					return gqlexec.Resolver[resolverJurisdictionRule](ec, "JurisdictionRule").PermitBaseFee(ctx, obj)
+					return gqlexec.Resolver[JurisdictionRuleResolver](ec, "JurisdictionRule@jurisdictionrule").PermitBaseFee(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -193,7 +193,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*jurisdictionrule.JurisdictionRule)
-					return gqlexec.Resolver[resolverJurisdictionRule](ec, "JurisdictionRule").PermitPerMileFee(ctx, obj)
+					return gqlexec.Resolver[JurisdictionRuleResolver](ec, "JurisdictionRule@jurisdictionrule").PermitPerMileFee(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -591,7 +591,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_jurisdictionRules_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").JurisdictionRules(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@jurisdictionrule").JurisdictionRules(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNJurisdictionRuleConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionRuleConnection),
 			},
@@ -604,7 +604,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_jurisdictionRule_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").JurisdictionRule(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@jurisdictionrule").JurisdictionRule(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOJurisdictionRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋjurisdictionruleᚐJurisdictionRule),
 			},
@@ -618,24 +618,24 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_jurisdictionRuleOverrides_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").JurisdictionRuleOverrides(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@jurisdictionrule").JurisdictionRuleOverrides(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNJurisdictionRuleOverrideConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionRuleOverrideConnection),
 			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "JurisdictionRule", Check: func(r any) bool { _, ok := r.(resolverJurisdictionRule); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "JurisdictionRule@jurisdictionrule", Check: func(r any) bool { _, ok := r.(JurisdictionRuleResolver); return ok }},
+		{Root: "Query@jurisdictionrule", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverJurisdictionRule interface {
+type JurisdictionRuleResolver interface {
 	PermitBaseFee(ctx context.Context, obj *jurisdictionrule.JurisdictionRule) (*string, error)
 	PermitPerMileFee(ctx context.Context, obj *jurisdictionrule.JurisdictionRule) (*string, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	JurisdictionRules(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JurisdictionRuleConnection, error)
 	JurisdictionRule(ctx context.Context, id string) (*jurisdictionrule.JurisdictionRule, error)
 	JurisdictionRuleOverrides(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JurisdictionRuleOverrideConnection, error)

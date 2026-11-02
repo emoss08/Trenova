@@ -58,7 +58,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*equipmentcontinuity.EquipmentContinuity)
-					return gqlexec.Resolver[resolverEquipmentContinuity](ec, "EquipmentContinuity").EquipmentType(ctx, obj)
+					return gqlexec.Resolver[EquipmentContinuityResolver](ec, "EquipmentContinuity@equipmentcontinuity").EquipmentType(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -79,7 +79,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*equipmentcontinuity.EquipmentContinuity)
-					return gqlexec.Resolver[resolverEquipmentContinuity](ec, "EquipmentContinuity").SourceShipmentID(ctx, obj)
+					return gqlexec.Resolver[EquipmentContinuityResolver](ec, "EquipmentContinuity@equipmentcontinuity").SourceShipmentID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -90,7 +90,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*equipmentcontinuity.EquipmentContinuity)
-					return gqlexec.Resolver[resolverEquipmentContinuity](ec, "EquipmentContinuity").SourceShipmentMoveID(ctx, obj)
+					return gqlexec.Resolver[EquipmentContinuityResolver](ec, "EquipmentContinuity@equipmentcontinuity").SourceShipmentMoveID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -101,7 +101,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*equipmentcontinuity.EquipmentContinuity)
-					return gqlexec.Resolver[resolverEquipmentContinuity](ec, "EquipmentContinuity").CurrentLocationID(ctx, obj)
+					return gqlexec.Resolver[EquipmentContinuityResolver](ec, "EquipmentContinuity@equipmentcontinuity").CurrentLocationID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -113,7 +113,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*equipmentcontinuity.EquipmentContinuity)
-					return gqlexec.Resolver[resolverEquipmentContinuity](ec, "EquipmentContinuity").CurrentLocationName(ctx, obj)
+					return gqlexec.Resolver[EquipmentContinuityResolver](ec, "EquipmentContinuity@equipmentcontinuity").CurrentLocationName(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -160,11 +160,11 @@ var Shard = &gqlexec.Shard{
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "EquipmentContinuity", Check: func(r any) bool { _, ok := r.(resolverEquipmentContinuity); return ok }},
+		{Root: "EquipmentContinuity@equipmentcontinuity", Check: func(r any) bool { _, ok := r.(EquipmentContinuityResolver); return ok }},
 	},
 }
 
-type resolverEquipmentContinuity interface {
+type EquipmentContinuityResolver interface {
 	EquipmentType(ctx context.Context, obj *equipmentcontinuity.EquipmentContinuity) (string, error)
 	SourceShipmentID(ctx context.Context, obj *equipmentcontinuity.EquipmentContinuity) (*string, error)
 	SourceShipmentMoveID(ctx context.Context, obj *equipmentcontinuity.EquipmentContinuity) (*string, error)

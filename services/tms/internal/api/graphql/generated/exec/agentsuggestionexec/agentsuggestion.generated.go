@@ -101,7 +101,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_recordMyAgentSuggestion_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordMyAgentSuggestion(ctx, fc.Args["input"].(gqlmodel.RecordMyAgentSuggestionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agentsuggestion").RecordMyAgentSuggestion(ctx, fc.Args["input"].(gqlmodel.RecordMyAgentSuggestionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentSuggestion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentsuggestionᚐSuggestion),
 			},
@@ -114,7 +114,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_settleMyAgentSuggestion_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SettleMyAgentSuggestion(ctx, fc.Args["input"].(gqlmodel.SettleMyAgentSuggestionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agentsuggestion").SettleMyAgentSuggestion(ctx, fc.Args["input"].(gqlmodel.SettleMyAgentSuggestionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentSuggestion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentsuggestionᚐSuggestion),
 			},
@@ -125,11 +125,11 @@ var Shard = &gqlexec.Shard{
 		{Name: "SettleMyAgentSuggestionInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSettleMyAgentSuggestionInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
+		{Root: "Mutation@agentsuggestion", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	RecordMyAgentSuggestion(ctx context.Context, input gqlmodel.RecordMyAgentSuggestionInput) (*agentsuggestion.Suggestion, error)
 	SettleMyAgentSuggestion(ctx context.Context, input gqlmodel.SettleMyAgentSuggestionInput) (*agentsuggestion.Suggestion, error)
 }

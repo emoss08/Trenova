@@ -234,7 +234,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_saveTelematicsFormMapping_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SaveTelematicsFormMapping(ctx, fc.Args["input"].(gqlmodel.SaveTelematicsFormMappingInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@telematics").SaveTelematicsFormMapping(ctx, fc.Args["input"].(gqlmodel.SaveTelematicsFormMappingInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTelematicsFormMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTelematicsFormMapping),
 			},
@@ -246,7 +246,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteTelematicsFormMapping_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteTelematicsFormMapping(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@telematics").DeleteTelematicsFormMapping(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -262,7 +262,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentFormSubmissions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentFormSubmissions(ctx, fc.Args["shipmentId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@telematics").ShipmentFormSubmissions(ctx, fc.Args["shipmentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNTelematicsFormSubmission2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTelematicsFormSubmissionᚄ),
 			},
@@ -274,7 +274,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "TelematicsFormMapping",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").TelematicsFormMappings(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@telematics").TelematicsFormMappings(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNTelematicsFormMapping2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTelematicsFormMappingᚄ),
 			},
@@ -287,7 +287,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_telematicsFormMapping_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").TelematicsFormMapping(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@telematics").TelematicsFormMapping(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOTelematicsFormMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTelematicsFormMapping),
 			},
@@ -301,7 +301,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentDriverFeasibility_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentDriverFeasibility(ctx, fc.Args["shipmentId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@telematics").ShipmentDriverFeasibility(ctx, fc.Args["shipmentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDriverFeasibility2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDriverFeasibilityᚄ),
 			},
@@ -315,7 +315,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_vehiclePositions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").VehiclePositions(ctx, fc.Args["maxAgeSeconds"].(*int), fc.Args["tractorIds"].([]string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@telematics").VehiclePositions(ctx, fc.Args["maxAgeSeconds"].(*int), fc.Args["tractorIds"].([]string))
 				},
 				Marshal: gqlexec.Marshal(marshalNVehiclePosition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐVehiclePositionᚄ),
 			},
@@ -328,7 +328,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_vehiclePosition_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").VehiclePosition(ctx, fc.Args["tractorId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@telematics").VehiclePosition(ctx, fc.Args["tractorId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOVehiclePosition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐVehiclePosition),
 			},
@@ -342,7 +342,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerHosStates_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerHosStates(ctx, fc.Args["workerIds"].([]string), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@telematics").WorkerHosStates(ctx, fc.Args["workerIds"].([]string), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerHosState2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerHosStateᚄ),
 			},
@@ -355,7 +355,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerHosState_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerHosState(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@telematics").WorkerHosState(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOWorkerHosState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerHosState),
 			},
@@ -369,7 +369,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerHosViolations_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerHosViolations(ctx, fc.Args["workerId"].(*string), fc.Args["since"].(*int), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@telematics").WorkerHosViolations(ctx, fc.Args["workerId"].(*string), fc.Args["since"].(*int), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerHosViolation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerHosViolationᚄ),
 			},
@@ -383,7 +383,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerHosLogs_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerHosLogs(ctx, fc.Args["workerId"].(string), fc.Args["startTime"].(int), fc.Args["endTime"].(int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@telematics").WorkerHosLogs(ctx, fc.Args["workerId"].(string), fc.Args["startTime"].(int), fc.Args["endTime"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerHosLogEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerHosLogEntryᚄ),
 			},
@@ -397,7 +397,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerHosDailyLogs_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerHosDailyLogs(ctx, fc.Args["workerId"].(string), fc.Args["startDate"].(string), fc.Args["endDate"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@telematics").WorkerHosDailyLogs(ctx, fc.Args["workerId"].(string), fc.Args["startDate"].(string), fc.Args["endDate"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerHosDailyLog2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerHosDailyLogᚄ),
 			},
@@ -411,7 +411,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_vehicleInspections_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").VehicleInspections(ctx, fc.Args["tractorId"].(*string), fc.Args["workerId"].(*string), fc.Args["since"].(*int), fc.Args["limit"].(*int), fc.Args["before"].(*int), fc.Args["beforeId"].(*string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@telematics").VehicleInspections(ctx, fc.Args["tractorId"].(*string), fc.Args["workerId"].(*string), fc.Args["since"].(*int), fc.Args["limit"].(*int), fc.Args["before"].(*int), fc.Args["beforeId"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNVehicleInspection2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐVehicleInspectionᚄ),
 			},
@@ -425,7 +425,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerFormSubmissions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerFormSubmissions(ctx, fc.Args["workerId"].(string), fc.Args["startTime"].(int), fc.Args["endTime"].(int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@telematics").WorkerFormSubmissions(ctx, fc.Args["workerId"].(string), fc.Args["startTime"].(int), fc.Args["endTime"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerFormSubmission2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerFormSubmissionᚄ),
 			},
@@ -439,7 +439,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_hosCertificationSummary_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").HosCertificationSummary(ctx, fc.Args["startDate"].(string), fc.Args["endDate"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@telematics").HosCertificationSummary(ctx, fc.Args["startDate"].(string), fc.Args["endDate"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNHosCertificationSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHosCertificationSummaryᚄ),
 			},
@@ -451,7 +451,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "TelematicsStatus",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").TelematicsStatus(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@telematics").TelematicsStatus(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNTelematicsStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTelematicsStatus),
 			},
@@ -1751,17 +1751,17 @@ var Shard = &gqlexec.Shard{
 		{Name: "TelematicsFormMappingItemInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputTelematicsFormMappingItemInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@telematics", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@telematics", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	SaveTelematicsFormMapping(ctx context.Context, input gqlmodel.SaveTelematicsFormMappingInput) (*gqlmodel.TelematicsFormMapping, error)
 	DeleteTelematicsFormMapping(ctx context.Context, id string) (bool, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	ShipmentFormSubmissions(ctx context.Context, shipmentID string) ([]*gqlmodel.TelematicsFormSubmission, error)
 	TelematicsFormMappings(ctx context.Context) ([]*gqlmodel.TelematicsFormMapping, error)
 	TelematicsFormMapping(ctx context.Context, id string) (*gqlmodel.TelematicsFormMapping, error)

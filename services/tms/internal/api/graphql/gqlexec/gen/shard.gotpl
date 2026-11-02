@@ -154,7 +154,7 @@ func unmarshalInput{{ $input.Name }}(ctx context.Context, ec *gqlexec.Exec, obj 
 				return {{ $it }}, err
 			}
 			{{- if $field.IsResolver }}
-			if err = gqlexec.Resolver[resolver{{ ucFirst $input.Name }}](ec, {{ quote (ucFirst $input.Name) }}).{{ $field.GoFieldName }}(ctx, &it, data); err != nil {
+			if err = gqlexec.Resolver[{{ ucFirst $input.Name }}Resolver](ec, {{ quote (printf "%s@%s" (ucFirst $input.Name) $.Name) }}).{{ $field.GoFieldName }}(ctx, &it, data); err != nil {
 				return {{ $it }}, err
 			}
 			{{- else if $field.TypeReference.IsOmittable }}

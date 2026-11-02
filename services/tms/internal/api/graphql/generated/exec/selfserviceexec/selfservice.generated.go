@@ -38,7 +38,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createWorkerPolicy_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateWorkerPolicy(ctx, fc.Args["input"].(gqlmodel.WorkerPolicyInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@selfservice").CreateWorkerPolicy(ctx, fc.Args["input"].(gqlmodel.WorkerPolicyInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicy),
 			},
@@ -51,7 +51,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateWorkerPolicy_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateWorkerPolicy(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.WorkerPolicyInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@selfservice").UpdateWorkerPolicy(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.WorkerPolicyInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicy),
 			},
@@ -64,7 +64,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_decideProfileChange_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DecideProfileChange(ctx, fc.Args["input"].(gqlmodel.DecideProfileChangeInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@selfservice").DecideProfileChange(ctx, fc.Args["input"].(gqlmodel.DecideProfileChangeInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerProfileChangeRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐWorkerProfileChangeRequest),
 			},
@@ -216,7 +216,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerPolicies_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerPolicies(ctx, fc.Args["activeOnly"].(*bool), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@selfservice").WorkerPolicies(ctx, fc.Args["activeOnly"].(*bool), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicyᚄ),
 			},
@@ -230,7 +230,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerPolicy_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerPolicy(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@selfservice").WorkerPolicy(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicy),
 			},
@@ -244,7 +244,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerPolicyCompliance_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerPolicyCompliance(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@selfservice").WorkerPolicyCompliance(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNPolicyCompliance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPolicyCompliance),
 			},
@@ -258,7 +258,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerPolicyAcknowledgements_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerPolicyAcknowledgements(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@selfservice").WorkerPolicyAcknowledgements(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerPolicyAcknowledgement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicyAcknowledgementᚄ),
 			},
@@ -272,7 +272,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_profileChangeRequests_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ProfileChangeRequests(ctx, fc.Args["filter"].(*gqlmodel.ProfileChangeFilterInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@selfservice").ProfileChangeRequests(ctx, fc.Args["filter"].(*gqlmodel.ProfileChangeFilterInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerProfileChangeRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐWorkerProfileChangeRequestᚄ),
 			},
@@ -643,7 +643,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "ProfileFieldChange",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*profilechange.WorkerProfileChangeRequest)
-					return gqlexec.Resolver[resolverWorkerProfileChangeRequest](ec, "WorkerProfileChangeRequest").Changes(ctx, obj)
+					return gqlexec.Resolver[WorkerProfileChangeRequestResolver](ec, "WorkerProfileChangeRequest@selfservice").Changes(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNProfileFieldChange2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐProfileFieldChangeᚄ),
 			},
@@ -721,19 +721,19 @@ var Shard = &gqlexec.Shard{
 		{Name: "WorkerPolicyInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputWorkerPolicyInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "WorkerProfileChangeRequest", Check: func(r any) bool { _, ok := r.(resolverWorkerProfileChangeRequest); return ok }},
+		{Root: "Mutation@selfservice", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@selfservice", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "WorkerProfileChangeRequest@selfservice", Check: func(r any) bool { _, ok := r.(WorkerProfileChangeRequestResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateWorkerPolicy(ctx context.Context, input gqlmodel.WorkerPolicyInput) (*workerpolicy.WorkerPolicy, error)
 	UpdateWorkerPolicy(ctx context.Context, id string, input gqlmodel.WorkerPolicyInput) (*workerpolicy.WorkerPolicy, error)
 	DecideProfileChange(ctx context.Context, input gqlmodel.DecideProfileChangeInput) (*profilechange.WorkerProfileChangeRequest, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	WorkerPolicies(ctx context.Context, activeOnly *bool, limit *int) ([]*workerpolicy.WorkerPolicy, error)
 	WorkerPolicy(ctx context.Context, id string) (*workerpolicy.WorkerPolicy, error)
 	WorkerPolicyCompliance(ctx context.Context, id string) (*gqlmodel.PolicyCompliance, error)
@@ -741,7 +741,7 @@ type resolverQuery interface {
 	ProfileChangeRequests(ctx context.Context, filter *gqlmodel.ProfileChangeFilterInput) ([]*profilechange.WorkerProfileChangeRequest, error)
 }
 
-type resolverWorkerProfileChangeRequest interface {
+type WorkerProfileChangeRequestResolver interface {
 	Changes(ctx context.Context, obj *profilechange.WorkerProfileChangeRequest) ([]*gqlmodel.ProfileFieldChange, error)
 }
 

@@ -320,7 +320,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createHazmatSegregationRule_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateHazmatSegregationRule(ctx, fc.Args["input"].(gqlmodel.HazmatSegregationRuleInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@hazmatsegregationrule").CreateHazmatSegregationRule(ctx, fc.Args["input"].(gqlmodel.HazmatSegregationRuleInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNHazmatSegregationRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazmatsegregationruleᚐHazmatSegregationRule),
 			},
@@ -333,7 +333,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateHazmatSegregationRule_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateHazmatSegregationRule(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.HazmatSegregationRuleInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@hazmatsegregationrule").UpdateHazmatSegregationRule(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.HazmatSegregationRuleInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNHazmatSegregationRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazmatsegregationruleᚐHazmatSegregationRule),
 			},
@@ -349,7 +349,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_hazmatSegregationRules_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").HazmatSegregationRules(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@hazmatsegregationrule").HazmatSegregationRules(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNHazmatSegregationRuleConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHazmatSegregationRuleConnection),
 			},
@@ -362,7 +362,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_hazmatSegregationRule_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").HazmatSegregationRule(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@hazmatsegregationrule").HazmatSegregationRule(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOHazmatSegregationRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazmatsegregationruleᚐHazmatSegregationRule),
 			},
@@ -372,17 +372,17 @@ var Shard = &gqlexec.Shard{
 		{Name: "HazmatSegregationRuleInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputHazmatSegregationRuleInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@hazmatsegregationrule", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@hazmatsegregationrule", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateHazmatSegregationRule(ctx context.Context, input gqlmodel.HazmatSegregationRuleInput) (*hazmatsegregationrule.HazmatSegregationRule, error)
 	UpdateHazmatSegregationRule(ctx context.Context, id string, input gqlmodel.HazmatSegregationRuleInput) (*hazmatsegregationrule.HazmatSegregationRule, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	HazmatSegregationRules(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.HazmatSegregationRuleConnection, error)
 	HazmatSegregationRule(ctx context.Context, id string) (*hazmatsegregationrule.HazmatSegregationRule, error)
 }

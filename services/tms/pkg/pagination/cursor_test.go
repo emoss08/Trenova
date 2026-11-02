@@ -46,18 +46,18 @@ func TestCursorListResult_NextCursorIsTheLastEdgesCursor(t *testing.T) {
 		HasNextPage: true,
 		EdgeCursors: []string{"first", "second"},
 	}
-	next, err := result.NextCursor()
+	next, err := NextCursor(result)
 	require.NoError(t, err)
 	assert.Equal(t, "second", next)
 
 	result.HasNextPage = false
-	next, err = result.NextCursor()
+	next, err = NextCursor(result)
 	require.NoError(t, err)
 	assert.Empty(t, next, "the last page has no next cursor")
 
 	result.HasNextPage = true
 	result.EdgeCursors = nil
-	_, err = result.NextCursor()
+	_, err = NextCursor(result)
 	require.ErrorIs(t, err, ErrNoEdgeCursor)
 }
 

@@ -97,7 +97,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createPtoPolicy_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreatePTOPolicy(ctx, fc.Args["input"].(gqlmodel.PTOPolicyInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@ptopolicy").CreatePTOPolicy(ctx, fc.Args["input"].(gqlmodel.PTOPolicyInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPTOPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋptoᚐPTOPolicy),
 			},
@@ -110,7 +110,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updatePtoPolicy_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdatePTOPolicy(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.PTOPolicyInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@ptopolicy").UpdatePTOPolicy(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.PTOPolicyInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPTOPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋptoᚐPTOPolicy),
 			},
@@ -123,7 +123,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_archivePtoPolicy_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ArchivePTOPolicy(ctx, fc.Args["id"].(string), fc.Args["version"].(*int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@ptopolicy").ArchivePTOPolicy(ctx, fc.Args["id"].(string), fc.Args["version"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNPTOPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋptoᚐPTOPolicy),
 			},
@@ -136,7 +136,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_restorePtoPolicy_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RestorePTOPolicy(ctx, fc.Args["id"].(string), fc.Args["version"].(*int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@ptopolicy").RestorePTOPolicy(ctx, fc.Args["id"].(string), fc.Args["version"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNPTOPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋptoᚐPTOPolicy),
 			},
@@ -149,7 +149,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_assignWorkerPtoPolicy_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AssignWorkerPTOPolicy(ctx, fc.Args["input"].(gqlmodel.AssignWorkerPTOPolicyInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@ptopolicy").AssignWorkerPTOPolicy(ctx, fc.Args["input"].(gqlmodel.AssignWorkerPTOPolicyInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAssignWorkerPTOPolicyPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋptopolicyserviceᚐAssignWorkersResult),
 			},
@@ -162,7 +162,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_endWorkerPtoPolicyAssignment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").EndWorkerPTOPolicyAssignment(ctx, fc.Args["input"].(gqlmodel.EndWorkerPTOPolicyAssignmentInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@ptopolicy").EndWorkerPTOPolicyAssignment(ctx, fc.Args["input"].(gqlmodel.EndWorkerPTOPolicyAssignmentInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerPTOPolicyAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋptoᚐWorkerPTOPolicyAssignment),
 			},
@@ -175,7 +175,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_adjustWorkerPtoBalance_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AdjustWorkerPTOBalance(ctx, fc.Args["input"].(gqlmodel.AdjustWorkerPTOBalanceInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@ptopolicy").AdjustWorkerPTOBalance(ctx, fc.Args["input"].(gqlmodel.AdjustWorkerPTOBalanceInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerPTOLedgerEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋptoᚐWorkerPTOLedgerEntry),
 			},
@@ -188,7 +188,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_runPtoAccrual_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RunPTOAccrual(ctx, fc.Args["input"].(gqlmodel.RunPTOAccrualInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@ptopolicy").RunPTOAccrual(ctx, fc.Args["input"].(gqlmodel.RunPTOAccrualInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPTOAccrualRunPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPTOAccrualRunPayload),
 			},
@@ -283,7 +283,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*pto.PTOAccrualTier)
-					return gqlexec.Resolver[resolverPTOAccrualTier](ec, "PTOAccrualTier").AccrualAmountDays(ctx, obj)
+					return gqlexec.Resolver[PTOAccrualTierResolver](ec, "PTOAccrualTier@ptopolicy").AccrualAmountDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -294,7 +294,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*pto.PTOAccrualTier)
-					return gqlexec.Resolver[resolverPTOAccrualTier](ec, "PTOAccrualTier").MaxBalanceDays(ctx, obj)
+					return gqlexec.Resolver[PTOAccrualTierResolver](ec, "PTOAccrualTier@ptopolicy").MaxBalanceDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -338,7 +338,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerservice.AvailabilityResult)
-					return gqlexec.Resolver[resolverPTOAvailability](ec, "PTOAvailability").Days(ctx, obj)
+					return gqlexec.Resolver[PTOAvailabilityResolver](ec, "PTOAvailability@ptopolicy").Days(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -350,7 +350,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerservice.AvailabilityResult)
-					return gqlexec.Resolver[resolverPTOAvailability](ec, "PTOAvailability").BalanceDays(ctx, obj)
+					return gqlexec.Resolver[PTOAvailabilityResolver](ec, "PTOAvailability@ptopolicy").BalanceDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -362,7 +362,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerservice.AvailabilityResult)
-					return gqlexec.Resolver[resolverPTOAvailability](ec, "PTOAvailability").PendingDays(ctx, obj)
+					return gqlexec.Resolver[PTOAvailabilityResolver](ec, "PTOAvailability@ptopolicy").PendingDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -374,7 +374,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerservice.AvailabilityResult)
-					return gqlexec.Resolver[resolverPTOAvailability](ec, "PTOAvailability").ProjectedAccrualDays(ctx, obj)
+					return gqlexec.Resolver[PTOAvailabilityResolver](ec, "PTOAvailability@ptopolicy").ProjectedAccrualDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -386,7 +386,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerservice.AvailabilityResult)
-					return gqlexec.Resolver[resolverPTOAvailability](ec, "PTOAvailability").ProjectedAvailableDays(ctx, obj)
+					return gqlexec.Resolver[PTOAvailabilityResolver](ec, "PTOAvailability@ptopolicy").ProjectedAvailableDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -398,7 +398,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerservice.AvailabilityResult)
-					return gqlexec.Resolver[resolverPTOAvailability](ec, "PTOAvailability").FloorDays(ctx, obj)
+					return gqlexec.Resolver[PTOAvailabilityResolver](ec, "PTOAvailability@ptopolicy").FloorDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -409,7 +409,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerservice.AvailabilityResult)
-					return gqlexec.Resolver[resolverPTOAvailability](ec, "PTOAvailability").Message(ctx, obj)
+					return gqlexec.Resolver[PTOAvailabilityResolver](ec, "PTOAvailability@ptopolicy").Message(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -443,7 +443,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerports.PTOBalanceSummary)
-					return gqlexec.Resolver[resolverPTOBalanceSummary](ec, "PTOBalanceSummary").TotalBalanceDays(ctx, obj)
+					return gqlexec.Resolver[PTOBalanceSummaryResolver](ec, "PTOBalanceSummary@ptopolicy").TotalBalanceDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -455,7 +455,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerports.PTOBalanceSummary)
-					return gqlexec.Resolver[resolverPTOBalanceSummary](ec, "PTOBalanceSummary").TotalPendingDays(ctx, obj)
+					return gqlexec.Resolver[PTOBalanceSummaryResolver](ec, "PTOBalanceSummary@ptopolicy").TotalPendingDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -467,7 +467,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerports.PTOBalanceSummary)
-					return gqlexec.Resolver[resolverPTOBalanceSummary](ec, "PTOBalanceSummary").AccruedYtdDays(ctx, obj)
+					return gqlexec.Resolver[PTOBalanceSummaryResolver](ec, "PTOBalanceSummary@ptopolicy").AccruedYtdDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -479,7 +479,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerports.PTOBalanceSummary)
-					return gqlexec.Resolver[resolverPTOBalanceSummary](ec, "PTOBalanceSummary").UsedYtdDays(ctx, obj)
+					return gqlexec.Resolver[PTOBalanceSummaryResolver](ec, "PTOBalanceSummary@ptopolicy").UsedYtdDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -513,7 +513,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerservice.LiabilityReport)
-					return gqlexec.Resolver[resolverPTOLiabilityReport](ec, "PTOLiabilityReport").TotalBalanceDays(ctx, obj)
+					return gqlexec.Resolver[PTOLiabilityReportResolver](ec, "PTOLiabilityReport@ptopolicy").TotalBalanceDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -525,7 +525,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerservice.LiabilityReport)
-					return gqlexec.Resolver[resolverPTOLiabilityReport](ec, "PTOLiabilityReport").LiabilityDays(ctx, obj)
+					return gqlexec.Resolver[PTOLiabilityReportResolver](ec, "PTOLiabilityReport@ptopolicy").LiabilityDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -537,7 +537,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerservice.LiabilityReport)
-					return gqlexec.Resolver[resolverPTOLiabilityReport](ec, "PTOLiabilityReport").ForfeitableDays(ctx, obj)
+					return gqlexec.Resolver[PTOLiabilityReportResolver](ec, "PTOLiabilityReport@ptopolicy").ForfeitableDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -592,7 +592,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerservice.LiabilityRow)
-					return gqlexec.Resolver[resolverPTOLiabilityRow](ec, "PTOLiabilityRow").BalanceDays(ctx, obj)
+					return gqlexec.Resolver[PTOLiabilityRowResolver](ec, "PTOLiabilityRow@ptopolicy").BalanceDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -604,7 +604,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerservice.LiabilityRow)
-					return gqlexec.Resolver[resolverPTOLiabilityRow](ec, "PTOLiabilityRow").AccruedYtdDays(ctx, obj)
+					return gqlexec.Resolver[PTOLiabilityRowResolver](ec, "PTOLiabilityRow@ptopolicy").AccruedYtdDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -616,7 +616,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerservice.LiabilityRow)
-					return gqlexec.Resolver[resolverPTOLiabilityRow](ec, "PTOLiabilityRow").UsedYtdDays(ctx, obj)
+					return gqlexec.Resolver[PTOLiabilityRowResolver](ec, "PTOLiabilityRow@ptopolicy").UsedYtdDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -638,7 +638,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerservice.LiabilityRow)
-					return gqlexec.Resolver[resolverPTOLiabilityRow](ec, "PTOLiabilityRow").LiabilityDays(ctx, obj)
+					return gqlexec.Resolver[PTOLiabilityRowResolver](ec, "PTOLiabilityRow@ptopolicy").LiabilityDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -791,7 +791,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*pto.PTOPolicy)
-					return gqlexec.Resolver[resolverPTOPolicy](ec, "PTOPolicy").NegativeFloorDays(ctx, obj)
+					return gqlexec.Resolver[PTOPolicyResolver](ec, "PTOPolicy@ptopolicy").NegativeFloorDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -814,7 +814,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*pto.PTOPolicy)
-					return gqlexec.Resolver[resolverPTOPolicy](ec, "PTOPolicy").OpenAssignmentCount(ctx, obj)
+					return gqlexec.Resolver[PTOPolicyResolver](ec, "PTOPolicy@ptopolicy").OpenAssignmentCount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
@@ -964,7 +964,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*pto.PTOPolicyRule)
-					return gqlexec.Resolver[resolverPTOPolicyRule](ec, "PTOPolicyRule").AccrualAmountDays(ctx, obj)
+					return gqlexec.Resolver[PTOPolicyRuleResolver](ec, "PTOPolicyRule@ptopolicy").AccrualAmountDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -975,7 +975,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*pto.PTOPolicyRule)
-					return gqlexec.Resolver[resolverPTOPolicyRule](ec, "PTOPolicyRule").MaxBalanceDays(ctx, obj)
+					return gqlexec.Resolver[PTOPolicyRuleResolver](ec, "PTOPolicyRule@ptopolicy").MaxBalanceDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -986,7 +986,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*pto.PTOPolicyRule)
-					return gqlexec.Resolver[resolverPTOPolicyRule](ec, "PTOPolicyRule").CarryoverCapDays(ctx, obj)
+					return gqlexec.Resolver[PTOPolicyRuleResolver](ec, "PTOPolicyRule@ptopolicy").CarryoverCapDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -1071,7 +1071,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerservice.PlannedEntry)
-					return gqlexec.Resolver[resolverPlannedPTOAccrual](ec, "PlannedPTOAccrual").NominalDays(ctx, obj)
+					return gqlexec.Resolver[PlannedPTOAccrualResolver](ec, "PlannedPTOAccrual@ptopolicy").NominalDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1097,7 +1097,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_ptoPolicies_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PTOPolicies(ctx, fc.Args["input"].(gqlmodel.PTOPoliciesInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@ptopolicy").PTOPolicies(ctx, fc.Args["input"].(gqlmodel.PTOPoliciesInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPTOPolicyConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPTOPolicyConnection),
 			},
@@ -1111,7 +1111,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_ptoPolicy_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PTOPolicy(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@ptopolicy").PTOPolicy(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNPTOPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋptoᚐPTOPolicy),
 			},
@@ -1125,7 +1125,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerPtoPolicyAssignments_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerPTOPolicyAssignments(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@ptopolicy").WorkerPTOPolicyAssignments(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerPTOPolicyAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋptoᚐWorkerPTOPolicyAssignmentᚄ),
 			},
@@ -1139,7 +1139,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerPtoBalances_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerPTOBalances(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@ptopolicy").WorkerPTOBalances(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerPTOBalance2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋptoledgerserviceᚐBalanceViewᚄ),
 			},
@@ -1153,7 +1153,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerPtoLedger_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerPTOLedger(ctx, fc.Args["input"].(gqlmodel.WorkerPTOLedgerInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@ptopolicy").WorkerPTOLedger(ctx, fc.Args["input"].(gqlmodel.WorkerPTOLedgerInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerPTOLedgerConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPTOLedgerConnection),
 			},
@@ -1167,7 +1167,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerPtoAvailability_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerPTOAvailability(ctx, fc.Args["input"].(gqlmodel.PTOAvailabilityInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@ptopolicy").WorkerPTOAvailability(ctx, fc.Args["input"].(gqlmodel.PTOAvailabilityInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPTOAvailability2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋptoledgerserviceᚐAvailabilityResult),
 			},
@@ -1181,7 +1181,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_previewWorkerPtoAccrual_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PreviewWorkerPTOAccrual(ctx, fc.Args["workerId"].(string), fc.Args["asOf"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@ptopolicy").PreviewWorkerPTOAccrual(ctx, fc.Args["workerId"].(string), fc.Args["asOf"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNPlannedPTOAccrual2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋptoledgerserviceᚐPlannedEntryᚄ),
 			},
@@ -1193,7 +1193,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "PTOBalanceSummary",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PTOBalanceSummary(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@ptopolicy").PTOBalanceSummary(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNPTOBalanceSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋptoledgerportsᚐPTOBalanceSummary),
 			},
@@ -1207,7 +1207,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_ptoLiabilityReport_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PTOLiabilityReport(ctx, fc.Args["asOf"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@ptopolicy").PTOLiabilityReport(ctx, fc.Args["asOf"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNPTOLiabilityReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋptoledgerserviceᚐLiabilityReport),
 			},
@@ -1251,7 +1251,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerservice.BalanceView)
-					return gqlexec.Resolver[resolverWorkerPTOBalance](ec, "WorkerPTOBalance").BalanceDays(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOBalanceResolver](ec, "WorkerPTOBalance@ptopolicy").BalanceDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1263,7 +1263,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerservice.BalanceView)
-					return gqlexec.Resolver[resolverWorkerPTOBalance](ec, "WorkerPTOBalance").PendingDays(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOBalanceResolver](ec, "WorkerPTOBalance@ptopolicy").PendingDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1275,7 +1275,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerservice.BalanceView)
-					return gqlexec.Resolver[resolverWorkerPTOBalance](ec, "WorkerPTOBalance").AvailableDays(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOBalanceResolver](ec, "WorkerPTOBalance@ptopolicy").AvailableDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1287,7 +1287,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerservice.BalanceView)
-					return gqlexec.Resolver[resolverWorkerPTOBalance](ec, "WorkerPTOBalance").AccruedYtdDays(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOBalanceResolver](ec, "WorkerPTOBalance@ptopolicy").AccruedYtdDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1299,7 +1299,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerservice.BalanceView)
-					return gqlexec.Resolver[resolverWorkerPTOBalance](ec, "WorkerPTOBalance").UsedYtdDays(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOBalanceResolver](ec, "WorkerPTOBalance@ptopolicy").UsedYtdDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1311,7 +1311,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerservice.BalanceView)
-					return gqlexec.Resolver[resolverWorkerPTOBalance](ec, "WorkerPTOBalance").CarriedDays(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOBalanceResolver](ec, "WorkerPTOBalance@ptopolicy").CarriedDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1322,7 +1322,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ptoledgerservice.BalanceView)
-					return gqlexec.Resolver[resolverWorkerPTOBalance](ec, "WorkerPTOBalance").MaxBalanceDays(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOBalanceResolver](ec, "WorkerPTOBalance@ptopolicy").MaxBalanceDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -1452,7 +1452,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*pto.WorkerPTOLedgerEntry)
-					return gqlexec.Resolver[resolverWorkerPTOLedgerEntry](ec, "WorkerPTOLedgerEntry").AmountDays(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOLedgerEntryResolver](ec, "WorkerPTOLedgerEntry@ptopolicy").AmountDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1464,7 +1464,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*pto.WorkerPTOLedgerEntry)
-					return gqlexec.Resolver[resolverWorkerPTOLedgerEntry](ec, "WorkerPTOLedgerEntry").BalanceAfterDays(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOLedgerEntryResolver](ec, "WorkerPTOLedgerEntry@ptopolicy").BalanceAfterDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1495,7 +1495,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*pto.WorkerPTOLedgerEntry)
-					return gqlexec.Resolver[resolverWorkerPTOLedgerEntry](ec, "WorkerPTOLedgerEntry").PeriodKey(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOLedgerEntryResolver](ec, "WorkerPTOLedgerEntry@ptopolicy").PeriodKey(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -1506,7 +1506,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*pto.WorkerPTOLedgerEntry)
-					return gqlexec.Resolver[resolverWorkerPTOLedgerEntry](ec, "WorkerPTOLedgerEntry").SourcePTOID(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOLedgerEntryResolver](ec, "WorkerPTOLedgerEntry@ptopolicy").SourcePTOID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1517,7 +1517,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*pto.WorkerPTOLedgerEntry)
-					return gqlexec.Resolver[resolverWorkerPTOLedgerEntry](ec, "WorkerPTOLedgerEntry").AssignmentID(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOLedgerEntryResolver](ec, "WorkerPTOLedgerEntry@ptopolicy").AssignmentID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1528,7 +1528,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*pto.WorkerPTOLedgerEntry)
-					return gqlexec.Resolver[resolverWorkerPTOLedgerEntry](ec, "WorkerPTOLedgerEntry").PTOPolicyID(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOLedgerEntryResolver](ec, "WorkerPTOLedgerEntry@ptopolicy").PTOPolicyID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1549,7 +1549,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*pto.WorkerPTOLedgerEntry)
-					return gqlexec.Resolver[resolverWorkerPTOLedgerEntry](ec, "WorkerPTOLedgerEntry").CreatedByID(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOLedgerEntryResolver](ec, "WorkerPTOLedgerEntry@ptopolicy").CreatedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1560,7 +1560,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*pto.WorkerPTOLedgerEntry)
-					return gqlexec.Resolver[resolverWorkerPTOLedgerEntry](ec, "WorkerPTOLedgerEntry").Note(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOLedgerEntryResolver](ec, "WorkerPTOLedgerEntry@ptopolicy").Note(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -1634,7 +1634,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "PTOPolicy",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*pto.WorkerPTOPolicyAssignment)
-					return gqlexec.Resolver[resolverWorkerPTOPolicyAssignment](ec, "WorkerPTOPolicyAssignment").PTOPolicy(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOPolicyAssignmentResolver](ec, "WorkerPTOPolicyAssignment@ptopolicy").PTOPolicy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOPTOPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋptoᚐPTOPolicy),
 			},
@@ -1664,7 +1664,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*pto.WorkerPTOPolicyAssignment)
-					return gqlexec.Resolver[resolverWorkerPTOPolicyAssignment](ec, "WorkerPTOPolicyAssignment").AssignedByID(ctx, obj)
+					return gqlexec.Resolver[WorkerPTOPolicyAssignmentResolver](ec, "WorkerPTOPolicyAssignment@ptopolicy").AssignedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1723,23 +1723,23 @@ var Shard = &gqlexec.Shard{
 		{Name: "WorkerPTOLedgerInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputWorkerPTOLedgerInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "PTOAccrualTier", Check: func(r any) bool { _, ok := r.(resolverPTOAccrualTier); return ok }},
-		{Root: "PTOAvailability", Check: func(r any) bool { _, ok := r.(resolverPTOAvailability); return ok }},
-		{Root: "PTOBalanceSummary", Check: func(r any) bool { _, ok := r.(resolverPTOBalanceSummary); return ok }},
-		{Root: "PTOLiabilityReport", Check: func(r any) bool { _, ok := r.(resolverPTOLiabilityReport); return ok }},
-		{Root: "PTOLiabilityRow", Check: func(r any) bool { _, ok := r.(resolverPTOLiabilityRow); return ok }},
-		{Root: "PTOPolicy", Check: func(r any) bool { _, ok := r.(resolverPTOPolicy); return ok }},
-		{Root: "PTOPolicyRule", Check: func(r any) bool { _, ok := r.(resolverPTOPolicyRule); return ok }},
-		{Root: "PlannedPTOAccrual", Check: func(r any) bool { _, ok := r.(resolverPlannedPTOAccrual); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "WorkerPTOBalance", Check: func(r any) bool { _, ok := r.(resolverWorkerPTOBalance); return ok }},
-		{Root: "WorkerPTOLedgerEntry", Check: func(r any) bool { _, ok := r.(resolverWorkerPTOLedgerEntry); return ok }},
-		{Root: "WorkerPTOPolicyAssignment", Check: func(r any) bool { _, ok := r.(resolverWorkerPTOPolicyAssignment); return ok }},
+		{Root: "Mutation@ptopolicy", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "PTOAccrualTier@ptopolicy", Check: func(r any) bool { _, ok := r.(PTOAccrualTierResolver); return ok }},
+		{Root: "PTOAvailability@ptopolicy", Check: func(r any) bool { _, ok := r.(PTOAvailabilityResolver); return ok }},
+		{Root: "PTOBalanceSummary@ptopolicy", Check: func(r any) bool { _, ok := r.(PTOBalanceSummaryResolver); return ok }},
+		{Root: "PTOLiabilityReport@ptopolicy", Check: func(r any) bool { _, ok := r.(PTOLiabilityReportResolver); return ok }},
+		{Root: "PTOLiabilityRow@ptopolicy", Check: func(r any) bool { _, ok := r.(PTOLiabilityRowResolver); return ok }},
+		{Root: "PTOPolicy@ptopolicy", Check: func(r any) bool { _, ok := r.(PTOPolicyResolver); return ok }},
+		{Root: "PTOPolicyRule@ptopolicy", Check: func(r any) bool { _, ok := r.(PTOPolicyRuleResolver); return ok }},
+		{Root: "PlannedPTOAccrual@ptopolicy", Check: func(r any) bool { _, ok := r.(PlannedPTOAccrualResolver); return ok }},
+		{Root: "Query@ptopolicy", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "WorkerPTOBalance@ptopolicy", Check: func(r any) bool { _, ok := r.(WorkerPTOBalanceResolver); return ok }},
+		{Root: "WorkerPTOLedgerEntry@ptopolicy", Check: func(r any) bool { _, ok := r.(WorkerPTOLedgerEntryResolver); return ok }},
+		{Root: "WorkerPTOPolicyAssignment@ptopolicy", Check: func(r any) bool { _, ok := r.(WorkerPTOPolicyAssignmentResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreatePTOPolicy(ctx context.Context, input gqlmodel.PTOPolicyInput) (*pto.PTOPolicy, error)
 	UpdatePTOPolicy(ctx context.Context, id string, input gqlmodel.PTOPolicyInput) (*pto.PTOPolicy, error)
 	ArchivePTOPolicy(ctx context.Context, id string, version *int) (*pto.PTOPolicy, error)
@@ -1750,12 +1750,12 @@ type resolverMutation interface {
 	RunPTOAccrual(ctx context.Context, input gqlmodel.RunPTOAccrualInput) (*gqlmodel.PTOAccrualRunPayload, error)
 }
 
-type resolverPTOAccrualTier interface {
+type PTOAccrualTierResolver interface {
 	AccrualAmountDays(ctx context.Context, obj *pto.PTOAccrualTier) (string, error)
 	MaxBalanceDays(ctx context.Context, obj *pto.PTOAccrualTier) (*string, error)
 }
 
-type resolverPTOAvailability interface {
+type PTOAvailabilityResolver interface {
 	Days(ctx context.Context, obj *ptoledgerservice.AvailabilityResult) (string, error)
 	BalanceDays(ctx context.Context, obj *ptoledgerservice.AvailabilityResult) (string, error)
 	PendingDays(ctx context.Context, obj *ptoledgerservice.AvailabilityResult) (string, error)
@@ -1765,42 +1765,42 @@ type resolverPTOAvailability interface {
 	Message(ctx context.Context, obj *ptoledgerservice.AvailabilityResult) (*string, error)
 }
 
-type resolverPTOBalanceSummary interface {
+type PTOBalanceSummaryResolver interface {
 	TotalBalanceDays(ctx context.Context, obj *ptoledgerports.PTOBalanceSummary) (string, error)
 	TotalPendingDays(ctx context.Context, obj *ptoledgerports.PTOBalanceSummary) (string, error)
 	AccruedYtdDays(ctx context.Context, obj *ptoledgerports.PTOBalanceSummary) (string, error)
 	UsedYtdDays(ctx context.Context, obj *ptoledgerports.PTOBalanceSummary) (string, error)
 }
 
-type resolverPTOLiabilityReport interface {
+type PTOLiabilityReportResolver interface {
 	TotalBalanceDays(ctx context.Context, obj *ptoledgerservice.LiabilityReport) (string, error)
 	LiabilityDays(ctx context.Context, obj *ptoledgerservice.LiabilityReport) (string, error)
 	ForfeitableDays(ctx context.Context, obj *ptoledgerservice.LiabilityReport) (string, error)
 }
 
-type resolverPTOLiabilityRow interface {
+type PTOLiabilityRowResolver interface {
 	BalanceDays(ctx context.Context, obj *ptoledgerservice.LiabilityRow) (string, error)
 	AccruedYtdDays(ctx context.Context, obj *ptoledgerservice.LiabilityRow) (string, error)
 	UsedYtdDays(ctx context.Context, obj *ptoledgerservice.LiabilityRow) (string, error)
 	LiabilityDays(ctx context.Context, obj *ptoledgerservice.LiabilityRow) (string, error)
 }
 
-type resolverPTOPolicy interface {
+type PTOPolicyResolver interface {
 	NegativeFloorDays(ctx context.Context, obj *pto.PTOPolicy) (string, error)
 	OpenAssignmentCount(ctx context.Context, obj *pto.PTOPolicy) (int, error)
 }
 
-type resolverPTOPolicyRule interface {
+type PTOPolicyRuleResolver interface {
 	AccrualAmountDays(ctx context.Context, obj *pto.PTOPolicyRule) (string, error)
 	MaxBalanceDays(ctx context.Context, obj *pto.PTOPolicyRule) (*string, error)
 	CarryoverCapDays(ctx context.Context, obj *pto.PTOPolicyRule) (*string, error)
 }
 
-type resolverPlannedPTOAccrual interface {
+type PlannedPTOAccrualResolver interface {
 	NominalDays(ctx context.Context, obj *ptoledgerservice.PlannedEntry) (string, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	PTOPolicies(ctx context.Context, input gqlmodel.PTOPoliciesInput) (*gqlmodel.PTOPolicyConnection, error)
 	PTOPolicy(ctx context.Context, id string) (*pto.PTOPolicy, error)
 	WorkerPTOPolicyAssignments(ctx context.Context, workerID string) ([]*pto.WorkerPTOPolicyAssignment, error)
@@ -1812,7 +1812,7 @@ type resolverQuery interface {
 	PTOLiabilityReport(ctx context.Context, asOf *int) (*ptoledgerservice.LiabilityReport, error)
 }
 
-type resolverWorkerPTOBalance interface {
+type WorkerPTOBalanceResolver interface {
 	BalanceDays(ctx context.Context, obj *ptoledgerservice.BalanceView) (string, error)
 	PendingDays(ctx context.Context, obj *ptoledgerservice.BalanceView) (string, error)
 	AvailableDays(ctx context.Context, obj *ptoledgerservice.BalanceView) (string, error)
@@ -1822,7 +1822,7 @@ type resolverWorkerPTOBalance interface {
 	MaxBalanceDays(ctx context.Context, obj *ptoledgerservice.BalanceView) (*string, error)
 }
 
-type resolverWorkerPTOLedgerEntry interface {
+type WorkerPTOLedgerEntryResolver interface {
 	AmountDays(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (string, error)
 	BalanceAfterDays(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (string, error)
 	PeriodKey(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error)
@@ -1833,7 +1833,7 @@ type resolverWorkerPTOLedgerEntry interface {
 	Note(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error)
 }
 
-type resolverWorkerPTOPolicyAssignment interface {
+type WorkerPTOPolicyAssignmentResolver interface {
 	PTOPolicy(ctx context.Context, obj *pto.WorkerPTOPolicyAssignment) (*pto.PTOPolicy, error)
 	AssignedByID(ctx context.Context, obj *pto.WorkerPTOPolicyAssignment) (*string, error)
 }

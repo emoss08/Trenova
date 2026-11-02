@@ -254,7 +254,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiprovider.Provider)
-					return gqlexec.Resolver[resolverAIProvider](ec, "AIProvider").InputCostPerMillion(ctx, obj)
+					return gqlexec.Resolver[AIProviderResolver](ec, "AIProvider@aiprovider").InputCostPerMillion(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -265,7 +265,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiprovider.Provider)
-					return gqlexec.Resolver[resolverAIProvider](ec, "AIProvider").OutputCostPerMillion(ctx, obj)
+					return gqlexec.Resolver[AIProviderResolver](ec, "AIProvider@aiprovider").OutputCostPerMillion(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -276,7 +276,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiprovider.Provider)
-					return gqlexec.Resolver[resolverAIProvider](ec, "AIProvider").CacheReadCostPerMillion(ctx, obj)
+					return gqlexec.Resolver[AIProviderResolver](ec, "AIProvider@aiprovider").CacheReadCostPerMillion(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -287,7 +287,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiprovider.Provider)
-					return gqlexec.Resolver[resolverAIProvider](ec, "AIProvider").CacheWriteCostPerMillion(ctx, obj)
+					return gqlexec.Resolver[AIProviderResolver](ec, "AIProvider@aiprovider").CacheWriteCostPerMillion(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -397,7 +397,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiprovider.Provider)
-					return gqlexec.Resolver[resolverAIProvider](ec, "AIProvider").MonthlyCapUsd(ctx, obj)
+					return gqlexec.Resolver[AIProviderResolver](ec, "AIProvider@aiprovider").MonthlyCapUsd(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -419,7 +419,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiprovider.Provider)
-					return gqlexec.Resolver[resolverAIProvider](ec, "AIProvider").MonthSpendUsd(ctx, obj)
+					return gqlexec.Resolver[AIProviderResolver](ec, "AIProvider@aiprovider").MonthSpendUsd(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -431,7 +431,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "AIProviderKeyInfo",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiprovider.Provider)
-					return gqlexec.Resolver[resolverAIProvider](ec, "AIProvider").APIKey(ctx, obj)
+					return gqlexec.Resolver[AIProviderResolver](ec, "AIProvider@aiprovider").APIKey(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAIProviderKeyInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderkeyᚐKeyInfo),
 			},
@@ -685,7 +685,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiproviderkey.KeyInfo)
-					return gqlexec.Resolver[resolverAIProviderKeyInfo](ec, "AIProviderKeyInfo").AddedBy(ctx, obj)
+					return gqlexec.Resolver[AIProviderKeyInfoResolver](ec, "AIProviderKeyInfo@aiprovider").AddedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -947,7 +947,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*airouting.RouteChoice)
-					return gqlexec.Resolver[resolverAIRouteChoice](ec, "AIRouteChoice").ProviderID(ctx, obj)
+					return gqlexec.Resolver[AIRouteChoiceResolver](ec, "AIRouteChoice@aiprovider").ProviderID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1025,7 +1025,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_testAIProviderDraft_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").TestAIProviderDraft(ctx, fc.Args["input"].(gqlmodel.AIProviderDraftTestInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@aiprovider").TestAIProviderDraft(ctx, fc.Args["input"].(gqlmodel.AIProviderDraftTestInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIProviderDraftTestResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiproviderportsᚐTestAIProviderResult),
 			},
@@ -1038,7 +1038,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_reorderAIProviders_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReorderAIProviders(ctx, fc.Args["ids"].([]string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@aiprovider").ReorderAIProviders(ctx, fc.Args["ids"].([]string))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIProvider2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐProviderᚄ),
 			},
@@ -1051,7 +1051,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_routeAITask_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RouteAITask(ctx, fc.Args["task"].(aitask.Task), fc.Args["providerId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@aiprovider").RouteAITask(ctx, fc.Args["task"].(aitask.Task), fc.Args["providerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIProvider2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐProviderᚄ),
 			},
@@ -1064,7 +1064,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_patchAIProvider_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchAIProvider(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.AIProviderPatchInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@aiprovider").PatchAIProvider(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.AIProviderPatchInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIProvider2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐProvider),
 			},
@@ -1080,7 +1080,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_aiProviderModels_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiProviderModels(ctx, fc.Args["input"].(gqlmodel.AIProviderEndpointInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@aiprovider").AiProviderModels(ctx, fc.Args["input"].(gqlmodel.AIProviderEndpointInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIProviderModelOption2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIProviderModelOptionᚄ),
 			},
@@ -1094,7 +1094,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_aiProviders_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiProviders(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@aiprovider").AiProviders(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIProviderConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIProviderConnection),
 			},
@@ -1107,7 +1107,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_aiProvider_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiProvider(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@aiprovider").AiProvider(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOAIProvider2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐProvider),
 			},
@@ -1121,7 +1121,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_aiRoutePreview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiRoutePreview(ctx, fc.Args["draft"].(gqlmodel.AIProviderRoutingDraftInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@aiprovider").AiRoutePreview(ctx, fc.Args["draft"].(gqlmodel.AIProviderRoutingDraftInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAITaskRoute2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋairoutingᚐTaskRouteᚄ),
 			},
@@ -1135,15 +1135,19 @@ var Shard = &gqlexec.Shard{
 		{Name: "AIProviderRoutingDraftInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAIProviderRoutingDraftInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "AIProvider", Check: func(r any) bool { _, ok := r.(resolverAIProvider); return ok }},
-		{Root: "AIProviderKeyInfo", Check: func(r any) bool { _, ok := r.(resolverAIProviderKeyInfo); return ok }},
-		{Root: "AIRouteChoice", Check: func(r any) bool { _, ok := r.(resolverAIRouteChoice); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "AIProviderKeyInfo@aiprovider", Check: func(r any) bool { _, ok := r.(AIProviderKeyInfoResolver); return ok }},
+		{Root: "AIProvider@aiprovider", Check: func(r any) bool { _, ok := r.(AIProviderResolver); return ok }},
+		{Root: "AIRouteChoice@aiprovider", Check: func(r any) bool { _, ok := r.(AIRouteChoiceResolver); return ok }},
+		{Root: "Mutation@aiprovider", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@aiprovider", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverAIProvider interface {
+type AIProviderKeyInfoResolver interface {
+	AddedBy(ctx context.Context, obj *aiproviderkey.KeyInfo) (*tenant.User, error)
+}
+
+type AIProviderResolver interface {
 	InputCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
 	OutputCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
 	CacheReadCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
@@ -1153,22 +1157,18 @@ type resolverAIProvider interface {
 	APIKey(ctx context.Context, obj *aiprovider.Provider) (*aiproviderkey.KeyInfo, error)
 }
 
-type resolverAIProviderKeyInfo interface {
-	AddedBy(ctx context.Context, obj *aiproviderkey.KeyInfo) (*tenant.User, error)
-}
-
-type resolverAIRouteChoice interface {
+type AIRouteChoiceResolver interface {
 	ProviderID(ctx context.Context, obj *airouting.RouteChoice) (*string, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	TestAIProviderDraft(ctx context.Context, input gqlmodel.AIProviderDraftTestInput) (*aiproviderports.TestAIProviderResult, error)
 	ReorderAIProviders(ctx context.Context, ids []string) ([]*aiprovider.Provider, error)
 	RouteAITask(ctx context.Context, task aitask.Task, providerID string) ([]*aiprovider.Provider, error)
 	PatchAIProvider(ctx context.Context, id string, version int, input gqlmodel.AIProviderPatchInput) (*aiprovider.Provider, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	AiProviderModels(ctx context.Context, input gqlmodel.AIProviderEndpointInput) ([]*gqlmodel.AIProviderModelOption, error)
 	AiProviders(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIProviderConnection, error)
 	AiProvider(ctx context.Context, id string) (*aiprovider.Provider, error)

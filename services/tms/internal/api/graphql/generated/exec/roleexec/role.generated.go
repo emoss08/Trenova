@@ -34,7 +34,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_roles_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Roles(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@role").Roles(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNRoleConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRoleConnection),
 			},
@@ -47,7 +47,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_role_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Role(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@role").Role(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalORole2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋrbacᚐRole),
 			},
@@ -110,7 +110,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*rbac.Role)
-					return gqlexec.Resolver[resolverRole](ec, "Role").CoreResponsibility(ctx, obj)
+					return gqlexec.Resolver[RoleResolver](ec, "Role@role").CoreResponsibility(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -131,7 +131,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*rbac.Role)
-					return gqlexec.Resolver[resolverRole](ec, "Role").MaxSensitivity(ctx, obj)
+					return gqlexec.Resolver[RoleResolver](ec, "Role@role").MaxSensitivity(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -184,7 +184,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "AgentDefinition",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*rbac.Role)
-					return gqlexec.Resolver[resolverRole](ec, "Role").Agents(ctx, obj)
+					return gqlexec.Resolver[RoleResolver](ec, "Role@role").Agents(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinitionᚄ),
 			},
@@ -257,17 +257,17 @@ var Shard = &gqlexec.Shard{
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "Role", Check: func(r any) bool { _, ok := r.(resolverRole); return ok }},
+		{Root: "Query@role", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "Role@role", Check: func(r any) bool { _, ok := r.(RoleResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	Roles(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RoleConnection, error)
 	Role(ctx context.Context, id string) (*rbac.Role, error)
 }
 
-type resolverRole interface {
+type RoleResolver interface {
 	CoreResponsibility(ctx context.Context, obj *rbac.Role) (*string, error)
 	MaxSensitivity(ctx context.Context, obj *rbac.Role) (string, error)
 	Agents(ctx context.Context, obj *rbac.Role) ([]*agentdefinition.Definition, error)

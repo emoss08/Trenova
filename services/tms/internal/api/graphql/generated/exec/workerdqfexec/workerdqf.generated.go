@@ -116,7 +116,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workercompliance.DQFFile)
-					return gqlexec.Resolver[resolverDQFFile](ec, "DQFFile").TerminationDate(ctx, obj)
+					return gqlexec.Resolver[DQFFileResolver](ec, "DQFFile@workerdqf").TerminationDate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -147,7 +147,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workercompliance.DQFFile)
-					return gqlexec.Resolver[resolverDQFFile](ec, "DQFFile").RetentionExpiresAt(ctx, obj)
+					return gqlexec.Resolver[DQFFileResolver](ec, "DQFFile@workerdqf").RetentionExpiresAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -170,7 +170,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "WorkerEmploymentVerification",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workercompliance.DQFFile)
-					return gqlexec.Resolver[resolverDQFFile](ec, "DQFFile").Verifications(ctx, obj)
+					return gqlexec.Resolver[DQFFileResolver](ec, "DQFFile@workerdqf").Verifications(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentVerification2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentVerificationᚄ),
 			},
@@ -233,7 +233,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workercompliance.DQFItem)
-					return gqlexec.Resolver[resolverDQFItem](ec, "DQFItem").Regulation(ctx, obj)
+					return gqlexec.Resolver[DQFItemResolver](ec, "DQFItem@workerdqf").Regulation(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -244,7 +244,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workercompliance.DQFItem)
-					return gqlexec.Resolver[resolverDQFItem](ec, "DQFItem").ExpiresAt(ctx, obj)
+					return gqlexec.Resolver[DQFItemResolver](ec, "DQFItem@workerdqf").ExpiresAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -301,7 +301,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_recordEmploymentVerification_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordEmploymentVerification(ctx, fc.Args["input"].(gqlmodel.RecordEmploymentVerificationInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerdqf").RecordEmploymentVerification(ctx, fc.Args["input"].(gqlmodel.RecordEmploymentVerificationInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentVerification),
 			},
@@ -314,7 +314,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateEmploymentVerification_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateEmploymentVerification(ctx, fc.Args["input"].(gqlmodel.UpdateEmploymentVerificationInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerdqf").UpdateEmploymentVerification(ctx, fc.Args["input"].(gqlmodel.UpdateEmploymentVerificationInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentVerification),
 			},
@@ -327,7 +327,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_markEmploymentVerificationRequested_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").MarkEmploymentVerificationRequested(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerdqf").MarkEmploymentVerificationRequested(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentVerification),
 			},
@@ -340,7 +340,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_recordEmploymentVerificationFollowUp_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordEmploymentVerificationFollowUp(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerdqf").RecordEmploymentVerificationFollowUp(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentVerification),
 			},
@@ -352,7 +352,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteEmploymentVerification_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteEmploymentVerification(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerdqf").DeleteEmploymentVerification(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -368,7 +368,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_driverQualificationFile_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DriverQualificationFile(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerdqf").DriverQualificationFile(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDQFFile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐDQFFile),
 			},
@@ -382,7 +382,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerEmploymentVerifications_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerEmploymentVerifications(ctx, fc.Args["workerId"].(*string), fc.Args["outstandingOnly"].(*bool), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerdqf").WorkerEmploymentVerifications(ctx, fc.Args["workerId"].(*string), fc.Args["outstandingOnly"].(*bool), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentVerification2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentVerificationᚄ),
 			},
@@ -394,7 +394,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "WorkerEmploymentVerification",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").OutstandingEmploymentVerifications(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerdqf").OutstandingEmploymentVerifications(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentVerification2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentVerificationᚄ),
 			},
@@ -406,7 +406,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "DQFRetentionCandidate",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DqfRetentionCandidates(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerdqf").DqfRetentionCandidates(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNDQFRetentionCandidate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerdqfportsᚐDQFRetentionCandidateᚄ),
 			},
@@ -524,7 +524,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*employment.WorkerEmploymentVerification)
-					return gqlexec.Resolver[resolverWorkerEmploymentVerification](ec, "WorkerEmploymentVerification").EmployedFrom(ctx, obj)
+					return gqlexec.Resolver[WorkerEmploymentVerificationResolver](ec, "WorkerEmploymentVerification@workerdqf").EmployedFrom(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -535,7 +535,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*employment.WorkerEmploymentVerification)
-					return gqlexec.Resolver[resolverWorkerEmploymentVerification](ec, "WorkerEmploymentVerification").EmployedTo(ctx, obj)
+					return gqlexec.Resolver[WorkerEmploymentVerificationResolver](ec, "WorkerEmploymentVerification@workerdqf").EmployedTo(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -576,7 +576,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*employment.WorkerEmploymentVerification)
-					return gqlexec.Resolver[resolverWorkerEmploymentVerification](ec, "WorkerEmploymentVerification").RequestedAt(ctx, obj)
+					return gqlexec.Resolver[WorkerEmploymentVerificationResolver](ec, "WorkerEmploymentVerification@workerdqf").RequestedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -587,7 +587,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*employment.WorkerEmploymentVerification)
-					return gqlexec.Resolver[resolverWorkerEmploymentVerification](ec, "WorkerEmploymentVerification").ResponseReceivedAt(ctx, obj)
+					return gqlexec.Resolver[WorkerEmploymentVerificationResolver](ec, "WorkerEmploymentVerification@workerdqf").ResponseReceivedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -598,7 +598,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*employment.WorkerEmploymentVerification)
-					return gqlexec.Resolver[resolverWorkerEmploymentVerification](ec, "WorkerEmploymentVerification").LastFollowUpAt(ctx, obj)
+					return gqlexec.Resolver[WorkerEmploymentVerificationResolver](ec, "WorkerEmploymentVerification@workerdqf").LastFollowUpAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -619,7 +619,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*employment.WorkerEmploymentVerification)
-					return gqlexec.Resolver[resolverWorkerEmploymentVerification](ec, "WorkerEmploymentVerification").DrugAlcoholResponseReceivedAt(ctx, obj)
+					return gqlexec.Resolver[WorkerEmploymentVerificationResolver](ec, "WorkerEmploymentVerification@workerdqf").DrugAlcoholResponseReceivedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -678,7 +678,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*employment.WorkerEmploymentVerification)
-					return gqlexec.Resolver[resolverWorkerEmploymentVerification](ec, "WorkerEmploymentVerification").DocumentID(ctx, obj)
+					return gqlexec.Resolver[WorkerEmploymentVerificationResolver](ec, "WorkerEmploymentVerification@workerdqf").DocumentID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -729,26 +729,26 @@ var Shard = &gqlexec.Shard{
 		{Name: "UpdateEmploymentVerificationInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateEmploymentVerificationInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "DQFFile", Check: func(r any) bool { _, ok := r.(resolverDQFFile); return ok }},
-		{Root: "DQFItem", Check: func(r any) bool { _, ok := r.(resolverDQFItem); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "WorkerEmploymentVerification", Check: func(r any) bool { _, ok := r.(resolverWorkerEmploymentVerification); return ok }},
+		{Root: "DQFFile@workerdqf", Check: func(r any) bool { _, ok := r.(DQFFileResolver); return ok }},
+		{Root: "DQFItem@workerdqf", Check: func(r any) bool { _, ok := r.(DQFItemResolver); return ok }},
+		{Root: "Mutation@workerdqf", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@workerdqf", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "WorkerEmploymentVerification@workerdqf", Check: func(r any) bool { _, ok := r.(WorkerEmploymentVerificationResolver); return ok }},
 	},
 }
 
-type resolverDQFFile interface {
+type DQFFileResolver interface {
 	TerminationDate(ctx context.Context, obj *workercompliance.DQFFile) (*int, error)
 	RetentionExpiresAt(ctx context.Context, obj *workercompliance.DQFFile) (*int, error)
 	Verifications(ctx context.Context, obj *workercompliance.DQFFile) ([]*employment.WorkerEmploymentVerification, error)
 }
 
-type resolverDQFItem interface {
+type DQFItemResolver interface {
 	Regulation(ctx context.Context, obj *workercompliance.DQFItem) (*string, error)
 	ExpiresAt(ctx context.Context, obj *workercompliance.DQFItem) (*int, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	RecordEmploymentVerification(ctx context.Context, input gqlmodel.RecordEmploymentVerificationInput) (*employment.WorkerEmploymentVerification, error)
 	UpdateEmploymentVerification(ctx context.Context, input gqlmodel.UpdateEmploymentVerificationInput) (*employment.WorkerEmploymentVerification, error)
 	MarkEmploymentVerificationRequested(ctx context.Context, id string) (*employment.WorkerEmploymentVerification, error)
@@ -756,14 +756,14 @@ type resolverMutation interface {
 	DeleteEmploymentVerification(ctx context.Context, id string) (bool, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	DriverQualificationFile(ctx context.Context, workerID string) (*workercompliance.DQFFile, error)
 	WorkerEmploymentVerifications(ctx context.Context, workerID *string, outstandingOnly *bool, limit *int) ([]*employment.WorkerEmploymentVerification, error)
 	OutstandingEmploymentVerifications(ctx context.Context) ([]*employment.WorkerEmploymentVerification, error)
 	DqfRetentionCandidates(ctx context.Context) ([]*workerdqfports.DQFRetentionCandidate, error)
 }
 
-type resolverWorkerEmploymentVerification interface {
+type WorkerEmploymentVerificationResolver interface {
 	EmployedFrom(ctx context.Context, obj *employment.WorkerEmploymentVerification) (*int, error)
 	EmployedTo(ctx context.Context, obj *employment.WorkerEmploymentVerification) (*int, error)
 	RequestedAt(ctx context.Context, obj *employment.WorkerEmploymentVerification) (*int, error)

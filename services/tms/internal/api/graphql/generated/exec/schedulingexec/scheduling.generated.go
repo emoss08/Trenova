@@ -38,7 +38,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createShiftTemplate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateShiftTemplate(ctx, fc.Args["input"].(gqlmodel.ShiftTemplateInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@scheduling").CreateShiftTemplate(ctx, fc.Args["input"].(gqlmodel.ShiftTemplateInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShiftTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftTemplate),
 			},
@@ -51,7 +51,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateShiftTemplate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateShiftTemplate(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ShiftTemplateInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@scheduling").UpdateShiftTemplate(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ShiftTemplateInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShiftTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftTemplate),
 			},
@@ -64,7 +64,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_assignWorkerShift_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AssignWorkerShift(ctx, fc.Args["input"].(gqlmodel.AssignShiftInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@scheduling").AssignWorkerShift(ctx, fc.Args["input"].(gqlmodel.AssignShiftInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerShiftAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐWorkerShiftAssignment),
 			},
@@ -77,7 +77,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_endWorkerShiftAssignment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").EndWorkerShiftAssignment(ctx, fc.Args["id"].(string), fc.Args["effectiveTo"].(int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@scheduling").EndWorkerShiftAssignment(ctx, fc.Args["id"].(string), fc.Args["effectiveTo"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerShiftAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐWorkerShiftAssignment),
 			},
@@ -90,7 +90,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_setWorkerAvailabilityPreference_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetWorkerAvailabilityPreference(ctx, fc.Args["input"].(gqlmodel.SetAvailabilityPreferenceInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@scheduling").SetWorkerAvailabilityPreference(ctx, fc.Args["input"].(gqlmodel.SetAvailabilityPreferenceInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerAvailabilityPreference2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐWorkerAvailabilityPreference),
 			},
@@ -103,7 +103,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_proposeShiftSwap_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ProposeShiftSwap(ctx, fc.Args["input"].(gqlmodel.ProposeShiftSwapInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@scheduling").ProposeShiftSwap(ctx, fc.Args["input"].(gqlmodel.ProposeShiftSwapInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShiftSwapRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftSwapRequest),
 			},
@@ -116,7 +116,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_transitionShiftSwap_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").TransitionShiftSwap(ctx, fc.Args["input"].(gqlmodel.TransitionShiftSwapInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@scheduling").TransitionShiftSwap(ctx, fc.Args["input"].(gqlmodel.TransitionShiftSwapInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShiftSwapRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftSwapRequest),
 			},
@@ -132,7 +132,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shiftTemplates_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShiftTemplates(ctx, fc.Args["activeOnly"].(*bool), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@scheduling").ShiftTemplates(ctx, fc.Args["activeOnly"].(*bool), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNShiftTemplate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftTemplateᚄ),
 			},
@@ -146,7 +146,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shiftTemplate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShiftTemplate(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@scheduling").ShiftTemplate(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNShiftTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftTemplate),
 			},
@@ -160,7 +160,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerShiftAssignments_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerShiftAssignments(ctx, fc.Args["workerId"].(string), fc.Args["activeOnly"].(*bool))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@scheduling").WorkerShiftAssignments(ctx, fc.Args["workerId"].(string), fc.Args["activeOnly"].(*bool))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerShiftAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐWorkerShiftAssignmentᚄ),
 			},
@@ -174,7 +174,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerAvailabilityPreferences_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerAvailabilityPreferences(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@scheduling").WorkerAvailabilityPreferences(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerAvailabilityPreference2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐWorkerAvailabilityPreferenceᚄ),
 			},
@@ -188,7 +188,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shiftSwapRequests_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShiftSwapRequests(ctx, fc.Args["workerId"].(*string), fc.Args["openOnly"].(*bool), fc.Args["since"].(*int), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@scheduling").ShiftSwapRequests(ctx, fc.Args["workerId"].(*string), fc.Args["openOnly"].(*bool), fc.Args["since"].(*int), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNShiftSwapRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftSwapRequestᚄ),
 			},
@@ -202,7 +202,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shiftSwapRequest_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShiftSwapRequest(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@scheduling").ShiftSwapRequest(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNShiftSwapRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftSwapRequest),
 			},
@@ -216,7 +216,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_rota_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Rota(ctx, fc.Args["filter"].(*gqlmodel.RotaFilterInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@scheduling").Rota(ctx, fc.Args["filter"].(*gqlmodel.RotaFilterInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNRota2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRota),
 			},
@@ -793,7 +793,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerschedule.ShiftTemplate)
-					return gqlexec.Resolver[resolverShiftTemplate](ec, "ShiftTemplate").ActiveAssignmentCount(ctx, obj)
+					return gqlexec.Resolver[ShiftTemplateResolver](ec, "ShiftTemplate@scheduling").ActiveAssignmentCount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
@@ -1058,13 +1058,13 @@ var Shard = &gqlexec.Shard{
 		{Name: "TransitionShiftSwapInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputTransitionShiftSwapInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "ShiftTemplate", Check: func(r any) bool { _, ok := r.(resolverShiftTemplate); return ok }},
+		{Root: "Mutation@scheduling", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@scheduling", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "ShiftTemplate@scheduling", Check: func(r any) bool { _, ok := r.(ShiftTemplateResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateShiftTemplate(ctx context.Context, input gqlmodel.ShiftTemplateInput) (*workerschedule.ShiftTemplate, error)
 	UpdateShiftTemplate(ctx context.Context, id string, input gqlmodel.ShiftTemplateInput) (*workerschedule.ShiftTemplate, error)
 	AssignWorkerShift(ctx context.Context, input gqlmodel.AssignShiftInput) (*workerschedule.WorkerShiftAssignment, error)
@@ -1074,7 +1074,7 @@ type resolverMutation interface {
 	TransitionShiftSwap(ctx context.Context, input gqlmodel.TransitionShiftSwapInput) (*workerschedule.ShiftSwapRequest, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	ShiftTemplates(ctx context.Context, activeOnly *bool, limit *int) ([]*workerschedule.ShiftTemplate, error)
 	ShiftTemplate(ctx context.Context, id string) (*workerschedule.ShiftTemplate, error)
 	WorkerShiftAssignments(ctx context.Context, workerID string, activeOnly *bool) ([]*workerschedule.WorkerShiftAssignment, error)
@@ -1084,7 +1084,7 @@ type resolverQuery interface {
 	Rota(ctx context.Context, filter *gqlmodel.RotaFilterInput) (*gqlmodel.Rota, error)
 }
 
-type resolverShiftTemplate interface {
+type ShiftTemplateResolver interface {
 	ActiveAssignmentCount(ctx context.Context, obj *workerschedule.ShiftTemplate) (int, error)
 }
 

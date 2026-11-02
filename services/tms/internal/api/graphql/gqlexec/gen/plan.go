@@ -82,7 +82,6 @@ type rootData struct {
 	Runtime      string
 	WorkerLimit  int64
 	Shards       []*shardData
-	Roots        []string
 	SchemaSource string
 }
 
@@ -128,7 +127,6 @@ func buildPlan(data *codegen.Data, runtimeImport string) (*rootData, error) {
 		Data:        data,
 		Runtime:     runtimeImport,
 		WorkerLimit: workerLimit(data.Config.Exec.WorkerLimit),
-		Roots:       resolverRoots(data),
 		SchemaSource: path.Join(
 			data.Config.Exec.ImportPath(), shardSuffix, schemaSourcePackage,
 		),
@@ -143,21 +141,6 @@ func buildPlan(data *codegen.Data, runtimeImport string) (*rootData, error) {
 	)
 
 	return root, nil
-}
-
-func resolverRoots(data *codegen.Data) []string {
-	var roots []string
-	for _, obj := range data.Objects {
-		if obj.HasResolvers() {
-			roots = append(roots, templates.UcFirst(obj.Name))
-		}
-	}
-	for _, in := range data.Inputs {
-		if in.HasResolvers() {
-			roots = append(roots, templates.UcFirst(in.Name))
-		}
-	}
-	return roots
 }
 
 func (p *planner) addObject(obj *codegen.Object) {
@@ -297,13 +280,21 @@ func (s *shardData) resolver(obj *codegen.Object) *resolverIface {
 		return r
 	}
 	r := &resolverIface{
-		Name:   "resolver" + templates.UcFirst(obj.Name),
-		Root:   templates.UcFirst(obj.Name),
+		Name:   resolverIfaceName(obj.Name),
+		Root:   resolverKey(obj.Name, s.Name),
 		Object: obj,
 	}
 	s.resolverByObj[obj.Name] = r
 	s.Resolvers = append(s.Resolvers, r)
 	return r
+}
+
+func resolverIfaceName(object string) string {
+	return templates.UcFirst(object) + "Resolver"
+}
+
+func resolverKey(object, shard string) string {
+	return templates.UcFirst(object) + "@" + shard
 }
 
 func (s *shardData) childErr(msg string) string {

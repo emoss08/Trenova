@@ -98,7 +98,7 @@ func TestEquipmentManufacturerRepository(t *testing.T) {
 		require.Len(t, first.Items, 2)
 		assert.Equal(t, "Freightliner", first.Items[0].Name)
 
-		next, err := first.NextCursor()
+		next, err := pagination.NextCursor(first)
 		require.NoError(t, err)
 		cursor, err = pagination.NewCursorInfo(2, next)
 		require.NoError(t, err)

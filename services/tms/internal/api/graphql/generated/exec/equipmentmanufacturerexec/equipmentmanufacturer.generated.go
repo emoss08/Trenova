@@ -212,7 +212,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createEquipmentManufacturer_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateEquipmentManufacturer(ctx, fc.Args["input"].(gqlmodel.EquipmentManufacturerInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@equipmentmanufacturer").CreateEquipmentManufacturer(ctx, fc.Args["input"].(gqlmodel.EquipmentManufacturerInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNEquipmentManufacturer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmentmanufacturerᚐEquipmentManufacturer),
 			},
@@ -225,7 +225,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateEquipmentManufacturer_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateEquipmentManufacturer(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.EquipmentManufacturerInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@equipmentmanufacturer").UpdateEquipmentManufacturer(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.EquipmentManufacturerInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNEquipmentManufacturer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmentmanufacturerᚐEquipmentManufacturer),
 			},
@@ -238,7 +238,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_patchEquipmentManufacturer_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchEquipmentManufacturer(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.EquipmentManufacturerPatchInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@equipmentmanufacturer").PatchEquipmentManufacturer(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.EquipmentManufacturerPatchInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNEquipmentManufacturer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmentmanufacturerᚐEquipmentManufacturer),
 			},
@@ -251,7 +251,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_bulkUpdateEquipmentManufacturerStatus_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkUpdateEquipmentManufacturerStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateEquipmentManufacturerStatusInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@equipmentmanufacturer").BulkUpdateEquipmentManufacturerStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateEquipmentManufacturerStatusInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNEquipmentManufacturer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmentmanufacturerᚐEquipmentManufacturerᚄ),
 			},
@@ -267,7 +267,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_equipmentManufacturers_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").EquipmentManufacturers(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@equipmentmanufacturer").EquipmentManufacturers(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNEquipmentManufacturerConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEquipmentManufacturerConnection),
 			},
@@ -280,7 +280,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_equipmentManufacturer_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").EquipmentManufacturer(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@equipmentmanufacturer").EquipmentManufacturer(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOEquipmentManufacturer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmentmanufacturerᚐEquipmentManufacturer),
 			},
@@ -292,19 +292,19 @@ var Shard = &gqlexec.Shard{
 		{Name: "EquipmentManufacturerPatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputEquipmentManufacturerPatchInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@equipmentmanufacturer", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@equipmentmanufacturer", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateEquipmentManufacturer(ctx context.Context, input gqlmodel.EquipmentManufacturerInput) (*equipmentmanufacturer.EquipmentManufacturer, error)
 	UpdateEquipmentManufacturer(ctx context.Context, id string, input gqlmodel.EquipmentManufacturerInput) (*equipmentmanufacturer.EquipmentManufacturer, error)
 	PatchEquipmentManufacturer(ctx context.Context, id string, input gqlmodel.EquipmentManufacturerPatchInput) (*equipmentmanufacturer.EquipmentManufacturer, error)
 	BulkUpdateEquipmentManufacturerStatus(ctx context.Context, input gqlmodel.BulkUpdateEquipmentManufacturerStatusInput) ([]*equipmentmanufacturer.EquipmentManufacturer, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	EquipmentManufacturers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.EquipmentManufacturerConnection, error)
 	EquipmentManufacturer(ctx context.Context, id string) (*equipmentmanufacturer.EquipmentManufacturer, error)
 }

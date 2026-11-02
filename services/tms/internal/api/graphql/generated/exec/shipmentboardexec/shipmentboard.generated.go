@@ -773,7 +773,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_tenderShipments_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").TenderShipments(ctx, fc.Args["input"].(gqlmodel.TenderShipmentsInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipmentboard").TenderShipments(ctx, fc.Args["input"].(gqlmodel.TenderShipmentsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTenderShipmentsResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTenderShipmentsResult),
 			},
@@ -785,7 +785,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_decideShipmentSuggestion_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DecideShipmentSuggestion(ctx, fc.Args["input"].(gqlmodel.DecideShipmentSuggestionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipmentboard").DecideShipmentSuggestion(ctx, fc.Args["input"].(gqlmodel.DecideShipmentSuggestionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -797,7 +797,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_undoShipmentSuggestionDecision_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UndoShipmentSuggestionDecision(ctx, fc.Args["key"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipmentboard").UndoShipmentSuggestionDecision(ctx, fc.Args["key"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -809,7 +809,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_notifyShipmentDelay_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").NotifyShipmentDelay(ctx, fc.Args["input"].(gqlmodel.NotifyShipmentDelayInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@shipmentboard").NotifyShipmentDelay(ctx, fc.Args["input"].(gqlmodel.NotifyShipmentDelayInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -865,7 +865,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "ShipmentBoardCapabilities",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentBoardCapabilities(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipmentboard").ShipmentBoardCapabilities(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentBoardCapabilities2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBoardCapabilities),
 			},
@@ -879,7 +879,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentStageSummary_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentStageSummary(ctx, fc.Args["input"].(gqlmodel.ShipmentBoardScopeInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipmentboard").ShipmentStageSummary(ctx, fc.Args["input"].(gqlmodel.ShipmentBoardScopeInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentStageSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentStageSummaryᚄ),
 			},
@@ -893,7 +893,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentBoardGroups_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentBoardGroups(ctx, fc.Args["input"].(gqlmodel.ShipmentBoardScopeInput), fc.Args["groupBy"].(boardgrouping.BoardGrouping))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipmentboard").ShipmentBoardGroups(ctx, fc.Args["input"].(gqlmodel.ShipmentBoardScopeInput), fc.Args["groupBy"].(boardgrouping.BoardGrouping))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentBoardGroup2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBoardGroupᚄ),
 			},
@@ -907,7 +907,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentQuickFilterCounts_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentQuickFilterCounts(ctx, fc.Args["input"].(gqlmodel.ShipmentBoardScopeInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipmentboard").ShipmentQuickFilterCounts(ctx, fc.Args["input"].(gqlmodel.ShipmentBoardScopeInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentQuickFilterCount2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentQuickFilterCountᚄ),
 			},
@@ -921,7 +921,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentBriefing_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentBriefing(ctx, fc.Args["timezone"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipmentboard").ShipmentBriefing(ctx, fc.Args["timezone"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBriefing),
 			},
@@ -935,7 +935,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentCapacity_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentCapacity(ctx, fc.Args["kind"].(gqlmodel.CapacityUnitKind))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipmentboard").ShipmentCapacity(ctx, fc.Args["kind"].(gqlmodel.CapacityUnitKind))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentCapacity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCapacity),
 			},
@@ -949,7 +949,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_capacityUnitMatches_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CapacityUnitMatches(ctx, fc.Args["kind"].(gqlmodel.CapacityUnitKind), fc.Args["unitId"].(string), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipmentboard").CapacityUnitMatches(ctx, fc.Args["kind"].(gqlmodel.CapacityUnitKind), fc.Args["unitId"].(string), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNCapacityMatch2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCapacityMatchᚄ),
 			},
@@ -963,7 +963,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentCoverageSuggestions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentCoverageSuggestions(ctx, fc.Args["shipmentId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipmentboard").ShipmentCoverageSuggestions(ctx, fc.Args["shipmentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentCoverageSuggestions2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCoverageSuggestions),
 			},
@@ -977,7 +977,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentSuggestions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentSuggestions(ctx, fc.Args["timezone"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipmentboard").ShipmentSuggestions(ctx, fc.Args["timezone"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentSuggestionQueue2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentSuggestionQueue),
 			},
@@ -991,7 +991,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentWatchlist_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentWatchlist(ctx, fc.Args["timezone"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipmentboard").ShipmentWatchlist(ctx, fc.Args["timezone"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentWatchlist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentWatchlist),
 			},
@@ -2235,19 +2235,19 @@ var Shard = &gqlexec.Shard{
 		{Name: "TenderShipmentsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputTenderShipmentsInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@shipmentboard", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@shipmentboard", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	TenderShipments(ctx context.Context, input gqlmodel.TenderShipmentsInput) (*gqlmodel.TenderShipmentsResult, error)
 	DecideShipmentSuggestion(ctx context.Context, input gqlmodel.DecideShipmentSuggestionInput) (bool, error)
 	UndoShipmentSuggestionDecision(ctx context.Context, key string) (bool, error)
 	NotifyShipmentDelay(ctx context.Context, input gqlmodel.NotifyShipmentDelayInput) (bool, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	ShipmentBoardCapabilities(ctx context.Context) (*gqlmodel.ShipmentBoardCapabilities, error)
 	ShipmentStageSummary(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput) ([]*gqlmodel.ShipmentStageSummary, error)
 	ShipmentBoardGroups(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput, groupBy boardgrouping.BoardGrouping) ([]*gqlmodel.ShipmentBoardGroup, error)

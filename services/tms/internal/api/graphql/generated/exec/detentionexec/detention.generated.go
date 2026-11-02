@@ -1076,7 +1076,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "Location",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
-					return gqlexec.Resolver[resolverDetentionOccurrence](ec, "DetentionOccurrence").Location(ctx, obj)
+					return gqlexec.Resolver[DetentionOccurrenceResolver](ec, "DetentionOccurrence@detention").Location(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationᚐLocation),
 			},
@@ -1105,7 +1105,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
-					return gqlexec.Resolver[resolverDetentionOccurrence](ec, "DetentionOccurrence").CalculationTrace(ctx, obj)
+					return gqlexec.Resolver[DetentionOccurrenceResolver](ec, "DetentionOccurrence@detention").CalculationTrace(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -1445,7 +1445,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
-					return gqlexec.Resolver[resolverDetentionOccurrence](ec, "DetentionOccurrence").ApprovedBy(ctx, obj)
+					return gqlexec.Resolver[DetentionOccurrenceResolver](ec, "DetentionOccurrence@detention").ApprovedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -1494,7 +1494,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
-					return gqlexec.Resolver[resolverDetentionOccurrence](ec, "DetentionOccurrence").WaivedBy(ctx, obj)
+					return gqlexec.Resolver[DetentionOccurrenceResolver](ec, "DetentionOccurrence@detention").WaivedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -2481,7 +2481,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPreviewResult)
-					return gqlexec.Resolver[resolverDetentionPreviewResult](ec, "DetentionPreviewResult").CalculationTrace(ctx, obj)
+					return gqlexec.Resolver[DetentionPreviewResultResolver](ec, "DetentionPreviewResult@detention").CalculationTrace(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -2740,7 +2740,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createDetentionPolicy_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateDetentionPolicy(ctx, fc.Args["input"].(gqlmodel.DetentionPolicyInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@detention").CreateDetentionPolicy(ctx, fc.Args["input"].(gqlmodel.DetentionPolicyInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDetentionPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicy),
 			},
@@ -2753,7 +2753,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateDetentionPolicy_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateDetentionPolicy(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.DetentionPolicyInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@detention").UpdateDetentionPolicy(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.DetentionPolicyInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDetentionPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicy),
 			},
@@ -2765,7 +2765,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteDetentionPolicy_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteDetentionPolicy(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@detention").DeleteDetentionPolicy(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -2778,7 +2778,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_detentionBacktest_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DetentionBacktest(ctx, fc.Args["input"].(gqlmodel.DetentionBacktestInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@detention").DetentionBacktest(ctx, fc.Args["input"].(gqlmodel.DetentionBacktestInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDetentionBacktestResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionBacktestResult),
 			},
@@ -2791,7 +2791,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_waiveDetentionOccurrence_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").WaiveDetentionOccurrence(ctx, fc.Args["input"].(gqlmodel.DetentionWaiveInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@detention").WaiveDetentionOccurrence(ctx, fc.Args["input"].(gqlmodel.DetentionWaiveInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDetentionOccurrence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionOccurrence),
 			},
@@ -2804,7 +2804,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_approveDetentionOccurrence_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApproveDetentionOccurrence(ctx, fc.Args["occurrenceId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@detention").ApproveDetentionOccurrence(ctx, fc.Args["occurrenceId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDetentionOccurrence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionOccurrence),
 			},
@@ -2817,7 +2817,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_disputeDetentionOccurrence_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DisputeDetentionOccurrence(ctx, fc.Args["input"].(gqlmodel.DetentionDisputeInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@detention").DisputeDetentionOccurrence(ctx, fc.Args["input"].(gqlmodel.DetentionDisputeInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDetentionOccurrence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionOccurrence),
 			},
@@ -2830,7 +2830,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_sendDetentionNotice_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SendDetentionNotice(ctx, fc.Args["occurrenceId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@detention").SendDetentionNotice(ctx, fc.Args["occurrenceId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDetentionOccurrence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionOccurrence),
 			},
@@ -2846,7 +2846,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_detentionPolicies_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DetentionPolicies(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@detention").DetentionPolicies(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDetentionPolicyConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyConnection),
 			},
@@ -2859,7 +2859,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_detentionPolicy_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DetentionPolicy(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@detention").DetentionPolicy(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalODetentionPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicy),
 			},
@@ -2873,7 +2873,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_detentionDesk_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DetentionDesk(ctx, fc.Args["includeAwaitingApproval"].(*bool), fc.Args["urgency"].(*gqlmodel.DetentionDeskUrgency), fc.Args["shipmentId"].(*string), fc.Args["proNumber"].(*string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@detention").DetentionDesk(ctx, fc.Args["includeAwaitingApproval"].(*bool), fc.Args["urgency"].(*gqlmodel.DetentionDeskUrgency), fc.Args["shipmentId"].(*string), fc.Args["proNumber"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDetentionDeskEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionDeskEntryᚄ),
 			},
@@ -2887,7 +2887,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_detentionOccurrence_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DetentionOccurrence(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@detention").DetentionOccurrence(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDetentionOccurrenceDetail2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionOccurrenceDetail),
 			},
@@ -2901,7 +2901,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentDetention_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentDetention(ctx, fc.Args["shipmentId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@detention").ShipmentDetention(ctx, fc.Args["shipmentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDetentionOccurrence2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionOccurrenceᚄ),
 			},
@@ -2915,7 +2915,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_detentionDisputePacket_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DetentionDisputePacket(ctx, fc.Args["occurrenceId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@detention").DetentionDisputePacket(ctx, fc.Args["occurrenceId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDetentionDisputePacket2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionDisputePacket),
 			},
@@ -2929,7 +2929,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_detentionFacilityStats_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DetentionFacilityStats(ctx, fc.Args["input"].(gqlmodel.DetentionStatsInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@detention").DetentionFacilityStats(ctx, fc.Args["input"].(gqlmodel.DetentionStatsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFacilityDetentionStat2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFacilityDetentionStatᚄ),
 			},
@@ -2943,7 +2943,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_detentionCustomerStats_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DetentionCustomerStats(ctx, fc.Args["input"].(gqlmodel.DetentionStatsInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@detention").DetentionCustomerStats(ctx, fc.Args["input"].(gqlmodel.DetentionStatsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCustomerDetentionStat2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerDetentionStatᚄ),
 			},
@@ -2957,7 +2957,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_detentionWaiverStats_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DetentionWaiverStats(ctx, fc.Args["input"].(gqlmodel.DetentionStatsInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@detention").DetentionWaiverStats(ctx, fc.Args["input"].(gqlmodel.DetentionStatsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDetentionWaiverLeakageStat2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionWaiverLeakageStatᚄ),
 			},
@@ -2971,7 +2971,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_detentionPolicyPreview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DetentionPolicyPreview(ctx, fc.Args["policy"].(gqlmodel.DetentionPolicyInput), fc.Args["scenario"].(gqlmodel.DetentionPreviewScenarioInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@detention").DetentionPolicyPreview(ctx, fc.Args["policy"].(gqlmodel.DetentionPolicyInput), fc.Args["scenario"].(gqlmodel.DetentionPreviewScenarioInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDetentionPreviewResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPreviewResult),
 			},
@@ -2987,25 +2987,25 @@ var Shard = &gqlexec.Shard{
 		{Name: "DetentionWaiveInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputDetentionWaiveInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "DetentionOccurrence", Check: func(r any) bool { _, ok := r.(resolverDetentionOccurrence); return ok }},
-		{Root: "DetentionPreviewResult", Check: func(r any) bool { _, ok := r.(resolverDetentionPreviewResult); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "DetentionOccurrence@detention", Check: func(r any) bool { _, ok := r.(DetentionOccurrenceResolver); return ok }},
+		{Root: "DetentionPreviewResult@detention", Check: func(r any) bool { _, ok := r.(DetentionPreviewResultResolver); return ok }},
+		{Root: "Mutation@detention", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@detention", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverDetentionOccurrence interface {
+type DetentionOccurrenceResolver interface {
 	Location(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (*location.Location, error)
 	CalculationTrace(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (map[string]any, error)
 	ApprovedBy(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (*tenant.User, error)
 	WaivedBy(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (*tenant.User, error)
 }
 
-type resolverDetentionPreviewResult interface {
+type DetentionPreviewResultResolver interface {
 	CalculationTrace(ctx context.Context, obj *gqlmodel.DetentionPreviewResult) (map[string]any, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateDetentionPolicy(ctx context.Context, input gqlmodel.DetentionPolicyInput) (*gqlmodel.DetentionPolicy, error)
 	UpdateDetentionPolicy(ctx context.Context, id string, input gqlmodel.DetentionPolicyInput) (*gqlmodel.DetentionPolicy, error)
 	DeleteDetentionPolicy(ctx context.Context, id string) (bool, error)
@@ -3016,7 +3016,7 @@ type resolverMutation interface {
 	SendDetentionNotice(ctx context.Context, occurrenceID string) (*gqlmodel.DetentionOccurrence, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	DetentionPolicies(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DetentionPolicyConnection, error)
 	DetentionPolicy(ctx context.Context, id string) (*gqlmodel.DetentionPolicy, error)
 	DetentionDesk(ctx context.Context, includeAwaitingApproval *bool, urgency *gqlmodel.DetentionDeskUrgency, shipmentID *string, proNumber *string) ([]*gqlmodel.DetentionDeskEntry, error)

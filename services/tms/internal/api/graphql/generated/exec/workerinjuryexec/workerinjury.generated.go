@@ -36,7 +36,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_recordWorkerInjury_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordWorkerInjury(ctx, fc.Args["input"].(gqlmodel.RecordWorkerInjuryInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerinjury").RecordWorkerInjury(ctx, fc.Args["input"].(gqlmodel.RecordWorkerInjuryInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerInjury2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐWorkerInjury),
 			},
@@ -49,7 +49,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateWorkerInjury_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateWorkerInjury(ctx, fc.Args["input"].(gqlmodel.UpdateWorkerInjuryInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerinjury").UpdateWorkerInjury(ctx, fc.Args["input"].(gqlmodel.UpdateWorkerInjuryInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerInjury2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐWorkerInjury),
 			},
@@ -61,7 +61,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteWorkerInjury_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteWorkerInjury(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerinjury").DeleteWorkerInjury(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -74,7 +74,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_saveOshaSummary_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SaveOshaSummary(ctx, fc.Args["input"].(gqlmodel.SaveOSHASummaryInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerinjury").SaveOshaSummary(ctx, fc.Args["input"].(gqlmodel.SaveOSHASummaryInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNOSHAAnnualSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHAAnnualSummary),
 			},
@@ -87,7 +87,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_certifyOshaSummary_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CertifyOshaSummary(ctx, fc.Args["year"].(int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerinjury").CertifyOshaSummary(ctx, fc.Args["year"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNOSHAAnnualSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHAAnnualSummary),
 			},
@@ -100,7 +100,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_uncertifyOshaSummary_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UncertifyOshaSummary(ctx, fc.Args["year"].(int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@workerinjury").UncertifyOshaSummary(ctx, fc.Args["year"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNOSHAAnnualSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHAAnnualSummary),
 			},
@@ -163,7 +163,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerinjury.OSHAAnnualSummary)
-					return gqlexec.Resolver[resolverOSHAAnnualSummary](ec, "OSHAAnnualSummary").TotalHoursWorked(ctx, obj)
+					return gqlexec.Resolver[OSHAAnnualSummaryResolver](ec, "OSHAAnnualSummary@workerinjury").TotalHoursWorked(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
@@ -201,7 +201,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerinjury.OSHAAnnualSummary)
-					return gqlexec.Resolver[resolverOSHAAnnualSummary](ec, "OSHAAnnualSummary").CertifiedAt(ctx, obj)
+					return gqlexec.Resolver[OSHAAnnualSummaryResolver](ec, "OSHAAnnualSummary@workerinjury").CertifiedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -212,7 +212,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerinjury.OSHAAnnualSummary)
-					return gqlexec.Resolver[resolverOSHAAnnualSummary](ec, "OSHAAnnualSummary").CertifiedByID(ctx, obj)
+					return gqlexec.Resolver[OSHAAnnualSummaryResolver](ec, "OSHAAnnualSummary@workerinjury").CertifiedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -223,7 +223,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerinjury.OSHAAnnualSummary)
-					return gqlexec.Resolver[resolverOSHAAnnualSummary](ec, "OSHAAnnualSummary").PostedFrom(ctx, obj)
+					return gqlexec.Resolver[OSHAAnnualSummaryResolver](ec, "OSHAAnnualSummary@workerinjury").PostedFrom(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -234,7 +234,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerinjury.OSHAAnnualSummary)
-					return gqlexec.Resolver[resolverOSHAAnnualSummary](ec, "OSHAAnnualSummary").PostedThrough(ctx, obj)
+					return gqlexec.Resolver[OSHAAnnualSummaryResolver](ec, "OSHAAnnualSummary@workerinjury").PostedThrough(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -245,7 +245,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerinjury.OSHAAnnualSummary)
-					return gqlexec.Resolver[resolverOSHAAnnualSummary](ec, "OSHAAnnualSummary").SubmittedAt(ctx, obj)
+					return gqlexec.Resolver[OSHAAnnualSummaryResolver](ec, "OSHAAnnualSummary@workerinjury").SubmittedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -513,7 +513,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerInjuries_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerInjuries(ctx, fc.Args["workerId"].(*string), fc.Args["caseYear"].(*int), fc.Args["recordableOnly"].(*bool), fc.Args["openOnly"].(*bool), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerinjury").WorkerInjuries(ctx, fc.Args["workerId"].(*string), fc.Args["caseYear"].(*int), fc.Args["recordableOnly"].(*bool), fc.Args["openOnly"].(*bool), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerInjury2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐWorkerInjuryᚄ),
 			},
@@ -527,7 +527,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerInjury_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerInjury(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerinjury").WorkerInjury(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerInjury2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐWorkerInjury),
 			},
@@ -541,7 +541,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_oshaLog_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").OshaLog(ctx, fc.Args["year"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerinjury").OshaLog(ctx, fc.Args["year"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNOSHALog2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkerinjuryserviceᚐOSHALog),
 			},
@@ -553,7 +553,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "OSHAAnnualSummary",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").OshaSummaries(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workerinjury").OshaSummaries(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNOSHAAnnualSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHAAnnualSummaryᚄ),
 			},
@@ -667,7 +667,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerinjury.WorkerInjury)
-					return gqlexec.Resolver[resolverWorkerInjury](ec, "WorkerInjury").Recordable(ctx, obj)
+					return gqlexec.Resolver[WorkerInjuryResolver](ec, "WorkerInjury@workerinjury").Recordable(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -688,7 +688,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerinjury.WorkerInjury)
-					return gqlexec.Resolver[resolverWorkerInjury](ec, "WorkerInjury").ReportedAt(ctx, obj)
+					return gqlexec.Resolver[WorkerInjuryResolver](ec, "WorkerInjury@workerinjury").ReportedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -699,7 +699,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerinjury.WorkerInjury)
-					return gqlexec.Resolver[resolverWorkerInjury](ec, "WorkerInjury").ReturnedToWorkAt(ctx, obj)
+					return gqlexec.Resolver[WorkerInjuryResolver](ec, "WorkerInjury@workerinjury").ReturnedToWorkAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -778,7 +778,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerinjury.WorkerInjury)
-					return gqlexec.Resolver[resolverWorkerInjury](ec, "WorkerInjury").LogName(ctx, obj)
+					return gqlexec.Resolver[WorkerInjuryResolver](ec, "WorkerInjury@workerinjury").LogName(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -817,7 +817,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerinjury.WorkerInjury)
-					return gqlexec.Resolver[resolverWorkerInjury](ec, "WorkerInjury").ClaimFiledAt(ctx, obj)
+					return gqlexec.Resolver[WorkerInjuryResolver](ec, "WorkerInjury@workerinjury").ClaimFiledAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -828,7 +828,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerinjury.WorkerInjury)
-					return gqlexec.Resolver[resolverWorkerInjury](ec, "WorkerInjury").ClaimClosedAt(ctx, obj)
+					return gqlexec.Resolver[WorkerInjuryResolver](ec, "WorkerInjury@workerinjury").ClaimClosedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -839,7 +839,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerinjury.WorkerInjury)
-					return gqlexec.Resolver[resolverWorkerInjury](ec, "WorkerInjury").SafetyEventID(ctx, obj)
+					return gqlexec.Resolver[WorkerInjuryResolver](ec, "WorkerInjury@workerinjury").SafetyEventID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -850,7 +850,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerinjury.WorkerInjury)
-					return gqlexec.Resolver[resolverWorkerInjury](ec, "WorkerInjury").DocumentID(ctx, obj)
+					return gqlexec.Resolver[WorkerInjuryResolver](ec, "WorkerInjury@workerinjury").DocumentID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -921,14 +921,14 @@ var Shard = &gqlexec.Shard{
 		{Name: "UpdateWorkerInjuryInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateWorkerInjuryInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "OSHAAnnualSummary", Check: func(r any) bool { _, ok := r.(resolverOSHAAnnualSummary); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "WorkerInjury", Check: func(r any) bool { _, ok := r.(resolverWorkerInjury); return ok }},
+		{Root: "Mutation@workerinjury", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "OSHAAnnualSummary@workerinjury", Check: func(r any) bool { _, ok := r.(OSHAAnnualSummaryResolver); return ok }},
+		{Root: "Query@workerinjury", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "WorkerInjury@workerinjury", Check: func(r any) bool { _, ok := r.(WorkerInjuryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	RecordWorkerInjury(ctx context.Context, input gqlmodel.RecordWorkerInjuryInput) (*workerinjury.WorkerInjury, error)
 	UpdateWorkerInjury(ctx context.Context, input gqlmodel.UpdateWorkerInjuryInput) (*workerinjury.WorkerInjury, error)
 	DeleteWorkerInjury(ctx context.Context, id string) (bool, error)
@@ -937,7 +937,7 @@ type resolverMutation interface {
 	UncertifyOshaSummary(ctx context.Context, year int) (*workerinjury.OSHAAnnualSummary, error)
 }
 
-type resolverOSHAAnnualSummary interface {
+type OSHAAnnualSummaryResolver interface {
 	TotalHoursWorked(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (int, error)
 	CertifiedAt(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (*int, error)
 	CertifiedByID(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (*string, error)
@@ -946,14 +946,14 @@ type resolverOSHAAnnualSummary interface {
 	SubmittedAt(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (*int, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	WorkerInjuries(ctx context.Context, workerID *string, caseYear *int, recordableOnly *bool, openOnly *bool, limit *int) ([]*workerinjury.WorkerInjury, error)
 	WorkerInjury(ctx context.Context, id string) (*workerinjury.WorkerInjury, error)
 	OshaLog(ctx context.Context, year *int) (*workerinjuryservice.OSHALog, error)
 	OshaSummaries(ctx context.Context) ([]*workerinjury.OSHAAnnualSummary, error)
 }
 
-type resolverWorkerInjury interface {
+type WorkerInjuryResolver interface {
 	Recordable(ctx context.Context, obj *workerinjury.WorkerInjury) (bool, error)
 	ReportedAt(ctx context.Context, obj *workerinjury.WorkerInjury) (*int, error)
 	ReturnedToWorkAt(ctx context.Context, obj *workerinjury.WorkerInjury) (*int, error)

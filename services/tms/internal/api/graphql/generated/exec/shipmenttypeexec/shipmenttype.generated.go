@@ -35,7 +35,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentTypes_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentTypes(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipmenttype").ShipmentTypes(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentTypeConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentTypeConnection),
 			},
@@ -48,7 +48,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentType_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentType(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@shipmenttype").ShipmentType(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOShipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋshipmenttypeᚐShipmentType),
 			},
@@ -241,11 +241,11 @@ var Shard = &gqlexec.Shard{
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Query@shipmenttype", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	ShipmentTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ShipmentTypeConnection, error)
 	ShipmentType(ctx context.Context, id string) (*shipmenttype.ShipmentType, error)
 }

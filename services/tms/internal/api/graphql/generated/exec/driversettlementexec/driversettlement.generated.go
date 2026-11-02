@@ -261,7 +261,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.PayEvent)
-					return gqlexec.Resolver[resolverDriverPayEvent](ec, "DriverPayEvent").TotalMiles(ctx, obj)
+					return gqlexec.Resolver[DriverPayEventResolver](ec, "DriverPayEvent@driversettlement").TotalMiles(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -414,7 +414,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.PayEventComponent)
-					return gqlexec.Resolver[resolverDriverPayEventComponent](ec, "DriverPayEventComponent").Quantity(ctx, obj)
+					return gqlexec.Resolver[DriverPayEventComponentResolver](ec, "DriverPayEventComponent@driversettlement").Quantity(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -426,7 +426,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.PayEventComponent)
-					return gqlexec.Resolver[resolverDriverPayEventComponent](ec, "DriverPayEventComponent").Rate(ctx, obj)
+					return gqlexec.Resolver[DriverPayEventComponentResolver](ec, "DriverPayEventComponent@driversettlement").Rate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -703,7 +703,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.Settlement)
-					return gqlexec.Resolver[resolverDriverSettlement](ec, "DriverSettlement").TotalMiles(ctx, obj)
+					return gqlexec.Resolver[DriverSettlementResolver](ec, "DriverSettlement@driversettlement").TotalMiles(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -733,7 +733,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.Settlement)
-					return gqlexec.Resolver[resolverDriverSettlement](ec, "DriverSettlement").ExchangeRate(ctx, obj)
+					return gqlexec.Resolver[DriverSettlementResolver](ec, "DriverSettlement@driversettlement").ExchangeRate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -753,7 +753,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.Settlement)
-					return gqlexec.Resolver[resolverDriverSettlement](ec, "DriverSettlement").PaidExchangeRate(ctx, obj)
+					return gqlexec.Resolver[DriverSettlementResolver](ec, "DriverSettlement@driversettlement").PaidExchangeRate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -974,7 +974,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "DriverSettlementLineGroup",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.Settlement)
-					return gqlexec.Resolver[resolverDriverSettlement](ec, "DriverSettlement").LineSummary(ctx, obj)
+					return gqlexec.Resolver[DriverSettlementResolver](ec, "DriverSettlement@driversettlement").LineSummary(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODriverSettlementLineGroup2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐLineGroupᚄ),
 			},
@@ -986,7 +986,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "SettlementLoadShare",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.Settlement)
-					return gqlexec.Resolver[resolverDriverSettlement](ec, "DriverSettlement").LoadShares(ctx, obj)
+					return gqlexec.Resolver[DriverSettlementResolver](ec, "DriverSettlement@driversettlement").LoadShares(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOSettlementLoadShare2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋsettlementloadᚐShareᚄ),
 			},
@@ -999,7 +999,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "SettlementDispute",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.Settlement)
-					return gqlexec.Resolver[resolverDriverSettlement](ec, "DriverSettlement").Disputes(ctx, obj)
+					return gqlexec.Resolver[DriverSettlementResolver](ec, "DriverSettlement@driversettlement").Disputes(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNSettlementDispute2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐDisputeᚄ),
 			},
@@ -1011,7 +1011,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.Settlement)
-					return gqlexec.Resolver[resolverDriverSettlement](ec, "DriverSettlement").SubmittedBy(ctx, obj)
+					return gqlexec.Resolver[DriverSettlementResolver](ec, "DriverSettlement@driversettlement").SubmittedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -1023,7 +1023,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.Settlement)
-					return gqlexec.Resolver[resolverDriverSettlement](ec, "DriverSettlement").ApprovedBy(ctx, obj)
+					return gqlexec.Resolver[DriverSettlementResolver](ec, "DriverSettlement@driversettlement").ApprovedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -1035,7 +1035,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.Settlement)
-					return gqlexec.Resolver[resolverDriverSettlement](ec, "DriverSettlement").PostedBy(ctx, obj)
+					return gqlexec.Resolver[DriverSettlementResolver](ec, "DriverSettlement@driversettlement").PostedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -1047,7 +1047,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.Settlement)
-					return gqlexec.Resolver[resolverDriverSettlement](ec, "DriverSettlement").PaidBy(ctx, obj)
+					return gqlexec.Resolver[DriverSettlementResolver](ec, "DriverSettlement@driversettlement").PaidBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -1059,7 +1059,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.Settlement)
-					return gqlexec.Resolver[resolverDriverSettlement](ec, "DriverSettlement").VoidedBy(ctx, obj)
+					return gqlexec.Resolver[DriverSettlementResolver](ec, "DriverSettlement@driversettlement").VoidedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -1207,7 +1207,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.SettlementLine)
-					return gqlexec.Resolver[resolverDriverSettlementLine](ec, "DriverSettlementLine").Quantity(ctx, obj)
+					return gqlexec.Resolver[DriverSettlementLineResolver](ec, "DriverSettlementLine@driversettlement").Quantity(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1219,7 +1219,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.SettlementLine)
-					return gqlexec.Resolver[resolverDriverSettlementLine](ec, "DriverSettlementLine").Rate(ctx, obj)
+					return gqlexec.Resolver[DriverSettlementLineResolver](ec, "DriverSettlementLine@driversettlement").Rate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1371,7 +1371,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.LineGroup)
-					return gqlexec.Resolver[resolverDriverSettlementLineGroup](ec, "DriverSettlementLineGroup").Rate(ctx, obj)
+					return gqlexec.Resolver[DriverSettlementLineGroupResolver](ec, "DriverSettlementLineGroup@driversettlement").Rate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -1383,7 +1383,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.LineGroup)
-					return gqlexec.Resolver[resolverDriverSettlementLineGroup](ec, "DriverSettlementLineGroup").Quantity(ctx, obj)
+					return gqlexec.Resolver[DriverSettlementLineGroupResolver](ec, "DriverSettlementLineGroup@driversettlement").Quantity(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1471,7 +1471,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "PayAdvance",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.LineGroup)
-					return gqlexec.Resolver[resolverDriverSettlementLineGroup](ec, "DriverSettlementLineGroup").Advance(ctx, obj)
+					return gqlexec.Resolver[DriverSettlementLineGroupResolver](ec, "DriverSettlementLineGroup@driversettlement").Advance(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOPayAdvance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpayadvanceᚐPayAdvance),
 			},
@@ -1483,7 +1483,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "EscrowAccount",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.LineGroup)
-					return gqlexec.Resolver[resolverDriverSettlementLineGroup](ec, "DriverSettlementLineGroup").EscrowAccount(ctx, obj)
+					return gqlexec.Resolver[DriverSettlementLineGroupResolver](ec, "DriverSettlementLineGroup@driversettlement").EscrowAccount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOEscrowAccount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpayescrowᚐEscrowAccount),
 			},
@@ -1565,7 +1565,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*payescrow.EscrowAccount)
-					return gqlexec.Resolver[resolverEscrowAccount](ec, "EscrowAccount").AnnualInterestRate(ctx, obj)
+					return gqlexec.Resolver[EscrowAccountResolver](ec, "EscrowAccount@driversettlement").AnnualInterestRate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1834,7 +1834,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createPayProfile_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreatePayProfile(ctx, fc.Args["input"].(gqlmodel.CreatePayProfileInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").CreatePayProfile(ctx, fc.Args["input"].(gqlmodel.CreatePayProfileInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPayProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayProfile),
 			},
@@ -1847,7 +1847,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updatePayProfile_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdatePayProfile(ctx, fc.Args["input"].(gqlmodel.UpdatePayProfileInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").UpdatePayProfile(ctx, fc.Args["input"].(gqlmodel.UpdatePayProfileInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPayProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayProfile),
 			},
@@ -1860,7 +1860,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_assignPayProfileToWorker_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AssignPayProfileToWorker(ctx, fc.Args["input"].(gqlmodel.AssignPayProfileInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").AssignPayProfileToWorker(ctx, fc.Args["input"].(gqlmodel.AssignPayProfileInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerPayAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpayassignmentᚐWorkerPayAssignment),
 			},
@@ -1873,7 +1873,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_endWorkerPayAssignment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").EndWorkerPayAssignment(ctx, fc.Args["input"].(gqlmodel.EndWorkerPayAssignmentInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").EndWorkerPayAssignment(ctx, fc.Args["input"].(gqlmodel.EndWorkerPayAssignmentInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerPayAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpayassignmentᚐWorkerPayAssignment),
 			},
@@ -1886,7 +1886,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createRecurringDeduction_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateRecurringDeduction(ctx, fc.Args["input"].(gqlmodel.CreateRecurringDeductionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").CreateRecurringDeduction(ctx, fc.Args["input"].(gqlmodel.CreateRecurringDeductionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNRecurringDeduction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋrecurringpayᚐRecurringDeduction),
 			},
@@ -1899,7 +1899,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateRecurringDeduction_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateRecurringDeduction(ctx, fc.Args["input"].(gqlmodel.UpdateRecurringDeductionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").UpdateRecurringDeduction(ctx, fc.Args["input"].(gqlmodel.UpdateRecurringDeductionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNRecurringDeduction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋrecurringpayᚐRecurringDeduction),
 			},
@@ -1912,7 +1912,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createRecurringEarning_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateRecurringEarning(ctx, fc.Args["input"].(gqlmodel.CreateRecurringEarningInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").CreateRecurringEarning(ctx, fc.Args["input"].(gqlmodel.CreateRecurringEarningInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNRecurringEarning2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋrecurringpayᚐRecurringEarning),
 			},
@@ -1925,7 +1925,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateRecurringEarning_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateRecurringEarning(ctx, fc.Args["input"].(gqlmodel.UpdateRecurringEarningInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").UpdateRecurringEarning(ctx, fc.Args["input"].(gqlmodel.UpdateRecurringEarningInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNRecurringEarning2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋrecurringpayᚐRecurringEarning),
 			},
@@ -1938,7 +1938,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createPayCode_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreatePayCode(ctx, fc.Args["input"].(gqlmodel.CreatePayCodeInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").CreatePayCode(ctx, fc.Args["input"].(gqlmodel.CreatePayCodeInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPayCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaycodeᚐPayCode),
 			},
@@ -1951,7 +1951,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updatePayCode_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdatePayCode(ctx, fc.Args["input"].(gqlmodel.UpdatePayCodeInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").UpdatePayCode(ctx, fc.Args["input"].(gqlmodel.UpdatePayCodeInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPayCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaycodeᚐPayCode),
 			},
@@ -1964,7 +1964,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_issuePayAdvance_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").IssuePayAdvance(ctx, fc.Args["input"].(gqlmodel.IssuePayAdvanceInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").IssuePayAdvance(ctx, fc.Args["input"].(gqlmodel.IssuePayAdvanceInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPayAdvance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpayadvanceᚐPayAdvance),
 			},
@@ -1977,7 +1977,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_writeOffPayAdvance_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").WriteOffPayAdvance(ctx, fc.Args["input"].(gqlmodel.WriteOffPayAdvanceInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").WriteOffPayAdvance(ctx, fc.Args["input"].(gqlmodel.WriteOffPayAdvanceInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPayAdvance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpayadvanceᚐPayAdvance),
 			},
@@ -1990,7 +1990,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_openEscrowAccount_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").OpenEscrowAccount(ctx, fc.Args["input"].(gqlmodel.OpenEscrowAccountInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").OpenEscrowAccount(ctx, fc.Args["input"].(gqlmodel.OpenEscrowAccountInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNEscrowAccount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpayescrowᚐEscrowAccount),
 			},
@@ -2003,7 +2003,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateEscrowAccount_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateEscrowAccount(ctx, fc.Args["input"].(gqlmodel.UpdateEscrowAccountInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").UpdateEscrowAccount(ctx, fc.Args["input"].(gqlmodel.UpdateEscrowAccountInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNEscrowAccount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpayescrowᚐEscrowAccount),
 			},
@@ -2016,7 +2016,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_adjustEscrowAccount_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AdjustEscrowAccount(ctx, fc.Args["input"].(gqlmodel.AdjustEscrowAccountInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").AdjustEscrowAccount(ctx, fc.Args["input"].(gqlmodel.AdjustEscrowAccountInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNEscrowAccount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpayescrowᚐEscrowAccount),
 			},
@@ -2029,7 +2029,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_closeEscrowAccount_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CloseEscrowAccount(ctx, fc.Args["accountId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").CloseEscrowAccount(ctx, fc.Args["accountId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNEscrowAccount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpayescrowᚐEscrowAccount),
 			},
@@ -2042,7 +2042,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_generateSettlementBatch_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").GenerateSettlementBatch(ctx, fc.Args["input"].(gqlmodel.GenerateSettlementBatchInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").GenerateSettlementBatch(ctx, fc.Args["input"].(gqlmodel.GenerateSettlementBatchInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNSettlementBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlementBatch),
 			},
@@ -2054,7 +2054,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_generateDriverSettlement_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").GenerateDriverSettlement(ctx, fc.Args["input"].(gqlmodel.GenerateDriverSettlementInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").GenerateDriverSettlement(ctx, fc.Args["input"].(gqlmodel.GenerateDriverSettlementInput))
 				},
 				Marshal: gqlexec.Marshal(marshalODriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlement),
 			},
@@ -2067,7 +2067,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_payWorkerNow_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PayWorkerNow(ctx, fc.Args["input"].(gqlmodel.PayWorkerNowInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").PayWorkerNow(ctx, fc.Args["input"].(gqlmodel.PayWorkerNowInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlement),
 			},
@@ -2080,7 +2080,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_submitDriverSettlement_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SubmitDriverSettlement(ctx, fc.Args["input"].(gqlmodel.DriverSettlementActionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").SubmitDriverSettlement(ctx, fc.Args["input"].(gqlmodel.DriverSettlementActionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlement),
 			},
@@ -2093,7 +2093,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_approveDriverSettlement_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApproveDriverSettlement(ctx, fc.Args["input"].(gqlmodel.DriverSettlementActionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").ApproveDriverSettlement(ctx, fc.Args["input"].(gqlmodel.DriverSettlementActionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlement),
 			},
@@ -2106,7 +2106,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_rejectDriverSettlement_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RejectDriverSettlement(ctx, fc.Args["input"].(gqlmodel.DriverSettlementActionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").RejectDriverSettlement(ctx, fc.Args["input"].(gqlmodel.DriverSettlementActionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlement),
 			},
@@ -2119,7 +2119,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_postDriverSettlement_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PostDriverSettlement(ctx, fc.Args["input"].(gqlmodel.DriverSettlementActionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").PostDriverSettlement(ctx, fc.Args["input"].(gqlmodel.DriverSettlementActionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlement),
 			},
@@ -2132,7 +2132,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_markDriverSettlementPaid_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").MarkDriverSettlementPaid(ctx, fc.Args["input"].(gqlmodel.MarkDriverSettlementPaidInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").MarkDriverSettlementPaid(ctx, fc.Args["input"].(gqlmodel.MarkDriverSettlementPaidInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlement),
 			},
@@ -2145,7 +2145,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_voidDriverSettlement_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").VoidDriverSettlement(ctx, fc.Args["input"].(gqlmodel.DriverSettlementActionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").VoidDriverSettlement(ctx, fc.Args["input"].(gqlmodel.DriverSettlementActionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlement),
 			},
@@ -2158,7 +2158,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_recalculateDriverSettlement_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecalculateDriverSettlement(ctx, fc.Args["input"].(gqlmodel.DriverSettlementActionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").RecalculateDriverSettlement(ctx, fc.Args["input"].(gqlmodel.DriverSettlementActionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlement),
 			},
@@ -2171,7 +2171,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_addDriverSettlementAdjustment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AddDriverSettlementAdjustment(ctx, fc.Args["input"].(gqlmodel.AddSettlementAdjustmentInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").AddDriverSettlementAdjustment(ctx, fc.Args["input"].(gqlmodel.AddSettlementAdjustmentInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlement),
 			},
@@ -2184,7 +2184,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_removeDriverSettlementAdjustment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RemoveDriverSettlementAdjustment(ctx, fc.Args["input"].(gqlmodel.RemoveSettlementAdjustmentInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").RemoveDriverSettlementAdjustment(ctx, fc.Args["input"].(gqlmodel.RemoveSettlementAdjustmentInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlement),
 			},
@@ -2197,7 +2197,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateSettlementControl_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateSettlementControl(ctx, fc.Args["input"].(gqlmodel.UpdateSettlementControlInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").UpdateSettlementControl(ctx, fc.Args["input"].(gqlmodel.UpdateSettlementControlInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNSettlementControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋsettlementcontrolᚐSettlementControl),
 			},
@@ -2210,7 +2210,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_holdDriverPayEvent_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").HoldDriverPayEvent(ctx, fc.Args["input"].(gqlmodel.HoldPayEventInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").HoldDriverPayEvent(ctx, fc.Args["input"].(gqlmodel.HoldPayEventInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDriverPayEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐPayEvent),
 			},
@@ -2223,7 +2223,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_releaseDriverPayEvent_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReleaseDriverPayEvent(ctx, fc.Args["payEventId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").ReleaseDriverPayEvent(ctx, fc.Args["payEventId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDriverPayEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐPayEvent),
 			},
@@ -2236,7 +2236,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_attachPayEventsToSettlement_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AttachPayEventsToSettlement(ctx, fc.Args["input"].(gqlmodel.AttachPayEventsInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").AttachPayEventsToSettlement(ctx, fc.Args["input"].(gqlmodel.AttachPayEventsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlement),
 			},
@@ -2249,7 +2249,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_detachPayEventFromSettlement_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DetachPayEventFromSettlement(ctx, fc.Args["input"].(gqlmodel.DetachPayEventInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").DetachPayEventFromSettlement(ctx, fc.Args["input"].(gqlmodel.DetachPayEventInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlement),
 			},
@@ -2262,7 +2262,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_bulkDriverSettlementAction_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkDriverSettlementAction(ctx, fc.Args["input"].(gqlmodel.BulkSettlementActionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").BulkDriverSettlementAction(ctx, fc.Args["input"].(gqlmodel.BulkSettlementActionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNBulkSettlementActionPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋdriversettlementworkspaceserviceᚐBulkActionPayload),
 			},
@@ -2691,7 +2691,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "PayCodeGLAccount",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*paycode.PayCode)
-					return gqlexec.Resolver[resolverPayCode](ec, "PayCode").GlAccount(ctx, obj)
+					return gqlexec.Resolver[PayCodeResolver](ec, "PayCode@driversettlement").GlAccount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOPayCodeGLAccount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPayCodeGLAccount),
 			},
@@ -2823,7 +2823,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driverpay.MileageBand)
-					return gqlexec.Resolver[resolverPayMileageBand](ec, "PayMileageBand").Rate(ctx, obj)
+					return gqlexec.Resolver[PayMileageBandResolver](ec, "PayMileageBand@driversettlement").Rate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -2927,7 +2927,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driverpay.PayProfile)
-					return gqlexec.Resolver[resolverPayProfile](ec, "PayProfile").PerDiemRatePerMile(ctx, obj)
+					return gqlexec.Resolver[PayProfileResolver](ec, "PayProfile@driversettlement").PerDiemRatePerMile(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -2989,7 +2989,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driverpay.PayProfile)
-					return gqlexec.Resolver[resolverPayProfile](ec, "PayProfile").ActiveAssignmentCount(ctx, obj)
+					return gqlexec.Resolver[PayProfileResolver](ec, "PayProfile@driversettlement").ActiveAssignmentCount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
@@ -3053,7 +3053,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driverpay.PayProfileComponent)
-					return gqlexec.Resolver[resolverPayProfileComponent](ec, "PayProfileComponent").Rate(ctx, obj)
+					return gqlexec.Resolver[PayProfileComponentResolver](ec, "PayProfileComponent@driversettlement").Rate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -3210,7 +3210,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*payassignment.RateOverride)
-					return gqlexec.Resolver[resolverPayRateOverride](ec, "PayRateOverride").Rate(ctx, obj)
+					return gqlexec.Resolver[PayRateOverrideResolver](ec, "PayRateOverride@driversettlement").Rate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -3226,7 +3226,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_payProfiles_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PayProfiles(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").PayProfiles(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPayProfileConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPayProfileConnection),
 			},
@@ -3239,7 +3239,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_payProfile_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PayProfile(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").PayProfile(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOPayProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayProfile),
 			},
@@ -3253,7 +3253,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerPayAssignments_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerPayAssignments(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").WorkerPayAssignments(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerPayAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpayassignmentᚐWorkerPayAssignmentᚄ),
 			},
@@ -3266,7 +3266,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_effectiveWorkerPayAssignment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").EffectiveWorkerPayAssignment(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").EffectiveWorkerPayAssignment(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOWorkerPayAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpayassignmentᚐWorkerPayAssignment),
 			},
@@ -3280,7 +3280,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_payProfileAssignments_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PayProfileAssignments(ctx, fc.Args["payProfileId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").PayProfileAssignments(ctx, fc.Args["payProfileId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerPayAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpayassignmentᚐWorkerPayAssignmentᚄ),
 			},
@@ -3294,7 +3294,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_recurringDeductions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").RecurringDeductions(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").RecurringDeductions(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNRecurringDeductionConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRecurringDeductionConnection),
 			},
@@ -3307,7 +3307,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_recurringDeduction_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").RecurringDeduction(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").RecurringDeduction(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalORecurringDeduction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋrecurringpayᚐRecurringDeduction),
 			},
@@ -3321,7 +3321,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_recurringEarnings_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").RecurringEarnings(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").RecurringEarnings(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNRecurringEarningConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRecurringEarningConnection),
 			},
@@ -3334,7 +3334,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_recurringEarning_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").RecurringEarning(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").RecurringEarning(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalORecurringEarning2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋrecurringpayᚐRecurringEarning),
 			},
@@ -3348,7 +3348,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_payCodes_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PayCodes(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").PayCodes(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPayCodeConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPayCodeConnection),
 			},
@@ -3361,7 +3361,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_payCode_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PayCode(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").PayCode(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOPayCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaycodeᚐPayCode),
 			},
@@ -3375,7 +3375,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_payCodeOptions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PayCodeOptions(ctx, fc.Args["direction"].(*paycode.PayCodeDirection))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").PayCodeOptions(ctx, fc.Args["direction"].(*paycode.PayCodeDirection))
 				},
 				Marshal: gqlexec.Marshal(marshalNPayCode2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaycodeᚐPayCodeᚄ),
 			},
@@ -3389,7 +3389,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_payAdvances_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PayAdvances(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").PayAdvances(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPayAdvanceConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPayAdvanceConnection),
 			},
@@ -3402,7 +3402,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_payAdvance_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PayAdvance(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").PayAdvance(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOPayAdvance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpayadvanceᚐPayAdvance),
 			},
@@ -3416,7 +3416,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_escrowAccounts_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").EscrowAccounts(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").EscrowAccounts(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNEscrowAccountConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEscrowAccountConnection),
 			},
@@ -3429,7 +3429,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_escrowAccount_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").EscrowAccount(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").EscrowAccount(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOEscrowAccount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpayescrowᚐEscrowAccount),
 			},
@@ -3443,7 +3443,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_driverSettlements_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DriverSettlements(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").DriverSettlements(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDriverSettlementConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDriverSettlementConnection),
 			},
@@ -3456,7 +3456,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_driverSettlement_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DriverSettlement(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").DriverSettlement(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalODriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlement),
 			},
@@ -3470,7 +3470,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_settlementBatches_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").SettlementBatches(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").SettlementBatches(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNSettlementBatchConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSettlementBatchConnection),
 			},
@@ -3483,7 +3483,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_settlementBatch_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").SettlementBatch(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").SettlementBatch(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOSettlementBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlementBatch),
 			},
@@ -3497,7 +3497,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_driverPayEvents_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DriverPayEvents(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").DriverPayEvents(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDriverPayEventConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDriverPayEventConnection),
 			},
@@ -3511,7 +3511,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_unsettledPayEvents_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").UnsettledPayEvents(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").UnsettledPayEvents(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDriverPayEvent2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐPayEventᚄ),
 			},
@@ -3525,7 +3525,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerEarningsSummary_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerEarningsSummary(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").WorkerEarningsSummary(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerEarningsSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋdriversettlementserviceᚐWorkerEarningsSummary),
 			},
@@ -3539,7 +3539,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerYtdPaySummaries_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerYtdPaySummaries(ctx, fc.Args["year"].(int), fc.Args["classification"].(*driverpay.PayeeClassification))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").WorkerYtdPaySummaries(ctx, fc.Args["year"].(int), fc.Args["classification"].(*driverpay.PayeeClassification))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerYTDPaySummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋdriversettlementworkspaceserviceᚐWorkerYTDPaySummaryᚄ),
 			},
@@ -3551,7 +3551,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "SettlementControl",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").SettlementControl(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").SettlementControl(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNSettlementControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋsettlementcontrolᚐSettlementControl),
 			},
@@ -3563,7 +3563,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "SettlementPeriodBounds",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CurrentSettlementPeriod(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").CurrentSettlementPeriod(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNSettlementPeriodBounds2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋsettlementsharedᚐPeriodBounds),
 			},
@@ -3577,7 +3577,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_settlementWorkspaceSummary_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").SettlementWorkspaceSummary(ctx, fc.Args["periodStart"].(*int), fc.Args["periodEnd"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").SettlementWorkspaceSummary(ctx, fc.Args["periodStart"].(*int), fc.Args["periodEnd"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNSettlementWorkspaceSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋdriversettlementworkspaceserviceᚐWorkspaceSummary),
 			},
@@ -3591,7 +3591,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_unsettledWorkerSummaries_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").UnsettledWorkerSummaries(ctx, fc.Args["periodStart"].(*int), fc.Args["periodEnd"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").UnsettledWorkerSummaries(ctx, fc.Args["periodStart"].(*int), fc.Args["periodEnd"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNUnsettledWorkerSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋportsᚋdriversettlementportsᚐUnsettledWorkerSummaryᚄ),
 			},
@@ -3605,7 +3605,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_previewDriverSettlement_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PreviewDriverSettlement(ctx, fc.Args["workerId"].(string), fc.Args["periodStart"].(*int), fc.Args["periodEnd"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").PreviewDriverSettlement(ctx, fc.Args["workerId"].(string), fc.Args["periodStart"].(*int), fc.Args["periodEnd"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNDriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlement),
 			},
@@ -3618,7 +3618,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_exportSettlementBatchCsv_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ExportSettlementBatchCSV(ctx, fc.Args["batchId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").ExportSettlementBatchCSV(ctx, fc.Args["batchId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -4566,7 +4566,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*settlementcontrol.SettlementControl)
-					return gqlexec.Resolver[resolverSettlementControl](ec, "SettlementControl").VarianceThresholdPct(ctx, obj)
+					return gqlexec.Resolver[SettlementControlResolver](ec, "SettlementControl@driversettlement").VarianceThresholdPct(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -4588,7 +4588,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*settlementcontrol.SettlementControl)
-					return gqlexec.Resolver[resolverSettlementControl](ec, "SettlementControl").DefaultEscrowInterestRate(ctx, obj)
+					return gqlexec.Resolver[SettlementControlResolver](ec, "SettlementControl@driversettlement").DefaultEscrowInterestRate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -4642,7 +4642,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.Exception)
-					return gqlexec.Resolver[resolverSettlementException](ec, "SettlementException").Code(ctx, obj)
+					return gqlexec.Resolver[SettlementExceptionResolver](ec, "SettlementException@driversettlement").Code(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -4654,7 +4654,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.Exception)
-					return gqlexec.Resolver[resolverSettlementException](ec, "SettlementException").Severity(ctx, obj)
+					return gqlexec.Resolver[SettlementExceptionResolver](ec, "SettlementException@driversettlement").Severity(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -5116,7 +5116,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*payassignment.WorkerPayAssignment)
-					return gqlexec.Resolver[resolverWorkerPayAssignment](ec, "WorkerPayAssignment").SplitPercent(ctx, obj)
+					return gqlexec.Resolver[WorkerPayAssignmentResolver](ec, "WorkerPayAssignment@driversettlement").SplitPercent(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -5326,35 +5326,47 @@ var Shard = &gqlexec.Shard{
 		{Name: "WriteOffPayAdvanceInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputWriteOffPayAdvanceInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "DriverPayEvent", Check: func(r any) bool { _, ok := r.(resolverDriverPayEvent); return ok }},
-		{Root: "DriverPayEventComponent", Check: func(r any) bool { _, ok := r.(resolverDriverPayEventComponent); return ok }},
-		{Root: "DriverSettlement", Check: func(r any) bool { _, ok := r.(resolverDriverSettlement); return ok }},
-		{Root: "DriverSettlementLine", Check: func(r any) bool { _, ok := r.(resolverDriverSettlementLine); return ok }},
-		{Root: "DriverSettlementLineGroup", Check: func(r any) bool { _, ok := r.(resolverDriverSettlementLineGroup); return ok }},
-		{Root: "EscrowAccount", Check: func(r any) bool { _, ok := r.(resolverEscrowAccount); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "PayCode", Check: func(r any) bool { _, ok := r.(resolverPayCode); return ok }},
-		{Root: "PayMileageBand", Check: func(r any) bool { _, ok := r.(resolverPayMileageBand); return ok }},
-		{Root: "PayProfile", Check: func(r any) bool { _, ok := r.(resolverPayProfile); return ok }},
-		{Root: "PayProfileComponent", Check: func(r any) bool { _, ok := r.(resolverPayProfileComponent); return ok }},
-		{Root: "PayRateOverride", Check: func(r any) bool { _, ok := r.(resolverPayRateOverride); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "SettlementControl", Check: func(r any) bool { _, ok := r.(resolverSettlementControl); return ok }},
-		{Root: "SettlementException", Check: func(r any) bool { _, ok := r.(resolverSettlementException); return ok }},
-		{Root: "WorkerPayAssignment", Check: func(r any) bool { _, ok := r.(resolverWorkerPayAssignment); return ok }},
+		{Root: "DriverPayEventComponent@driversettlement", Check: func(r any) bool { _, ok := r.(DriverPayEventComponentResolver); return ok }},
+		{Root: "DriverPayEvent@driversettlement", Check: func(r any) bool { _, ok := r.(DriverPayEventResolver); return ok }},
+		{Root: "DriverSettlementLineGroup@driversettlement", Check: func(r any) bool { _, ok := r.(DriverSettlementLineGroupResolver); return ok }},
+		{Root: "DriverSettlementLine@driversettlement", Check: func(r any) bool { _, ok := r.(DriverSettlementLineResolver); return ok }},
+		{Root: "DriverSettlement@driversettlement", Check: func(r any) bool { _, ok := r.(DriverSettlementResolver); return ok }},
+		{Root: "EscrowAccount@driversettlement", Check: func(r any) bool { _, ok := r.(EscrowAccountResolver); return ok }},
+		{Root: "Mutation@driversettlement", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "PayCode@driversettlement", Check: func(r any) bool { _, ok := r.(PayCodeResolver); return ok }},
+		{Root: "PayMileageBand@driversettlement", Check: func(r any) bool { _, ok := r.(PayMileageBandResolver); return ok }},
+		{Root: "PayProfileComponent@driversettlement", Check: func(r any) bool { _, ok := r.(PayProfileComponentResolver); return ok }},
+		{Root: "PayProfile@driversettlement", Check: func(r any) bool { _, ok := r.(PayProfileResolver); return ok }},
+		{Root: "PayRateOverride@driversettlement", Check: func(r any) bool { _, ok := r.(PayRateOverrideResolver); return ok }},
+		{Root: "Query@driversettlement", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "SettlementControl@driversettlement", Check: func(r any) bool { _, ok := r.(SettlementControlResolver); return ok }},
+		{Root: "SettlementException@driversettlement", Check: func(r any) bool { _, ok := r.(SettlementExceptionResolver); return ok }},
+		{Root: "WorkerPayAssignment@driversettlement", Check: func(r any) bool { _, ok := r.(WorkerPayAssignmentResolver); return ok }},
 	},
 }
 
-type resolverDriverPayEvent interface {
-	TotalMiles(ctx context.Context, obj *driversettlement.PayEvent) (string, error)
-}
-
-type resolverDriverPayEventComponent interface {
+type DriverPayEventComponentResolver interface {
 	Quantity(ctx context.Context, obj *driversettlement.PayEventComponent) (string, error)
 	Rate(ctx context.Context, obj *driversettlement.PayEventComponent) (string, error)
 }
 
-type resolverDriverSettlement interface {
+type DriverPayEventResolver interface {
+	TotalMiles(ctx context.Context, obj *driversettlement.PayEvent) (string, error)
+}
+
+type DriverSettlementLineGroupResolver interface {
+	Rate(ctx context.Context, obj *driversettlement.LineGroup) (*string, error)
+	Quantity(ctx context.Context, obj *driversettlement.LineGroup) (string, error)
+	Advance(ctx context.Context, obj *driversettlement.LineGroup) (*payadvance.PayAdvance, error)
+	EscrowAccount(ctx context.Context, obj *driversettlement.LineGroup) (*payescrow.EscrowAccount, error)
+}
+
+type DriverSettlementLineResolver interface {
+	Quantity(ctx context.Context, obj *driversettlement.SettlementLine) (string, error)
+	Rate(ctx context.Context, obj *driversettlement.SettlementLine) (string, error)
+}
+
+type DriverSettlementResolver interface {
 	TotalMiles(ctx context.Context, obj *driversettlement.Settlement) (string, error)
 	ExchangeRate(ctx context.Context, obj *driversettlement.Settlement) (*string, error)
 	PaidExchangeRate(ctx context.Context, obj *driversettlement.Settlement) (*string, error)
@@ -5368,23 +5380,11 @@ type resolverDriverSettlement interface {
 	VoidedBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error)
 }
 
-type resolverDriverSettlementLine interface {
-	Quantity(ctx context.Context, obj *driversettlement.SettlementLine) (string, error)
-	Rate(ctx context.Context, obj *driversettlement.SettlementLine) (string, error)
-}
-
-type resolverDriverSettlementLineGroup interface {
-	Rate(ctx context.Context, obj *driversettlement.LineGroup) (*string, error)
-	Quantity(ctx context.Context, obj *driversettlement.LineGroup) (string, error)
-	Advance(ctx context.Context, obj *driversettlement.LineGroup) (*payadvance.PayAdvance, error)
-	EscrowAccount(ctx context.Context, obj *driversettlement.LineGroup) (*payescrow.EscrowAccount, error)
-}
-
-type resolverEscrowAccount interface {
+type EscrowAccountResolver interface {
 	AnnualInterestRate(ctx context.Context, obj *payescrow.EscrowAccount) (string, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreatePayProfile(ctx context.Context, input gqlmodel.CreatePayProfileInput) (*driverpay.PayProfile, error)
 	UpdatePayProfile(ctx context.Context, input gqlmodel.UpdatePayProfileInput) (*driverpay.PayProfile, error)
 	AssignPayProfileToWorker(ctx context.Context, input gqlmodel.AssignPayProfileInput) (*payassignment.WorkerPayAssignment, error)
@@ -5421,28 +5421,28 @@ type resolverMutation interface {
 	BulkDriverSettlementAction(ctx context.Context, input gqlmodel.BulkSettlementActionInput) (*driversettlementworkspaceservice.BulkActionPayload, error)
 }
 
-type resolverPayCode interface {
+type PayCodeResolver interface {
 	GlAccount(ctx context.Context, obj *paycode.PayCode) (*gqlmodel.PayCodeGLAccount, error)
 }
 
-type resolverPayMileageBand interface {
+type PayMileageBandResolver interface {
 	Rate(ctx context.Context, obj *driverpay.MileageBand) (string, error)
 }
 
-type resolverPayProfile interface {
+type PayProfileComponentResolver interface {
+	Rate(ctx context.Context, obj *driverpay.PayProfileComponent) (string, error)
+}
+
+type PayProfileResolver interface {
 	PerDiemRatePerMile(ctx context.Context, obj *driverpay.PayProfile) (string, error)
 	ActiveAssignmentCount(ctx context.Context, obj *driverpay.PayProfile) (int, error)
 }
 
-type resolverPayProfileComponent interface {
-	Rate(ctx context.Context, obj *driverpay.PayProfileComponent) (string, error)
-}
-
-type resolverPayRateOverride interface {
+type PayRateOverrideResolver interface {
 	Rate(ctx context.Context, obj *payassignment.RateOverride) (string, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	PayProfiles(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.PayProfileConnection, error)
 	PayProfile(ctx context.Context, id string) (*driverpay.PayProfile, error)
 	WorkerPayAssignments(ctx context.Context, workerID string) ([]*payassignment.WorkerPayAssignment, error)
@@ -5475,17 +5475,17 @@ type resolverQuery interface {
 	ExportSettlementBatchCSV(ctx context.Context, batchID string) (string, error)
 }
 
-type resolverSettlementControl interface {
+type SettlementControlResolver interface {
 	VarianceThresholdPct(ctx context.Context, obj *settlementcontrol.SettlementControl) (string, error)
 	DefaultEscrowInterestRate(ctx context.Context, obj *settlementcontrol.SettlementControl) (string, error)
 }
 
-type resolverSettlementException interface {
+type SettlementExceptionResolver interface {
 	Code(ctx context.Context, obj *driversettlement.Exception) (string, error)
 	Severity(ctx context.Context, obj *driversettlement.Exception) (string, error)
 }
 
-type resolverWorkerPayAssignment interface {
+type WorkerPayAssignmentResolver interface {
 	SplitPercent(ctx context.Context, obj *payassignment.WorkerPayAssignment) (string, error)
 }
 

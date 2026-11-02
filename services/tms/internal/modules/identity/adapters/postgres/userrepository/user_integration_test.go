@@ -426,7 +426,7 @@ func TestListConnectionHidesTheSystemUserAndOtherOrganizations(t *testing.T) {
 	assert.Equal(t, 2, *first.TotalCount)
 	require.True(t, first.HasNextPage)
 
-	next, err := first.NextCursor()
+	next, err := pagination.NextCursor(first)
 	require.NoError(t, err)
 	secondCursor, err := pagination.NewCursorInfo(1, next)
 	require.NoError(t, err)

@@ -39,7 +39,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createPerformanceReviewTemplate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreatePerformanceReviewTemplate(ctx, fc.Args["input"].(gqlmodel.PerformanceReviewTemplateInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@performancereview").CreatePerformanceReviewTemplate(ctx, fc.Args["input"].(gqlmodel.PerformanceReviewTemplateInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerreviewᚐPerformanceReviewTemplate),
 			},
@@ -52,7 +52,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updatePerformanceReviewTemplate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdatePerformanceReviewTemplate(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.PerformanceReviewTemplateInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@performancereview").UpdatePerformanceReviewTemplate(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.PerformanceReviewTemplateInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerreviewᚐPerformanceReviewTemplate),
 			},
@@ -65,7 +65,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_archivePerformanceReviewTemplate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ArchivePerformanceReviewTemplate(ctx, fc.Args["id"].(string), fc.Args["version"].(*int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@performancereview").ArchivePerformanceReviewTemplate(ctx, fc.Args["id"].(string), fc.Args["version"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerreviewᚐPerformanceReviewTemplate),
 			},
@@ -78,7 +78,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_restorePerformanceReviewTemplate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RestorePerformanceReviewTemplate(ctx, fc.Args["id"].(string), fc.Args["version"].(*int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@performancereview").RestorePerformanceReviewTemplate(ctx, fc.Args["id"].(string), fc.Args["version"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerreviewᚐPerformanceReviewTemplate),
 			},
@@ -91,7 +91,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createPerformanceReview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreatePerformanceReview(ctx, fc.Args["input"].(gqlmodel.CreatePerformanceReviewInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@performancereview").CreatePerformanceReview(ctx, fc.Args["input"].(gqlmodel.CreatePerformanceReviewInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerreviewᚐPerformanceReview),
 			},
@@ -104,7 +104,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updatePerformanceReview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdatePerformanceReview(ctx, fc.Args["input"].(gqlmodel.UpdatePerformanceReviewInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@performancereview").UpdatePerformanceReview(ctx, fc.Args["input"].(gqlmodel.UpdatePerformanceReviewInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerreviewᚐPerformanceReview),
 			},
@@ -117,7 +117,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_submitPerformanceReview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SubmitPerformanceReview(ctx, fc.Args["input"].(gqlmodel.PerformanceReviewStatusInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@performancereview").SubmitPerformanceReview(ctx, fc.Args["input"].(gqlmodel.PerformanceReviewStatusInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerreviewᚐPerformanceReview),
 			},
@@ -130,7 +130,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_reopenPerformanceReview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReopenPerformanceReview(ctx, fc.Args["input"].(gqlmodel.PerformanceReviewStatusInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@performancereview").ReopenPerformanceReview(ctx, fc.Args["input"].(gqlmodel.PerformanceReviewStatusInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerreviewᚐPerformanceReview),
 			},
@@ -143,7 +143,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_closePerformanceReview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ClosePerformanceReview(ctx, fc.Args["input"].(gqlmodel.PerformanceReviewStatusInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@performancereview").ClosePerformanceReview(ctx, fc.Args["input"].(gqlmodel.PerformanceReviewStatusInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerreviewᚐPerformanceReview),
 			},
@@ -155,7 +155,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deletePerformanceReview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeletePerformanceReview(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@performancereview").DeletePerformanceReview(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -168,7 +168,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_acknowledgeMyReview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AcknowledgeMyReview(ctx, fc.Args["id"].(string), fc.Args["comment"].(*string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@performancereview").AcknowledgeMyReview(ctx, fc.Args["id"].(string), fc.Args["comment"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerreviewᚐPerformanceReview),
 			},
@@ -241,7 +241,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerreview.PerformanceReview)
-					return gqlexec.Resolver[resolverPerformanceReview](ec, "PerformanceReview").ReviewerID(ctx, obj)
+					return gqlexec.Resolver[PerformanceReviewResolver](ec, "PerformanceReview@performancereview").ReviewerID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -313,7 +313,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerreview.PerformanceReview)
-					return gqlexec.Resolver[resolverPerformanceReview](ec, "PerformanceReview").OverallScore(ctx, obj)
+					return gqlexec.Resolver[PerformanceReviewResolver](ec, "PerformanceReview@performancereview").OverallScore(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -398,7 +398,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerreview.PerformanceReview)
-					return gqlexec.Resolver[resolverPerformanceReview](ec, "PerformanceReview").ClosedByID(ctx, obj)
+					return gqlexec.Resolver[PerformanceReviewResolver](ec, "PerformanceReview@performancereview").ClosedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -539,7 +539,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerreview.PerformanceReviewTemplate)
-					return gqlexec.Resolver[resolverPerformanceReviewTemplate](ec, "PerformanceReviewTemplate").CadenceMonths(ctx, obj)
+					return gqlexec.Resolver[PerformanceReviewTemplateResolver](ec, "PerformanceReviewTemplate@performancereview").CadenceMonths(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
@@ -562,7 +562,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerreview.PerformanceReviewTemplate)
-					return gqlexec.Resolver[resolverPerformanceReviewTemplate](ec, "PerformanceReviewTemplate").OpenReviewCount(ctx, obj)
+					return gqlexec.Resolver[PerformanceReviewTemplateResolver](ec, "PerformanceReviewTemplate@performancereview").OpenReviewCount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
@@ -674,7 +674,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_performanceReviewTemplates_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PerformanceReviewTemplates(ctx, fc.Args["input"].(gqlmodel.PerformanceReviewTemplatesInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@performancereview").PerformanceReviewTemplates(ctx, fc.Args["input"].(gqlmodel.PerformanceReviewTemplatesInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNPerformanceReviewTemplateConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPerformanceReviewTemplateConnection),
 			},
@@ -688,7 +688,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_performanceReviewTemplate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PerformanceReviewTemplate(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@performancereview").PerformanceReviewTemplate(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerreviewᚐPerformanceReviewTemplate),
 			},
@@ -700,7 +700,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "PerformanceReviewTemplate",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ActivePerformanceReviewTemplates(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@performancereview").ActivePerformanceReviewTemplates(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNPerformanceReviewTemplate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerreviewᚐPerformanceReviewTemplateᚄ),
 			},
@@ -714,7 +714,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerPerformanceReviews_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerPerformanceReviews(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@performancereview").WorkerPerformanceReviews(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerreviewᚐPerformanceReviewᚄ),
 			},
@@ -728,7 +728,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_performanceReview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PerformanceReview(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@performancereview").PerformanceReview(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerreviewᚐPerformanceReview),
 			},
@@ -740,7 +740,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "PerformanceReview",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").MyReviews(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@performancereview").MyReviews(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerreviewᚐPerformanceReviewᚄ),
 			},
@@ -865,7 +865,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workerreview.ReviewRating)
-					return gqlexec.Resolver[resolverReviewRating](ec, "ReviewRating").Score(ctx, obj)
+					return gqlexec.Resolver[ReviewRatingResolver](ec, "ReviewRating@performancereview").Score(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
@@ -891,15 +891,15 @@ var Shard = &gqlexec.Shard{
 		{Name: "UpdatePerformanceReviewInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdatePerformanceReviewInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "PerformanceReview", Check: func(r any) bool { _, ok := r.(resolverPerformanceReview); return ok }},
-		{Root: "PerformanceReviewTemplate", Check: func(r any) bool { _, ok := r.(resolverPerformanceReviewTemplate); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "ReviewRating", Check: func(r any) bool { _, ok := r.(resolverReviewRating); return ok }},
+		{Root: "Mutation@performancereview", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "PerformanceReview@performancereview", Check: func(r any) bool { _, ok := r.(PerformanceReviewResolver); return ok }},
+		{Root: "PerformanceReviewTemplate@performancereview", Check: func(r any) bool { _, ok := r.(PerformanceReviewTemplateResolver); return ok }},
+		{Root: "Query@performancereview", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "ReviewRating@performancereview", Check: func(r any) bool { _, ok := r.(ReviewRatingResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreatePerformanceReviewTemplate(ctx context.Context, input gqlmodel.PerformanceReviewTemplateInput) (*workerreview.PerformanceReviewTemplate, error)
 	UpdatePerformanceReviewTemplate(ctx context.Context, id string, input gqlmodel.PerformanceReviewTemplateInput) (*workerreview.PerformanceReviewTemplate, error)
 	ArchivePerformanceReviewTemplate(ctx context.Context, id string, version *int) (*workerreview.PerformanceReviewTemplate, error)
@@ -913,18 +913,18 @@ type resolverMutation interface {
 	AcknowledgeMyReview(ctx context.Context, id string, comment *string) (*workerreview.PerformanceReview, error)
 }
 
-type resolverPerformanceReview interface {
+type PerformanceReviewResolver interface {
 	ReviewerID(ctx context.Context, obj *workerreview.PerformanceReview) (*string, error)
 	OverallScore(ctx context.Context, obj *workerreview.PerformanceReview) (*string, error)
 	ClosedByID(ctx context.Context, obj *workerreview.PerformanceReview) (*string, error)
 }
 
-type resolverPerformanceReviewTemplate interface {
+type PerformanceReviewTemplateResolver interface {
 	CadenceMonths(ctx context.Context, obj *workerreview.PerformanceReviewTemplate) (*int, error)
 	OpenReviewCount(ctx context.Context, obj *workerreview.PerformanceReviewTemplate) (int, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	PerformanceReviewTemplates(ctx context.Context, input gqlmodel.PerformanceReviewTemplatesInput) (*gqlmodel.PerformanceReviewTemplateConnection, error)
 	PerformanceReviewTemplate(ctx context.Context, id string) (*workerreview.PerformanceReviewTemplate, error)
 	ActivePerformanceReviewTemplates(ctx context.Context) ([]*workerreview.PerformanceReviewTemplate, error)
@@ -933,7 +933,7 @@ type resolverQuery interface {
 	MyReviews(ctx context.Context) ([]*workerreview.PerformanceReview, error)
 }
 
-type resolverReviewRating interface {
+type ReviewRatingResolver interface {
 	Score(ctx context.Context, obj *workerreview.ReviewRating) (*int, error)
 }
 

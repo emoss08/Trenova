@@ -23,7 +23,7 @@ type operationWalk struct {
 func (r *Registry) validateOperations(
 	schema *ast.Schema,
 	docs []*ast.QueryDocument,
-	resolvers map[string]func() any,
+	resolvers map[string]any,
 ) error {
 	walk := &operationWalk{
 		reg:       r,
@@ -190,17 +190,17 @@ func (w *operationWalk) input(name string) {
 	}
 }
 
-func (w *operationWalk) resolvers(resolvers map[string]func() any) {
+func (w *operationWalk) resolvers(resolvers map[string]any) {
 	if resolvers == nil {
 		return
 	}
 	for _, req := range w.reg.resolvers {
-		get, ok := resolvers[req.Root]
+		resolver, ok := resolvers[req.Root]
 		if !ok {
 			w.problem("resolver root " + req.Root + " is not bound")
 			continue
 		}
-		if resolver := get(); resolver != nil && !req.Check(resolver) {
+		if resolver != nil && !req.Check(resolver) {
 			w.problem("resolver " + req.Root + " does not implement the fields its schema declares")
 		}
 	}

@@ -35,7 +35,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_storedMileages_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").StoredMileages(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@storedmileage").StoredMileages(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNStoredMileageConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStoredMileageConnection),
 			},
@@ -48,7 +48,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_storedMileage_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").StoredMileage(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@storedmileage").StoredMileage(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOStoredMileage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋstoredmileageᚐStoredMileage),
 			},
@@ -456,11 +456,11 @@ var Shard = &gqlexec.Shard{
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Query@storedmileage", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	StoredMileages(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.StoredMileageConnection, error)
 	StoredMileage(ctx context.Context, id string) (*storedmileage.StoredMileage, error)
 }

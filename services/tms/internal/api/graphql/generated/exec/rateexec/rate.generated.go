@@ -55,7 +55,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_rateAgreements_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").RateAgreements(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@rate").RateAgreements(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNRateAgreementConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementConnection),
 			},
@@ -68,7 +68,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_rateAgreement_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").RateAgreement(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@rate").RateAgreement(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalORateAgreement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreement),
 			},
@@ -82,7 +82,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_rateZones_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").RateZones(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@rate").RateZones(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNRateZoneConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateZoneConnection),
 			},
@@ -96,7 +96,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_rateMatrices_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").RateMatrices(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@rate").RateMatrices(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNRateMatrixConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixConnection),
 			},
@@ -109,7 +109,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_rateMatrix_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").RateMatrix(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@rate").RateMatrix(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalORateMatrix2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrix),
 			},
@@ -123,7 +123,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_rateMatrixVersions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").RateMatrixVersions(ctx, fc.Args["rateMatrixId"].(string), fc.Args["first"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@rate").RateMatrixVersions(ctx, fc.Args["rateMatrixId"].(string), fc.Args["first"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNRateMatrixVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixversionᚐRateMatrixVersionᚄ),
 			},
@@ -136,7 +136,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_rateMatrixVersion_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").RateMatrixVersion(ctx, fc.Args["rateMatrixId"].(string), fc.Args["versionNumber"].(int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@rate").RateMatrixVersion(ctx, fc.Args["rateMatrixId"].(string), fc.Args["versionNumber"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalORateMatrixVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixversionᚐRateMatrixVersion),
 			},
@@ -150,7 +150,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_rateMatrixReviews_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").RateMatrixReviews(ctx, fc.Args["rateMatrixId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@rate").RateMatrixReviews(ctx, fc.Args["rateMatrixId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNRateMatrixReview2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixreviewᚐRateMatrixReviewᚄ),
 			},
@@ -164,7 +164,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_rateMatrixUsages_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").RateMatrixUsages(ctx, fc.Args["rateMatrixId"].(string), fc.Args["versionNumber"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@rate").RateMatrixUsages(ctx, fc.Args["rateMatrixId"].(string), fc.Args["versionNumber"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNRateMatrixUsage2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋportsᚋformulatemplateportsᚐMatrixUsageᚄ),
 			},
@@ -178,7 +178,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_rateQuotes_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").RateQuotes(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@rate").RateQuotes(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNRateQuoteConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuoteConnection),
 			},
@@ -465,7 +465,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverRateAgreement](ec, "RateAgreement").Lanes(ctx, obj, fc.Args["first"].(*int))
+					return gqlexec.Resolver[RateAgreementResolver](ec, "RateAgreement@rate").Lanes(ctx, obj, fc.Args["first"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNRateAgreementLane2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementLaneᚄ),
 			},
@@ -477,7 +477,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
-					return gqlexec.Resolver[resolverRateAgreement](ec, "RateAgreement").LaneCount(ctx, obj)
+					return gqlexec.Resolver[RateAgreementResolver](ec, "RateAgreement@rate").LaneCount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
@@ -489,7 +489,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
-					return gqlexec.Resolver[resolverRateAgreement](ec, "RateAgreement").LaneCountExact(ctx, obj)
+					return gqlexec.Resolver[RateAgreementResolver](ec, "RateAgreement@rate").LaneCountExact(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -1134,7 +1134,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrix)
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverRateMatrix](ec, "RateMatrix").Cells(ctx, obj, fc.Args["offset"].(*int), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[RateMatrixResolver](ec, "RateMatrix@rate").Cells(ctx, obj, fc.Args["offset"].(*int), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNRateMatrixCell2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixCellᚄ),
 			},
@@ -1837,7 +1837,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "RateMatrixDimension",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixversion.RateMatrixVersion)
-					return gqlexec.Resolver[resolverRateMatrixVersion](ec, "RateMatrixVersion").Dimensions(ctx, obj)
+					return gqlexec.Resolver[RateMatrixVersionResolver](ec, "RateMatrixVersion@rate").Dimensions(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNRateMatrixDimension2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixDimensionᚄ),
 			},
@@ -1862,7 +1862,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixversion.RateMatrixVersion)
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverRateMatrixVersion](ec, "RateMatrixVersion").Cells(ctx, obj, fc.Args["offset"].(*int), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[RateMatrixVersionResolver](ec, "RateMatrixVersion@rate").Cells(ctx, obj, fc.Args["offset"].(*int), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNRateMatrixCell2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixCellᚄ),
 			},
@@ -2387,14 +2387,14 @@ var Shard = &gqlexec.Shard{
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "RateAgreement", Check: func(r any) bool { _, ok := r.(resolverRateAgreement); return ok }},
-		{Root: "RateMatrix", Check: func(r any) bool { _, ok := r.(resolverRateMatrix); return ok }},
-		{Root: "RateMatrixVersion", Check: func(r any) bool { _, ok := r.(resolverRateMatrixVersion); return ok }},
+		{Root: "Query@rate", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "RateAgreement@rate", Check: func(r any) bool { _, ok := r.(RateAgreementResolver); return ok }},
+		{Root: "RateMatrix@rate", Check: func(r any) bool { _, ok := r.(RateMatrixResolver); return ok }},
+		{Root: "RateMatrixVersion@rate", Check: func(r any) bool { _, ok := r.(RateMatrixVersionResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	RateAgreements(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateAgreementConnection, error)
 	RateAgreement(ctx context.Context, id string) (*gqlmodel.RateAgreement, error)
 	RateZones(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateZoneConnection, error)
@@ -2407,17 +2407,17 @@ type resolverQuery interface {
 	RateQuotes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateQuoteConnection, error)
 }
 
-type resolverRateAgreement interface {
+type RateAgreementResolver interface {
 	Lanes(ctx context.Context, obj *gqlmodel.RateAgreement, first *int) ([]*gqlmodel.RateAgreementLane, error)
 	LaneCount(ctx context.Context, obj *gqlmodel.RateAgreement) (int, error)
 	LaneCountExact(ctx context.Context, obj *gqlmodel.RateAgreement) (bool, error)
 }
 
-type resolverRateMatrix interface {
+type RateMatrixResolver interface {
 	Cells(ctx context.Context, obj *gqlmodel.RateMatrix, offset *int, limit *int) ([]*gqlmodel.RateMatrixCell, error)
 }
 
-type resolverRateMatrixVersion interface {
+type RateMatrixVersionResolver interface {
 	Dimensions(ctx context.Context, obj *ratematrixversion.RateMatrixVersion) ([]*gqlmodel.RateMatrixDimension, error)
 	Cells(ctx context.Context, obj *ratematrixversion.RateMatrixVersion, offset *int, limit *int) ([]*gqlmodel.RateMatrixCell, error)
 }

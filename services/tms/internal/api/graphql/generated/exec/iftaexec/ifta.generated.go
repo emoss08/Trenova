@@ -56,7 +56,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.FleetMPG)
-					return gqlexec.Resolver[resolverIFTAFleetMPG](ec, "IFTAFleetMPG").Mpg(ctx, obj)
+					return gqlexec.Resolver[IFTAFleetMPGResolver](ec, "IFTAFleetMPG@ifta").Mpg(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -68,7 +68,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.FleetMPG)
-					return gqlexec.Resolver[resolverIFTAFleetMPG](ec, "IFTAFleetMPG").TotalMiles(ctx, obj)
+					return gqlexec.Resolver[IFTAFleetMPGResolver](ec, "IFTAFleetMPG@ifta").TotalMiles(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -80,7 +80,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.FleetMPG)
-					return gqlexec.Resolver[resolverIFTAFleetMPG](ec, "IFTAFleetMPG").TotalGallons(ctx, obj)
+					return gqlexec.Resolver[IFTAFleetMPGResolver](ec, "IFTAFleetMPG@ifta").TotalGallons(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -133,7 +133,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Jurisdiction)
-					return gqlexec.Resolver[resolverIFTAJurisdiction](ec, "IFTAJurisdiction").UsStateID(ctx, obj)
+					return gqlexec.Resolver[IFTAJurisdictionResolver](ec, "IFTAJurisdiction@ifta").UsStateID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -205,7 +205,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "UsState",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Jurisdiction)
-					return gqlexec.Resolver[resolverIFTAJurisdiction](ec, "IFTAJurisdiction").UsState(ctx, obj)
+					return gqlexec.Resolver[IFTAJurisdictionResolver](ec, "IFTAJurisdiction@ifta").UsState(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋusstateᚐUsState),
 			},
@@ -299,7 +299,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.JurisdictionMileageEntry)
-					return gqlexec.Resolver[resolverIFTAJurisdictionMileageEntry](ec, "IFTAJurisdictionMileageEntry").Miles(ctx, obj)
+					return gqlexec.Resolver[IFTAJurisdictionMileageEntryResolver](ec, "IFTAJurisdictionMileageEntry@ifta").Miles(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -330,7 +330,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.JurisdictionMileageEntry)
-					return gqlexec.Resolver[resolverIFTAJurisdictionMileageEntry](ec, "IFTAJurisdictionMileageEntry").ShipmentMoveID(ctx, obj)
+					return gqlexec.Resolver[IFTAJurisdictionMileageEntryResolver](ec, "IFTAJurisdictionMileageEntry@ifta").ShipmentMoveID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -350,7 +350,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.JurisdictionMileageEntry)
-					return gqlexec.Resolver[resolverIFTAJurisdictionMileageEntry](ec, "IFTAJurisdictionMileageEntry").CreatedByID(ctx, obj)
+					return gqlexec.Resolver[IFTAJurisdictionMileageEntryResolver](ec, "IFTAJurisdictionMileageEntry@ifta").CreatedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -392,7 +392,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "Tractor",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.JurisdictionMileageEntry)
-					return gqlexec.Resolver[resolverIFTAJurisdictionMileageEntry](ec, "IFTAJurisdictionMileageEntry").Tractor(ctx, obj)
+					return gqlexec.Resolver[IFTAJurisdictionMileageEntryResolver](ec, "IFTAJurisdictionMileageEntry@ifta").Tractor(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtractorᚐTractor),
 			},
@@ -405,7 +405,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "IFTAJurisdiction",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.JurisdictionMileageEntry)
-					return gqlexec.Resolver[resolverIFTAJurisdictionMileageEntry](ec, "IFTAJurisdictionMileageEntry").Jurisdiction(ctx, obj)
+					return gqlexec.Resolver[IFTAJurisdictionMileageEntryResolver](ec, "IFTAJurisdictionMileageEntry@ifta").Jurisdiction(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAJurisdiction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdiction),
 			},
@@ -505,7 +505,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Period)
-					return gqlexec.Resolver[resolverIFTAPeriod](ec, "IFTAPeriod").Key(ctx, obj)
+					return gqlexec.Resolver[IFTAPeriodResolver](ec, "IFTAPeriod@ifta").Key(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -517,7 +517,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Period)
-					return gqlexec.Resolver[resolverIFTAPeriod](ec, "IFTAPeriod").Label(ctx, obj)
+					return gqlexec.Resolver[IFTAPeriodResolver](ec, "IFTAPeriod@ifta").Label(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -529,7 +529,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Period)
-					return gqlexec.Resolver[resolverIFTAPeriod](ec, "IFTAPeriod").Start(ctx, obj)
+					return gqlexec.Resolver[IFTAPeriodResolver](ec, "IFTAPeriod@ifta").Start(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
 			},
@@ -541,7 +541,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Period)
-					return gqlexec.Resolver[resolverIFTAPeriod](ec, "IFTAPeriod").End(ctx, obj)
+					return gqlexec.Resolver[IFTAPeriodResolver](ec, "IFTAPeriod@ifta").End(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
 			},
@@ -553,7 +553,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Period)
-					return gqlexec.Resolver[resolverIFTAPeriod](ec, "IFTAPeriod").DueDate(ctx, obj)
+					return gqlexec.Resolver[IFTAPeriodResolver](ec, "IFTAPeriod@ifta").DueDate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
 			},
@@ -618,7 +618,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "IFTAPeriod",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").Period(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").Period(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐPeriod),
 			},
@@ -639,7 +639,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").AmendsReturnID(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").AmendsReturnID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -651,7 +651,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "IFTAReturn",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").AmendsReturn(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").AmendsReturn(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturn),
 			},
@@ -703,7 +703,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").TotalMiles(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").TotalMiles(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -715,7 +715,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").TotalTaxableMiles(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").TotalTaxableMiles(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -727,7 +727,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").TotalGallons(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").TotalGallons(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -739,7 +739,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").TotalTaxPaidGallons(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").TotalTaxPaidGallons(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -751,7 +751,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").NetTaxableGallons(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").NetTaxableGallons(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -763,7 +763,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").TaxDue(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").TaxDue(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -775,7 +775,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").SurchargeDue(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").SurchargeDue(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -787,7 +787,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").NetDue(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").NetDue(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -810,7 +810,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "IFTAFleetMPG",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").FleetMpgByFuelType(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").FleetMpgByFuelType(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAFleetMPG2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐFleetMPGᚄ),
 			},
@@ -822,7 +822,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").UnattributedMiles(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").UnattributedMiles(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -844,7 +844,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").NoTractorMiles(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").NoTractorMiles(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -867,7 +867,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "IFTAReturnProblem",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").Problems(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").Problems(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAReturnProblem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐProblemᚄ),
 			},
@@ -878,7 +878,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").ComputedAt(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").ComputedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -889,7 +889,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").FinalizedAt(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").FinalizedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -900,7 +900,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").FinalizedByID(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").FinalizedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -912,7 +912,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").FinalizedBy(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").FinalizedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -923,7 +923,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").FiledAt(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").FiledAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -934,7 +934,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").FiledByID(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").FiledByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -946,7 +946,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").FiledBy(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").FiledBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -966,7 +966,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").ReopenedAt(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").ReopenedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -977,7 +977,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").ReopenedByID(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").ReopenedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -999,7 +999,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "IFTAReturnLine",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Return)
-					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").Lines(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnResolver](ec, "IFTAReturn@ifta").Lines(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAReturnLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturnLineᚄ),
 			},
@@ -1179,7 +1179,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.ReturnLine)
-					return gqlexec.Resolver[resolverIFTAReturnLine](ec, "IFTAReturnLine").TotalMiles(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnLineResolver](ec, "IFTAReturnLine@ifta").TotalMiles(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1191,7 +1191,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.ReturnLine)
-					return gqlexec.Resolver[resolverIFTAReturnLine](ec, "IFTAReturnLine").TaxableMiles(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnLineResolver](ec, "IFTAReturnLine@ifta").TaxableMiles(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1203,7 +1203,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.ReturnLine)
-					return gqlexec.Resolver[resolverIFTAReturnLine](ec, "IFTAReturnLine").RouteMiles(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnLineResolver](ec, "IFTAReturnLine@ifta").RouteMiles(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1215,7 +1215,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.ReturnLine)
-					return gqlexec.Resolver[resolverIFTAReturnLine](ec, "IFTAReturnLine").ManualMiles(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnLineResolver](ec, "IFTAReturnLine@ifta").ManualMiles(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1227,7 +1227,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.ReturnLine)
-					return gqlexec.Resolver[resolverIFTAReturnLine](ec, "IFTAReturnLine").LoadedMiles(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnLineResolver](ec, "IFTAReturnLine@ifta").LoadedMiles(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1239,7 +1239,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.ReturnLine)
-					return gqlexec.Resolver[resolverIFTAReturnLine](ec, "IFTAReturnLine").EmptyMiles(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnLineResolver](ec, "IFTAReturnLine@ifta").EmptyMiles(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1251,7 +1251,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.ReturnLine)
-					return gqlexec.Resolver[resolverIFTAReturnLine](ec, "IFTAReturnLine").TaxPaidGallons(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnLineResolver](ec, "IFTAReturnLine@ifta").TaxPaidGallons(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1263,7 +1263,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.ReturnLine)
-					return gqlexec.Resolver[resolverIFTAReturnLine](ec, "IFTAReturnLine").TaxPaidGallonsRaw(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnLineResolver](ec, "IFTAReturnLine@ifta").TaxPaidGallonsRaw(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1285,7 +1285,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.ReturnLine)
-					return gqlexec.Resolver[resolverIFTAReturnLine](ec, "IFTAReturnLine").TaxableGallons(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnLineResolver](ec, "IFTAReturnLine@ifta").TaxableGallons(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1297,7 +1297,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.ReturnLine)
-					return gqlexec.Resolver[resolverIFTAReturnLine](ec, "IFTAReturnLine").NetTaxableGallons(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnLineResolver](ec, "IFTAReturnLine@ifta").NetTaxableGallons(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1308,7 +1308,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.ReturnLine)
-					return gqlexec.Resolver[resolverIFTAReturnLine](ec, "IFTAReturnLine").RatePerGallon(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnLineResolver](ec, "IFTAReturnLine@ifta").RatePerGallon(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -1319,7 +1319,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.ReturnLine)
-					return gqlexec.Resolver[resolverIFTAReturnLine](ec, "IFTAReturnLine").SurchargeRatePerGallon(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnLineResolver](ec, "IFTAReturnLine@ifta").SurchargeRatePerGallon(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -1341,7 +1341,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.ReturnLine)
-					return gqlexec.Resolver[resolverIFTAReturnLine](ec, "IFTAReturnLine").TaxDue(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnLineResolver](ec, "IFTAReturnLine@ifta").TaxDue(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1353,7 +1353,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.ReturnLine)
-					return gqlexec.Resolver[resolverIFTAReturnLine](ec, "IFTAReturnLine").SurchargeDue(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnLineResolver](ec, "IFTAReturnLine@ifta").SurchargeDue(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1365,7 +1365,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.ReturnLine)
-					return gqlexec.Resolver[resolverIFTAReturnLine](ec, "IFTAReturnLine").LineTotal(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnLineResolver](ec, "IFTAReturnLine@ifta").LineTotal(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1408,7 +1408,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "IFTAJurisdiction",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.ReturnLine)
-					return gqlexec.Resolver[resolverIFTAReturnLine](ec, "IFTAReturnLine").Jurisdiction(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnLineResolver](ec, "IFTAReturnLine@ifta").Jurisdiction(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAJurisdiction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdiction),
 			},
@@ -1450,7 +1450,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Problem)
-					return gqlexec.Resolver[resolverIFTAReturnProblem](ec, "IFTAReturnProblem").FuelType(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnProblemResolver](ec, "IFTAReturnProblem@ifta").FuelType(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOIFTAFuelType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐIFTAFuelType),
 			},
@@ -1461,7 +1461,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.Problem)
-					return gqlexec.Resolver[resolverIFTAReturnProblem](ec, "IFTAReturnProblem").Amount(ctx, obj)
+					return gqlexec.Resolver[IFTAReturnProblemResolver](ec, "IFTAReturnProblem@ifta").Amount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -1525,7 +1525,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.TaxRate)
-					return gqlexec.Resolver[resolverIFTATaxRate](ec, "IFTATaxRate").RatePerGallon(ctx, obj)
+					return gqlexec.Resolver[IFTATaxRateResolver](ec, "IFTATaxRate@ifta").RatePerGallon(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1536,7 +1536,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.TaxRate)
-					return gqlexec.Resolver[resolverIFTATaxRate](ec, "IFTATaxRate").SurchargeRatePerGallon(ctx, obj)
+					return gqlexec.Resolver[IFTATaxRateResolver](ec, "IFTATaxRate@ifta").SurchargeRatePerGallon(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -1597,7 +1597,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "IFTAJurisdiction",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ifta.TaxRate)
-					return gqlexec.Resolver[resolverIFTATaxRate](ec, "IFTATaxRate").Jurisdiction(ctx, obj)
+					return gqlexec.Resolver[IFTATaxRateResolver](ec, "IFTATaxRate@ifta").Jurisdiction(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAJurisdiction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdiction),
 			},
@@ -1678,7 +1678,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_upsertIftaTaxRates_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpsertIFTATaxRates(ctx, fc.Args["input"].([]*gqlmodel.IFTATaxRateInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@ifta").UpsertIFTATaxRates(ctx, fc.Args["input"].([]*gqlmodel.IFTATaxRateInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTATaxRate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐTaxRateᚄ),
 			},
@@ -1690,7 +1690,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteIftaTaxRate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteIFTATaxRate(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@ifta").DeleteIFTATaxRate(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -1703,7 +1703,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createIftaMileageEntry_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateIFTAMileageEntry(ctx, fc.Args["input"].(gqlmodel.IFTAMileageEntryInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@ifta").CreateIFTAMileageEntry(ctx, fc.Args["input"].(gqlmodel.IFTAMileageEntryInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAJurisdictionMileageEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdictionMileageEntry),
 			},
@@ -1716,7 +1716,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateIftaMileageEntry_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateIFTAMileageEntry(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.IFTAMileageEntryInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@ifta").UpdateIFTAMileageEntry(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.IFTAMileageEntryInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAJurisdictionMileageEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdictionMileageEntry),
 			},
@@ -1728,7 +1728,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteIftaMileageEntry_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteIFTAMileageEntry(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@ifta").DeleteIFTAMileageEntry(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -1741,7 +1741,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_generateIftaReturn_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").GenerateIFTAReturn(ctx, fc.Args["period"].(gqlmodel.IFTAPeriodInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@ifta").GenerateIFTAReturn(ctx, fc.Args["period"].(gqlmodel.IFTAPeriodInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturn),
 			},
@@ -1754,7 +1754,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_recomputeIftaReturn_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecomputeIFTAReturn(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@ifta").RecomputeIFTAReturn(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturn),
 			},
@@ -1767,7 +1767,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_finalizeIftaReturn_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").FinalizeIFTAReturn(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@ifta").FinalizeIFTAReturn(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturn),
 			},
@@ -1780,7 +1780,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_reopenIftaReturn_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReopenIFTAReturn(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["reason"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@ifta").ReopenIFTAReturn(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["reason"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturn),
 			},
@@ -1793,7 +1793,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_markIftaReturnFiled_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").MarkIFTAReturnFiled(ctx, fc.Args["input"].(gqlmodel.MarkIFTAReturnFiledInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@ifta").MarkIFTAReturnFiled(ctx, fc.Args["input"].(gqlmodel.MarkIFTAReturnFiledInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturn),
 			},
@@ -1806,7 +1806,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_amendIftaReturn_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AmendIFTAReturn(ctx, fc.Args["id"].(string), fc.Args["reason"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@ifta").AmendIFTAReturn(ctx, fc.Args["id"].(string), fc.Args["reason"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturn),
 			},
@@ -1818,7 +1818,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteIftaReturn_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteIFTAReturn(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@ifta").DeleteIFTAReturn(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -1831,7 +1831,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_recalculateMoveJurisdictionMiles_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecalculateMoveJurisdictionMiles(ctx, fc.Args["shipmentMoveId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@ifta").RecalculateMoveJurisdictionMiles(ctx, fc.Args["shipmentMoveId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentMoveJurisdictionMile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐShipmentMoveJurisdictionMileᚄ),
 			},
@@ -1844,7 +1844,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_backfillJurisdictionMiles_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BackfillJurisdictionMiles(ctx, fc.Args["input"].(gqlmodel.BackfillJurisdictionMilesInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@ifta").BackfillJurisdictionMiles(ctx, fc.Args["input"].(gqlmodel.BackfillJurisdictionMilesInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNJurisdictionMilesBackfillResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionMilesBackfillResult),
 			},
@@ -1860,7 +1860,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_iftaJurisdictions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").IFTAJurisdictions(ctx, fc.Args["membersOnly"].(*bool), fc.Args["countryCode"].(*string), fc.Args["activeOnly"].(*bool))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@ifta").IFTAJurisdictions(ctx, fc.Args["membersOnly"].(*bool), fc.Args["countryCode"].(*string), fc.Args["activeOnly"].(*bool))
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAJurisdiction2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdictionᚄ),
 			},
@@ -1874,7 +1874,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_iftaTaxRates_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").IFTATaxRates(ctx, fc.Args["input"].(gqlmodel.IFTATaxRatesInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@ifta").IFTATaxRates(ctx, fc.Args["input"].(gqlmodel.IFTATaxRatesInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTATaxRateConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐIFTATaxRateConnection),
 			},
@@ -1888,7 +1888,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_iftaMileageEntries_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").IFTAMileageEntries(ctx, fc.Args["input"].(gqlmodel.IFTAMileageEntriesInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@ifta").IFTAMileageEntries(ctx, fc.Args["input"].(gqlmodel.IFTAMileageEntriesInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAJurisdictionMileageEntryConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐIFTAJurisdictionMileageEntryConnection),
 			},
@@ -1902,7 +1902,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_iftaMileageEntry_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").IFTAMileageEntry(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@ifta").IFTAMileageEntry(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAJurisdictionMileageEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdictionMileageEntry),
 			},
@@ -1916,7 +1916,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_iftaReturns_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").IFTAReturns(ctx, fc.Args["input"].(gqlmodel.IFTAReturnsInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@ifta").IFTAReturns(ctx, fc.Args["input"].(gqlmodel.IFTAReturnsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAReturnConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐIFTAReturnConnection),
 			},
@@ -1930,7 +1930,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_iftaReturn_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").IFTAReturn(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@ifta").IFTAReturn(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturn),
 			},
@@ -1943,7 +1943,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_iftaReturnForPeriod_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").IFTAReturnForPeriod(ctx, fc.Args["period"].(gqlmodel.IFTAPeriodInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@ifta").IFTAReturnForPeriod(ctx, fc.Args["period"].(gqlmodel.IFTAPeriodInput))
 				},
 				Marshal: gqlexec.Marshal(marshalOIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturn),
 			},
@@ -1957,7 +1957,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_iftaPeriod_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").IFTAPeriod(ctx, fc.Args["year"].(int), fc.Args["quarter"].(int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@ifta").IFTAPeriod(ctx, fc.Args["year"].(int), fc.Args["quarter"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐPeriod),
 			},
@@ -1969,7 +1969,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "IFTAPeriod",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").IFTACurrentPeriod(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@ifta").IFTACurrentPeriod(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐPeriod),
 			},
@@ -1986,31 +1986,26 @@ var Shard = &gqlexec.Shard{
 		{Name: "MarkIFTAReturnFiledInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputMarkIFTAReturnFiledInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "IFTAFleetMPG", Check: func(r any) bool { _, ok := r.(resolverIFTAFleetMPG); return ok }},
-		{Root: "IFTAJurisdiction", Check: func(r any) bool { _, ok := r.(resolverIFTAJurisdiction); return ok }},
-		{Root: "IFTAJurisdictionMileageEntry", Check: func(r any) bool { _, ok := r.(resolverIFTAJurisdictionMileageEntry); return ok }},
-		{Root: "IFTAPeriod", Check: func(r any) bool { _, ok := r.(resolverIFTAPeriod); return ok }},
-		{Root: "IFTAReturn", Check: func(r any) bool { _, ok := r.(resolverIFTAReturn); return ok }},
-		{Root: "IFTAReturnLine", Check: func(r any) bool { _, ok := r.(resolverIFTAReturnLine); return ok }},
-		{Root: "IFTAReturnProblem", Check: func(r any) bool { _, ok := r.(resolverIFTAReturnProblem); return ok }},
-		{Root: "IFTATaxRate", Check: func(r any) bool { _, ok := r.(resolverIFTATaxRate); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "IFTAFleetMPG@ifta", Check: func(r any) bool { _, ok := r.(IFTAFleetMPGResolver); return ok }},
+		{Root: "IFTAJurisdictionMileageEntry@ifta", Check: func(r any) bool { _, ok := r.(IFTAJurisdictionMileageEntryResolver); return ok }},
+		{Root: "IFTAJurisdiction@ifta", Check: func(r any) bool { _, ok := r.(IFTAJurisdictionResolver); return ok }},
+		{Root: "IFTAPeriod@ifta", Check: func(r any) bool { _, ok := r.(IFTAPeriodResolver); return ok }},
+		{Root: "IFTAReturnLine@ifta", Check: func(r any) bool { _, ok := r.(IFTAReturnLineResolver); return ok }},
+		{Root: "IFTAReturnProblem@ifta", Check: func(r any) bool { _, ok := r.(IFTAReturnProblemResolver); return ok }},
+		{Root: "IFTAReturn@ifta", Check: func(r any) bool { _, ok := r.(IFTAReturnResolver); return ok }},
+		{Root: "IFTATaxRate@ifta", Check: func(r any) bool { _, ok := r.(IFTATaxRateResolver); return ok }},
+		{Root: "Mutation@ifta", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@ifta", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverIFTAFleetMPG interface {
+type IFTAFleetMPGResolver interface {
 	Mpg(ctx context.Context, obj *ifta.FleetMPG) (*string, error)
 	TotalMiles(ctx context.Context, obj *ifta.FleetMPG) (string, error)
 	TotalGallons(ctx context.Context, obj *ifta.FleetMPG) (string, error)
 }
 
-type resolverIFTAJurisdiction interface {
-	UsStateID(ctx context.Context, obj *ifta.Jurisdiction) (*string, error)
-	UsState(ctx context.Context, obj *ifta.Jurisdiction) (*usstate.UsState, error)
-}
-
-type resolverIFTAJurisdictionMileageEntry interface {
+type IFTAJurisdictionMileageEntryResolver interface {
 	Miles(ctx context.Context, obj *ifta.JurisdictionMileageEntry) (string, error)
 	ShipmentMoveID(ctx context.Context, obj *ifta.JurisdictionMileageEntry) (*string, error)
 	CreatedByID(ctx context.Context, obj *ifta.JurisdictionMileageEntry) (*string, error)
@@ -2018,7 +2013,12 @@ type resolverIFTAJurisdictionMileageEntry interface {
 	Jurisdiction(ctx context.Context, obj *ifta.JurisdictionMileageEntry) (*ifta.Jurisdiction, error)
 }
 
-type resolverIFTAPeriod interface {
+type IFTAJurisdictionResolver interface {
+	UsStateID(ctx context.Context, obj *ifta.Jurisdiction) (*string, error)
+	UsState(ctx context.Context, obj *ifta.Jurisdiction) (*usstate.UsState, error)
+}
+
+type IFTAPeriodResolver interface {
 	Key(ctx context.Context, obj *ifta.Period) (string, error)
 	Label(ctx context.Context, obj *ifta.Period) (string, error)
 	Start(ctx context.Context, obj *ifta.Period) (int, error)
@@ -2026,7 +2026,31 @@ type resolverIFTAPeriod interface {
 	DueDate(ctx context.Context, obj *ifta.Period) (int, error)
 }
 
-type resolverIFTAReturn interface {
+type IFTAReturnLineResolver interface {
+	TotalMiles(ctx context.Context, obj *ifta.ReturnLine) (string, error)
+	TaxableMiles(ctx context.Context, obj *ifta.ReturnLine) (string, error)
+	RouteMiles(ctx context.Context, obj *ifta.ReturnLine) (string, error)
+	ManualMiles(ctx context.Context, obj *ifta.ReturnLine) (string, error)
+	LoadedMiles(ctx context.Context, obj *ifta.ReturnLine) (string, error)
+	EmptyMiles(ctx context.Context, obj *ifta.ReturnLine) (string, error)
+	TaxPaidGallons(ctx context.Context, obj *ifta.ReturnLine) (string, error)
+	TaxPaidGallonsRaw(ctx context.Context, obj *ifta.ReturnLine) (string, error)
+	TaxableGallons(ctx context.Context, obj *ifta.ReturnLine) (string, error)
+	NetTaxableGallons(ctx context.Context, obj *ifta.ReturnLine) (string, error)
+	RatePerGallon(ctx context.Context, obj *ifta.ReturnLine) (*string, error)
+	SurchargeRatePerGallon(ctx context.Context, obj *ifta.ReturnLine) (*string, error)
+	TaxDue(ctx context.Context, obj *ifta.ReturnLine) (string, error)
+	SurchargeDue(ctx context.Context, obj *ifta.ReturnLine) (string, error)
+	LineTotal(ctx context.Context, obj *ifta.ReturnLine) (string, error)
+	Jurisdiction(ctx context.Context, obj *ifta.ReturnLine) (*ifta.Jurisdiction, error)
+}
+
+type IFTAReturnProblemResolver interface {
+	FuelType(ctx context.Context, obj *ifta.Problem) (*domaintypes.IFTAFuelType, error)
+	Amount(ctx context.Context, obj *ifta.Problem) (*string, error)
+}
+
+type IFTAReturnResolver interface {
 	Period(ctx context.Context, obj *ifta.Return) (*ifta.Period, error)
 	AmendsReturnID(ctx context.Context, obj *ifta.Return) (*string, error)
 	AmendsReturn(ctx context.Context, obj *ifta.Return) (*ifta.Return, error)
@@ -2054,37 +2078,13 @@ type resolverIFTAReturn interface {
 	Lines(ctx context.Context, obj *ifta.Return) ([]*ifta.ReturnLine, error)
 }
 
-type resolverIFTAReturnLine interface {
-	TotalMiles(ctx context.Context, obj *ifta.ReturnLine) (string, error)
-	TaxableMiles(ctx context.Context, obj *ifta.ReturnLine) (string, error)
-	RouteMiles(ctx context.Context, obj *ifta.ReturnLine) (string, error)
-	ManualMiles(ctx context.Context, obj *ifta.ReturnLine) (string, error)
-	LoadedMiles(ctx context.Context, obj *ifta.ReturnLine) (string, error)
-	EmptyMiles(ctx context.Context, obj *ifta.ReturnLine) (string, error)
-	TaxPaidGallons(ctx context.Context, obj *ifta.ReturnLine) (string, error)
-	TaxPaidGallonsRaw(ctx context.Context, obj *ifta.ReturnLine) (string, error)
-	TaxableGallons(ctx context.Context, obj *ifta.ReturnLine) (string, error)
-	NetTaxableGallons(ctx context.Context, obj *ifta.ReturnLine) (string, error)
-	RatePerGallon(ctx context.Context, obj *ifta.ReturnLine) (*string, error)
-	SurchargeRatePerGallon(ctx context.Context, obj *ifta.ReturnLine) (*string, error)
-	TaxDue(ctx context.Context, obj *ifta.ReturnLine) (string, error)
-	SurchargeDue(ctx context.Context, obj *ifta.ReturnLine) (string, error)
-	LineTotal(ctx context.Context, obj *ifta.ReturnLine) (string, error)
-	Jurisdiction(ctx context.Context, obj *ifta.ReturnLine) (*ifta.Jurisdiction, error)
-}
-
-type resolverIFTAReturnProblem interface {
-	FuelType(ctx context.Context, obj *ifta.Problem) (*domaintypes.IFTAFuelType, error)
-	Amount(ctx context.Context, obj *ifta.Problem) (*string, error)
-}
-
-type resolverIFTATaxRate interface {
+type IFTATaxRateResolver interface {
 	RatePerGallon(ctx context.Context, obj *ifta.TaxRate) (string, error)
 	SurchargeRatePerGallon(ctx context.Context, obj *ifta.TaxRate) (*string, error)
 	Jurisdiction(ctx context.Context, obj *ifta.TaxRate) (*ifta.Jurisdiction, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	UpsertIFTATaxRates(ctx context.Context, input []*gqlmodel.IFTATaxRateInput) ([]*ifta.TaxRate, error)
 	DeleteIFTATaxRate(ctx context.Context, id string, version int) (bool, error)
 	CreateIFTAMileageEntry(ctx context.Context, input gqlmodel.IFTAMileageEntryInput) (*ifta.JurisdictionMileageEntry, error)
@@ -2101,7 +2101,7 @@ type resolverMutation interface {
 	BackfillJurisdictionMiles(ctx context.Context, input gqlmodel.BackfillJurisdictionMilesInput) (*gqlmodel.JurisdictionMilesBackfillResult, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	IFTAJurisdictions(ctx context.Context, membersOnly *bool, countryCode *string, activeOnly *bool) ([]*ifta.Jurisdiction, error)
 	IFTATaxRates(ctx context.Context, input gqlmodel.IFTATaxRatesInput) (*gqlmodel.IFTATaxRateConnection, error)
 	IFTAMileageEntries(ctx context.Context, input gqlmodel.IFTAMileageEntriesInput) (*gqlmodel.IFTAJurisdictionMileageEntryConnection, error)

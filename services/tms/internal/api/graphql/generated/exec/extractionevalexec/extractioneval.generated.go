@@ -86,7 +86,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aicorrection.Correction)
-					return gqlexec.Resolver[resolverAICorrection](ec, "AICorrection").Task(ctx, obj)
+					return gqlexec.Resolver[AICorrectionResolver](ec, "AICorrection@extractioneval").Task(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -98,7 +98,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aicorrection.Correction)
-					return gqlexec.Resolver[resolverAICorrection](ec, "AICorrection").SourceType(ctx, obj)
+					return gqlexec.Resolver[AICorrectionResolver](ec, "AICorrection@extractioneval").SourceType(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -129,7 +129,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aicorrection.Correction)
-					return gqlexec.Resolver[resolverAICorrection](ec, "AICorrection").SubjectType(ctx, obj)
+					return gqlexec.Resolver[AICorrectionResolver](ec, "AICorrection@extractioneval").SubjectType(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -303,7 +303,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aicorrection.Correction)
-					return gqlexec.Resolver[resolverAICorrection](ec, "AICorrection").Accuracy(ctx, obj)
+					return gqlexec.Resolver[AICorrectionResolver](ec, "AICorrection@extractioneval").Accuracy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
 			},
@@ -714,7 +714,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*extractioneval.ExtractionCase)
-					return gqlexec.Resolver[resolverExtractionEvalCase](ec, "ExtractionEvalCase").Task(ctx, obj)
+					return gqlexec.Resolver[ExtractionEvalCaseResolver](ec, "ExtractionEvalCase@extractioneval").Task(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -1332,7 +1332,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*extractioneval.ExtractionResult)
-					return gqlexec.Resolver[resolverExtractionEvalResult](ec, "ExtractionEvalResult").CostUsd(ctx, obj)
+					return gqlexec.Resolver[ExtractionEvalResultResolver](ec, "ExtractionEvalResult@extractioneval").CostUsd(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1500,7 +1500,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*extractioneval.ExtractionRun)
-					return gqlexec.Resolver[resolverExtractionEvalRun](ec, "ExtractionEvalRun").Task(ctx, obj)
+					return gqlexec.Resolver[ExtractionEvalRunResolver](ec, "ExtractionEvalRun@extractioneval").Task(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -1693,7 +1693,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*extractioneval.ExtractionRun)
-					return gqlexec.Resolver[resolverExtractionEvalRun](ec, "ExtractionEvalRun").CostUsd(ctx, obj)
+					return gqlexec.Resolver[ExtractionEvalRunResolver](ec, "ExtractionEvalRun@extractioneval").CostUsd(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -2152,7 +2152,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "ExtractionSnapshotField",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aicorrection.Snapshot)
-					return gqlexec.Resolver[resolverExtractionSnapshot](ec, "ExtractionSnapshot").Fields(ctx, obj)
+					return gqlexec.Resolver[ExtractionSnapshotResolver](ec, "ExtractionSnapshot@extractioneval").Fields(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionSnapshotField2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐExtractionSnapshotFieldᚄ),
 			},
@@ -2383,7 +2383,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_promoteAICorrection_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PromoteAICorrection(ctx, fc.Args["input"].(gqlmodel.PromoteAICorrectionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@extractioneval").PromoteAICorrection(ctx, fc.Args["input"].(gqlmodel.PromoteAICorrectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionEvalCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionevalᚐExtractionCase),
 			},
@@ -2396,7 +2396,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateExtractionEvalCase_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateExtractionEvalCase(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.UpdateExtractionEvalCaseInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@extractioneval").UpdateExtractionEvalCase(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.UpdateExtractionEvalCaseInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionEvalCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionevalᚐExtractionCase),
 			},
@@ -2408,7 +2408,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteExtractionEvalCase_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteExtractionEvalCase(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@extractioneval").DeleteExtractionEvalCase(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -2421,7 +2421,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_startExtractionEvalRun_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").StartExtractionEvalRun(ctx, fc.Args["input"].(gqlmodel.StartExtractionEvalRunInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@extractioneval").StartExtractionEvalRun(ctx, fc.Args["input"].(gqlmodel.StartExtractionEvalRunInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionEvalRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionevalᚐExtractionRun),
 			},
@@ -2434,7 +2434,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_cancelExtractionEvalRun_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CancelExtractionEvalRun(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@extractioneval").CancelExtractionEvalRun(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionEvalRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionevalᚐExtractionRun),
 			},
@@ -2447,7 +2447,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_refreezeExtractionEvalCases_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RefreezeExtractionEvalCases(ctx, fc.Args["input"].(gqlmodel.RefreezeExtractionEvalCasesInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@extractioneval").RefreezeExtractionEvalCases(ctx, fc.Args["input"].(gqlmodel.RefreezeExtractionEvalCasesInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionEvalRefreeze2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionevalportsᚐRefreezeExtractionEvalCasesResult),
 			},
@@ -2463,7 +2463,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_extractionAccuracy_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ExtractionAccuracy(ctx, fc.Args["windowDays"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@extractioneval").ExtractionAccuracy(ctx, fc.Args["windowDays"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionAccuracy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionevalportsᚐExtractionAccuracy),
 			},
@@ -2475,7 +2475,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "ExtractionProviderTrends",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ExtractionProviderTrends(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@extractioneval").ExtractionProviderTrends(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionProviderTrends2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionevalportsᚐExtractionProviderTrends),
 			},
@@ -2489,7 +2489,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_aiCorrections_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiCorrections(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@extractioneval").AiCorrections(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAICorrectionConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAICorrectionConnection),
 			},
@@ -2502,7 +2502,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_aiCorrection_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiCorrection(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@extractioneval").AiCorrection(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOAICorrection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaicorrectionᚐCorrection),
 			},
@@ -2516,7 +2516,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_extractionEvalCases_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ExtractionEvalCases(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@extractioneval").ExtractionEvalCases(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionEvalCaseConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐExtractionEvalCaseConnection),
 			},
@@ -2529,7 +2529,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_extractionEvalCase_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ExtractionEvalCase(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@extractioneval").ExtractionEvalCase(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOExtractionEvalCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionevalᚐExtractionCase),
 			},
@@ -2543,7 +2543,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_extractionEvalRuns_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ExtractionEvalRuns(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@extractioneval").ExtractionEvalRuns(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionEvalRunConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐExtractionEvalRunConnection),
 			},
@@ -2556,7 +2556,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_extractionEvalRun_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ExtractionEvalRun(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@extractioneval").ExtractionEvalRun(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOExtractionEvalRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionevalᚐExtractionRun),
 			},
@@ -2570,7 +2570,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_extractionEvalResults_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ExtractionEvalResults(ctx, fc.Args["runId"].(string), fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@extractioneval").ExtractionEvalResults(ctx, fc.Args["runId"].(string), fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionEvalResultConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐExtractionEvalResultConnection),
 			},
@@ -2583,7 +2583,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_extractionEvalResult_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ExtractionEvalResult(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@extractioneval").ExtractionEvalResult(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOExtractionEvalResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionevalᚐExtractionResult),
 			},
@@ -2594,7 +2594,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "ExtractionEvalRefreezeProgress",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ExtractionEvalRefreeze(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@extractioneval").ExtractionEvalRefreeze(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalOExtractionEvalRefreezeProgress2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionevalportsᚐExtractionEvalRefreezeProgress),
 			},
@@ -2607,41 +2607,41 @@ var Shard = &gqlexec.Shard{
 		{Name: "UpdateExtractionEvalCaseInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateExtractionEvalCaseInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "AICorrection", Check: func(r any) bool { _, ok := r.(resolverAICorrection); return ok }},
-		{Root: "ExtractionEvalCase", Check: func(r any) bool { _, ok := r.(resolverExtractionEvalCase); return ok }},
-		{Root: "ExtractionEvalResult", Check: func(r any) bool { _, ok := r.(resolverExtractionEvalResult); return ok }},
-		{Root: "ExtractionEvalRun", Check: func(r any) bool { _, ok := r.(resolverExtractionEvalRun); return ok }},
-		{Root: "ExtractionSnapshot", Check: func(r any) bool { _, ok := r.(resolverExtractionSnapshot); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "AICorrection@extractioneval", Check: func(r any) bool { _, ok := r.(AICorrectionResolver); return ok }},
+		{Root: "ExtractionEvalCase@extractioneval", Check: func(r any) bool { _, ok := r.(ExtractionEvalCaseResolver); return ok }},
+		{Root: "ExtractionEvalResult@extractioneval", Check: func(r any) bool { _, ok := r.(ExtractionEvalResultResolver); return ok }},
+		{Root: "ExtractionEvalRun@extractioneval", Check: func(r any) bool { _, ok := r.(ExtractionEvalRunResolver); return ok }},
+		{Root: "ExtractionSnapshot@extractioneval", Check: func(r any) bool { _, ok := r.(ExtractionSnapshotResolver); return ok }},
+		{Root: "Mutation@extractioneval", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@extractioneval", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverAICorrection interface {
+type AICorrectionResolver interface {
 	Task(ctx context.Context, obj *aicorrection.Correction) (string, error)
 	SourceType(ctx context.Context, obj *aicorrection.Correction) (string, error)
 	SubjectType(ctx context.Context, obj *aicorrection.Correction) (string, error)
 	Accuracy(ctx context.Context, obj *aicorrection.Correction) (float64, error)
 }
 
-type resolverExtractionEvalCase interface {
+type ExtractionEvalCaseResolver interface {
 	Task(ctx context.Context, obj *extractioneval.ExtractionCase) (string, error)
 }
 
-type resolverExtractionEvalResult interface {
+type ExtractionEvalResultResolver interface {
 	CostUsd(ctx context.Context, obj *extractioneval.ExtractionResult) (string, error)
 }
 
-type resolverExtractionEvalRun interface {
+type ExtractionEvalRunResolver interface {
 	Task(ctx context.Context, obj *extractioneval.ExtractionRun) (string, error)
 	CostUsd(ctx context.Context, obj *extractioneval.ExtractionRun) (string, error)
 }
 
-type resolverExtractionSnapshot interface {
+type ExtractionSnapshotResolver interface {
 	Fields(ctx context.Context, obj *aicorrection.Snapshot) ([]*gqlmodel.ExtractionSnapshotField, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	PromoteAICorrection(ctx context.Context, input gqlmodel.PromoteAICorrectionInput) (*extractioneval.ExtractionCase, error)
 	UpdateExtractionEvalCase(ctx context.Context, id string, input gqlmodel.UpdateExtractionEvalCaseInput) (*extractioneval.ExtractionCase, error)
 	DeleteExtractionEvalCase(ctx context.Context, id string) (bool, error)
@@ -2650,7 +2650,7 @@ type resolverMutation interface {
 	RefreezeExtractionEvalCases(ctx context.Context, input gqlmodel.RefreezeExtractionEvalCasesInput) (*extractionevalports.RefreezeExtractionEvalCasesResult, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	ExtractionAccuracy(ctx context.Context, windowDays *int) (*extractionevalports.ExtractionAccuracy, error)
 	ExtractionProviderTrends(ctx context.Context) (*extractionevalports.ExtractionProviderTrends, error)
 	AiCorrections(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AICorrectionConnection, error)

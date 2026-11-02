@@ -940,18 +940,18 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_deskBoardCard_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DeskBoardCard(ctx, fc.Args["threadId"].(string), fc.Args["artifactId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@deskboard").DeskBoardCard(ctx, fc.Args["threadId"].(string), fc.Args["artifactId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDeskBoardCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskBoardCard),
 			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Query@deskboard", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	DeskBoardCard(ctx context.Context, threadID string, artifactID string) (*gqlmodel.DeskBoardCard, error)
 }
 

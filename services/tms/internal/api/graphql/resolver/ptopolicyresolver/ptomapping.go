@@ -140,7 +140,7 @@ func ptoPolicyCursorConnectionToModel(
 ) (*gqlmodel.PTOPolicyConnection, error) {
 	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
-		result,
+		result.EdgeCursors,
 		func(node *pto.PTOPolicy, cursor string) *gqlmodel.PTOPolicyEdge {
 			return &gqlmodel.PTOPolicyEdge{Node: node, Cursor: cursor}
 		},
@@ -168,7 +168,7 @@ func ptoLedgerCursorConnectionToModel(
 ) (*gqlmodel.WorkerPTOLedgerConnection, error) {
 	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
-		result,
+		result.EdgeCursors,
 		func(node *pto.WorkerPTOLedgerEntry, cursor string) *gqlmodel.WorkerPTOLedgerEdge {
 			return &gqlmodel.WorkerPTOLedgerEdge{Node: node, Cursor: cursor}
 		},

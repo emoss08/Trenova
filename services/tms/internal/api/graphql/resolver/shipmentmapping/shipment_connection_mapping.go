@@ -15,7 +15,7 @@ func ShipmentConnectionToModel(
 ) (*gqlmodel.ShipmentConnection, error) {
 	edges, endCursor, err := gqlconnection.MappedEntityCursorEdges(
 		result.Items,
-		result,
+		result.EdgeCursors,
 		func(entity *shipmentdomain.Shipment) (*gqlmodel.Shipment, error) {
 			return ShipmentToModel(ctx, entity)
 		},
@@ -45,7 +45,7 @@ func ShipmentCommentConnectionToModel(
 ) (*gqlmodel.ShipmentCommentConnection, error) {
 	edges, endCursor, err := gqlconnection.MappedEntityCursorEdges(
 		result.Items,
-		result,
+		result.EdgeCursors,
 		ShipmentCommentToModel,
 		func(node *gqlmodel.ShipmentComment, cursor string) *gqlmodel.ShipmentCommentEdge {
 			return &gqlmodel.ShipmentCommentEdge{

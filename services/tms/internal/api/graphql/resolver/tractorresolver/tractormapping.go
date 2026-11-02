@@ -104,7 +104,7 @@ func tractorConnectionToModel(
 ) (*gqlmodel.TractorConnection, error) {
 	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
-		result,
+		result.EdgeCursors,
 		func(node *tractor.Tractor, cursor string) *gqlmodel.TractorEdge {
 			return &gqlmodel.TractorEdge{
 				Node:   node,

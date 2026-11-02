@@ -1748,7 +1748,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "AccountingBriefing",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AccountingBriefing(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@accountsreceivable").AccountingBriefing(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNAccountingBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaccountingbriefportsᚐAccountingBriefing),
 			},
@@ -1762,7 +1762,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_arAgingSummary_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ArAgingSummary(ctx, fc.Args["asOfDate"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@accountsreceivable").ArAgingSummary(ctx, fc.Args["asOfDate"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNARAgingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARAgingSummary),
 			},
@@ -1776,7 +1776,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_arOpenItems_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ArOpenItems(ctx, fc.Args["customerId"].(*string), fc.Args["asOfDate"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@accountsreceivable").ArOpenItems(ctx, fc.Args["customerId"].(*string), fc.Args["asOfDate"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNAROpenItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐAROpenItemᚄ),
 			},
@@ -1790,7 +1790,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_arCustomerLedger_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ArCustomerLedger(ctx, fc.Args["customerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@accountsreceivable").ArCustomerLedger(ctx, fc.Args["customerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNARLedgerEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARLedgerEntryᚄ),
 			},
@@ -1804,7 +1804,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_arCustomerStatement_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ArCustomerStatement(ctx, fc.Args["customerId"].(string), fc.Args["startDate"].(*int), fc.Args["asOfDate"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@accountsreceivable").ArCustomerStatement(ctx, fc.Args["customerId"].(string), fc.Args["startDate"].(*int), fc.Args["asOfDate"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNARCustomerStatement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCustomerStatement),
 			},
@@ -1816,7 +1816,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "ARDashboardKPIs",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ArDashboardKpis(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@accountsreceivable").ArDashboardKpis(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNARDashboardKPIs2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARDashboardKPIs),
 			},
@@ -1830,7 +1830,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_arDsoTrend_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ArDsoTrend(ctx, fc.Args["weeks"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@accountsreceivable").ArDsoTrend(ctx, fc.Args["weeks"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNARDSOTrendPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARDSOTrendPointᚄ),
 			},
@@ -1844,7 +1844,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_arAgingTrend_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ArAgingTrend(ctx, fc.Args["weeks"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@accountsreceivable").ArAgingTrend(ctx, fc.Args["weeks"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNARAgingTrendPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARAgingTrendPointᚄ),
 			},
@@ -1858,7 +1858,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_arCashFlowForecast_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ArCashFlowForecast(ctx, fc.Args["pastWeeks"].(*int), fc.Args["futureWeeks"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@accountsreceivable").ArCashFlowForecast(ctx, fc.Args["pastWeeks"].(*int), fc.Args["futureWeeks"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNARCashFlowPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCashFlowPointᚄ),
 			},
@@ -1872,7 +1872,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_arTopOverdueCustomers_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ArTopOverdueCustomers(ctx, fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@accountsreceivable").ArTopOverdueCustomers(ctx, fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNARTopOverdueCustomer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARTopOverdueCustomerᚄ),
 			},
@@ -1886,7 +1886,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_arCollectionsWorklist_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ArCollectionsWorklist(ctx, fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@accountsreceivable").ArCollectionsWorklist(ctx, fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNARCollectionsWorklistItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCollectionsWorklistItemᚄ),
 			},
@@ -1900,7 +1900,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_arCustomerProfile_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ArCustomerProfile(ctx, fc.Args["customerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@accountsreceivable").ArCustomerProfile(ctx, fc.Args["customerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNARCustomerProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCustomerProfile),
 			},
@@ -1912,18 +1912,18 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "ARPaymentStats",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ArPaymentStats(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@accountsreceivable").ArPaymentStats(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNARPaymentStats2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARPaymentStats),
 			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Query@accountsreceivable", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	AccountingBriefing(ctx context.Context) (*accountingbriefports.AccountingBriefing, error)
 	ArAgingSummary(ctx context.Context, asOfDate *int) (*customerledgerports.ARAgingSummary, error)
 	ArOpenItems(ctx context.Context, customerID *string, asOfDate *int) ([]*customerledgerports.AROpenItem, error)

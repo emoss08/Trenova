@@ -96,7 +96,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateOrganization_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateOrganization(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.OrganizationInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@tenant").UpdateOrganization(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.OrganizationInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization),
 			},
@@ -334,7 +334,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_organization_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Organization(ctx, fc.Args["id"].(string), fc.Args["includeState"].(*bool), fc.Args["includeBu"].(*bool))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@tenant").Organization(ctx, fc.Args["id"].(string), fc.Args["includeState"].(*bool), fc.Args["includeBu"].(*bool))
 				},
 				Marshal: gqlexec.Marshal(marshalNOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization),
 			},
@@ -408,7 +408,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tenant.User)
-					return gqlexec.Resolver[resolverUser](ec, "User").TimeFormat(ctx, obj)
+					return gqlexec.Resolver[UserResolver](ec, "User@tenant").TimeFormat(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNTimeFormat2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTimeFormat),
 			},
@@ -577,7 +577,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "BusinessUnit",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tenant.User)
-					return gqlexec.Resolver[resolverUser](ec, "User").BusinessUnit(ctx, obj)
+					return gqlexec.Resolver[UserResolver](ec, "User@tenant").BusinessUnit(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit),
 			},
@@ -589,7 +589,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "Organization",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tenant.User)
-					return gqlexec.Resolver[resolverUser](ec, "User").CurrentOrganization(ctx, obj)
+					return gqlexec.Resolver[UserResolver](ec, "User@tenant").CurrentOrganization(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization),
 			},
@@ -599,21 +599,21 @@ var Shard = &gqlexec.Shard{
 		{Name: "OrganizationInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputOrganizationInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "User", Check: func(r any) bool { _, ok := r.(resolverUser); return ok }},
+		{Root: "Mutation@tenant", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@tenant", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "User@tenant", Check: func(r any) bool { _, ok := r.(UserResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	UpdateOrganization(ctx context.Context, id string, input gqlmodel.OrganizationInput) (*tenant.Organization, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	Organization(ctx context.Context, id string, includeState *bool, includeBu *bool) (*tenant.Organization, error)
 }
 
-type resolverUser interface {
+type UserResolver interface {
 	TimeFormat(ctx context.Context, obj *tenant.User) (gqlmodel.TimeFormat, error)
 	BusinessUnit(ctx context.Context, obj *tenant.User) (*tenant.BusinessUnit, error)
 	CurrentOrganization(ctx context.Context, obj *tenant.User) (*tenant.Organization, error)

@@ -39,7 +39,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_serviceFailures_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ServiceFailures(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["shipmentId"].(*string), fc.Args["locationId"].(*string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@servicefailure").ServiceFailures(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["shipmentId"].(*string), fc.Args["locationId"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNServiceFailureConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐServiceFailureConnection),
 			},
@@ -52,7 +52,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_serviceFailure_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ServiceFailure(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@servicefailure").ServiceFailure(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOServiceFailure2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐServiceFailure),
 			},
@@ -175,7 +175,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*servicefailure.ServiceFailure)
-					return gqlexec.Resolver[resolverServiceFailure](ec, "ServiceFailure").StopType(ctx, obj)
+					return gqlexec.Resolver[ServiceFailureResolver](ec, "ServiceFailure@servicefailure").StopType(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNStopType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopType),
 			},
@@ -384,7 +384,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*servicefailure.ServiceFailure)
-					return gqlexec.Resolver[resolverServiceFailure](ec, "ServiceFailure").CreatedBy(ctx, obj)
+					return gqlexec.Resolver[ServiceFailureResolver](ec, "ServiceFailure@servicefailure").CreatedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -396,7 +396,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*servicefailure.ServiceFailure)
-					return gqlexec.Resolver[resolverServiceFailure](ec, "ServiceFailure").ReviewedBy(ctx, obj)
+					return gqlexec.Resolver[ServiceFailureResolver](ec, "ServiceFailure@servicefailure").ReviewedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -408,7 +408,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*servicefailure.ServiceFailure)
-					return gqlexec.Resolver[resolverServiceFailure](ec, "ServiceFailure").ResolvedBy(ctx, obj)
+					return gqlexec.Resolver[ServiceFailureResolver](ec, "ServiceFailure@servicefailure").ResolvedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -420,7 +420,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*servicefailure.ServiceFailure)
-					return gqlexec.Resolver[resolverServiceFailure](ec, "ServiceFailure").VoidedBy(ctx, obj)
+					return gqlexec.Resolver[ServiceFailureResolver](ec, "ServiceFailure@servicefailure").VoidedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -529,7 +529,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "Customer",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.Shipment)
-					return gqlexec.Resolver[resolverServiceFailureShipment](ec, "ServiceFailureShipment").Customer(ctx, obj)
+					return gqlexec.Resolver[ServiceFailureShipmentResolver](ec, "ServiceFailureShipment@servicefailure").Customer(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer),
 			},
@@ -553,7 +553,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*shipment.Stop)
-					return gqlexec.Resolver[resolverServiceFailureStop](ec, "ServiceFailureStop").Type(ctx, obj)
+					return gqlexec.Resolver[ServiceFailureStopResolver](ec, "ServiceFailureStop@servicefailure").Type(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNStopType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopType),
 			},
@@ -590,19 +590,19 @@ var Shard = &gqlexec.Shard{
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "ServiceFailure", Check: func(r any) bool { _, ok := r.(resolverServiceFailure); return ok }},
-		{Root: "ServiceFailureShipment", Check: func(r any) bool { _, ok := r.(resolverServiceFailureShipment); return ok }},
-		{Root: "ServiceFailureStop", Check: func(r any) bool { _, ok := r.(resolverServiceFailureStop); return ok }},
+		{Root: "Query@servicefailure", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "ServiceFailure@servicefailure", Check: func(r any) bool { _, ok := r.(ServiceFailureResolver); return ok }},
+		{Root: "ServiceFailureShipment@servicefailure", Check: func(r any) bool { _, ok := r.(ServiceFailureShipmentResolver); return ok }},
+		{Root: "ServiceFailureStop@servicefailure", Check: func(r any) bool { _, ok := r.(ServiceFailureStopResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	ServiceFailures(ctx context.Context, input gqlmodel.DataTableConnectionInput, shipmentID *string, locationID *string) (*gqlmodel.ServiceFailureConnection, error)
 	ServiceFailure(ctx context.Context, id string) (*servicefailure.ServiceFailure, error)
 }
 
-type resolverServiceFailure interface {
+type ServiceFailureResolver interface {
 	StopType(ctx context.Context, obj *servicefailure.ServiceFailure) (gqlmodel.StopType, error)
 	CreatedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error)
 	ReviewedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error)
@@ -610,11 +610,11 @@ type resolverServiceFailure interface {
 	VoidedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error)
 }
 
-type resolverServiceFailureShipment interface {
+type ServiceFailureShipmentResolver interface {
 	Customer(ctx context.Context, obj *shipment.Shipment) (*customer.Customer, error)
 }
 
-type resolverServiceFailureStop interface {
+type ServiceFailureStopResolver interface {
 	Type(ctx context.Context, obj *shipment.Stop) (gqlmodel.StopType, error)
 }
 

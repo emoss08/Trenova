@@ -91,7 +91,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*locationcategory.LocationCategory)
-					return gqlexec.Resolver[resolverLocationCategory](ec, "LocationCategory").FacilityType(ctx, obj)
+					return gqlexec.Resolver[LocationCategoryResolver](ec, "LocationCategory@locationcategory").FacilityType(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOFacilityType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationcategoryᚐFacilityType),
 			},
@@ -269,7 +269,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createLocationCategory_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateLocationCategory(ctx, fc.Args["input"].(gqlmodel.LocationCategoryInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@locationcategory").CreateLocationCategory(ctx, fc.Args["input"].(gqlmodel.LocationCategoryInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNLocationCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationcategoryᚐLocationCategory),
 			},
@@ -282,7 +282,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateLocationCategory_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateLocationCategory(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.LocationCategoryInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@locationcategory").UpdateLocationCategory(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.LocationCategoryInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNLocationCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationcategoryᚐLocationCategory),
 			},
@@ -298,7 +298,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_locationCategories_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").LocationCategories(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@locationcategory").LocationCategories(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNLocationCategoryConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐLocationCategoryConnection),
 			},
@@ -311,7 +311,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_locationCategory_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").LocationCategory(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@locationcategory").LocationCategory(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOLocationCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationcategoryᚐLocationCategory),
 			},
@@ -321,22 +321,22 @@ var Shard = &gqlexec.Shard{
 		{Name: "LocationCategoryInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputLocationCategoryInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "LocationCategory", Check: func(r any) bool { _, ok := r.(resolverLocationCategory); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "LocationCategory@locationcategory", Check: func(r any) bool { _, ok := r.(LocationCategoryResolver); return ok }},
+		{Root: "Mutation@locationcategory", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@locationcategory", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverLocationCategory interface {
+type LocationCategoryResolver interface {
 	FacilityType(ctx context.Context, obj *locationcategory.LocationCategory) (*locationcategory.FacilityType, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateLocationCategory(ctx context.Context, input gqlmodel.LocationCategoryInput) (*locationcategory.LocationCategory, error)
 	UpdateLocationCategory(ctx context.Context, id string, input gqlmodel.LocationCategoryInput) (*locationcategory.LocationCategory, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	LocationCategories(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.LocationCategoryConnection, error)
 	LocationCategory(ctx context.Context, id string) (*locationcategory.LocationCategory, error)
 }
