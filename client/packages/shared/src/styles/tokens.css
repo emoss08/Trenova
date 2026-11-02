@@ -793,7 +793,7 @@
    that is distinct in both themes rather than to a value shared with two others.
 
    New code uses the canonical names. These stay until the call sites are
-   migrated; the lint rule in .oxlintrc.json does not flag them.
+   migrated; the lint rule in oxlint.config.ts does not flag them.
    --------------------------------------------------------------------------- */
 
 :root,
