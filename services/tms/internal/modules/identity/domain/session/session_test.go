@@ -283,3 +283,67 @@ func TestKeepAliveIntervalFitsInsideIdleGrace(t *testing.T) {
 
 	assert.Less(t, KeepAliveInterval, IdleGrace)
 }
+
+func TestReplaceSecretKeepsThePreviousOneForTheGrace(t *testing.T) {
+	t.Parallel()
+
+	sess := &Session{SecretHash: "first"}
+	sess.ReplaceSecret("second", 1_000, RotationGrace)
+
+	assert.Equal(t, "second", sess.SecretHash)
+	assert.Equal(t, []string{"second", "first"}, sess.SecretHashesAt(1_000))
+	graceEnd := 1_000 + int64(RotationGrace/time.Second)
+	assert.Equal(t, []string{"second", "first"}, sess.SecretHashesAt(graceEnd))
+	assert.Equal(t, []string{"second"}, sess.SecretHashesAt(graceEnd+1))
+}
+
+func TestReplaceSecretWithoutGraceDropsEveryOlderSecret(t *testing.T) {
+	t.Parallel()
+
+	sess := &Session{SecretHash: "first"}
+	sess.ReplaceSecret("second", 1_000, RotationGrace)
+	sess.ReplaceSecret("third", 1_001, 0)
+
+	assert.Equal(t, []string{"third"}, sess.SecretHashesAt(1_001))
+	assert.Empty(t, sess.PreviousSecretHash)
+	assert.Zero(t, sess.PreviousSecretUntil)
+}
+
+func TestReplaceSecretOnlyKeepsTheSecretItReplaced(t *testing.T) {
+	t.Parallel()
+
+	sess := &Session{SecretHash: "first"}
+	sess.ReplaceSecret("second", 1_000, RotationGrace)
+	sess.ReplaceSecret("third", 1_010, RotationGrace)
+
+	assert.Equal(t, []string{"third", "second"}, sess.SecretHashesAt(1_010))
+}
+
+func TestUnconfirmedTooLongCountsFromTheLastConfirmation(t *testing.T) {
+	t.Parallel()
+
+	sess := &Session{LastAccessedAt: 20_000, AccessConfirmedAt: 10_000}
+	bound := int64(MaxUnconfirmed / time.Second)
+
+	assert.False(t, sess.UnconfirmedTooLong(10_000+bound))
+	assert.True(t, sess.UnconfirmedTooLong(10_000+bound+1))
+}
+
+func TestNeedsAccessCheckIgnoresActivity(t *testing.T) {
+	t.Parallel()
+
+	sess := &Session{LastAccessedAt: 10_300, AccessConfirmedAt: 10_000}
+
+	assert.False(t, sess.NeedsAccessCheck(10_299))
+	assert.True(t, sess.NeedsAccessCheck(10_300))
+	assert.False(t, sess.NeedsTouch(10_300))
+}
+
+func TestAFutureConfirmationForcesTheAccessCheck(t *testing.T) {
+	t.Parallel()
+
+	sess := &Session{AccessConfirmedAt: 99_999}
+
+	assert.True(t, sess.NeedsAccessCheck(10_000))
+	assert.True(t, sess.UnconfirmedTooLong(10_000))
+}

@@ -698,6 +698,7 @@ var usersTable = schema.Table{
 		{Name: "away_delegate_user_id", Quoted: `"away_delegate_user_id"`, Field: "AwayDelegateUserID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Away Delegate User ID`, JSON: `awayDelegateUserId`},
 		{Name: "away_note", Quoted: `"away_note"`, Field: "AwayNote", Kind: schema.KindString, Flags: 0, Label: `Away Note`, JSON: `awayNote`},
 		{Name: "password_changed_at", Quoted: `"password_changed_at"`, Field: "PasswordChangedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Password Changed At`, JSON: `passwordChangedAt`},
+		{Name: "session_epoch", Quoted: `"session_epoch"`, Field: "SessionEpoch", Kind: schema.KindInt64, Flags: 0, Label: `Session Epoch`},
 		{Name: "assistant_hidden", Quoted: `"assistant_hidden"`, Field: "AssistantHidden", Kind: schema.KindBool, Flags: 0, Label: `Assistant Hidden`, JSON: `assistantHidden`},
 	},
 	Relations: []schema.Relation{
@@ -707,9 +708,9 @@ var usersTable = schema.Table{
 	},
 	PK:           []int32{0},
 	Tenant:       []int32{1},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
-	Update:       []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
+	Update:       []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
 	Returning:    nil,
 	Version:      15,
 	AutoID:       0,
@@ -758,6 +759,7 @@ type UsersTable struct {
 	AwayDelegateUserID    keelkinds.PulidIDCol
 	AwayNote              keel.StringCol
 	PasswordChangedAt     keel.Int64Col
+	SessionEpoch          keel.Int64Col
 	AssistantHidden       keel.BoolCol
 }
 
@@ -792,7 +794,8 @@ var Users = &UsersTable{
 	AwayDelegateUserID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &usersRef, Index: 25}}},
 	AwayNote:              keel.StringCol{Col: keel.Col{Ref: &usersRef, Index: 26}},
 	PasswordChangedAt:     keel.Int64Col{Col: keel.Col{Ref: &usersRef, Index: 27}},
-	AssistantHidden:       keel.BoolCol{Col: keel.Col{Ref: &usersRef, Index: 28}},
+	SessionEpoch:          keel.Int64Col{Col: keel.Col{Ref: &usersRef, Index: 28}},
+	AssistantHidden:       keel.BoolCol{Col: keel.Col{Ref: &usersRef, Index: 29}},
 }
 
 // BuildUsers builds the handle of users for ref. Generated relation and alias methods call it.
@@ -827,7 +830,8 @@ func BuildUsers(r *keel.Ref) *UsersTable {
 		AwayDelegateUserID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 25}}},
 		AwayNote:              keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
 		PasswordChangedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
-		AssistantHidden:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 28}},
+		SessionEpoch:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
+		AssistantHidden:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 29}},
 	}
 }
 
@@ -921,6 +925,8 @@ func ptrUser(p unsafe.Pointer, c int32) any {
 	case 27:
 		return &r.PasswordChangedAt
 	case 28:
+		return &r.SessionEpoch
+	case 29:
 		return &r.AssistantHidden
 	}
 	return nil
@@ -1007,6 +1013,8 @@ func valueUser(p unsafe.Pointer, c int32) any {
 		}
 		return *r.PasswordChangedAt
 	case 28:
+		return r.SessionEpoch
+	case 29:
 		return r.AssistantHidden
 	}
 	return nil

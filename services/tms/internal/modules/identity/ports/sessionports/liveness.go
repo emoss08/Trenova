@@ -6,6 +6,13 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+type SessionStanding struct {
+	ID           pulid.ID
+	Ended        bool
+	SecretsKnown bool
+	SecretHashes []string
+}
+
 type SessionLiveness interface {
-	Ended(ctx context.Context, sessionIDs []pulid.ID) ([]pulid.ID, error)
+	Standings(ctx context.Context, sessionIDs []pulid.ID) ([]SessionStanding, error)
 }

@@ -5,7 +5,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/sessioncookie"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -40,10 +42,23 @@ func NewAuthMiddleware(p AuthMiddlewareParams) *AuthMiddleware {
 func (m *AuthMiddleware) RequireAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if err := m.authenticate(c); err != nil {
+			if errors.Is(err, sessionports.ErrSessionAccessUnconfirmed) {
+				m.errorHandler.HandleError(c, err)
+				return
+			}
 			m.errorHandler.HandleError(
 				c,
 				errortypes.NewAuthenticationError("Authentication required"),
 			)
+			return
+		}
+		if refusesSupersededSecretWrite(c) {
+			authCtx := authctx.GetAuthContext(c)
+			m.errorHandler.HandleError(c, errortypes.NewSessionContextStaleError(
+				authCtx.UserID,
+				authCtx.OrganizationID,
+				authCtx.BusinessUnitID,
+			))
 			return
 		}
 
@@ -72,12 +87,15 @@ func (m *AuthMiddleware) authenticateWithSession(c *gin.Context) error {
 
 	sess, err := m.service.AuthenticateSession(c.Request.Context(), cookie)
 	if err != nil {
-		m.clearSessionCookie(c)
+		if !sessionports.KeepsCookie(err) {
+			sessioncookie.Clear(c, &m.cfg.Session)
+		}
 		return err
 	}
 
 	authctx.SetSessionAuthContext(c, authctx.SessionAuthContextParams{
 		SessionID:              sess.ID,
+		SessionSecretHash:      sess.AuthenticatedSecretHash,
 		UserID:                 sess.UserID,
 		BusinessUnitID:         sess.BusinessUnitID,
 		OrganizationID:         sess.OrganizationID,
@@ -98,7 +116,17 @@ func (m *AuthMiddleware) authenticateWithSession(c *gin.Context) error {
 		Locale:                 sess.Locale,
 	})
 
+	if sess.AuthenticatedSecretHash != sess.SecretHash {
+		c.Request = c.Request.WithContext(authctx.WithSupersededSessionSecret(c.Request.Context()))
+	}
+
 	return nil
+}
+
+func refusesSupersededSecretWrite(c *gin.Context) bool {
+	return authctx.UsesSupersededSessionSecret(c.Request.Context()) &&
+		IsUnsafeMethod(c.Request.Method) &&
+		routeOf(c) != graphQLPath
 }
 
 func (m *AuthMiddleware) authenticateWithBearer(c *gin.Context, token string) error {
@@ -120,18 +148,4 @@ func (m *AuthMiddleware) authenticateWithBearer(c *gin.Context, token string) er
 	)
 
 	return nil
-}
-
-func (m *AuthMiddleware) clearSessionCookie(c *gin.Context) {
-	sessionCfg := m.cfg.Session
-	c.SetSameSite(sessionCfg.GetSameSite())
-	c.SetCookie(
-		sessionCfg.Name,
-		"",
-		-1,
-		sessionCfg.Path,
-		sessionCfg.Domain,
-		sessionCfg.Secure,
-		sessionCfg.HTTPOnly,
-	)
 }

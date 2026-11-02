@@ -173,6 +173,33 @@ func TestVerifyMFAChallengeStartsAnAAL2Session(t *testing.T) {
 	require.ErrorIs(t, err, errMFAChallengeExpired)
 }
 
+func TestVerifyMFAChallengeRefusesAChallengeIssuedBeforeTheCredentialsChanged(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	usr := newTestUser(t)
+	usr.SessionEpoch = 4
+	deps.svc.mfa = &fakeMFA{active: true, validCode: "123456"}
+	deps.svc.challenges = newMemoryChallenges()
+
+	deps.userRepo.On("FindByEmail", mock.Anything, usr.EmailAddress).Return(usr, nil)
+	login, err := deps.svc.Login(t.Context(), tenantports.LoginRequest{
+		EmailAddress: usr.EmailAddress,
+		Password:     "password123",
+	})
+	require.NoError(t, err)
+	changed := *usr
+	changed.SessionEpoch = 5
+	deps.userRepo.On("FindByIDForLogin", mock.Anything, usr.ID).Return(&changed, nil)
+
+	_, err = deps.svc.VerifyMFAChallenge(t.Context(), tenantports.VerifyMFAChallengeRequest{
+		ChallengeToken: login.MFAChallengeToken,
+		Code:           "123456",
+	})
+
+	require.ErrorIs(t, err, errMFAChallengeExpired)
+	deps.sessionRepo.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+}
+
 func TestVerifyMFAChallengeGivesUpAfterRepeatedWrongCodes(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)

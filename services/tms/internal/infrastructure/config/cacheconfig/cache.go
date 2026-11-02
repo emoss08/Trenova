@@ -23,6 +23,15 @@ type Config struct {
 	MaxRetries      int           `mapstructure:"maxRetries"      validate:"min=0,max=10"`
 	MinRetryBackoff time.Duration `mapstructure:"minRetryBackoff"`
 	MaxRetryBackoff time.Duration `mapstructure:"maxRetryBackoff"`
+	TLS             TLSConfig     `mapstructure:"tls"`
+}
+
+type TLSConfig struct {
+	Enabled    bool   `mapstructure:"enabled"`
+	ServerName string `mapstructure:"serverName"`
+	CAFile     string `mapstructure:"caFile"`
+	CertFile   string `mapstructure:"certFile"`
+	KeyFile    string `mapstructure:"keyFile"`
 }
 
 func (c *Config) GetRedisAddr() string {

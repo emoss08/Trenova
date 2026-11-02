@@ -375,11 +375,23 @@ func TestValidateConfig(t *testing.T) {
 		l := NewLoader(WithEnvironment(appconfig.EnvProduction))
 		cfg := newValidConfig()
 		cfg.Database.SSLMode = "require"
+		cfg.Cache.Password = stagedCachePassword
 
 		err := l.validateConfig(cfg)
 
 		require.Error(t, err)
 		assert.ErrorIs(t, err, securityconfig.ErrProductionSessionCookieRequired)
+	})
+
+	t.Run("production rejects Redis without a password", func(t *testing.T) {
+		l := NewLoader(WithEnvironment(appconfig.EnvProduction))
+		cfg := newValidConfig()
+		cfg.Database.SSLMode = "require"
+
+		err := l.validateConfig(cfg)
+
+		require.Error(t, err)
+		assert.ErrorIs(t, err, cacheconfig.ErrProductionRedisPasswordRequired)
 	})
 
 	t.Run("logging output file but no file config", func(t *testing.T) {
@@ -1289,7 +1301,10 @@ func TestProductionConfigFileLoads(t *testing.T) {
 // stageProductionBase fills in the sections config.test.yaml leaves out but a
 // production deployment must supply. Viper's AutomaticEnv cannot substitute for
 // them: it only resolves keys it already knows about.
-const stagedRecoveryCodePepper = "4d1f8a2b6c9e3071a5b8c2d4e6f8091a3b5c7d9e"
+const (
+	stagedRecoveryCodePepper = "4d1f8a2b6c9e3071a5b8c2d4e6f8091a3b5c7d9e"
+	stagedCachePassword      = "7a3c9e1f5b8d2a4c6e0f9b3d5a7c1e82"
+)
 
 func stageProductionBase(t *testing.T, path string) {
 	t.Helper()
@@ -1302,6 +1317,7 @@ func stageProductionBase(t *testing.T, path string) {
 
 	mergeInto(staged, map[string]any{
 		"temporal": map[string]any{"hostPort": "temporal:7233"},
+		"cache":    map[string]any{"password": stagedCachePassword},
 		"security": map[string]any{
 			"mfa": map[string]any{"recoveryCodePepper": stagedRecoveryCodePepper},
 		},

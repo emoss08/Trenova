@@ -1,15 +1,21 @@
 package sessiontoken
 
 import (
-	"crypto/subtle"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"strings"
 
+	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/tokenutils"
 )
 
-const separator = "."
+const (
+	separator          = "."
+	keyDerivationLabel = "trenova session token key v1"
+)
 
 var ErrMalformed = errors.New("session token is malformed")
 
@@ -18,16 +24,38 @@ type Issued struct {
 	SecretHash string
 }
 
-func Issue(sessionID pulid.ID) (*Issued, error) {
-	secret, hash, err := tokenutils.New()
+type Issuer struct {
+	key []byte
+}
+
+func NewIssuer(secret string) *Issuer {
+	return &Issuer{key: hashutils.DeriveKey(secret, keyDerivationLabel)}
+}
+
+func (i *Issuer) Issue(sessionID, userID pulid.ID) (*Issued, error) {
+	secret, _, err := tokenutils.New()
 	if err != nil {
 		return nil, err
 	}
 
 	return &Issued{
 		Token:      sessionID.String() + separator + secret,
-		SecretHash: hash,
+		SecretHash: i.hash(sessionID, userID, secret),
 	}, nil
+}
+
+func (i *Issuer) Matches(sessionID, userID pulid.ID, secret, storedHash string) bool {
+	if secret == "" || storedHash == "" {
+		return false
+	}
+
+	return hmac.Equal([]byte(i.hash(sessionID, userID, secret)), []byte(storedHash))
+}
+
+func (i *Issuer) hash(sessionID, userID pulid.ID, secret string) string {
+	mac := hmac.New(sha256.New, i.key)
+	hashutils.WriteParts(mac, sessionID.String(), userID.String(), secret)
+	return hex.EncodeToString(mac.Sum(nil))
 }
 
 func Parse(token string) (pulid.ID, string, error) {
@@ -42,12 +70,4 @@ func Parse(token string) (pulid.ID, string, error) {
 	}
 
 	return sessionID, secret, nil
-}
-
-func Matches(secret, storedHash string) bool {
-	if secret == "" || storedHash == "" {
-		return false
-	}
-
-	return subtle.ConstantTimeCompare([]byte(tokenutils.Hash(secret)), []byte(storedHash)) == 1
 }

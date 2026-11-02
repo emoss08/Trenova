@@ -242,8 +242,11 @@ function isStaleProblem(problem: ProblemLike): boolean {
 
 /**
  * Called by a transport with the error it is about to throw. A refusal names the session the
- * cookie acts for now: a request this tab sent just before switching organization itself is
- * refused too, and must not mark the tab left behind. Returns whether the error was explained.
+ * cookie acts for now: a request this tab sent just before switching organization itself, or
+ * a save sent with the cookie its session just replaced, is refused too, and must not mark the
+ * tab left behind. Only a refusal the app answers with its own prompt is explained; one that
+ * names this tab's session is left to its caller, so a refused save says so instead of
+ * failing silently. Returns whether the error was explained.
  */
 export function reportSessionContextStale(error: object): boolean {
   const refusal = problemsOf(error).find(isStaleProblem);
@@ -251,7 +254,12 @@ export function reportSessionContextStale(error: object): boolean {
     return false;
   }
 
+  const status = verdict(confirmed, parseSessionContext(refusal.params));
+  notify(status);
+  if (status === "current") {
+    return false;
+  }
+
   markExplained(error);
-  notify(verdict(confirmed, parseSessionContext(refusal.params)));
   return true;
 }

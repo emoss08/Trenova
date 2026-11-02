@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/passwordresetservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -101,6 +102,7 @@ func (h *Handler) activateSessionRoles(c *gin.Context) {
 		return
 	}
 	req.SessionID = sess.ID
+	req.SecretHash = sess.AuthenticatedSecretHash
 
 	resp, err := h.service.ActivateSessionRoles(c.Request.Context(), req)
 	if err != nil {
@@ -108,6 +110,7 @@ func (h *Handler) activateSessionRoles(c *gin.Context) {
 		return
 	}
 
+	h.setSessionCookie(c, resp.SessionToken, resp.ExpiresAt)
 	helpers.JSON(c, http.StatusOK, resp)
 }
 
@@ -183,14 +186,20 @@ func (h *Handler) completeLogin(c *gin.Context, resp *tenantports.LoginResponse)
 // @Failure 401 {object} helpers.ProblemDetail
 // @Router /auth/logout [post]
 func (h *Handler) logout(c *gin.Context) {
-	sess, ok := h.sessionFromCookie(c)
-	if !ok {
+	token, err := c.Cookie(h.securityConfig.Session.Name)
+	if err != nil || token == "" {
 		h.clearSessionCookie(c)
+		h.eh.HandleError(c, errortypes.NewAuthenticationError("Session not found"))
 		return
 	}
 
-	if err := h.service.Logout(c.Request.Context(), sess.ID); err != nil {
-		h.l.Warn("logout failed", zap.String("sessionID", sess.ID.String()), zap.Error(err))
+	if err = h.service.SignOut(c.Request.Context(), token); err != nil {
+		h.clearSessionCookie(c)
+		if errortypes.IsAuthenticationError(err) {
+			h.eh.HandleError(c, err)
+			return
+		}
+		h.l.Warn("logout failed", zap.Error(err))
 	}
 
 	h.clearSessionCookie(c)
@@ -213,7 +222,9 @@ func (h *Handler) keepSessionAlive(c *gin.Context) {
 	}
 
 	if _, err = h.service.KeepSessionAlive(c.Request.Context(), token); err != nil {
-		h.clearSessionCookie(c)
+		if !sessionports.KeepsCookie(err) {
+			h.clearSessionCookie(c)
+		}
 		h.eh.HandleError(c, err)
 		return
 	}

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/api/sessionwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/paletteports"
@@ -24,6 +25,7 @@ type Params struct {
 	Palette              paletteports.PaletteService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
+	Sessions             *sessionwatch.Watch
 	Logger               *zap.Logger
 }
 
@@ -31,19 +33,20 @@ type Params struct {
 // by the person in the session, so a guessed id reaches nothing of anyone
 // else's.
 type Handler struct {
-	palette paletteports.PaletteService
-	eh      *helpers.ErrorHandler
-	pm      *middleware.PermissionMiddleware
-	logger  *zap.Logger
+	palette  paletteports.PaletteService
+	eh       *helpers.ErrorHandler
+	pm       *middleware.PermissionMiddleware
+	sessions *sessionwatch.Watch
+	logger   *zap.Logger
 }
 
-//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Handler {
 	return &Handler{
-		palette: p.Palette,
-		eh:      p.ErrorHandler,
-		pm:      p.PermissionMiddleware,
-		logger:  p.Logger.Named("palettehandler"),
+		palette:  p.Palette,
+		eh:       p.ErrorHandler,
+		pm:       p.PermissionMiddleware,
+		sessions: p.Sessions,
+		logger:   p.Logger.Named("palettehandler"),
 	}
 }
 
@@ -107,7 +110,14 @@ func (h *Handler) stream(c *gin.Context) {
 	}
 	defer stream.Close()
 
-	err = h.palette.Relay(c.Request.Context(), &paletteports.RelayRequest{
+	ctx, stopWatching := h.sessions.Context(
+		c.Request.Context(),
+		authctx.GetAuthContext(c).SessionID,
+		authctx.GetSessionSecretHash(c),
+	)
+	defer stopWatching()
+
+	err = h.palette.Relay(ctx, &paletteports.RelayRequest{
 		Ref:    ref,
 		Cursor: helpers.EventCursor(c),
 		OnFrame: func(frame assistantstreamports.TurnStreamFrame) error {
@@ -116,6 +126,9 @@ func (h *Handler) stream(c *gin.Context) {
 			return nil
 		},
 	})
+	if sessionwatch.Ended(ctx) {
+		return
+	}
 	if err != nil {
 		h.logger.Warn("palette answer relay failed",
 			zap.String("askId", ref.AskID.String()), zap.Error(err))

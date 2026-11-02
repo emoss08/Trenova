@@ -8,7 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.uber.org/fx"
@@ -53,10 +56,13 @@ func (e *ReadOnlyExtension) MutateOperationContext(
 	ctx context.Context,
 	opCtx *graphql.OperationContext,
 ) *gqlerror.Error {
-	if e.plans == nil || !e.plans.EnforcesPlans() {
+	if opCtx == nil || opCtx.Operation == nil || opCtx.Operation.Operation != ast.Mutation {
 		return nil
 	}
-	if opCtx == nil || opCtx.Operation == nil || opCtx.Operation.Operation != ast.Mutation {
+	if authctx.UsesSupersededSessionSecret(ctx) {
+		return supersededSecretRefusal(ctx)
+	}
+	if e.plans == nil || !e.plans.EnforcesPlans() {
 		return nil
 	}
 
@@ -88,4 +94,20 @@ func (e *ReadOnlyExtension) MutateOperationContext(
 	}
 
 	return gqlerror.WrapIfUnwrapped(err)
+}
+
+func supersededSecretRefusal(ctx context.Context) *gqlerror.Error {
+	refusal := errortypes.NewSessionContextStaleError(pulid.Nil, pulid.Nil, pulid.Nil)
+	if authCtx, ok := gqlctx.AuthContext(ctx); ok && authCtx != nil {
+		refusal = errortypes.NewSessionContextStaleError(
+			authCtx.UserID,
+			authCtx.OrganizationID,
+			authCtx.BusinessUnitID,
+		)
+	}
+	if status, found := gqlctx.ResponseStatusFrom(ctx); found {
+		status.Override(http.StatusConflict, 0)
+	}
+
+	return gqlerror.WrapIfUnwrapped(refusal)
 }

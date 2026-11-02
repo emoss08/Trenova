@@ -154,9 +154,12 @@ through `http.Server.RegisterOnShutdown`, so readers move to another replica
 while this one finishes. A stream whose session ends (signed out, revoked, evicted, idle
 or past its age) is closed with `session_ended` within `sessionCheckInterval`: each replica
 keeps the sessions behind its open streams in `sessionwatch.Watch` and, once per interval,
-asks Redis in pipelined batches which of them have ended (`sessionports.SessionLiveness`,
-reading only each session's three timestamps). A reply it cannot read keeps the stream open,
-so a misread can only leave a stream running until its rotation, never close everyone's. Per-replica limits (`maxConnections`,
+asks Redis in pipelined batches where each stands (`sessionports.SessionLiveness`, reading only
+each session's timestamps and secret hashes). A stream opened with a secret the session no
+longer accepts, because it rotated past its grace, is closed with `rotate`, so the person's tab
+reconnects with its new cookie and a copied one is refused. A reply it cannot read keeps the
+stream open, so a misread can only leave a stream running until its rotation, never close
+everyone's. Per-replica limits (`maxConnections`,
 `maxConnectionsPerUser`) answer `429` with `Retry-After`.
 
 Keep the stream out of anything that buffers. The timeout middleware skips

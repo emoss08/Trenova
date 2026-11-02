@@ -2,6 +2,7 @@ package userservice
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -38,7 +39,8 @@ func tenantOf(user *tenant.User) pagination.TenantInfo {
 func expectSelfLoad(deps *testDeps, user *tenant.User) {
 	deps.repo.On("GetByID", mock.Anything, mock.MatchedBy(func(req tenantports.GetUserByIDRequest) bool {
 		return req.TenantInfo.UserID == user.ID
-	})).Return(user, nil)
+	})).
+		Return(user, nil)
 }
 
 func capturedColumns(deps *testDeps) *[]string {
@@ -71,7 +73,11 @@ func TestUpdateMyProfileWritesOnlyTheFieldsSentAndCanClearThem(t *testing.T) {
 
 	require.NoError(t, err)
 	cols := tenantdb.Users
-	assert.ElementsMatch(t, []string{columnName(cols.JobTitle.Col), columnName(cols.PhoneNumber.Col)}, *columns)
+	assert.ElementsMatch(
+		t,
+		[]string{columnName(cols.JobTitle.Col), columnName(cols.PhoneNumber.Col)},
+		*columns,
+	)
 	assert.Equal(t, "Dispatch lead", user.JobTitle)
 	assert.Empty(t, user.PhoneNumber, "an empty phone must be written, not skipped as a zero value")
 }
@@ -215,7 +221,11 @@ func TestDeleteProfilePictureWritesTheEmptiedColumns(t *testing.T) {
 
 	require.NoError(t, err)
 	cols := tenantdb.Users
-	assert.ElementsMatch(t, []string{columnName(cols.ProfilePicURL.Col), columnName(cols.ThumbnailURL.Col)}, *columns)
+	assert.ElementsMatch(
+		t,
+		[]string{columnName(cols.ProfilePicURL.Col), columnName(cols.ThumbnailURL.Col)},
+		*columns,
+	)
 	assert.Empty(t, user.ProfilePicURL)
 }
 
@@ -235,13 +245,21 @@ func TestListMySessionsPutsThisDeviceFirstThenMostRecent(t *testing.T) {
 	deps := setupTest(t)
 	user := newTestUser()
 	now := time.Now().Unix()
-	current := sessionFor(user.ID, now-600, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/129.0 Safari/537.36")
-	recent := sessionFor(user.ID, now-60, "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile/15E148 Safari/604.1")
+	current := sessionFor(
+		user.ID,
+		now-600,
+		"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/129.0 Safari/537.36",
+	)
+	recent := sessionFor(
+		user.ID,
+		now-60,
+		"Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile/15E148 Safari/604.1",
+	)
 	stale := sessionFor(user.ID, now-86400, "")
 	deps.sessionRepo.On("ListForUser", mock.Anything, user.ID).
 		Return([]*session.Session{stale, current, recent}, nil)
 
-	got, err := deps.svc.ListMySessions(t.Context(), SessionScope{
+	got, err := deps.svc.ListMySessions(t.Context(), &SessionScope{
 		TenantInfo:       tenantOf(user),
 		CurrentSessionID: current.ID,
 	})
@@ -262,7 +280,7 @@ func TestRevokeMySessionRefusesTheSessionInUse(t *testing.T) {
 	user := newTestUser()
 	current := pulid.MustNew("ses_")
 
-	err := deps.svc.RevokeMySession(t.Context(), SessionScope{
+	err := deps.svc.RevokeMySession(t.Context(), &SessionScope{
 		TenantInfo:       tenantOf(user),
 		CurrentSessionID: current,
 	}, current)
@@ -279,7 +297,11 @@ func TestRevokeMySessionOnlyEndsTheCallersOwnSessions(t *testing.T) {
 	someoneElses := pulid.MustNew("ses_")
 	deps.sessionRepo.On("ListForUser", mock.Anything, user.ID).Return([]*session.Session{mine}, nil)
 
-	err := deps.svc.RevokeMySession(t.Context(), SessionScope{TenantInfo: tenantOf(user)}, someoneElses)
+	err := deps.svc.RevokeMySession(
+		t.Context(),
+		&SessionScope{TenantInfo: tenantOf(user)},
+		someoneElses,
+	)
 
 	var notFound *errortypes.NotFoundError
 	require.ErrorAs(t, err, &notFound)
@@ -293,10 +315,11 @@ func TestRevokeMySessionEndsItAndRecordsTheSignOut(t *testing.T) {
 	deps.svc.authEvents = events
 	user := newTestUser()
 	other := sessionFor(user.ID, time.Now().Unix(), "")
-	deps.sessionRepo.On("ListForUser", mock.Anything, user.ID).Return([]*session.Session{other}, nil)
+	deps.sessionRepo.On("ListForUser", mock.Anything, user.ID).
+		Return([]*session.Session{other}, nil)
 	deps.sessionRepo.On("Delete", mock.Anything, other.ID).Return(nil)
 
-	err := deps.svc.RevokeMySession(t.Context(), SessionScope{TenantInfo: tenantOf(user)}, other.ID)
+	err := deps.svc.RevokeMySession(t.Context(), &SessionScope{TenantInfo: tenantOf(user)}, other.ID)
 
 	require.NoError(t, err)
 	require.Len(t, events.records, 1)
@@ -317,7 +340,7 @@ func TestRevokeMyOtherSessionsKeepsTheCurrentOne(t *testing.T) {
 	deps.sessionRepo.On("Delete", mock.Anything, first.ID).Return(nil)
 	deps.sessionRepo.On("Delete", mock.Anything, second.ID).Return(nil)
 
-	revoked, err := deps.svc.RevokeMyOtherSessions(t.Context(), SessionScope{
+	revoked, err := deps.svc.RevokeMyOtherSessions(t.Context(), &SessionScope{
 		TenantInfo:       tenantOf(user),
 		CurrentSessionID: current.ID,
 	})
@@ -325,6 +348,31 @@ func TestRevokeMyOtherSessionsKeepsTheCurrentOne(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 2, revoked)
 	deps.sessionRepo.AssertNotCalled(t, "Delete", mock.Anything, current.ID)
+}
+
+func TestRevokeMyOtherSessionsReportsASessionItCouldNotEnd(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	events := &recordedEvents{}
+	deps.svc.authEvents = events
+	user := newTestUser()
+	current := sessionFor(user.ID, time.Now().Unix(), "")
+	ended := sessionFor(user.ID, time.Now().Unix(), "")
+	stuck := sessionFor(user.ID, time.Now().Unix(), "")
+	deps.sessionRepo.On("ListForUser", mock.Anything, user.ID).
+		Return([]*session.Session{current, ended, stuck}, nil)
+	deps.sessionRepo.On("Delete", mock.Anything, ended.ID).Return(nil)
+	deps.sessionRepo.On("Delete", mock.Anything, stuck.ID).Return(errors.New("redis unavailable"))
+
+	revoked, err := deps.svc.RevokeMyOtherSessions(t.Context(), &SessionScope{
+		TenantInfo:       tenantOf(user),
+		CurrentSessionID: current.ID,
+	})
+
+	require.Error(t, err)
+	assert.Equal(t, 1, revoked)
+	require.Len(t, events.records, 1)
+	assert.Equal(t, iamports.SessionRevocationSingle, events.records[0].MFAState)
 }
 
 func TestListAvatarsShowsAnAwayNoteOnlyWhileAway(t *testing.T) {
@@ -342,9 +390,14 @@ func TestListAvatarsShowsAnAwayNoteOnlyWhileAway(t *testing.T) {
 	returned.AwayNote = "Back soon"
 	deps.repo.On("GetByIDs", mock.Anything, mock.MatchedBy(func(req tenantports.GetUsersByIDsRequest) bool {
 		return len(req.UserIDs) == 2
-	})).Return([]*tenant.User{away, returned}, nil)
+	})).
+		Return([]*tenant.User{away, returned}, nil)
 
-	got, err := deps.svc.ListAvatars(t.Context(), tenantOf(caller), []pulid.ID{away.ID, returned.ID, away.ID})
+	got, err := deps.svc.ListAvatars(
+		t.Context(),
+		tenantOf(caller),
+		[]pulid.ID{away.ID, returned.ID, away.ID},
+	)
 
 	require.NoError(t, err)
 	require.Len(t, got, 2)

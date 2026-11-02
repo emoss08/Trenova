@@ -14,6 +14,9 @@ const (
 	lastAccessedResolution = 5 * time.Minute
 	IdleGrace              = lastAccessedResolution
 	KeepAliveInterval      = time.Minute
+	RotationGrace          = time.Minute
+	CredentialChangeGrace  = 10 * time.Second
+	MaxUnconfirmed         = 3 * lastAccessedResolution
 )
 
 type Policy struct {
@@ -31,7 +34,10 @@ func (p Policy) IdleEnabled() bool {
 
 type Session struct {
 	ID                    pulid.ID   `json:"id"`
-	SecretHash            string     `json:"secretHash,omitempty"`
+	SecretHash            string     `json:"secretHash"`
+	PreviousSecretHash    string     `json:"previousSecretHash"`
+	PreviousSecretUntil   int64      `json:"previousSecretUntil"`
+	SessionEpoch          int64      `json:"sessionEpoch"`
 	UserID                pulid.ID   `json:"userId"`
 	BusinessUnitID        pulid.ID   `json:"businessUnitId"`
 	OrganizationID        pulid.ID   `json:"organizationId"`
@@ -48,7 +54,9 @@ type Session struct {
 	IsPortalUser          bool       `json:"isPortalUser"`
 	IssuedBySignIn        bool       `json:"issuedBySignIn,omitempty"`
 
-	RoleActivationRequired bool `json:"-"`
+	RoleActivationRequired  bool   `json:"-"`
+	AuthenticatedSecretHash string `json:"-"`
+	Seal                    string `json:"seal"`
 	// MustChangePassword is copied off the user at login so every later request can be
 	// gated without another user lookup. It is refreshed on the next sign-in, which is
 	// the only moment it can change for a session that already exists.
@@ -56,18 +64,20 @@ type Session struct {
 	// Locale is copied off the user for the same reason as MustChangePassword: every
 	// request needs it to render errors, and a session already in flight must not pay for
 	// a user lookup to find out what language to answer in.
-	Locale         string       `json:"locale,omitempty"`
-	IPAddress      string       `json:"ipAddress,omitempty"`
-	UserAgent      string       `json:"userAgent,omitempty"`
-	LastAccessedAt int64        `json:"lastAccessedAt"`
-	ExpiresAt      int64        `json:"expiresAt"`
-	CreatedAt      int64        `json:"createdAt"`
-	UpdatedAt      int64        `json:"updatedAt"`
-	User           *tenant.User `json:"user"`
+	Locale            string       `json:"locale,omitempty"`
+	IPAddress         string       `json:"ipAddress,omitempty"`
+	UserAgent         string       `json:"userAgent,omitempty"`
+	LastAccessedAt    int64        `json:"lastAccessedAt"`
+	AccessConfirmedAt int64        `json:"accessConfirmedAt"`
+	ExpiresAt         int64        `json:"expiresAt"`
+	CreatedAt         int64        `json:"createdAt"`
+	UpdatedAt         int64        `json:"updatedAt"`
+	User              *tenant.User `json:"user"`
 }
 
 type NewSessionRequest struct {
 	TenantInfo            pagination.TenantInfo
+	SessionEpoch          int64
 	ExpiresAt             int64
 	AuthProvider          string
 	ExternalIdentityID    string
@@ -106,6 +116,7 @@ func NewSession(req *NewSessionRequest) *Session {
 		UserID:                req.TenantInfo.UserID,
 		OrganizationID:        req.TenantInfo.OrgID,
 		ActiveRoleIDs:         []pulid.ID{},
+		SessionEpoch:          req.SessionEpoch,
 		AuthProvider:          req.AuthProvider,
 		ExternalIdentityID:    req.ExternalIdentityID,
 		ExternalSubject:       req.ExternalSubject,
@@ -121,10 +132,33 @@ func NewSession(req *NewSessionRequest) *Session {
 		IPAddress:             req.IPAddress,
 		UserAgent:             req.UserAgent,
 		LastAccessedAt:        now,
+		AccessConfirmedAt:     now,
 		ExpiresAt:             req.ExpiresAt,
 		CreatedAt:             now,
 		UpdatedAt:             now,
 	}
+}
+
+func (s *Session) ReplaceSecret(secretHash string, now int64, grace time.Duration) {
+	if grace > 0 && s.SecretHash != "" {
+		s.PreviousSecretHash = s.SecretHash
+		s.PreviousSecretUntil = now + int64(grace/time.Second)
+	} else {
+		s.PreviousSecretHash = ""
+		s.PreviousSecretUntil = 0
+	}
+	s.SecretHash = secretHash
+}
+
+func (s *Session) SecretHashesAt(now int64) []string {
+	hashes := make([]string, 0, 2)
+	if s.SecretHash != "" {
+		hashes = append(hashes, s.SecretHash)
+	}
+	if s.PreviousSecretHash != "" && now <= s.PreviousSecretUntil {
+		hashes = append(hashes, s.PreviousSecretHash)
+	}
+	return hashes
 }
 
 func (s *Session) IsValid() bool {
@@ -163,6 +197,16 @@ func (s *Session) IsExpiredAt(p Policy, now int64) bool {
 
 func (s *Session) NeedsTouch(now int64) bool {
 	return now-s.LastAccessedAt >= int64(lastAccessedResolution/time.Second)
+}
+
+func (s *Session) NeedsAccessCheck(now int64) bool {
+	return s.AccessConfirmedAt > now ||
+		now-s.AccessConfirmedAt >= int64(lastAccessedResolution/time.Second)
+}
+
+func (s *Session) UnconfirmedTooLong(now int64) bool {
+	return s.AccessConfirmedAt > now ||
+		now-s.AccessConfirmedAt > int64(MaxUnconfirmed/time.Second)
 }
 
 func (s *Session) UpdateLastAccessedAt() {

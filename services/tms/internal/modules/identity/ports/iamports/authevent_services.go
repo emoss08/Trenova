@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -16,6 +17,14 @@ const AuthEventProviderMFAStepUp = "mfa.step_up"
 const AuthEventProviderLogout = "session.logout"
 
 const AuthEventProviderSessionRevoked = "session.revoked"
+
+const (
+	SessionRevocationSingle         = "single"
+	SessionRevocationOthers         = "others"
+	SessionRevocationAll            = "all"
+	SessionRevocationOrganization   = "organization"
+	SessionRevocationPasswordChange = "password_change"
+)
 
 const AuthEventProviderPasswordResetRequest = "password_reset.request"
 
@@ -59,6 +68,21 @@ type AuthEventRecord struct {
 	RiskOutcome      iam.RiskOutcome
 	RiskSignals      []string
 	ErrorCode        string
+}
+
+func SessionRevokedEvent(
+	tenantInfo pagination.TenantInfo,
+	userID pulid.ID,
+	scope string,
+) *AuthEventRecord {
+	return &AuthEventRecord{
+		Provider:       AuthEventProviderSessionRevoked,
+		Outcome:        iam.AuthEventOutcomeSuccess,
+		UserID:         userID,
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		MFAState:       scope,
+	}
 }
 
 type AuthEventRecorder interface {

@@ -449,7 +449,7 @@ func (s *Service) ResetPassword(ctx context.Context, rawToken, newPassword strin
 		return err
 	}
 
-	if err = s.ur.UpdatePassword(scoped, tenantports.UpdateUserPasswordRequest{
+	if _, err = s.ur.UpdatePassword(scoped, tenantports.UpdateUserPasswordRequest{
 		UserID:         user.ID,
 		OrganizationID: token.OrganizationID,
 		BusinessUnitID: token.BusinessUnitID,

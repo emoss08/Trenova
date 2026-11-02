@@ -12,8 +12,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/app/sessionrotation"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -65,6 +67,7 @@ type Params struct {
 	Repository     iamports.MFARepository
 	Users          tenantports.UserRepository
 	Sessions       sessionports.SessionRepository
+	Rotator        *sessionrotation.Rotator
 	Encryption     *encryptionservice.Service
 	Auditor        permissionports.SecurityAuditor
 	AppConfig      *appconfig.Config
@@ -78,6 +81,7 @@ type Service struct {
 	repo        iamports.MFARepository
 	users       tenantports.UserRepository
 	sessions    sessionports.SessionRepository
+	rotator     *sessionrotation.Rotator
 	enc         *encryptionservice.Service
 	auditor     permissionports.SecurityAuditor
 	throttle    sessionports.LoginThrottleStore
@@ -109,6 +113,7 @@ func newService(p *Params) (*Service, error) {
 		repo:        p.Repository,
 		users:       p.Users,
 		sessions:    p.Sessions,
+		rotator:     p.Rotator,
 		enc:         p.Encryption,
 		auditor:     p.Auditor,
 		throttle:    p.Throttle,
@@ -220,7 +225,7 @@ func (s *Service) BeginTOTPEnrollment(
 func (s *Service) ConfirmTOTPEnrollment(
 	ctx context.Context,
 	req *sessionports.ConfirmTOTPEnrollmentRequest,
-) (*sessionports.RecoveryCodesResponse, error) {
+) (*sessionports.TOTPEnrollmentResponse, error) {
 	authenticator, err := s.repo.GetTOTP(ctx, req.TenantInfo.UserID)
 	if err != nil {
 		return nil, err
@@ -262,7 +267,11 @@ func (s *Service) ConfirmTOTPEnrollment(
 		return nil, err
 	}
 
-	s.raiseSessionAssurance(ctx, req.SessionID, req.TenantInfo.UserID, now.Unix())
+	resp := &sessionports.TOTPEnrollmentResponse{RecoveryCodes: codes}
+	if rotated := s.raiseSessionAssurance(ctx, req, now.Unix()); rotated != nil {
+		resp.SessionToken = rotated.Token
+		resp.ExpiresAt = rotated.Session.ExpiresAt
+	}
 
 	s.recordChange(ctx, &mfaChange{
 		tenantInfo: req.TenantInfo,
@@ -273,7 +282,7 @@ func (s *Service) ConfirmTOTPEnrollment(
 		comment:    "Turned on two-factor authentication with an authenticator app",
 	})
 
-	return &sessionports.RecoveryCodesResponse{RecoveryCodes: codes}, nil
+	return resp, nil
 }
 
 func (s *Service) DisableTOTP(ctx context.Context, req *sessionports.DisableTOTPRequest) error {
@@ -363,12 +372,31 @@ func (s *Service) ResetUserMFA(ctx context.Context, req *sessionports.ResetUserM
 		return err
 	}
 
+	active, err := s.HasActiveFactor(ctx, req.TargetUserID)
+	if err != nil {
+		return err
+	}
+	if active {
+		if err = s.users.AdvanceSessionEpoch(ctx, req.TargetUserID); err != nil {
+			return fmt.Errorf("advance the session epoch of user %s: %w", req.TargetUserID, err)
+		}
+		if err = s.sessions.DeleteAllForUser(ctx, req.TargetUserID); err != nil {
+			return fmt.Errorf("end sessions for user %s: %w", req.TargetUserID, err)
+		}
+		s.recordSessionsEnded(ctx, req.TenantInfo, req.TargetUserID)
+	}
+
 	removed, err := s.repo.DeleteAll(ctx, req.TargetUserID)
 	if err != nil {
 		return err
 	}
 	if removed == 0 {
 		return errNoActiveFactor
+	}
+	if active {
+		if err = s.users.AdvanceSessionEpoch(ctx, req.TargetUserID); err != nil {
+			return fmt.Errorf("advance the session epoch of user %s: %w", req.TargetUserID, err)
+		}
 	}
 
 	s.recordChange(ctx, &mfaChange{
@@ -599,24 +627,33 @@ func (s *Service) decryptSecret(authenticator *iam.MFAAuthenticator) (string, er
 
 func (s *Service) raiseSessionAssurance(
 	ctx context.Context,
-	sessionID, userID pulid.ID,
+	req *sessionports.ConfirmTOTPEnrollmentRequest,
 	verifiedAt int64,
-) {
-	if sessionID.IsNil() || s.sessions == nil {
-		return
+) *sessionrotation.Rotated {
+	if req.SessionID.IsNil() || s.rotator == nil {
+		return nil
 	}
 
-	sess, err := s.sessions.Get(ctx, sessionID)
-	if err != nil || sess == nil || sess.UserID != userID {
-		return
+	rotated, err := s.rotator.Rotate(ctx, sessionrotation.Request{
+		SessionID:         req.SessionID,
+		UserID:            req.TenantInfo.UserID,
+		CurrentSecretHash: req.SessionSecretHash,
+		Grace:             session.RotationGrace,
+		Change: func(sess *session.Session) error {
+			sess.AuthenticatorAAL = max(sess.AuthenticatorAAL, mfaAssuranceLevel)
+			sess.MFAAuthenticatedAt = verifiedAt
+			sess.LastReauthenticatedAt = verifiedAt
+			return nil
+		},
+	})
+	if err != nil {
+		if !errors.Is(err, sessionports.ErrSessionNotFound) {
+			s.l.Warn("failed to raise the session's assurance after enrollment", zap.Error(err))
+		}
+		return nil
 	}
 
-	sess.AuthenticatorAAL = max(sess.AuthenticatorAAL, mfaAssuranceLevel)
-	sess.MFAAuthenticatedAt = verifiedAt
-	sess.LastReauthenticatedAt = verifiedAt
-	if err = s.sessions.Update(ctx, sess); err != nil {
-		s.l.Warn("failed to raise the session's assurance after enrollment", zap.Error(err))
-	}
+	return rotated
 }
 
 type mfaChange struct {
@@ -627,6 +664,20 @@ type mfaChange struct {
 	before     any
 	after      any
 	comment    string
+}
+
+func (s *Service) recordSessionsEnded(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	userID pulid.ID,
+) {
+	if s.authEvents == nil {
+		return
+	}
+	s.authEvents.Record(
+		ctx,
+		iamports.SessionRevokedEvent(tenantInfo, userID, iamports.SessionRevocationAll),
+	)
 }
 
 func (s *Service) recordChange(ctx context.Context, change *mfaChange) {

@@ -106,9 +106,9 @@ func (r *stubUserRepo) FindByEmail(_ context.Context, _ string) (*tenant.User, e
 func (r *stubUserRepo) UpdatePassword(
 	_ context.Context,
 	req tenantports.UpdateUserPasswordRequest,
-) error {
+) (int64, error) {
 	r.updated = &req
-	return r.updateErr
+	return 1, r.updateErr
 }
 
 type stubSessionRepo struct {

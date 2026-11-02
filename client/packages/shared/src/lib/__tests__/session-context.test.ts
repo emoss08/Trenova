@@ -264,13 +264,23 @@ describe("session context", () => {
     });
 
     it("keeps the tab current when the refusal names its own session", async () => {
+      const { api, handler } = await loadListening();
+      fetchMock.mockResolvedValueOnce(problemResponse(409, staleProblem(LOADED)));
+
+      await api.get("/shipments/").catch(() => undefined);
+
+      expect(handler.mock.calls).toEqual([["current"]]);
+    });
+
+    it("leaves a refused save that names its own session to its caller, so the save fails visibly", async () => {
       const { api, handler, isExplainedError } = await loadListening();
       fetchMock.mockResolvedValueOnce(problemResponse(409, staleProblem(LOADED)));
 
-      const error = await api.get("/shipments/").catch((e: unknown) => e);
+      const error = await api.post("/shipments/", { proNumber: "1" }).catch((e: unknown) => e);
 
       expect(handler.mock.calls).toEqual([["current"]]);
-      expect(isExplainedError(error)).toBe(true);
+      expect(isExplainedError(error)).toBe(false);
+      expect(error).toMatchObject({ status: 409 });
     });
 
     it("treats a refusal that does not name the session as an organization change", async () => {

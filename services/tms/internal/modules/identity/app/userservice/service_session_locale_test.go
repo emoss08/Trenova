@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/testutil/sessiontest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -47,11 +48,8 @@ func TestUpdateMySettings_LanguageChangeReachesTheCurrentSession(t *testing.T) {
 	tenantInfo := expectSettingsSave(deps, user)
 
 	sess := &session.Session{ID: pulid.MustNew("ses_"), UserID: user.ID, Locale: "en"}
-	deps.sessionRepo.On("Get", mock.Anything, sess.ID).Return(sess, nil).Once()
-	deps.sessionRepo.On("Update", mock.Anything, mock.MatchedBy(func(updated *session.Session) bool {
-		return updated.ID == sess.ID && updated.Locale == "es"
-	})).
-		Return(nil).
+	deps.sessionRepo.EXPECT().Update(mock.Anything, sess.ID, mock.Anything).
+		RunAndReturn(sessiontest.UpdateStored(sess)).
 		Once()
 
 	_, err := deps.svc.UpdateMySettings(t.Context(), tenantInfo, UpdateMySettingsRequest{
@@ -62,7 +60,7 @@ func TestUpdateMySettings_LanguageChangeReachesTheCurrentSession(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	deps.sessionRepo.AssertExpectations(t)
+	require.Equal(t, "es", sess.Locale)
 }
 
 func TestUpdateMySettings_LeavesAnotherUsersSessionAlone(t *testing.T) {
@@ -73,7 +71,9 @@ func TestUpdateMySettings_LeavesAnotherUsersSessionAlone(t *testing.T) {
 	tenantInfo := expectSettingsSave(deps, user)
 
 	sess := &session.Session{ID: pulid.MustNew("ses_"), UserID: pulid.MustNew("usr_"), Locale: "en"}
-	deps.sessionRepo.On("Get", mock.Anything, sess.ID).Return(sess, nil).Once()
+	deps.sessionRepo.EXPECT().Update(mock.Anything, sess.ID, mock.Anything).
+		RunAndReturn(sessiontest.UpdateStored(sess)).
+		Once()
 
 	_, err := deps.svc.UpdateMySettings(t.Context(), tenantInfo, UpdateMySettingsRequest{
 		Timezone:   "America/Chicago",
@@ -83,7 +83,7 @@ func TestUpdateMySettings_LeavesAnotherUsersSessionAlone(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	deps.sessionRepo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+	require.Equal(t, "en", sess.Locale)
 }
 
 func TestUpdateMySettings_SavesTheLanguageWhenTheSessionCannotBeRefreshed(t *testing.T) {
@@ -94,7 +94,7 @@ func TestUpdateMySettings_SavesTheLanguageWhenTheSessionCannotBeRefreshed(t *tes
 	tenantInfo := expectSettingsSave(deps, user)
 
 	sessionID := pulid.MustNew("ses_")
-	deps.sessionRepo.On("Get", mock.Anything, sessionID).
+	deps.sessionRepo.EXPECT().Update(mock.Anything, sessionID, mock.Anything).
 		Return(nil, context.DeadlineExceeded).Once()
 
 	updated, err := deps.svc.UpdateMySettings(t.Context(), tenantInfo, UpdateMySettingsRequest{

@@ -66,8 +66,9 @@ type SignInSummary struct {
 }
 
 type SessionScope struct {
-	TenantInfo       pagination.TenantInfo
-	CurrentSessionID pulid.ID
+	TenantInfo        pagination.TenantInfo
+	CurrentSessionID  pulid.ID
+	CurrentSecretHash string
 }
 
 type columnUpdate struct {
@@ -134,16 +135,16 @@ func (s *Service) updateColumns(ctx context.Context, req *columnUpdate) (*tenant
 func (s *Service) loadSelf(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*tenant.User, *tenant.User, error) {
-	user, err := s.repo.GetByID(ctx, tenantports.GetUserByIDRequest{
+) (current, original *tenant.User, err error) {
+	current, err = s.repo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:         tenantInfo,
 		IncludeMemberships: true,
 	})
 	if err != nil {
 		return nil, nil, err
 	}
-	original := *user
-	return user, &original, nil
+	snapshot := *current
+	return current, &snapshot, nil
 }
 
 func (s *Service) UpdateMyProfile(
@@ -344,7 +345,7 @@ func (s *Service) ListAvatars(
 
 func (s *Service) ListMySessions(
 	ctx context.Context,
-	scope SessionScope,
+	scope *SessionScope,
 ) ([]SessionSummary, error) {
 	sessions, err := s.sr.ListForUser(ctx, scope.TenantInfo.UserID)
 	if err != nil {
@@ -391,7 +392,7 @@ func (s *Service) ListMySessions(
 
 func (s *Service) RevokeMySession(
 	ctx context.Context,
-	scope SessionScope,
+	scope *SessionScope,
 	sessionID pulid.ID,
 ) error {
 	if sessionID == scope.CurrentSessionID {
@@ -421,32 +422,12 @@ func (s *Service) RevokeMySession(
 	return nil
 }
 
-func (s *Service) RevokeMyOtherSessions(ctx context.Context, scope SessionScope) (int, error) {
-	sessions, err := s.sr.ListForUser(ctx, scope.TenantInfo.UserID)
-	if err != nil {
-		return 0, err
-	}
-
-	revoked := 0
-	for _, sess := range sessions {
-		if sess.ID == scope.CurrentSessionID {
-			continue
-		}
-		if err = s.sr.Delete(ctx, sess.ID); err != nil {
-			s.l.Warn(
-				"failed to revoke session",
-				zap.String("sessionID", sess.ID.String()),
-				zap.Error(err),
-			)
-			continue
-		}
-		revoked++
-	}
-
+func (s *Service) RevokeMyOtherSessions(ctx context.Context, scope *SessionScope) (int, error) {
+	revoked, err := s.endOtherSessions(ctx, scope)
 	if revoked > 0 {
 		s.recordRevocation(ctx, scope.TenantInfo, revoked)
 	}
-	return revoked, nil
+	return revoked, err
 }
 
 func (s *Service) recordRevocation(
@@ -454,21 +435,11 @@ func (s *Service) recordRevocation(
 	tenantInfo pagination.TenantInfo,
 	count int,
 ) {
-	if s.authEvents == nil {
-		return
-	}
-	mfaState := "single"
+	scope := iamports.SessionRevocationSingle
 	if count > 1 {
-		mfaState = "others"
+		scope = iamports.SessionRevocationOthers
 	}
-	s.authEvents.Record(ctx, &iamports.AuthEventRecord{
-		Provider:       iamports.AuthEventProviderSessionRevoked,
-		Outcome:        iam.AuthEventOutcomeSuccess,
-		UserID:         tenantInfo.UserID,
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-		MFAState:       mfaState,
-	})
+	s.recordSessionsEnded(ctx, tenantInfo, tenantInfo.UserID, scope)
 }
 
 func (s *Service) ListMySignIns(

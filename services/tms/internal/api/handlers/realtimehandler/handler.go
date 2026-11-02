@@ -1,6 +1,7 @@
 package realtimehandler
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -131,7 +132,7 @@ func (h *Handler) stream(c *gin.Context) {
 	rotate := time.NewTimer(timeutils.Jittered(h.maxLifetime))
 	defer rotate.Stop()
 
-	sessionEnded, stopWatching := h.sessions.Watch(authCtx.SessionID)
+	ending, stopWatching := h.sessions.Watch(authCtx.SessionID, authctx.GetSessionSecretHash(c))
 	defer stopWatching()
 
 	frames := rt.Frames()
@@ -142,7 +143,11 @@ func (h *Handler) stream(c *gin.Context) {
 		case <-rotate.C:
 			h.emitClose(stream, realtimeports.RealtimeCloseRotate)
 			return
-		case <-sessionEnded:
+		case <-ending.Done():
+			if errors.Is(ending.Cause(), sessionwatch.ErrSessionRotated) {
+				h.emitClose(stream, realtimeports.RealtimeCloseRotate)
+				return
+			}
 			h.emitClose(stream, realtimeports.RealtimeCloseSessionEnded)
 			return
 		case frame, ok := <-frames:

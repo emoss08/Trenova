@@ -1,9 +1,11 @@
 package userhandler_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -21,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
@@ -28,8 +31,10 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/permchangetest"
+	"github.com/emoss08/trenova/internal/testutil/sessiontest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/sessiontoken"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -47,6 +52,7 @@ type setupOptions struct {
 	sessionRepo *sessionportsmock.MockSessionRepository
 	storage     *kernelportsmock.MockClient
 	permEngine  permissionports.PermissionEngine
+	mfa         sessionports.MFAService
 	cfg         *config.Config
 }
 
@@ -90,6 +96,7 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 		Logger:            logger,
 		Repo:              opts.userRepo,
 		SessionRepository: opts.sessionRepo,
+		Rotator:           sessiontest.Rotator(opts.sessionRepo),
 		AuditService:      &mocks.NoopAuditService{},
 		Realtime:          &mocks.NoopRealtimeService{},
 		Storage:           opts.storage,
@@ -121,6 +128,8 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 		Service:              userSvc,
 		RoleService:          roleSvc,
 		PermissionEngine:     opts.permEngine,
+		MFA:                  opts.mfa,
+		SecurityConfig:       &opts.cfg.Security,
 		ErrorHandler:         errorHandler,
 		PermissionMiddleware: pm,
 	})
@@ -551,14 +560,19 @@ func TestUserHandler_SwitchOrganization_Success(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 
 	sessionRepo := sessionportsmock.NewMockSessionRepository(t)
-	sessionRepo.On("Get", mock.Anything, mock.Anything).Return(&session.Session{
+	current := &session.Session{
 		ID:             sessionID,
+		SecretHash:     testutil.TestSessionSecretHash,
 		UserID:         testutil.TestUserID,
 		OrganizationID: testutil.TestOrgID,
 		BusinessUnitID: testutil.TestBuID,
 		ExpiresAt:      time.Now().Add(time.Hour).Unix(),
-	}, nil)
-	sessionRepo.On("Update", mock.Anything, mock.Anything).Return(nil)
+	}
+	sessionRepo.On("Get", mock.Anything, mock.Anything).Return(current, nil)
+	stored := *current
+	sessionRepo.EXPECT().Update(mock.Anything, sessionID, mock.Anything).
+		RunAndReturn(sessiontest.UpdateStored(&stored)).
+		Once()
 
 	userRepo := tenantportsmock.NewMockUserRepository(t)
 	userRepo.On("GetOrganizations", mock.Anything, mock.Anything).
@@ -599,7 +613,17 @@ func TestUserHandler_SwitchOrganization_Success(t *testing.T) {
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
-	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+	cookie := sessionCookie(t, ginCtx.Recorder)
+	rotatedID, secret, err := sessiontoken.Parse(cookie.Value)
+	require.NoError(t, err)
+	assert.Equal(t, sessionID, rotatedID)
+	assert.True(
+		t,
+		sessiontest.Tokens().Matches(sessionID, current.UserID, secret, stored.SecretHash),
+	)
+	assert.Equal(t, targetOrgID, stored.OrganizationID)
+	assert.NotContains(t, ginCtx.Recorder.Body.String(), cookie.Value)
 }
 
 func TestUserHandler_SwitchOrganization_NoCookie(t *testing.T) {
@@ -823,8 +847,11 @@ func TestUserHandler_UpdateMyAssistantVisibility_RequiresTheChoice(t *testing.T)
 	repo.AssertNotCalled(t, "UpdateColumns", mock.Anything, mock.Anything)
 }
 
-func TestUserHandler_ChangeMyPassword_Success(t *testing.T) {
-	t.Parallel()
+func setupPasswordChangeHandler(
+	t *testing.T,
+	current *session.Session,
+) (*userhandler.Handler, *sessionportsmock.MockSessionRepository, *tenant.User) {
+	t.Helper()
 
 	user := newTestUserForHandler()
 	hashedPassword, err := user.GeneratePassword("current-password")
@@ -833,20 +860,55 @@ func TestUserHandler_ChangeMyPassword_Success(t *testing.T) {
 
 	repo := tenantportsmock.NewMockUserRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(user, nil).Twice()
-	repo.On("UpdatePassword", mock.Anything, mock.Anything).Return(nil).Once()
+	repo.On("UpdatePassword", mock.Anything, mock.Anything).Return(int64(1), nil).Once()
+	sessions := sessionportsmock.NewMockSessionRepository(t)
+	sessions.EXPECT().ListForUser(mock.Anything, user.ID).
+		Return([]*session.Session{current}, nil).
+		Once()
 
-	handler := setupUserHandler(t, setupOptions{userRepo: repo})
+	return setupUserHandler(t, setupOptions{userRepo: repo, sessionRepo: sessions}), sessions, user
+}
 
-	ginCtx := testutil.NewGinTestContext().
+func changePasswordRequest(sessionID pulid.ID) *testutil.GinTestContext {
+	return testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath("/api/v1/users/me/change-password/").
-		WithDefaultAuthContext().
+		WithDefaultSessionAuthContext(sessionID).
 		WithJSONBody(map[string]any{
 			"currentPassword": "current-password",
 			"newPassword":     "new-password",
 			"confirmPassword": "new-password",
 		})
+}
 
+func sessionCookie(t *testing.T, recorder *httptest.ResponseRecorder) *http.Cookie {
+	t.Helper()
+
+	for _, cookie := range recorder.Result().Cookies() {
+		if cookie.Name == "trenova_session" {
+			return cookie
+		}
+	}
+	require.Fail(t, "the response sets no session cookie")
+	return nil
+}
+
+func TestUserHandler_ChangeMyPassword_SetsTheRotatedSessionCookie(t *testing.T) {
+	t.Parallel()
+
+	current := &session.Session{
+		ID:         pulid.MustNew("ses_"),
+		UserID:     testutil.TestUserID,
+		SecretHash: testutil.TestSessionSecretHash,
+		ExpiresAt:  timeutils.NowUnix() + 3600,
+	}
+	handler, sessions, user := setupPasswordChangeHandler(t, current)
+	stored := *current
+	sessions.EXPECT().Update(mock.Anything, current.ID, mock.Anything).
+		RunAndReturn(sessiontest.UpdateStored(&stored)).
+		Once()
+
+	ginCtx := changePasswordRequest(current.ID)
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
@@ -854,7 +916,34 @@ func TestUserHandler_ChangeMyPassword_Success(t *testing.T) {
 	var resp tenant.User
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	assert.Equal(t, user.ID, resp.ID)
-	assert.Equal(t, user.EmailAddress, resp.EmailAddress)
+	cookie := sessionCookie(t, ginCtx.Recorder)
+	sessionID, secret, err := sessiontoken.Parse(cookie.Value)
+	require.NoError(t, err)
+	assert.Equal(t, current.ID, sessionID)
+	assert.True(
+		t,
+		sessiontest.Tokens().Matches(current.ID, current.UserID, secret, stored.SecretHash),
+	)
+	assert.Positive(t, cookie.MaxAge)
+}
+
+func TestUserHandler_ChangeMyPassword_ClearsTheCookieOfASessionThatEnded(t *testing.T) {
+	t.Parallel()
+
+	current := &session.Session{ID: pulid.MustNew("ses_"), UserID: testutil.TestUserID}
+	handler, sessions, _ := setupPasswordChangeHandler(t, current)
+	sessions.EXPECT().Update(mock.Anything, current.ID, mock.Anything).
+		Return(nil, sessionports.ErrSessionNotFound).
+		Once()
+
+	ginCtx := changePasswordRequest(current.ID)
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+	cookie := sessionCookie(t, ginCtx.Recorder)
+	assert.Empty(t, cookie.Value)
+	assert.Negative(t, cookie.MaxAge)
 }
 
 func TestUserHandler_ChangeMyPassword_ValidationFailure(t *testing.T) {
@@ -890,4 +979,47 @@ func newTestUserForHandler() *tenant.User {
 		TimeFormat:            domaintypes.TimeFormat12Hour,
 		Status:                domaintypes.StatusActive,
 	}
+}
+
+type enrollingMFA struct {
+	sessionports.MFAService
+
+	confirmed *sessionports.ConfirmTOTPEnrollmentRequest
+}
+
+func (m *enrollingMFA) ConfirmTOTPEnrollment(
+	_ context.Context,
+	req *sessionports.ConfirmTOTPEnrollmentRequest,
+) (*sessionports.TOTPEnrollmentResponse, error) {
+	m.confirmed = req
+	return &sessionports.TOTPEnrollmentResponse{
+		RecoveryCodes: []string{"code-one", "code-two"},
+		SessionToken:  "rotated-token",
+		ExpiresAt:     timeutils.NowUnix() + 3600,
+	}, nil
+}
+
+func TestUserHandler_ConfirmTOTPEnrollment_SetsTheRotatedSessionCookie(t *testing.T) {
+	t.Parallel()
+
+	sessionID := pulid.MustNew("ses_")
+	mfa := &enrollingMFA{}
+	handler := setupUserHandler(t, setupOptions{mfa: mfa})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/users/me/mfa/totp/confirm/").
+		WithDefaultSessionAuthContext(sessionID).
+		WithJSONBody(map[string]any{"code": "123456"})
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+	require.NotNil(t, mfa.confirmed)
+	assert.Equal(t, sessionID, mfa.confirmed.SessionID)
+	assert.Equal(t, testutil.TestSessionSecretHash, mfa.confirmed.SessionSecretHash)
+	cookie := sessionCookie(t, ginCtx.Recorder)
+	assert.Equal(t, "rotated-token", cookie.Value)
+	assert.Contains(t, ginCtx.Recorder.Body.String(), "code-one")
+	assert.NotContains(t, ginCtx.Recorder.Body.String(), "rotated-token")
 }

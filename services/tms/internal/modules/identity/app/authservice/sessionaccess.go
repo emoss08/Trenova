@@ -2,46 +2,74 @@ package authservice
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
 
+func (s *Service) refreshSession(
+	ctx context.Context,
+	sess *session.Session,
+	now int64,
+) error {
+	if sess.IssuedBySignIn && sess.NeedsAccessCheck(now) {
+		return s.confirmSessionAccess(ctx, sess, now)
+	}
+
+	if sess.NeedsTouch(now) {
+		if err := s.sr.Touch(ctx, sess.ID, now); err == nil {
+			sess.LastAccessedAt = now
+		}
+	}
+
+	return nil
+}
+
 func (s *Service) confirmSessionAccess(
 	ctx context.Context,
 	sess *session.Session,
 	now int64,
 ) error {
-	if sess.IssuedBySignIn {
-		ended, err := s.sessionAccessEnded(ctx, sess, now)
-		if err != nil {
-			s.l.Warn(
-				"could not confirm a session still has access; checking again on its next request",
-				zap.String("sessionID", sess.ID.String()),
-				zap.String("userID", sess.UserID.String()),
-				zap.Error(err),
-			)
-			return nil
+	ended, err := s.sessionAccessEnded(ctx, sess, now)
+	if err != nil && sess.UnconfirmedTooLong(now) {
+		s.l.Error(
+			"refused a session whose access has gone unconfirmed too long",
+			zap.String("sessionID", sess.ID.String()),
+			zap.String("userID", sess.UserID.String()),
+			zap.Error(err),
+		)
+		return fmt.Errorf("%w: %w", sessionports.ErrSessionAccessUnconfirmed, err)
+	}
+	if err != nil {
+		s.l.Warn(
+			"could not confirm a session still has access; checking again on its next request",
+			zap.String("sessionID", sess.ID.String()),
+			zap.String("userID", sess.UserID.String()),
+			zap.Error(err),
+		)
+		return nil
+	}
+	if ended {
+		s.l.Info(
+			"ended a session whose user lost access to its organization",
+			zap.String("sessionID", sess.ID.String()),
+			zap.String("userID", sess.UserID.String()),
+			zap.String("organizationID", sess.OrganizationID.String()),
+		)
+		if delErr := s.sr.Delete(ctx, sess.ID); delErr != nil {
+			s.l.Error("failed to delete a session that lost access", zap.Error(delErr))
 		}
-		if ended {
-			s.l.Info(
-				"ended a session whose user lost access to its organization",
-				zap.String("sessionID", sess.ID.String()),
-				zap.String("userID", sess.UserID.String()),
-				zap.String("organizationID", sess.OrganizationID.String()),
-			)
-			if delErr := s.sr.Delete(ctx, sess.ID); delErr != nil {
-				s.l.Error("failed to delete a session that lost access", zap.Error(delErr))
-			}
-			return errortypes.NewAuthenticationError("Session is invalid. Please login again.")
-		}
+		return errortypes.NewAuthenticationError("Session is invalid. Please login again.")
 	}
 
-	if err := s.sr.Touch(ctx, sess.ID, now); err == nil {
+	if err = s.sr.ConfirmAccess(ctx, sess.ID, now); err == nil {
 		sess.LastAccessedAt = now
+		sess.AccessConfirmedAt = now
 	}
 
 	return nil
@@ -66,6 +94,10 @@ func (s *Service) sessionAccessEnded(
 			return true, nil
 		}
 		return false, err
+	}
+
+	if user.SessionEpoch > sess.SessionEpoch {
+		return true, nil
 	}
 
 	return user.ValidateStatus() != nil, nil

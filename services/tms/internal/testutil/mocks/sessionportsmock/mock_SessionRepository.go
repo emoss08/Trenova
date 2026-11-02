@@ -279,20 +279,31 @@ func (_c *MockSessionRepository_Get_Call) RunAndReturn(run func(ctx context.Cont
 }
 
 // Update provides a mock function for the type MockSessionRepository
-func (_mock *MockSessionRepository) Update(ctx context.Context, session1 *session.Session) error {
-	ret := _mock.Called(ctx, session1)
+func (_mock *MockSessionRepository) Update(ctx context.Context, sessionID pulid.ID, mutate func(*session.Session) error) (*session.Session, error) {
+	ret := _mock.Called(ctx, sessionID, mutate)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *session.Session) error); ok {
-		r0 = returnFunc(ctx, session1)
-	} else {
-		r0 = ret.Error(0)
+	var r0 *session.Session
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, func(*session.Session) error) (*session.Session, error)); ok {
+		return returnFunc(ctx, sessionID, mutate)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, func(*session.Session) error) *session.Session); ok {
+		r0 = returnFunc(ctx, sessionID, mutate)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*session.Session)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, func(*session.Session) error) error); ok {
+		r1 = returnFunc(ctx, sessionID, mutate)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // MockSessionRepository_Update_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Update'
@@ -302,35 +313,41 @@ type MockSessionRepository_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - session1 *session.Session
-func (_e *MockSessionRepository_Expecter) Update(ctx any, session1 any) *MockSessionRepository_Update_Call {
-	return &MockSessionRepository_Update_Call{Call: _e.mock.On("Update", ctx, session1)}
+//   - sessionID pulid.ID
+//   - mutate func(*session.Session) error
+func (_e *MockSessionRepository_Expecter) Update(ctx any, sessionID any, mutate any) *MockSessionRepository_Update_Call {
+	return &MockSessionRepository_Update_Call{Call: _e.mock.On("Update", ctx, sessionID, mutate)}
 }
 
-func (_c *MockSessionRepository_Update_Call) Run(run func(ctx context.Context, session1 *session.Session)) *MockSessionRepository_Update_Call {
+func (_c *MockSessionRepository_Update_Call) Run(run func(ctx context.Context, sessionID pulid.ID, mutate func(*session.Session) error)) *MockSessionRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *session.Session
+		var arg1 pulid.ID
 		if args[1] != nil {
-			arg1 = args[1].(*session.Session)
+			arg1 = args[1].(pulid.ID)
+		}
+		var arg2 func(*session.Session) error
+		if args[2] != nil {
+			arg2 = args[2].(func(*session.Session) error)
 		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
 }
 
-func (_c *MockSessionRepository_Update_Call) Return(err error) *MockSessionRepository_Update_Call {
-	_c.Call.Return(err)
+func (_c *MockSessionRepository_Update_Call) Return(session1 *session.Session, err error) *MockSessionRepository_Update_Call {
+	_c.Call.Return(session1, err)
 	return _c
 }
 
-func (_c *MockSessionRepository_Update_Call) RunAndReturn(run func(ctx context.Context, session1 *session.Session) error) *MockSessionRepository_Update_Call {
+func (_c *MockSessionRepository_Update_Call) RunAndReturn(run func(ctx context.Context, sessionID pulid.ID, mutate func(*session.Session) error) (*session.Session, error)) *MockSessionRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -399,6 +416,69 @@ func (_c *MockSessionRepository_ListForUser_Call) Return(sessions []*session.Ses
 }
 
 func (_c *MockSessionRepository_ListForUser_Call) RunAndReturn(run func(ctx context.Context, userID pulid.ID) ([]*session.Session, error)) *MockSessionRepository_ListForUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ConfirmAccess provides a mock function for the type MockSessionRepository
+func (_mock *MockSessionRepository) ConfirmAccess(ctx context.Context, sessionID pulid.ID, at int64) error {
+	ret := _mock.Called(ctx, sessionID, at)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ConfirmAccess")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, int64) error); ok {
+		r0 = returnFunc(ctx, sessionID, at)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockSessionRepository_ConfirmAccess_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ConfirmAccess'
+type MockSessionRepository_ConfirmAccess_Call struct {
+	*mock.Call
+}
+
+// ConfirmAccess is a helper method to define mock.On call
+//   - ctx context.Context
+//   - sessionID pulid.ID
+//   - at int64
+func (_e *MockSessionRepository_Expecter) ConfirmAccess(ctx any, sessionID any, at any) *MockSessionRepository_ConfirmAccess_Call {
+	return &MockSessionRepository_ConfirmAccess_Call{Call: _e.mock.On("ConfirmAccess", ctx, sessionID, at)}
+}
+
+func (_c *MockSessionRepository_ConfirmAccess_Call) Run(run func(ctx context.Context, sessionID pulid.ID, at int64)) *MockSessionRepository_ConfirmAccess_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].(pulid.ID)
+		}
+		var arg2 int64
+		if args[2] != nil {
+			arg2 = args[2].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockSessionRepository_ConfirmAccess_Call) Return(err error) *MockSessionRepository_ConfirmAccess_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockSessionRepository_ConfirmAccess_Call) RunAndReturn(run func(ctx context.Context, sessionID pulid.ID, at int64) error) *MockSessionRepository_ConfirmAccess_Call {
 	_c.Call.Return(run)
 	return _c
 }

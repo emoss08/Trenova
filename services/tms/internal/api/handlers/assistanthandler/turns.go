@@ -1,8 +1,6 @@
 package assistanthandler
 
 import (
-	"context"
-	"errors"
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
@@ -130,7 +128,11 @@ func (h *Handler) streamTurn(c *gin.Context) {
 	}
 	defer stream.Close()
 
-	ctx, stopWatching := h.sessions.Context(c.Request.Context(), authCtx.SessionID)
+	ctx, stopWatching := h.sessions.Context(
+		c.Request.Context(),
+		authCtx.SessionID,
+		authctx.GetSessionSecretHash(c),
+	)
 	defer stopWatching()
 
 	err = h.turns.Relay(ctx, assistantturnservice.RelayRequest{
@@ -144,7 +146,7 @@ func (h *Handler) streamTurn(c *gin.Context) {
 
 		return nil
 	})
-	if errors.Is(context.Cause(ctx), sessionwatch.ErrSessionEnded) {
+	if sessionwatch.Ended(ctx) {
 		return
 	}
 	if err != nil {

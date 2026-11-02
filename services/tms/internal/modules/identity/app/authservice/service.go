@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/sessionrotation"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
@@ -60,6 +61,8 @@ type Params struct {
 	MFAChallenges     iamports.MFAChallengeRepository `optional:"true"`
 	RoleActivation    iamports.RoleActivationPolicy   `optional:"true"`
 	Encryption        *encryptionservice.Service
+	Tokens            *sessiontoken.Issuer
+	Rotator           *sessionrotation.Rotator
 	SecurityConfig    *securityconfig.Config
 	ServerConfig      *serverconfig.Config
 	Logger            *zap.Logger
@@ -84,6 +87,8 @@ type Service struct {
 	challenges     iamports.MFAChallengeRepository
 	activation     iamports.RoleActivationPolicy
 	enc            *encryptionservice.Service
+	tokens         *sessiontoken.Issuer
+	rotator        *sessionrotation.Rotator
 	securityConfig *securityconfig.Config
 	serverConfig   *serverconfig.Config
 	policy         session.Policy
@@ -111,6 +116,8 @@ func New(p Params) tenantports.AuthService {
 		challenges:     p.MFAChallenges,
 		activation:     p.RoleActivation,
 		enc:            p.Encryption,
+		tokens:         p.Tokens,
+		rotator:        p.Rotator,
 		securityConfig: p.SecurityConfig,
 		serverConfig:   p.ServerConfig,
 		policy: session.Policy{
@@ -684,19 +691,21 @@ func (s *Service) AuthenticateSession(
 		return nil, err
 	}
 
-	if !sessiontoken.Matches(secret, sess.SecretHash) {
+	secretHash, ok := s.acceptedSecretHash(sess, secret)
+	if !ok {
 		s.l.Warn(
 			"rejected a session cookie whose secret does not match the session",
 			zap.String("sessionID", sessionID.String()),
 			zap.String("userID", sess.UserID.String()),
 		)
-		return nil, errortypes.NewAuthenticationError("Session is invalid. Please login again.")
+		return nil, errortypes.NewAuthenticationError("Session is invalid. Please login again.").
+			WithInternal(sessionports.ErrSessionSecretMismatch)
 	}
 
-	if now := timeutils.NowUnix(); sess.NeedsTouch(now) {
-		if err = s.confirmSessionAccess(ctx, sess, now); err != nil {
-			return nil, err
-		}
+	sess.AuthenticatedSecretHash = secretHash
+
+	if err = s.refreshSession(ctx, sess, timeutils.NowUnix()); err != nil {
+		return nil, err
 	}
 	sess.RoleActivationRequired = s.roleActivationRequired(
 		ctx,
@@ -705,6 +714,15 @@ func (s *Service) AuthenticateSession(
 	)
 
 	return sess, nil
+}
+
+func (s *Service) acceptedSecretHash(sess *session.Session, secret string) (string, bool) {
+	for _, hash := range sess.SecretHashesAt(timeutils.NowUnix()) {
+		if s.tokens.Matches(sess.ID, sess.UserID, secret, hash) {
+			return hash, true
+		}
+	}
+	return "", false
 }
 
 func (s *Service) KeepSessionAlive(
@@ -809,8 +827,19 @@ func (s *Service) ActivateSessionRoles(
 		)
 	}
 
-	sess.ActiveRoleIDs = activeRoleIDs
-	if err = s.sr.Update(ctx, sess); err != nil {
+	rotated, err := s.rotator.Rotate(ctx, sessionrotation.Request{
+		SessionID:         sess.ID,
+		UserID:            sess.UserID,
+		CurrentSecretHash: req.SecretHash,
+		Grace:             session.RotationGrace,
+		Change: func(current *session.Session) error {
+			return activateRoles(current, sess, activeRoleIDs)
+		},
+	})
+	if err != nil {
+		if errors.Is(err, sessionports.ErrSessionNotFound) {
+			return nil, errSessionEnded
+		}
 		return nil, err
 	}
 
@@ -821,7 +850,22 @@ func (s *Service) ActivateSessionRoles(
 		AuthorizedRoles:   authorizedRoles,
 		RequiresRoleActivation: len(activeRoleIDs) == 0 && len(authorizedRoleIDs) > 0 &&
 			s.roleActivationRequired(ctx, sess.OrganizationID, sess.BusinessUnitID),
+		SessionToken: rotated.Token,
+		ExpiresAt:    rotated.Session.ExpiresAt,
 	}, nil
+}
+
+func activateRoles(current, validated *session.Session, activeRoleIDs []pulid.ID) error {
+	if current.OrganizationID != validated.OrganizationID ||
+		current.BusinessUnitID != validated.BusinessUnitID {
+		return errortypes.NewSessionContextStaleError(
+			current.UserID,
+			current.OrganizationID,
+			current.BusinessUnitID,
+		)
+	}
+	current.ActiveRoleIDs = activeRoleIDs
+	return nil
 }
 
 // stopTurnsTimeout bounds stopping a person's replies as they sign out. Each
@@ -832,6 +876,27 @@ const stopTurnsTimeout = 10 * time.Second
 // Logout ends the session, then stops every reply its person still has in
 // progress. Once they have signed out nobody is left to read those replies,
 // and each one runs on a worker, and bills, until it is stopped.
+func (s *Service) SignOut(ctx context.Context, token string) error {
+	sessionID, secret, err := sessiontoken.Parse(token)
+	if err != nil {
+		return errortypes.NewAuthenticationError("Session is invalid. Please login again.")
+	}
+
+	sess, err := s.sr.Get(ctx, sessionID)
+	if errors.Is(err, sessionports.ErrSessionNotFound) {
+		return errSessionEnded
+	}
+	if err != nil {
+		return err
+	}
+	if _, ok := s.acceptedSecretHash(sess, secret); !ok {
+		return errortypes.NewAuthenticationError("Session is invalid. Please login again.").
+			WithInternal(sessionports.ErrSessionSecretMismatch)
+	}
+
+	return s.Logout(ctx, sess.ID)
+}
+
 func (s *Service) Logout(ctx context.Context, sessionID pulid.ID) error {
 	sess, err := s.sr.Get(ctx, sessionID)
 	if err != nil {
@@ -961,6 +1026,7 @@ func (s *Service) createSession(
 
 	meta, _ := requestmeta.From(ctx)
 	sess := session.NewSession(&session.NewSessionRequest{
+		SessionEpoch:          user.SessionEpoch,
 		IPAddress:             meta.ClientIP,
 		UserAgent:             meta.UserAgent,
 		TenantInfo:            tenantInfo,
@@ -981,7 +1047,7 @@ func (s *Service) createSession(
 
 	sess.IssuedBySignIn = true
 
-	issued, err := sessiontoken.Issue(sess.ID)
+	issued, err := s.tokens.Issue(sess.ID, sess.UserID)
 	if err != nil {
 		return nil, "", err
 	}
@@ -990,8 +1056,31 @@ func (s *Service) createSession(
 	if err = s.sr.Create(ctx, sess); err != nil {
 		return nil, "", err
 	}
+	if err = s.confirmSessionEpoch(ctx, sess); err != nil {
+		return nil, "", err
+	}
 
 	return sess, issued.Token, nil
+}
+
+func (s *Service) confirmSessionEpoch(ctx context.Context, sess *session.Session) error {
+	epoch, err := s.ur.GetSessionEpoch(ctx, sess.UserID)
+	if err == nil && epoch == sess.SessionEpoch {
+		return nil
+	}
+
+	if delErr := s.sr.Delete(ctx, sess.ID); delErr != nil {
+		s.l.Error("failed to discard a session its credentials outdated", zap.Error(delErr))
+	}
+	if err != nil {
+		return err
+	}
+
+	s.l.Warn(
+		"discarded a sign-in that finished after its credentials changed",
+		zap.String("userID", sess.UserID.String()),
+	)
+	return errInvalidCredentials
 }
 
 func (s *Service) createLoginResponse(
