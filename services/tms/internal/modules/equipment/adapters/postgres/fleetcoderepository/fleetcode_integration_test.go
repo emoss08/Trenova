@@ -180,7 +180,7 @@ func TestFleetCodeRepository(t *testing.T) {
 		require.NotNil(t, first.TotalCount)
 		assert.Equal(t, 5, *first.TotalCount)
 
-		next, err := first.NextCursor()
+		next, err := pagination.NextCursor(first)
 		require.NoError(t, err)
 		second := f.connection(t, &pagination.QueryOptions{}, 2, next)
 		assert.Equal(t, order[2:4], codesOf(second.Items))
@@ -191,7 +191,7 @@ func TestFleetCodeRepository(t *testing.T) {
 		afterThat := f.connection(t, &pagination.QueryOptions{}, 2, afterFirstEdge.EdgeCursors[0])
 		assert.Equal(t, order[2:4], codesOf(afterThat.Items))
 
-		last, err := second.NextCursor()
+		last, err := pagination.NextCursor(second)
 		require.NoError(t, err)
 		third := f.connection(t, &pagination.QueryOptions{}, 2, last)
 		assert.Equal(t, order[4:], codesOf(third.Items))
@@ -206,7 +206,7 @@ func TestFleetCodeRepository(t *testing.T) {
 		first := f.connection(t, filter, 3, "")
 		assert.Equal(t, []string{"FC0", "FC1", "FC2"}, codesOf(first.Items))
 
-		next, err := first.NextCursor()
+		next, err := pagination.NextCursor(first)
 		require.NoError(t, err)
 		second := f.connection(t, filter, 3, next)
 		assert.Equal(t, []string{"FC3", "FC4"}, codesOf(second.Items))
