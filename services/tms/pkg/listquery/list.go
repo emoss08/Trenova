@@ -39,7 +39,8 @@ func Connection[T any](
 ) (*pagination.CursorListResult[*T], error) {
 	p := newPlan(q, req.Computed).withCopies(req.Copies)
 	read := narrow(p, q, req)
-	if err := bindWindow(ctx, db, p, q, req); err != nil {
+	q, err := bindWindow(ctx, db, p, q, req)
+	if err != nil {
 		return nil, err
 	}
 
@@ -167,7 +168,8 @@ func List[T any](
 ) (*pagination.ListResult[*T], error) {
 	p := newPlan(q, req.Computed).withCopies(req.Copies)
 	read := narrow(p, q, req)
-	if err := bindWindow(ctx, db, p, q, req); err != nil {
+	q, err := bindWindow(ctx, db, p, q, req)
+	if err != nil {
 		return nil, err
 	}
 
@@ -210,15 +212,45 @@ func listRows[T any](
 	return rows, counted, nil
 }
 
+type selectOptions[T any] struct {
+	matchCap int
+	shape    func(keel.Query[*T]) keel.Query[*T]
+}
+
+type SelectOption[T any] func(*selectOptions[T])
+
+func MatchCap[T any](limit int) SelectOption[T] {
+	return func(o *selectOptions[T]) { o.matchCap = limit }
+}
+
+func SelectShape[T any](shape func(keel.Query[*T]) keel.Query[*T]) SelectOption[T] {
+	return func(o *selectOptions[T]) { o.shape = shape }
+}
+
 func SelectOptions[T any](
 	ctx context.Context,
 	db *keel.DB,
 	q keel.Query[*T],
 	req *pagination.SelectQueryRequest,
 	search func(query string) keel.Pred,
+	opts ...SelectOption[T],
 ) (*pagination.ListResult[*T], error) {
+	var o selectOptions[T]
+	for _, opt := range opts {
+		opt(&o)
+	}
 	if req.Query != "" && search != nil {
 		q.Where(search(req.Query))
+		if o.matchCap > 0 {
+			capped, err := capMatches(ctx, db, newPlan(q, nil), q, o.matchCap)
+			if err != nil {
+				return nil, err
+			}
+			q = capped
+		}
+	}
+	if o.shape != nil {
+		q = o.shape(q)
 	}
 
 	counted := q.Clone()

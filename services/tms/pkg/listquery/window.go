@@ -39,26 +39,35 @@ func bindWindow[T any](
 	p *plan,
 	q keel.Query[*T],
 	req *Request[T],
-) error {
+) (keel.Query[*T], error) {
 	if !req.Window.appliesTo(req.Filter) {
-		return nil
+		return q, nil
 	}
+
+	return capMatches(ctx, db, p, q, req.Window.Cap)
+}
+
+func capMatches[T any](
+	ctx context.Context,
+	db *keel.DB,
+	p *plan,
+	q keel.Query[*T],
+	limit int,
+) (keel.Query[*T], error) {
 	id, ok := p.idColumn()
 	if !ok {
-		return nil
+		return q, nil
 	}
 
-	matched, err := q.Clone().CountUpTo(ctx, db, int64(req.Window.Cap)+1)
+	matched, err := q.Clone().CountUpTo(ctx, db, int64(limit)+1)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if matched <= int64(req.Window.Cap) {
-		q.Where(id.InQuery(q.Clone().Pick(id).Limit(req.Window.Cap + 1)))
-		return nil
+	if matched > int64(limit) {
+		return q.CustomPlan(), nil
 	}
-	q.CustomPlan()
 
-	return nil
+	return keel.QueryOf[*T](q.TableRef()).Where(id.InQuery(q.Pick(id).Limit(limit + 1))), nil
 }
 
 func (p *plan) idColumn() (keel.Col, bool) {

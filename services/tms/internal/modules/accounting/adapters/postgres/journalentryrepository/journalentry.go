@@ -3,7 +3,6 @@ package journalentryrepository
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -161,24 +160,42 @@ func (r *repository) GetByIDs(
 	})
 }
 
+const selectMatchCap = 1000
+
+func selectShape(
+	q keel.Query[*journalentry.JournalEntry],
+) keel.Query[*journalentry.JournalEntry] {
+	je := journalentrydb.JournalEntries
+
+	return q.Pick(
+		je.ID,
+		je.FiscalPeriodID,
+		je.EntryNumber,
+		je.EntryType,
+		je.Status,
+		je.AccountingDate,
+		je.CreatedAt,
+	).Order(je.AccountingDate.Desc(), je.ID.Desc())
+}
+
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *journalentryports.JournalEntrySelectOptionsRequest,
+) (*pagination.ListResult[*journalentry.JournalEntry], error) {
+	return r.selectOptions(ctx, req, selectMatchCap)
+}
+
+func (r *repository) selectOptions(
+	ctx context.Context,
+	req *journalentryports.JournalEntrySelectOptionsRequest,
+	matchCap int,
 ) (*pagination.ListResult[*journalentry.JournalEntry], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*journalentry.JournalEntry], error) {
 			je := journalentrydb.JournalEntries
-			q := je.Pick(
-				je.ID,
-				je.FiscalPeriodID,
-				je.EntryNumber,
-				je.EntryType,
-				je.Status,
-				je.AccountingDate,
-				je.CreatedAt,
-			).Order(je.AccountingDate.Desc(), je.ID.Desc())
+			q := je.Query()
 			if req.ReversibleOnly {
 				q = q.Where(
 					je.Status.Eq(journalentry.StatusPosted),
@@ -193,7 +210,9 @@ func (r *repository) SelectOptions(
 				r.db.Keel(ctx),
 				q,
 				req.SelectQueryRequest,
-				func(s string) keel.Pred { return je.EntryNumber.Lower().Contains(strings.ToLower(s)) },
+				func(s string) keel.Pred { return je.EntryNumber.ContainsFold(s) },
+				listquery.MatchCap[journalentry.JournalEntry](matchCap),
+				listquery.SelectShape(selectShape),
 			)
 		},
 	)

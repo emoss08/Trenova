@@ -275,21 +275,24 @@ func TestReversibleSelectOptionsListOnlyPostedEntriesNotYetReversedNewestFirst(t
 	_, err := je.Where(je.ID.Eq(reversed.ID)).Update(ctx, f.db.Admin, je.ReversedByID.To(reversal.ID))
 	require.NoError(t, err)
 
-	numbers := func(query string, reversibleOnly bool) []string {
-		result, listErr := f.repo.SelectOptions(ctx, &journalentryports.JournalEntrySelectOptionsRequest{
+	numbersCapped := func(query string, reversibleOnly bool, matchCap int) []string {
+		result, listErr := f.repo.(*repository).selectOptions(ctx, &journalentryports.JournalEntrySelectOptionsRequest{
 			SelectQueryRequest: &pagination.SelectQueryRequest{
 				TenantInfo: f.db.A.Info,
 				Pagination: pagination.Info{Limit: 10},
 				Query:      query,
 			},
 			ReversibleOnly: reversibleOnly,
-		})
+		}, matchCap)
 		require.NoError(t, listErr)
 		got := make([]string, 0, len(result.Items))
 		for _, item := range result.Items {
 			got = append(got, item.EntryNumber)
 		}
 		return got
+	}
+	numbers := func(query string, reversibleOnly bool) []string {
+		return numbersCapped(query, reversibleOnly, selectMatchCap)
 	}
 
 	assert.Equal(t, []string{"JE-REV-520", "JE-REV-510"}, numbers("je-rev-5", true))
@@ -298,6 +301,10 @@ func TestReversibleSelectOptionsListOnlyPostedEntriesNotYetReversedNewestFirst(t
 		[]string{"JE-REV-550", "JE-REV-540", "JE-REV-530", "JE-REV-520", "JE-REV-510"},
 		numbers("je-rev-5", false),
 	)
+	assert.Equal(t, numbers("je-rev-5", false), numbersCapped("je-rev-5", false, 2),
+		"more matches than the cap read in the same order")
+	assert.Equal(t, numbers("je-rev-5", false), numbersCapped("je-rev-5", false, 5),
+		"exactly the cap still reads the capped matches")
 
 	got, err := f.repo.GetByIDs(ctx, journalentryports.GetJournalEntriesByIDsRequest{
 		TenantInfo: f.db.A.Info,

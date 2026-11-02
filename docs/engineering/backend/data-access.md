@@ -444,10 +444,13 @@ volume generator, not the query: give the table the rows and status mix producti
 - **A date window filter on a list paged in another order** (items delivered this week, oldest
   queued first) has no index that gives both. Name the window's fields in
   `listquery.Request.Window` with a cap: a capped count of the window decides the read. A window
-  that fits pages the rows `id IN (<the window> LIMIT cap+1)` returns, a sort the plan guard
+  that fits pages the table's rows `id IN (<the window> LIMIT cap+1)` names, the filter written
+  only inside the subquery so the planner cannot hash every match against it, a sort the plan guard
   bounds by that `Limit`, as it bounds the key lookups the page's loads make from it; a larger
   one pages in the list's own order with `CustomPlan`, planned for the window's real width,
-  which the guard explains without checking (`billingqueuerepository.shipmentWindow`).
+  which the guard explains without checking (`billingqueuerepository.shipmentWindow`). A picker's
+  text match is the same read: `listquery.SelectOptions` with `MatchCap` and `SelectShape`, the
+  shape applying the picks and order after the cap (`journalentryrepository.selectShape`).
 - **A read scoped to explicit ids** is bounded by them: drop the `LIMIT` when the ids fit in the
   page (`dispatchconsolerepository.boundedByMoveIDs`), or truncate in Go when a row per id is not
   guaranteed, rather than sorting a handful of rows under a `LIMIT` over a large table.
