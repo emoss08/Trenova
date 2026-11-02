@@ -301,15 +301,15 @@ export function CustomerBillingProfileForm() {
                   ediPartner
                     ? t("Posted invoices are sent to {0} as an EDI 210.", ediPartner.name)
                     : t(
-                        "Sends posted invoices to the customer's EDI partner as an EDI 210. Link an active outbound partner with a 210 document profile first, or every send is refused as unconfigured.",
-                      )
+                      "Sends posted invoices to the customer's EDI partner as an EDI 210. Link an active outbound partner with a 210 document profile first, or every send is refused as unconfigured.",
+                    )
                 }
               />
             </div>
           </FormControl>
           {customerId ? (
             <FormControl cols="full">
-              <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed p-3 bg-card">
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed bg-card p-3">
                 <div>
                   <p className="text-xs font-medium">{t("Memos")}</p>
                   <p className="text-muted-foreground text-2xs">
@@ -380,7 +380,7 @@ export function CustomerBillingProfileForm() {
             />
           </FormControl>
           {isConsolidated && (
-            <div className="flex flex-col gap-4 pl-4 border-l">
+            <div className="flex flex-col gap-4 border-l pl-4">
               <FormGroup cols={2}>
                 <FormControl>
                   <SelectField
@@ -459,7 +459,7 @@ export function CustomerBillingProfileForm() {
                     )}
                   />
                 </FormControl>
-                <FormControl cols="full">
+                <FormControl>
                   <NumberField
                     control={control}
                     name="billingProfile.minConsolidatedAmount"
