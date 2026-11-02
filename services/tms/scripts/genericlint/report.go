@@ -24,11 +24,11 @@ func allowKey(pkgPath, ident, origin string) string {
 	return pkgPath + " " + ident + " " + origin
 }
 
-func (f finding) key() string {
+func (f *finding) key() string {
 	return allowKey(f.pkgPath, f.ident, f.hit.origin)
 }
 
-func (f finding) String() string {
+func (f *finding) String() string {
 	subject := f.ident
 	if f.member != "" {
 		subject += " " + f.member

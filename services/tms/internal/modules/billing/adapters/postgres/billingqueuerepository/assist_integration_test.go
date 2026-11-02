@@ -5,6 +5,7 @@ package billingqueuerepository
 import (
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +17,7 @@ func TestRecentCustomerInvoices_ReadsChargesWithoutACode(t *testing.T) {
 
 	f := setupSyncFixture(t)
 	var customerID pulid.ID
-	require.NoError(t, f.db.Pool().QueryRow(f.ctx,
+	require.NoError(t, keel.Pool(f.db).QueryRow(f.ctx,
 		`SELECT i.customer_id FROM invoices i
 		JOIN invoice_lines il ON il.invoice_id = i.id
 		WHERE i.organization_id = $1 AND i.business_unit_id = $2

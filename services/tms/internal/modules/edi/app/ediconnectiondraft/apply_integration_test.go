@@ -46,7 +46,7 @@ func realService(t *testing.T) (context.Context, *keel.DB, *Service, pagination.
 	t.Cleanup(cleanup)
 
 	var orgID, buID string
-	require.NoError(t, db.Pool().QueryRow(ctx, `SELECT id, business_unit_id FROM organizations
+	require.NoError(t, keel.Pool(db).QueryRow(ctx, `SELECT id, business_unit_id FROM organizations
 		WHERE NOT EXISTS (SELECT 1 FROM edi_partners ep WHERE ep.organization_id = organizations.id)
 		ORDER BY id LIMIT 1`).Scan(&orgID, &buID))
 	scope := editest.TenantOf(

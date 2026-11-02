@@ -80,7 +80,7 @@ func run(ctx context.Context, opts options) error {
 		return nil
 	}
 
-	problems := allow.filter(findings)
+	problems := allow.filter(findings, loadedPackages(pkgs))
 	if len(problems) == 0 {
 		return nil
 	}

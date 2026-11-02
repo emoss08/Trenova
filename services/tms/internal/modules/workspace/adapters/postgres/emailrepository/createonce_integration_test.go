@@ -5,6 +5,7 @@ package emailrepository_test
 import (
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -23,7 +24,7 @@ func TestCreateMessageOnce_Integration(t *testing.T) {
 	defer cleanup()
 
 	var orgID, buID string
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		"SELECT id, business_unit_id FROM organizations ORDER BY id LIMIT 1",
 	).Scan(&orgID, &buID))
 	org := struct{ ID, BusinessUnitID pulid.ID }{

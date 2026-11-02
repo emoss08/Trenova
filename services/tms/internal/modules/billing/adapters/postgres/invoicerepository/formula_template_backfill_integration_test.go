@@ -5,6 +5,7 @@ package invoicerepository_test
 import (
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -33,7 +34,7 @@ func TestFormulaTemplateBackfillNamesTheTemplateEachFreightLineWasRatedWith(t *t
 	defer cleanup()
 
 	var shipmentID, customerID, orgID, buID pulid.ID
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		"SELECT id, customer_id, organization_id, business_unit_id FROM shipments ORDER BY id LIMIT 1",
 	).
 		Scan(&shipmentID, &customerID, &orgID, &buID))
@@ -42,14 +43,14 @@ func TestFormulaTemplateBackfillNamesTheTemplateEachFreightLineWasRatedWith(t *t
 	rated := backfillTemplate{ID: pulid.MustNew("ft_"), Name: "Per mile – backfill rated"}
 	assigned := backfillTemplate{ID: pulid.MustNew("ft_"), Name: "Per CWT – backfill assigned"}
 	for _, tmpl := range []backfillTemplate{rated, assigned} {
-		_, err := db.Pool().Exec(ctx,
+		_, err := keel.Pool(db).Exec(ctx,
 			`INSERT INTO "formula_templates" ("id", "organization_id", "business_unit_id", "name", "source")
 			VALUES ($1, $2, $3, $4, '')`,
 			tmpl.ID, orgID, buID, tmpl.Name)
 		require.NoError(t, err)
 	}
 
-	_, err := db.Pool().Exec(ctx,
+	_, err := keel.Pool(db).Exec(ctx,
 		`UPDATE shipments SET formula_template_id = $1,
 			rating_detail = jsonb_build_object('formulaTemplateId', $2::text, 'formulaTemplateName', $3::text)
 		WHERE id = $4 AND organization_id = $5 AND business_unit_id = $6`,
@@ -112,7 +113,7 @@ func TestFormulaTemplateBackfillNamesTheTemplateEachFreightLineWasRatedWith(t *t
 
 	up, err := migrations.File(formulaTemplateBackfill)
 	require.NoError(t, err)
-	_, err = db.Pool().Exec(ctx, up)
+	_, err = keel.Pool(db).Exec(ctx, up)
 	require.NoError(t, err)
 
 	got := make(map[pulid.ID]pulid.ID, len(lines))

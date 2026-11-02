@@ -6,6 +6,11 @@ repository) is the API, and this page is how Trenova uses it. The reference vert
 (`internal/modules/equipment`). Paths are under `services/tms/`. Read
 [row-level-security.md](../row-level-security.md) before writing a repository.
 
+Trenova always builds against keel's latest release. When keel tags one, bump it in the same
+day: `go get github.com/emoss08/keel@<version>` in `services/tms`, then `task keel-gen` and the
+call-site changes its release notes name. Never pin a pseudo-version or a commit except while a
+release is being tagged.
+
 ## Entities
 
 A domain entity is a keel model in `domain/<entity>/` (`domain/tractor/tractor.go`):

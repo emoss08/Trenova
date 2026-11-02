@@ -5,6 +5,7 @@ package billingqueuerepository
 import (
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -21,7 +22,7 @@ func TestListConnection_FindsAnItemByItsShipmentsProNumber(t *testing.T) {
 	f := setupSyncFixture(t)
 	item := f.createItem(t, "BQ-SEARCH-1", billingqueue.StatusReadyForReview, billingqueue.BillTypeInvoice)
 	var proNumber string
-	require.NoError(t, f.db.Pool().QueryRow(f.ctx,
+	require.NoError(t, keel.Pool(f.db).QueryRow(f.ctx,
 		"SELECT pro_number FROM shipments WHERE id = $1", f.shipmentID,
 	).Scan(&proNumber))
 	require.NotEmpty(t, proNumber)
@@ -51,7 +52,7 @@ func TestListConnection_NarrowsToAShipmentsCustomerAndDeliveryDate(t *testing.T)
 	item := f.createItem(t, "BQ-FILTER-1", billingqueue.StatusReadyForReview, billingqueue.BillTypeInvoice)
 	delivered := int64(1_793_000_000)
 	var customerID pulid.ID
-	require.NoError(t, f.db.Pool().QueryRow(f.ctx,
+	require.NoError(t, keel.Pool(f.db).QueryRow(f.ctx,
 		`UPDATE shipments SET actual_delivery_date = $2 WHERE id = $1 RETURNING customer_id`,
 		f.shipmentID, delivered,
 	).Scan(&customerID))

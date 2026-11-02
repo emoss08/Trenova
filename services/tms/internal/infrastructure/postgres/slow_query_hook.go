@@ -23,7 +23,7 @@ const (
 type slowQueryLog struct {
 	threshold time.Duration
 	logger    *observability.ContextLogger
-	pool      *pgxpool.Pool
+	stat      func() *pgxpool.Stat
 }
 
 type slowQuery struct {
@@ -66,16 +66,14 @@ func (l *slowQueryLog) record(ctx context.Context, q slowQuery) {
 	if ctxErr := ctx.Err(); ctxErr != nil {
 		fields = append(fields, zap.String("context_error", ctxErr.Error()))
 	}
-	if l.pool != nil {
-		fields = append(fields, platformmetrics.PoolStatsFields(poolStats(l.pool))...)
+	if l.stat != nil {
+		fields = append(fields, platformmetrics.PoolStatsFields(poolStats(l.stat()))...)
 	}
 
 	l.logger.Warn(ctx, "slow database query", fields...)
 }
 
-func poolStats(pool *pgxpool.Pool) platformmetrics.PoolStats {
-	stat := pool.Stat()
-
+func poolStats(stat *pgxpool.Stat) platformmetrics.PoolStats {
 	return platformmetrics.PoolStats{
 		Open:         int(stat.TotalConns()),
 		InUse:        int(stat.AcquiredConns()),

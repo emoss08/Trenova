@@ -230,6 +230,12 @@ usual and reporting what it would have reused; `GOCUT_MODE=active` skips those c
 reuse would link stale code, so it is for local hot reload only: tests, lint, CI and release
 builds never take it.
 
+On the keel v0.5.0 tree (4 cores, Go 1.27.1, the watch flags), gocut in active mode with its
+default 10% verify sample takes an exported function added to `domain/shipment` from 82 s to 30 s
+(median of three), the same edit inserted mid-file from 82 s to 31 s, and a line added inside an
+unexported function in `shipment.go` from 80 s to 29 s. It reused all 1,041 recompiled packages,
+and every shadow comparison and verified reuse was byte-identical to the compiler's output.
+
 Each main registers its edition separately; see "Server seams" in [editions.md](editions.md).
 
 ### Why `WorkerOptions` live in the jobs package
@@ -411,7 +417,8 @@ These designs did this at scale before they were changed:
 | `pagination.EncodeCursorFromEntity*`, `ExtractCursorValues` | four generic encoders, called by `CursorListResult[T].NextCursor`, in each of the 707 packages that mention a `CursorListResult` | the encoders take `any`; they only ever used reflection and type assertions on the item |
 | `auditservice.SensitiveDataManager`, the RLS scope reporter behind `postgres.Connection` | `sync.Map`'s generic internals in every package that reaches a service or a repository | mutex-guarded maps |
 | `*lru.Cache` / `*expirable.LRU` fields in the template engine, the rate table cache and six other packages | golang-lru's cache, list and entry methods, about 17 KB in each of 30 packages | fields typed `lrucache.Cache[K, V]` from `shared/lrucache`, built with `lrucache.New` or `lrucache.NewExpirable` |
-| keel's `Handle[T]` and `Query[T]` structs, one instantiation per table | a wrapper for every method of both per table in each package that could see the table, which relation accessors make almost every repository and `*db` package: `recordversionrepository`, 728 lines, compiled 18,814 functions, 18,660 of them keel wrappers for the 197 tables it could see; the repositories and `*db` packages were 56% of the compiler CPU of a cold `cmd/api` watch build (430 s wall, 3,977 CPU-seconds on 14 cores) | keel's `Query[T]`/`Handle[T]` are generic interfaces; `keel gen` emits a concrete `<Plural>Table`/`<Plural>Query` per table, compiled once in its `*db` package, over keel's non-generic `TableBase` and `QueryCore`; `Page[T]` has no methods. A cold `cmd/api` watch build now takes 2,192 compiler CPU-seconds (from 3,977) and at most 210 s wall on the same 14-core machine (from 430 s): the repositories fell from 1,407 to 327 CPU-seconds and the `*db` packages from 836 to 373, while the linker output shrank from 343 MB to 306 MB. `recordversionrepository` now compiles 360 functions, 209 of them generic: the pgx pool's `puddle` and `atomic.Pointer` instantiations every package holding a `*keel.DB` compiles. A reload after an exported function is added to `domain/shipment` fell from 181 s to 82 s, and the link of every reload from 11.4 s to 7.8 s ("Measured results"). |
+| keel's `Handle[T]` and `Query[T]` structs, one instantiation per table | a wrapper for every method of both per table in each package that could see the table, which relation accessors make almost every repository and `*db` package: `recordversionrepository`, 728 lines, compiled 18,814 functions, 18,660 of them keel wrappers for the 197 tables it could see; the repositories and `*db` packages were 56% of the compiler CPU of a cold `cmd/api` watch build (430 s wall, 3,977 CPU-seconds on 14 cores) | keel's `Query[T]`/`Handle[T]` are generic interfaces; `keel gen` emits a concrete `<Plural>Table`/`<Plural>Query` per table, compiled once in its `*db` package, over keel's non-generic `TableBase` and `QueryCore`; `Page[T]` has no methods. A cold `cmd/api` watch build now takes 2,192 compiler CPU-seconds (from 3,977) and at most 210 s wall on the same 14-core machine (from 430 s): the repositories fell from 1,407 to 327 CPU-seconds and the `*db` packages from 836 to 373, while the linker output shrank from 343 MB to 306 MB. `recordversionrepository` now compiles 360 functions, 209 of them generic, nearly all of them the pgx pool's `puddle` and `atomic.Pointer` instantiations of the next row. A reload after an exported function is added to `domain/shipment` fell from 181 s to 82 s, and the link of every reload from 11.4 s to 7.8 s ("Measured results"). |
+| `*keel.DB`, which held a `*pgxpool.Pool` and named `*pgxpool.Pool`/`*pgxpool.Conn` in its methods | puddle's generic pool, resource list and stack for `*pgxpool.connResource`: 93 functions (24 KB of machine code, about 0.1 s) in each of 699 packages that held a database handle, 65,010 functions per cold `cmd/api` build | keel's `DB` holds its pools behind interfaces whose methods name no pgxpool type; `keel.Pool(db)` hands out the pool and `db.Stat()` its statistics, so only a package that calls `keel.Pool` (a test helper, `dbcli`) compiles puddle. A probe holding a `*keel.DB` fell from 93 generic functions and about 190 ms of compiler CPU to none and about 80 ms; the 694 packages that held a handle compiled 14 percentage points faster than the rest of the cold build (about 50 to 70 CPU-seconds on 4 cores). |
 
 go-redis did it to every package that holds a `*redis.Client` or a `redis.UniversalClient`, at
 about 0.7 seconds each. `baseClient` kept a `weak.Pointer[Client]`, and because `Client` embeds
@@ -424,6 +431,16 @@ plus a change that holds the weak reference and the maps behind types whose meth
 name no generic type. A package holding a `*redis.Client` now compiles 114 functions in about
 66 ms instead of 1,722 in about 690 ms. The core module, `extra/redisotel` and `extra/rediscmd`
 are replaced at one commit, and a new fork commit moves all three `replace` lines together.
+
+The linker keeps every exported method of every type a binary can reach when any reachable
+function calls `reflect.Value.Method`, `MethodByName` or their `reflect.Type` forms with a name
+it cannot see at compile time. `go build -ldflags=-dumpdep` marks those functions
+`<ReflectMethod>`. `cmd/api` has four: `html/template` (notification emails), Temporal's
+`RegisterActivity` of an activity struct, go-playground/validator's `validateFn` check (gin's
+binding) and `tiendc/go-deepcopy`. Removing all four would shrink the stripped binary from 321 MB
+to 237 MB, but the link only from 7.7 s to 7.0 s, because the linker spends most of its time
+loading every package's object file (3.9 s of 7.6 s for 4,000 packages), not writing the
+output. It is not worth forking those packages for.
 
 These measurements come from probe packages: a package that imports one dependency and mentions
 one of its types in a function signature, compiled on its own. A probe that compiles thousands of
@@ -451,8 +468,9 @@ every type of another module, as the compiler does, so a `sync.Map` field is rep
 checked where it is declared. Each finding gives the file and line, the identifier, the
 instantiation, its method count and the type it was reached through. Accepted findings are listed
 in `scripts/genericlint/allow.txt`, one `<package path> <identifier> <origin type> # reason` per
-line; an entry that matches nothing fails as stale, and `-write-allow` rewrites the file from the
-current findings, keeping existing reasons and writing `# TODO reason` for new ones, which a
+line; an entry that matches nothing fails as stale unless the build loads no package of its origin
+type (a standard-library package only some Go releases have, such as Go 1.27's
+`internal/nettest`), and `-write-allow` rewrites the file from the current findings, keeping existing reasons and writing `# TODO reason` for new ones, which a
 reviewer replaces before merging.
 
 ## Build benchmark

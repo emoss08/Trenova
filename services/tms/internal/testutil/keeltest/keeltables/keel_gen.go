@@ -5,6 +5,8 @@
 package keeltables
 
 import (
+	"sync"
+
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/testutil/keeltest/keeltestdb"
 )
@@ -15,3 +17,8 @@ func All() []*schema.Table {
 		keeltestdb.FleetCodesSchema(),
 	}
 }
+
+var catalog = sync.OnceValue(func() *schema.Catalog { return schema.NewCatalog(All()) })
+
+// Catalog returns every table keel gen generated, found by table name and by model name.
+func Catalog() *schema.Catalog { return catalog() }

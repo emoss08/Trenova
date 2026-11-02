@@ -69,7 +69,7 @@ func DevelopmentTenant(t *testing.T, ctx context.Context, admin *keel.DB) Tenant
 	t.Helper()
 
 	var orgID, buID, userID string
-	require.NoError(t, admin.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(admin).QueryRow(ctx,
 		`SELECT gla.organization_id, gla.business_unit_id, u.id
 		FROM gl_accounts gla
 		JOIN users u ON u.current_organization_id = gla.organization_id
@@ -92,14 +92,14 @@ func tenantOf(t *testing.T, orgID, buID, userID pulid.ID) Tenant {
 func (d *Database) Exec(t *testing.T, sql string, args ...any) {
 	t.Helper()
 
-	_, err := d.Admin.Pool().Exec(t.Context(), sql, args...)
+	_, err := keel.Pool(d.Admin).Exec(t.Context(), sql, args...)
 	require.NoError(t, err)
 }
 
 func Value[T any](t *testing.T, d *Database, sql string, args ...any) T {
 	t.Helper()
 
-	rows, err := d.Admin.Pool().Query(t.Context(), sql, args...)
+	rows, err := keel.Pool(d.Admin).Query(t.Context(), sql, args...)
 	require.NoError(t, err)
 
 	value, err := pgx.CollectExactlyOneRow(rows, pgx.RowTo[T])
