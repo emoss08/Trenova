@@ -52,12 +52,12 @@ internal/api/graphql/
 │   ├── gen/                 # the generator (`task gqlgen`)
 │   └── internal/e2e/        # a two-file schema exercising every code path
 ├── generated/
-│   ├── root.generated.go    # ResolverRoot, *Resolver interfaces, Config, NewExecutableSchema
+│   ├── root.generated.go    # ResolverRoot (Roots()), Config, NewExecutableSchema
 │   └── exec/<file>exec/     # one executor package per schema file
 ├── gqlmodel/models_gen.go   # gqlgen model plugin, unchanged
 └── resolver/
     ├── services.go          # Params (fx), Services: every dependency a resolver may use
-    ├── resolver.generated.go  # Resolver root: builds each package's Deps, wires ResolverRoot
+    ├── resolver.generated.go  # Resolver root: builds each package's Deps and resolvers, keyed per shard
     ├── resolvercore/        # Core (logger, permissions, team scope, tracing), embedded in every Deps
     ├── gqlid/ gqlscalar/ gqldecimal/  # id, pointer and decimal conversions
     ├── gqlconnection/       # connections, list and data-table inputs
@@ -147,6 +147,16 @@ r := &QueryResolver{&Deps{
 
 Tests in the root package use `FromServices(&Services{...})`.
 
+The root never merges resolvers. Each executor shard declares the interface it calls for each
+object (`shipmentexec.QueryResolver`) and asks for it under a per-shard key (`Query@shipment`).
+The root builds each package's resolver once, registers it under that key in `Roots()` (a
+`map[string]any`), and asserts at compile time that it implements the shard's interface. There
+is no `QueryResolver` with every query field, no struct embedding every package's
+`QueryResolver`, and no per-object `*Resolver` interfaces in `generated`: the promoted-method
+wrappers and interface methods those forced made the root, `agentread` and `generated` compile
+11,500 functions between them on every exported domain edit. They now compile 1,650, in 3.4 s
+instead of 7.1 s (4 cores, one package at a time), and their archives fell from 52 MB to 19 MB.
+
 The 50 or so service packages reachable from shared packages (`gqlmodel`, `loaders`,
 middleware, `ports/services`) still recompile every resolver package when edited. Domain
 edits also still reach most of them; that cascade comes from the domain package graph, not
@@ -173,8 +183,8 @@ Extensions that read `graphql.GetFieldContext`, `CollectFieldsCtx`, root field c
 before.
 
 At startup the registry checks that every object, field, interface and union in the schema
-has an executor, and that the resolver root implements every resolver interface a shard
-declares. If something is missing, `NewExecutableSchema` panics with the list instead of
+has an executor, and that the resolver root registers, under each shard's key, a resolver that
+implements the interface the shard declares. If something is missing, `NewExecutableSchema` panics with the list instead of
 failing on the first request that reaches it.
 
 ## Proof of equivalence

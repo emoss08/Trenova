@@ -31,7 +31,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createUser_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateUser(ctx, fc.Args["input"].(gqlmodel.CreateUserInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@user").CreateUser(ctx, fc.Args["input"].(gqlmodel.CreateUserInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -44,7 +44,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_patchUser_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchUser(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.UserPatchInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@user").PatchUser(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.UserPatchInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -60,7 +60,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_users_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Users(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@user").Users(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNUserConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUserConnection),
 			},
@@ -73,7 +73,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_user_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").User(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@user").User(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -150,17 +150,17 @@ var Shard = &gqlexec.Shard{
 		{Name: "UserPatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUserPatchInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@user", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@user", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateUser(ctx context.Context, input gqlmodel.CreateUserInput) (*tenant.User, error)
 	PatchUser(ctx context.Context, id string, input gqlmodel.UserPatchInput) (*tenant.User, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	Users(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.UserConnection, error)
 	User(ctx context.Context, id string) (*tenant.User, error)
 }

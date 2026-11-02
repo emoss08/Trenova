@@ -558,7 +558,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentScorecard_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentScorecard(ctx, fc.Args["input"].(gqlmodel.AgentScorecardInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentscorecard").AgentScorecard(ctx, fc.Args["input"].(gqlmodel.AgentScorecardInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentScorecard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentScorecard),
 			},
@@ -568,11 +568,11 @@ var Shard = &gqlexec.Shard{
 		{Name: "AgentScorecardInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentScorecardInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Query@agentscorecard", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	AgentScorecard(ctx context.Context, input gqlmodel.AgentScorecardInput) (*gqlmodel.AgentScorecard, error)
 }
 

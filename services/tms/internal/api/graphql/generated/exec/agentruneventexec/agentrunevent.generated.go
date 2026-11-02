@@ -61,7 +61,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentrunevent.AgentRunEvent)
-					return gqlexec.Resolver[resolverAgentRunEvent](ec, "AgentRunEvent").OwnerKind(ctx, obj)
+					return gqlexec.Resolver[AgentRunEventResolver](ec, "AgentRunEvent@agentrunevent").OwnerKind(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentRunEventOwnerKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentRunEventOwnerKind),
 			},
@@ -243,23 +243,23 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentRunEvents_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentRunEvents(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentrunevent").AgentRunEvents(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentRunEventConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentRunEventConnection),
 			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "AgentRunEvent", Check: func(r any) bool { _, ok := r.(resolverAgentRunEvent); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "AgentRunEvent@agentrunevent", Check: func(r any) bool { _, ok := r.(AgentRunEventResolver); return ok }},
+		{Root: "Query@agentrunevent", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverAgentRunEvent interface {
+type AgentRunEventResolver interface {
 	OwnerKind(ctx context.Context, obj *agentrunevent.AgentRunEvent) (gqlmodel.AgentRunEventOwnerKind, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	AgentRunEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentRunEventConnection, error)
 }
 

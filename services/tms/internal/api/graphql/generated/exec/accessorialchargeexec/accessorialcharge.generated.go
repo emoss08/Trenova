@@ -102,7 +102,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*accessorialcharge.AccessorialCharge)
-					return gqlexec.Resolver[resolverAccessorialCharge](ec, "AccessorialCharge").RateUnit(ctx, obj)
+					return gqlexec.Resolver[AccessorialChargeResolver](ec, "AccessorialCharge@accessorialcharge").RateUnit(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalORateUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋaccessorialchargeᚐRateUnit),
 			},
@@ -114,7 +114,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*accessorialcharge.AccessorialCharge)
-					return gqlexec.Resolver[resolverAccessorialCharge](ec, "AccessorialCharge").Amount(ctx, obj)
+					return gqlexec.Resolver[AccessorialChargeResolver](ec, "AccessorialCharge@accessorialcharge").Amount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
 			},
@@ -245,7 +245,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createAccessorialCharge_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateAccessorialCharge(ctx, fc.Args["input"].(gqlmodel.AccessorialChargeInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@accessorialcharge").CreateAccessorialCharge(ctx, fc.Args["input"].(gqlmodel.AccessorialChargeInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAccessorialCharge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋaccessorialchargeᚐAccessorialCharge),
 			},
@@ -258,7 +258,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateAccessorialCharge_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateAccessorialCharge(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AccessorialChargeInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@accessorialcharge").UpdateAccessorialCharge(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AccessorialChargeInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAccessorialCharge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋaccessorialchargeᚐAccessorialCharge),
 			},
@@ -271,7 +271,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_patchAccessorialCharge_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchAccessorialCharge(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AccessorialChargePatchInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@accessorialcharge").PatchAccessorialCharge(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AccessorialChargePatchInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAccessorialCharge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋaccessorialchargeᚐAccessorialCharge),
 			},
@@ -287,7 +287,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_accessorialCharges_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AccessorialCharges(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@accessorialcharge").AccessorialCharges(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAccessorialChargeConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAccessorialChargeConnection),
 			},
@@ -300,7 +300,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_accessorialCharge_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AccessorialCharge(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@accessorialcharge").AccessorialCharge(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOAccessorialCharge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋaccessorialchargeᚐAccessorialCharge),
 			},
@@ -311,24 +311,24 @@ var Shard = &gqlexec.Shard{
 		{Name: "AccessorialChargePatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAccessorialChargePatchInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "AccessorialCharge", Check: func(r any) bool { _, ok := r.(resolverAccessorialCharge); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "AccessorialCharge@accessorialcharge", Check: func(r any) bool { _, ok := r.(AccessorialChargeResolver); return ok }},
+		{Root: "Mutation@accessorialcharge", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@accessorialcharge", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverAccessorialCharge interface {
+type AccessorialChargeResolver interface {
 	RateUnit(ctx context.Context, obj *accessorialcharge.AccessorialCharge) (*accessorialcharge.RateUnit, error)
 	Amount(ctx context.Context, obj *accessorialcharge.AccessorialCharge) (float64, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateAccessorialCharge(ctx context.Context, input gqlmodel.AccessorialChargeInput) (*accessorialcharge.AccessorialCharge, error)
 	UpdateAccessorialCharge(ctx context.Context, id string, input gqlmodel.AccessorialChargeInput) (*accessorialcharge.AccessorialCharge, error)
 	PatchAccessorialCharge(ctx context.Context, id string, input gqlmodel.AccessorialChargePatchInput) (*accessorialcharge.AccessorialCharge, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	AccessorialCharges(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccessorialChargeConnection, error)
 	AccessorialCharge(ctx context.Context, id string) (*accessorialcharge.AccessorialCharge, error)
 }

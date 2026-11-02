@@ -212,7 +212,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capture.CaptureBatch)
-					return gqlexec.Resolver[resolverCaptureBatch](ec, "CaptureBatch").User(ctx, obj)
+					return gqlexec.Resolver[CaptureBatchResolver](ec, "CaptureBatch@capture").User(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -234,7 +234,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "CaptureDevice",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capture.CaptureBatch)
-					return gqlexec.Resolver[resolverCaptureBatch](ec, "CaptureBatch").Device(ctx, obj)
+					return gqlexec.Resolver[CaptureBatchResolver](ec, "CaptureBatch@capture").Device(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOCaptureDevice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureDevice),
 			},
@@ -334,7 +334,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "CaptureRecordRef",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capture.CaptureBatch)
-					return gqlexec.Resolver[resolverCaptureBatch](ec, "CaptureBatch").Target(ctx, obj)
+					return gqlexec.Resolver[CaptureBatchResolver](ec, "CaptureBatch@capture").Target(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOCaptureRecordRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋcaptureportsᚐCaptureRecordLabel),
 			},
@@ -385,7 +385,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capture.CaptureBatch)
-					return gqlexec.Resolver[resolverCaptureBatch](ec, "CaptureBatch").OpenItemCount(ctx, obj)
+					return gqlexec.Resolver[CaptureBatchResolver](ec, "CaptureBatch@capture").OpenItemCount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
@@ -435,7 +435,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capture.CaptureBatch)
-					return gqlexec.Resolver[resolverCaptureBatch](ec, "CaptureBatch").IsEditable(ctx, obj)
+					return gqlexec.Resolver[CaptureBatchResolver](ec, "CaptureBatch@capture").IsEditable(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -448,7 +448,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "CapturePage",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capture.CaptureBatch)
-					return gqlexec.Resolver[resolverCaptureBatch](ec, "CaptureBatch").Pages(ctx, obj)
+					return gqlexec.Resolver[CaptureBatchResolver](ec, "CaptureBatch@capture").Pages(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNCapturePage2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCapturePageᚄ),
 			},
@@ -461,7 +461,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "CaptureItem",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capture.CaptureBatch)
-					return gqlexec.Resolver[resolverCaptureBatch](ec, "CaptureBatch").Items(ctx, obj)
+					return gqlexec.Resolver[CaptureBatchResolver](ec, "CaptureBatch@capture").Items(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureItemᚄ),
 			},
@@ -600,7 +600,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "CaptureRecordRef",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.CaptureCoverSheet)
-					return gqlexec.Resolver[resolverCaptureCoverSheet](ec, "CaptureCoverSheet").Target(ctx, obj)
+					return gqlexec.Resolver[CaptureCoverSheetResolver](ec, "CaptureCoverSheet@capture").Target(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOCaptureRecordRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋcaptureportsᚐCaptureRecordLabel),
 			},
@@ -704,7 +704,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capture.CaptureDevice)
-					return gqlexec.Resolver[resolverCaptureDevice](ec, "CaptureDevice").User(ctx, obj)
+					return gqlexec.Resolver[CaptureDeviceResolver](ec, "CaptureDevice@capture").User(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -806,7 +806,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capture.CaptureDevice)
-					return gqlexec.Resolver[resolverCaptureDevice](ec, "CaptureDevice").IsOnline(ctx, obj)
+					return gqlexec.Resolver[CaptureDeviceResolver](ec, "CaptureDevice@capture").IsOnline(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -938,7 +938,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capture.CaptureItem)
-					return gqlexec.Resolver[resolverCaptureItem](ec, "CaptureItem").PageCount(ctx, obj)
+					return gqlexec.Resolver[CaptureItemResolver](ec, "CaptureItem@capture").PageCount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
@@ -969,7 +969,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "CaptureRecordRef",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capture.CaptureItem)
-					return gqlexec.Resolver[resolverCaptureItem](ec, "CaptureItem").SuggestedRecord(ctx, obj)
+					return gqlexec.Resolver[CaptureItemResolver](ec, "CaptureItem@capture").SuggestedRecord(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOCaptureRecordRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋcaptureportsᚐCaptureRecordLabel),
 			},
@@ -989,7 +989,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capture.CaptureItem)
-					return gqlexec.Resolver[resolverCaptureItem](ec, "CaptureItem").SuggestionSource(ctx, obj)
+					return gqlexec.Resolver[CaptureItemResolver](ec, "CaptureItem@capture").SuggestionSource(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOCaptureSuggestionSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSuggestionSource),
 			},
@@ -1058,7 +1058,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "CaptureRecordRef",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capture.CaptureItem)
-					return gqlexec.Resolver[resolverCaptureItem](ec, "CaptureItem").FiledRecord(ctx, obj)
+					return gqlexec.Resolver[CaptureItemResolver](ec, "CaptureItem@capture").FiledRecord(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOCaptureRecordRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋcaptureportsᚐCaptureRecordLabel),
 			},
@@ -1097,7 +1097,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capture.CaptureItem)
-					return gqlexec.Resolver[resolverCaptureItem](ec, "CaptureItem").FiledBy(ctx, obj)
+					return gqlexec.Resolver[CaptureItemResolver](ec, "CaptureItem@capture").FiledBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -1302,7 +1302,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capture.CapturePage)
-					return gqlexec.Resolver[resolverCapturePage](ec, "CapturePage").PatchCode(ctx, obj)
+					return gqlexec.Resolver[CapturePageResolver](ec, "CapturePage@capture").PatchCode(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -1314,7 +1314,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capture.CapturePage)
-					return gqlexec.Resolver[resolverCapturePage](ec, "CapturePage").IsCoverSheet(ctx, obj)
+					return gqlexec.Resolver[CapturePageResolver](ec, "CapturePage@capture").IsCoverSheet(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -1326,7 +1326,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capture.CapturePage)
-					return gqlexec.Resolver[resolverCapturePage](ec, "CapturePage").UnrecognizedCoverSheet(ctx, obj)
+					return gqlexec.Resolver[CapturePageResolver](ec, "CapturePage@capture").UnrecognizedCoverSheet(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -1348,7 +1348,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capture.CapturePage)
-					return gqlexec.Resolver[resolverCapturePage](ec, "CapturePage").ContentPath(ctx, obj)
+					return gqlexec.Resolver[CapturePageResolver](ec, "CapturePage@capture").ContentPath(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -1360,7 +1360,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capture.CapturePage)
-					return gqlexec.Resolver[resolverCapturePage](ec, "CapturePage").ThumbnailPath(ctx, obj)
+					return gqlexec.Resolver[CapturePageResolver](ec, "CapturePage@capture").ThumbnailPath(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -1828,7 +1828,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild18,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capturerequest.CaptureRequest)
-					return gqlexec.Resolver[resolverCaptureRequest](ec, "CaptureRequest").FailureCode(ctx, obj)
+					return gqlexec.Resolver[CaptureRequestResolver](ec, "CaptureRequest@capture").FailureCode(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOCaptureRequestFailureCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcapturerequestᚐRequestFailureCode),
 			},
@@ -1878,7 +1878,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capturerequest.CaptureRequest)
-					return gqlexec.Resolver[resolverCaptureRequest](ec, "CaptureRequest").IsOpen(ctx, obj)
+					return gqlexec.Resolver[CaptureRequestResolver](ec, "CaptureRequest@capture").IsOpen(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -1921,7 +1921,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild19,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capture.Settings)
-					return gqlexec.Resolver[resolverCaptureSettings](ec, "CaptureSettings").Protocol(ctx, obj)
+					return gqlexec.Resolver[CaptureSettingsResolver](ec, "CaptureSettings@capture").Protocol(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOCaptureSourceProtocol2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSourceProtocol),
 			},
@@ -1952,7 +1952,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capture.Settings)
-					return gqlexec.Resolver[resolverCaptureSettings](ec, "CaptureSettings").PixelType(ctx, obj)
+					return gqlexec.Resolver[CaptureSettingsResolver](ec, "CaptureSettings@capture").PixelType(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOCapturePixelType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐPixelType),
 			},
@@ -2024,7 +2024,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*capture.Settings)
-					return gqlexec.Resolver[resolverCaptureSettings](ec, "CaptureSettings").Refused(ctx, obj)
+					return gqlexec.Resolver[CaptureSettingsResolver](ec, "CaptureSettings@capture").Refused(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
 			},
@@ -2165,7 +2165,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_editCaptureItems_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").EditCaptureItems(ctx, fc.Args["batchId"].(string), fc.Args["input"].(gqlmodel.EditCaptureItemsInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@capture").EditCaptureItems(ctx, fc.Args["batchId"].(string), fc.Args["input"].(gqlmodel.EditCaptureItemsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureBatch),
 			},
@@ -2178,7 +2178,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_fileCaptureItem_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").FileCaptureItem(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.FileCaptureItemInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@capture").FileCaptureItem(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.FileCaptureItemInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureItem),
 			},
@@ -2191,7 +2191,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_fileCaptureItems_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").FileCaptureItems(ctx, fc.Args["items"].([]*gqlmodel.FileCaptureItemsEntryInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@capture").FileCaptureItems(ctx, fc.Args["items"].([]*gqlmodel.FileCaptureItemsEntryInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFileCaptureItemsResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcapturefilingᚐFileItemsResult),
 			},
@@ -2204,7 +2204,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_discardCaptureItem_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DiscardCaptureItem(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@capture").DiscardCaptureItem(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureBatch),
 			},
@@ -2217,7 +2217,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_discardCaptureBatch_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DiscardCaptureBatch(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@capture").DiscardCaptureBatch(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureBatch),
 			},
@@ -2230,7 +2230,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createCaptureRequest_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateCaptureRequest(ctx, fc.Args["input"].(gqlmodel.CreateCaptureRequestInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@capture").CreateCaptureRequest(ctx, fc.Args["input"].(gqlmodel.CreateCaptureRequestInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcapturerequestᚐCaptureRequest),
 			},
@@ -2243,7 +2243,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_cancelCaptureRequest_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CancelCaptureRequest(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@capture").CancelCaptureRequest(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcapturerequestᚐCaptureRequest),
 			},
@@ -2256,7 +2256,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createCaptureCoverSheets_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateCaptureCoverSheets(ctx, fc.Args["sheets"].([]*gqlmodel.CaptureCoverSheetInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@capture").CreateCaptureCoverSheets(ctx, fc.Args["sheets"].([]*gqlmodel.CaptureCoverSheetInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureCoverSheet2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCaptureCoverSheetᚄ),
 			},
@@ -2268,7 +2268,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_approveCaptureDevicePairing_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApproveCaptureDevicePairing(ctx, fc.Args["userCode"].(string), fc.Args["deviceName"].(*string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@capture").ApproveCaptureDevicePairing(ctx, fc.Args["userCode"].(string), fc.Args["deviceName"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -2280,7 +2280,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_denyCaptureDevicePairing_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DenyCaptureDevicePairing(ctx, fc.Args["userCode"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@capture").DenyCaptureDevicePairing(ctx, fc.Args["userCode"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -2293,7 +2293,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_revokeMyCaptureDevice_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RevokeMyCaptureDevice(ctx, fc.Args["id"].(string), fc.Args["reason"].(*string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@capture").RevokeMyCaptureDevice(ctx, fc.Args["id"].(string), fc.Args["reason"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureDevice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureDevice),
 			},
@@ -2306,7 +2306,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_revokeCaptureDevice_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RevokeCaptureDevice(ctx, fc.Args["id"].(string), fc.Args["reason"].(*string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@capture").RevokeCaptureDevice(ctx, fc.Args["id"].(string), fc.Args["reason"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureDevice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureDevice),
 			},
@@ -2319,7 +2319,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createCaptureProfile_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateCaptureProfile(ctx, fc.Args["input"].(gqlmodel.CaptureProfileInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@capture").CreateCaptureProfile(ctx, fc.Args["input"].(gqlmodel.CaptureProfileInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureprofileᚐCaptureProfile),
 			},
@@ -2332,7 +2332,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateCaptureProfile_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateCaptureProfile(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.CaptureProfileInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@capture").UpdateCaptureProfile(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.CaptureProfileInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureprofileᚐCaptureProfile),
 			},
@@ -2344,7 +2344,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteCaptureProfile_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteCaptureProfile(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@capture").DeleteCaptureProfile(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -2358,7 +2358,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "CaptureAccess",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").MyCaptureAccess(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@capture").MyCaptureAccess(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureAccess2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcapturesupportᚐAccess),
 			},
@@ -2369,7 +2369,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "CaptureAgentRelease",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CaptureAgentRelease(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@capture").CaptureAgentRelease(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalOCaptureAgentRelease2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcapturereleaseserviceᚐRelease),
 			},
@@ -2383,7 +2383,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_captureBatches_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CaptureBatches(ctx, fc.Args["input"].(gqlmodel.CaptureBatchesInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@capture").CaptureBatches(ctx, fc.Args["input"].(gqlmodel.CaptureBatchesInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureBatchConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCaptureBatchConnection),
 			},
@@ -2397,7 +2397,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_captureBatch_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CaptureBatch(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@capture").CaptureBatch(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureBatch),
 			},
@@ -2411,7 +2411,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_myCaptureDevices_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").MyCaptureDevices(ctx, fc.Args["status"].(*capture.DeviceStatus))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@capture").MyCaptureDevices(ctx, fc.Args["status"].(*capture.DeviceStatus))
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureDevice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureDeviceᚄ),
 			},
@@ -2425,7 +2425,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_captureDevices_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CaptureDevices(ctx, fc.Args["status"].(*capture.DeviceStatus), fc.Args["query"].(*string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@capture").CaptureDevices(ctx, fc.Args["status"].(*capture.DeviceStatus), fc.Args["query"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureDevice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureDeviceᚄ),
 			},
@@ -2437,7 +2437,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "CaptureProfile",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AvailableCaptureProfiles(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@capture").AvailableCaptureProfiles(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureProfile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureprofileᚐCaptureProfileᚄ),
 			},
@@ -2451,7 +2451,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_captureProfiles_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CaptureProfiles(ctx, fc.Args["status"].(*captureprofile.ProfileStatus), fc.Args["query"].(*string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@capture").CaptureProfiles(ctx, fc.Args["status"].(*captureprofile.ProfileStatus), fc.Args["query"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureProfile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureprofileᚐCaptureProfileᚄ),
 			},
@@ -2465,7 +2465,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_captureProfile_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CaptureProfile(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@capture").CaptureProfile(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureprofileᚐCaptureProfile),
 			},
@@ -2479,7 +2479,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_captureRequestsForTarget_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CaptureRequestsForTarget(ctx, fc.Args["targetType"].(string), fc.Args["targetId"].(string), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@capture").CaptureRequestsForTarget(ctx, fc.Args["targetType"].(string), fc.Args["targetId"].(string), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNCaptureRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcapturerequestᚐCaptureRequestᚄ),
 			},
@@ -2493,7 +2493,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_captureDevicePairing_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CaptureDevicePairing(ctx, fc.Args["userCode"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@capture").CaptureDevicePairing(ctx, fc.Args["userCode"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNCapturePairingPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcapturedevicesᚐPairingPreview),
 			},
@@ -2511,19 +2511,19 @@ var Shard = &gqlexec.Shard{
 		{Name: "FileCaptureItemsEntryInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputFileCaptureItemsEntryInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "CaptureBatch", Check: func(r any) bool { _, ok := r.(resolverCaptureBatch); return ok }},
-		{Root: "CaptureCoverSheet", Check: func(r any) bool { _, ok := r.(resolverCaptureCoverSheet); return ok }},
-		{Root: "CaptureDevice", Check: func(r any) bool { _, ok := r.(resolverCaptureDevice); return ok }},
-		{Root: "CaptureItem", Check: func(r any) bool { _, ok := r.(resolverCaptureItem); return ok }},
-		{Root: "CapturePage", Check: func(r any) bool { _, ok := r.(resolverCapturePage); return ok }},
-		{Root: "CaptureRequest", Check: func(r any) bool { _, ok := r.(resolverCaptureRequest); return ok }},
-		{Root: "CaptureSettings", Check: func(r any) bool { _, ok := r.(resolverCaptureSettings); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "CaptureBatch@capture", Check: func(r any) bool { _, ok := r.(CaptureBatchResolver); return ok }},
+		{Root: "CaptureCoverSheet@capture", Check: func(r any) bool { _, ok := r.(CaptureCoverSheetResolver); return ok }},
+		{Root: "CaptureDevice@capture", Check: func(r any) bool { _, ok := r.(CaptureDeviceResolver); return ok }},
+		{Root: "CaptureItem@capture", Check: func(r any) bool { _, ok := r.(CaptureItemResolver); return ok }},
+		{Root: "CapturePage@capture", Check: func(r any) bool { _, ok := r.(CapturePageResolver); return ok }},
+		{Root: "CaptureRequest@capture", Check: func(r any) bool { _, ok := r.(CaptureRequestResolver); return ok }},
+		{Root: "CaptureSettings@capture", Check: func(r any) bool { _, ok := r.(CaptureSettingsResolver); return ok }},
+		{Root: "Mutation@capture", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@capture", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverCaptureBatch interface {
+type CaptureBatchResolver interface {
 	User(ctx context.Context, obj *capture.CaptureBatch) (*tenant.User, error)
 	Device(ctx context.Context, obj *capture.CaptureBatch) (*capture.CaptureDevice, error)
 	Target(ctx context.Context, obj *capture.CaptureBatch) (*captureports.CaptureRecordLabel, error)
@@ -2533,16 +2533,16 @@ type resolverCaptureBatch interface {
 	Items(ctx context.Context, obj *capture.CaptureBatch) ([]*capture.CaptureItem, error)
 }
 
-type resolverCaptureCoverSheet interface {
+type CaptureCoverSheetResolver interface {
 	Target(ctx context.Context, obj *gqlmodel.CaptureCoverSheet) (*captureports.CaptureRecordLabel, error)
 }
 
-type resolverCaptureDevice interface {
+type CaptureDeviceResolver interface {
 	User(ctx context.Context, obj *capture.CaptureDevice) (*tenant.User, error)
 	IsOnline(ctx context.Context, obj *capture.CaptureDevice) (bool, error)
 }
 
-type resolverCaptureItem interface {
+type CaptureItemResolver interface {
 	PageCount(ctx context.Context, obj *capture.CaptureItem) (int, error)
 	SuggestedRecord(ctx context.Context, obj *capture.CaptureItem) (*captureports.CaptureRecordLabel, error)
 	SuggestionSource(ctx context.Context, obj *capture.CaptureItem) (*capture.SuggestionSource, error)
@@ -2550,7 +2550,7 @@ type resolverCaptureItem interface {
 	FiledBy(ctx context.Context, obj *capture.CaptureItem) (*tenant.User, error)
 }
 
-type resolverCapturePage interface {
+type CapturePageResolver interface {
 	PatchCode(ctx context.Context, obj *capture.CapturePage) (string, error)
 	IsCoverSheet(ctx context.Context, obj *capture.CapturePage) (bool, error)
 	UnrecognizedCoverSheet(ctx context.Context, obj *capture.CapturePage) (bool, error)
@@ -2558,18 +2558,18 @@ type resolverCapturePage interface {
 	ThumbnailPath(ctx context.Context, obj *capture.CapturePage) (string, error)
 }
 
-type resolverCaptureRequest interface {
+type CaptureRequestResolver interface {
 	FailureCode(ctx context.Context, obj *capturerequest.CaptureRequest) (*capturerequest.RequestFailureCode, error)
 	IsOpen(ctx context.Context, obj *capturerequest.CaptureRequest) (bool, error)
 }
 
-type resolverCaptureSettings interface {
+type CaptureSettingsResolver interface {
 	Protocol(ctx context.Context, obj *capture.Settings) (*capture.SourceProtocol, error)
 	PixelType(ctx context.Context, obj *capture.Settings) (*capture.PixelType, error)
 	Refused(ctx context.Context, obj *capture.Settings) ([]string, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	EditCaptureItems(ctx context.Context, batchID string, input gqlmodel.EditCaptureItemsInput) (*capture.CaptureBatch, error)
 	FileCaptureItem(ctx context.Context, id string, input gqlmodel.FileCaptureItemInput) (*capture.CaptureItem, error)
 	FileCaptureItems(ctx context.Context, items []*gqlmodel.FileCaptureItemsEntryInput) (*capturefiling.FileItemsResult, error)
@@ -2587,7 +2587,7 @@ type resolverMutation interface {
 	DeleteCaptureProfile(ctx context.Context, id string) (bool, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	MyCaptureAccess(ctx context.Context) (*capturesupport.Access, error)
 	CaptureAgentRelease(ctx context.Context) (*capturereleaseservice.Release, error)
 	CaptureBatches(ctx context.Context, input gqlmodel.CaptureBatchesInput) (*gqlmodel.CaptureBatchConnection, error)

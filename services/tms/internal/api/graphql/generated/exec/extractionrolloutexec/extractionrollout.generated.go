@@ -83,7 +83,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*extractionrollout.ExtractionRollout)
-					return gqlexec.Resolver[resolverExtractionRollout](ec, "ExtractionRollout").Serving(ctx, obj)
+					return gqlexec.Resolver[ExtractionRolloutResolver](ec, "ExtractionRollout@extractionrollout").Serving(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -112,7 +112,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*extractionrollout.ExtractionRollout)
-					return gqlexec.Resolver[resolverExtractionRollout](ec, "ExtractionRollout").HaltReason(ctx, obj)
+					return gqlexec.Resolver[ExtractionRolloutResolver](ec, "ExtractionRollout@extractionrollout").HaltReason(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOExtractionRolloutHaltReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionrolloutᚐHaltReason),
 			},
@@ -398,7 +398,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateExtractionRollout_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateExtractionRollout(ctx, fc.Args["input"].(gqlmodel.UpdateExtractionRolloutInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@extractionrollout").UpdateExtractionRollout(ctx, fc.Args["input"].(gqlmodel.UpdateExtractionRolloutInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionRollout2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionrolloutᚐExtractionRollout),
 			},
@@ -412,7 +412,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "ExtractionRollout",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ExtractionRollout(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@extractionrollout").ExtractionRollout(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionRollout2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionrolloutᚐExtractionRollout),
 			},
@@ -424,7 +424,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "ExtractionRolloutReport",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ExtractionRolloutReport(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@extractionrollout").ExtractionRolloutReport(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionRolloutReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionrolloutportsᚐExtractionRolloutReport),
 			},
@@ -434,22 +434,22 @@ var Shard = &gqlexec.Shard{
 		{Name: "UpdateExtractionRolloutInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateExtractionRolloutInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "ExtractionRollout", Check: func(r any) bool { _, ok := r.(resolverExtractionRollout); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "ExtractionRollout@extractionrollout", Check: func(r any) bool { _, ok := r.(ExtractionRolloutResolver); return ok }},
+		{Root: "Mutation@extractionrollout", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@extractionrollout", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverExtractionRollout interface {
+type ExtractionRolloutResolver interface {
 	Serving(ctx context.Context, obj *extractionrollout.ExtractionRollout) (bool, error)
 	HaltReason(ctx context.Context, obj *extractionrollout.ExtractionRollout) (*extractionrollout.HaltReason, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	UpdateExtractionRollout(ctx context.Context, input gqlmodel.UpdateExtractionRolloutInput) (*extractionrollout.ExtractionRollout, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	ExtractionRollout(ctx context.Context) (*extractionrollout.ExtractionRollout, error)
 	ExtractionRolloutReport(ctx context.Context) (*extractionrolloutports.ExtractionRolloutReport, error)
 }

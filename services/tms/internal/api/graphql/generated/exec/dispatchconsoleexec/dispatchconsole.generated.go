@@ -2256,7 +2256,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_dispatchAssignMoves_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DispatchAssignMoves(ctx, fc.Args["input"].([]*gqlmodel.DispatchAssignMoveInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@dispatchconsole").DispatchAssignMoves(ctx, fc.Args["input"].([]*gqlmodel.DispatchAssignMoveInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDispatchBulkAssignResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBulkAssignResult),
 			},
@@ -2269,7 +2269,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_dispatchUnassignMoves_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DispatchUnassignMoves(ctx, fc.Args["moveIds"].([]string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@dispatchconsole").DispatchUnassignMoves(ctx, fc.Args["moveIds"].([]string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDispatchBulkAssignResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBulkAssignResult),
 			},
@@ -2282,7 +2282,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_dispatchAssignMoveToCarrier_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DispatchAssignMoveToCarrier(ctx, fc.Args["input"].(gqlmodel.DispatchAssignMoveToCarrierInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@dispatchconsole").DispatchAssignMoveToCarrier(ctx, fc.Args["input"].(gqlmodel.DispatchAssignMoveToCarrierInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierAssignment),
 			},
@@ -2294,7 +2294,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_dispatchCancelCarrierAssignment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DispatchCancelCarrierAssignment(ctx, fc.Args["moveId"].(string), fc.Args["reason"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@dispatchconsole").DispatchCancelCarrierAssignment(ctx, fc.Args["moveId"].(string), fc.Args["reason"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -2307,7 +2307,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_dispatchPlanAutoAssign_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DispatchPlanAutoAssign(ctx, fc.Args["input"].(gqlmodel.DispatchPlanInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@dispatchconsole").DispatchPlanAutoAssign(ctx, fc.Args["input"].(gqlmodel.DispatchPlanInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDispatchPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchPlan),
 			},
@@ -2323,7 +2323,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_dispatchBoard_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DispatchBoard(ctx, fc.Args["input"].(gqlmodel.DispatchBoardInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@dispatchconsole").DispatchBoard(ctx, fc.Args["input"].(gqlmodel.DispatchBoardInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDispatchBoard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoard),
 			},
@@ -2337,7 +2337,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_dispatchMoveCandidates_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DispatchMoveCandidates(ctx, fc.Args["input"].(gqlmodel.DispatchMoveCandidatesInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@dispatchconsole").DispatchMoveCandidates(ctx, fc.Args["input"].(gqlmodel.DispatchMoveCandidatesInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDispatchCandidate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchCandidateᚄ),
 			},
@@ -2351,7 +2351,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_dispatchDriverMoves_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DispatchDriverMoves(ctx, fc.Args["input"].(gqlmodel.DispatchDriverMovesInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@dispatchconsole").DispatchDriverMoves(ctx, fc.Args["input"].(gqlmodel.DispatchDriverMovesInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDispatchDriverMoveMatch2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchDriverMoveMatchᚄ),
 			},
@@ -2365,7 +2365,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_dispatchAssignmentPreview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DispatchAssignmentPreview(ctx, fc.Args["input"].(gqlmodel.DispatchAssignmentPreviewInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@dispatchconsole").DispatchAssignmentPreview(ctx, fc.Args["input"].(gqlmodel.DispatchAssignmentPreviewInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDispatchAssignmentPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchAssignmentPreview),
 			},
@@ -2379,7 +2379,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_dispatchCarrierAssignmentPreview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DispatchCarrierAssignmentPreview(ctx, fc.Args["input"].(gqlmodel.DispatchCarrierAssignmentPreviewInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@dispatchconsole").DispatchCarrierAssignmentPreview(ctx, fc.Args["input"].(gqlmodel.DispatchCarrierAssignmentPreviewInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDispatchCarrierEligibility2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchCarrierEligibility),
 			},
@@ -2397,12 +2397,12 @@ var Shard = &gqlexec.Shard{
 		{Name: "DispatchPlanInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputDispatchPlanInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@dispatchconsole", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@dispatchconsole", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	DispatchAssignMoves(ctx context.Context, input []*gqlmodel.DispatchAssignMoveInput) (*gqlmodel.DispatchBulkAssignResult, error)
 	DispatchUnassignMoves(ctx context.Context, moveIds []string) (*gqlmodel.DispatchBulkAssignResult, error)
 	DispatchAssignMoveToCarrier(ctx context.Context, input gqlmodel.DispatchAssignMoveToCarrierInput) (*shipment.CarrierAssignment, error)
@@ -2410,7 +2410,7 @@ type resolverMutation interface {
 	DispatchPlanAutoAssign(ctx context.Context, input gqlmodel.DispatchPlanInput) (*gqlmodel.DispatchPlan, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	DispatchBoard(ctx context.Context, input gqlmodel.DispatchBoardInput) (*gqlmodel.DispatchBoard, error)
 	DispatchMoveCandidates(ctx context.Context, input gqlmodel.DispatchMoveCandidatesInput) ([]*gqlmodel.DispatchCandidate, error)
 	DispatchDriverMoves(ctx context.Context, input gqlmodel.DispatchDriverMovesInput) ([]*gqlmodel.DispatchDriverMoveMatch, error)

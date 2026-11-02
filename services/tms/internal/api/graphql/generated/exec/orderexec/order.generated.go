@@ -37,7 +37,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createOrder_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateOrder(ctx, fc.Args["input"].(gqlmodel.OrderInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@order").CreateOrder(ctx, fc.Args["input"].(gqlmodel.OrderInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
@@ -50,7 +50,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateOrder_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateOrder(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.OrderInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@order").UpdateOrder(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.OrderInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
@@ -63,7 +63,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_attachOrderShipments_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AttachOrderShipments(ctx, fc.Args["orderId"].(string), fc.Args["shipmentIds"].([]string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@order").AttachOrderShipments(ctx, fc.Args["orderId"].(string), fc.Args["shipmentIds"].([]string))
 				},
 				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
@@ -76,7 +76,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_detachOrderShipment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DetachOrderShipment(ctx, fc.Args["orderId"].(string), fc.Args["shipmentId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@order").DetachOrderShipment(ctx, fc.Args["orderId"].(string), fc.Args["shipmentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
@@ -89,7 +89,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_addOrderCharge_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AddOrderCharge(ctx, fc.Args["orderId"].(string), fc.Args["description"].(string), fc.Args["amount"].(string), fc.Args["allocations"].([]*gqlmodel.ChargeAllocationInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@order").AddOrderCharge(ctx, fc.Args["orderId"].(string), fc.Args["description"].(string), fc.Args["amount"].(string), fc.Args["allocations"].([]*gqlmodel.ChargeAllocationInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
@@ -102,7 +102,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateOrderCharge_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateOrderCharge(ctx, fc.Args["input"].(gqlmodel.UpdateOrderChargeInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@order").UpdateOrderCharge(ctx, fc.Args["input"].(gqlmodel.UpdateOrderChargeInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
@@ -115,7 +115,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_setOrderChargeAllocations_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetOrderChargeAllocations(ctx, fc.Args["input"].(gqlmodel.SetOrderChargeAllocationsInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@order").SetOrderChargeAllocations(ctx, fc.Args["input"].(gqlmodel.SetOrderChargeAllocationsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
@@ -128,7 +128,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_removeOrderCharge_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RemoveOrderCharge(ctx, fc.Args["input"].(gqlmodel.RemoveOrderChargeInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@order").RemoveOrderCharge(ctx, fc.Args["input"].(gqlmodel.RemoveOrderChargeInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
@@ -141,7 +141,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_closeOrder_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CloseOrder(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@order").CloseOrder(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
@@ -154,7 +154,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_cancelOrder_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CancelOrder(ctx, fc.Args["id"].(string), fc.Args["cancelReason"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@order").CancelOrder(ctx, fc.Args["id"].(string), fc.Args["cancelReason"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
@@ -273,7 +273,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*order.Order)
-					return gqlexec.Resolver[resolverOrder](ec, "Order").QuotedAmount(ctx, obj)
+					return gqlexec.Resolver[OrderResolver](ec, "Order@order").QuotedAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -284,7 +284,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*order.Order)
-					return gqlexec.Resolver[resolverOrder](ec, "Order").BaseAmount(ctx, obj)
+					return gqlexec.Resolver[OrderResolver](ec, "Order@order").BaseAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -295,7 +295,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*order.Order)
-					return gqlexec.Resolver[resolverOrder](ec, "Order").TotalAmount(ctx, obj)
+					return gqlexec.Resolver[OrderResolver](ec, "Order@order").TotalAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -368,7 +368,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "OrderLeg",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*order.Order)
-					return gqlexec.Resolver[resolverOrder](ec, "Order").Legs(ctx, obj)
+					return gqlexec.Resolver[OrderResolver](ec, "Order@order").Legs(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNOrderLeg2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐOrderLegᚄ),
 			},
@@ -381,7 +381,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "OrderCharge",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*order.Order)
-					return gqlexec.Resolver[resolverOrder](ec, "Order").Charges(ctx, obj)
+					return gqlexec.Resolver[OrderResolver](ec, "Order@order").Charges(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNOrderCharge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐOrderChargeᚄ),
 			},
@@ -615,7 +615,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_orders_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Orders(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@order").Orders(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNOrderConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐOrderConnection),
 			},
@@ -628,7 +628,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_order_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Order(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@order").Order(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
@@ -641,13 +641,13 @@ var Shard = &gqlexec.Shard{
 		{Name: "UpdateOrderChargeInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateOrderChargeInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Order", Check: func(r any) bool { _, ok := r.(resolverOrder); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@order", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Order@order", Check: func(r any) bool { _, ok := r.(OrderResolver); return ok }},
+		{Root: "Query@order", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateOrder(ctx context.Context, input gqlmodel.OrderInput) (*order.Order, error)
 	UpdateOrder(ctx context.Context, id string, input gqlmodel.OrderInput) (*order.Order, error)
 	AttachOrderShipments(ctx context.Context, orderID string, shipmentIds []string) (*order.Order, error)
@@ -660,7 +660,7 @@ type resolverMutation interface {
 	CancelOrder(ctx context.Context, id string, cancelReason string) (*order.Order, error)
 }
 
-type resolverOrder interface {
+type OrderResolver interface {
 	QuotedAmount(ctx context.Context, obj *order.Order) (*string, error)
 	BaseAmount(ctx context.Context, obj *order.Order) (*string, error)
 	TotalAmount(ctx context.Context, obj *order.Order) (*string, error)
@@ -668,7 +668,7 @@ type resolverOrder interface {
 	Charges(ctx context.Context, obj *order.Order) ([]*gqlmodel.OrderCharge, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	Orders(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.OrderConnection, error)
 	Order(ctx context.Context, id string) (*order.Order, error)
 }

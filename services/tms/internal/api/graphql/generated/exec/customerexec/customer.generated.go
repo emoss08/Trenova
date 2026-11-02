@@ -470,7 +470,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
-					return gqlexec.Resolver[resolverCustomerBillingProfile](ec, "CustomerBillingProfile").MinConsolidatedAmount(ctx, obj)
+					return gqlexec.Resolver[CustomerBillingProfileResolver](ec, "CustomerBillingProfile@customer").MinConsolidatedAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -511,7 +511,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
-					return gqlexec.Resolver[resolverCustomerBillingProfile](ec, "CustomerBillingProfile").CreditLimit(ctx, obj)
+					return gqlexec.Resolver[CustomerBillingProfileResolver](ec, "CustomerBillingProfile@customer").CreditLimit(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -523,7 +523,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
-					return gqlexec.Resolver[resolverCustomerBillingProfile](ec, "CustomerBillingProfile").CreditBalance(ctx, obj)
+					return gqlexec.Resolver[CustomerBillingProfileResolver](ec, "CustomerBillingProfile@customer").CreditBalance(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -701,7 +701,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
-					return gqlexec.Resolver[resolverCustomerBillingProfile](ec, "CustomerBillingProfile").LateChargeRate(ctx, obj)
+					return gqlexec.Resolver[CustomerBillingProfileResolver](ec, "CustomerBillingProfile@customer").LateChargeRate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -1171,7 +1171,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createCustomer_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateCustomer(ctx, fc.Args["input"].(gqlmodel.CustomerInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@customer").CreateCustomer(ctx, fc.Args["input"].(gqlmodel.CustomerInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer),
 			},
@@ -1184,7 +1184,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateCustomer_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateCustomer(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.CustomerInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@customer").UpdateCustomer(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.CustomerInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer),
 			},
@@ -1197,7 +1197,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_patchCustomer_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchCustomer(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.CustomerPatchInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@customer").PatchCustomer(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.CustomerPatchInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer),
 			},
@@ -1210,7 +1210,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_bulkUpdateCustomerStatus_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkUpdateCustomerStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateCustomerStatusInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@customer").BulkUpdateCustomerStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateCustomerStatusInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCustomer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomerᚄ),
 			},
@@ -1226,7 +1226,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_customers_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Customers(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@customer").Customers(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCustomerConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerConnection),
 			},
@@ -1239,7 +1239,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_customer_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Customer(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@customer").Customer(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer),
 			},
@@ -1253,7 +1253,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_shipmentCustomerBillingRules_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentCustomerBillingRules(ctx, fc.Args["customerIds"].([]string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@customer").ShipmentCustomerBillingRules(ctx, fc.Args["customerIds"].([]string))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentCustomerBillingRules2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋportsᚋcustomerportsᚐShipmentBillingRulesᚄ),
 			},
@@ -1330,27 +1330,27 @@ var Shard = &gqlexec.Shard{
 		{Name: "CustomerTrackingProfileInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCustomerTrackingProfileInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "CustomerBillingProfile", Check: func(r any) bool { _, ok := r.(resolverCustomerBillingProfile); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "CustomerBillingProfile@customer", Check: func(r any) bool { _, ok := r.(CustomerBillingProfileResolver); return ok }},
+		{Root: "Mutation@customer", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@customer", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverCustomerBillingProfile interface {
+type CustomerBillingProfileResolver interface {
 	MinConsolidatedAmount(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 	CreditLimit(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 	CreditBalance(ctx context.Context, obj *customer.CustomerBillingProfile) (string, error)
 	LateChargeRate(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateCustomer(ctx context.Context, input gqlmodel.CustomerInput) (*customer.Customer, error)
 	UpdateCustomer(ctx context.Context, id string, input gqlmodel.CustomerInput) (*customer.Customer, error)
 	PatchCustomer(ctx context.Context, id string, input gqlmodel.CustomerPatchInput) (*customer.Customer, error)
 	BulkUpdateCustomerStatus(ctx context.Context, input gqlmodel.BulkUpdateCustomerStatusInput) ([]*customer.Customer, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	Customers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CustomerConnection, error)
 	Customer(ctx context.Context, id string) (*customer.Customer, error)
 	ShipmentCustomerBillingRules(ctx context.Context, customerIds []string) ([]*customerports.ShipmentBillingRules, error)

@@ -204,7 +204,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "FiscalPeriod",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalyear.FiscalYear)
-					return gqlexec.Resolver[resolverFiscalYear](ec, "FiscalYear").Periods(ctx, obj)
+					return gqlexec.Resolver[FiscalYearResolver](ec, "FiscalYear@fiscalyear").Periods(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNFiscalPeriod2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐFiscalPeriodᚄ),
 			},
@@ -286,7 +286,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_fiscalYears_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FiscalYears(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fiscalyear").FiscalYears(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFiscalYearConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFiscalYearConnection),
 			},
@@ -299,23 +299,23 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_fiscalYear_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FiscalYear(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fiscalyear").FiscalYear(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOFiscalYear2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalyearᚐFiscalYear),
 			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "FiscalYear", Check: func(r any) bool { _, ok := r.(resolverFiscalYear); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "FiscalYear@fiscalyear", Check: func(r any) bool { _, ok := r.(FiscalYearResolver); return ok }},
+		{Root: "Query@fiscalyear", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverFiscalYear interface {
+type FiscalYearResolver interface {
 	Periods(ctx context.Context, obj *fiscalyear.FiscalYear) ([]*fiscalperiod.FiscalPeriod, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	FiscalYears(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FiscalYearConnection, error)
 	FiscalYear(ctx context.Context, id string) (*fiscalyear.FiscalYear, error)
 }

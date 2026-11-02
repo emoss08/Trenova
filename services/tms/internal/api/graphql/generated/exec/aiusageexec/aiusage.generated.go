@@ -626,7 +626,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_aiUsageFeatures_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiUsageFeatures(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["days"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@aiusage").AiUsageFeatures(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["days"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIUsageFeatureConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIUsageFeatureConnection),
 			},
@@ -640,7 +640,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_aiUsageSummary_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiUsageSummary(ctx, fc.Args["since"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@aiusage").AiUsageSummary(ctx, fc.Args["since"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIUsageSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageSummary),
 			},
@@ -654,18 +654,18 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_aiUsageDaily_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiUsageDaily(ctx, fc.Args["days"].(*int), fc.Args["timezone"].(*string), fc.Args["providerId"].(*string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@aiusage").AiUsageDaily(ctx, fc.Args["days"].(*int), fc.Args["timezone"].(*string), fc.Args["providerId"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIUsageDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageDayᚄ),
 			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Query@aiusage", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	AiUsageFeatures(ctx context.Context, input gqlmodel.DataTableConnectionInput, days *int) (*gqlmodel.AIUsageFeatureConnection, error)
 	AiUsageSummary(ctx context.Context, since *int) (*aiusageports.AIUsageSummary, error)
 	AiUsageDaily(ctx context.Context, days *int, timezone *string, providerID *string) ([]*aiusageports.AIUsageDay, error)

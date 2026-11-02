@@ -153,7 +153,7 @@ func (r *Registry) addFields(s *Shard) error {
 	return nil
 }
 
-func (r *Registry) validate(schema *ast.Schema, resolvers map[string]func() any) error {
+func (r *Registry) validate(schema *ast.Schema, resolvers map[string]any) error {
 	var problems []string
 
 	for name, def := range schema.Types {
@@ -165,12 +165,12 @@ func (r *Registry) validate(schema *ast.Schema, resolvers map[string]func() any)
 
 	if resolvers != nil {
 		for _, req := range r.resolvers {
-			get, ok := resolvers[req.Root]
+			resolver, ok := resolvers[req.Root]
 			if !ok {
 				problems = append(problems, "resolver root "+req.Root+" is not bound")
 				continue
 			}
-			if resolver := get(); resolver != nil && !req.Check(resolver) {
+			if resolver != nil && !req.Check(resolver) {
 				problems = append(
 					problems,
 					"resolver "+req.Root+" does not implement the fields its schema declares",

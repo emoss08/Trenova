@@ -33,7 +33,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "InvoiceDispute",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
-					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").Disputes(ctx, obj)
+					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoicedispute").Disputes(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceDispute2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐInvoiceDisputeᚄ),
 			},
@@ -45,7 +45,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "InvoiceDispute",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
-					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").OpenDispute(ctx, obj)
+					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoicedispute").OpenDispute(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInvoiceDispute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐInvoiceDispute),
 			},
@@ -128,7 +128,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoicedispute.InvoiceDispute)
-					return gqlexec.Resolver[resolverInvoiceDispute](ec, "InvoiceDispute").DisputedAmount(ctx, obj)
+					return gqlexec.Resolver[InvoiceDisputeResolver](ec, "InvoiceDispute@invoicedispute").DisputedAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -196,7 +196,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoicedispute.InvoiceDispute)
-					return gqlexec.Resolver[resolverInvoiceDispute](ec, "InvoiceDispute").Resolution(ctx, obj)
+					return gqlexec.Resolver[InvoiceDisputeResolver](ec, "InvoiceDispute@invoicedispute").Resolution(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInvoiceDisputeResolution2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐDisputeResolution),
 			},
@@ -276,7 +276,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoicedispute.InvoiceDispute)
-					return gqlexec.Resolver[resolverInvoiceDispute](ec, "InvoiceDispute").OpenedBy(ctx, obj)
+					return gqlexec.Resolver[InvoiceDisputeResolver](ec, "InvoiceDispute@invoicedispute").OpenedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -288,7 +288,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoicedispute.InvoiceDispute)
-					return gqlexec.Resolver[resolverInvoiceDispute](ec, "InvoiceDispute").ResolvedBy(ctx, obj)
+					return gqlexec.Resolver[InvoiceDisputeResolver](ec, "InvoiceDispute@invoicedispute").ResolvedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -303,7 +303,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_openInvoiceDispute_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").OpenInvoiceDispute(ctx, fc.Args["input"].(gqlmodel.OpenInvoiceDisputeInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@invoicedispute").OpenInvoiceDispute(ctx, fc.Args["input"].(gqlmodel.OpenInvoiceDisputeInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceDispute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐInvoiceDispute),
 			},
@@ -316,7 +316,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_resolveInvoiceDispute_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ResolveInvoiceDispute(ctx, fc.Args["input"].(gqlmodel.ResolveInvoiceDisputeInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@invoicedispute").ResolveInvoiceDispute(ctx, fc.Args["input"].(gqlmodel.ResolveInvoiceDisputeInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceDispute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐInvoiceDispute),
 			},
@@ -329,7 +329,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_withdrawInvoiceDispute_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").WithdrawInvoiceDispute(ctx, fc.Args["input"].(gqlmodel.WithdrawInvoiceDisputeInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@invoicedispute").WithdrawInvoiceDispute(ctx, fc.Args["input"].(gqlmodel.WithdrawInvoiceDisputeInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceDispute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐInvoiceDispute),
 			},
@@ -345,7 +345,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_invoiceDisputes_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").InvoiceDisputes(ctx, fc.Args["invoiceId"].(*string), fc.Args["invoiceIds"].([]string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@invoicedispute").InvoiceDisputes(ctx, fc.Args["invoiceId"].(*string), fc.Args["invoiceIds"].([]string))
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceDispute2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐInvoiceDisputeᚄ),
 			},
@@ -357,32 +357,32 @@ var Shard = &gqlexec.Shard{
 		{Name: "WithdrawInvoiceDisputeInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputWithdrawInvoiceDisputeInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Invoice", Check: func(r any) bool { _, ok := r.(resolverInvoice); return ok }},
-		{Root: "InvoiceDispute", Check: func(r any) bool { _, ok := r.(resolverInvoiceDispute); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "InvoiceDispute@invoicedispute", Check: func(r any) bool { _, ok := r.(InvoiceDisputeResolver); return ok }},
+		{Root: "Invoice@invoicedispute", Check: func(r any) bool { _, ok := r.(InvoiceResolver); return ok }},
+		{Root: "Mutation@invoicedispute", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@invoicedispute", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverInvoice interface {
-	Disputes(ctx context.Context, obj *invoice.Invoice) ([]*invoicedispute.InvoiceDispute, error)
-	OpenDispute(ctx context.Context, obj *invoice.Invoice) (*invoicedispute.InvoiceDispute, error)
-}
-
-type resolverInvoiceDispute interface {
+type InvoiceDisputeResolver interface {
 	DisputedAmount(ctx context.Context, obj *invoicedispute.InvoiceDispute) (*string, error)
 	Resolution(ctx context.Context, obj *invoicedispute.InvoiceDispute) (*invoicedispute.DisputeResolution, error)
 	OpenedBy(ctx context.Context, obj *invoicedispute.InvoiceDispute) (*tenant.User, error)
 	ResolvedBy(ctx context.Context, obj *invoicedispute.InvoiceDispute) (*tenant.User, error)
 }
 
-type resolverMutation interface {
+type InvoiceResolver interface {
+	Disputes(ctx context.Context, obj *invoice.Invoice) ([]*invoicedispute.InvoiceDispute, error)
+	OpenDispute(ctx context.Context, obj *invoice.Invoice) (*invoicedispute.InvoiceDispute, error)
+}
+
+type MutationResolver interface {
 	OpenInvoiceDispute(ctx context.Context, input gqlmodel.OpenInvoiceDisputeInput) (*invoicedispute.InvoiceDispute, error)
 	ResolveInvoiceDispute(ctx context.Context, input gqlmodel.ResolveInvoiceDisputeInput) (*invoicedispute.InvoiceDispute, error)
 	WithdrawInvoiceDispute(ctx context.Context, input gqlmodel.WithdrawInvoiceDisputeInput) (*invoicedispute.InvoiceDispute, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	InvoiceDisputes(ctx context.Context, invoiceID *string, invoiceIds []string) ([]*invoicedispute.InvoiceDispute, error)
 }
 

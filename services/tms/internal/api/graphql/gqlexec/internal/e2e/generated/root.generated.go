@@ -3,7 +3,6 @@
 package generated
 
 import (
-	"context"
 	"sync"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -12,48 +11,17 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/generated/exec/peopleexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/generated/exec/preludeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/generated/exec/schemasource"
-	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/model"
 )
 
 type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 type ResolverRoot interface {
-	Driver() DriverResolver
-	Mutation() MutationResolver
-	Query() QueryResolver
-	Truck() TruckResolver
+	Roots() map[string]any
 }
 
 type DirectiveRoot struct{}
 
 type ComplexityRoot struct{}
-
-type DriverResolver interface {
-	Truck(ctx context.Context, obj *model.Driver) (*model.Truck, error)
-}
-
-type MutationResolver interface {
-	RenameTruck(ctx context.Context, input gqlmodel.RenameTruckInput) (*model.Truck, error)
-	Touch(ctx context.Context, ids []string) ([]string, error)
-}
-
-type QueryResolver interface {
-	Node(ctx context.Context, id string) (model.Node, error)
-	Trucks(ctx context.Context, filter *gqlmodel.TruckFilter) ([]*model.Truck, error)
-	Truck(ctx context.Context, id string) (*model.Truck, error)
-	Search(ctx context.Context, text string) ([]model.SearchResult, error)
-	Panics(ctx context.Context) (*string, error)
-	EchoFilter(ctx context.Context, filter gqlmodel.TruckFilter) (string, error)
-	Drivers(ctx context.Context, page *gqlmodel.PageInput) ([]*model.Driver, error)
-	Mixed(ctx context.Context) ([]*model.Truck, error)
-}
-
-type TruckResolver interface {
-	LoadCount(ctx context.Context, obj *model.Truck, since *int) (int, error)
-	Failing(ctx context.Context, obj *model.Truck) (string, error)
-	NullableFailing(ctx context.Context, obj *model.Truck) (*string, error)
-}
 
 var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 	return gqlexec.Compile([]*gqlexec.Shard{
@@ -69,14 +37,9 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 		panic(err)
 	}
 
-	var resolvers map[string]func() any
+	var resolvers map[string]any
 	if r := cfg.Resolvers; r != nil {
-		resolvers = map[string]func() any{
-			"Driver":   func() any { return r.Driver() },
-			"Mutation": func() any { return r.Mutation() },
-			"Query":    func() any { return r.Query() },
-			"Truck":    func() any { return r.Truck() },
-		}
+		resolvers = r.Roots()
 	}
 
 	return gqlexec.NewSchema(gqlexec.SchemaConfig{

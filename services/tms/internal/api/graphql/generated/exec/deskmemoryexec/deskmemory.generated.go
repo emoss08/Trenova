@@ -395,7 +395,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createDeskMemory_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateDeskMemory(ctx, fc.Args["input"].(gqlmodel.CreateDeskMemoryInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@deskmemory").CreateDeskMemory(ctx, fc.Args["input"].(gqlmodel.CreateDeskMemoryInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDeskMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskMemory),
 			},
@@ -408,7 +408,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_reviseDeskMemory_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReviseDeskMemory(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ReviseDeskMemoryInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@deskmemory").ReviseDeskMemory(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ReviseDeskMemoryInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDeskMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskMemory),
 			},
@@ -421,7 +421,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_setDeskMemoryStatus_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetDeskMemoryStatus(ctx, fc.Args["id"].(string), fc.Args["status"].(agentmemory.MemoryStatus))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@deskmemory").SetDeskMemoryStatus(ctx, fc.Args["id"].(string), fc.Args["status"].(agentmemory.MemoryStatus))
 				},
 				Marshal: gqlexec.Marshal(marshalNDeskMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskMemory),
 			},
@@ -434,7 +434,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_confirmDeskMemory_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ConfirmDeskMemory(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ConfirmDeskMemoryInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@deskmemory").ConfirmDeskMemory(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ConfirmDeskMemoryInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDeskMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskMemory),
 			},
@@ -447,7 +447,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_dismissDeskMemory_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DismissDeskMemory(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@deskmemory").DismissDeskMemory(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDeskMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskMemory),
 			},
@@ -460,7 +460,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_setMemorySavingMode_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetMemorySavingMode(ctx, fc.Args["mode"].(agentmemory.MemorySavingMode))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@deskmemory").SetMemorySavingMode(ctx, fc.Args["mode"].(agentmemory.MemorySavingMode))
 				},
 				Marshal: gqlexec.Marshal(marshalNDeskMemorySettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskMemorySettings),
 			},
@@ -476,7 +476,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_deskMemories_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DeskMemories(ctx, fc.Args["input"].(gqlmodel.DeskMemoriesInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@deskmemory").DeskMemories(ctx, fc.Args["input"].(gqlmodel.DeskMemoriesInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDeskMemoryPage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskMemoryPage),
 			},
@@ -490,7 +490,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_deskMemoriesByIds_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DeskMemoriesByIds(ctx, fc.Args["ids"].([]string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@deskmemory").DeskMemoriesByIds(ctx, fc.Args["ids"].([]string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDeskMemory2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskMemoryᚄ),
 			},
@@ -502,7 +502,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "DeskMemorySettings",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DeskMemorySettings(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@deskmemory").DeskMemorySettings(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNDeskMemorySettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskMemorySettings),
 			},
@@ -515,12 +515,12 @@ var Shard = &gqlexec.Shard{
 		{Name: "ReviseDeskMemoryInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReviseDeskMemoryInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@deskmemory", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@deskmemory", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateDeskMemory(ctx context.Context, input gqlmodel.CreateDeskMemoryInput) (*gqlmodel.DeskMemory, error)
 	ReviseDeskMemory(ctx context.Context, id string, input gqlmodel.ReviseDeskMemoryInput) (*gqlmodel.DeskMemory, error)
 	SetDeskMemoryStatus(ctx context.Context, id string, status agentmemory.MemoryStatus) (*gqlmodel.DeskMemory, error)
@@ -529,7 +529,7 @@ type resolverMutation interface {
 	SetMemorySavingMode(ctx context.Context, mode agentmemory.MemorySavingMode) (*gqlmodel.DeskMemorySettings, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	DeskMemories(ctx context.Context, input gqlmodel.DeskMemoriesInput) (*gqlmodel.DeskMemoryPage, error)
 	DeskMemoriesByIds(ctx context.Context, ids []string) ([]*gqlmodel.DeskMemory, error)
 	DeskMemorySettings(ctx context.Context) (*gqlmodel.DeskMemorySettings, error)

@@ -34,7 +34,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateSidebarPreferences_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateSidebarPreferences(ctx, fc.Args["input"].(gqlmodel.SidebarPreferencesInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@sidebarpreference").UpdateSidebarPreferences(ctx, fc.Args["input"].(gqlmodel.SidebarPreferencesInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNSidebarPreferences2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSidebarPreferences),
 			},
@@ -48,7 +48,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "SidebarPreferences",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").SidebarPreferences(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@sidebarpreference").SidebarPreferences(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNSidebarPreferences2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSidebarPreferences),
 			},
@@ -60,7 +60,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "SidebarCustomizationOptions",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").SidebarCustomizationOptions(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@sidebarpreference").SidebarCustomizationOptions(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNSidebarCustomizationOptions2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSidebarCustomizationOptions),
 			},
@@ -311,16 +311,16 @@ var Shard = &gqlexec.Shard{
 		{Name: "SidebarSectionPreferenceInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSidebarSectionPreferenceInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@sidebarpreference", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@sidebarpreference", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	UpdateSidebarPreferences(ctx context.Context, input gqlmodel.SidebarPreferencesInput) (*gqlmodel.SidebarPreferences, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	SidebarPreferences(ctx context.Context) (*gqlmodel.SidebarPreferences, error)
 	SidebarCustomizationOptions(ctx context.Context) (*gqlmodel.SidebarCustomizationOptions, error)
 }

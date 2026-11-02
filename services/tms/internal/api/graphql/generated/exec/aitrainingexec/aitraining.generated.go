@@ -90,18 +90,18 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "AITrainingExportHistoryEntry",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiTrainingExportHistory(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@aitraining").AiTrainingExportHistory(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNAITrainingExportHistoryEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaitrainingᚐExportHistoryEntryᚄ),
 			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Query@aitraining", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	AiTrainingExportHistory(ctx context.Context) ([]*aitraining.ExportHistoryEntry, error)
 }
 

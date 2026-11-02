@@ -142,10 +142,9 @@ the bound operations reach:
   bound operations select (`gqlexec.Compile` takes any slice of shards). The generator works the
   set out from the operations' selection sets and fragments, so it grows one module at a time as
   tools convert.
-- **Resolvers.** The **resolver map holds only those shards' objects**, keyed by object name as
-  `NewExecutableSchema`'s is. `Query` is a generated composite that embeds only the query
-  resolver types of the packages the bound root fields live in. Each shard checks only the
-  methods it calls, so a partial composite satisfies it.
+- **Resolvers.** The **resolver map holds only those shards' resolvers**, under the same
+  per-shard keys as `NewExecutableSchema`'s (`Query@shipment`), each built as the full resolver
+  root builds it.
 - **Services.** The **services are only the ones those resolver packages name**. The generator
   writes `agentread.ResolverParams` (an `fx.In` struct) from the same per-package `Deps` analysis
   `task gqlgen` already does, so the worker graph takes, say, the customer and location services,

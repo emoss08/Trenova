@@ -300,7 +300,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createHoldReason_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateHoldReason(ctx, fc.Args["input"].(gqlmodel.HoldReasonInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@holdreason").CreateHoldReason(ctx, fc.Args["input"].(gqlmodel.HoldReasonInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNHoldReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋholdreasonᚐHoldReason),
 			},
@@ -313,7 +313,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateHoldReason_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateHoldReason(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.HoldReasonInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@holdreason").UpdateHoldReason(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.HoldReasonInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNHoldReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋholdreasonᚐHoldReason),
 			},
@@ -329,7 +329,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_holdReasons_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").HoldReasons(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@holdreason").HoldReasons(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNHoldReasonConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHoldReasonConnection),
 			},
@@ -342,7 +342,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_holdReason_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").HoldReason(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@holdreason").HoldReason(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOHoldReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋholdreasonᚐHoldReason),
 			},
@@ -352,17 +352,17 @@ var Shard = &gqlexec.Shard{
 		{Name: "HoldReasonInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputHoldReasonInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@holdreason", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@holdreason", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateHoldReason(ctx context.Context, input gqlmodel.HoldReasonInput) (*holdreason.HoldReason, error)
 	UpdateHoldReason(ctx context.Context, id string, input gqlmodel.HoldReasonInput) (*holdreason.HoldReason, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	HoldReasons(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.HoldReasonConnection, error)
 	HoldReason(ctx context.Context, id string) (*holdreason.HoldReason, error)
 }

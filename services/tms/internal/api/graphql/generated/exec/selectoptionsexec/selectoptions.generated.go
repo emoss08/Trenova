@@ -31,7 +31,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_selectOptions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").SelectOptions(ctx, fc.Args["input"].(gqlmodel.SelectOptionsInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@selectoptions").SelectOptions(ctx, fc.Args["input"].(gqlmodel.SelectOptionsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNSelectOptionConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSelectOptionConnection),
 			},
@@ -147,11 +147,11 @@ var Shard = &gqlexec.Shard{
 		{Name: "SelectOptionsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSelectOptionsInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Query@selectoptions", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	SelectOptions(ctx context.Context, input gqlmodel.SelectOptionsInput) (*gqlmodel.SelectOptionConnection, error)
 }
 

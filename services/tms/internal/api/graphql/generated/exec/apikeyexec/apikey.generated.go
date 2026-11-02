@@ -91,7 +91,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*apikey.Key)
-					return gqlexec.Resolver[resolverApiKey](ec, "ApiKey").Status(ctx, obj)
+					return gqlexec.Resolver[ApiKeyResolver](ec, "ApiKey@apikey").Status(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -173,7 +173,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*apikey.Key)
-					return gqlexec.Resolver[resolverApiKey](ec, "ApiKey").PermissionScope(ctx, obj)
+					return gqlexec.Resolver[ApiKeyResolver](ec, "ApiKey@apikey").PermissionScope(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -275,7 +275,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_apiKeys_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").APIKeys(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@apikey").APIKeys(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNApiKeyConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAPIKeyConnection),
 			},
@@ -288,24 +288,24 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_apiKey_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").APIKey(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@apikey").APIKey(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOApiKey2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋapikeyᚐKey),
 			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "ApiKey", Check: func(r any) bool { _, ok := r.(resolverApiKey); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "ApiKey@apikey", Check: func(r any) bool { _, ok := r.(ApiKeyResolver); return ok }},
+		{Root: "Query@apikey", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverApiKey interface {
+type ApiKeyResolver interface {
 	Status(ctx context.Context, obj *apikey.Key) (string, error)
 	PermissionScope(ctx context.Context, obj *apikey.Key) (string, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	APIKeys(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.APIKeyConnection, error)
 	APIKey(ctx context.Context, id string) (*apikey.Key, error)
 }

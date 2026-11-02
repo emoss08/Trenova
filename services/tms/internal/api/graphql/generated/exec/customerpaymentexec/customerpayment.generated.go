@@ -344,7 +344,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerpayment.Payment)
-					return gqlexec.Resolver[resolverCustomerPayment](ec, "CustomerPayment").ExchangeRate(ctx, obj)
+					return gqlexec.Resolver[CustomerPaymentResolver](ec, "CustomerPayment@customerpayment").ExchangeRate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -460,7 +460,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "Customer",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerpayment.Payment)
-					return gqlexec.Resolver[resolverCustomerPayment](ec, "CustomerPayment").Customer(ctx, obj)
+					return gqlexec.Resolver[CustomerPaymentResolver](ec, "CustomerPayment@customerpayment").Customer(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer),
 			},
@@ -584,7 +584,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "Invoice",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerpayment.Application)
-					return gqlexec.Resolver[resolverCustomerPaymentApplication](ec, "CustomerPaymentApplication").Invoice(ctx, obj)
+					return gqlexec.Resolver[CustomerPaymentApplicationResolver](ec, "CustomerPaymentApplication@customerpayment").Invoice(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoice),
 			},
@@ -675,7 +675,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_postAndApplyCustomerPayment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PostAndApplyCustomerPayment(ctx, fc.Args["input"].(gqlmodel.PostCustomerPaymentInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@customerpayment").PostAndApplyCustomerPayment(ctx, fc.Args["input"].(gqlmodel.PostCustomerPaymentInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐPayment),
 			},
@@ -688,7 +688,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_applyUnappliedCustomerPayment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApplyUnappliedCustomerPayment(ctx, fc.Args["input"].(gqlmodel.ApplyCustomerPaymentInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@customerpayment").ApplyUnappliedCustomerPayment(ctx, fc.Args["input"].(gqlmodel.ApplyCustomerPaymentInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐPayment),
 			},
@@ -701,7 +701,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_reverseCustomerPayment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReverseCustomerPayment(ctx, fc.Args["input"].(gqlmodel.ReverseCustomerPaymentInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@customerpayment").ReverseCustomerPayment(ctx, fc.Args["input"].(gqlmodel.ReverseCustomerPaymentInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐPayment),
 			},
@@ -714,7 +714,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_applyCreditMemo_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApplyCreditMemo(ctx, fc.Args["input"].(gqlmodel.ApplyCreditMemoInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@customerpayment").ApplyCreditMemo(ctx, fc.Args["input"].(gqlmodel.ApplyCreditMemoInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCreditMemoApplication2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐCreditMemoApplicationᚄ),
 			},
@@ -727,7 +727,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_unapplyCreditMemoApplication_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UnapplyCreditMemoApplication(ctx, fc.Args["input"].(gqlmodel.UnapplyCreditMemoApplicationInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@customerpayment").UnapplyCreditMemoApplication(ctx, fc.Args["input"].(gqlmodel.UnapplyCreditMemoApplicationInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCreditMemoApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐCreditMemoApplication),
 			},
@@ -743,7 +743,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_customerPayments_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CustomerPayments(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@customerpayment").CustomerPayments(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCustomerPaymentConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerPaymentConnection),
 			},
@@ -756,7 +756,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_customerPayment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CustomerPayment(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@customerpayment").CustomerPayment(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐPayment),
 			},
@@ -772,23 +772,23 @@ var Shard = &gqlexec.Shard{
 		{Name: "UnapplyCreditMemoApplicationInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUnapplyCreditMemoApplicationInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "CustomerPayment", Check: func(r any) bool { _, ok := r.(resolverCustomerPayment); return ok }},
-		{Root: "CustomerPaymentApplication", Check: func(r any) bool { _, ok := r.(resolverCustomerPaymentApplication); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "CustomerPaymentApplication@customerpayment", Check: func(r any) bool { _, ok := r.(CustomerPaymentApplicationResolver); return ok }},
+		{Root: "CustomerPayment@customerpayment", Check: func(r any) bool { _, ok := r.(CustomerPaymentResolver); return ok }},
+		{Root: "Mutation@customerpayment", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@customerpayment", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverCustomerPayment interface {
+type CustomerPaymentApplicationResolver interface {
+	Invoice(ctx context.Context, obj *customerpayment.Application) (*invoice.Invoice, error)
+}
+
+type CustomerPaymentResolver interface {
 	ExchangeRate(ctx context.Context, obj *customerpayment.Payment) (*string, error)
 	Customer(ctx context.Context, obj *customerpayment.Payment) (*customer.Customer, error)
 }
 
-type resolverCustomerPaymentApplication interface {
-	Invoice(ctx context.Context, obj *customerpayment.Application) (*invoice.Invoice, error)
-}
-
-type resolverMutation interface {
+type MutationResolver interface {
 	PostAndApplyCustomerPayment(ctx context.Context, input gqlmodel.PostCustomerPaymentInput) (*customerpayment.Payment, error)
 	ApplyUnappliedCustomerPayment(ctx context.Context, input gqlmodel.ApplyCustomerPaymentInput) (*customerpayment.Payment, error)
 	ReverseCustomerPayment(ctx context.Context, input gqlmodel.ReverseCustomerPaymentInput) (*customerpayment.Payment, error)
@@ -796,7 +796,7 @@ type resolverMutation interface {
 	UnapplyCreditMemoApplication(ctx context.Context, input gqlmodel.UnapplyCreditMemoApplicationInput) (*customerpayment.CreditMemoApplication, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	CustomerPayments(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CustomerPaymentConnection, error)
 	CustomerPayment(ctx context.Context, id string) (*customerpayment.Payment, error)
 }

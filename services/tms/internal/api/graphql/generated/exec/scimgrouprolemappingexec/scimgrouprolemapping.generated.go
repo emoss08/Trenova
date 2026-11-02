@@ -34,7 +34,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_scimGroupRoleMappings_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ScimGroupRoleMappings(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["directoryId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@scimgrouprolemapping").ScimGroupRoleMappings(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["directoryId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNSCIMGroupRoleMappingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSCIMGroupRoleMappingConnection),
 			},
@@ -219,11 +219,11 @@ var Shard = &gqlexec.Shard{
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Query@scimgrouprolemapping", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	ScimGroupRoleMappings(ctx context.Context, input gqlmodel.DataTableConnectionInput, directoryID string) (*gqlmodel.SCIMGroupRoleMappingConnection, error)
 }
 

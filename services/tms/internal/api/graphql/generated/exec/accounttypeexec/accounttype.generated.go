@@ -250,7 +250,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createAccountType_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateAccountType(ctx, fc.Args["input"].(gqlmodel.AccountTypeInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@accounttype").CreateAccountType(ctx, fc.Args["input"].(gqlmodel.AccountTypeInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAccountType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐAccountType),
 			},
@@ -263,7 +263,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateAccountType_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateAccountType(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AccountTypeInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@accounttype").UpdateAccountType(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AccountTypeInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAccountType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐAccountType),
 			},
@@ -276,7 +276,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_patchAccountType_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchAccountType(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AccountTypePatchInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@accounttype").PatchAccountType(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AccountTypePatchInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAccountType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐAccountType),
 			},
@@ -289,7 +289,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_bulkUpdateAccountTypeStatus_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkUpdateAccountTypeStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateAccountTypeStatusInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@accounttype").BulkUpdateAccountTypeStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateAccountTypeStatusInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAccountType2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐAccountTypeᚄ),
 			},
@@ -305,7 +305,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_accountTypes_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AccountTypes(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@accounttype").AccountTypes(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAccountTypeConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAccountTypeConnection),
 			},
@@ -318,7 +318,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_accountType_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AccountType(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@accounttype").AccountType(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOAccountType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐAccountType),
 			},
@@ -330,19 +330,19 @@ var Shard = &gqlexec.Shard{
 		{Name: "BulkUpdateAccountTypeStatusInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputBulkUpdateAccountTypeStatusInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@accounttype", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@accounttype", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateAccountType(ctx context.Context, input gqlmodel.AccountTypeInput) (*accounttype.AccountType, error)
 	UpdateAccountType(ctx context.Context, id string, input gqlmodel.AccountTypeInput) (*accounttype.AccountType, error)
 	PatchAccountType(ctx context.Context, id string, input gqlmodel.AccountTypePatchInput) (*accounttype.AccountType, error)
 	BulkUpdateAccountTypeStatus(ctx context.Context, input gqlmodel.BulkUpdateAccountTypeStatusInput) ([]*accounttype.AccountType, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	AccountTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountTypeConnection, error)
 	AccountType(ctx context.Context, id string) (*accounttype.AccountType, error)
 }

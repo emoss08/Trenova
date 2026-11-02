@@ -935,7 +935,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carriersettlement.CarrierSettlement)
-					return gqlexec.Resolver[resolverCarrierSettlement](ec, "CarrierSettlement").ExchangeRate(ctx, obj)
+					return gqlexec.Resolver[CarrierSettlementResolver](ec, "CarrierSettlement@carriersettlement").ExchangeRate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -955,7 +955,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carriersettlement.CarrierSettlement)
-					return gqlexec.Resolver[resolverCarrierSettlement](ec, "CarrierSettlement").PaidExchangeRate(ctx, obj)
+					return gqlexec.Resolver[CarrierSettlementResolver](ec, "CarrierSettlement@carriersettlement").PaidExchangeRate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -1183,7 +1183,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "CarrierSettlementLineGroup",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carriersettlement.CarrierSettlement)
-					return gqlexec.Resolver[resolverCarrierSettlement](ec, "CarrierSettlement").CostSummary(ctx, obj)
+					return gqlexec.Resolver[CarrierSettlementResolver](ec, "CarrierSettlement@carriersettlement").CostSummary(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOCarrierSettlementLineGroup2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCostGroupᚄ),
 			},
@@ -1195,7 +1195,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "SettlementLoadShare",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carriersettlement.CarrierSettlement)
-					return gqlexec.Resolver[resolverCarrierSettlement](ec, "CarrierSettlement").LoadShares(ctx, obj)
+					return gqlexec.Resolver[CarrierSettlementResolver](ec, "CarrierSettlement@carriersettlement").LoadShares(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOSettlementLoadShare2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋsettlementloadᚐShareᚄ),
 			},
@@ -1207,7 +1207,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "CarrierSettlementMoveInvoice",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carriersettlement.CarrierSettlement)
-					return gqlexec.Resolver[resolverCarrierSettlement](ec, "CarrierSettlement").MoveInvoices(ctx, obj)
+					return gqlexec.Resolver[CarrierSettlementResolver](ec, "CarrierSettlement@carriersettlement").MoveInvoices(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOCarrierSettlementMoveInvoice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐMoveInvoiceᚄ),
 			},
@@ -1219,7 +1219,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carriersettlement.CarrierSettlement)
-					return gqlexec.Resolver[resolverCarrierSettlement](ec, "CarrierSettlement").SubmittedBy(ctx, obj)
+					return gqlexec.Resolver[CarrierSettlementResolver](ec, "CarrierSettlement@carriersettlement").SubmittedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -1231,7 +1231,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carriersettlement.CarrierSettlement)
-					return gqlexec.Resolver[resolverCarrierSettlement](ec, "CarrierSettlement").ApprovedBy(ctx, obj)
+					return gqlexec.Resolver[CarrierSettlementResolver](ec, "CarrierSettlement@carriersettlement").ApprovedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -1243,7 +1243,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carriersettlement.CarrierSettlement)
-					return gqlexec.Resolver[resolverCarrierSettlement](ec, "CarrierSettlement").PostedBy(ctx, obj)
+					return gqlexec.Resolver[CarrierSettlementResolver](ec, "CarrierSettlement@carriersettlement").PostedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -1255,7 +1255,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carriersettlement.CarrierSettlement)
-					return gqlexec.Resolver[resolverCarrierSettlement](ec, "CarrierSettlement").PaidBy(ctx, obj)
+					return gqlexec.Resolver[CarrierSettlementResolver](ec, "CarrierSettlement@carriersettlement").PaidBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -1267,7 +1267,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carriersettlement.CarrierSettlement)
-					return gqlexec.Resolver[resolverCarrierSettlement](ec, "CarrierSettlement").VoidedBy(ctx, obj)
+					return gqlexec.Resolver[CarrierSettlementResolver](ec, "CarrierSettlement@carriersettlement").VoidedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -2329,7 +2329,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*edicarrierinvoice.CarrierInvoice)
-					return gqlexec.Resolver[resolverEdiCarrierInvoice](ec, "EdiCarrierInvoice").TotalAmount(ctx, obj)
+					return gqlexec.Resolver[EdiCarrierInvoiceResolver](ec, "EdiCarrierInvoice@carriersettlement").TotalAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -2340,7 +2340,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*edicarrierinvoice.CarrierInvoice)
-					return gqlexec.Resolver[resolverEdiCarrierInvoice](ec, "EdiCarrierInvoice").ExpectedAmount(ctx, obj)
+					return gqlexec.Resolver[EdiCarrierInvoiceResolver](ec, "EdiCarrierInvoice@carriersettlement").ExpectedAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -2351,7 +2351,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*edicarrierinvoice.CarrierInvoice)
-					return gqlexec.Resolver[resolverEdiCarrierInvoice](ec, "EdiCarrierInvoice").VarianceAmount(ctx, obj)
+					return gqlexec.Resolver[EdiCarrierInvoiceResolver](ec, "EdiCarrierInvoice@carriersettlement").VarianceAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -2363,7 +2363,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*edicarrierinvoice.CarrierInvoice)
-					return gqlexec.Resolver[resolverEdiCarrierInvoice](ec, "EdiCarrierInvoice").ReconciliationStatus(ctx, obj)
+					return gqlexec.Resolver[EdiCarrierInvoiceResolver](ec, "EdiCarrierInvoice@carriersettlement").ReconciliationStatus(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -2424,7 +2424,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "Carrier",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*edicarrierinvoice.CarrierInvoice)
-					return gqlexec.Resolver[resolverEdiCarrierInvoice](ec, "EdiCarrierInvoice").SuggestedCarrier(ctx, obj)
+					return gqlexec.Resolver[EdiCarrierInvoiceResolver](ec, "EdiCarrierInvoice@carriersettlement").SuggestedCarrier(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐCarrier),
 			},
@@ -2472,7 +2472,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_generateCarrierSettlementBatch_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").GenerateCarrierSettlementBatch(ctx, fc.Args["input"].(gqlmodel.GenerateCarrierSettlementBatchInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@carriersettlement").GenerateCarrierSettlementBatch(ctx, fc.Args["input"].(gqlmodel.GenerateCarrierSettlementBatchInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierSettlementBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCarrierSettlementBatch),
 			},
@@ -2485,7 +2485,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_submitCarrierSettlement_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SubmitCarrierSettlement(ctx, fc.Args["input"].(gqlmodel.CarrierSettlementActionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@carriersettlement").SubmitCarrierSettlement(ctx, fc.Args["input"].(gqlmodel.CarrierSettlementActionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCarrierSettlement),
 			},
@@ -2498,7 +2498,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_approveCarrierSettlement_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApproveCarrierSettlement(ctx, fc.Args["input"].(gqlmodel.CarrierSettlementActionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@carriersettlement").ApproveCarrierSettlement(ctx, fc.Args["input"].(gqlmodel.CarrierSettlementActionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCarrierSettlement),
 			},
@@ -2511,7 +2511,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_rejectCarrierSettlement_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RejectCarrierSettlement(ctx, fc.Args["input"].(gqlmodel.CarrierSettlementActionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@carriersettlement").RejectCarrierSettlement(ctx, fc.Args["input"].(gqlmodel.CarrierSettlementActionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCarrierSettlement),
 			},
@@ -2524,7 +2524,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_postCarrierSettlement_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PostCarrierSettlement(ctx, fc.Args["input"].(gqlmodel.CarrierSettlementActionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@carriersettlement").PostCarrierSettlement(ctx, fc.Args["input"].(gqlmodel.CarrierSettlementActionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCarrierSettlement),
 			},
@@ -2537,7 +2537,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_markCarrierSettlementPaid_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").MarkCarrierSettlementPaid(ctx, fc.Args["input"].(gqlmodel.MarkCarrierSettlementPaidInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@carriersettlement").MarkCarrierSettlementPaid(ctx, fc.Args["input"].(gqlmodel.MarkCarrierSettlementPaidInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCarrierSettlement),
 			},
@@ -2550,7 +2550,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_voidCarrierSettlement_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").VoidCarrierSettlement(ctx, fc.Args["input"].(gqlmodel.CarrierSettlementActionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@carriersettlement").VoidCarrierSettlement(ctx, fc.Args["input"].(gqlmodel.CarrierSettlementActionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCarrierSettlement),
 			},
@@ -2563,7 +2563,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_recalculateCarrierSettlement_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecalculateCarrierSettlement(ctx, fc.Args["input"].(gqlmodel.CarrierSettlementActionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@carriersettlement").RecalculateCarrierSettlement(ctx, fc.Args["input"].(gqlmodel.CarrierSettlementActionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCarrierSettlement),
 			},
@@ -2576,7 +2576,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_addCarrierSettlementAdjustment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AddCarrierSettlementAdjustment(ctx, fc.Args["input"].(gqlmodel.AddCarrierSettlementAdjustmentInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@carriersettlement").AddCarrierSettlementAdjustment(ctx, fc.Args["input"].(gqlmodel.AddCarrierSettlementAdjustmentInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCarrierSettlement),
 			},
@@ -2589,7 +2589,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_removeCarrierSettlementAdjustment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RemoveCarrierSettlementAdjustment(ctx, fc.Args["input"].(gqlmodel.RemoveCarrierSettlementAdjustmentInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@carriersettlement").RemoveCarrierSettlementAdjustment(ctx, fc.Args["input"].(gqlmodel.RemoveCarrierSettlementAdjustmentInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCarrierSettlement),
 			},
@@ -2602,7 +2602,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateCarrierSettlementControl_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateCarrierSettlementControl(ctx, fc.Args["input"].(gqlmodel.UpdateCarrierSettlementControlInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@carriersettlement").UpdateCarrierSettlementControl(ctx, fc.Args["input"].(gqlmodel.UpdateCarrierSettlementControlInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierSettlementControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋcarriersettlementcontrolᚐCarrierSettlementControl),
 			},
@@ -2615,7 +2615,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_linkEdiCarrierInvoiceToCarrier_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").LinkEDICarrierInvoiceToCarrier(ctx, fc.Args["invoiceId"].(string), fc.Args["carrierId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@carriersettlement").LinkEDICarrierInvoiceToCarrier(ctx, fc.Args["invoiceId"].(string), fc.Args["carrierId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNEdiCarrierInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedicarrierinvoiceᚐCarrierInvoice),
 			},
@@ -2628,7 +2628,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createCarrierInvoiceMatch_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateCarrierInvoiceMatch(ctx, fc.Args["input"].(gqlmodel.CreateCarrierInvoiceMatchInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@carriersettlement").CreateCarrierInvoiceMatch(ctx, fc.Args["input"].(gqlmodel.CreateCarrierInvoiceMatchInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierInvoiceMatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐInvoiceMatch),
 			},
@@ -2641,7 +2641,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_acceptCarrierInvoiceMatch_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AcceptCarrierInvoiceMatch(ctx, fc.Args["input"].(gqlmodel.CarrierInvoiceMatchActionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@carriersettlement").AcceptCarrierInvoiceMatch(ctx, fc.Args["input"].(gqlmodel.CarrierInvoiceMatchActionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierInvoiceMatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐInvoiceMatch),
 			},
@@ -2654,7 +2654,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_acceptCarrierInvoiceMatchWithVariance_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AcceptCarrierInvoiceMatchWithVariance(ctx, fc.Args["input"].(gqlmodel.CarrierInvoiceMatchActionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@carriersettlement").AcceptCarrierInvoiceMatchWithVariance(ctx, fc.Args["input"].(gqlmodel.CarrierInvoiceMatchActionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierInvoiceMatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐInvoiceMatch),
 			},
@@ -2667,7 +2667,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_rejectCarrierInvoiceMatch_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RejectCarrierInvoiceMatch(ctx, fc.Args["input"].(gqlmodel.CarrierInvoiceMatchActionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@carriersettlement").RejectCarrierInvoiceMatch(ctx, fc.Args["input"].(gqlmodel.CarrierInvoiceMatchActionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierInvoiceMatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐInvoiceMatch),
 			},
@@ -2683,7 +2683,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_carrierSettlements_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierSettlements(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@carriersettlement").CarrierSettlements(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierSettlementConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierSettlementConnection),
 			},
@@ -2696,7 +2696,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_carrierSettlement_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierSettlement(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@carriersettlement").CarrierSettlement(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOCarrierSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCarrierSettlement),
 			},
@@ -2710,7 +2710,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_carrierSettlementBatches_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierSettlementBatches(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@carriersettlement").CarrierSettlementBatches(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierSettlementBatchConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierSettlementBatchConnection),
 			},
@@ -2723,7 +2723,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_carrierSettlementBatch_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierSettlementBatch(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@carriersettlement").CarrierSettlementBatch(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOCarrierSettlementBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCarrierSettlementBatch),
 			},
@@ -2737,7 +2737,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_carrierCostEvents_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierCostEvents(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@carriersettlement").CarrierCostEvents(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierCostEventConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierCostEventConnection),
 			},
@@ -2749,7 +2749,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "CarrierSettlementControl",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierSettlementControl(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@carriersettlement").CarrierSettlementControl(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierSettlementControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋcarriersettlementcontrolᚐCarrierSettlementControl),
 			},
@@ -2761,7 +2761,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "CarrierSettlementPeriodBounds",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CurrentCarrierSettlementPeriod(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@carriersettlement").CurrentCarrierSettlementPeriod(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierSettlementPeriodBounds2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋsettlementsharedᚐPeriodBounds),
 			},
@@ -2775,7 +2775,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_carrierSettlementWorkspaceSummary_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierSettlementWorkspaceSummary(ctx, fc.Args["periodStart"].(*int), fc.Args["periodEnd"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@carriersettlement").CarrierSettlementWorkspaceSummary(ctx, fc.Args["periodStart"].(*int), fc.Args["periodEnd"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierSettlementWorkspaceSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋcarriersettlementworkspaceserviceᚐWorkspaceSummary),
 			},
@@ -2789,7 +2789,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_carrierLedgerEntries_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierLedgerEntries(ctx, fc.Args["carrierId"].(string), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@carriersettlement").CarrierLedgerEntries(ctx, fc.Args["carrierId"].(string), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierLedgerEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐLedgerEntryᚄ),
 			},
@@ -2803,7 +2803,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_carrierInvoiceMatches_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierInvoiceMatches(ctx, fc.Args["status"].(*carriersettlement.InvoiceMatchStatus), fc.Args["carrierId"].(*string), fc.Args["limit"].(*int), fc.Args["offset"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@carriersettlement").CarrierInvoiceMatches(ctx, fc.Args["status"].(*carriersettlement.InvoiceMatchStatus), fc.Args["carrierId"].(*string), fc.Args["limit"].(*int), fc.Args["offset"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierInvoiceMatchList2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierInvoiceMatchList),
 			},
@@ -2817,7 +2817,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_ediCarrierInvoices_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").EDICarrierInvoices(ctx, fc.Args["reconciliationStatus"].(*string), fc.Args["limit"].(*int), fc.Args["offset"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@carriersettlement").EDICarrierInvoices(ctx, fc.Args["reconciliationStatus"].(*string), fc.Args["limit"].(*int), fc.Args["offset"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNEdiCarrierInvoiceList2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEDICarrierInvoiceList),
 			},
@@ -2830,7 +2830,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_suggestCarrierForEdiInvoice_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").SuggestCarrierForEDIInvoice(ctx, fc.Args["invoiceId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@carriersettlement").SuggestCarrierForEDIInvoice(ctx, fc.Args["invoiceId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐCarrier),
 			},
@@ -2843,7 +2843,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_exportCarrierSettlementBatchCsv_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ExportCarrierSettlementBatchCSV(ctx, fc.Args["batchId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@carriersettlement").ExportCarrierSettlementBatchCSV(ctx, fc.Args["batchId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -2860,14 +2860,14 @@ var Shard = &gqlexec.Shard{
 		{Name: "UpdateCarrierSettlementControlInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateCarrierSettlementControlInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "CarrierSettlement", Check: func(r any) bool { _, ok := r.(resolverCarrierSettlement); return ok }},
-		{Root: "EdiCarrierInvoice", Check: func(r any) bool { _, ok := r.(resolverEdiCarrierInvoice); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "CarrierSettlement@carriersettlement", Check: func(r any) bool { _, ok := r.(CarrierSettlementResolver); return ok }},
+		{Root: "EdiCarrierInvoice@carriersettlement", Check: func(r any) bool { _, ok := r.(EdiCarrierInvoiceResolver); return ok }},
+		{Root: "Mutation@carriersettlement", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@carriersettlement", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverCarrierSettlement interface {
+type CarrierSettlementResolver interface {
 	ExchangeRate(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*string, error)
 	PaidExchangeRate(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*string, error)
 	CostSummary(ctx context.Context, obj *carriersettlement.CarrierSettlement) ([]*carriersettlement.CostGroup, error)
@@ -2880,7 +2880,7 @@ type resolverCarrierSettlement interface {
 	VoidedBy(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*tenant.User, error)
 }
 
-type resolverEdiCarrierInvoice interface {
+type EdiCarrierInvoiceResolver interface {
 	TotalAmount(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*string, error)
 	ExpectedAmount(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*string, error)
 	VarianceAmount(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*string, error)
@@ -2888,7 +2888,7 @@ type resolverEdiCarrierInvoice interface {
 	SuggestedCarrier(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*carrier.Carrier, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	GenerateCarrierSettlementBatch(ctx context.Context, input gqlmodel.GenerateCarrierSettlementBatchInput) (*carriersettlement.CarrierSettlementBatch, error)
 	SubmitCarrierSettlement(ctx context.Context, input gqlmodel.CarrierSettlementActionInput) (*carriersettlement.CarrierSettlement, error)
 	ApproveCarrierSettlement(ctx context.Context, input gqlmodel.CarrierSettlementActionInput) (*carriersettlement.CarrierSettlement, error)
@@ -2907,7 +2907,7 @@ type resolverMutation interface {
 	RejectCarrierInvoiceMatch(ctx context.Context, input gqlmodel.CarrierInvoiceMatchActionInput) (*carriersettlement.InvoiceMatch, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	CarrierSettlements(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierSettlementConnection, error)
 	CarrierSettlement(ctx context.Context, id string) (*carriersettlement.CarrierSettlement, error)
 	CarrierSettlementBatches(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierSettlementBatchConnection, error)

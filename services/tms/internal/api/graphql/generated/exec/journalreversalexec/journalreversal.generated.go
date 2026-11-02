@@ -371,7 +371,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_journalReversals_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").JournalReversals(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@journalreversal").JournalReversals(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNJournalReversalConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJournalReversalConnection),
 			},
@@ -384,18 +384,18 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_journalReversal_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").JournalReversal(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@journalreversal").JournalReversal(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOJournalReversal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalreversalᚐReversal),
 			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Query@journalreversal", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	JournalReversals(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JournalReversalConnection, error)
 	JournalReversal(ctx context.Context, id string) (*journalreversal.Reversal, error)
 }

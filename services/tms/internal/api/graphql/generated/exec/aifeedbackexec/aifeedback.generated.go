@@ -221,7 +221,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aifeedback.Feedback)
-					return gqlexec.Resolver[resolverAIFeedback](ec, "AIFeedback").Rating(ctx, obj)
+					return gqlexec.Resolver[AIFeedbackResolver](ec, "AIFeedback@aifeedback").Rating(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
@@ -662,7 +662,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_setMyAIFeedback_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetMyAIFeedback(ctx, fc.Args["input"].(gqlmodel.SetMyAIFeedbackInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@aifeedback").SetMyAIFeedback(ctx, fc.Args["input"].(gqlmodel.SetMyAIFeedbackInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIFeedback2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐFeedback),
 			},
@@ -674,7 +674,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_clearMyAIFeedback_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ClearMyAIFeedback(ctx, fc.Args["input"].(gqlmodel.AIFeedbackTargetInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@aifeedback").ClearMyAIFeedback(ctx, fc.Args["input"].(gqlmodel.AIFeedbackTargetInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -690,7 +690,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_myAIFeedback_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").MyAIFeedback(ctx, fc.Args["input"].(gqlmodel.MyAIFeedbackInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@aifeedback").MyAIFeedback(ctx, fc.Args["input"].(gqlmodel.MyAIFeedbackInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIFeedback2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐFeedbackᚄ),
 			},
@@ -704,7 +704,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_aiFeedback_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiFeedback(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@aifeedback").AiFeedback(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIFeedbackConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIFeedbackConnection),
 			},
@@ -718,7 +718,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentFeedbackSummary_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentFeedbackSummary(ctx, fc.Args["agentDefinitionId"].(string), fc.Args["window"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@aifeedback").AgentFeedbackSummary(ctx, fc.Args["agentDefinitionId"].(string), fc.Args["window"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentFeedbackSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaifeedbackportsᚐAgentFeedbackSummary),
 			},
@@ -730,22 +730,22 @@ var Shard = &gqlexec.Shard{
 		{Name: "SetMyAIFeedbackInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSetMyAIFeedbackInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "AIFeedback", Check: func(r any) bool { _, ok := r.(resolverAIFeedback); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "AIFeedback@aifeedback", Check: func(r any) bool { _, ok := r.(AIFeedbackResolver); return ok }},
+		{Root: "Mutation@aifeedback", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@aifeedback", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverAIFeedback interface {
+type AIFeedbackResolver interface {
 	Rating(ctx context.Context, obj *aifeedback.Feedback) (int, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	SetMyAIFeedback(ctx context.Context, input gqlmodel.SetMyAIFeedbackInput) (*aifeedback.Feedback, error)
 	ClearMyAIFeedback(ctx context.Context, input gqlmodel.AIFeedbackTargetInput) (bool, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	MyAIFeedback(ctx context.Context, input gqlmodel.MyAIFeedbackInput) ([]*aifeedback.Feedback, error)
 	AiFeedback(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIFeedbackConnection, error)
 	AgentFeedbackSummary(ctx context.Context, agentDefinitionID string, window *int) (*aifeedbackports.AgentFeedbackSummary, error)

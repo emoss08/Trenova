@@ -83,18 +83,18 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "AttentionSummary",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AttentionSummary(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@attention").AttentionSummary(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNAttentionSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAttentionSummary),
 			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Query@attention", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	AttentionSummary(ctx context.Context) (*gqlmodel.AttentionSummary, error)
 }
 

@@ -59,7 +59,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "Truck",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*model.Driver)
-					return gqlexec.Resolver[resolverDriver](ec, "Driver").Truck(ctx, obj)
+					return gqlexec.Resolver[DriverResolver](ec, "Driver@people").Truck(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTruck2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlexecᚋinternalᚋe2eᚋmodelᚐTruck),
 			},
@@ -73,7 +73,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_touch_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").Touch(ctx, fc.Args["ids"].([]string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@people").Touch(ctx, fc.Args["ids"].([]string))
 				},
 				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
 			},
@@ -89,7 +89,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_drivers_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Drivers(ctx, fc.Args["page"].(*gqlmodel.PageInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@people").Drivers(ctx, fc.Args["page"].(*gqlmodel.PageInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDriver2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlexecᚋinternalᚋe2eᚋmodelᚐDriverᚄ),
 			},
@@ -100,7 +100,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "Truck",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Mixed(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@people").Mixed(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalOTruck2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlexecᚋinternalᚋe2eᚋmodelᚐTruck),
 			},
@@ -113,21 +113,21 @@ var Shard = &gqlexec.Shard{
 		{Name: "PageInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputPageInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Driver", Check: func(r any) bool { _, ok := r.(resolverDriver); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Driver@people", Check: func(r any) bool { _, ok := r.(DriverResolver); return ok }},
+		{Root: "Mutation@people", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@people", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverDriver interface {
+type DriverResolver interface {
 	Truck(ctx context.Context, obj *model.Driver) (*model.Truck, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	Touch(ctx context.Context, ids []string) ([]string, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	Drivers(ctx context.Context, page *gqlmodel.PageInput) ([]*model.Driver, error)
 	Mixed(ctx context.Context) ([]*model.Truck, error)
 }

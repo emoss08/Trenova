@@ -39,7 +39,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerOverview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerOverview(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workeroverview").WorkerOverview(ctx, fc.Args["workerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐOverview),
 			},
@@ -51,7 +51,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "WorkerRosterAttention",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerRosterAttention(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workeroverview").WorkerRosterAttention(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerRosterAttention2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐRosterAttention),
 			},
@@ -299,7 +299,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workeroverviewservice.RosterAttention)
-					return gqlexec.Resolver[resolverWorkerRosterAttention](ec, "WorkerRosterAttention").PTOLiabilityDays(ctx, obj)
+					return gqlexec.Resolver[WorkerRosterAttentionResolver](ec, "WorkerRosterAttention@workeroverview").PTOLiabilityDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -315,17 +315,17 @@ var Shard = &gqlexec.Shard{
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "WorkerRosterAttention", Check: func(r any) bool { _, ok := r.(resolverWorkerRosterAttention); return ok }},
+		{Root: "Query@workeroverview", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "WorkerRosterAttention@workeroverview", Check: func(r any) bool { _, ok := r.(WorkerRosterAttentionResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	WorkerOverview(ctx context.Context, workerID string) (*workeroverviewservice.Overview, error)
 	WorkerRosterAttention(ctx context.Context) (*workeroverviewservice.RosterAttention, error)
 }
 
-type resolverWorkerRosterAttention interface {
+type WorkerRosterAttentionResolver interface {
 	PTOLiabilityDays(ctx context.Context, obj *workeroverviewservice.RosterAttention) (string, error)
 }
 

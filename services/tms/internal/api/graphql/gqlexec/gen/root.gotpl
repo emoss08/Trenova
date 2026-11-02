@@ -11,47 +11,12 @@
 type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 type ResolverRoot interface {
-{{- range $object := $.Data.Objects }}
-	{{- if $object.HasResolvers }}
-	{{ ucFirst $object.Name }}() {{ ucFirst $object.Name }}Resolver
-	{{- end }}
-{{- end }}
-{{- range $object := $.Data.Inputs }}
-	{{- if $object.HasResolvers }}
-	{{ ucFirst $object.Name }}() {{ ucFirst $object.Name }}Resolver
-	{{- end }}
-{{- end }}
+	Roots() map[string]any
 }
 
 type DirectiveRoot struct{}
 
 type ComplexityRoot struct{}
-
-{{- range $object := $.Data.Objects }}
-{{- if $object.HasResolvers }}
-
-type {{ ucFirst $object.Name }}Resolver interface {
-	{{- range $field := $object.Fields }}
-	{{- if $field.IsResolver }}
-	{{ $field.GoFieldName }}{{ $field.ShortResolverDeclaration }}
-	{{- end }}
-	{{- end }}
-}
-{{- end }}
-{{- end }}
-
-{{- range $object := $.Data.Inputs }}
-{{- if $object.HasResolvers }}
-
-type {{ $object.Name }}Resolver interface {
-	{{- range $field := $object.Fields }}
-	{{- if $field.IsResolver }}
-	{{ $field.GoFieldName }}{{ $field.ShortResolverDeclaration }}
-	{{- end }}
-	{{- end }}
-}
-{{- end }}
-{{- end }}
 
 var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 	return gqlexec.Compile([]*gqlexec.Shard{
@@ -67,13 +32,9 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 		panic(err)
 	}
 
-	var resolvers map[string]func() any
+	var resolvers map[string]any
 	if r := cfg.Resolvers; r != nil {
-		resolvers = map[string]func() any{
-			{{- range $root := $.Roots }}
-			{{ quote $root }}: func() any { return r.{{ $root }}() },
-			{{- end }}
-		}
+		resolvers = r.Roots()
 	}
 
 	return gqlexec.NewSchema(gqlexec.SchemaConfig{

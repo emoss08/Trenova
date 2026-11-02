@@ -117,7 +117,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiauditports.AIAuditChainStatus)
-					return gqlexec.Resolver[resolverAIAuditChainStatus](ec, "AIAuditChainStatus").LastVerificationStatus(ctx, obj)
+					return gqlexec.Resolver[AIAuditChainStatusResolver](ec, "AIAuditChainStatus@aiaudit").LastVerificationStatus(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAIAuditVerificationStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐVerificationStatus),
 			},
@@ -338,7 +338,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiaudit.AIAuditEvent)
-					return gqlexec.Resolver[resolverAIAuditEvent](ec, "AIAuditEvent").OnBehalfOf(ctx, obj)
+					return gqlexec.Resolver[AIAuditEventResolver](ec, "AIAuditEvent@aiaudit").OnBehalfOf(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -368,7 +368,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiaudit.AIAuditEvent)
-					return gqlexec.Resolver[resolverAIAuditEvent](ec, "AIAuditEvent").DecidedBy(ctx, obj)
+					return gqlexec.Resolver[AIAuditEventResolver](ec, "AIAuditEvent@aiaudit").DecidedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -407,7 +407,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "AgentDefinition",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiaudit.AIAuditEvent)
-					return gqlexec.Resolver[resolverAIAuditEvent](ec, "AIAuditEvent").Agent(ctx, obj)
+					return gqlexec.Resolver[AIAuditEventResolver](ec, "AIAuditEvent@aiaudit").Agent(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinition),
 			},
@@ -418,7 +418,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiaudit.AIAuditEvent)
-					return gqlexec.Resolver[resolverAIAuditEvent](ec, "AIAuditEvent").OwnerKind(ctx, obj)
+					return gqlexec.Resolver[AIAuditEventResolver](ec, "AIAuditEvent@aiaudit").OwnerKind(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentRunEventOwnerKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentRunEventOwnerKind),
 			},
@@ -546,7 +546,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiaudit.AIAuditEvent)
-					return gqlexec.Resolver[resolverAIAuditEvent](ec, "AIAuditEvent").TraceURL(ctx, obj)
+					return gqlexec.Resolver[AIAuditEventResolver](ec, "AIAuditEvent@aiaudit").TraceURL(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -653,7 +653,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiaudit.AIAuditEvent)
-					return gqlexec.Resolver[resolverAIAuditEvent](ec, "AIAuditEvent").CostUsd(ctx, obj)
+					return gqlexec.Resolver[AIAuditEventResolver](ec, "AIAuditEvent@aiaudit").CostUsd(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -737,7 +737,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiaudit.AIAuditEvent)
-					return gqlexec.Resolver[resolverAIAuditEvent](ec, "AIAuditEvent").Arguments(ctx, obj)
+					return gqlexec.Resolver[AIAuditEventResolver](ec, "AIAuditEvent@aiaudit").Arguments(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -748,7 +748,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiaudit.AIAuditEvent)
-					return gqlexec.Resolver[resolverAIAuditEvent](ec, "AIAuditEvent").ArgumentSensitivity(ctx, obj)
+					return gqlexec.Resolver[AIAuditEventResolver](ec, "AIAuditEvent@aiaudit").ArgumentSensitivity(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -844,7 +844,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "AuditEntry",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiaudit.AIAuditEvent)
-					return gqlexec.Resolver[resolverAIAuditEvent](ec, "AIAuditEvent").AuditEntries(ctx, obj)
+					return gqlexec.Resolver[AIAuditEventResolver](ec, "AIAuditEvent@aiaudit").AuditEntries(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNAuditEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋauditᚐEntryᚄ),
 			},
@@ -865,7 +865,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiaudit.AIAuditEvent)
-					return gqlexec.Resolver[resolverAIAuditEvent](ec, "AIAuditEvent").Taint(ctx, obj)
+					return gqlexec.Resolver[AIAuditEventResolver](ec, "AIAuditEvent@aiaudit").Taint(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -1064,7 +1064,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiaudit.AIAuditExport)
-					return gqlexec.Resolver[resolverAIAuditExport](ec, "AIAuditExport").RequestedBy(ctx, obj)
+					return gqlexec.Resolver[AIAuditExportResolver](ec, "AIAuditExport@aiaudit").RequestedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -1085,7 +1085,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiaudit.AIAuditExport)
-					return gqlexec.Resolver[resolverAIAuditExport](ec, "AIAuditExport").Filters(ctx, obj)
+					return gqlexec.Resolver[AIAuditExportResolver](ec, "AIAuditExport@aiaudit").Filters(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -1239,7 +1239,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiaudit.AIAuditExport)
-					return gqlexec.Resolver[resolverAIAuditExport](ec, "AIAuditExport").Downloadable(ctx, obj)
+					return gqlexec.Resolver[AIAuditExportResolver](ec, "AIAuditExport@aiaudit").Downloadable(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -1340,7 +1340,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_requestAIAuditExport_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RequestAIAuditExport(ctx, fc.Args["input"].(gqlmodel.RequestAIAuditExportInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@aiaudit").RequestAIAuditExport(ctx, fc.Args["input"].(gqlmodel.RequestAIAuditExportInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIAuditExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐAIAuditExport),
 			},
@@ -1353,7 +1353,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_aiAuditExportDownload_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AiAuditExportDownload(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@aiaudit").AiAuditExportDownload(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIAuditDownload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiauditportsᚐAIAuditExportDownload),
 			},
@@ -1364,7 +1364,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "AIAuditChainStatus",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").VerifyAIAuditChain(ctx)
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@aiaudit").VerifyAIAuditChain(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNAIAuditChainStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiauditportsᚐAIAuditChainStatus),
 			},
@@ -1380,7 +1380,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_aiAuditEvents_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiAuditEvents(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@aiaudit").AiAuditEvents(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIAuditEventConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIAuditEventConnection),
 			},
@@ -1393,7 +1393,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_aiAuditEvent_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiAuditEvent(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@aiaudit").AiAuditEvent(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOAIAuditEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐAIAuditEvent),
 			},
@@ -1405,7 +1405,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "AIAuditChainStatus",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiAuditChainStatus(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@aiaudit").AiAuditChainStatus(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNAIAuditChainStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiauditportsᚐAIAuditChainStatus),
 			},
@@ -1419,7 +1419,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_aiAuditExports_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiAuditExports(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@aiaudit").AiAuditExports(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIAuditExportConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIAuditExportConnection),
 			},
@@ -1432,7 +1432,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_aiAuditExport_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiAuditExport(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@aiaudit").AiAuditExport(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOAIAuditExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐAIAuditExport),
 			},
@@ -1442,19 +1442,19 @@ var Shard = &gqlexec.Shard{
 		{Name: "RequestAIAuditExportInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRequestAIAuditExportInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "AIAuditChainStatus", Check: func(r any) bool { _, ok := r.(resolverAIAuditChainStatus); return ok }},
-		{Root: "AIAuditEvent", Check: func(r any) bool { _, ok := r.(resolverAIAuditEvent); return ok }},
-		{Root: "AIAuditExport", Check: func(r any) bool { _, ok := r.(resolverAIAuditExport); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "AIAuditChainStatus@aiaudit", Check: func(r any) bool { _, ok := r.(AIAuditChainStatusResolver); return ok }},
+		{Root: "AIAuditEvent@aiaudit", Check: func(r any) bool { _, ok := r.(AIAuditEventResolver); return ok }},
+		{Root: "AIAuditExport@aiaudit", Check: func(r any) bool { _, ok := r.(AIAuditExportResolver); return ok }},
+		{Root: "Mutation@aiaudit", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@aiaudit", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverAIAuditChainStatus interface {
+type AIAuditChainStatusResolver interface {
 	LastVerificationStatus(ctx context.Context, obj *aiauditports.AIAuditChainStatus) (*aiaudit.VerificationStatus, error)
 }
 
-type resolverAIAuditEvent interface {
+type AIAuditEventResolver interface {
 	OnBehalfOf(ctx context.Context, obj *aiaudit.AIAuditEvent) (*tenant.User, error)
 	DecidedBy(ctx context.Context, obj *aiaudit.AIAuditEvent) (*tenant.User, error)
 	Agent(ctx context.Context, obj *aiaudit.AIAuditEvent) (*agentdefinition.Definition, error)
@@ -1467,19 +1467,19 @@ type resolverAIAuditEvent interface {
 	Taint(ctx context.Context, obj *aiaudit.AIAuditEvent) (map[string]any, error)
 }
 
-type resolverAIAuditExport interface {
+type AIAuditExportResolver interface {
 	RequestedBy(ctx context.Context, obj *aiaudit.AIAuditExport) (*tenant.User, error)
 	Filters(ctx context.Context, obj *aiaudit.AIAuditExport) (map[string]any, error)
 	Downloadable(ctx context.Context, obj *aiaudit.AIAuditExport) (bool, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	RequestAIAuditExport(ctx context.Context, input gqlmodel.RequestAIAuditExportInput) (*aiaudit.AIAuditExport, error)
 	AiAuditExportDownload(ctx context.Context, id string) (*aiauditports.AIAuditExportDownload, error)
 	VerifyAIAuditChain(ctx context.Context) (*aiauditports.AIAuditChainStatus, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	AiAuditEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIAuditEventConnection, error)
 	AiAuditEvent(ctx context.Context, id string) (*aiaudit.AIAuditEvent, error)
 	AiAuditChainStatus(ctx context.Context) (*aiauditports.AIAuditChainStatus, error)

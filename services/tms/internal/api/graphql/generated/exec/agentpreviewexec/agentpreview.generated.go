@@ -43,7 +43,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "AgentProposalPreview",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdecision.AgentDecision)
-					return gqlexec.Resolver[resolverAgentDecision](ec, "AgentDecision").Preview(ctx, obj)
+					return gqlexec.Resolver[AgentDecisionResolver](ec, "AgentDecision@agentpreview").Preview(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentProposalPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentpreviewᚐProposalPreview),
 			},
@@ -203,7 +203,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentpreview.PreviewFieldChange)
-					return gqlexec.Resolver[resolverAgentPreviewFieldChange](ec, "AgentPreviewFieldChange").Type(ctx, obj)
+					return gqlexec.Resolver[AgentPreviewFieldChangeResolver](ec, "AgentPreviewFieldChange@agentpreview").Type(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -423,7 +423,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentpreview.MessagePreview)
-					return gqlexec.Resolver[resolverAgentPreviewMessage](ec, "AgentPreviewMessage").TemplateVersionID(ctx, obj)
+					return gqlexec.Resolver[AgentPreviewMessageResolver](ec, "AgentPreviewMessage@agentpreview").TemplateVersionID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -457,7 +457,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentpreview.MoneyPreview)
-					return gqlexec.Resolver[resolverAgentPreviewMoney](ec, "AgentPreviewMoney").TotalBefore(ctx, obj)
+					return gqlexec.Resolver[AgentPreviewMoneyResolver](ec, "AgentPreviewMoney@agentpreview").TotalBefore(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -468,7 +468,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentpreview.MoneyPreview)
-					return gqlexec.Resolver[resolverAgentPreviewMoney](ec, "AgentPreviewMoney").TotalAfter(ctx, obj)
+					return gqlexec.Resolver[AgentPreviewMoneyResolver](ec, "AgentPreviewMoney@agentpreview").TotalAfter(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -479,7 +479,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentpreview.MoneyPreview)
-					return gqlexec.Resolver[resolverAgentPreviewMoney](ec, "AgentPreviewMoney").Delta(ctx, obj)
+					return gqlexec.Resolver[AgentPreviewMoneyResolver](ec, "AgentPreviewMoney@agentpreview").Delta(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -512,7 +512,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentpreview.MoneyLine)
-					return gqlexec.Resolver[resolverAgentPreviewMoneyLine](ec, "AgentPreviewMoneyLine").Before(ctx, obj)
+					return gqlexec.Resolver[AgentPreviewMoneyLineResolver](ec, "AgentPreviewMoneyLine@agentpreview").Before(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -523,7 +523,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentpreview.MoneyLine)
-					return gqlexec.Resolver[resolverAgentPreviewMoneyLine](ec, "AgentPreviewMoneyLine").After(ctx, obj)
+					return gqlexec.Resolver[AgentPreviewMoneyLineResolver](ec, "AgentPreviewMoneyLine@agentpreview").After(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -579,7 +579,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentpreview.RecordChange)
-					return gqlexec.Resolver[resolverAgentPreviewRecordChange](ec, "AgentPreviewRecordChange").Resource(ctx, obj)
+					return gqlexec.Resolver[AgentPreviewRecordChangeResolver](ec, "AgentPreviewRecordChange@agentpreview").Resource(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -600,7 +600,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentpreview.RecordChange)
-					return gqlexec.Resolver[resolverAgentPreviewRecordChange](ec, "AgentPreviewRecordChange").EntityID(ctx, obj)
+					return gqlexec.Resolver[AgentPreviewRecordChangeResolver](ec, "AgentPreviewRecordChange@agentpreview").EntityID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -726,7 +726,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentpreview.PreviewRef)
-					return gqlexec.Resolver[resolverAgentPreviewRef](ec, "AgentPreviewRef").Resource(ctx, obj)
+					return gqlexec.Resolver[AgentPreviewRefResolver](ec, "AgentPreviewRef@agentpreview").Resource(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -821,7 +821,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentpreview.PreviewWarning)
-					return gqlexec.Resolver[resolverAgentPreviewWarning](ec, "AgentPreviewWarning").Code(ctx, obj)
+					return gqlexec.Resolver[AgentPreviewWarningResolver](ec, "AgentPreviewWarning@agentpreview").Code(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -1022,7 +1022,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentProposalPreview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentProposalPreview(ctx, fc.Args["id"].(string), fc.Args["modifications"].(map[string]any))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentpreview").AgentProposalPreview(ctx, fc.Args["id"].(string), fc.Args["modifications"].(map[string]any))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentProposalPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentpreviewᚐProposalPreview),
 			},
@@ -1036,7 +1036,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_agentPlanPreview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentPlanPreview(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentpreview").AgentPlanPreview(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentPlanPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentpreviewᚐPlanPreview),
 			},
@@ -1050,7 +1050,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_myProposalPreview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").MyProposalPreview(ctx, fc.Args["id"].(string), fc.Args["modifications"].(map[string]any))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentpreview").MyProposalPreview(ctx, fc.Args["id"].(string), fc.Args["modifications"].(map[string]any))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentProposalPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentpreviewᚐProposalPreview),
 			},
@@ -1064,7 +1064,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_myPlanPreview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").MyPlanPreview(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentpreview").MyPlanPreview(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentPlanPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentpreviewᚐPlanPreview),
 			},
@@ -1074,55 +1074,55 @@ var Shard = &gqlexec.Shard{
 		{Name: "AgentProposalPreviewDigestInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentProposalPreviewDigestInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "AgentDecision", Check: func(r any) bool { _, ok := r.(resolverAgentDecision); return ok }},
-		{Root: "AgentPreviewFieldChange", Check: func(r any) bool { _, ok := r.(resolverAgentPreviewFieldChange); return ok }},
-		{Root: "AgentPreviewMessage", Check: func(r any) bool { _, ok := r.(resolverAgentPreviewMessage); return ok }},
-		{Root: "AgentPreviewMoney", Check: func(r any) bool { _, ok := r.(resolverAgentPreviewMoney); return ok }},
-		{Root: "AgentPreviewMoneyLine", Check: func(r any) bool { _, ok := r.(resolverAgentPreviewMoneyLine); return ok }},
-		{Root: "AgentPreviewRecordChange", Check: func(r any) bool { _, ok := r.(resolverAgentPreviewRecordChange); return ok }},
-		{Root: "AgentPreviewRef", Check: func(r any) bool { _, ok := r.(resolverAgentPreviewRef); return ok }},
-		{Root: "AgentPreviewWarning", Check: func(r any) bool { _, ok := r.(resolverAgentPreviewWarning); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "AgentDecision@agentpreview", Check: func(r any) bool { _, ok := r.(AgentDecisionResolver); return ok }},
+		{Root: "AgentPreviewFieldChange@agentpreview", Check: func(r any) bool { _, ok := r.(AgentPreviewFieldChangeResolver); return ok }},
+		{Root: "AgentPreviewMessage@agentpreview", Check: func(r any) bool { _, ok := r.(AgentPreviewMessageResolver); return ok }},
+		{Root: "AgentPreviewMoneyLine@agentpreview", Check: func(r any) bool { _, ok := r.(AgentPreviewMoneyLineResolver); return ok }},
+		{Root: "AgentPreviewMoney@agentpreview", Check: func(r any) bool { _, ok := r.(AgentPreviewMoneyResolver); return ok }},
+		{Root: "AgentPreviewRecordChange@agentpreview", Check: func(r any) bool { _, ok := r.(AgentPreviewRecordChangeResolver); return ok }},
+		{Root: "AgentPreviewRef@agentpreview", Check: func(r any) bool { _, ok := r.(AgentPreviewRefResolver); return ok }},
+		{Root: "AgentPreviewWarning@agentpreview", Check: func(r any) bool { _, ok := r.(AgentPreviewWarningResolver); return ok }},
+		{Root: "Query@agentpreview", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverAgentDecision interface {
+type AgentDecisionResolver interface {
 	Preview(ctx context.Context, obj *agentdecision.AgentDecision) (*agentpreview.ProposalPreview, error)
 }
 
-type resolverAgentPreviewFieldChange interface {
+type AgentPreviewFieldChangeResolver interface {
 	Type(ctx context.Context, obj *agentpreview.PreviewFieldChange) (string, error)
 }
 
-type resolverAgentPreviewMessage interface {
+type AgentPreviewMessageResolver interface {
 	TemplateVersionID(ctx context.Context, obj *agentpreview.MessagePreview) (*string, error)
 }
 
-type resolverAgentPreviewMoney interface {
+type AgentPreviewMoneyLineResolver interface {
+	Before(ctx context.Context, obj *agentpreview.MoneyLine) (*string, error)
+	After(ctx context.Context, obj *agentpreview.MoneyLine) (*string, error)
+}
+
+type AgentPreviewMoneyResolver interface {
 	TotalBefore(ctx context.Context, obj *agentpreview.MoneyPreview) (*string, error)
 	TotalAfter(ctx context.Context, obj *agentpreview.MoneyPreview) (*string, error)
 	Delta(ctx context.Context, obj *agentpreview.MoneyPreview) (*string, error)
 }
 
-type resolverAgentPreviewMoneyLine interface {
-	Before(ctx context.Context, obj *agentpreview.MoneyLine) (*string, error)
-	After(ctx context.Context, obj *agentpreview.MoneyLine) (*string, error)
-}
-
-type resolverAgentPreviewRecordChange interface {
+type AgentPreviewRecordChangeResolver interface {
 	Resource(ctx context.Context, obj *agentpreview.RecordChange) (string, error)
 	EntityID(ctx context.Context, obj *agentpreview.RecordChange) (*string, error)
 }
 
-type resolverAgentPreviewRef interface {
+type AgentPreviewRefResolver interface {
 	Resource(ctx context.Context, obj *agentpreview.PreviewRef) (string, error)
 }
 
-type resolverAgentPreviewWarning interface {
+type AgentPreviewWarningResolver interface {
 	Code(ctx context.Context, obj *agentpreview.PreviewWarning) (string, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	AgentProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agentpreview.ProposalPreview, error)
 	AgentPlanPreview(ctx context.Context, id string) (*agentpreview.PlanPreview, error)
 	MyProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agentpreview.ProposalPreview, error)

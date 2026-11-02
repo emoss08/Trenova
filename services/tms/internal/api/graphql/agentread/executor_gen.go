@@ -1713,708 +1713,687 @@ func NewSchema(p ResolverParams) Schema {
 		WorkerTrainingService:      p.WorkerTrainingService,
 		DriverPortalRecordsService: p.DriverPortalRecordsService,
 	}
-	customerBillingProfile := &customerBillingProfileResolver{
-		customerCustomerBillingProfile:  &customerCustomerBillingProfile{Deps: customerDeps},
-		factoringCustomerBillingProfile: &factoringCustomerBillingProfile{Deps: factoringDeps},
-	}
-	inboundAttachment := &inboundAttachmentResolver{
-		inboundmessageInboundAttachment: &inboundmessageInboundAttachment{Deps: inboundmessageDeps},
-		inboundreplyInboundAttachment:   &inboundreplyInboundAttachment{Deps: inboundreplyDeps},
-	}
-	inboundMessage := &inboundMessageResolver{
-		inboundmessageInboundMessage: &inboundmessageInboundMessage{Deps: inboundmessageDeps},
-		inboundreplyInboundMessage:   &inboundreplyInboundMessage{Deps: inboundreplyDeps},
-		triageInboundMessage:         &triageInboundMessage{Deps: triageDeps},
-	}
-	invoice := &invoiceResolver{
-		factoringInvoice:      &factoringInvoice{Deps: factoringDeps},
-		invoiceInvoice:        &invoiceInvoice{Deps: invoiceDeps},
-		invoicedisputeInvoice: &invoicedisputeInvoice{Deps: invoicedisputeDeps},
-	}
-	mutation := &mutationResolver{
-		accessorialchargeMutation:     &accessorialchargeMutation{Deps: accessorialchargeDeps},
-		accountingsyncMutation:        &accountingsyncMutation{Deps: accountingsyncDeps},
-		briefingMutation:              &briefingMutation{Deps: briefingDeps},
-		captureMutation:               &captureMutation{Deps: captureDeps},
-		carriercapacityMutation:       &carriercapacityMutation{Deps: carriercapacityDeps},
-		carrierintelligenceMutation:   &carrierintelligenceMutation{Deps: carrierintelligenceDeps},
-		carriersettlementMutation:     &carriersettlementMutation{Deps: carriersettlementDeps},
-		commodityMutation:             &commodityMutation{Deps: commodityDeps},
-		customerMutation:              &customerMutation{Deps: customerDeps},
-		customerpaymentMutation:       &customerpaymentMutation{Deps: customerpaymentDeps},
-		customertrackingMutation:      &customertrackingMutation{Deps: customertrackingDeps},
-		detentionMutation:             &detentionMutation{Deps: detentionDeps},
-		dispatchconsoleMutation:       &dispatchconsoleMutation{Deps: dispatchconsoleDeps},
-		documenttypeMutation:          &documenttypeMutation{Deps: documenttypeDeps},
-		driverportalMutation:          &driverportalMutation{Deps: driverportalDeps},
-		driversettlementMutation:      &driversettlementMutation{Deps: driversettlementDeps},
-		equipmentmanufacturerMutation: &equipmentmanufacturerMutation{Deps: equipmentmanufacturerDeps},
-		equipmenttypeMutation:         &equipmenttypeMutation{Deps: equipmenttypeDeps},
-		factoringMutation:             &factoringMutation{Deps: factoringDeps},
-		factoringcompanyMutation:      &factoringcompanyMutation{Deps: factoringcompanyDeps},
-		fleetcodeMutation:             &fleetcodeMutation{Deps: fleetcodeDeps},
-		fleetsafetyMutation:           &fleetsafetyMutation{Deps: fleetsafetyDeps},
-		fuelpurchaseMutation:          &fuelpurchaseMutation{Deps: fuelpurchaseDeps},
-		fuelsurchargeMutation:         &fuelsurchargeMutation{Deps: fuelsurchargeDeps},
-		hazardousmaterialMutation:     &hazardousmaterialMutation{Deps: hazardousmaterialDeps},
-		holdreasonMutation:            &holdreasonMutation{Deps: holdreasonDeps},
-		homelayoutMutation:            &homelayoutMutation{Deps: homelayoutDeps},
-		iftaMutation:                  &iftaMutation{Deps: iftaDeps},
-		inboundmessageMutation:        &inboundmessageMutation{Deps: inboundmessageDeps},
-		inboundreplyMutation:          &inboundreplyMutation{Deps: inboundreplyDeps},
-		invoiceMutation:               &invoiceMutation{Deps: invoiceDeps},
-		invoiceadjustmentMutation:     &invoiceadjustmentMutation{Deps: invoiceadjustmentDeps},
-		invoicedisputeMutation:        &invoicedisputeMutation{Deps: invoicedisputeDeps},
-		journalentryMutation:          &journalentryMutation{Deps: journalentryDeps},
-		locationcategoryMutation:      &locationcategoryMutation{Deps: locationcategoryDeps},
-		orderMutation:                 &orderMutation{Deps: orderDeps},
-		performancereviewMutation:     &performancereviewMutation{Deps: performancereviewDeps},
-		reportMutation:                &reportMutation{Deps: reportDeps},
-		schedulingMutation:            &schedulingMutation{Deps: schedulingDeps},
-		shipmentMutation:              &shipmentMutation{Deps: shipmentDeps},
-		telematicsMutation:            &telematicsMutation{Deps: telematicsDeps},
-		tenantMutation:                &tenantMutation{Deps: tenantDeps},
-		tractorMutation:               &tractorMutation{Deps: tractorDeps},
-		trailerMutation:               &trailerMutation{Deps: trailerDeps},
-		triageMutation:                &triageMutation{Deps: triageDeps},
-		workerMutation:                &workerMutation{Deps: workerDeps},
-		workerchecklistMutation:       &workerchecklistMutation{Deps: workerchecklistDeps},
-		workercredentialMutation:      &workercredentialMutation{Deps: workercredentialDeps},
-		workerdqfMutation:             &workerdqfMutation{Deps: workerdqfDeps},
-		workerdrugalcoholMutation:     &workerdrugalcoholMutation{Deps: workerdrugalcoholDeps},
-		workerinjuryMutation:          &workerinjuryMutation{Deps: workerinjuryDeps},
-		workerleaveMutation:           &workerleaveMutation{Deps: workerleaveDeps},
-		workersafetyMutation:          &workersafetyMutation{Deps: workersafetyDeps},
-		workertrainingMutation:        &workertrainingMutation{Deps: workertrainingDeps},
-	}
-	query := &queryResolver{
-		accessorialchargeQuery:        &accessorialchargeQuery{Deps: accessorialchargeDeps},
-		accountingsyncQuery:           &accountingsyncQuery{Deps: accountingsyncDeps},
-		briefingQuery:                 &briefingQuery{Deps: briefingDeps},
-		captureQuery:                  &captureQuery{Deps: captureDeps},
-		carrierQuery:                  &carrierQuery{Deps: carrierDeps},
-		carriercapacityQuery:          &carriercapacityQuery{Deps: carriercapacityDeps},
-		carrierintelligenceQuery:      &carrierintelligenceQuery{Deps: carrierintelligenceDeps},
-		carriersettlementQuery:        &carriersettlementQuery{Deps: carriersettlementDeps},
-		commodityQuery:                &commodityQuery{Deps: commodityDeps},
-		customerQuery:                 &customerQuery{Deps: customerDeps},
-		customerpaymentQuery:          &customerpaymentQuery{Deps: customerpaymentDeps},
-		customertrackingQuery:         &customertrackingQuery{Deps: customertrackingDeps},
-		detentionQuery:                &detentionQuery{Deps: detentionDeps},
-		dispatchconsoleQuery:          &dispatchconsoleQuery{Deps: dispatchconsoleDeps},
-		documenttypeQuery:             &documenttypeQuery{Deps: documenttypeDeps},
-		driverportalQuery:             &driverportalQuery{Deps: driverportalDeps},
-		driversettlementQuery:         &driversettlementQuery{Deps: driversettlementDeps},
-		ediQuery:                      &ediQuery{Deps: ediDeps},
-		emailprofileQuery:             &emailprofileQuery{Deps: emailprofileDeps},
-		equipmentmanufacturerQuery:    &equipmentmanufacturerQuery{Deps: equipmentmanufacturerDeps},
-		equipmenttypeQuery:            &equipmenttypeQuery{Deps: equipmenttypeDeps},
-		factoringQuery:                &factoringQuery{Deps: factoringDeps},
-		factoringcompanyQuery:         &factoringcompanyQuery{Deps: factoringcompanyDeps},
-		fiscalperiodQuery:             &fiscalperiodQuery{Deps: fiscalperiodDeps},
-		fleetcodeQuery:                &fleetcodeQuery{Deps: fleetcodeDeps},
-		fleetsafetyQuery:              &fleetsafetyQuery{Deps: fleetsafetyDeps},
-		formulalibraryQuery:           &formulalibraryQuery{Deps: formulalibraryDeps},
-		formulatemplateQuery:          &formulatemplateQuery{Deps: formulatemplateDeps},
-		fuelpurchaseQuery:             &fuelpurchaseQuery{Deps: fuelpurchaseDeps},
-		fuelsurchargeQuery:            &fuelsurchargeQuery{Deps: fuelsurchargeDeps},
-		hazardousmaterialQuery:        &hazardousmaterialQuery{Deps: hazardousmaterialDeps},
-		holdreasonQuery:               &holdreasonQuery{Deps: holdreasonDeps},
-		homelayoutQuery:               &homelayoutQuery{Deps: homelayoutDeps},
-		iftaQuery:                     &iftaQuery{Deps: iftaDeps},
-		inboundmessageQuery:           &inboundmessageQuery{Deps: inboundmessageDeps},
-		inboundreplyQuery:             &inboundreplyQuery{Deps: inboundreplyDeps},
-		invoiceQuery:                  &invoiceQuery{Deps: invoiceDeps},
-		invoiceadjustmentQuery:        &invoiceadjustmentQuery{Deps: invoiceadjustmentDeps},
-		invoicedisputeQuery:           &invoicedisputeQuery{Deps: invoicedisputeDeps},
-		journalentryQuery:             &journalentryQuery{Deps: journalentryDeps},
-		journalreversalQuery:          &journalreversalQuery{Deps: journalreversalDeps},
-		locationQuery:                 &locationQuery{Deps: locationDeps},
-		locationcategoryQuery:         &locationcategoryQuery{Deps: locationcategoryDeps},
-		manualjournalQuery:            &manualjournalQuery{Deps: manualjournalDeps},
-		orderQuery:                    &orderQuery{Deps: orderDeps},
-		performancereviewQuery:        &performancereviewQuery{Deps: performancereviewDeps},
-		rateQuery:                     &rateQuery{Deps: rateDeps},
-		recurringshipmentQuery:        &recurringshipmentQuery{Deps: recurringshipmentDeps},
-		reportQuery:                   &reportQuery{Deps: reportDeps},
-		schedulingQuery:               &schedulingQuery{Deps: schedulingDeps},
-		servicefailureQuery:           &servicefailureQuery{Deps: servicefailureDeps},
-		servicefailurereasoncodeQuery: &servicefailurereasoncodeQuery{Deps: servicefailurereasoncodeDeps},
-		servicetypeQuery:              &servicetypeQuery{Deps: servicetypeDeps},
-		shipmentQuery:                 &shipmentQuery{Deps: shipmentDeps},
-		shipmenttypeQuery:             &shipmenttypeQuery{Deps: shipmenttypeDeps},
-		tablechangealertQuery:         &tablechangealertQuery{Deps: tablechangealertDeps},
-		telematicsQuery:               &telematicsQuery{Deps: telematicsDeps},
-		tenantQuery:                   &tenantQuery{Deps: tenantDeps},
-		tenderQuery:                   &tenderQuery{Deps: tenderDeps},
-		tractorQuery:                  &tractorQuery{Deps: tractorDeps},
-		trailerQuery:                  &trailerQuery{Deps: trailerDeps},
-		triageQuery:                   &triageQuery{Deps: triageDeps},
-		workerQuery:                   &workerQuery{Deps: workerDeps},
-		workerchecklistQuery:          &workerchecklistQuery{Deps: workerchecklistDeps},
-		workercredentialQuery:         &workercredentialQuery{Deps: workercredentialDeps},
-		workerdqfQuery:                &workerdqfQuery{Deps: workerdqfDeps},
-		workerdrugalcoholQuery:        &workerdrugalcoholQuery{Deps: workerdrugalcoholDeps},
-		workerinjuryQuery:             &workerinjuryQuery{Deps: workerinjuryDeps},
-		workerleaveQuery:              &workerleaveQuery{Deps: workerleaveDeps},
-		workersafetyQuery:             &workersafetyQuery{Deps: workersafetyDeps},
-		workertrainingQuery:           &workertrainingQuery{Deps: workertrainingDeps},
-	}
+	accessorialchargeAccessorialCharge := &accessorialchargeresolver.AccessorialChargeResolver{Deps: accessorialchargeDeps}
+	accountingsyncAccountingAppCredential := &accountingsyncresolver.AccountingAppCredentialResolver{Deps: accountingsyncDeps}
+	accountingsyncAccountingAppSettings := &accountingsyncresolver.AccountingAppSettingsResolver{Deps: accountingsyncDeps}
+	accountingsyncAccountingConnection := &accountingsyncresolver.AccountingConnectionResolver{Deps: accountingsyncDeps}
+	accountingsyncAccountingDriftFinding := &accountingsyncresolver.AccountingDriftFindingResolver{Deps: accountingsyncDeps}
+	accountingsyncAccountingDriftFixPreview := &accountingsyncresolver.AccountingDriftFixPreviewResolver{Deps: accountingsyncDeps}
+	accountingsyncAccountingInboundChange := &accountingsyncresolver.AccountingInboundChangeResolver{Deps: accountingsyncDeps}
+	accountingsyncAccountingInboundLine := &accountingsyncresolver.AccountingInboundLineResolver{Deps: accountingsyncDeps}
+	accountingsyncAccountingMapping := &accountingsyncresolver.AccountingMappingResolver{Deps: accountingsyncDeps}
+	accountingsyncAccountingReferenceObject := &accountingsyncresolver.AccountingReferenceObjectResolver{Deps: accountingsyncDeps}
+	accountingsyncAccountingSyncAttempt := &accountingsyncresolver.AccountingSyncAttemptResolver{Deps: accountingsyncDeps}
+	accountingsyncAccountingSyncAttentionGroup := &accountingsyncresolver.AccountingSyncAttentionGroupResolver{Deps: accountingsyncDeps}
+	accountingsyncAccountingSyncRecord := &accountingsyncresolver.AccountingSyncRecordResolver{Deps: accountingsyncDeps}
+	briefingBriefingSection := &briefingresolver.BriefingSectionResolver{Deps: briefingDeps}
+	captureCaptureBatch := &captureresolver.CaptureBatchResolver{Deps: captureDeps}
+	captureCaptureCoverSheet := &captureresolver.CaptureCoverSheetResolver{Deps: captureDeps}
+	captureCaptureDevice := &captureresolver.CaptureDeviceResolver{Deps: captureDeps}
+	captureCaptureItem := &captureresolver.CaptureItemResolver{Deps: captureDeps}
+	captureCapturePage := &captureresolver.CapturePageResolver{Deps: captureDeps}
+	captureCaptureRequest := &captureresolver.CaptureRequestResolver{Deps: captureDeps}
+	captureCaptureSettings := &captureresolver.CaptureSettingsResolver{Deps: captureDeps}
+	carrierintelligenceCarrier := &carrierintelligenceresolver.CarrierResolver{Deps: carrierintelligenceDeps}
+	shipmentCarrierAssignment := &shipmentresolver.CarrierAssignmentResolver{Deps: shipmentDeps}
+	shipmentCarrierAssignmentAccessorial := &shipmentresolver.CarrierAssignmentAccessorialResolver{Deps: shipmentDeps}
+	carriercapacityCarrierCapacityPosting := &carriercapacityresolver.CarrierCapacityPostingResolver{Deps: carriercapacityDeps}
+	carrierintelligenceCarrierEquipmentVerification := &carrierintelligenceresolver.CarrierEquipmentVerificationResolver{Deps: carrierintelligenceDeps}
+	carrierCarrierInsurancePolicy := &carrierresolver.CarrierInsurancePolicyResolver{Deps: carrierDeps}
+	carrierintelligenceCarrierIntelControl := &carrierintelligenceresolver.CarrierIntelControlResolver{Deps: carrierintelligenceDeps}
+	carrierintelligenceCarrierIntelEquipment := &carrierintelligenceresolver.CarrierIntelEquipmentResolver{Deps: carrierintelligenceDeps}
+	carrierintelligenceCarrierIntelEvent := &carrierintelligenceresolver.CarrierIntelEventResolver{Deps: carrierintelligenceDeps}
+	carrierintelligenceCarrierIntelFeedState := &carrierintelligenceresolver.CarrierIntelFeedStateResolver{Deps: carrierintelligenceDeps}
+	carrierintelligenceCarrierIntelFinding := &carrierintelligenceresolver.CarrierIntelFindingResolver{Deps: carrierintelligenceDeps}
+	carrierintelligenceCarrierIntelInsurance := &carrierintelligenceresolver.CarrierIntelInsuranceResolver{Deps: carrierintelligenceDeps}
+	carrierintelligenceCarrierIntelInsuranceChange := &carrierintelligenceresolver.CarrierIntelInsuranceChangeResolver{Deps: carrierintelligenceDeps}
+	carrierintelligenceCarrierIntelInsuranceFiling := &carrierintelligenceresolver.CarrierIntelInsuranceFilingResolver{Deps: carrierintelligenceDeps}
+	carrierintelligenceCarrierIntelOverride := &carrierintelligenceresolver.CarrierIntelOverrideResolver{Deps: carrierintelligenceDeps}
+	carrierintelligenceCarrierIntelRuleDefinition := &carrierintelligenceresolver.CarrierIntelRuleDefinitionResolver{Deps: carrierintelligenceDeps}
+	carrierintelligenceCarrierIntelSafety := &carrierintelligenceresolver.CarrierIntelSafetyResolver{Deps: carrierintelligenceDeps}
+	carrierintelligenceCarrierIntelSnapshot := &carrierintelligenceresolver.CarrierIntelSnapshotResolver{Deps: carrierintelligenceDeps}
+	carrierintelligenceCarrierMonitoringEnrollment := &carrierintelligenceresolver.CarrierMonitoringEnrollmentResolver{Deps: carrierintelligenceDeps}
+	carriersettlementCarrierSettlement := &carriersettlementresolver.CarrierSettlementResolver{Deps: carriersettlementDeps}
+	carrierintelligenceCarrierSourcingResult := &carrierintelligenceresolver.CarrierSourcingResultResolver{Deps: carrierintelligenceDeps}
+	shipmentChargeAllocation := &shipmentresolver.ChargeAllocationResolver{Deps: shipmentDeps}
+	commodityCommodity := &commodityresolver.CommodityResolver{Deps: commodityDeps}
+	carrierintelligenceCustomer := &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps}
+	customerCustomerBillingProfile := &customerresolver.CustomerBillingProfileResolver{Deps: customerDeps}
+	factoringCustomerBillingProfile := &factoringresolver.CustomerBillingProfileResolver{Deps: factoringDeps}
+	customerpaymentCustomerPayment := &customerpaymentresolver.CustomerPaymentResolver{Deps: customerpaymentDeps}
+	customerpaymentCustomerPaymentApplication := &customerpaymentresolver.CustomerPaymentApplicationResolver{Deps: customerpaymentDeps}
+	customertrackingCustomerTrackingProfile := &customertrackingresolver.CustomerTrackingProfileResolver{Deps: customertrackingDeps}
+	workerdrugalcoholDOTRandomDraw := &workerdrugalcoholresolver.DOTRandomDrawResolver{Deps: workerdrugalcoholDeps}
+	workerdrugalcoholDOTRandomDrawEntry := &workerdrugalcoholresolver.DOTRandomDrawEntryResolver{Deps: workerdrugalcoholDeps}
+	workerdrugalcoholDOTRandomPool := &workerdrugalcoholresolver.DOTRandomPoolResolver{Deps: workerdrugalcoholDeps}
+	workerdqfDQFFile := &workerdqfresolver.DQFFileResolver{Deps: workerdqfDeps}
+	workerdqfDQFItem := &workerdqfresolver.DQFItemResolver{Deps: workerdqfDeps}
+	detentionDetentionOccurrence := &detentionresolver.DetentionOccurrenceResolver{Deps: detentionDeps}
+	detentionDetentionPreviewResult := &detentionresolver.DetentionPreviewResultResolver{Deps: detentionDeps}
+	workersafetyDisciplinaryLadder := &workersafetyresolver.DisciplinaryLadderResolver{Deps: workersafetyDeps}
+	driversettlementDriverPayEvent := &driversettlementresolver.DriverPayEventResolver{Deps: driversettlementDeps}
+	driversettlementDriverPayEventComponent := &driversettlementresolver.DriverPayEventComponentResolver{Deps: driversettlementDeps}
+	driversettlementDriverSettlement := &driversettlementresolver.DriverSettlementResolver{Deps: driversettlementDeps}
+	driversettlementDriverSettlementLine := &driversettlementresolver.DriverSettlementLineResolver{Deps: driversettlementDeps}
+	driversettlementDriverSettlementLineGroup := &driversettlementresolver.DriverSettlementLineGroupResolver{Deps: driversettlementDeps}
+	workerdrugalcoholDrugAlcoholStanding := &workerdrugalcoholresolver.DrugAlcoholStandingResolver{Deps: workerdrugalcoholDeps}
+	carriersettlementEdiCarrierInvoice := &carriersettlementresolver.EdiCarrierInvoiceResolver{Deps: carriersettlementDeps}
+	ediEdiFlowInstance := &ediresolver.EdiFlowInstanceResolver{Deps: ediDeps}
+	ediEdiLadingVersion := &ediresolver.EdiLadingVersionResolver{Deps: ediDeps}
+	ediEdiMessage := &ediresolver.EdiMessageResolver{Deps: ediDeps}
+	ediEdiTransfer := &ediresolver.EdiTransferResolver{Deps: ediDeps}
+	driversettlementEscrowAccount := &driversettlementresolver.EscrowAccountResolver{Deps: driversettlementDeps}
+	factoringFactoringAgreement := &factoringresolver.FactoringAgreementResolver{Deps: factoringDeps}
+	factoringFactoringCheck := &factoringresolver.FactoringCheckResolver{Deps: factoringDeps}
+	factoringFactoringCompany := &factoringresolver.FactoringCompanyResolver{Deps: factoringDeps}
+	factoringFactoringFundingPlan := &factoringresolver.FactoringFundingPlanResolver{Deps: factoringDeps}
+	factoringFactoringInvoiceState := &factoringresolver.FactoringInvoiceStateResolver{Deps: factoringDeps}
+	factoringFactoringMovement := &factoringresolver.FactoringMovementResolver{Deps: factoringDeps}
+	factoringFactoringNoa := &factoringresolver.FactoringNoaResolver{Deps: factoringDeps}
+	factoringFactoringPlannedLine := &factoringresolver.FactoringPlannedLineResolver{Deps: factoringDeps}
+	factoringFactoringPlannedMovement := &factoringresolver.FactoringPlannedMovementResolver{Deps: factoringDeps}
+	factoringFactoringRemittance := &factoringresolver.FactoringRemittanceResolver{Deps: factoringDeps}
+	factoringFactoringRemittanceLine := &factoringresolver.FactoringRemittanceLineResolver{Deps: factoringDeps}
+	factoringFactoringRemittancePlan := &factoringresolver.FactoringRemittancePlanResolver{Deps: factoringDeps}
+	factoringFactoringReserveEntry := &factoringresolver.FactoringReserveEntryResolver{Deps: factoringDeps}
+	factoringFactoringReserveMovementPlan := &factoringresolver.FactoringReserveMovementPlanResolver{Deps: factoringDeps}
+	factoringFactoringSubmission := &factoringresolver.FactoringSubmissionResolver{Deps: factoringDeps}
+	factoringFactoringSubmissionItem := &factoringresolver.FactoringSubmissionItemResolver{Deps: factoringDeps}
+	factoringFactoringSubmissionPlan := &factoringresolver.FactoringSubmissionPlanResolver{Deps: factoringDeps}
+	factoringFactoringTransport := &factoringresolver.FactoringTransportResolver{Deps: factoringDeps}
+	fleetsafetyFleetSafetyRank := &fleetsafetyresolver.FleetSafetyRankResolver{Deps: fleetsafetyDeps}
+	fleetsafetyFleetSafetyTerminal := &fleetsafetyresolver.FleetSafetyTerminalResolver{Deps: fleetsafetyDeps}
+	formulatemplateFormulaLibraryImport := &formulatemplateresolver.FormulaLibraryImportResolver{Deps: formulatemplateDeps}
+	formulalibraryFormulaLibraryVersion := &formulalibraryresolver.FormulaLibraryVersionResolver{Deps: formulalibraryDeps}
+	formulatemplateFormulaTemplate := &formulatemplateresolver.FormulaTemplateResolver{Deps: formulatemplateDeps}
+	formulatemplateFormulaTemplateTable := &formulatemplateresolver.FormulaTemplateTableResolver{Deps: formulatemplateDeps}
+	fuelpurchaseFuelCard := &fuelpurchaseresolver.FuelCardResolver{Deps: fuelpurchaseDeps}
+	fuelpurchaseFuelCardDeskCard := &fuelpurchaseresolver.FuelCardDeskCardResolver{Deps: fuelpurchaseDeps}
+	fuelpurchaseFuelFeedStatus := &fuelpurchaseresolver.FuelFeedStatusResolver{Deps: fuelpurchaseDeps}
+	fuelpurchaseFuelHeldSpend := &fuelpurchaseresolver.FuelHeldSpendResolver{Deps: fuelpurchaseDeps}
+	fuelpurchaseFuelJurisdictionGallons := &fuelpurchaseresolver.FuelJurisdictionGallonsResolver{Deps: fuelpurchaseDeps}
+	fuelpurchaseFuelPurchase := &fuelpurchaseresolver.FuelPurchaseResolver{Deps: fuelpurchaseDeps}
+	fuelpurchaseFuelPurchaseIFTA := &fuelpurchaseresolver.FuelPurchaseIFTAResolver{Deps: fuelpurchaseDeps}
+	fuelpurchaseFuelPurchaseImportBatch := &fuelpurchaseresolver.FuelPurchaseImportBatchResolver{Deps: fuelpurchaseDeps}
+	fuelpurchaseFuelPurchaseImportRow := &fuelpurchaseresolver.FuelPurchaseImportRowResolver{Deps: fuelpurchaseDeps}
+	fuelpurchaseFuelPurchaseImportSummary := &fuelpurchaseresolver.FuelPurchaseImportSummaryResolver{Deps: fuelpurchaseDeps}
+	fuelpurchaseFuelSpend := &fuelpurchaseresolver.FuelSpendResolver{Deps: fuelpurchaseDeps}
+	iftaIFTAFleetMPG := &iftaresolver.IFTAFleetMPGResolver{Deps: iftaDeps}
+	iftaIFTAJurisdiction := &iftaresolver.IFTAJurisdictionResolver{Deps: iftaDeps}
+	iftaIFTAJurisdictionMileageEntry := &iftaresolver.IFTAJurisdictionMileageEntryResolver{Deps: iftaDeps}
+	iftaIFTAPeriod := &iftaresolver.IFTAPeriodResolver{Deps: iftaDeps}
+	iftaIFTAReturn := &iftaresolver.IFTAReturnResolver{Deps: iftaDeps}
+	iftaIFTAReturnLine := &iftaresolver.IFTAReturnLineResolver{Deps: iftaDeps}
+	iftaIFTAReturnProblem := &iftaresolver.IFTAReturnProblemResolver{Deps: iftaDeps}
+	iftaIFTATaxRate := &iftaresolver.IFTATaxRateResolver{Deps: iftaDeps}
+	inboundmessageInboundActivity := &inboundmessageresolver.InboundActivityResolver{Deps: inboundmessageDeps}
+	inboundmessageInboundAttachment := &inboundmessageresolver.InboundAttachmentResolver{Deps: inboundmessageDeps}
+	inboundreplyInboundAttachment := &inboundreplyresolver.InboundAttachmentResolver{Deps: inboundreplyDeps}
+	inboundmessageInboundMailbox := &inboundmessageresolver.InboundMailboxResolver{Deps: inboundmessageDeps}
+	inboundmessageInboundMailboxCredentials := &inboundmessageresolver.InboundMailboxCredentialsResolver{Deps: inboundmessageDeps}
+	inboundmessageInboundMessage := &inboundmessageresolver.InboundMessageResolver{Deps: inboundmessageDeps}
+	inboundreplyInboundMessage := &inboundreplyresolver.InboundMessageResolver{Deps: inboundreplyDeps}
+	triageInboundMessage := &triageresolver.InboundMessageResolver{Deps: triageDeps}
+	inboundreplyInboundReply := &inboundreplyresolver.InboundReplyResolver{Deps: inboundreplyDeps}
+	inboundmessageInboundSnooze := &inboundmessageresolver.InboundSnoozeResolver{Deps: inboundmessageDeps}
+	inboundmessageInboundSplitDocument := &inboundmessageresolver.InboundSplitDocumentResolver{Deps: inboundmessageDeps}
+	factoringInvoice := &factoringresolver.InvoiceResolver{Deps: factoringDeps}
+	invoiceInvoice := &invoiceresolver.InvoiceResolver{Deps: invoiceDeps}
+	invoicedisputeInvoice := &invoicedisputeresolver.InvoiceResolver{Deps: invoicedisputeDeps}
+	invoiceadjustmentInvoiceAdjustment := &invoiceadjustmentresolver.InvoiceAdjustmentResolver{Deps: invoiceadjustmentDeps}
+	invoiceadjustmentInvoiceAdjustmentApprovalQueueItem := &invoiceadjustmentresolver.InvoiceAdjustmentApprovalQueueItemResolver{Deps: invoiceadjustmentDeps}
+	invoiceadjustmentInvoiceAdjustmentLine := &invoiceadjustmentresolver.InvoiceAdjustmentLineResolver{Deps: invoiceadjustmentDeps}
+	invoiceInvoiceChargeGroup := &invoiceresolver.InvoiceChargeGroupResolver{Deps: invoiceDeps}
+	invoicedisputeInvoiceDispute := &invoicedisputeresolver.InvoiceDisputeResolver{Deps: invoicedisputeDeps}
+	invoiceInvoiceLine := &invoiceresolver.InvoiceLineResolver{Deps: invoiceDeps}
+	journalentryJournalCardLine := &journalentryresolver.JournalCardLineResolver{Deps: journalentryDeps}
+	journalentryJournalCardPosting := &journalentryresolver.JournalCardPostingResolver{Deps: journalentryDeps}
+	journalentryJournalEntry := &journalentryresolver.JournalEntryResolver{Deps: journalentryDeps}
+	journalentryJournalEntryLine := &journalentryresolver.JournalEntryLineResolver{Deps: journalentryDeps}
+	journalentryJournalReviewSummary := &journalentryresolver.JournalReviewSummaryResolver{Deps: journalentryDeps}
+	journalentryJournalSourceInfo := &journalentryresolver.JournalSourceInfoResolver{Deps: journalentryDeps}
+	workerleaveLeaveControl := &workerleaveresolver.LeaveControlResolver{Deps: workerleaveDeps}
+	workerleaveLeaveEntitlement := &workerleaveresolver.LeaveEntitlementResolver{Deps: workerleaveDeps}
+	locationcategoryLocationCategory := &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps}
+	accessorialchargeMutation := &accessorialchargeresolver.MutationResolver{Deps: accessorialchargeDeps}
+	accountingsyncMutation := &accountingsyncresolver.MutationResolver{Deps: accountingsyncDeps}
+	briefingMutation := &briefingresolver.MutationResolver{Deps: briefingDeps}
+	captureMutation := &captureresolver.MutationResolver{Deps: captureDeps}
+	carriercapacityMutation := &carriercapacityresolver.MutationResolver{Deps: carriercapacityDeps}
+	carrierintelligenceMutation := &carrierintelligenceresolver.MutationResolver{Deps: carrierintelligenceDeps}
+	carriersettlementMutation := &carriersettlementresolver.MutationResolver{Deps: carriersettlementDeps}
+	commodityMutation := &commodityresolver.MutationResolver{Deps: commodityDeps}
+	customerMutation := &customerresolver.MutationResolver{Deps: customerDeps}
+	customerpaymentMutation := &customerpaymentresolver.MutationResolver{Deps: customerpaymentDeps}
+	customertrackingMutation := &customertrackingresolver.MutationResolver{Deps: customertrackingDeps}
+	detentionMutation := &detentionresolver.MutationResolver{Deps: detentionDeps}
+	dispatchconsoleMutation := &dispatchconsoleresolver.MutationResolver{Deps: dispatchconsoleDeps}
+	documenttypeMutation := &documenttyperesolver.MutationResolver{Deps: documenttypeDeps}
+	driverportalMutation := &driverportalresolver.MutationResolver{Deps: driverportalDeps}
+	driversettlementMutation := &driversettlementresolver.MutationResolver{Deps: driversettlementDeps}
+	equipmentmanufacturerMutation := &equipmentmanufacturerresolver.MutationResolver{Deps: equipmentmanufacturerDeps}
+	equipmenttypeMutation := &equipmenttyperesolver.MutationResolver{Deps: equipmenttypeDeps}
+	factoringMutation := &factoringresolver.MutationResolver{Deps: factoringDeps}
+	factoringcompanyMutation := &factoringcompanyresolver.MutationResolver{Deps: factoringcompanyDeps}
+	fleetcodeMutation := &fleetcoderesolver.MutationResolver{Deps: fleetcodeDeps}
+	fleetsafetyMutation := &fleetsafetyresolver.MutationResolver{Deps: fleetsafetyDeps}
+	fuelpurchaseMutation := &fuelpurchaseresolver.MutationResolver{Deps: fuelpurchaseDeps}
+	fuelsurchargeMutation := &fuelsurchargeresolver.MutationResolver{Deps: fuelsurchargeDeps}
+	hazardousmaterialMutation := &hazardousmaterialresolver.MutationResolver{Deps: hazardousmaterialDeps}
+	holdreasonMutation := &holdreasonresolver.MutationResolver{Deps: holdreasonDeps}
+	homelayoutMutation := &homelayoutresolver.MutationResolver{Deps: homelayoutDeps}
+	iftaMutation := &iftaresolver.MutationResolver{Deps: iftaDeps}
+	inboundmessageMutation := &inboundmessageresolver.MutationResolver{Deps: inboundmessageDeps}
+	inboundreplyMutation := &inboundreplyresolver.MutationResolver{Deps: inboundreplyDeps}
+	invoiceMutation := &invoiceresolver.MutationResolver{Deps: invoiceDeps}
+	invoiceadjustmentMutation := &invoiceadjustmentresolver.MutationResolver{Deps: invoiceadjustmentDeps}
+	invoicedisputeMutation := &invoicedisputeresolver.MutationResolver{Deps: invoicedisputeDeps}
+	journalentryMutation := &journalentryresolver.MutationResolver{Deps: journalentryDeps}
+	locationcategoryMutation := &locationcategoryresolver.MutationResolver{Deps: locationcategoryDeps}
+	orderMutation := &orderresolver.MutationResolver{Deps: orderDeps}
+	performancereviewMutation := &performancereviewresolver.MutationResolver{Deps: performancereviewDeps}
+	reportMutation := &reportresolver.MutationResolver{Deps: reportDeps}
+	schedulingMutation := &schedulingresolver.MutationResolver{Deps: schedulingDeps}
+	shipmentMutation := &shipmentresolver.MutationResolver{Deps: shipmentDeps}
+	telematicsMutation := &telematicsresolver.MutationResolver{Deps: telematicsDeps}
+	tenantMutation := &tenantresolver.MutationResolver{Deps: tenantDeps}
+	tractorMutation := &tractorresolver.MutationResolver{Deps: tractorDeps}
+	trailerMutation := &trailerresolver.MutationResolver{Deps: trailerDeps}
+	triageMutation := &triageresolver.MutationResolver{Deps: triageDeps}
+	workerMutation := &workerresolver.MutationResolver{Deps: workerDeps}
+	workerchecklistMutation := &workerchecklistresolver.MutationResolver{Deps: workerchecklistDeps}
+	workercredentialMutation := &workercredentialresolver.MutationResolver{Deps: workercredentialDeps}
+	workerdqfMutation := &workerdqfresolver.MutationResolver{Deps: workerdqfDeps}
+	workerdrugalcoholMutation := &workerdrugalcoholresolver.MutationResolver{Deps: workerdrugalcoholDeps}
+	workerinjuryMutation := &workerinjuryresolver.MutationResolver{Deps: workerinjuryDeps}
+	workerleaveMutation := &workerleaveresolver.MutationResolver{Deps: workerleaveDeps}
+	workersafetyMutation := &workersafetyresolver.MutationResolver{Deps: workersafetyDeps}
+	workertrainingMutation := &workertrainingresolver.MutationResolver{Deps: workertrainingDeps}
+	driverportalMyPTOBalance := &driverportalresolver.MyPTOBalanceResolver{Deps: driverportalDeps}
+	workerinjuryOSHAAnnualSummary := &workerinjuryresolver.OSHAAnnualSummaryResolver{Deps: workerinjuryDeps}
+	orderOrder := &orderresolver.OrderResolver{Deps: orderDeps}
+	workerPTOChartDataPoint := &workerresolver.PTOChartDataPointResolver{Deps: workerDeps}
+	driversettlementPayCode := &driversettlementresolver.PayCodeResolver{Deps: driversettlementDeps}
+	driversettlementPayMileageBand := &driversettlementresolver.PayMileageBandResolver{Deps: driversettlementDeps}
+	driversettlementPayProfile := &driversettlementresolver.PayProfileResolver{Deps: driversettlementDeps}
+	driversettlementPayProfileComponent := &driversettlementresolver.PayProfileComponentResolver{Deps: driversettlementDeps}
+	driversettlementPayRateOverride := &driversettlementresolver.PayRateOverrideResolver{Deps: driversettlementDeps}
+	performancereviewPerformanceReview := &performancereviewresolver.PerformanceReviewResolver{Deps: performancereviewDeps}
+	performancereviewPerformanceReviewTemplate := &performancereviewresolver.PerformanceReviewTemplateResolver{Deps: performancereviewDeps}
+	driverportalPortalCredential := &driverportalresolver.PortalCredentialResolver{Deps: driverportalDeps}
+	workertrainingPortalTraining := &workertrainingresolver.PortalTrainingResolver{Deps: workertrainingDeps}
+	accessorialchargeQuery := &accessorialchargeresolver.QueryResolver{Deps: accessorialchargeDeps}
+	accountingsyncQuery := &accountingsyncresolver.QueryResolver{Deps: accountingsyncDeps}
+	briefingQuery := &briefingresolver.QueryResolver{Deps: briefingDeps}
+	captureQuery := &captureresolver.QueryResolver{Deps: captureDeps}
+	carrierQuery := &carrierresolver.QueryResolver{Deps: carrierDeps}
+	carriercapacityQuery := &carriercapacityresolver.QueryResolver{Deps: carriercapacityDeps}
+	carrierintelligenceQuery := &carrierintelligenceresolver.QueryResolver{Deps: carrierintelligenceDeps}
+	carriersettlementQuery := &carriersettlementresolver.QueryResolver{Deps: carriersettlementDeps}
+	commodityQuery := &commodityresolver.QueryResolver{Deps: commodityDeps}
+	customerQuery := &customerresolver.QueryResolver{Deps: customerDeps}
+	customerpaymentQuery := &customerpaymentresolver.QueryResolver{Deps: customerpaymentDeps}
+	customertrackingQuery := &customertrackingresolver.QueryResolver{Deps: customertrackingDeps}
+	detentionQuery := &detentionresolver.QueryResolver{Deps: detentionDeps}
+	dispatchconsoleQuery := &dispatchconsoleresolver.QueryResolver{Deps: dispatchconsoleDeps}
+	documenttypeQuery := &documenttyperesolver.QueryResolver{Deps: documenttypeDeps}
+	driverportalQuery := &driverportalresolver.QueryResolver{Deps: driverportalDeps}
+	driversettlementQuery := &driversettlementresolver.QueryResolver{Deps: driversettlementDeps}
+	ediQuery := &ediresolver.QueryResolver{Deps: ediDeps}
+	emailprofileQuery := &emailprofileresolver.QueryResolver{Deps: emailprofileDeps}
+	equipmentmanufacturerQuery := &equipmentmanufacturerresolver.QueryResolver{Deps: equipmentmanufacturerDeps}
+	equipmenttypeQuery := &equipmenttyperesolver.QueryResolver{Deps: equipmenttypeDeps}
+	factoringQuery := &factoringresolver.QueryResolver{Deps: factoringDeps}
+	factoringcompanyQuery := &factoringcompanyresolver.QueryResolver{Deps: factoringcompanyDeps}
+	fiscalperiodQuery := &fiscalperiodresolver.QueryResolver{Deps: fiscalperiodDeps}
+	fleetcodeQuery := &fleetcoderesolver.QueryResolver{Deps: fleetcodeDeps}
+	fleetsafetyQuery := &fleetsafetyresolver.QueryResolver{Deps: fleetsafetyDeps}
+	formulalibraryQuery := &formulalibraryresolver.QueryResolver{Deps: formulalibraryDeps}
+	formulatemplateQuery := &formulatemplateresolver.QueryResolver{Deps: formulatemplateDeps}
+	fuelpurchaseQuery := &fuelpurchaseresolver.QueryResolver{Deps: fuelpurchaseDeps}
+	fuelsurchargeQuery := &fuelsurchargeresolver.QueryResolver{Deps: fuelsurchargeDeps}
+	hazardousmaterialQuery := &hazardousmaterialresolver.QueryResolver{Deps: hazardousmaterialDeps}
+	holdreasonQuery := &holdreasonresolver.QueryResolver{Deps: holdreasonDeps}
+	homelayoutQuery := &homelayoutresolver.QueryResolver{Deps: homelayoutDeps}
+	iftaQuery := &iftaresolver.QueryResolver{Deps: iftaDeps}
+	inboundmessageQuery := &inboundmessageresolver.QueryResolver{Deps: inboundmessageDeps}
+	inboundreplyQuery := &inboundreplyresolver.QueryResolver{Deps: inboundreplyDeps}
+	invoiceQuery := &invoiceresolver.QueryResolver{Deps: invoiceDeps}
+	invoiceadjustmentQuery := &invoiceadjustmentresolver.QueryResolver{Deps: invoiceadjustmentDeps}
+	invoicedisputeQuery := &invoicedisputeresolver.QueryResolver{Deps: invoicedisputeDeps}
+	journalentryQuery := &journalentryresolver.QueryResolver{Deps: journalentryDeps}
+	journalreversalQuery := &journalreversalresolver.QueryResolver{Deps: journalreversalDeps}
+	locationQuery := &locationresolver.QueryResolver{Deps: locationDeps}
+	locationcategoryQuery := &locationcategoryresolver.QueryResolver{Deps: locationcategoryDeps}
+	manualjournalQuery := &manualjournalresolver.QueryResolver{Deps: manualjournalDeps}
+	orderQuery := &orderresolver.QueryResolver{Deps: orderDeps}
+	performancereviewQuery := &performancereviewresolver.QueryResolver{Deps: performancereviewDeps}
+	rateQuery := &rateresolver.QueryResolver{Deps: rateDeps}
+	recurringshipmentQuery := &recurringshipmentresolver.QueryResolver{Deps: recurringshipmentDeps}
+	reportQuery := &reportresolver.QueryResolver{Deps: reportDeps}
+	schedulingQuery := &schedulingresolver.QueryResolver{Deps: schedulingDeps}
+	servicefailureQuery := &servicefailureresolver.QueryResolver{Deps: servicefailureDeps}
+	servicefailurereasoncodeQuery := &servicefailurereasoncoderesolver.QueryResolver{Deps: servicefailurereasoncodeDeps}
+	servicetypeQuery := &servicetyperesolver.QueryResolver{Deps: servicetypeDeps}
+	shipmentQuery := &shipmentresolver.QueryResolver{Deps: shipmentDeps}
+	shipmenttypeQuery := &shipmenttyperesolver.QueryResolver{Deps: shipmenttypeDeps}
+	tablechangealertQuery := &tablechangealertresolver.QueryResolver{Deps: tablechangealertDeps}
+	telematicsQuery := &telematicsresolver.QueryResolver{Deps: telematicsDeps}
+	tenantQuery := &tenantresolver.QueryResolver{Deps: tenantDeps}
+	tenderQuery := &tenderresolver.QueryResolver{Deps: tenderDeps}
+	tractorQuery := &tractorresolver.QueryResolver{Deps: tractorDeps}
+	trailerQuery := &trailerresolver.QueryResolver{Deps: trailerDeps}
+	triageQuery := &triageresolver.QueryResolver{Deps: triageDeps}
+	workerQuery := &workerresolver.QueryResolver{Deps: workerDeps}
+	workerchecklistQuery := &workerchecklistresolver.QueryResolver{Deps: workerchecklistDeps}
+	workercredentialQuery := &workercredentialresolver.QueryResolver{Deps: workercredentialDeps}
+	workerdqfQuery := &workerdqfresolver.QueryResolver{Deps: workerdqfDeps}
+	workerdrugalcoholQuery := &workerdrugalcoholresolver.QueryResolver{Deps: workerdrugalcoholDeps}
+	workerinjuryQuery := &workerinjuryresolver.QueryResolver{Deps: workerinjuryDeps}
+	workerleaveQuery := &workerleaveresolver.QueryResolver{Deps: workerleaveDeps}
+	workersafetyQuery := &workersafetyresolver.QueryResolver{Deps: workersafetyDeps}
+	workertrainingQuery := &workertrainingresolver.QueryResolver{Deps: workertrainingDeps}
+	rateRateAgreement := &rateresolver.RateAgreementResolver{Deps: rateDeps}
+	rateRateMatrix := &rateresolver.RateMatrixResolver{Deps: rateDeps}
+	rateRateMatrixVersion := &rateresolver.RateMatrixVersionResolver{Deps: rateDeps}
+	reportReportSchedule := &reportresolver.ReportScheduleResolver{Deps: reportDeps}
+	performancereviewReviewRating := &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps}
+	workersafetySafetyScorecard := &workersafetyresolver.SafetyScorecardResolver{Deps: workersafetyDeps}
+	servicefailureServiceFailure := &servicefailureresolver.ServiceFailureResolver{Deps: servicefailureDeps}
+	servicefailureServiceFailureShipment := &servicefailureresolver.ServiceFailureShipmentResolver{Deps: servicefailureDeps}
+	servicefailureServiceFailureStop := &servicefailureresolver.ServiceFailureStopResolver{Deps: servicefailureDeps}
+	driversettlementSettlementControl := &driversettlementresolver.SettlementControlResolver{Deps: driversettlementDeps}
+	driversettlementSettlementException := &driversettlementresolver.SettlementExceptionResolver{Deps: driversettlementDeps}
+	schedulingShiftTemplate := &schedulingresolver.ShiftTemplateResolver{Deps: schedulingDeps}
+	shipmentShipment := &shipmentresolver.ShipmentResolver{Deps: shipmentDeps}
+	shipmentShipmentCustomer := &shipmentresolver.ShipmentCustomerResolver{Deps: shipmentDeps}
+	shipmentShipmentMove := &shipmentresolver.ShipmentMoveResolver{Deps: shipmentDeps}
+	shipmentShipmentMoveJurisdictionMile := &shipmentresolver.ShipmentMoveJurisdictionMileResolver{Deps: shipmentDeps}
+	shipmentShipmentRatingDetail := &shipmentresolver.ShipmentRatingDetailResolver{Deps: shipmentDeps}
+	shipmentShipmentRatingReviewApproval := &shipmentresolver.ShipmentRatingReviewApprovalResolver{Deps: shipmentDeps}
+	tablechangealertTCASubscription := &tablechangealertresolver.TCASubscriptionResolver{Deps: tablechangealertDeps}
+	tenderTender := &tenderresolver.TenderResolver{Deps: tenderDeps}
+	tenderTenderOffer := &tenderresolver.TenderOfferResolver{Deps: tenderDeps}
+	tractorTractor := &tractorresolver.TractorResolver{Deps: tractorDeps}
+	trailerTrailer := &trailerresolver.TrailerResolver{Deps: trailerDeps}
+	workertrainingTrainingCourse := &workertrainingresolver.TrainingCourseResolver{Deps: workertrainingDeps}
+	inboundreplyTriageAction := &inboundreplyresolver.TriageActionResolver{Deps: inboundreplyDeps}
+	inboundmessageTriageAssignee := &inboundmessageresolver.TriageAssigneeResolver{Deps: inboundmessageDeps}
+	triageTriageBriefing := &triageresolver.TriageBriefingResolver{Deps: triageDeps}
+	triageTriageConflict := &triageresolver.TriageConflictResolver{Deps: triageDeps}
+	triageTriageDeckItem := &triageresolver.TriageDeckItemResolver{Deps: triageDeps}
+	inboundmessageTriageHandOff := &inboundmessageresolver.TriageHandOffResolver{Deps: inboundmessageDeps}
+	inboundreplyTriageReplyTemplate := &inboundreplyresolver.TriageReplyTemplateResolver{Deps: inboundreplyDeps}
+	triageTriageRule := &triageresolver.TriageRuleResolver{Deps: triageDeps}
+	inboundmessageTriageSettings := &inboundmessageresolver.TriageSettingsResolver{Deps: inboundmessageDeps}
+	inboundreplyTriageStopTimes := &inboundreplyresolver.TriageStopTimesResolver{Deps: inboundreplyDeps}
+	inboundmessageTriageView := &inboundmessageresolver.TriageViewResolver{Deps: inboundmessageDeps}
+	tenantUser := &tenantresolver.UserResolver{Deps: tenantDeps}
+	workerWorker := &workerresolver.WorkerResolver{Deps: workerDeps}
+	workerchecklistWorkerChecklist := &workerchecklistresolver.WorkerChecklistResolver{Deps: workerchecklistDeps}
+	workerchecklistWorkerChecklistItem := &workerchecklistresolver.WorkerChecklistItemResolver{Deps: workerchecklistDeps}
+	workerchecklistWorkerChecklistProgress := &workerchecklistresolver.WorkerChecklistProgressResolver{Deps: workerchecklistDeps}
+	workerchecklistWorkerChecklistTemplate := &workerchecklistresolver.WorkerChecklistTemplateResolver{Deps: workerchecklistDeps}
+	workerchecklistWorkerChecklistTemplateItem := &workerchecklistresolver.WorkerChecklistTemplateItemResolver{Deps: workerchecklistDeps}
+	workerdrugalcoholWorkerClearinghouseQuery := &workerdrugalcoholresolver.WorkerClearinghouseQueryResolver{Deps: workerdrugalcoholDeps}
+	workercredentialWorkerCredential := &workercredentialresolver.WorkerCredentialResolver{Deps: workercredentialDeps}
+	workercredentialWorkerCredentialType := &workercredentialresolver.WorkerCredentialTypeResolver{Deps: workercredentialDeps}
+	workerdrugalcoholWorkerDOTTest := &workerdrugalcoholresolver.WorkerDOTTestResolver{Deps: workerdrugalcoholDeps}
+	workerdrugalcoholWorkerDOTViolation := &workerdrugalcoholresolver.WorkerDOTViolationResolver{Deps: workerdrugalcoholDeps}
+	workersafetyWorkerDisciplinaryAction := &workersafetyresolver.WorkerDisciplinaryActionResolver{Deps: workersafetyDeps}
+	workerdqfWorkerEmploymentVerification := &workerdqfresolver.WorkerEmploymentVerificationResolver{Deps: workerdqfDeps}
+	workerinjuryWorkerInjury := &workerinjuryresolver.WorkerInjuryResolver{Deps: workerinjuryDeps}
+	workerleaveWorkerLeaveCase := &workerleaveresolver.WorkerLeaveCaseResolver{Deps: workerleaveDeps}
+	workerleaveWorkerLeaveEntry := &workerleaveresolver.WorkerLeaveEntryResolver{Deps: workerleaveDeps}
+	workerWorkerPTO := &workerresolver.WorkerPTOResolver{Deps: workerDeps}
+	driversettlementWorkerPayAssignment := &driversettlementresolver.WorkerPayAssignmentResolver{Deps: driversettlementDeps}
+	workerWorkerProfile := &workerresolver.WorkerProfileResolver{Deps: workerDeps}
+	workersafetyWorkerRecognition := &workersafetyresolver.WorkerRecognitionResolver{Deps: workersafetyDeps}
+	workersafetyWorkerSafetyEvent := &workersafetyresolver.WorkerSafetyEventResolver{Deps: workersafetyDeps}
+	workertrainingWorkerTrainingRecord := &workertrainingresolver.WorkerTrainingRecordResolver{Deps: workertrainingDeps}
 
-	return newSchema(shards, map[string]func() any{
-		"CustomerBillingProfile":    func() any { return customerBillingProfile },
-		"InboundAttachment":         func() any { return inboundAttachment },
-		"InboundMessage":            func() any { return inboundMessage },
-		"Invoice":                   func() any { return invoice },
-		"Mutation":                  func() any { return mutation },
-		"Query":                     func() any { return query },
-		"AccessorialCharge":         func() any { return &accessorialchargeresolver.AccessorialChargeResolver{Deps: accessorialchargeDeps} },
-		"AccountingAppCredential":   func() any { return &accountingsyncresolver.AccountingAppCredentialResolver{Deps: accountingsyncDeps} },
-		"AccountingAppSettings":     func() any { return &accountingsyncresolver.AccountingAppSettingsResolver{Deps: accountingsyncDeps} },
-		"AccountingConnection":      func() any { return &accountingsyncresolver.AccountingConnectionResolver{Deps: accountingsyncDeps} },
-		"AccountingDriftFinding":    func() any { return &accountingsyncresolver.AccountingDriftFindingResolver{Deps: accountingsyncDeps} },
-		"AccountingDriftFixPreview": func() any { return &accountingsyncresolver.AccountingDriftFixPreviewResolver{Deps: accountingsyncDeps} },
-		"AccountingInboundChange":   func() any { return &accountingsyncresolver.AccountingInboundChangeResolver{Deps: accountingsyncDeps} },
-		"AccountingInboundLine":     func() any { return &accountingsyncresolver.AccountingInboundLineResolver{Deps: accountingsyncDeps} },
-		"AccountingMapping":         func() any { return &accountingsyncresolver.AccountingMappingResolver{Deps: accountingsyncDeps} },
-		"AccountingReferenceObject": func() any { return &accountingsyncresolver.AccountingReferenceObjectResolver{Deps: accountingsyncDeps} },
-		"AccountingSyncAttempt":     func() any { return &accountingsyncresolver.AccountingSyncAttemptResolver{Deps: accountingsyncDeps} },
-		"AccountingSyncAttentionGroup": func() any {
-			return &accountingsyncresolver.AccountingSyncAttentionGroupResolver{Deps: accountingsyncDeps}
-		},
-		"AccountingSyncRecord":         func() any { return &accountingsyncresolver.AccountingSyncRecordResolver{Deps: accountingsyncDeps} },
-		"BriefingSection":              func() any { return &briefingresolver.BriefingSectionResolver{Deps: briefingDeps} },
-		"CaptureBatch":                 func() any { return &captureresolver.CaptureBatchResolver{Deps: captureDeps} },
-		"CaptureCoverSheet":            func() any { return &captureresolver.CaptureCoverSheetResolver{Deps: captureDeps} },
-		"CaptureDevice":                func() any { return &captureresolver.CaptureDeviceResolver{Deps: captureDeps} },
-		"CaptureItem":                  func() any { return &captureresolver.CaptureItemResolver{Deps: captureDeps} },
-		"CapturePage":                  func() any { return &captureresolver.CapturePageResolver{Deps: captureDeps} },
-		"CaptureRequest":               func() any { return &captureresolver.CaptureRequestResolver{Deps: captureDeps} },
-		"CaptureSettings":              func() any { return &captureresolver.CaptureSettingsResolver{Deps: captureDeps} },
-		"Carrier":                      func() any { return &carrierintelligenceresolver.CarrierResolver{Deps: carrierintelligenceDeps} },
-		"CarrierAssignment":            func() any { return &shipmentresolver.CarrierAssignmentResolver{Deps: shipmentDeps} },
-		"CarrierAssignmentAccessorial": func() any { return &shipmentresolver.CarrierAssignmentAccessorialResolver{Deps: shipmentDeps} },
-		"CarrierCapacityPosting":       func() any { return &carriercapacityresolver.CarrierCapacityPostingResolver{Deps: carriercapacityDeps} },
-		"CarrierEquipmentVerification": func() any {
-			return &carrierintelligenceresolver.CarrierEquipmentVerificationResolver{Deps: carrierintelligenceDeps}
-		},
-		"CarrierInsurancePolicy": func() any { return &carrierresolver.CarrierInsurancePolicyResolver{Deps: carrierDeps} },
-		"CarrierIntelControl": func() any {
-			return &carrierintelligenceresolver.CarrierIntelControlResolver{Deps: carrierintelligenceDeps}
-		},
-		"CarrierIntelEquipment": func() any {
-			return &carrierintelligenceresolver.CarrierIntelEquipmentResolver{Deps: carrierintelligenceDeps}
-		},
-		"CarrierIntelEvent": func() any {
-			return &carrierintelligenceresolver.CarrierIntelEventResolver{Deps: carrierintelligenceDeps}
-		},
-		"CarrierIntelFeedState": func() any {
-			return &carrierintelligenceresolver.CarrierIntelFeedStateResolver{Deps: carrierintelligenceDeps}
-		},
-		"CarrierIntelFinding": func() any {
-			return &carrierintelligenceresolver.CarrierIntelFindingResolver{Deps: carrierintelligenceDeps}
-		},
-		"CarrierIntelInsurance": func() any {
-			return &carrierintelligenceresolver.CarrierIntelInsuranceResolver{Deps: carrierintelligenceDeps}
-		},
-		"CarrierIntelInsuranceChange": func() any {
-			return &carrierintelligenceresolver.CarrierIntelInsuranceChangeResolver{Deps: carrierintelligenceDeps}
-		},
-		"CarrierIntelInsuranceFiling": func() any {
-			return &carrierintelligenceresolver.CarrierIntelInsuranceFilingResolver{Deps: carrierintelligenceDeps}
-		},
-		"CarrierIntelOverride": func() any {
-			return &carrierintelligenceresolver.CarrierIntelOverrideResolver{Deps: carrierintelligenceDeps}
-		},
-		"CarrierIntelRuleDefinition": func() any {
-			return &carrierintelligenceresolver.CarrierIntelRuleDefinitionResolver{Deps: carrierintelligenceDeps}
-		},
-		"CarrierIntelSafety": func() any {
-			return &carrierintelligenceresolver.CarrierIntelSafetyResolver{Deps: carrierintelligenceDeps}
-		},
-		"CarrierIntelSnapshot": func() any {
-			return &carrierintelligenceresolver.CarrierIntelSnapshotResolver{Deps: carrierintelligenceDeps}
-		},
-		"CarrierMonitoringEnrollment": func() any {
-			return &carrierintelligenceresolver.CarrierMonitoringEnrollmentResolver{Deps: carrierintelligenceDeps}
-		},
-		"CarrierSettlement": func() any { return &carriersettlementresolver.CarrierSettlementResolver{Deps: carriersettlementDeps} },
-		"CarrierSourcingResult": func() any {
-			return &carrierintelligenceresolver.CarrierSourcingResultResolver{Deps: carrierintelligenceDeps}
-		},
-		"ChargeAllocation": func() any { return &shipmentresolver.ChargeAllocationResolver{Deps: shipmentDeps} },
-		"Commodity":        func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
-		"Customer":         func() any { return &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps} },
-		"CustomerPayment":  func() any { return &customerpaymentresolver.CustomerPaymentResolver{Deps: customerpaymentDeps} },
-		"CustomerPaymentApplication": func() any {
-			return &customerpaymentresolver.CustomerPaymentApplicationResolver{Deps: customerpaymentDeps}
-		},
-		"CustomerTrackingProfile": func() any {
-			return &customertrackingresolver.CustomerTrackingProfileResolver{Deps: customertrackingDeps}
-		},
-		"DOTRandomDraw":          func() any { return &workerdrugalcoholresolver.DOTRandomDrawResolver{Deps: workerdrugalcoholDeps} },
-		"DOTRandomDrawEntry":     func() any { return &workerdrugalcoholresolver.DOTRandomDrawEntryResolver{Deps: workerdrugalcoholDeps} },
-		"DOTRandomPool":          func() any { return &workerdrugalcoholresolver.DOTRandomPoolResolver{Deps: workerdrugalcoholDeps} },
-		"DQFFile":                func() any { return &workerdqfresolver.DQFFileResolver{Deps: workerdqfDeps} },
-		"DQFItem":                func() any { return &workerdqfresolver.DQFItemResolver{Deps: workerdqfDeps} },
-		"DetentionOccurrence":    func() any { return &detentionresolver.DetentionOccurrenceResolver{Deps: detentionDeps} },
-		"DetentionPreviewResult": func() any { return &detentionresolver.DetentionPreviewResultResolver{Deps: detentionDeps} },
-		"DisciplinaryLadder":     func() any { return &workersafetyresolver.DisciplinaryLadderResolver{Deps: workersafetyDeps} },
-		"DriverPayEvent":         func() any { return &driversettlementresolver.DriverPayEventResolver{Deps: driversettlementDeps} },
-		"DriverPayEventComponent": func() any {
-			return &driversettlementresolver.DriverPayEventComponentResolver{Deps: driversettlementDeps}
-		},
-		"DriverSettlement":     func() any { return &driversettlementresolver.DriverSettlementResolver{Deps: driversettlementDeps} },
-		"DriverSettlementLine": func() any { return &driversettlementresolver.DriverSettlementLineResolver{Deps: driversettlementDeps} },
-		"DriverSettlementLineGroup": func() any {
-			return &driversettlementresolver.DriverSettlementLineGroupResolver{Deps: driversettlementDeps}
-		},
-		"DrugAlcoholStanding":          func() any { return &workerdrugalcoholresolver.DrugAlcoholStandingResolver{Deps: workerdrugalcoholDeps} },
-		"EdiCarrierInvoice":            func() any { return &carriersettlementresolver.EdiCarrierInvoiceResolver{Deps: carriersettlementDeps} },
-		"EdiFlowInstance":              func() any { return &ediresolver.EdiFlowInstanceResolver{Deps: ediDeps} },
-		"EdiLadingVersion":             func() any { return &ediresolver.EdiLadingVersionResolver{Deps: ediDeps} },
-		"EdiMessage":                   func() any { return &ediresolver.EdiMessageResolver{Deps: ediDeps} },
-		"EdiTransfer":                  func() any { return &ediresolver.EdiTransferResolver{Deps: ediDeps} },
-		"EscrowAccount":                func() any { return &driversettlementresolver.EscrowAccountResolver{Deps: driversettlementDeps} },
-		"FactoringAgreement":           func() any { return &factoringresolver.FactoringAgreementResolver{Deps: factoringDeps} },
-		"FactoringCheck":               func() any { return &factoringresolver.FactoringCheckResolver{Deps: factoringDeps} },
-		"FactoringCompany":             func() any { return &factoringresolver.FactoringCompanyResolver{Deps: factoringDeps} },
-		"FactoringFundingPlan":         func() any { return &factoringresolver.FactoringFundingPlanResolver{Deps: factoringDeps} },
-		"FactoringInvoiceState":        func() any { return &factoringresolver.FactoringInvoiceStateResolver{Deps: factoringDeps} },
-		"FactoringMovement":            func() any { return &factoringresolver.FactoringMovementResolver{Deps: factoringDeps} },
-		"FactoringNoa":                 func() any { return &factoringresolver.FactoringNoaResolver{Deps: factoringDeps} },
-		"FactoringPlannedLine":         func() any { return &factoringresolver.FactoringPlannedLineResolver{Deps: factoringDeps} },
-		"FactoringPlannedMovement":     func() any { return &factoringresolver.FactoringPlannedMovementResolver{Deps: factoringDeps} },
-		"FactoringRemittance":          func() any { return &factoringresolver.FactoringRemittanceResolver{Deps: factoringDeps} },
-		"FactoringRemittanceLine":      func() any { return &factoringresolver.FactoringRemittanceLineResolver{Deps: factoringDeps} },
-		"FactoringRemittancePlan":      func() any { return &factoringresolver.FactoringRemittancePlanResolver{Deps: factoringDeps} },
-		"FactoringReserveEntry":        func() any { return &factoringresolver.FactoringReserveEntryResolver{Deps: factoringDeps} },
-		"FactoringReserveMovementPlan": func() any { return &factoringresolver.FactoringReserveMovementPlanResolver{Deps: factoringDeps} },
-		"FactoringSubmission":          func() any { return &factoringresolver.FactoringSubmissionResolver{Deps: factoringDeps} },
-		"FactoringSubmissionItem":      func() any { return &factoringresolver.FactoringSubmissionItemResolver{Deps: factoringDeps} },
-		"FactoringSubmissionPlan":      func() any { return &factoringresolver.FactoringSubmissionPlanResolver{Deps: factoringDeps} },
-		"FactoringTransport":           func() any { return &factoringresolver.FactoringTransportResolver{Deps: factoringDeps} },
-		"FleetSafetyRank":              func() any { return &fleetsafetyresolver.FleetSafetyRankResolver{Deps: fleetsafetyDeps} },
-		"FleetSafetyTerminal":          func() any { return &fleetsafetyresolver.FleetSafetyTerminalResolver{Deps: fleetsafetyDeps} },
-		"FormulaLibraryImport":         func() any { return &formulatemplateresolver.FormulaLibraryImportResolver{Deps: formulatemplateDeps} },
-		"FormulaLibraryVersion":        func() any { return &formulalibraryresolver.FormulaLibraryVersionResolver{Deps: formulalibraryDeps} },
-		"FormulaTemplate":              func() any { return &formulatemplateresolver.FormulaTemplateResolver{Deps: formulatemplateDeps} },
-		"FormulaTemplateTable":         func() any { return &formulatemplateresolver.FormulaTemplateTableResolver{Deps: formulatemplateDeps} },
-		"FuelCard":                     func() any { return &fuelpurchaseresolver.FuelCardResolver{Deps: fuelpurchaseDeps} },
-		"FuelCardDeskCard":             func() any { return &fuelpurchaseresolver.FuelCardDeskCardResolver{Deps: fuelpurchaseDeps} },
-		"FuelFeedStatus":               func() any { return &fuelpurchaseresolver.FuelFeedStatusResolver{Deps: fuelpurchaseDeps} },
-		"FuelHeldSpend":                func() any { return &fuelpurchaseresolver.FuelHeldSpendResolver{Deps: fuelpurchaseDeps} },
-		"FuelJurisdictionGallons":      func() any { return &fuelpurchaseresolver.FuelJurisdictionGallonsResolver{Deps: fuelpurchaseDeps} },
-		"FuelPurchase":                 func() any { return &fuelpurchaseresolver.FuelPurchaseResolver{Deps: fuelpurchaseDeps} },
-		"FuelPurchaseIFTA":             func() any { return &fuelpurchaseresolver.FuelPurchaseIFTAResolver{Deps: fuelpurchaseDeps} },
-		"FuelPurchaseImportBatch":      func() any { return &fuelpurchaseresolver.FuelPurchaseImportBatchResolver{Deps: fuelpurchaseDeps} },
-		"FuelPurchaseImportRow":        func() any { return &fuelpurchaseresolver.FuelPurchaseImportRowResolver{Deps: fuelpurchaseDeps} },
-		"FuelPurchaseImportSummary":    func() any { return &fuelpurchaseresolver.FuelPurchaseImportSummaryResolver{Deps: fuelpurchaseDeps} },
-		"FuelSpend":                    func() any { return &fuelpurchaseresolver.FuelSpendResolver{Deps: fuelpurchaseDeps} },
-		"IFTAFleetMPG":                 func() any { return &iftaresolver.IFTAFleetMPGResolver{Deps: iftaDeps} },
-		"IFTAJurisdiction":             func() any { return &iftaresolver.IFTAJurisdictionResolver{Deps: iftaDeps} },
-		"IFTAJurisdictionMileageEntry": func() any { return &iftaresolver.IFTAJurisdictionMileageEntryResolver{Deps: iftaDeps} },
-		"IFTAPeriod":                   func() any { return &iftaresolver.IFTAPeriodResolver{Deps: iftaDeps} },
-		"IFTAReturn":                   func() any { return &iftaresolver.IFTAReturnResolver{Deps: iftaDeps} },
-		"IFTAReturnLine":               func() any { return &iftaresolver.IFTAReturnLineResolver{Deps: iftaDeps} },
-		"IFTAReturnProblem":            func() any { return &iftaresolver.IFTAReturnProblemResolver{Deps: iftaDeps} },
-		"IFTATaxRate":                  func() any { return &iftaresolver.IFTATaxRateResolver{Deps: iftaDeps} },
-		"InboundActivity":              func() any { return &inboundmessageresolver.InboundActivityResolver{Deps: inboundmessageDeps} },
-		"InboundMailbox":               func() any { return &inboundmessageresolver.InboundMailboxResolver{Deps: inboundmessageDeps} },
-		"InboundMailboxCredentials":    func() any { return &inboundmessageresolver.InboundMailboxCredentialsResolver{Deps: inboundmessageDeps} },
-		"InboundReply":                 func() any { return &inboundreplyresolver.InboundReplyResolver{Deps: inboundreplyDeps} },
-		"InboundSnooze":                func() any { return &inboundmessageresolver.InboundSnoozeResolver{Deps: inboundmessageDeps} },
-		"InboundSplitDocument":         func() any { return &inboundmessageresolver.InboundSplitDocumentResolver{Deps: inboundmessageDeps} },
-		"InvoiceAdjustment":            func() any { return &invoiceadjustmentresolver.InvoiceAdjustmentResolver{Deps: invoiceadjustmentDeps} },
-		"InvoiceAdjustmentApprovalQueueItem": func() any {
-			return &invoiceadjustmentresolver.InvoiceAdjustmentApprovalQueueItemResolver{Deps: invoiceadjustmentDeps}
-		},
-		"InvoiceAdjustmentLine": func() any {
-			return &invoiceadjustmentresolver.InvoiceAdjustmentLineResolver{Deps: invoiceadjustmentDeps}
-		},
-		"InvoiceChargeGroup":   func() any { return &invoiceresolver.InvoiceChargeGroupResolver{Deps: invoiceDeps} },
-		"InvoiceDispute":       func() any { return &invoicedisputeresolver.InvoiceDisputeResolver{Deps: invoicedisputeDeps} },
-		"InvoiceLine":          func() any { return &invoiceresolver.InvoiceLineResolver{Deps: invoiceDeps} },
-		"JournalCardLine":      func() any { return &journalentryresolver.JournalCardLineResolver{Deps: journalentryDeps} },
-		"JournalCardPosting":   func() any { return &journalentryresolver.JournalCardPostingResolver{Deps: journalentryDeps} },
-		"JournalEntry":         func() any { return &journalentryresolver.JournalEntryResolver{Deps: journalentryDeps} },
-		"JournalEntryLine":     func() any { return &journalentryresolver.JournalEntryLineResolver{Deps: journalentryDeps} },
-		"JournalReviewSummary": func() any { return &journalentryresolver.JournalReviewSummaryResolver{Deps: journalentryDeps} },
-		"JournalSourceInfo":    func() any { return &journalentryresolver.JournalSourceInfoResolver{Deps: journalentryDeps} },
-		"LeaveControl":         func() any { return &workerleaveresolver.LeaveControlResolver{Deps: workerleaveDeps} },
-		"LeaveEntitlement":     func() any { return &workerleaveresolver.LeaveEntitlementResolver{Deps: workerleaveDeps} },
-		"LocationCategory":     func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
-		"MyPTOBalance":         func() any { return &driverportalresolver.MyPTOBalanceResolver{Deps: driverportalDeps} },
-		"OSHAAnnualSummary":    func() any { return &workerinjuryresolver.OSHAAnnualSummaryResolver{Deps: workerinjuryDeps} },
-		"Order":                func() any { return &orderresolver.OrderResolver{Deps: orderDeps} },
-		"PTOChartDataPoint":    func() any { return &workerresolver.PTOChartDataPointResolver{Deps: workerDeps} },
-		"PayCode":              func() any { return &driversettlementresolver.PayCodeResolver{Deps: driversettlementDeps} },
-		"PayMileageBand":       func() any { return &driversettlementresolver.PayMileageBandResolver{Deps: driversettlementDeps} },
-		"PayProfile":           func() any { return &driversettlementresolver.PayProfileResolver{Deps: driversettlementDeps} },
-		"PayProfileComponent":  func() any { return &driversettlementresolver.PayProfileComponentResolver{Deps: driversettlementDeps} },
-		"PayRateOverride":      func() any { return &driversettlementresolver.PayRateOverrideResolver{Deps: driversettlementDeps} },
-		"PerformanceReview":    func() any { return &performancereviewresolver.PerformanceReviewResolver{Deps: performancereviewDeps} },
-		"PerformanceReviewTemplate": func() any {
-			return &performancereviewresolver.PerformanceReviewTemplateResolver{Deps: performancereviewDeps}
-		},
-		"PortalCredential":             func() any { return &driverportalresolver.PortalCredentialResolver{Deps: driverportalDeps} },
-		"PortalTraining":               func() any { return &workertrainingresolver.PortalTrainingResolver{Deps: workertrainingDeps} },
-		"RateAgreement":                func() any { return &rateresolver.RateAgreementResolver{Deps: rateDeps} },
-		"RateMatrix":                   func() any { return &rateresolver.RateMatrixResolver{Deps: rateDeps} },
-		"RateMatrixVersion":            func() any { return &rateresolver.RateMatrixVersionResolver{Deps: rateDeps} },
-		"ReportSchedule":               func() any { return &reportresolver.ReportScheduleResolver{Deps: reportDeps} },
-		"ReviewRating":                 func() any { return &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps} },
-		"SafetyScorecard":              func() any { return &workersafetyresolver.SafetyScorecardResolver{Deps: workersafetyDeps} },
-		"ServiceFailure":               func() any { return &servicefailureresolver.ServiceFailureResolver{Deps: servicefailureDeps} },
-		"ServiceFailureShipment":       func() any { return &servicefailureresolver.ServiceFailureShipmentResolver{Deps: servicefailureDeps} },
-		"ServiceFailureStop":           func() any { return &servicefailureresolver.ServiceFailureStopResolver{Deps: servicefailureDeps} },
-		"SettlementControl":            func() any { return &driversettlementresolver.SettlementControlResolver{Deps: driversettlementDeps} },
-		"SettlementException":          func() any { return &driversettlementresolver.SettlementExceptionResolver{Deps: driversettlementDeps} },
-		"ShiftTemplate":                func() any { return &schedulingresolver.ShiftTemplateResolver{Deps: schedulingDeps} },
-		"Shipment":                     func() any { return &shipmentresolver.ShipmentResolver{Deps: shipmentDeps} },
-		"ShipmentCustomer":             func() any { return &shipmentresolver.ShipmentCustomerResolver{Deps: shipmentDeps} },
-		"ShipmentMove":                 func() any { return &shipmentresolver.ShipmentMoveResolver{Deps: shipmentDeps} },
-		"ShipmentMoveJurisdictionMile": func() any { return &shipmentresolver.ShipmentMoveJurisdictionMileResolver{Deps: shipmentDeps} },
-		"ShipmentRatingDetail":         func() any { return &shipmentresolver.ShipmentRatingDetailResolver{Deps: shipmentDeps} },
-		"ShipmentRatingReviewApproval": func() any { return &shipmentresolver.ShipmentRatingReviewApprovalResolver{Deps: shipmentDeps} },
-		"TCASubscription":              func() any { return &tablechangealertresolver.TCASubscriptionResolver{Deps: tablechangealertDeps} },
-		"Tender":                       func() any { return &tenderresolver.TenderResolver{Deps: tenderDeps} },
-		"TenderOffer":                  func() any { return &tenderresolver.TenderOfferResolver{Deps: tenderDeps} },
-		"Tractor":                      func() any { return &tractorresolver.TractorResolver{Deps: tractorDeps} },
-		"Trailer":                      func() any { return &trailerresolver.TrailerResolver{Deps: trailerDeps} },
-		"TrainingCourse":               func() any { return &workertrainingresolver.TrainingCourseResolver{Deps: workertrainingDeps} },
-		"TriageAction":                 func() any { return &inboundreplyresolver.TriageActionResolver{Deps: inboundreplyDeps} },
-		"TriageAssignee":               func() any { return &inboundmessageresolver.TriageAssigneeResolver{Deps: inboundmessageDeps} },
-		"TriageBriefing":               func() any { return &triageresolver.TriageBriefingResolver{Deps: triageDeps} },
-		"TriageConflict":               func() any { return &triageresolver.TriageConflictResolver{Deps: triageDeps} },
-		"TriageDeckItem":               func() any { return &triageresolver.TriageDeckItemResolver{Deps: triageDeps} },
-		"TriageHandOff":                func() any { return &inboundmessageresolver.TriageHandOffResolver{Deps: inboundmessageDeps} },
-		"TriageReplyTemplate":          func() any { return &inboundreplyresolver.TriageReplyTemplateResolver{Deps: inboundreplyDeps} },
-		"TriageRule":                   func() any { return &triageresolver.TriageRuleResolver{Deps: triageDeps} },
-		"TriageSettings":               func() any { return &inboundmessageresolver.TriageSettingsResolver{Deps: inboundmessageDeps} },
-		"TriageStopTimes":              func() any { return &inboundreplyresolver.TriageStopTimesResolver{Deps: inboundreplyDeps} },
-		"TriageView":                   func() any { return &inboundmessageresolver.TriageViewResolver{Deps: inboundmessageDeps} },
-		"User":                         func() any { return &tenantresolver.UserResolver{Deps: tenantDeps} },
-		"Worker":                       func() any { return &workerresolver.WorkerResolver{Deps: workerDeps} },
-		"WorkerChecklist":              func() any { return &workerchecklistresolver.WorkerChecklistResolver{Deps: workerchecklistDeps} },
-		"WorkerChecklistItem":          func() any { return &workerchecklistresolver.WorkerChecklistItemResolver{Deps: workerchecklistDeps} },
-		"WorkerChecklistProgress":      func() any { return &workerchecklistresolver.WorkerChecklistProgressResolver{Deps: workerchecklistDeps} },
-		"WorkerChecklistTemplate":      func() any { return &workerchecklistresolver.WorkerChecklistTemplateResolver{Deps: workerchecklistDeps} },
-		"WorkerChecklistTemplateItem": func() any {
-			return &workerchecklistresolver.WorkerChecklistTemplateItemResolver{Deps: workerchecklistDeps}
-		},
-		"WorkerClearinghouseQuery": func() any {
-			return &workerdrugalcoholresolver.WorkerClearinghouseQueryResolver{Deps: workerdrugalcoholDeps}
-		},
-		"WorkerCredential":             func() any { return &workercredentialresolver.WorkerCredentialResolver{Deps: workercredentialDeps} },
-		"WorkerCredentialType":         func() any { return &workercredentialresolver.WorkerCredentialTypeResolver{Deps: workercredentialDeps} },
-		"WorkerDOTTest":                func() any { return &workerdrugalcoholresolver.WorkerDOTTestResolver{Deps: workerdrugalcoholDeps} },
-		"WorkerDOTViolation":           func() any { return &workerdrugalcoholresolver.WorkerDOTViolationResolver{Deps: workerdrugalcoholDeps} },
-		"WorkerDisciplinaryAction":     func() any { return &workersafetyresolver.WorkerDisciplinaryActionResolver{Deps: workersafetyDeps} },
-		"WorkerEmploymentVerification": func() any { return &workerdqfresolver.WorkerEmploymentVerificationResolver{Deps: workerdqfDeps} },
-		"WorkerInjury":                 func() any { return &workerinjuryresolver.WorkerInjuryResolver{Deps: workerinjuryDeps} },
-		"WorkerLeaveCase":              func() any { return &workerleaveresolver.WorkerLeaveCaseResolver{Deps: workerleaveDeps} },
-		"WorkerLeaveEntry":             func() any { return &workerleaveresolver.WorkerLeaveEntryResolver{Deps: workerleaveDeps} },
-		"WorkerPTO":                    func() any { return &workerresolver.WorkerPTOResolver{Deps: workerDeps} },
-		"WorkerPayAssignment":          func() any { return &driversettlementresolver.WorkerPayAssignmentResolver{Deps: driversettlementDeps} },
-		"WorkerProfile":                func() any { return &workerresolver.WorkerProfileResolver{Deps: workerDeps} },
-		"WorkerRecognition":            func() any { return &workersafetyresolver.WorkerRecognitionResolver{Deps: workersafetyDeps} },
-		"WorkerSafetyEvent":            func() any { return &workersafetyresolver.WorkerSafetyEventResolver{Deps: workersafetyDeps} },
-		"WorkerTrainingRecord":         func() any { return &workertrainingresolver.WorkerTrainingRecordResolver{Deps: workertrainingDeps} },
+	return newSchema(shards, map[string]any{
+		"AccessorialCharge@accessorialcharge":                  accessorialchargeAccessorialCharge,
+		"AccountingAppCredential@accountingsync":               accountingsyncAccountingAppCredential,
+		"AccountingAppSettings@accountingsync":                 accountingsyncAccountingAppSettings,
+		"AccountingConnection@accountingsync":                  accountingsyncAccountingConnection,
+		"AccountingDriftFinding@accountingsync":                accountingsyncAccountingDriftFinding,
+		"AccountingDriftFixPreview@accountingsync":             accountingsyncAccountingDriftFixPreview,
+		"AccountingInboundChange@accountingsync":               accountingsyncAccountingInboundChange,
+		"AccountingInboundLine@accountingsync":                 accountingsyncAccountingInboundLine,
+		"AccountingMapping@accountingsync":                     accountingsyncAccountingMapping,
+		"AccountingReferenceObject@accountingsync":             accountingsyncAccountingReferenceObject,
+		"AccountingSyncAttempt@accountingsync":                 accountingsyncAccountingSyncAttempt,
+		"AccountingSyncAttentionGroup@accountingsync":          accountingsyncAccountingSyncAttentionGroup,
+		"AccountingSyncRecord@accountingsync":                  accountingsyncAccountingSyncRecord,
+		"BriefingSection@briefing":                             briefingBriefingSection,
+		"CaptureBatch@capture":                                 captureCaptureBatch,
+		"CaptureCoverSheet@capture":                            captureCaptureCoverSheet,
+		"CaptureDevice@capture":                                captureCaptureDevice,
+		"CaptureItem@capture":                                  captureCaptureItem,
+		"CapturePage@capture":                                  captureCapturePage,
+		"CaptureRequest@capture":                               captureCaptureRequest,
+		"CaptureSettings@capture":                              captureCaptureSettings,
+		"Carrier@carrierintelligence":                          carrierintelligenceCarrier,
+		"CarrierAssignment@shipment":                           shipmentCarrierAssignment,
+		"CarrierAssignmentAccessorial@shipment":                shipmentCarrierAssignmentAccessorial,
+		"CarrierCapacityPosting@carriercapacity":               carriercapacityCarrierCapacityPosting,
+		"CarrierEquipmentVerification@carrierintelligence":     carrierintelligenceCarrierEquipmentVerification,
+		"CarrierInsurancePolicy@carrier":                       carrierCarrierInsurancePolicy,
+		"CarrierIntelControl@carrierintelligence":              carrierintelligenceCarrierIntelControl,
+		"CarrierIntelEquipment@carrierintelligence":            carrierintelligenceCarrierIntelEquipment,
+		"CarrierIntelEvent@carrierintelligence":                carrierintelligenceCarrierIntelEvent,
+		"CarrierIntelFeedState@carrierintelligence":            carrierintelligenceCarrierIntelFeedState,
+		"CarrierIntelFinding@carrierintelligence":              carrierintelligenceCarrierIntelFinding,
+		"CarrierIntelInsurance@carrierintelligence":            carrierintelligenceCarrierIntelInsurance,
+		"CarrierIntelInsuranceChange@carrierintelligence":      carrierintelligenceCarrierIntelInsuranceChange,
+		"CarrierIntelInsuranceFiling@carrierintelligence":      carrierintelligenceCarrierIntelInsuranceFiling,
+		"CarrierIntelOverride@carrierintelligence":             carrierintelligenceCarrierIntelOverride,
+		"CarrierIntelRuleDefinition@carrierintelligence":       carrierintelligenceCarrierIntelRuleDefinition,
+		"CarrierIntelSafety@carrierintelligence":               carrierintelligenceCarrierIntelSafety,
+		"CarrierIntelSnapshot@carrierintelligence":             carrierintelligenceCarrierIntelSnapshot,
+		"CarrierMonitoringEnrollment@carrierintelligence":      carrierintelligenceCarrierMonitoringEnrollment,
+		"CarrierSettlement@carriersettlement":                  carriersettlementCarrierSettlement,
+		"CarrierSourcingResult@carrierintelligence":            carrierintelligenceCarrierSourcingResult,
+		"ChargeAllocation@shipment":                            shipmentChargeAllocation,
+		"Commodity@commodity":                                  commodityCommodity,
+		"Customer@carrierintelligence":                         carrierintelligenceCustomer,
+		"CustomerBillingProfile@customer":                      customerCustomerBillingProfile,
+		"CustomerBillingProfile@factoring":                     factoringCustomerBillingProfile,
+		"CustomerPayment@customerpayment":                      customerpaymentCustomerPayment,
+		"CustomerPaymentApplication@customerpayment":           customerpaymentCustomerPaymentApplication,
+		"CustomerTrackingProfile@customertracking":             customertrackingCustomerTrackingProfile,
+		"DOTRandomDraw@workerdrugalcohol":                      workerdrugalcoholDOTRandomDraw,
+		"DOTRandomDrawEntry@workerdrugalcohol":                 workerdrugalcoholDOTRandomDrawEntry,
+		"DOTRandomPool@workerdrugalcohol":                      workerdrugalcoholDOTRandomPool,
+		"DQFFile@workerdqf":                                    workerdqfDQFFile,
+		"DQFItem@workerdqf":                                    workerdqfDQFItem,
+		"DetentionOccurrence@detention":                        detentionDetentionOccurrence,
+		"DetentionPreviewResult@detention":                     detentionDetentionPreviewResult,
+		"DisciplinaryLadder@workersafety":                      workersafetyDisciplinaryLadder,
+		"DriverPayEvent@driversettlement":                      driversettlementDriverPayEvent,
+		"DriverPayEventComponent@driversettlement":             driversettlementDriverPayEventComponent,
+		"DriverSettlement@driversettlement":                    driversettlementDriverSettlement,
+		"DriverSettlementLine@driversettlement":                driversettlementDriverSettlementLine,
+		"DriverSettlementLineGroup@driversettlement":           driversettlementDriverSettlementLineGroup,
+		"DrugAlcoholStanding@workerdrugalcohol":                workerdrugalcoholDrugAlcoholStanding,
+		"EdiCarrierInvoice@carriersettlement":                  carriersettlementEdiCarrierInvoice,
+		"EdiFlowInstance@edi":                                  ediEdiFlowInstance,
+		"EdiLadingVersion@edi":                                 ediEdiLadingVersion,
+		"EdiMessage@edi":                                       ediEdiMessage,
+		"EdiTransfer@edi":                                      ediEdiTransfer,
+		"EscrowAccount@driversettlement":                       driversettlementEscrowAccount,
+		"FactoringAgreement@factoring":                         factoringFactoringAgreement,
+		"FactoringCheck@factoring":                             factoringFactoringCheck,
+		"FactoringCompany@factoring":                           factoringFactoringCompany,
+		"FactoringFundingPlan@factoring":                       factoringFactoringFundingPlan,
+		"FactoringInvoiceState@factoring":                      factoringFactoringInvoiceState,
+		"FactoringMovement@factoring":                          factoringFactoringMovement,
+		"FactoringNoa@factoring":                               factoringFactoringNoa,
+		"FactoringPlannedLine@factoring":                       factoringFactoringPlannedLine,
+		"FactoringPlannedMovement@factoring":                   factoringFactoringPlannedMovement,
+		"FactoringRemittance@factoring":                        factoringFactoringRemittance,
+		"FactoringRemittanceLine@factoring":                    factoringFactoringRemittanceLine,
+		"FactoringRemittancePlan@factoring":                    factoringFactoringRemittancePlan,
+		"FactoringReserveEntry@factoring":                      factoringFactoringReserveEntry,
+		"FactoringReserveMovementPlan@factoring":               factoringFactoringReserveMovementPlan,
+		"FactoringSubmission@factoring":                        factoringFactoringSubmission,
+		"FactoringSubmissionItem@factoring":                    factoringFactoringSubmissionItem,
+		"FactoringSubmissionPlan@factoring":                    factoringFactoringSubmissionPlan,
+		"FactoringTransport@factoring":                         factoringFactoringTransport,
+		"FleetSafetyRank@fleetsafety":                          fleetsafetyFleetSafetyRank,
+		"FleetSafetyTerminal@fleetsafety":                      fleetsafetyFleetSafetyTerminal,
+		"FormulaLibraryImport@formulatemplate":                 formulatemplateFormulaLibraryImport,
+		"FormulaLibraryVersion@formulalibrary":                 formulalibraryFormulaLibraryVersion,
+		"FormulaTemplate@formulatemplate":                      formulatemplateFormulaTemplate,
+		"FormulaTemplateTable@formulatemplate":                 formulatemplateFormulaTemplateTable,
+		"FuelCard@fuelpurchase":                                fuelpurchaseFuelCard,
+		"FuelCardDeskCard@fuelpurchase":                        fuelpurchaseFuelCardDeskCard,
+		"FuelFeedStatus@fuelpurchase":                          fuelpurchaseFuelFeedStatus,
+		"FuelHeldSpend@fuelpurchase":                           fuelpurchaseFuelHeldSpend,
+		"FuelJurisdictionGallons@fuelpurchase":                 fuelpurchaseFuelJurisdictionGallons,
+		"FuelPurchase@fuelpurchase":                            fuelpurchaseFuelPurchase,
+		"FuelPurchaseIFTA@fuelpurchase":                        fuelpurchaseFuelPurchaseIFTA,
+		"FuelPurchaseImportBatch@fuelpurchase":                 fuelpurchaseFuelPurchaseImportBatch,
+		"FuelPurchaseImportRow@fuelpurchase":                   fuelpurchaseFuelPurchaseImportRow,
+		"FuelPurchaseImportSummary@fuelpurchase":               fuelpurchaseFuelPurchaseImportSummary,
+		"FuelSpend@fuelpurchase":                               fuelpurchaseFuelSpend,
+		"IFTAFleetMPG@ifta":                                    iftaIFTAFleetMPG,
+		"IFTAJurisdiction@ifta":                                iftaIFTAJurisdiction,
+		"IFTAJurisdictionMileageEntry@ifta":                    iftaIFTAJurisdictionMileageEntry,
+		"IFTAPeriod@ifta":                                      iftaIFTAPeriod,
+		"IFTAReturn@ifta":                                      iftaIFTAReturn,
+		"IFTAReturnLine@ifta":                                  iftaIFTAReturnLine,
+		"IFTAReturnProblem@ifta":                               iftaIFTAReturnProblem,
+		"IFTATaxRate@ifta":                                     iftaIFTATaxRate,
+		"InboundActivity@inboundmessage":                       inboundmessageInboundActivity,
+		"InboundAttachment@inboundmessage":                     inboundmessageInboundAttachment,
+		"InboundAttachment@inboundreply":                       inboundreplyInboundAttachment,
+		"InboundMailbox@inboundmessage":                        inboundmessageInboundMailbox,
+		"InboundMailboxCredentials@inboundmessage":             inboundmessageInboundMailboxCredentials,
+		"InboundMessage@inboundmessage":                        inboundmessageInboundMessage,
+		"InboundMessage@inboundreply":                          inboundreplyInboundMessage,
+		"InboundMessage@triage":                                triageInboundMessage,
+		"InboundReply@inboundreply":                            inboundreplyInboundReply,
+		"InboundSnooze@inboundmessage":                         inboundmessageInboundSnooze,
+		"InboundSplitDocument@inboundmessage":                  inboundmessageInboundSplitDocument,
+		"Invoice@factoring":                                    factoringInvoice,
+		"Invoice@invoice":                                      invoiceInvoice,
+		"Invoice@invoicedispute":                               invoicedisputeInvoice,
+		"InvoiceAdjustment@invoiceadjustment":                  invoiceadjustmentInvoiceAdjustment,
+		"InvoiceAdjustmentApprovalQueueItem@invoiceadjustment": invoiceadjustmentInvoiceAdjustmentApprovalQueueItem,
+		"InvoiceAdjustmentLine@invoiceadjustment":              invoiceadjustmentInvoiceAdjustmentLine,
+		"InvoiceChargeGroup@invoice":                           invoiceInvoiceChargeGroup,
+		"InvoiceDispute@invoicedispute":                        invoicedisputeInvoiceDispute,
+		"InvoiceLine@invoice":                                  invoiceInvoiceLine,
+		"JournalCardLine@journalentry":                         journalentryJournalCardLine,
+		"JournalCardPosting@journalentry":                      journalentryJournalCardPosting,
+		"JournalEntry@journalentry":                            journalentryJournalEntry,
+		"JournalEntryLine@journalentry":                        journalentryJournalEntryLine,
+		"JournalReviewSummary@journalentry":                    journalentryJournalReviewSummary,
+		"JournalSourceInfo@journalentry":                       journalentryJournalSourceInfo,
+		"LeaveControl@workerleave":                             workerleaveLeaveControl,
+		"LeaveEntitlement@workerleave":                         workerleaveLeaveEntitlement,
+		"LocationCategory@locationcategory":                    locationcategoryLocationCategory,
+		"Mutation@accessorialcharge":                           accessorialchargeMutation,
+		"Mutation@accountingsync":                              accountingsyncMutation,
+		"Mutation@briefing":                                    briefingMutation,
+		"Mutation@capture":                                     captureMutation,
+		"Mutation@carriercapacity":                             carriercapacityMutation,
+		"Mutation@carrierintelligence":                         carrierintelligenceMutation,
+		"Mutation@carriersettlement":                           carriersettlementMutation,
+		"Mutation@commodity":                                   commodityMutation,
+		"Mutation@customer":                                    customerMutation,
+		"Mutation@customerpayment":                             customerpaymentMutation,
+		"Mutation@customertracking":                            customertrackingMutation,
+		"Mutation@detention":                                   detentionMutation,
+		"Mutation@dispatchconsole":                             dispatchconsoleMutation,
+		"Mutation@documenttype":                                documenttypeMutation,
+		"Mutation@driverportal":                                driverportalMutation,
+		"Mutation@driversettlement":                            driversettlementMutation,
+		"Mutation@equipmentmanufacturer":                       equipmentmanufacturerMutation,
+		"Mutation@equipmenttype":                               equipmenttypeMutation,
+		"Mutation@factoring":                                   factoringMutation,
+		"Mutation@factoringcompany":                            factoringcompanyMutation,
+		"Mutation@fleetcode":                                   fleetcodeMutation,
+		"Mutation@fleetsafety":                                 fleetsafetyMutation,
+		"Mutation@fuelpurchase":                                fuelpurchaseMutation,
+		"Mutation@fuelsurcharge":                               fuelsurchargeMutation,
+		"Mutation@hazardousmaterial":                           hazardousmaterialMutation,
+		"Mutation@holdreason":                                  holdreasonMutation,
+		"Mutation@homelayout":                                  homelayoutMutation,
+		"Mutation@ifta":                                        iftaMutation,
+		"Mutation@inboundmessage":                              inboundmessageMutation,
+		"Mutation@inboundreply":                                inboundreplyMutation,
+		"Mutation@invoice":                                     invoiceMutation,
+		"Mutation@invoiceadjustment":                           invoiceadjustmentMutation,
+		"Mutation@invoicedispute":                              invoicedisputeMutation,
+		"Mutation@journalentry":                                journalentryMutation,
+		"Mutation@locationcategory":                            locationcategoryMutation,
+		"Mutation@order":                                       orderMutation,
+		"Mutation@performancereview":                           performancereviewMutation,
+		"Mutation@report":                                      reportMutation,
+		"Mutation@scheduling":                                  schedulingMutation,
+		"Mutation@shipment":                                    shipmentMutation,
+		"Mutation@telematics":                                  telematicsMutation,
+		"Mutation@tenant":                                      tenantMutation,
+		"Mutation@tractor":                                     tractorMutation,
+		"Mutation@trailer":                                     trailerMutation,
+		"Mutation@triage":                                      triageMutation,
+		"Mutation@worker":                                      workerMutation,
+		"Mutation@workerchecklist":                             workerchecklistMutation,
+		"Mutation@workercredential":                            workercredentialMutation,
+		"Mutation@workerdqf":                                   workerdqfMutation,
+		"Mutation@workerdrugalcohol":                           workerdrugalcoholMutation,
+		"Mutation@workerinjury":                                workerinjuryMutation,
+		"Mutation@workerleave":                                 workerleaveMutation,
+		"Mutation@workersafety":                                workersafetyMutation,
+		"Mutation@workertraining":                              workertrainingMutation,
+		"MyPTOBalance@driverportal":                            driverportalMyPTOBalance,
+		"OSHAAnnualSummary@workerinjury":                       workerinjuryOSHAAnnualSummary,
+		"Order@order":                                          orderOrder,
+		"PTOChartDataPoint@worker":                             workerPTOChartDataPoint,
+		"PayCode@driversettlement":                             driversettlementPayCode,
+		"PayMileageBand@driversettlement":                      driversettlementPayMileageBand,
+		"PayProfile@driversettlement":                          driversettlementPayProfile,
+		"PayProfileComponent@driversettlement":                 driversettlementPayProfileComponent,
+		"PayRateOverride@driversettlement":                     driversettlementPayRateOverride,
+		"PerformanceReview@performancereview":                  performancereviewPerformanceReview,
+		"PerformanceReviewTemplate@performancereview":          performancereviewPerformanceReviewTemplate,
+		"PortalCredential@driverportal":                        driverportalPortalCredential,
+		"PortalTraining@workertraining":                        workertrainingPortalTraining,
+		"Query@accessorialcharge":                              accessorialchargeQuery,
+		"Query@accountingsync":                                 accountingsyncQuery,
+		"Query@briefing":                                       briefingQuery,
+		"Query@capture":                                        captureQuery,
+		"Query@carrier":                                        carrierQuery,
+		"Query@carriercapacity":                                carriercapacityQuery,
+		"Query@carrierintelligence":                            carrierintelligenceQuery,
+		"Query@carriersettlement":                              carriersettlementQuery,
+		"Query@commodity":                                      commodityQuery,
+		"Query@customer":                                       customerQuery,
+		"Query@customerpayment":                                customerpaymentQuery,
+		"Query@customertracking":                               customertrackingQuery,
+		"Query@detention":                                      detentionQuery,
+		"Query@dispatchconsole":                                dispatchconsoleQuery,
+		"Query@documenttype":                                   documenttypeQuery,
+		"Query@driverportal":                                   driverportalQuery,
+		"Query@driversettlement":                               driversettlementQuery,
+		"Query@edi":                                            ediQuery,
+		"Query@emailprofile":                                   emailprofileQuery,
+		"Query@equipmentmanufacturer":                          equipmentmanufacturerQuery,
+		"Query@equipmenttype":                                  equipmenttypeQuery,
+		"Query@factoring":                                      factoringQuery,
+		"Query@factoringcompany":                               factoringcompanyQuery,
+		"Query@fiscalperiod":                                   fiscalperiodQuery,
+		"Query@fleetcode":                                      fleetcodeQuery,
+		"Query@fleetsafety":                                    fleetsafetyQuery,
+		"Query@formulalibrary":                                 formulalibraryQuery,
+		"Query@formulatemplate":                                formulatemplateQuery,
+		"Query@fuelpurchase":                                   fuelpurchaseQuery,
+		"Query@fuelsurcharge":                                  fuelsurchargeQuery,
+		"Query@hazardousmaterial":                              hazardousmaterialQuery,
+		"Query@holdreason":                                     holdreasonQuery,
+		"Query@homelayout":                                     homelayoutQuery,
+		"Query@ifta":                                           iftaQuery,
+		"Query@inboundmessage":                                 inboundmessageQuery,
+		"Query@inboundreply":                                   inboundreplyQuery,
+		"Query@invoice":                                        invoiceQuery,
+		"Query@invoiceadjustment":                              invoiceadjustmentQuery,
+		"Query@invoicedispute":                                 invoicedisputeQuery,
+		"Query@journalentry":                                   journalentryQuery,
+		"Query@journalreversal":                                journalreversalQuery,
+		"Query@location":                                       locationQuery,
+		"Query@locationcategory":                               locationcategoryQuery,
+		"Query@manualjournal":                                  manualjournalQuery,
+		"Query@order":                                          orderQuery,
+		"Query@performancereview":                              performancereviewQuery,
+		"Query@rate":                                           rateQuery,
+		"Query@recurringshipment":                              recurringshipmentQuery,
+		"Query@report":                                         reportQuery,
+		"Query@scheduling":                                     schedulingQuery,
+		"Query@servicefailure":                                 servicefailureQuery,
+		"Query@servicefailurereasoncode":                       servicefailurereasoncodeQuery,
+		"Query@servicetype":                                    servicetypeQuery,
+		"Query@shipment":                                       shipmentQuery,
+		"Query@shipmenttype":                                   shipmenttypeQuery,
+		"Query@tablechangealert":                               tablechangealertQuery,
+		"Query@telematics":                                     telematicsQuery,
+		"Query@tenant":                                         tenantQuery,
+		"Query@tender":                                         tenderQuery,
+		"Query@tractor":                                        tractorQuery,
+		"Query@trailer":                                        trailerQuery,
+		"Query@triage":                                         triageQuery,
+		"Query@worker":                                         workerQuery,
+		"Query@workerchecklist":                                workerchecklistQuery,
+		"Query@workercredential":                               workercredentialQuery,
+		"Query@workerdqf":                                      workerdqfQuery,
+		"Query@workerdrugalcohol":                              workerdrugalcoholQuery,
+		"Query@workerinjury":                                   workerinjuryQuery,
+		"Query@workerleave":                                    workerleaveQuery,
+		"Query@workersafety":                                   workersafetyQuery,
+		"Query@workertraining":                                 workertrainingQuery,
+		"RateAgreement@rate":                                   rateRateAgreement,
+		"RateMatrix@rate":                                      rateRateMatrix,
+		"RateMatrixVersion@rate":                               rateRateMatrixVersion,
+		"ReportSchedule@report":                                reportReportSchedule,
+		"ReviewRating@performancereview":                       performancereviewReviewRating,
+		"SafetyScorecard@workersafety":                         workersafetySafetyScorecard,
+		"ServiceFailure@servicefailure":                        servicefailureServiceFailure,
+		"ServiceFailureShipment@servicefailure":                servicefailureServiceFailureShipment,
+		"ServiceFailureStop@servicefailure":                    servicefailureServiceFailureStop,
+		"SettlementControl@driversettlement":                   driversettlementSettlementControl,
+		"SettlementException@driversettlement":                 driversettlementSettlementException,
+		"ShiftTemplate@scheduling":                             schedulingShiftTemplate,
+		"Shipment@shipment":                                    shipmentShipment,
+		"ShipmentCustomer@shipment":                            shipmentShipmentCustomer,
+		"ShipmentMove@shipment":                                shipmentShipmentMove,
+		"ShipmentMoveJurisdictionMile@shipment":                shipmentShipmentMoveJurisdictionMile,
+		"ShipmentRatingDetail@shipment":                        shipmentShipmentRatingDetail,
+		"ShipmentRatingReviewApproval@shipment":                shipmentShipmentRatingReviewApproval,
+		"TCASubscription@tablechangealert":                     tablechangealertTCASubscription,
+		"Tender@tender":                                        tenderTender,
+		"TenderOffer@tender":                                   tenderTenderOffer,
+		"Tractor@tractor":                                      tractorTractor,
+		"Trailer@trailer":                                      trailerTrailer,
+		"TrainingCourse@workertraining":                        workertrainingTrainingCourse,
+		"TriageAction@inboundreply":                            inboundreplyTriageAction,
+		"TriageAssignee@inboundmessage":                        inboundmessageTriageAssignee,
+		"TriageBriefing@triage":                                triageTriageBriefing,
+		"TriageConflict@triage":                                triageTriageConflict,
+		"TriageDeckItem@triage":                                triageTriageDeckItem,
+		"TriageHandOff@inboundmessage":                         inboundmessageTriageHandOff,
+		"TriageReplyTemplate@inboundreply":                     inboundreplyTriageReplyTemplate,
+		"TriageRule@triage":                                    triageTriageRule,
+		"TriageSettings@inboundmessage":                        inboundmessageTriageSettings,
+		"TriageStopTimes@inboundreply":                         inboundreplyTriageStopTimes,
+		"TriageView@inboundmessage":                            inboundmessageTriageView,
+		"User@tenant":                                          tenantUser,
+		"Worker@worker":                                        workerWorker,
+		"WorkerChecklist@workerchecklist":                      workerchecklistWorkerChecklist,
+		"WorkerChecklistItem@workerchecklist":                  workerchecklistWorkerChecklistItem,
+		"WorkerChecklistProgress@workerchecklist":              workerchecklistWorkerChecklistProgress,
+		"WorkerChecklistTemplate@workerchecklist":              workerchecklistWorkerChecklistTemplate,
+		"WorkerChecklistTemplateItem@workerchecklist":          workerchecklistWorkerChecklistTemplateItem,
+		"WorkerClearinghouseQuery@workerdrugalcohol":           workerdrugalcoholWorkerClearinghouseQuery,
+		"WorkerCredential@workercredential":                    workercredentialWorkerCredential,
+		"WorkerCredentialType@workercredential":                workercredentialWorkerCredentialType,
+		"WorkerDOTTest@workerdrugalcohol":                      workerdrugalcoholWorkerDOTTest,
+		"WorkerDOTViolation@workerdrugalcohol":                 workerdrugalcoholWorkerDOTViolation,
+		"WorkerDisciplinaryAction@workersafety":                workersafetyWorkerDisciplinaryAction,
+		"WorkerEmploymentVerification@workerdqf":               workerdqfWorkerEmploymentVerification,
+		"WorkerInjury@workerinjury":                            workerinjuryWorkerInjury,
+		"WorkerLeaveCase@workerleave":                          workerleaveWorkerLeaveCase,
+		"WorkerLeaveEntry@workerleave":                         workerleaveWorkerLeaveEntry,
+		"WorkerPTO@worker":                                     workerWorkerPTO,
+		"WorkerPayAssignment@driversettlement":                 driversettlementWorkerPayAssignment,
+		"WorkerProfile@worker":                                 workerWorkerProfile,
+		"WorkerRecognition@workersafety":                       workersafetyWorkerRecognition,
+		"WorkerSafetyEvent@workersafety":                       workersafetyWorkerSafetyEvent,
+		"WorkerTrainingRecord@workertraining":                  workertrainingWorkerTrainingRecord,
 	}, operations)
 }
 
 func Operations() []Operation {
 	return operations
 }
-
-type customerBillingProfileResolver struct {
-	*customerCustomerBillingProfile
-	*factoringCustomerBillingProfile
-}
-
-type inboundAttachmentResolver struct {
-	*inboundmessageInboundAttachment
-	*inboundreplyInboundAttachment
-}
-
-type inboundMessageResolver struct {
-	*inboundmessageInboundMessage
-	*inboundreplyInboundMessage
-	*triageInboundMessage
-}
-
-type invoiceResolver struct {
-	*factoringInvoice
-	*invoiceInvoice
-	*invoicedisputeInvoice
-}
-
-type mutationResolver struct {
-	*accessorialchargeMutation
-	*accountingsyncMutation
-	*briefingMutation
-	*captureMutation
-	*carriercapacityMutation
-	*carrierintelligenceMutation
-	*carriersettlementMutation
-	*commodityMutation
-	*customerMutation
-	*customerpaymentMutation
-	*customertrackingMutation
-	*detentionMutation
-	*dispatchconsoleMutation
-	*documenttypeMutation
-	*driverportalMutation
-	*driversettlementMutation
-	*equipmentmanufacturerMutation
-	*equipmenttypeMutation
-	*factoringMutation
-	*factoringcompanyMutation
-	*fleetcodeMutation
-	*fleetsafetyMutation
-	*fuelpurchaseMutation
-	*fuelsurchargeMutation
-	*hazardousmaterialMutation
-	*holdreasonMutation
-	*homelayoutMutation
-	*iftaMutation
-	*inboundmessageMutation
-	*inboundreplyMutation
-	*invoiceMutation
-	*invoiceadjustmentMutation
-	*invoicedisputeMutation
-	*journalentryMutation
-	*locationcategoryMutation
-	*orderMutation
-	*performancereviewMutation
-	*reportMutation
-	*schedulingMutation
-	*shipmentMutation
-	*telematicsMutation
-	*tenantMutation
-	*tractorMutation
-	*trailerMutation
-	*triageMutation
-	*workerMutation
-	*workerchecklistMutation
-	*workercredentialMutation
-	*workerdqfMutation
-	*workerdrugalcoholMutation
-	*workerinjuryMutation
-	*workerleaveMutation
-	*workersafetyMutation
-	*workertrainingMutation
-}
-
-type queryResolver struct {
-	*accessorialchargeQuery
-	*accountingsyncQuery
-	*briefingQuery
-	*captureQuery
-	*carrierQuery
-	*carriercapacityQuery
-	*carrierintelligenceQuery
-	*carriersettlementQuery
-	*commodityQuery
-	*customerQuery
-	*customerpaymentQuery
-	*customertrackingQuery
-	*detentionQuery
-	*dispatchconsoleQuery
-	*documenttypeQuery
-	*driverportalQuery
-	*driversettlementQuery
-	*ediQuery
-	*emailprofileQuery
-	*equipmentmanufacturerQuery
-	*equipmenttypeQuery
-	*factoringQuery
-	*factoringcompanyQuery
-	*fiscalperiodQuery
-	*fleetcodeQuery
-	*fleetsafetyQuery
-	*formulalibraryQuery
-	*formulatemplateQuery
-	*fuelpurchaseQuery
-	*fuelsurchargeQuery
-	*hazardousmaterialQuery
-	*holdreasonQuery
-	*homelayoutQuery
-	*iftaQuery
-	*inboundmessageQuery
-	*inboundreplyQuery
-	*invoiceQuery
-	*invoiceadjustmentQuery
-	*invoicedisputeQuery
-	*journalentryQuery
-	*journalreversalQuery
-	*locationQuery
-	*locationcategoryQuery
-	*manualjournalQuery
-	*orderQuery
-	*performancereviewQuery
-	*rateQuery
-	*recurringshipmentQuery
-	*reportQuery
-	*schedulingQuery
-	*servicefailureQuery
-	*servicefailurereasoncodeQuery
-	*servicetypeQuery
-	*shipmentQuery
-	*shipmenttypeQuery
-	*tablechangealertQuery
-	*telematicsQuery
-	*tenantQuery
-	*tenderQuery
-	*tractorQuery
-	*trailerQuery
-	*triageQuery
-	*workerQuery
-	*workerchecklistQuery
-	*workercredentialQuery
-	*workerdqfQuery
-	*workerdrugalcoholQuery
-	*workerinjuryQuery
-	*workerleaveQuery
-	*workersafetyQuery
-	*workertrainingQuery
-}
-
-type (
-	customerCustomerBillingProfile  = customerresolver.CustomerBillingProfileResolver
-	factoringCustomerBillingProfile = factoringresolver.CustomerBillingProfileResolver
-	inboundmessageInboundAttachment = inboundmessageresolver.InboundAttachmentResolver
-	inboundreplyInboundAttachment   = inboundreplyresolver.InboundAttachmentResolver
-	inboundmessageInboundMessage    = inboundmessageresolver.InboundMessageResolver
-	inboundreplyInboundMessage      = inboundreplyresolver.InboundMessageResolver
-	triageInboundMessage            = triageresolver.InboundMessageResolver
-	factoringInvoice                = factoringresolver.InvoiceResolver
-	invoiceInvoice                  = invoiceresolver.InvoiceResolver
-	invoicedisputeInvoice           = invoicedisputeresolver.InvoiceResolver
-	accessorialchargeMutation       = accessorialchargeresolver.MutationResolver
-	accountingsyncMutation          = accountingsyncresolver.MutationResolver
-	briefingMutation                = briefingresolver.MutationResolver
-	captureMutation                 = captureresolver.MutationResolver
-	carriercapacityMutation         = carriercapacityresolver.MutationResolver
-	carrierintelligenceMutation     = carrierintelligenceresolver.MutationResolver
-	carriersettlementMutation       = carriersettlementresolver.MutationResolver
-	commodityMutation               = commodityresolver.MutationResolver
-	customerMutation                = customerresolver.MutationResolver
-	customerpaymentMutation         = customerpaymentresolver.MutationResolver
-	customertrackingMutation        = customertrackingresolver.MutationResolver
-	detentionMutation               = detentionresolver.MutationResolver
-	dispatchconsoleMutation         = dispatchconsoleresolver.MutationResolver
-	documenttypeMutation            = documenttyperesolver.MutationResolver
-	driverportalMutation            = driverportalresolver.MutationResolver
-	driversettlementMutation        = driversettlementresolver.MutationResolver
-	equipmentmanufacturerMutation   = equipmentmanufacturerresolver.MutationResolver
-	equipmenttypeMutation           = equipmenttyperesolver.MutationResolver
-	factoringMutation               = factoringresolver.MutationResolver
-	factoringcompanyMutation        = factoringcompanyresolver.MutationResolver
-	fleetcodeMutation               = fleetcoderesolver.MutationResolver
-	fleetsafetyMutation             = fleetsafetyresolver.MutationResolver
-	fuelpurchaseMutation            = fuelpurchaseresolver.MutationResolver
-	fuelsurchargeMutation           = fuelsurchargeresolver.MutationResolver
-	hazardousmaterialMutation       = hazardousmaterialresolver.MutationResolver
-	holdreasonMutation              = holdreasonresolver.MutationResolver
-	homelayoutMutation              = homelayoutresolver.MutationResolver
-	iftaMutation                    = iftaresolver.MutationResolver
-	inboundmessageMutation          = inboundmessageresolver.MutationResolver
-	inboundreplyMutation            = inboundreplyresolver.MutationResolver
-	invoiceMutation                 = invoiceresolver.MutationResolver
-	invoiceadjustmentMutation       = invoiceadjustmentresolver.MutationResolver
-	invoicedisputeMutation          = invoicedisputeresolver.MutationResolver
-	journalentryMutation            = journalentryresolver.MutationResolver
-	locationcategoryMutation        = locationcategoryresolver.MutationResolver
-	orderMutation                   = orderresolver.MutationResolver
-	performancereviewMutation       = performancereviewresolver.MutationResolver
-	reportMutation                  = reportresolver.MutationResolver
-	schedulingMutation              = schedulingresolver.MutationResolver
-	shipmentMutation                = shipmentresolver.MutationResolver
-	telematicsMutation              = telematicsresolver.MutationResolver
-	tenantMutation                  = tenantresolver.MutationResolver
-	tractorMutation                 = tractorresolver.MutationResolver
-	trailerMutation                 = trailerresolver.MutationResolver
-	triageMutation                  = triageresolver.MutationResolver
-	workerMutation                  = workerresolver.MutationResolver
-	workerchecklistMutation         = workerchecklistresolver.MutationResolver
-	workercredentialMutation        = workercredentialresolver.MutationResolver
-	workerdqfMutation               = workerdqfresolver.MutationResolver
-	workerdrugalcoholMutation       = workerdrugalcoholresolver.MutationResolver
-	workerinjuryMutation            = workerinjuryresolver.MutationResolver
-	workerleaveMutation             = workerleaveresolver.MutationResolver
-	workersafetyMutation            = workersafetyresolver.MutationResolver
-	workertrainingMutation          = workertrainingresolver.MutationResolver
-	accessorialchargeQuery          = accessorialchargeresolver.QueryResolver
-	accountingsyncQuery             = accountingsyncresolver.QueryResolver
-	briefingQuery                   = briefingresolver.QueryResolver
-	captureQuery                    = captureresolver.QueryResolver
-	carrierQuery                    = carrierresolver.QueryResolver
-	carriercapacityQuery            = carriercapacityresolver.QueryResolver
-	carrierintelligenceQuery        = carrierintelligenceresolver.QueryResolver
-	carriersettlementQuery          = carriersettlementresolver.QueryResolver
-	commodityQuery                  = commodityresolver.QueryResolver
-	customerQuery                   = customerresolver.QueryResolver
-	customerpaymentQuery            = customerpaymentresolver.QueryResolver
-	customertrackingQuery           = customertrackingresolver.QueryResolver
-	detentionQuery                  = detentionresolver.QueryResolver
-	dispatchconsoleQuery            = dispatchconsoleresolver.QueryResolver
-	documenttypeQuery               = documenttyperesolver.QueryResolver
-	driverportalQuery               = driverportalresolver.QueryResolver
-	driversettlementQuery           = driversettlementresolver.QueryResolver
-	ediQuery                        = ediresolver.QueryResolver
-	emailprofileQuery               = emailprofileresolver.QueryResolver
-	equipmentmanufacturerQuery      = equipmentmanufacturerresolver.QueryResolver
-	equipmenttypeQuery              = equipmenttyperesolver.QueryResolver
-	factoringQuery                  = factoringresolver.QueryResolver
-	factoringcompanyQuery           = factoringcompanyresolver.QueryResolver
-	fiscalperiodQuery               = fiscalperiodresolver.QueryResolver
-	fleetcodeQuery                  = fleetcoderesolver.QueryResolver
-	fleetsafetyQuery                = fleetsafetyresolver.QueryResolver
-	formulalibraryQuery             = formulalibraryresolver.QueryResolver
-	formulatemplateQuery            = formulatemplateresolver.QueryResolver
-	fuelpurchaseQuery               = fuelpurchaseresolver.QueryResolver
-	fuelsurchargeQuery              = fuelsurchargeresolver.QueryResolver
-	hazardousmaterialQuery          = hazardousmaterialresolver.QueryResolver
-	holdreasonQuery                 = holdreasonresolver.QueryResolver
-	homelayoutQuery                 = homelayoutresolver.QueryResolver
-	iftaQuery                       = iftaresolver.QueryResolver
-	inboundmessageQuery             = inboundmessageresolver.QueryResolver
-	inboundreplyQuery               = inboundreplyresolver.QueryResolver
-	invoiceQuery                    = invoiceresolver.QueryResolver
-	invoiceadjustmentQuery          = invoiceadjustmentresolver.QueryResolver
-	invoicedisputeQuery             = invoicedisputeresolver.QueryResolver
-	journalentryQuery               = journalentryresolver.QueryResolver
-	journalreversalQuery            = journalreversalresolver.QueryResolver
-	locationQuery                   = locationresolver.QueryResolver
-	locationcategoryQuery           = locationcategoryresolver.QueryResolver
-	manualjournalQuery              = manualjournalresolver.QueryResolver
-	orderQuery                      = orderresolver.QueryResolver
-	performancereviewQuery          = performancereviewresolver.QueryResolver
-	rateQuery                       = rateresolver.QueryResolver
-	recurringshipmentQuery          = recurringshipmentresolver.QueryResolver
-	reportQuery                     = reportresolver.QueryResolver
-	schedulingQuery                 = schedulingresolver.QueryResolver
-	servicefailureQuery             = servicefailureresolver.QueryResolver
-	servicefailurereasoncodeQuery   = servicefailurereasoncoderesolver.QueryResolver
-	servicetypeQuery                = servicetyperesolver.QueryResolver
-	shipmentQuery                   = shipmentresolver.QueryResolver
-	shipmenttypeQuery               = shipmenttyperesolver.QueryResolver
-	tablechangealertQuery           = tablechangealertresolver.QueryResolver
-	telematicsQuery                 = telematicsresolver.QueryResolver
-	tenantQuery                     = tenantresolver.QueryResolver
-	tenderQuery                     = tenderresolver.QueryResolver
-	tractorQuery                    = tractorresolver.QueryResolver
-	trailerQuery                    = trailerresolver.QueryResolver
-	triageQuery                     = triageresolver.QueryResolver
-	workerQuery                     = workerresolver.QueryResolver
-	workerchecklistQuery            = workerchecklistresolver.QueryResolver
-	workercredentialQuery           = workercredentialresolver.QueryResolver
-	workerdqfQuery                  = workerdqfresolver.QueryResolver
-	workerdrugalcoholQuery          = workerdrugalcoholresolver.QueryResolver
-	workerinjuryQuery               = workerinjuryresolver.QueryResolver
-	workerleaveQuery                = workerleaveresolver.QueryResolver
-	workersafetyQuery               = workersafetyresolver.QueryResolver
-	workertrainingQuery             = workertrainingresolver.QueryResolver
-)

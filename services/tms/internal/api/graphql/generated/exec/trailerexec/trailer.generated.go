@@ -43,7 +43,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createTrailer_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateTrailer(ctx, fc.Args["input"].(gqlmodel.TrailerInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@trailer").CreateTrailer(ctx, fc.Args["input"].(gqlmodel.TrailerInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTrailer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtrailerᚐTrailer),
 			},
@@ -56,7 +56,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateTrailer_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateTrailer(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.TrailerInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@trailer").UpdateTrailer(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.TrailerInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTrailer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtrailerᚐTrailer),
 			},
@@ -69,7 +69,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_patchTrailer_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchTrailer(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.TrailerPatchInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@trailer").PatchTrailer(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.TrailerPatchInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTrailer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtrailerᚐTrailer),
 			},
@@ -82,7 +82,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_bulkUpdateTrailerStatus_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkUpdateTrailerStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateTrailerStatusInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@trailer").BulkUpdateTrailerStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateTrailerStatusInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTrailer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtrailerᚐTrailerᚄ),
 			},
@@ -95,7 +95,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_locateTrailer_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").LocateTrailer(ctx, fc.Args["input"].(gqlmodel.LocateTrailerInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@trailer").LocateTrailer(ctx, fc.Args["input"].(gqlmodel.LocateTrailerInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNEquipmentContinuity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmentcontinuityᚐEquipmentContinuity),
 			},
@@ -111,7 +111,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_trailers_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Trailers(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["status"].(*domaintypes.EquipmentStatus), fc.Args["includeEquipmentDetails"].(*bool), fc.Args["includeFleetDetails"].(*bool))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@trailer").Trailers(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["status"].(*domaintypes.EquipmentStatus), fc.Args["includeEquipmentDetails"].(*bool), fc.Args["includeFleetDetails"].(*bool))
 				},
 				Marshal: gqlexec.Marshal(marshalNTrailerConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTrailerConnection),
 			},
@@ -124,7 +124,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_trailer_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Trailer(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@trailer").Trailer(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOTrailer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtrailerᚐTrailer),
 			},
@@ -209,7 +209,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trailer.Trailer)
-					return gqlexec.Resolver[resolverTrailer](ec, "Trailer").RegistrationStateID(ctx, obj)
+					return gqlexec.Resolver[TrailerResolver](ec, "Trailer@trailer").RegistrationStateID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -220,7 +220,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trailer.Trailer)
-					return gqlexec.Resolver[resolverTrailer](ec, "Trailer").FleetCodeID(ctx, obj)
+					return gqlexec.Resolver[TrailerResolver](ec, "Trailer@trailer").FleetCodeID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -242,7 +242,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trailer.Trailer)
-					return gqlexec.Resolver[resolverTrailer](ec, "Trailer").EquipmentStatus(ctx, obj)
+					return gqlexec.Resolver[TrailerResolver](ec, "Trailer@trailer").EquipmentStatus(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNEquipmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐEquipmentStatus),
 			},
@@ -359,7 +359,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trailer.Trailer)
-					return gqlexec.Resolver[resolverTrailer](ec, "Trailer").LastKnownLocationID(ctx, obj)
+					return gqlexec.Resolver[TrailerResolver](ec, "Trailer@trailer").LastKnownLocationID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -380,7 +380,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trailer.Trailer)
-					return gqlexec.Resolver[resolverTrailer](ec, "Trailer").InProgressMoveID(ctx, obj)
+					return gqlexec.Resolver[TrailerResolver](ec, "Trailer@trailer").InProgressMoveID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -568,7 +568,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "LocationReference",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trailer.Trailer)
-					return gqlexec.Resolver[resolverTrailer](ec, "Trailer").LastKnownLocation(ctx, obj)
+					return gqlexec.Resolver[TrailerResolver](ec, "Trailer@trailer").LastKnownLocation(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOLocationReference2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐLocationReference),
 			},
@@ -647,13 +647,13 @@ var Shard = &gqlexec.Shard{
 		{Name: "TrailerPatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputTrailerPatchInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "Trailer", Check: func(r any) bool { _, ok := r.(resolverTrailer); return ok }},
+		{Root: "Mutation@trailer", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@trailer", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "Trailer@trailer", Check: func(r any) bool { _, ok := r.(TrailerResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateTrailer(ctx context.Context, input gqlmodel.TrailerInput) (*trailer.Trailer, error)
 	UpdateTrailer(ctx context.Context, id string, input gqlmodel.TrailerInput) (*trailer.Trailer, error)
 	PatchTrailer(ctx context.Context, id string, input gqlmodel.TrailerPatchInput) (*trailer.Trailer, error)
@@ -661,12 +661,12 @@ type resolverMutation interface {
 	LocateTrailer(ctx context.Context, input gqlmodel.LocateTrailerInput) (*equipmentcontinuity.EquipmentContinuity, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	Trailers(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool) (*gqlmodel.TrailerConnection, error)
 	Trailer(ctx context.Context, id string) (*trailer.Trailer, error)
 }
 
-type resolverTrailer interface {
+type TrailerResolver interface {
 	RegistrationStateID(ctx context.Context, obj *trailer.Trailer) (*string, error)
 	FleetCodeID(ctx context.Context, obj *trailer.Trailer) (*string, error)
 	EquipmentStatus(ctx context.Context, obj *trailer.Trailer) (domaintypes.EquipmentStatus, error)

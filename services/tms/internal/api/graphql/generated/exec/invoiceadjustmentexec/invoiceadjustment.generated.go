@@ -162,7 +162,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceadjustment.InvoiceAdjustment)
-					return gqlexec.Resolver[resolverInvoiceAdjustment](ec, "InvoiceAdjustment").RebillStrategy(ctx, obj)
+					return gqlexec.Resolver[InvoiceAdjustmentResolver](ec, "InvoiceAdjustment@invoiceadjustment").RebillStrategy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInvoiceAdjustmentRebillStrategy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐRebillStrategy),
 			},
@@ -204,7 +204,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceadjustment.InvoiceAdjustment)
-					return gqlexec.Resolver[resolverInvoiceAdjustment](ec, "InvoiceAdjustment").CreditTotalAmount(ctx, obj)
+					return gqlexec.Resolver[InvoiceAdjustmentResolver](ec, "InvoiceAdjustment@invoiceadjustment").CreditTotalAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -216,7 +216,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceadjustment.InvoiceAdjustment)
-					return gqlexec.Resolver[resolverInvoiceAdjustment](ec, "InvoiceAdjustment").RebillTotalAmount(ctx, obj)
+					return gqlexec.Resolver[InvoiceAdjustmentResolver](ec, "InvoiceAdjustment@invoiceadjustment").RebillTotalAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -228,7 +228,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceadjustment.InvoiceAdjustment)
-					return gqlexec.Resolver[resolverInvoiceAdjustment](ec, "InvoiceAdjustment").NetDeltaAmount(ctx, obj)
+					return gqlexec.Resolver[InvoiceAdjustmentResolver](ec, "InvoiceAdjustment@invoiceadjustment").NetDeltaAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -240,7 +240,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceadjustment.InvoiceAdjustment)
-					return gqlexec.Resolver[resolverInvoiceAdjustment](ec, "InvoiceAdjustment").RerateVariancePercent(ctx, obj)
+					return gqlexec.Resolver[InvoiceAdjustmentResolver](ec, "InvoiceAdjustment@invoiceadjustment").RerateVariancePercent(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -397,7 +397,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceadjustment.InvoiceAdjustment)
-					return gqlexec.Resolver[resolverInvoiceAdjustment](ec, "InvoiceAdjustment").SupportingDocumentIds(ctx, obj)
+					return gqlexec.Resolver[InvoiceAdjustmentResolver](ec, "InvoiceAdjustment@invoiceadjustment").SupportingDocumentIds(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNID2ᚕstringᚄ),
 			},
@@ -566,7 +566,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
-					return gqlexec.Resolver[resolverInvoiceAdjustmentApprovalQueueItem](ec, "InvoiceAdjustmentApprovalQueueItem").RebillStrategy(ctx, obj)
+					return gqlexec.Resolver[InvoiceAdjustmentApprovalQueueItemResolver](ec, "InvoiceAdjustmentApprovalQueueItem@invoiceadjustment").RebillStrategy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInvoiceAdjustmentRebillStrategy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐRebillStrategy),
 			},
@@ -608,7 +608,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
-					return gqlexec.Resolver[resolverInvoiceAdjustmentApprovalQueueItem](ec, "InvoiceAdjustmentApprovalQueueItem").CreditTotalAmount(ctx, obj)
+					return gqlexec.Resolver[InvoiceAdjustmentApprovalQueueItemResolver](ec, "InvoiceAdjustmentApprovalQueueItem@invoiceadjustment").CreditTotalAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -620,7 +620,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
-					return gqlexec.Resolver[resolverInvoiceAdjustmentApprovalQueueItem](ec, "InvoiceAdjustmentApprovalQueueItem").RebillTotalAmount(ctx, obj)
+					return gqlexec.Resolver[InvoiceAdjustmentApprovalQueueItemResolver](ec, "InvoiceAdjustmentApprovalQueueItem@invoiceadjustment").RebillTotalAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -632,7 +632,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
-					return gqlexec.Resolver[resolverInvoiceAdjustmentApprovalQueueItem](ec, "InvoiceAdjustmentApprovalQueueItem").NetDeltaAmount(ctx, obj)
+					return gqlexec.Resolver[InvoiceAdjustmentApprovalQueueItemResolver](ec, "InvoiceAdjustmentApprovalQueueItem@invoiceadjustment").NetDeltaAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -644,7 +644,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
-					return gqlexec.Resolver[resolverInvoiceAdjustmentApprovalQueueItem](ec, "InvoiceAdjustmentApprovalQueueItem").RerateVariancePercent(ctx, obj)
+					return gqlexec.Resolver[InvoiceAdjustmentApprovalQueueItemResolver](ec, "InvoiceAdjustmentApprovalQueueItem@invoiceadjustment").RerateVariancePercent(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -946,7 +946,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceadjustment.InvoiceAdjustmentLine)
-					return gqlexec.Resolver[resolverInvoiceAdjustmentLine](ec, "InvoiceAdjustmentLine").CreditQuantity(ctx, obj)
+					return gqlexec.Resolver[InvoiceAdjustmentLineResolver](ec, "InvoiceAdjustmentLine@invoiceadjustment").CreditQuantity(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -958,7 +958,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceadjustment.InvoiceAdjustmentLine)
-					return gqlexec.Resolver[resolverInvoiceAdjustmentLine](ec, "InvoiceAdjustmentLine").CreditAmount(ctx, obj)
+					return gqlexec.Resolver[InvoiceAdjustmentLineResolver](ec, "InvoiceAdjustmentLine@invoiceadjustment").CreditAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -970,7 +970,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceadjustment.InvoiceAdjustmentLine)
-					return gqlexec.Resolver[resolverInvoiceAdjustmentLine](ec, "InvoiceAdjustmentLine").RemainingEligibleAmount(ctx, obj)
+					return gqlexec.Resolver[InvoiceAdjustmentLineResolver](ec, "InvoiceAdjustmentLine@invoiceadjustment").RemainingEligibleAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -982,7 +982,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceadjustment.InvoiceAdjustmentLine)
-					return gqlexec.Resolver[resolverInvoiceAdjustmentLine](ec, "InvoiceAdjustmentLine").RebillQuantity(ctx, obj)
+					return gqlexec.Resolver[InvoiceAdjustmentLineResolver](ec, "InvoiceAdjustmentLine@invoiceadjustment").RebillQuantity(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -994,7 +994,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceadjustment.InvoiceAdjustmentLine)
-					return gqlexec.Resolver[resolverInvoiceAdjustmentLine](ec, "InvoiceAdjustmentLine").RebillAmount(ctx, obj)
+					return gqlexec.Resolver[InvoiceAdjustmentLineResolver](ec, "InvoiceAdjustmentLine@invoiceadjustment").RebillAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1189,7 +1189,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_approveInvoiceAdjustment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApproveInvoiceAdjustment(ctx, fc.Args["adjustmentId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@invoiceadjustment").ApproveInvoiceAdjustment(ctx, fc.Args["adjustmentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustment),
 			},
@@ -1202,7 +1202,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_rejectInvoiceAdjustment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RejectInvoiceAdjustment(ctx, fc.Args["input"].(gqlmodel.RejectInvoiceAdjustmentInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@invoiceadjustment").RejectInvoiceAdjustment(ctx, fc.Args["input"].(gqlmodel.RejectInvoiceAdjustmentInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustment),
 			},
@@ -1217,7 +1217,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_invoiceAdjustment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").InvoiceAdjustment(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@invoiceadjustment").InvoiceAdjustment(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOInvoiceAdjustment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustment),
 			},
@@ -1231,7 +1231,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_invoiceAdjustmentApprovals_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").InvoiceAdjustmentApprovals(ctx, fc.Args["input"].(gqlmodel.InvoiceAdjustmentApprovalsInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@invoiceadjustment").InvoiceAdjustmentApprovals(ctx, fc.Args["input"].(gqlmodel.InvoiceAdjustmentApprovalsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentApprovalQueueConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐInvoiceAdjustmentApprovalQueueConnection),
 			},
@@ -1243,7 +1243,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "InvoiceAdjustmentOperationsSummary",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").InvoiceAdjustmentOperationsSummary(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@invoiceadjustment").InvoiceAdjustmentOperationsSummary(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentOperationsSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentOperationsSummary),
 			},
@@ -1254,15 +1254,31 @@ var Shard = &gqlexec.Shard{
 		{Name: "RejectInvoiceAdjustmentInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRejectInvoiceAdjustmentInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "InvoiceAdjustment", Check: func(r any) bool { _, ok := r.(resolverInvoiceAdjustment); return ok }},
-		{Root: "InvoiceAdjustmentApprovalQueueItem", Check: func(r any) bool { _, ok := r.(resolverInvoiceAdjustmentApprovalQueueItem); return ok }},
-		{Root: "InvoiceAdjustmentLine", Check: func(r any) bool { _, ok := r.(resolverInvoiceAdjustmentLine); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "InvoiceAdjustmentApprovalQueueItem@invoiceadjustment", Check: func(r any) bool { _, ok := r.(InvoiceAdjustmentApprovalQueueItemResolver); return ok }},
+		{Root: "InvoiceAdjustmentLine@invoiceadjustment", Check: func(r any) bool { _, ok := r.(InvoiceAdjustmentLineResolver); return ok }},
+		{Root: "InvoiceAdjustment@invoiceadjustment", Check: func(r any) bool { _, ok := r.(InvoiceAdjustmentResolver); return ok }},
+		{Root: "Mutation@invoiceadjustment", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@invoiceadjustment", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverInvoiceAdjustment interface {
+type InvoiceAdjustmentApprovalQueueItemResolver interface {
+	RebillStrategy(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (*invoiceadjustment.RebillStrategy, error)
+	CreditTotalAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error)
+	RebillTotalAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error)
+	NetDeltaAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error)
+	RerateVariancePercent(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error)
+}
+
+type InvoiceAdjustmentLineResolver interface {
+	CreditQuantity(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustmentLine) (string, error)
+	CreditAmount(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustmentLine) (string, error)
+	RemainingEligibleAmount(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustmentLine) (string, error)
+	RebillQuantity(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustmentLine) (string, error)
+	RebillAmount(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustmentLine) (string, error)
+}
+
+type InvoiceAdjustmentResolver interface {
 	RebillStrategy(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) (*invoiceadjustment.RebillStrategy, error)
 	CreditTotalAmount(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) (string, error)
 	RebillTotalAmount(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) (string, error)
@@ -1271,28 +1287,12 @@ type resolverInvoiceAdjustment interface {
 	SupportingDocumentIds(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) ([]string, error)
 }
 
-type resolverInvoiceAdjustmentApprovalQueueItem interface {
-	RebillStrategy(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (*invoiceadjustment.RebillStrategy, error)
-	CreditTotalAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error)
-	RebillTotalAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error)
-	NetDeltaAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error)
-	RerateVariancePercent(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error)
-}
-
-type resolverInvoiceAdjustmentLine interface {
-	CreditQuantity(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustmentLine) (string, error)
-	CreditAmount(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustmentLine) (string, error)
-	RemainingEligibleAmount(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustmentLine) (string, error)
-	RebillQuantity(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustmentLine) (string, error)
-	RebillAmount(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustmentLine) (string, error)
-}
-
-type resolverMutation interface {
+type MutationResolver interface {
 	ApproveInvoiceAdjustment(ctx context.Context, adjustmentID string) (*invoiceadjustment.InvoiceAdjustment, error)
 	RejectInvoiceAdjustment(ctx context.Context, input gqlmodel.RejectInvoiceAdjustmentInput) (*invoiceadjustment.InvoiceAdjustment, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	InvoiceAdjustment(ctx context.Context, id string) (*invoiceadjustment.InvoiceAdjustment, error)
 	InvoiceAdjustmentApprovals(ctx context.Context, input gqlmodel.InvoiceAdjustmentApprovalsInput) (*gqlmodel.InvoiceAdjustmentApprovalQueueConnection, error)
 	InvoiceAdjustmentOperationsSummary(ctx context.Context) (*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary, error)

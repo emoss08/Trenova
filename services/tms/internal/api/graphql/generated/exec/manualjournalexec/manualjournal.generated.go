@@ -489,7 +489,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_manualJournals_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ManualJournals(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@manualjournal").ManualJournals(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNManualJournalConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManualJournalConnection),
 			},
@@ -502,7 +502,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_manualJournal_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ManualJournal(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@manualjournal").ManualJournal(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOManualJournal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐRequest),
 			},
@@ -516,18 +516,18 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_manualJournalCard_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ManualJournalCard(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@manualjournal").ManualJournalCard(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNManualJournalCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋappᚋjournalcardserviceᚐManualJournalCard),
 			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Query@manualjournal", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	ManualJournals(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ManualJournalConnection, error)
 	ManualJournal(ctx context.Context, id string) (*manualjournal.Request, error)
 	ManualJournalCard(ctx context.Context, id string) (*journalcardservice.ManualJournalCard, error)

@@ -252,7 +252,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_emailProfiles_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").EmailProfiles(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@emailprofile").EmailProfiles(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNEmailProfileConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEmailProfileConnection),
 			},
@@ -265,18 +265,18 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_emailProfile_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").EmailProfile(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@emailprofile").EmailProfile(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOEmailProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProfile),
 			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Query@emailprofile", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	EmailProfiles(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.EmailProfileConnection, error)
 	EmailProfile(ctx context.Context, id string) (*email.Profile, error)
 }

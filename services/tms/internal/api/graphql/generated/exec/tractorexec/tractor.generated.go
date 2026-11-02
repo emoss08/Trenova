@@ -40,7 +40,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createTractor_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateTractor(ctx, fc.Args["input"].(gqlmodel.TractorInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@tractor").CreateTractor(ctx, fc.Args["input"].(gqlmodel.TractorInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtractorᚐTractor),
 			},
@@ -53,7 +53,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateTractor_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateTractor(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.TractorInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@tractor").UpdateTractor(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.TractorInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtractorᚐTractor),
 			},
@@ -66,7 +66,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_patchTractor_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchTractor(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.TractorPatchInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@tractor").PatchTractor(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.TractorPatchInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtractorᚐTractor),
 			},
@@ -79,7 +79,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_bulkUpdateTractorStatus_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkUpdateTractorStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateTractorStatusInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@tractor").BulkUpdateTractorStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateTractorStatusInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTractor2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtractorᚐTractorᚄ),
 			},
@@ -92,7 +92,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_locateTractor_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").LocateTractor(ctx, fc.Args["input"].(gqlmodel.LocateTractorInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@tractor").LocateTractor(ctx, fc.Args["input"].(gqlmodel.LocateTractorInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNEquipmentContinuity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmentcontinuityᚐEquipmentContinuity),
 			},
@@ -108,7 +108,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_tractors_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Tractors(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["status"].(*domaintypes.EquipmentStatus), fc.Args["includeEquipmentDetails"].(*bool), fc.Args["includeFleetDetails"].(*bool), fc.Args["includeWorkerDetails"].(*bool))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@tractor").Tractors(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["status"].(*domaintypes.EquipmentStatus), fc.Args["includeEquipmentDetails"].(*bool), fc.Args["includeFleetDetails"].(*bool), fc.Args["includeWorkerDetails"].(*bool))
 				},
 				Marshal: gqlexec.Marshal(marshalNTractorConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTractorConnection),
 			},
@@ -121,7 +121,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_tractor_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Tractor(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@tractor").Tractor(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtractorᚐTractor),
 			},
@@ -194,7 +194,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tractor.Tractor)
-					return gqlexec.Resolver[resolverTractor](ec, "Tractor").StateID(ctx, obj)
+					return gqlexec.Resolver[TractorResolver](ec, "Tractor@tractor").StateID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -205,7 +205,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tractor.Tractor)
-					return gqlexec.Resolver[resolverTractor](ec, "Tractor").FleetCodeID(ctx, obj)
+					return gqlexec.Resolver[TractorResolver](ec, "Tractor@tractor").FleetCodeID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -216,7 +216,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tractor.Tractor)
-					return gqlexec.Resolver[resolverTractor](ec, "Tractor").SecondaryWorkerID(ctx, obj)
+					return gqlexec.Resolver[TractorResolver](ec, "Tractor@tractor").SecondaryWorkerID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -238,7 +238,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tractor.Tractor)
-					return gqlexec.Resolver[resolverTractor](ec, "Tractor").EquipmentStatus(ctx, obj)
+					return gqlexec.Resolver[TractorResolver](ec, "Tractor@tractor").EquipmentStatus(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNEquipmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐEquipmentStatus),
 			},
@@ -337,7 +337,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tractor.Tractor)
-					return gqlexec.Resolver[resolverTractor](ec, "Tractor").LastKnownLocationID(ctx, obj)
+					return gqlexec.Resolver[TractorResolver](ec, "Tractor@tractor").LastKnownLocationID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -358,7 +358,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tractor.Tractor)
-					return gqlexec.Resolver[resolverTractor](ec, "Tractor").InProgressMoveID(ctx, obj)
+					return gqlexec.Resolver[TractorResolver](ec, "Tractor@tractor").InProgressMoveID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -586,7 +586,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "LocationReference",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tractor.Tractor)
-					return gqlexec.Resolver[resolverTractor](ec, "Tractor").LastKnownLocation(ctx, obj)
+					return gqlexec.Resolver[TractorResolver](ec, "Tractor@tractor").LastKnownLocation(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOLocationReference2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐLocationReference),
 			},
@@ -665,13 +665,13 @@ var Shard = &gqlexec.Shard{
 		{Name: "TractorPatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputTractorPatchInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "Tractor", Check: func(r any) bool { _, ok := r.(resolverTractor); return ok }},
+		{Root: "Mutation@tractor", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@tractor", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "Tractor@tractor", Check: func(r any) bool { _, ok := r.(TractorResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateTractor(ctx context.Context, input gqlmodel.TractorInput) (*tractor.Tractor, error)
 	UpdateTractor(ctx context.Context, id string, input gqlmodel.TractorInput) (*tractor.Tractor, error)
 	PatchTractor(ctx context.Context, id string, input gqlmodel.TractorPatchInput) (*tractor.Tractor, error)
@@ -679,12 +679,12 @@ type resolverMutation interface {
 	LocateTractor(ctx context.Context, input gqlmodel.LocateTractorInput) (*equipmentcontinuity.EquipmentContinuity, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	Tractors(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool, includeWorkerDetails *bool) (*gqlmodel.TractorConnection, error)
 	Tractor(ctx context.Context, id string) (*tractor.Tractor, error)
 }
 
-type resolverTractor interface {
+type TractorResolver interface {
 	StateID(ctx context.Context, obj *tractor.Tractor) (*string, error)
 	FleetCodeID(ctx context.Context, obj *tractor.Tractor) (*string, error)
 	SecondaryWorkerID(ctx context.Context, obj *tractor.Tractor) (*string, error)

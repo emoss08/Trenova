@@ -322,7 +322,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_pageAccess_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PageAccess(ctx, fc.Args["location"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@pageaccess").PageAccess(ctx, fc.Args["location"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOPageAccess2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageAccess),
 			},
@@ -335,7 +335,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_pageAccessPreview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PageAccessPreview(ctx, fc.Args["input"].(gqlmodel.PageAccessPreviewInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@pageaccess").PageAccessPreview(ctx, fc.Args["input"].(gqlmodel.PageAccessPreviewInput))
 				},
 				Marshal: gqlexec.Marshal(marshalOPageAccess2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageAccess),
 			},
@@ -347,7 +347,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "PageAccessScreen",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PageAccessScreens(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@pageaccess").PageAccessScreens(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNPageAccessScreen2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageAccessScreenᚄ),
 			},
@@ -361,7 +361,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_roleResourceGuides_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").RoleResourceGuides(ctx, fc.Args["input"].(gqlmodel.RoleResourceGuideInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@pageaccess").RoleResourceGuides(ctx, fc.Args["input"].(gqlmodel.RoleResourceGuideInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNRoleResourceGuide2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRoleResourceGuideᚄ),
 			},
@@ -468,11 +468,11 @@ var Shard = &gqlexec.Shard{
 		{Name: "RoleResourceGuideInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRoleResourceGuideInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Query@pageaccess", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	PageAccess(ctx context.Context, location string) (*gqlmodel.PageAccess, error)
 	PageAccessPreview(ctx context.Context, input gqlmodel.PageAccessPreviewInput) (*gqlmodel.PageAccess, error)
 	PageAccessScreens(ctx context.Context) ([]*gqlmodel.PageAccessScreen, error)

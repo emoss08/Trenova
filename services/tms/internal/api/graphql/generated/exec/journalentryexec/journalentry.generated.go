@@ -86,7 +86,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalcardservice.Line)
-					return gqlexec.Resolver[resolverJournalCardLine](ec, "JournalCardLine").Category(ctx, obj)
+					return gqlexec.Resolver[JournalCardLineResolver](ec, "JournalCardLine@journalentry").Category(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAccountCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐCategory),
 			},
@@ -187,7 +187,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalcardservice.Posting)
-					return gqlexec.Resolver[resolverJournalCardPosting](ec, "JournalCardPosting").AccountingDate(ctx, obj)
+					return gqlexec.Resolver[JournalCardPostingResolver](ec, "JournalCardPosting@journalentry").AccountingDate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -291,7 +291,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
-					return gqlexec.Resolver[resolverJournalEntry](ec, "JournalEntry").EntryType(ctx, obj)
+					return gqlexec.Resolver[JournalEntryResolver](ec, "JournalEntry@journalentry").EntryType(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -303,7 +303,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
-					return gqlexec.Resolver[resolverJournalEntry](ec, "JournalEntry").Status(ctx, obj)
+					return gqlexec.Resolver[JournalEntryResolver](ec, "JournalEntry@journalentry").Status(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -876,7 +876,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "JournalEntryLineAccount",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntryLine)
-					return gqlexec.Resolver[resolverJournalEntryLine](ec, "JournalEntryLine").GlAccount(ctx, obj)
+					return gqlexec.Resolver[JournalEntryLineResolver](ec, "JournalEntryLine@journalentry").GlAccount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJournalEntryLineAccount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJournalEntryLineAccount),
 			},
@@ -1036,7 +1036,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentryports.JournalReviewSummary)
-					return gqlexec.Resolver[resolverJournalReviewSummary](ec, "JournalReviewSummary").PostingMode(ctx, obj)
+					return gqlexec.Resolver[JournalReviewSummaryResolver](ec, "JournalReviewSummary@journalentry").PostingMode(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -1119,7 +1119,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalsource.Source)
-					return gqlexec.Resolver[resolverJournalSourceInfo](ec, "JournalSourceInfo").BatchNumber(ctx, obj)
+					return gqlexec.Resolver[JournalSourceInfoResolver](ec, "JournalSourceInfo@journalentry").BatchNumber(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -1134,7 +1134,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_approveJournalEntries_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApproveJournalEntries(ctx, fc.Args["input"].(gqlmodel.JournalReviewInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@journalentry").ApproveJournalEntries(ctx, fc.Args["input"].(gqlmodel.JournalReviewInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNJournalReviewResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋjournalentryportsᚐJournalReviewResult),
 			},
@@ -1147,7 +1147,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_postJournalEntries_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PostJournalEntries(ctx, fc.Args["input"].(gqlmodel.JournalReviewInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@journalentry").PostJournalEntries(ctx, fc.Args["input"].(gqlmodel.JournalReviewInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNJournalReviewResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋjournalentryportsᚐJournalReviewResult),
 			},
@@ -1162,7 +1162,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_journalEntry_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").JournalEntry(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@journalentry").JournalEntry(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntry),
 			},
@@ -1176,7 +1176,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_journalEntries_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").JournalEntries(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@journalentry").JournalEntries(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNJournalEntryConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJournalEntryConnection),
 			},
@@ -1190,7 +1190,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_journalEntriesBySource_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").JournalEntriesBySource(ctx, fc.Args["sourceType"].(string), fc.Args["sourceId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@journalentry").JournalEntriesBySource(ctx, fc.Args["sourceType"].(string), fc.Args["sourceId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNJournalEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntryᚄ),
 			},
@@ -1203,7 +1203,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_journalSourceByObject_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").JournalSourceByObject(ctx, fc.Args["sourceType"].(string), fc.Args["sourceId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@journalentry").JournalSourceByObject(ctx, fc.Args["sourceType"].(string), fc.Args["sourceId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOJournalSourceInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalsourceᚐSource),
 			},
@@ -1217,7 +1217,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_journalReviewTable_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").JournalReviewTable(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@journalentry").JournalReviewTable(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNJournalEntryConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJournalEntryConnection),
 			},
@@ -1229,7 +1229,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "JournalReviewSummary",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").JournalReviewSummary(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@journalentry").JournalReviewSummary(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNJournalReviewSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋjournalentryportsᚐJournalReviewSummary),
 			},
@@ -1243,7 +1243,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_journalEntryCard_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").JournalEntryCard(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@journalentry").JournalEntryCard(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNJournalEntryCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋappᚋjournalcardserviceᚐJournalEntryCard),
 			},
@@ -1253,48 +1253,48 @@ var Shard = &gqlexec.Shard{
 		{Name: "JournalReviewInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputJournalReviewInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "JournalCardLine", Check: func(r any) bool { _, ok := r.(resolverJournalCardLine); return ok }},
-		{Root: "JournalCardPosting", Check: func(r any) bool { _, ok := r.(resolverJournalCardPosting); return ok }},
-		{Root: "JournalEntry", Check: func(r any) bool { _, ok := r.(resolverJournalEntry); return ok }},
-		{Root: "JournalEntryLine", Check: func(r any) bool { _, ok := r.(resolverJournalEntryLine); return ok }},
-		{Root: "JournalReviewSummary", Check: func(r any) bool { _, ok := r.(resolverJournalReviewSummary); return ok }},
-		{Root: "JournalSourceInfo", Check: func(r any) bool { _, ok := r.(resolverJournalSourceInfo); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "JournalCardLine@journalentry", Check: func(r any) bool { _, ok := r.(JournalCardLineResolver); return ok }},
+		{Root: "JournalCardPosting@journalentry", Check: func(r any) bool { _, ok := r.(JournalCardPostingResolver); return ok }},
+		{Root: "JournalEntryLine@journalentry", Check: func(r any) bool { _, ok := r.(JournalEntryLineResolver); return ok }},
+		{Root: "JournalEntry@journalentry", Check: func(r any) bool { _, ok := r.(JournalEntryResolver); return ok }},
+		{Root: "JournalReviewSummary@journalentry", Check: func(r any) bool { _, ok := r.(JournalReviewSummaryResolver); return ok }},
+		{Root: "JournalSourceInfo@journalentry", Check: func(r any) bool { _, ok := r.(JournalSourceInfoResolver); return ok }},
+		{Root: "Mutation@journalentry", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@journalentry", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverJournalCardLine interface {
+type JournalCardLineResolver interface {
 	Category(ctx context.Context, obj *journalcardservice.Line) (*accounttype.Category, error)
 }
 
-type resolverJournalCardPosting interface {
+type JournalCardPostingResolver interface {
 	AccountingDate(ctx context.Context, obj *journalcardservice.Posting) (*int, error)
 }
 
-type resolverJournalEntry interface {
+type JournalEntryLineResolver interface {
+	GlAccount(ctx context.Context, obj *journalentry.JournalEntryLine) (*gqlmodel.JournalEntryLineAccount, error)
+}
+
+type JournalEntryResolver interface {
 	EntryType(ctx context.Context, obj *journalentry.JournalEntry) (string, error)
 	Status(ctx context.Context, obj *journalentry.JournalEntry) (string, error)
 }
 
-type resolverJournalEntryLine interface {
-	GlAccount(ctx context.Context, obj *journalentry.JournalEntryLine) (*gqlmodel.JournalEntryLineAccount, error)
-}
-
-type resolverJournalReviewSummary interface {
+type JournalReviewSummaryResolver interface {
 	PostingMode(ctx context.Context, obj *journalentryports.JournalReviewSummary) (string, error)
 }
 
-type resolverJournalSourceInfo interface {
+type JournalSourceInfoResolver interface {
 	BatchNumber(ctx context.Context, obj *journalsource.Source) (*string, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	ApproveJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*journalentryports.JournalReviewResult, error)
 	PostJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*journalentryports.JournalReviewResult, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	JournalEntry(ctx context.Context, id string) (*journalentry.JournalEntry, error)
 	JournalEntries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JournalEntryConnection, error)
 	JournalEntriesBySource(ctx context.Context, sourceType string, sourceID string) ([]*journalentry.JournalEntry, error)

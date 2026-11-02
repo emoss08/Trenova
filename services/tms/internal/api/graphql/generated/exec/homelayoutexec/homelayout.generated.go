@@ -651,7 +651,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateHomeLayout_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateHomeLayout(ctx, fc.Args["input"].(gqlmodel.HomeLayoutInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@homelayout").UpdateHomeLayout(ctx, fc.Args["input"].(gqlmodel.HomeLayoutInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNHomeLayout2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayout),
 			},
@@ -662,7 +662,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "HomeLayout",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ResetHomeLayout(ctx)
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@homelayout").ResetHomeLayout(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNHomeLayout2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayout),
 			},
@@ -675,7 +675,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createHomeLayoutPreset_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateHomeLayoutPreset(ctx, fc.Args["input"].(gqlmodel.SaveHomeLayoutPresetInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@homelayout").CreateHomeLayoutPreset(ctx, fc.Args["input"].(gqlmodel.SaveHomeLayoutPresetInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNHomeLayoutPreset2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayoutPreset),
 			},
@@ -688,7 +688,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateHomeLayoutPreset_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateHomeLayoutPreset(ctx, fc.Args["input"].(gqlmodel.UpdateHomeLayoutPresetInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@homelayout").UpdateHomeLayoutPreset(ctx, fc.Args["input"].(gqlmodel.UpdateHomeLayoutPresetInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNHomeLayoutPreset2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayoutPreset),
 			},
@@ -700,7 +700,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteHomeLayoutPreset_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteHomeLayoutPreset(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@homelayout").DeleteHomeLayoutPreset(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -714,7 +714,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "HomeLayout",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").HomeLayout(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@homelayout").HomeLayout(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNHomeLayout2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayout),
 			},
@@ -726,7 +726,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "HomeWidgetCatalog",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").HomeWidgetCatalog(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@homelayout").HomeWidgetCatalog(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNHomeWidgetCatalog2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetCatalog),
 			},
@@ -738,7 +738,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "HomeLayoutPreset",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").HomeLayoutPresets(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@homelayout").HomeLayoutPresets(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNHomeLayoutPreset2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayoutPresetᚄ),
 			},
@@ -752,7 +752,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_homeLayoutPreset_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").HomeLayoutPreset(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@homelayout").HomeLayoutPreset(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNHomeLayoutPreset2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayoutPreset),
 			},
@@ -766,7 +766,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_homeLayoutPreview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").HomeLayoutPreview(ctx, fc.Args["presetId"].(*string), fc.Args["roleId"].(*string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@homelayout").HomeLayoutPreview(ctx, fc.Args["presetId"].(*string), fc.Args["roleId"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNHomeLayout2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayout),
 			},
@@ -780,12 +780,12 @@ var Shard = &gqlexec.Shard{
 		{Name: "UpdateHomeLayoutPresetInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateHomeLayoutPresetInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@homelayout", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@homelayout", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	UpdateHomeLayout(ctx context.Context, input gqlmodel.HomeLayoutInput) (*gqlmodel.HomeLayout, error)
 	ResetHomeLayout(ctx context.Context) (*gqlmodel.HomeLayout, error)
 	CreateHomeLayoutPreset(ctx context.Context, input gqlmodel.SaveHomeLayoutPresetInput) (*gqlmodel.HomeLayoutPreset, error)
@@ -793,7 +793,7 @@ type resolverMutation interface {
 	DeleteHomeLayoutPreset(ctx context.Context, id string) (bool, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	HomeLayout(ctx context.Context) (*gqlmodel.HomeLayout, error)
 	HomeWidgetCatalog(ctx context.Context) (*gqlmodel.HomeWidgetCatalog, error)
 	HomeLayoutPresets(ctx context.Context) ([]*gqlmodel.HomeLayoutPreset, error)

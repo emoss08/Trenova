@@ -13,7 +13,7 @@ type SchemaConfig struct {
 	Registry    *Registry
 	Parsed      *ast.Schema
 	Override    *ast.Schema
-	Resolvers   map[string]func() any
+	Resolvers   map[string]any
 	WorkerLimit int64
 	// Operations, when set, are the only operations this executor runs. Its
 	// registry then holds only the shards they reach, and is validated
@@ -25,7 +25,7 @@ type Schema struct {
 	state       *graphql.ExecutableSchemaState[struct{}, struct{}, struct{}]
 	parsed      *ast.Schema
 	reg         *Registry
-	resolvers   map[string]func() any
+	resolvers   map[string]any
 	workerLimit int64
 	query       *Object
 	mutation    *Object

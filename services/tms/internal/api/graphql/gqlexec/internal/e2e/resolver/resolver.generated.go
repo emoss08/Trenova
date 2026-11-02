@@ -3,17 +3,15 @@
 package resolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/generated"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/generated/exec/fleetexec"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/generated/exec/peopleexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/resolver/fleetresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/resolver/peopleresolver"
 )
 
 type Resolver struct {
 	*Services
-	driver   *peopleresolver.DriverResolver
-	mutation *mutationResolver
-	query    *queryResolver
-	truck    *fleetresolver.TruckResolver
+	roots map[string]any
 }
 
 func New(p Params) *Resolver {
@@ -31,51 +29,35 @@ func FromServices(s *Services) *Resolver {
 		Fleet:  s.Fleet,
 		Roster: s.Roster,
 	}
+	peopleDriver := &peopleresolver.DriverResolver{Deps: peopleDeps}
+	fleetMutation := &fleetresolver.MutationResolver{Deps: fleetDeps}
+	peopleMutation := &peopleresolver.MutationResolver{Deps: peopleDeps}
+	fleetQuery := &fleetresolver.QueryResolver{Deps: fleetDeps}
+	peopleQuery := &peopleresolver.QueryResolver{Deps: peopleDeps}
+	fleetTruck := &fleetresolver.TruckResolver{Deps: fleetDeps}
 
 	return &Resolver{
 		Services: s,
-		driver:   &peopleresolver.DriverResolver{Deps: peopleDeps},
-		mutation: &mutationResolver{
-			fleetMutation:  &fleetMutation{Deps: fleetDeps},
-			peopleMutation: &peopleMutation{Deps: peopleDeps},
+		roots: map[string]any{
+			"Driver@people":   peopleDriver,
+			"Mutation@fleet":  fleetMutation,
+			"Mutation@people": peopleMutation,
+			"Query@fleet":     fleetQuery,
+			"Query@people":    peopleQuery,
+			"Truck@fleet":     fleetTruck,
 		},
-		query: &queryResolver{
-			fleetQuery:  &fleetQuery{Deps: fleetDeps},
-			peopleQuery: &peopleQuery{Deps: peopleDeps},
-		},
-		truck: &fleetresolver.TruckResolver{Deps: fleetDeps},
 	}
 }
 
-func (r *Resolver) Driver() generated.DriverResolver {
-	return r.driver
+func (r *Resolver) Roots() map[string]any {
+	return r.roots
 }
 
-func (r *Resolver) Mutation() generated.MutationResolver {
-	return r.mutation
-}
-
-type mutationResolver struct {
-	*fleetMutation
-	*peopleMutation
-}
-
-func (r *Resolver) Query() generated.QueryResolver {
-	return r.query
-}
-
-type queryResolver struct {
-	*fleetQuery
-	*peopleQuery
-}
-
-func (r *Resolver) Truck() generated.TruckResolver {
-	return r.truck
-}
-
-type (
-	fleetMutation  = fleetresolver.MutationResolver
-	peopleMutation = peopleresolver.MutationResolver
-	fleetQuery     = fleetresolver.QueryResolver
-	peopleQuery    = peopleresolver.QueryResolver
+var (
+	_ peopleexec.DriverResolver   = (*peopleresolver.DriverResolver)(nil)
+	_ fleetexec.MutationResolver  = (*fleetresolver.MutationResolver)(nil)
+	_ peopleexec.MutationResolver = (*peopleresolver.MutationResolver)(nil)
+	_ fleetexec.QueryResolver     = (*fleetresolver.QueryResolver)(nil)
+	_ peopleexec.QueryResolver    = (*peopleresolver.QueryResolver)(nil)
+	_ fleetexec.TruckResolver     = (*fleetresolver.TruckResolver)(nil)
 )

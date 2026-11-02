@@ -70,8 +70,8 @@ func TestCompile_MergesFieldsAcrossShards(t *testing.T) {
 	require.NotNil(t, query)
 	assert.NotNil(t, query.field("thing"))
 	assert.NotNil(t, query.field("any"))
-	assert.NoError(t, reg.validate(registrySchema(t), map[string]func() any{
-		"Query": func() any { return thingRoot{} },
+	assert.NoError(t, reg.validate(registrySchema(t), map[string]any{
+		"Query": thingRoot{},
 	}))
 }
 
@@ -144,12 +144,12 @@ func TestValidate_ReportsUnimplementedResolvers(t *testing.T) {
 	reg, err := Compile(registryShards())
 	require.NoError(t, err)
 
-	err = reg.validate(registrySchema(t), map[string]func() any{
-		"Query": func() any { return struct{}{} },
+	err = reg.validate(registrySchema(t), map[string]any{
+		"Query": struct{}{},
 	})
 	assert.ErrorContains(t, err, "resolver Query does not implement the fields its schema declares")
 
-	err = reg.validate(registrySchema(t), map[string]func() any{})
+	err = reg.validate(registrySchema(t), map[string]any{})
 	assert.ErrorContains(t, err, "resolver root Query is not bound")
 }
 
@@ -160,8 +160,8 @@ func TestValidate_SkipsResolverChecksWithoutResolvers(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.NoError(t, reg.validate(registrySchema(t), nil))
-	assert.NoError(t, reg.validate(registrySchema(t), map[string]func() any{
-		"Query": func() any { return nil },
+	assert.NoError(t, reg.validate(registrySchema(t), map[string]any{
+		"Query": nil,
 	}))
 }
 

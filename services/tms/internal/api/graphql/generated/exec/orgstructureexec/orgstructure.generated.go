@@ -108,7 +108,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*approvaldelegation.ApprovalDelegation)
-					return gqlexec.Resolver[resolverApprovalDelegation](ec, "ApprovalDelegation").EndsAt(ctx, obj)
+					return gqlexec.Resolver[ApprovalDelegationResolver](ec, "ApprovalDelegation@orgstructure").EndsAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -128,7 +128,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*approvaldelegation.ApprovalDelegation)
-					return gqlexec.Resolver[resolverApprovalDelegation](ec, "ApprovalDelegation").RevokedAt(ctx, obj)
+					return gqlexec.Resolver[ApprovalDelegationResolver](ec, "ApprovalDelegation@orgstructure").RevokedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -139,7 +139,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*approvaldelegation.ApprovalDelegation)
-					return gqlexec.Resolver[resolverApprovalDelegation](ec, "ApprovalDelegation").RevokedByID(ctx, obj)
+					return gqlexec.Resolver[ApprovalDelegationResolver](ec, "ApprovalDelegation@orgstructure").RevokedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -150,7 +150,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*approvaldelegation.ApprovalDelegation)
-					return gqlexec.Resolver[resolverApprovalDelegation](ec, "ApprovalDelegation").CreatedByID(ctx, obj)
+					return gqlexec.Resolver[ApprovalDelegationResolver](ec, "ApprovalDelegation@orgstructure").CreatedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -469,7 +469,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.JobPosition)
-					return gqlexec.Resolver[resolverJobPosition](ec, "JobPosition").ReportsToPositionID(ctx, obj)
+					return gqlexec.Resolver[JobPositionResolver](ec, "JobPosition@orgstructure").ReportsToPositionID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -524,7 +524,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createJobPosition_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateJobPosition(ctx, fc.Args["input"].(gqlmodel.JobPositionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@orgstructure").CreateJobPosition(ctx, fc.Args["input"].(gqlmodel.JobPositionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNJobPosition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐJobPosition),
 			},
@@ -537,7 +537,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateJobPosition_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateJobPosition(ctx, fc.Args["input"].(gqlmodel.UpdateJobPositionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@orgstructure").UpdateJobPosition(ctx, fc.Args["input"].(gqlmodel.UpdateJobPositionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNJobPosition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐJobPosition),
 			},
@@ -549,7 +549,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_assignWorkerPosition_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AssignWorkerPosition(ctx, fc.Args["workerId"].(string), fc.Args["positionId"].(*string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@orgstructure").AssignWorkerPosition(ctx, fc.Args["workerId"].(string), fc.Args["positionId"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -561,7 +561,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_assignUserPosition_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AssignUserPosition(ctx, fc.Args["userId"].(string), fc.Args["positionId"].(*string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@orgstructure").AssignUserPosition(ctx, fc.Args["userId"].(string), fc.Args["positionId"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -574,7 +574,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_delegateApproval_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DelegateApproval(ctx, fc.Args["input"].(gqlmodel.DelegateApprovalInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@orgstructure").DelegateApproval(ctx, fc.Args["input"].(gqlmodel.DelegateApprovalInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNApprovalDelegation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋapprovaldelegationᚐApprovalDelegation),
 			},
@@ -587,7 +587,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_revokeApprovalDelegation_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RevokeApprovalDelegation(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@orgstructure").RevokeApprovalDelegation(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNApprovalDelegation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋapprovaldelegationᚐApprovalDelegation),
 			},
@@ -655,7 +655,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_jobPositions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").JobPositions(ctx, fc.Args["activeOnly"].(*bool), fc.Args["drivingOnly"].(*bool))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@orgstructure").JobPositions(ctx, fc.Args["activeOnly"].(*bool), fc.Args["drivingOnly"].(*bool))
 				},
 				Marshal: gqlexec.Marshal(marshalNJobPosition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐJobPositionᚄ),
 			},
@@ -669,7 +669,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_jobPosition_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").JobPosition(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@orgstructure").JobPosition(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNJobPosition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐJobPosition),
 			},
@@ -681,7 +681,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "Headcount",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Headcount(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@orgstructure").Headcount(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNHeadcount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋorgstructureserviceᚐHeadcount),
 			},
@@ -695,7 +695,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_jobPositionHolders_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").JobPositionHolders(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@orgstructure").JobPositionHolders(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNPositionHolder2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPositionHolderᚄ),
 			},
@@ -709,7 +709,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_myTeam_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").MyTeam(ctx, fc.Args["includeInactive"].(*bool))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@orgstructure").MyTeam(ctx, fc.Args["includeInactive"].(*bool))
 				},
 				Marshal: gqlexec.Marshal(marshalNTeamMember2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTeamMemberᚄ),
 			},
@@ -723,7 +723,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_approvalDelegations_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ApprovalDelegations(ctx, fc.Args["delegatorId"].(*string), fc.Args["delegateId"].(*string), fc.Args["activeOnly"].(*bool))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@orgstructure").ApprovalDelegations(ctx, fc.Args["delegatorId"].(*string), fc.Args["delegateId"].(*string), fc.Args["activeOnly"].(*bool))
 				},
 				Marshal: gqlexec.Marshal(marshalNApprovalDelegation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋapprovaldelegationᚐApprovalDelegationᚄ),
 			},
@@ -883,25 +883,25 @@ var Shard = &gqlexec.Shard{
 		{Name: "UpdateJobPositionInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateJobPositionInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "ApprovalDelegation", Check: func(r any) bool { _, ok := r.(resolverApprovalDelegation); return ok }},
-		{Root: "JobPosition", Check: func(r any) bool { _, ok := r.(resolverJobPosition); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "ApprovalDelegation@orgstructure", Check: func(r any) bool { _, ok := r.(ApprovalDelegationResolver); return ok }},
+		{Root: "JobPosition@orgstructure", Check: func(r any) bool { _, ok := r.(JobPositionResolver); return ok }},
+		{Root: "Mutation@orgstructure", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@orgstructure", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverApprovalDelegation interface {
+type ApprovalDelegationResolver interface {
 	EndsAt(ctx context.Context, obj *approvaldelegation.ApprovalDelegation) (*int, error)
 	RevokedAt(ctx context.Context, obj *approvaldelegation.ApprovalDelegation) (*int, error)
 	RevokedByID(ctx context.Context, obj *approvaldelegation.ApprovalDelegation) (*string, error)
 	CreatedByID(ctx context.Context, obj *approvaldelegation.ApprovalDelegation) (*string, error)
 }
 
-type resolverJobPosition interface {
+type JobPositionResolver interface {
 	ReportsToPositionID(ctx context.Context, obj *worker.JobPosition) (*string, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateJobPosition(ctx context.Context, input gqlmodel.JobPositionInput) (*worker.JobPosition, error)
 	UpdateJobPosition(ctx context.Context, input gqlmodel.UpdateJobPositionInput) (*worker.JobPosition, error)
 	AssignWorkerPosition(ctx context.Context, workerID string, positionID *string) (bool, error)
@@ -910,7 +910,7 @@ type resolverMutation interface {
 	RevokeApprovalDelegation(ctx context.Context, id string) (*approvaldelegation.ApprovalDelegation, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	JobPositions(ctx context.Context, activeOnly *bool, drivingOnly *bool) ([]*worker.JobPosition, error)
 	JobPosition(ctx context.Context, id string) (*worker.JobPosition, error)
 	Headcount(ctx context.Context) (*orgstructureservice.Headcount, error)

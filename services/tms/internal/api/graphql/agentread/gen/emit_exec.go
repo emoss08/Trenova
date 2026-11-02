@@ -66,20 +66,13 @@ func NewSchema(p ResolverParams) Schema {
 {{- end }}
 	}
 {{- end }}
-{{- range .Plan.Composites }}
-	{{ .Var }} := &{{ .Type }}{
-{{- range .Members }}
-		{{ .Alias }}: &{{ .Alias }}{Deps: {{ .Deps }}},
-{{- end }}
-	}
+{{- range .Plan.Parts }}
+	{{ .Alias }} := &{{ .Package }}.{{ .Type }}{Deps: {{ .Deps }}}
 {{- end }}
 
-	return newSchema(shards, map[string]func() any{
-{{- range .Plan.Composites }}
-		{{ quote .Object }}: func() any { return {{ .Var }} },
-{{- end }}
-{{- range .Plan.Objects }}
-		{{ quote .Object }}: func() any { return &{{ .Package }}.{{ .Type }}{Deps: {{ .Deps }}} },
+	return newSchema(shards, map[string]any{
+{{- range .Plan.Parts }}
+		{{ quote .Key }}: {{ .Alias }},
 {{- end }}
 	}, operations)
 }
@@ -87,22 +80,6 @@ func NewSchema(p ResolverParams) Schema {
 func Operations() []Operation {
 	return operations
 }
-{{- range .Plan.Composites }}
-type {{ .Type }} struct {
-{{- range .Members }}
-	*{{ .Alias }}
-{{- end }}
-}
-{{ end }}
-{{- if .Plan.Composites }}
-type (
-{{- range .Plan.Composites }}
-{{- range .Members }}
-	{{ .Alias }} = {{ .Package }}.{{ .Type }}
-{{- end }}
-{{- end }}
-)
-{{- end }}
 `))
 
 func writeExecutor(dir string, plan *executorPlan, bindings []*binding) error {

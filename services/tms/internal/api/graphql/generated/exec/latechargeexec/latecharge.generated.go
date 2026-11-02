@@ -36,7 +36,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "LateChargeAssessment",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
-					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").LateChargeAssessments(ctx, obj)
+					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@latecharge").LateChargeAssessments(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNLateChargeAssessment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋlatechargeᚐLateChargeAssessmentᚄ),
 			},
@@ -150,7 +150,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*latecharge.LateChargeAssessment)
-					return gqlexec.Resolver[resolverLateChargeAssessment](ec, "LateChargeAssessment").RatePercent(ctx, obj)
+					return gqlexec.Resolver[LateChargeAssessmentResolver](ec, "LateChargeAssessment@latecharge").RatePercent(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -487,7 +487,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*latechargeports.LateChargeLine)
-					return gqlexec.Resolver[resolverLateChargeLine](ec, "LateChargeLine").RatePercent(ctx, obj)
+					return gqlexec.Resolver[LateChargeLineResolver](ec, "LateChargeLine@latecharge").RatePercent(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -512,7 +512,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_assessLateCharges_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AssessLateCharges(ctx, fc.Args["input"].(*gqlmodel.LateChargeAssessmentInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@latecharge").AssessLateCharges(ctx, fc.Args["input"].(*gqlmodel.LateChargeAssessmentInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNLateChargeAssessmentResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋlatechargeportsᚐLateChargeAssessmentResult),
 			},
@@ -528,7 +528,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_lateChargePreview_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").LateChargePreview(ctx, fc.Args["input"].(*gqlmodel.LateChargeAssessmentInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@latecharge").LateChargePreview(ctx, fc.Args["input"].(*gqlmodel.LateChargeAssessmentInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNLateChargeAssessmentResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋlatechargeportsᚐLateChargeAssessmentResult),
 			},
@@ -538,31 +538,31 @@ var Shard = &gqlexec.Shard{
 		{Name: "LateChargeAssessmentInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputLateChargeAssessmentInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Invoice", Check: func(r any) bool { _, ok := r.(resolverInvoice); return ok }},
-		{Root: "LateChargeAssessment", Check: func(r any) bool { _, ok := r.(resolverLateChargeAssessment); return ok }},
-		{Root: "LateChargeLine", Check: func(r any) bool { _, ok := r.(resolverLateChargeLine); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Invoice@latecharge", Check: func(r any) bool { _, ok := r.(InvoiceResolver); return ok }},
+		{Root: "LateChargeAssessment@latecharge", Check: func(r any) bool { _, ok := r.(LateChargeAssessmentResolver); return ok }},
+		{Root: "LateChargeLine@latecharge", Check: func(r any) bool { _, ok := r.(LateChargeLineResolver); return ok }},
+		{Root: "Mutation@latecharge", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@latecharge", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverInvoice interface {
+type InvoiceResolver interface {
 	LateChargeAssessments(ctx context.Context, obj *invoice.Invoice) ([]*latecharge.LateChargeAssessment, error)
 }
 
-type resolverLateChargeAssessment interface {
+type LateChargeAssessmentResolver interface {
 	RatePercent(ctx context.Context, obj *latecharge.LateChargeAssessment) (string, error)
 }
 
-type resolverLateChargeLine interface {
+type LateChargeLineResolver interface {
 	RatePercent(ctx context.Context, obj *latechargeports.LateChargeLine) (string, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	AssessLateCharges(ctx context.Context, input *gqlmodel.LateChargeAssessmentInput) (*latechargeports.LateChargeAssessmentResult, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	LateChargePreview(ctx context.Context, input *gqlmodel.LateChargeAssessmentInput) (*latechargeports.LateChargeAssessmentResult, error)
 }
 

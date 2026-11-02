@@ -727,7 +727,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carrier.CarrierInsurancePolicy)
-					return gqlexec.Resolver[resolverCarrierInsurancePolicy](ec, "CarrierInsurancePolicy").CoverageAmount(ctx, obj)
+					return gqlexec.Resolver[CarrierInsurancePolicyResolver](ec, "CarrierInsurancePolicy@carrier").CoverageAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -803,7 +803,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_carriers_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Carriers(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@carrier").Carriers(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierConnection),
 			},
@@ -816,23 +816,23 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_carrier_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").Carrier(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@carrier").Carrier(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐCarrier),
 			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "CarrierInsurancePolicy", Check: func(r any) bool { _, ok := r.(resolverCarrierInsurancePolicy); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "CarrierInsurancePolicy@carrier", Check: func(r any) bool { _, ok := r.(CarrierInsurancePolicyResolver); return ok }},
+		{Root: "Query@carrier", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverCarrierInsurancePolicy interface {
+type CarrierInsurancePolicyResolver interface {
 	CoverageAmount(ctx context.Context, obj *carrier.CarrierInsurancePolicy) (string, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	Carriers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierConnection, error)
 	Carrier(ctx context.Context, id string) (*carrier.Carrier, error)
 }

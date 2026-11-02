@@ -128,7 +128,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelCard)
-					return gqlexec.Resolver[resolverFuelCard](ec, "FuelCard").AssignedWorkerID(ctx, obj)
+					return gqlexec.Resolver[FuelCardResolver](ec, "FuelCard@fuelpurchase").AssignedWorkerID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -139,7 +139,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelCard)
-					return gqlexec.Resolver[resolverFuelCard](ec, "FuelCard").AssignedTractorID(ctx, obj)
+					return gqlexec.Resolver[FuelCardResolver](ec, "FuelCard@fuelpurchase").AssignedTractorID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -160,7 +160,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelCard)
-					return gqlexec.Resolver[resolverFuelCard](ec, "FuelCard").ExpiresAt(ctx, obj)
+					return gqlexec.Resolver[FuelCardResolver](ec, "FuelCard@fuelpurchase").ExpiresAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -171,7 +171,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelCard)
-					return gqlexec.Resolver[resolverFuelCard](ec, "FuelCard").CancelledAt(ctx, obj)
+					return gqlexec.Resolver[FuelCardResolver](ec, "FuelCard@fuelpurchase").CancelledAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -240,7 +240,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "Worker",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelCard)
-					return gqlexec.Resolver[resolverFuelCard](ec, "FuelCard").AssignedWorker(ctx, obj)
+					return gqlexec.Resolver[FuelCardResolver](ec, "FuelCard@fuelpurchase").AssignedWorker(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
 			},
@@ -252,7 +252,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "Tractor",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelCard)
-					return gqlexec.Resolver[resolverFuelCard](ec, "FuelCard").AssignedTractor(ctx, obj)
+					return gqlexec.Resolver[FuelCardResolver](ec, "FuelCard@fuelpurchase").AssignedTractor(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtractorᚐTractor),
 			},
@@ -381,7 +381,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.FuelCardCard)
-					return gqlexec.Resolver[resolverFuelCardDeskCard](ec, "FuelCardDeskCard").LastPurchasedAt(ctx, obj)
+					return gqlexec.Resolver[FuelCardDeskCardResolver](ec, "FuelCardDeskCard@fuelpurchase").LastPurchasedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -563,7 +563,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.CardFeedState)
-					return gqlexec.Resolver[resolverFuelFeedStatus](ec, "FuelFeedStatus").LastPolledAt(ctx, obj)
+					return gqlexec.Resolver[FuelFeedStatusResolver](ec, "FuelFeedStatus@fuelpurchase").LastPolledAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -574,7 +574,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.CardFeedState)
-					return gqlexec.Resolver[resolverFuelFeedStatus](ec, "FuelFeedStatus").LastSuccessAt(ctx, obj)
+					return gqlexec.Resolver[FuelFeedStatusResolver](ec, "FuelFeedStatus@fuelpurchase").LastSuccessAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -595,7 +595,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.CardFeedState)
-					return gqlexec.Resolver[resolverFuelFeedStatus](ec, "FuelFeedStatus").LastError(ctx, obj)
+					return gqlexec.Resolver[FuelFeedStatusResolver](ec, "FuelFeedStatus@fuelpurchase").LastError(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -619,7 +619,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.HeldSpend)
-					return gqlexec.Resolver[resolverFuelHeldSpend](ec, "FuelHeldSpend").Gallons(ctx, obj)
+					return gqlexec.Resolver[FuelHeldSpendResolver](ec, "FuelHeldSpend@fuelpurchase").Gallons(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -631,7 +631,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.HeldSpend)
-					return gqlexec.Resolver[resolverFuelHeldSpend](ec, "FuelHeldSpend").TotalAmount(ctx, obj)
+					return gqlexec.Resolver[FuelHeldSpendResolver](ec, "FuelHeldSpend@fuelpurchase").TotalAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -678,7 +678,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "IFTAJurisdiction",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.JurisdictionGallons)
-					return gqlexec.Resolver[resolverFuelJurisdictionGallons](ec, "FuelJurisdictionGallons").Jurisdiction(ctx, obj)
+					return gqlexec.Resolver[FuelJurisdictionGallonsResolver](ec, "FuelJurisdictionGallons@fuelpurchase").Jurisdiction(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAJurisdiction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdiction),
 			},
@@ -690,7 +690,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.JurisdictionGallons)
-					return gqlexec.Resolver[resolverFuelJurisdictionGallons](ec, "FuelJurisdictionGallons").Gallons(ctx, obj)
+					return gqlexec.Resolver[FuelJurisdictionGallonsResolver](ec, "FuelJurisdictionGallons@fuelpurchase").Gallons(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -753,7 +753,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelPurchase)
-					return gqlexec.Resolver[resolverFuelPurchase](ec, "FuelPurchase").WorkerID(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseResolver](ec, "FuelPurchase@fuelpurchase").WorkerID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -774,7 +774,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelPurchase)
-					return gqlexec.Resolver[resolverFuelPurchase](ec, "FuelPurchase").FuelCardID(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseResolver](ec, "FuelPurchase@fuelpurchase").FuelCardID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -833,7 +833,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelPurchase)
-					return gqlexec.Resolver[resolverFuelPurchase](ec, "FuelPurchase").Quantity(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseResolver](ec, "FuelPurchase@fuelpurchase").Quantity(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -855,7 +855,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelPurchase)
-					return gqlexec.Resolver[resolverFuelPurchase](ec, "FuelPurchase").Gallons(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseResolver](ec, "FuelPurchase@fuelpurchase").Gallons(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -866,7 +866,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelPurchase)
-					return gqlexec.Resolver[resolverFuelPurchase](ec, "FuelPurchase").UnitPrice(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseResolver](ec, "FuelPurchase@fuelpurchase").UnitPrice(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -878,7 +878,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelPurchase)
-					return gqlexec.Resolver[resolverFuelPurchase](ec, "FuelPurchase").TotalAmount(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseResolver](ec, "FuelPurchase@fuelpurchase").TotalAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -899,7 +899,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelPurchase)
-					return gqlexec.Resolver[resolverFuelPurchase](ec, "FuelPurchase").Odometer(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseResolver](ec, "FuelPurchase@fuelpurchase").Odometer(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
@@ -929,7 +929,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelPurchase)
-					return gqlexec.Resolver[resolverFuelPurchase](ec, "FuelPurchase").ImportBatchID(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseResolver](ec, "FuelPurchase@fuelpurchase").ImportBatchID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -959,7 +959,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelPurchase)
-					return gqlexec.Resolver[resolverFuelPurchase](ec, "FuelPurchase").CreatedByID(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseResolver](ec, "FuelPurchase@fuelpurchase").CreatedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1001,7 +1001,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "Tractor",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelPurchase)
-					return gqlexec.Resolver[resolverFuelPurchase](ec, "FuelPurchase").Tractor(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseResolver](ec, "FuelPurchase@fuelpurchase").Tractor(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtractorᚐTractor),
 			},
@@ -1013,7 +1013,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "Worker",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelPurchase)
-					return gqlexec.Resolver[resolverFuelPurchase](ec, "FuelPurchase").Worker(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseResolver](ec, "FuelPurchase@fuelpurchase").Worker(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
 			},
@@ -1026,7 +1026,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "IFTAJurisdiction",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelPurchase)
-					return gqlexec.Resolver[resolverFuelPurchase](ec, "FuelPurchase").Jurisdiction(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseResolver](ec, "FuelPurchase@fuelpurchase").Jurisdiction(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAJurisdiction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdiction),
 			},
@@ -1038,7 +1038,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "FuelCard",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelPurchase)
-					return gqlexec.Resolver[resolverFuelPurchase](ec, "FuelPurchase").FuelCard(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseResolver](ec, "FuelPurchase@fuelpurchase").FuelCard(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelCard),
 			},
@@ -1202,7 +1202,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.PurchaseIFTA)
-					return gqlexec.Resolver[resolverFuelPurchaseIFTA](ec, "FuelPurchaseIFTA").TaxPaidGallons(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseIFTAResolver](ec, "FuelPurchaseIFTA@fuelpurchase").TaxPaidGallons(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1213,7 +1213,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.PurchaseIFTA)
-					return gqlexec.Resolver[resolverFuelPurchaseIFTA](ec, "FuelPurchaseIFTA").RatePerGallon(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseIFTAResolver](ec, "FuelPurchaseIFTA@fuelpurchase").RatePerGallon(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -1224,7 +1224,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.PurchaseIFTA)
-					return gqlexec.Resolver[resolverFuelPurchaseIFTA](ec, "FuelPurchaseIFTA").TaxPaidCredit(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseIFTAResolver](ec, "FuelPurchaseIFTA@fuelpurchase").TaxPaidCredit(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
@@ -1236,7 +1236,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.PurchaseIFTA)
-					return gqlexec.Resolver[resolverFuelPurchaseIFTA](ec, "FuelPurchaseIFTA").TractorGallons(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseIFTAResolver](ec, "FuelPurchaseIFTA@fuelpurchase").TractorGallons(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -1318,7 +1318,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportBatch)
-					return gqlexec.Resolver[resolverFuelPurchaseImportBatch](ec, "FuelPurchaseImportBatch").DocumentID(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportBatchResolver](ec, "FuelPurchaseImportBatch@fuelpurchase").DocumentID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1338,7 +1338,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportBatch)
-					return gqlexec.Resolver[resolverFuelPurchaseImportBatch](ec, "FuelPurchaseImportBatch").SourceFormat(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportBatchResolver](ec, "FuelPurchaseImportBatch@fuelpurchase").SourceFormat(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOFuelImportFormat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐSourceFormat),
 			},
@@ -1359,7 +1359,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportBatch)
-					return gqlexec.Resolver[resolverFuelPurchaseImportBatch](ec, "FuelPurchaseImportBatch").DefaultFuelType(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportBatchResolver](ec, "FuelPurchaseImportBatch@fuelpurchase").DefaultFuelType(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOIFTAFuelType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐIFTAFuelType),
 			},
@@ -1370,7 +1370,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportBatch)
-					return gqlexec.Resolver[resolverFuelPurchaseImportBatch](ec, "FuelPurchaseImportBatch").DefaultFuelCardID(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportBatchResolver](ec, "FuelPurchaseImportBatch@fuelpurchase").DefaultFuelCardID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1391,7 +1391,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportBatch)
-					return gqlexec.Resolver[resolverFuelPurchaseImportBatch](ec, "FuelPurchaseImportBatch").Mapping(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportBatchResolver](ec, "FuelPurchaseImportBatch@fuelpurchase").Mapping(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -1413,7 +1413,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "FuelPurchaseImportSummary",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportBatch)
-					return gqlexec.Resolver[resolverFuelPurchaseImportBatch](ec, "FuelPurchaseImportBatch").Summary(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportBatchResolver](ec, "FuelPurchaseImportBatch@fuelpurchase").Summary(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOFuelPurchaseImportSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportSummary),
 			},
@@ -1463,7 +1463,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportBatch)
-					return gqlexec.Resolver[resolverFuelPurchaseImportBatch](ec, "FuelPurchaseImportBatch").UploadedByID(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportBatchResolver](ec, "FuelPurchaseImportBatch@fuelpurchase").UploadedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1474,7 +1474,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportBatch)
-					return gqlexec.Resolver[resolverFuelPurchaseImportBatch](ec, "FuelPurchaseImportBatch").StagedAt(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportBatchResolver](ec, "FuelPurchaseImportBatch@fuelpurchase").StagedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -1485,7 +1485,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportBatch)
-					return gqlexec.Resolver[resolverFuelPurchaseImportBatch](ec, "FuelPurchaseImportBatch").CommittedAt(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportBatchResolver](ec, "FuelPurchaseImportBatch@fuelpurchase").CommittedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -1496,7 +1496,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportBatch)
-					return gqlexec.Resolver[resolverFuelPurchaseImportBatch](ec, "FuelPurchaseImportBatch").CommittedByID(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportBatchResolver](ec, "FuelPurchaseImportBatch@fuelpurchase").CommittedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1538,7 +1538,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "WorkerCredentialDocument",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportBatch)
-					return gqlexec.Resolver[resolverFuelPurchaseImportBatch](ec, "FuelPurchaseImportBatch").Document(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportBatchResolver](ec, "FuelPurchaseImportBatch@fuelpurchase").Document(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOWorkerCredentialDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentᚐDocument),
 			},
@@ -1550,7 +1550,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "FuelCard",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportBatch)
-					return gqlexec.Resolver[resolverFuelPurchaseImportBatch](ec, "FuelPurchaseImportBatch").DefaultFuelCard(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportBatchResolver](ec, "FuelPurchaseImportBatch@fuelpurchase").DefaultFuelCard(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelCard),
 			},
@@ -1565,7 +1565,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportBatch)
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverFuelPurchaseImportBatch](ec, "FuelPurchaseImportBatch").Rows(ctx, obj, fc.Args["input"].(*gqlmodel.FuelPurchaseImportRowsInput))
+					return gqlexec.Resolver[FuelPurchaseImportBatchResolver](ec, "FuelPurchaseImportBatch@fuelpurchase").Rows(ctx, obj, fc.Args["input"].(*gqlmodel.FuelPurchaseImportRowsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportRowConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelPurchaseImportRowConnection),
 			},
@@ -1895,7 +1895,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "FuelPurchaseImportParsed",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportRow)
-					return gqlexec.Resolver[resolverFuelPurchaseImportRow](ec, "FuelPurchaseImportRow").Parsed(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportRowResolver](ec, "FuelPurchaseImportRow@fuelpurchase").Parsed(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOFuelPurchaseImportParsed2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelPurchaseImportParsed),
 			},
@@ -1934,7 +1934,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportRow)
-					return gqlexec.Resolver[resolverFuelPurchaseImportRow](ec, "FuelPurchaseImportRow").ResolvedTractorID(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportRowResolver](ec, "FuelPurchaseImportRow@fuelpurchase").ResolvedTractorID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1945,7 +1945,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportRow)
-					return gqlexec.Resolver[resolverFuelPurchaseImportRow](ec, "FuelPurchaseImportRow").ResolvedFuelCardID(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportRowResolver](ec, "FuelPurchaseImportRow@fuelpurchase").ResolvedFuelCardID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1956,7 +1956,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportRow)
-					return gqlexec.Resolver[resolverFuelPurchaseImportRow](ec, "FuelPurchaseImportRow").ResolvedJurisdictionID(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportRowResolver](ec, "FuelPurchaseImportRow@fuelpurchase").ResolvedJurisdictionID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1977,7 +1977,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportRow)
-					return gqlexec.Resolver[resolverFuelPurchaseImportRow](ec, "FuelPurchaseImportRow").FuelPurchaseID(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportRowResolver](ec, "FuelPurchaseImportRow@fuelpurchase").FuelPurchaseID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -1999,7 +1999,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "Tractor",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportRow)
-					return gqlexec.Resolver[resolverFuelPurchaseImportRow](ec, "FuelPurchaseImportRow").ResolvedTractor(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportRowResolver](ec, "FuelPurchaseImportRow@fuelpurchase").ResolvedTractor(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtractorᚐTractor),
 			},
@@ -2129,7 +2129,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportSummary)
-					return gqlexec.Resolver[resolverFuelPurchaseImportSummary](ec, "FuelPurchaseImportSummary").TotalGallons(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportSummaryResolver](ec, "FuelPurchaseImportSummary@fuelpurchase").TotalGallons(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -2141,7 +2141,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportSummary)
-					return gqlexec.Resolver[resolverFuelPurchaseImportSummary](ec, "FuelPurchaseImportSummary").TotalAmount(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportSummaryResolver](ec, "FuelPurchaseImportSummary@fuelpurchase").TotalAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -2152,7 +2152,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportSummary)
-					return gqlexec.Resolver[resolverFuelPurchaseImportSummary](ec, "FuelPurchaseImportSummary").ByFuelType(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportSummaryResolver](ec, "FuelPurchaseImportSummary@fuelpurchase").ByFuelType(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -2163,7 +2163,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportSummary)
-					return gqlexec.Resolver[resolverFuelPurchaseImportSummary](ec, "FuelPurchaseImportSummary").ByJurisdiction(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportSummaryResolver](ec, "FuelPurchaseImportSummary@fuelpurchase").ByJurisdiction(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -2174,7 +2174,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportSummary)
-					return gqlexec.Resolver[resolverFuelPurchaseImportSummary](ec, "FuelPurchaseImportSummary").EarliestPurchasedAt(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportSummaryResolver](ec, "FuelPurchaseImportSummary@fuelpurchase").EarliestPurchasedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -2185,7 +2185,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportSummary)
-					return gqlexec.Resolver[resolverFuelPurchaseImportSummary](ec, "FuelPurchaseImportSummary").LatestPurchasedAt(ctx, obj)
+					return gqlexec.Resolver[FuelPurchaseImportSummaryResolver](ec, "FuelPurchaseImportSummary@fuelpurchase").LatestPurchasedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -2252,7 +2252,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.Spend)
-					return gqlexec.Resolver[resolverFuelSpend](ec, "FuelSpend").Gallons(ctx, obj)
+					return gqlexec.Resolver[FuelSpendResolver](ec, "FuelSpend@fuelpurchase").Gallons(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -2264,7 +2264,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.Spend)
-					return gqlexec.Resolver[resolverFuelSpend](ec, "FuelSpend").UntaxedGallons(ctx, obj)
+					return gqlexec.Resolver[FuelSpendResolver](ec, "FuelSpend@fuelpurchase").UntaxedGallons(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -2276,7 +2276,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.Spend)
-					return gqlexec.Resolver[resolverFuelSpend](ec, "FuelSpend").TotalAmount(ctx, obj)
+					return gqlexec.Resolver[FuelSpendResolver](ec, "FuelSpend@fuelpurchase").TotalAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -2291,7 +2291,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createFuelCard_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateFuelCard(ctx, fc.Args["input"].(gqlmodel.FuelCardInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fuelpurchase").CreateFuelCard(ctx, fc.Args["input"].(gqlmodel.FuelCardInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelCard),
 			},
@@ -2304,7 +2304,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateFuelCard_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateFuelCard(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.FuelCardInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fuelpurchase").UpdateFuelCard(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.FuelCardInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelCard),
 			},
@@ -2317,7 +2317,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_cancelFuelCard_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CancelFuelCard(ctx, fc.Args["input"].(gqlmodel.CancelFuelCardInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fuelpurchase").CancelFuelCard(ctx, fc.Args["input"].(gqlmodel.CancelFuelCardInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelCard),
 			},
@@ -2330,7 +2330,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_assignFuelCard_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AssignFuelCard(ctx, fc.Args["input"].(gqlmodel.AssignFuelCardInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fuelpurchase").AssignFuelCard(ctx, fc.Args["input"].(gqlmodel.AssignFuelCardInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelCard),
 			},
@@ -2343,7 +2343,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_syncFuelCardFeed_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SyncFuelCardFeed(ctx, fc.Args["provider"].(fuelpurchase.CardProvider))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fuelpurchase").SyncFuelCardFeed(ctx, fc.Args["provider"].(fuelpurchase.CardProvider))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelCardSyncResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelCardSyncResult),
 			},
@@ -2356,7 +2356,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createFuelPurchase_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateFuelPurchase(ctx, fc.Args["input"].(gqlmodel.FuelPurchaseInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fuelpurchase").CreateFuelPurchase(ctx, fc.Args["input"].(gqlmodel.FuelPurchaseInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelPurchase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelPurchase),
 			},
@@ -2369,7 +2369,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateFuelPurchase_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateFuelPurchase(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.FuelPurchaseInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fuelpurchase").UpdateFuelPurchase(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.FuelPurchaseInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelPurchase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelPurchase),
 			},
@@ -2381,7 +2381,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteFuelPurchase_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteFuelPurchase(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fuelpurchase").DeleteFuelPurchase(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -2394,7 +2394,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createFuelPurchaseImport_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateFuelPurchaseImport(ctx, fc.Args["input"].(gqlmodel.CreateFuelPurchaseImportInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fuelpurchase").CreateFuelPurchaseImport(ctx, fc.Args["input"].(gqlmodel.CreateFuelPurchaseImportInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportBatch),
 			},
@@ -2407,7 +2407,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_stageFuelPurchaseImport_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").StageFuelPurchaseImport(ctx, fc.Args["input"].(gqlmodel.StageFuelPurchaseImportInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fuelpurchase").StageFuelPurchaseImport(ctx, fc.Args["input"].(gqlmodel.StageFuelPurchaseImportInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportBatch),
 			},
@@ -2420,7 +2420,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_commitFuelPurchaseImport_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CommitFuelPurchaseImport(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fuelpurchase").CommitFuelPurchaseImport(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportBatch),
 			},
@@ -2433,7 +2433,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_resolveFuelPurchaseImportRows_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ResolveFuelPurchaseImportRows(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fuelpurchase").ResolveFuelPurchaseImportRows(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportResolveResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelPurchaseImportResolveResult),
 			},
@@ -2446,7 +2446,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_discardFuelPurchaseImport_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DiscardFuelPurchaseImport(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["reason"].(*string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fuelpurchase").DiscardFuelPurchaseImport(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["reason"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportBatch),
 			},
@@ -2462,7 +2462,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_fuelCards_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FuelCards(ctx, fc.Args["input"].(gqlmodel.FuelCardsInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fuelpurchase").FuelCards(ctx, fc.Args["input"].(gqlmodel.FuelCardsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelCardConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelCardConnection),
 			},
@@ -2476,7 +2476,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_fuelCard_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FuelCard(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fuelpurchase").FuelCard(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelCard),
 			},
@@ -2490,7 +2490,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_fuelPurchases_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FuelPurchases(ctx, fc.Args["input"].(gqlmodel.FuelPurchasesInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fuelpurchase").FuelPurchases(ctx, fc.Args["input"].(gqlmodel.FuelPurchasesInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelPurchaseConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelPurchaseConnection),
 			},
@@ -2504,7 +2504,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_fuelPurchase_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FuelPurchase(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fuelpurchase").FuelPurchase(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelPurchase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelPurchase),
 			},
@@ -2518,7 +2518,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_fuelPurchaseImports_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FuelPurchaseImports(ctx, fc.Args["input"].(gqlmodel.FuelPurchaseImportsInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fuelpurchase").FuelPurchaseImports(ctx, fc.Args["input"].(gqlmodel.FuelPurchaseImportsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportBatchConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelPurchaseImportBatchConnection),
 			},
@@ -2532,7 +2532,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_fuelPurchaseImport_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FuelPurchaseImport(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fuelpurchase").FuelPurchaseImport(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportBatch),
 			},
@@ -2546,7 +2546,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_fuelPurchaseImportTemplate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FuelPurchaseImportTemplate(ctx, fc.Args["provider"].(fuelpurchase.CardProvider))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fuelpurchase").FuelPurchaseImportTemplate(ctx, fc.Args["provider"].(fuelpurchase.CardProvider))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelImportTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelImportTemplate),
 			},
@@ -2560,7 +2560,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_fuelPurchaseDeskCard_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FuelPurchaseDeskCard(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fuelpurchase").FuelPurchaseDeskCard(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelPurchaseDeskCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋfueldeskcardserviceᚐPurchaseCard),
 			},
@@ -2574,7 +2574,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_fuelCardDeskCard_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FuelCardDeskCard(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fuelpurchase").FuelCardDeskCard(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelCardDeskCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋfueldeskcardserviceᚐFuelCardCard),
 			},
@@ -2593,23 +2593,27 @@ var Shard = &gqlexec.Shard{
 		{Name: "StageFuelPurchaseImportInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputStageFuelPurchaseImportInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "FuelCard", Check: func(r any) bool { _, ok := r.(resolverFuelCard); return ok }},
-		{Root: "FuelCardDeskCard", Check: func(r any) bool { _, ok := r.(resolverFuelCardDeskCard); return ok }},
-		{Root: "FuelFeedStatus", Check: func(r any) bool { _, ok := r.(resolverFuelFeedStatus); return ok }},
-		{Root: "FuelHeldSpend", Check: func(r any) bool { _, ok := r.(resolverFuelHeldSpend); return ok }},
-		{Root: "FuelJurisdictionGallons", Check: func(r any) bool { _, ok := r.(resolverFuelJurisdictionGallons); return ok }},
-		{Root: "FuelPurchase", Check: func(r any) bool { _, ok := r.(resolverFuelPurchase); return ok }},
-		{Root: "FuelPurchaseIFTA", Check: func(r any) bool { _, ok := r.(resolverFuelPurchaseIFTA); return ok }},
-		{Root: "FuelPurchaseImportBatch", Check: func(r any) bool { _, ok := r.(resolverFuelPurchaseImportBatch); return ok }},
-		{Root: "FuelPurchaseImportRow", Check: func(r any) bool { _, ok := r.(resolverFuelPurchaseImportRow); return ok }},
-		{Root: "FuelPurchaseImportSummary", Check: func(r any) bool { _, ok := r.(resolverFuelPurchaseImportSummary); return ok }},
-		{Root: "FuelSpend", Check: func(r any) bool { _, ok := r.(resolverFuelSpend); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "FuelCardDeskCard@fuelpurchase", Check: func(r any) bool { _, ok := r.(FuelCardDeskCardResolver); return ok }},
+		{Root: "FuelCard@fuelpurchase", Check: func(r any) bool { _, ok := r.(FuelCardResolver); return ok }},
+		{Root: "FuelFeedStatus@fuelpurchase", Check: func(r any) bool { _, ok := r.(FuelFeedStatusResolver); return ok }},
+		{Root: "FuelHeldSpend@fuelpurchase", Check: func(r any) bool { _, ok := r.(FuelHeldSpendResolver); return ok }},
+		{Root: "FuelJurisdictionGallons@fuelpurchase", Check: func(r any) bool { _, ok := r.(FuelJurisdictionGallonsResolver); return ok }},
+		{Root: "FuelPurchaseIFTA@fuelpurchase", Check: func(r any) bool { _, ok := r.(FuelPurchaseIFTAResolver); return ok }},
+		{Root: "FuelPurchaseImportBatch@fuelpurchase", Check: func(r any) bool { _, ok := r.(FuelPurchaseImportBatchResolver); return ok }},
+		{Root: "FuelPurchaseImportRow@fuelpurchase", Check: func(r any) bool { _, ok := r.(FuelPurchaseImportRowResolver); return ok }},
+		{Root: "FuelPurchaseImportSummary@fuelpurchase", Check: func(r any) bool { _, ok := r.(FuelPurchaseImportSummaryResolver); return ok }},
+		{Root: "FuelPurchase@fuelpurchase", Check: func(r any) bool { _, ok := r.(FuelPurchaseResolver); return ok }},
+		{Root: "FuelSpend@fuelpurchase", Check: func(r any) bool { _, ok := r.(FuelSpendResolver); return ok }},
+		{Root: "Mutation@fuelpurchase", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@fuelpurchase", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverFuelCard interface {
+type FuelCardDeskCardResolver interface {
+	LastPurchasedAt(ctx context.Context, obj *fueldeskcardservice.FuelCardCard) (*int, error)
+}
+
+type FuelCardResolver interface {
 	AssignedWorkerID(ctx context.Context, obj *fuelpurchase.FuelCard) (*string, error)
 	AssignedTractorID(ctx context.Context, obj *fuelpurchase.FuelCard) (*string, error)
 	ExpiresAt(ctx context.Context, obj *fuelpurchase.FuelCard) (*int, error)
@@ -2618,50 +2622,30 @@ type resolverFuelCard interface {
 	AssignedTractor(ctx context.Context, obj *fuelpurchase.FuelCard) (*tractor.Tractor, error)
 }
 
-type resolverFuelCardDeskCard interface {
-	LastPurchasedAt(ctx context.Context, obj *fueldeskcardservice.FuelCardCard) (*int, error)
-}
-
-type resolverFuelFeedStatus interface {
+type FuelFeedStatusResolver interface {
 	LastPolledAt(ctx context.Context, obj *fuelpurchase.CardFeedState) (*int, error)
 	LastSuccessAt(ctx context.Context, obj *fuelpurchase.CardFeedState) (*int, error)
 	LastError(ctx context.Context, obj *fuelpurchase.CardFeedState) (*string, error)
 }
 
-type resolverFuelHeldSpend interface {
+type FuelHeldSpendResolver interface {
 	Gallons(ctx context.Context, obj *fueldeskcardservice.HeldSpend) (string, error)
 	TotalAmount(ctx context.Context, obj *fueldeskcardservice.HeldSpend) (string, error)
 }
 
-type resolverFuelJurisdictionGallons interface {
+type FuelJurisdictionGallonsResolver interface {
 	Jurisdiction(ctx context.Context, obj *fueldeskcardservice.JurisdictionGallons) (*ifta.Jurisdiction, error)
 	Gallons(ctx context.Context, obj *fueldeskcardservice.JurisdictionGallons) (string, error)
 }
 
-type resolverFuelPurchase interface {
-	WorkerID(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*string, error)
-	FuelCardID(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*string, error)
-	Quantity(ctx context.Context, obj *fuelpurchase.FuelPurchase) (string, error)
-	Gallons(ctx context.Context, obj *fuelpurchase.FuelPurchase) (string, error)
-	UnitPrice(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*string, error)
-	TotalAmount(ctx context.Context, obj *fuelpurchase.FuelPurchase) (string, error)
-	Odometer(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*int, error)
-	ImportBatchID(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*string, error)
-	CreatedByID(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*string, error)
-	Tractor(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*tractor.Tractor, error)
-	Worker(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*worker.Worker, error)
-	Jurisdiction(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*ifta.Jurisdiction, error)
-	FuelCard(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*fuelpurchase.FuelCard, error)
-}
-
-type resolverFuelPurchaseIFTA interface {
+type FuelPurchaseIFTAResolver interface {
 	TaxPaidGallons(ctx context.Context, obj *fueldeskcardservice.PurchaseIFTA) (string, error)
 	RatePerGallon(ctx context.Context, obj *fueldeskcardservice.PurchaseIFTA) (*string, error)
 	TaxPaidCredit(ctx context.Context, obj *fueldeskcardservice.PurchaseIFTA) (*string, error)
 	TractorGallons(ctx context.Context, obj *fueldeskcardservice.PurchaseIFTA) (string, error)
 }
 
-type resolverFuelPurchaseImportBatch interface {
+type FuelPurchaseImportBatchResolver interface {
 	DocumentID(ctx context.Context, obj *fuelpurchase.ImportBatch) (*string, error)
 	SourceFormat(ctx context.Context, obj *fuelpurchase.ImportBatch) (*fuelpurchase.SourceFormat, error)
 	DefaultFuelType(ctx context.Context, obj *fuelpurchase.ImportBatch) (*domaintypes.IFTAFuelType, error)
@@ -2677,7 +2661,7 @@ type resolverFuelPurchaseImportBatch interface {
 	Rows(ctx context.Context, obj *fuelpurchase.ImportBatch, input *gqlmodel.FuelPurchaseImportRowsInput) (*gqlmodel.FuelPurchaseImportRowConnection, error)
 }
 
-type resolverFuelPurchaseImportRow interface {
+type FuelPurchaseImportRowResolver interface {
 	Parsed(ctx context.Context, obj *fuelpurchase.ImportRow) (*gqlmodel.FuelPurchaseImportParsed, error)
 	ResolvedTractorID(ctx context.Context, obj *fuelpurchase.ImportRow) (*string, error)
 	ResolvedFuelCardID(ctx context.Context, obj *fuelpurchase.ImportRow) (*string, error)
@@ -2686,7 +2670,7 @@ type resolverFuelPurchaseImportRow interface {
 	ResolvedTractor(ctx context.Context, obj *fuelpurchase.ImportRow) (*tractor.Tractor, error)
 }
 
-type resolverFuelPurchaseImportSummary interface {
+type FuelPurchaseImportSummaryResolver interface {
 	TotalGallons(ctx context.Context, obj *fuelpurchase.ImportSummary) (string, error)
 	TotalAmount(ctx context.Context, obj *fuelpurchase.ImportSummary) (string, error)
 	ByFuelType(ctx context.Context, obj *fuelpurchase.ImportSummary) (map[string]any, error)
@@ -2695,13 +2679,29 @@ type resolverFuelPurchaseImportSummary interface {
 	LatestPurchasedAt(ctx context.Context, obj *fuelpurchase.ImportSummary) (*int, error)
 }
 
-type resolverFuelSpend interface {
+type FuelPurchaseResolver interface {
+	WorkerID(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*string, error)
+	FuelCardID(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*string, error)
+	Quantity(ctx context.Context, obj *fuelpurchase.FuelPurchase) (string, error)
+	Gallons(ctx context.Context, obj *fuelpurchase.FuelPurchase) (string, error)
+	UnitPrice(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*string, error)
+	TotalAmount(ctx context.Context, obj *fuelpurchase.FuelPurchase) (string, error)
+	Odometer(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*int, error)
+	ImportBatchID(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*string, error)
+	CreatedByID(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*string, error)
+	Tractor(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*tractor.Tractor, error)
+	Worker(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*worker.Worker, error)
+	Jurisdiction(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*ifta.Jurisdiction, error)
+	FuelCard(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*fuelpurchase.FuelCard, error)
+}
+
+type FuelSpendResolver interface {
 	Gallons(ctx context.Context, obj *fueldeskcardservice.Spend) (string, error)
 	UntaxedGallons(ctx context.Context, obj *fueldeskcardservice.Spend) (string, error)
 	TotalAmount(ctx context.Context, obj *fueldeskcardservice.Spend) (string, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateFuelCard(ctx context.Context, input gqlmodel.FuelCardInput) (*fuelpurchase.FuelCard, error)
 	UpdateFuelCard(ctx context.Context, id string, version int, input gqlmodel.FuelCardInput) (*fuelpurchase.FuelCard, error)
 	CancelFuelCard(ctx context.Context, input gqlmodel.CancelFuelCardInput) (*fuelpurchase.FuelCard, error)
@@ -2717,7 +2717,7 @@ type resolverMutation interface {
 	DiscardFuelPurchaseImport(ctx context.Context, id string, version int, reason *string) (*fuelpurchase.ImportBatch, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	FuelCards(ctx context.Context, input gqlmodel.FuelCardsInput) (*gqlmodel.FuelCardConnection, error)
 	FuelCard(ctx context.Context, id string) (*fuelpurchase.FuelCard, error)
 	FuelPurchases(ctx context.Context, input gqlmodel.FuelPurchasesInput) (*gqlmodel.FuelPurchaseConnection, error)

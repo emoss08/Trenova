@@ -534,7 +534,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_customFieldDefinitions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CustomFieldDefinitions(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@customfielddefinition").CustomFieldDefinitions(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCustomFieldDefinitionConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomFieldDefinitionConnection),
 			},
@@ -547,7 +547,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_customFieldDefinition_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CustomFieldDefinition(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@customfielddefinition").CustomFieldDefinition(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOCustomFieldDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐCustomFieldDefinition),
 			},
@@ -561,7 +561,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_customFieldFormFields_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CustomFieldFormFields(ctx, fc.Args["resourceType"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@customfielddefinition").CustomFieldFormFields(ctx, fc.Args["resourceType"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNCustomFieldFormField2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐCustomFieldDefinitionᚄ),
 			},
@@ -572,18 +572,18 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CustomFieldResourceTypes(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@customfielddefinition").CustomFieldResourceTypes(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
 			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Query@customfielddefinition", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	CustomFieldDefinitions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CustomFieldDefinitionConnection, error)
 	CustomFieldDefinition(ctx context.Context, id string) (*customfield.CustomFieldDefinition, error)
 	CustomFieldFormFields(ctx context.Context, resourceType string) ([]*customfield.CustomFieldDefinition, error)

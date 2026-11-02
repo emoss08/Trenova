@@ -1079,7 +1079,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createFuelIndex_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateFuelIndex(ctx, fc.Args["input"].(gqlmodel.FuelIndexInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fuelsurcharge").CreateFuelIndex(ctx, fc.Args["input"].(gqlmodel.FuelIndexInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelIndex2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelIndex),
 			},
@@ -1092,7 +1092,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateFuelIndex_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateFuelIndex(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.FuelIndexInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fuelsurcharge").UpdateFuelIndex(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.FuelIndexInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelIndex2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelIndex),
 			},
@@ -1104,7 +1104,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteFuelIndex_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteFuelIndex(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fuelsurcharge").DeleteFuelIndex(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -1117,7 +1117,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_addFuelIndexPrice_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AddFuelIndexPrice(ctx, fc.Args["input"].(gqlmodel.FuelIndexPriceInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fuelsurcharge").AddFuelIndexPrice(ctx, fc.Args["input"].(gqlmodel.FuelIndexPriceInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelIndexPrice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelIndexPrice),
 			},
@@ -1130,7 +1130,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateFuelIndexPrice_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateFuelIndexPrice(ctx, fc.Args["input"].(gqlmodel.UpdateFuelIndexPriceInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fuelsurcharge").UpdateFuelIndexPrice(ctx, fc.Args["input"].(gqlmodel.UpdateFuelIndexPriceInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelIndexPrice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelIndexPrice),
 			},
@@ -1142,7 +1142,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteFuelIndexPrice_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteFuelIndexPrice(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fuelsurcharge").DeleteFuelIndexPrice(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -1155,7 +1155,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createFuelSurchargeProgram_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateFuelSurchargeProgram(ctx, fc.Args["input"].(gqlmodel.FuelSurchargeProgramInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fuelsurcharge").CreateFuelSurchargeProgram(ctx, fc.Args["input"].(gqlmodel.FuelSurchargeProgramInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelSurchargeProgram2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelSurchargeProgram),
 			},
@@ -1168,7 +1168,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateFuelSurchargeProgram_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateFuelSurchargeProgram(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.FuelSurchargeProgramInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fuelsurcharge").UpdateFuelSurchargeProgram(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.FuelSurchargeProgramInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelSurchargeProgram2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelSurchargeProgram),
 			},
@@ -1180,7 +1180,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteFuelSurchargeProgram_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteFuelSurchargeProgram(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@fuelsurcharge").DeleteFuelSurchargeProgram(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -1196,7 +1196,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_fuelIndexes_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FuelIndexes(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fuelsurcharge").FuelIndexes(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelIndexConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelIndexConnection),
 			},
@@ -1209,7 +1209,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_fuelIndex_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FuelIndex(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fuelsurcharge").FuelIndex(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOFuelIndex2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelIndex),
 			},
@@ -1223,7 +1223,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_fuelIndexPriceHistory_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FuelIndexPriceHistory(ctx, fc.Args["indexId"].(string), fc.Args["from"].(*string), fc.Args["to"].(*string), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fuelsurcharge").FuelIndexPriceHistory(ctx, fc.Args["indexId"].(string), fc.Args["from"].(*string), fc.Args["to"].(*string), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelIndexPrice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelIndexPriceᚄ),
 			},
@@ -1235,7 +1235,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "FuelIndexLatestPrice",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FuelDashboard(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fuelsurcharge").FuelDashboard(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelIndexLatestPrice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelIndexLatestPriceᚄ),
 			},
@@ -1249,7 +1249,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_fuelSurchargePrograms_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FuelSurchargePrograms(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fuelsurcharge").FuelSurchargePrograms(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelSurchargeProgramConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelSurchargeProgramConnection),
 			},
@@ -1262,7 +1262,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_fuelSurchargeProgram_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FuelSurchargeProgram(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fuelsurcharge").FuelSurchargeProgram(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOFuelSurchargeProgram2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelSurchargeProgram),
 			},
@@ -1274,7 +1274,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "FuelProgramCurrentRate",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").FuelProgramCurrentRates(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fuelsurcharge").FuelProgramCurrentRates(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNFuelProgramCurrentRate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelProgramCurrentRateᚄ),
 			},
@@ -1288,7 +1288,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_generateFuelSurchargeTable_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").GenerateFuelSurchargeTable(ctx, fc.Args["input"].(gqlmodel.GenerateFuelTableInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fuelsurcharge").GenerateFuelSurchargeTable(ctx, fc.Args["input"].(gqlmodel.GenerateFuelTableInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNGeneratedFuelTableRow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐGeneratedFuelTableRowᚄ),
 			},
@@ -1300,7 +1300,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "EIASeriesOption",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").EiaSeriesOptions(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@fuelsurcharge").EiaSeriesOptions(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNEIASeriesOption2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEIASeriesOptionᚄ),
 			},
@@ -1315,12 +1315,12 @@ var Shard = &gqlexec.Shard{
 		{Name: "UpdateFuelIndexPriceInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateFuelIndexPriceInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Mutation@fuelsurcharge", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@fuelsurcharge", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	CreateFuelIndex(ctx context.Context, input gqlmodel.FuelIndexInput) (*gqlmodel.FuelIndex, error)
 	UpdateFuelIndex(ctx context.Context, id string, input gqlmodel.FuelIndexInput) (*gqlmodel.FuelIndex, error)
 	DeleteFuelIndex(ctx context.Context, id string) (bool, error)
@@ -1332,7 +1332,7 @@ type resolverMutation interface {
 	DeleteFuelSurchargeProgram(ctx context.Context, id string) (bool, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	FuelIndexes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FuelIndexConnection, error)
 	FuelIndex(ctx context.Context, id string) (*gqlmodel.FuelIndex, error)
 	FuelIndexPriceHistory(ctx context.Context, indexID string, from *string, to *string, limit *int) ([]*gqlmodel.FuelIndexPrice, error)

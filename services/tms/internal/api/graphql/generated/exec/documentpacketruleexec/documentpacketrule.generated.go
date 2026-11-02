@@ -231,7 +231,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_documentPacketRules_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DocumentPacketRules(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@documentpacketrule").DocumentPacketRules(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNDocumentPacketRuleConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentPacketRuleConnection),
 			},
@@ -244,18 +244,18 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_documentPacketRule_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DocumentPacketRule(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@documentpacketrule").DocumentPacketRule(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalODocumentPacketRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentpacketruleᚐDocumentPacketRule),
 			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "Query@documentpacketrule", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	DocumentPacketRules(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DocumentPacketRuleConnection, error)
 	DocumentPacketRule(ctx context.Context, id string) (*documentpacketrule.DocumentPacketRule, error)
 }

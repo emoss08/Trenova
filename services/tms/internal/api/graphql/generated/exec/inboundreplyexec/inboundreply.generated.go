@@ -46,7 +46,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "InboundDocumentReading",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*inboundmessage.InboundAttachment)
-					return gqlexec.Resolver[resolverInboundAttachment](ec, "InboundAttachment").Reading(ctx, obj)
+					return gqlexec.Resolver[InboundAttachmentResolver](ec, "InboundAttachment@inboundreply").Reading(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInboundDocumentReading2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋinboundmessageportsᚐDocumentReading),
 			},
@@ -136,7 +136,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "TriageAction",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*inboundmessage.InboundMessage)
-					return gqlexec.Resolver[resolverInboundMessage](ec, "InboundMessage").Actions(ctx, obj)
+					return gqlexec.Resolver[InboundMessageResolver](ec, "InboundMessage@inboundreply").Actions(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNTriageAction2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋtriageᚐActionᚄ),
 			},
@@ -149,7 +149,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "InboundReply",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*inboundmessage.InboundMessage)
-					return gqlexec.Resolver[resolverInboundMessage](ec, "InboundMessage").Replies(ctx, obj)
+					return gqlexec.Resolver[InboundMessageResolver](ec, "InboundMessage@inboundreply").Replies(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInboundReply2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋtriageᚐReplyᚄ),
 			},
@@ -161,7 +161,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "InboundReply",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*inboundmessage.InboundMessage)
-					return gqlexec.Resolver[resolverInboundMessage](ec, "InboundMessage").ReplyDraft(ctx, obj)
+					return gqlexec.Resolver[InboundMessageResolver](ec, "InboundMessage@inboundreply").ReplyDraft(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInboundReply2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋtriageᚐReply),
 			},
@@ -173,7 +173,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "TriageLoadDraft",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*inboundmessage.InboundMessage)
-					return gqlexec.Resolver[resolverInboundMessage](ec, "InboundMessage").LoadDraft(ctx, obj)
+					return gqlexec.Resolver[InboundMessageResolver](ec, "InboundMessage@inboundreply").LoadDraft(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTriageLoadDraft2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐLoadDraft),
 			},
@@ -237,7 +237,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*triage.Reply)
-					return gqlexec.Resolver[resolverInboundReply](ec, "InboundReply").CcAddresses(ctx, obj)
+					return gqlexec.Resolver[InboundReplyResolver](ec, "InboundReply@inboundreply").CcAddresses(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
 			},
@@ -278,7 +278,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*triage.Reply)
-					return gqlexec.Resolver[resolverInboundReply](ec, "InboundReply").TemplateID(ctx, obj)
+					return gqlexec.Resolver[InboundReplyResolver](ec, "InboundReply@inboundreply").TemplateID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -299,7 +299,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*triage.Reply)
-					return gqlexec.Resolver[resolverInboundReply](ec, "InboundReply").SuggestedAddress(ctx, obj)
+					return gqlexec.Resolver[InboundReplyResolver](ec, "InboundReply@inboundreply").SuggestedAddress(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -311,7 +311,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*triage.Reply)
-					return gqlexec.Resolver[resolverInboundReply](ec, "InboundReply").SentBy(ctx, obj)
+					return gqlexec.Resolver[InboundReplyResolver](ec, "InboundReply@inboundreply").SentBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -322,7 +322,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*triage.Reply)
-					return gqlexec.Resolver[resolverInboundReply](ec, "InboundReply").SentAt(ctx, obj)
+					return gqlexec.Resolver[InboundReplyResolver](ec, "InboundReply@inboundreply").SentAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -482,7 +482,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_draftInboundReply_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DraftInboundReply(ctx, fc.Args["messageId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@inboundreply").DraftInboundReply(ctx, fc.Args["messageId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNInboundReply2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋtriageᚐReply),
 			},
@@ -495,7 +495,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_saveInboundReplyDraft_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SaveInboundReplyDraft(ctx, fc.Args["messageId"].(string), fc.Args["subject"].(string), fc.Args["body"].(string), fc.Args["documentIds"].([]string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@inboundreply").SaveInboundReplyDraft(ctx, fc.Args["messageId"].(string), fc.Args["subject"].(string), fc.Args["body"].(string), fc.Args["documentIds"].([]string))
 				},
 				Marshal: gqlexec.Marshal(marshalNInboundReply2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋtriageᚐReply),
 			},
@@ -508,7 +508,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_discardInboundReplyDraft_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DiscardInboundReplyDraft(ctx, fc.Args["messageId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@inboundreply").DiscardInboundReplyDraft(ctx, fc.Args["messageId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNInboundMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐInboundMessage),
 			},
@@ -521,7 +521,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_sendInboundReply_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SendInboundReply(ctx, fc.Args["input"].(gqlmodel.SendInboundReplyInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@inboundreply").SendInboundReply(ctx, fc.Args["input"].(gqlmodel.SendInboundReplyInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNInboundReply2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋtriageᚐReply),
 			},
@@ -533,7 +533,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_draftInboundMany_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DraftInboundMany(ctx, fc.Args["messageIds"].([]string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@inboundreply").DraftInboundMany(ctx, fc.Args["messageIds"].([]string))
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
@@ -546,7 +546,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createTriageReplyTemplate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateTriageReplyTemplate(ctx, fc.Args["input"].(gqlmodel.TriageReplyTemplateInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@inboundreply").CreateTriageReplyTemplate(ctx, fc.Args["input"].(gqlmodel.TriageReplyTemplateInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTriageReplyTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋtriageᚐReplyTemplate),
 			},
@@ -559,7 +559,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_updateTriageReplyTemplate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateTriageReplyTemplate(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.TriageReplyTemplateInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@inboundreply").UpdateTriageReplyTemplate(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.TriageReplyTemplateInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNTriageReplyTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋtriageᚐReplyTemplate),
 			},
@@ -571,7 +571,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_deleteTriageReplyTemplate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteTriageReplyTemplate(ctx, fc.Args["id"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@inboundreply").DeleteTriageReplyTemplate(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -584,7 +584,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_draftInboundLoad_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DraftInboundLoad(ctx, fc.Args["messageId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@inboundreply").DraftInboundLoad(ctx, fc.Args["messageId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNInboundMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐInboundMessage),
 			},
@@ -597,7 +597,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_discardInboundLoad_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DiscardInboundLoad(ctx, fc.Args["messageId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@inboundreply").DiscardInboundLoad(ctx, fc.Args["messageId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNInboundMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐInboundMessage),
 			},
@@ -610,7 +610,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createInboundLoad_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateInboundLoad(ctx, fc.Args["messageId"].(string), fc.Args["fields"].([]*gqlmodel.TriageLoadFieldInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@inboundreply").CreateInboundLoad(ctx, fc.Args["messageId"].(string), fc.Args["fields"].([]*gqlmodel.TriageLoadFieldInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNInboundMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐInboundMessage),
 			},
@@ -623,7 +623,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_fileInboundAttachment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").FileInboundAttachment(ctx, fc.Args["input"].(gqlmodel.FileInboundAttachmentInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@inboundreply").FileInboundAttachment(ctx, fc.Args["input"].(gqlmodel.FileInboundAttachmentInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNInboundMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐInboundMessage),
 			},
@@ -636,7 +636,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_fileInboundMany_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").FileInboundMany(ctx, fc.Args["messageIds"].([]string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@inboundreply").FileInboundMany(ctx, fc.Args["messageIds"].([]string))
 				},
 				Marshal: gqlexec.Marshal(marshalNTriageBulkResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋinboundmessageportsᚐBulkResult),
 			},
@@ -649,7 +649,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_unfileInboundAttachment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UnfileInboundAttachment(ctx, fc.Args["attachmentId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@inboundreply").UnfileInboundAttachment(ctx, fc.Args["attachmentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNInboundMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐInboundMessage),
 			},
@@ -662,7 +662,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_logInboundException_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").LogInboundException(ctx, fc.Args["messageId"].(string), fc.Args["input"].(gqlmodel.LogInboundExceptionInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@inboundreply").LogInboundException(ctx, fc.Args["messageId"].(string), fc.Args["input"].(gqlmodel.LogInboundExceptionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNInboundMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐInboundMessage),
 			},
@@ -675,7 +675,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_blockInboundSender_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BlockInboundSender(ctx, fc.Args["messageId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@inboundreply").BlockInboundSender(ctx, fc.Args["messageId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNInboundMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐInboundMessage),
 			},
@@ -688,7 +688,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_unblockInboundSender_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UnblockInboundSender(ctx, fc.Args["mailboxId"].(string), fc.Args["sender"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@inboundreply").UnblockInboundSender(ctx, fc.Args["mailboxId"].(string), fc.Args["sender"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐMailbox),
 			},
@@ -701,7 +701,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_decideInboundStops_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DecideInboundStops(ctx, fc.Args["messageId"].(string), fc.Args["decision"].(inboundmessage.StopsDecision))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@inboundreply").DecideInboundStops(ctx, fc.Args["messageId"].(string), fc.Args["decision"].(inboundmessage.StopsDecision))
 				},
 				Marshal: gqlexec.Marshal(marshalNInboundMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐInboundMessage),
 			},
@@ -715,7 +715,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "TriageReplyTemplate",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").TriageReplyTemplates(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@inboundreply").TriageReplyTemplates(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNTriageReplyTemplate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋtriageᚐReplyTemplateᚄ),
 			},
@@ -728,7 +728,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_renderTriageReplyTemplate_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").RenderTriageReplyTemplate(ctx, fc.Args["templateId"].(string), fc.Args["messageId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@inboundreply").RenderTriageReplyTemplate(ctx, fc.Args["templateId"].(string), fc.Args["messageId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -741,7 +741,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_triageStopTimes_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").TriageStopTimes(ctx, fc.Args["messageId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@inboundreply").TriageStopTimes(ctx, fc.Args["messageId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOTriageStopTimes2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋinboundmessageportsᚐStopTimes),
 			},
@@ -755,7 +755,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_triageShipmentPeek_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").TriageShipmentPeek(ctx, fc.Args["shipmentId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@inboundreply").TriageShipmentPeek(ctx, fc.Args["shipmentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNTriageShipmentPeek2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋinboundmessageportsᚐShipmentPeek),
 			},
@@ -769,7 +769,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_triageCustomerPeek_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").TriageCustomerPeek(ctx, fc.Args["customerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@inboundreply").TriageCustomerPeek(ctx, fc.Args["customerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNTriageCustomerPeek2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋinboundmessageportsᚐCustomerPeek),
 			},
@@ -783,7 +783,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_inboundReplyAttachables_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").InboundReplyAttachables(ctx, fc.Args["messageId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@inboundreply").InboundReplyAttachables(ctx, fc.Args["messageId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNInboundReplyAttachable2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋinboundreplyportsᚐReplyAttachableᚄ),
 			},
@@ -794,7 +794,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").InboundReplyAttachmentLimit(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@inboundreply").InboundReplyAttachmentLimit(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
@@ -848,7 +848,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "InboundAttachment",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*triage.Action)
-					return gqlexec.Resolver[resolverTriageAction](ec, "TriageAction").Attachment(ctx, obj)
+					return gqlexec.Resolver[TriageActionResolver](ec, "TriageAction@inboundreply").Attachment(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInboundAttachment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐInboundAttachment),
 			},
@@ -860,7 +860,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "InboundShipmentRef",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*triage.Action)
-					return gqlexec.Resolver[resolverTriageAction](ec, "TriageAction").Shipment(ctx, obj)
+					return gqlexec.Resolver[TriageActionResolver](ec, "TriageAction@inboundreply").Shipment(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInboundShipmentRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋshipmentportsᚐShipmentSummary),
 			},
@@ -871,7 +871,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*triage.Action)
-					return gqlexec.Resolver[resolverTriageAction](ec, "TriageAction").ReplyPurpose(ctx, obj)
+					return gqlexec.Resolver[TriageActionResolver](ec, "TriageAction@inboundreply").ReplyPurpose(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTriageReplyPurpose2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋtriageᚐReplyPurpose),
 			},
@@ -882,7 +882,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*triage.Action)
-					return gqlexec.Resolver[resolverTriageAction](ec, "TriageAction").RefusedFileName(ctx, obj)
+					return gqlexec.Resolver[TriageActionResolver](ec, "TriageAction@inboundreply").RefusedFileName(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
@@ -894,7 +894,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "InboundReply",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*triage.Action)
-					return gqlexec.Resolver[resolverTriageAction](ec, "TriageAction").Reply(ctx, obj)
+					return gqlexec.Resolver[TriageActionResolver](ec, "TriageAction@inboundreply").Reply(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInboundReply2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋtriageᚐReply),
 			},
@@ -916,7 +916,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "InboundShipmentRef",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*triage.Action)
-					return gqlexec.Resolver[resolverTriageAction](ec, "TriageAction").CreatedShipment(ctx, obj)
+					return gqlexec.Resolver[TriageActionResolver](ec, "TriageAction@inboundreply").CreatedShipment(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInboundShipmentRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋshipmentportsᚐShipmentSummary),
 			},
@@ -927,7 +927,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*triage.Action)
-					return gqlexec.Resolver[resolverTriageAction](ec, "TriageAction").StopsDecision(ctx, obj)
+					return gqlexec.Resolver[TriageActionResolver](ec, "TriageAction@inboundreply").StopsDecision(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTriageStopsDecision2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐStopsDecision),
 			},
@@ -938,7 +938,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*triage.Action)
-					return gqlexec.Resolver[resolverTriageAction](ec, "TriageAction").ExceptionKind(ctx, obj)
+					return gqlexec.Resolver[TriageActionResolver](ec, "TriageAction@inboundreply").ExceptionKind(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTriageExceptionKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐExceptionKind),
 			},
@@ -949,7 +949,7 @@ var Shard = &gqlexec.Shard{
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*triage.Action)
-					return gqlexec.Resolver[resolverTriageAction](ec, "TriageAction").CompletedAt(ctx, obj)
+					return gqlexec.Resolver[TriageActionResolver](ec, "TriageAction@inboundreply").CompletedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
@@ -1211,7 +1211,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*triage.ReplyTemplate)
-					return gqlexec.Resolver[resolverTriageReplyTemplate](ec, "TriageReplyTemplate").CreatedBy(ctx, obj)
+					return gqlexec.Resolver[TriageReplyTemplateResolver](ec, "TriageReplyTemplate@inboundreply").CreatedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
@@ -1387,7 +1387,7 @@ var Shard = &gqlexec.Shard{
 				ChildType:  "InboundShipmentRef",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*inboundmessageports.StopTimes)
-					return gqlexec.Resolver[resolverTriageStopTimes](ec, "TriageStopTimes").Shipment(ctx, obj)
+					return gqlexec.Resolver[TriageStopTimesResolver](ec, "TriageStopTimes@inboundreply").Shipment(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInboundShipmentRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋshipmentportsᚐShipmentSummary),
 			},
@@ -1506,29 +1506,29 @@ var Shard = &gqlexec.Shard{
 		{Name: "TriageReplyTemplateInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputTriageReplyTemplateInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
-		{Root: "InboundAttachment", Check: func(r any) bool { _, ok := r.(resolverInboundAttachment); return ok }},
-		{Root: "InboundMessage", Check: func(r any) bool { _, ok := r.(resolverInboundMessage); return ok }},
-		{Root: "InboundReply", Check: func(r any) bool { _, ok := r.(resolverInboundReply); return ok }},
-		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
-		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
-		{Root: "TriageAction", Check: func(r any) bool { _, ok := r.(resolverTriageAction); return ok }},
-		{Root: "TriageReplyTemplate", Check: func(r any) bool { _, ok := r.(resolverTriageReplyTemplate); return ok }},
-		{Root: "TriageStopTimes", Check: func(r any) bool { _, ok := r.(resolverTriageStopTimes); return ok }},
+		{Root: "InboundAttachment@inboundreply", Check: func(r any) bool { _, ok := r.(InboundAttachmentResolver); return ok }},
+		{Root: "InboundMessage@inboundreply", Check: func(r any) bool { _, ok := r.(InboundMessageResolver); return ok }},
+		{Root: "InboundReply@inboundreply", Check: func(r any) bool { _, ok := r.(InboundReplyResolver); return ok }},
+		{Root: "Mutation@inboundreply", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "Query@inboundreply", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "TriageAction@inboundreply", Check: func(r any) bool { _, ok := r.(TriageActionResolver); return ok }},
+		{Root: "TriageReplyTemplate@inboundreply", Check: func(r any) bool { _, ok := r.(TriageReplyTemplateResolver); return ok }},
+		{Root: "TriageStopTimes@inboundreply", Check: func(r any) bool { _, ok := r.(TriageStopTimesResolver); return ok }},
 	},
 }
 
-type resolverInboundAttachment interface {
+type InboundAttachmentResolver interface {
 	Reading(ctx context.Context, obj *inboundmessage.InboundAttachment) (*inboundmessageports.DocumentReading, error)
 }
 
-type resolverInboundMessage interface {
+type InboundMessageResolver interface {
 	Actions(ctx context.Context, obj *inboundmessage.InboundMessage) ([]*triage.Action, error)
 	Replies(ctx context.Context, obj *inboundmessage.InboundMessage) ([]*triage.Reply, error)
 	ReplyDraft(ctx context.Context, obj *inboundmessage.InboundMessage) (*triage.Reply, error)
 	LoadDraft(ctx context.Context, obj *inboundmessage.InboundMessage) (*inboundmessage.LoadDraft, error)
 }
 
-type resolverInboundReply interface {
+type InboundReplyResolver interface {
 	CcAddresses(ctx context.Context, obj *triage.Reply) ([]string, error)
 	TemplateID(ctx context.Context, obj *triage.Reply) (*string, error)
 	SuggestedAddress(ctx context.Context, obj *triage.Reply) (*string, error)
@@ -1536,7 +1536,7 @@ type resolverInboundReply interface {
 	SentAt(ctx context.Context, obj *triage.Reply) (*int, error)
 }
 
-type resolverMutation interface {
+type MutationResolver interface {
 	DraftInboundReply(ctx context.Context, messageID string) (*triage.Reply, error)
 	SaveInboundReplyDraft(ctx context.Context, messageID string, subject string, body string, documentIds []string) (*triage.Reply, error)
 	DiscardInboundReplyDraft(ctx context.Context, messageID string) (*inboundmessage.InboundMessage, error)
@@ -1557,7 +1557,7 @@ type resolverMutation interface {
 	DecideInboundStops(ctx context.Context, messageID string, decision inboundmessage.StopsDecision) (*inboundmessage.InboundMessage, error)
 }
 
-type resolverQuery interface {
+type QueryResolver interface {
 	TriageReplyTemplates(ctx context.Context) ([]*triage.ReplyTemplate, error)
 	RenderTriageReplyTemplate(ctx context.Context, templateID string, messageID string) (string, error)
 	TriageStopTimes(ctx context.Context, messageID string) (*inboundmessageports.StopTimes, error)
@@ -1567,7 +1567,7 @@ type resolverQuery interface {
 	InboundReplyAttachmentLimit(ctx context.Context) (int, error)
 }
 
-type resolverTriageAction interface {
+type TriageActionResolver interface {
 	Attachment(ctx context.Context, obj *triage.Action) (*inboundmessage.InboundAttachment, error)
 	Shipment(ctx context.Context, obj *triage.Action) (*shipmentports.ShipmentSummary, error)
 	ReplyPurpose(ctx context.Context, obj *triage.Action) (*triage.ReplyPurpose, error)
@@ -1579,11 +1579,11 @@ type resolverTriageAction interface {
 	CompletedAt(ctx context.Context, obj *triage.Action) (*int, error)
 }
 
-type resolverTriageReplyTemplate interface {
+type TriageReplyTemplateResolver interface {
 	CreatedBy(ctx context.Context, obj *triage.ReplyTemplate) (*tenant.User, error)
 }
 
-type resolverTriageStopTimes interface {
+type TriageStopTimesResolver interface {
 	Shipment(ctx context.Context, obj *inboundmessageports.StopTimes) (*shipmentports.ShipmentSummary, error)
 }
 
