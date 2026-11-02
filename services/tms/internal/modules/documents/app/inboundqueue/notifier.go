@@ -30,9 +30,9 @@ type NotifierParams struct {
 	fx.In
 
 	Logger     *zap.Logger
-	Realtime   realtimeports.RealtimeService                 `optional:"true"`
-	Watchtower watchtowerports.WatchtowerProjector           `optional:"true"`
-	Briefing   inboundmessageports.TriageBriefingInvalidator `optional:"true"`
+	Realtime   realtimeports.RealtimeService
+	Watchtower watchtowerports.WatchtowerProjector
+	Briefing   inboundmessageports.TriageBriefingInvalidator
 }
 
 type notifierDeps struct {
@@ -84,9 +84,8 @@ func (n *Notifier) MessagesCreated(
 func (n *Notifier) TenantChanged(ctx context.Context, tenantInfo pagination.TenantInfo) {
 	kernelports.AfterCommit(ctx, func(committed context.Context) {
 		n.Publish(committed, tenantInfo, pulid.Nil, InboxRealtimeAction)
-		if n.briefing != nil {
-			n.briefing.InvalidateBriefing(committed, tenantInfo)
-		}
+		n.briefing.InvalidateBriefing(committed, tenantInfo)
+
 	})
 }
 
@@ -109,10 +108,6 @@ func (n *Notifier) changed(
 }
 
 func (n *Notifier) project(ctx context.Context, message *inboundmessage.InboundMessage) {
-	if n.watchtower == nil {
-		return
-	}
-
 	if !message.NeedsReview() {
 		n.watchtower.Resolve(
 			ctx,
@@ -132,9 +127,6 @@ func (n *Notifier) publishAll(
 	action string,
 	messages []*inboundmessage.InboundMessage,
 ) {
-	if n.realtime == nil {
-		return
-	}
 	if len(messages) <= maxRecordInvalidations {
 		for _, message := range messages {
 			n.Publish(ctx, TenantOfMessage(message), message.ID, action)
@@ -160,10 +152,6 @@ func (n *Notifier) Publish(
 	messageID pulid.ID,
 	action string,
 ) {
-	if n.realtime == nil {
-		return
-	}
-
 	if err := realtimeinvalidation.Publish(ctx, n.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
@@ -181,10 +169,6 @@ func (n *Notifier) invalidateBriefings(
 	ctx context.Context,
 	messages []*inboundmessage.InboundMessage,
 ) {
-	if n.briefing == nil {
-		return
-	}
-
 	seen := make(map[pagination.TenantInfo]struct{}, 1)
 	for _, message := range messages {
 		tenantInfo := TenantOfMessage(message)

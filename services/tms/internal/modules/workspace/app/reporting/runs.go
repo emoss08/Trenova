@@ -33,12 +33,6 @@ type RunReportRequest struct {
 func (s *Service) RunReport(ctx context.Context, req *RunReportRequest) (*report.ReportRun, error) {
 	log := s.l.With(zap.String("operation", "RunReport"))
 
-	if !s.workflows.Enabled() {
-		return nil, errortypes.NewBusinessError(
-			"Report generation is temporarily unavailable — the background worker is not connected",
-		)
-	}
-
 	format := req.Format
 	if !format.IsValid() {
 		return nil, errortypes.NewValidationError(
@@ -236,7 +230,7 @@ func (s *Service) CancelRun(ctx context.Context, req *GetRunRequest) (*report.Re
 	}
 	run := change.Before
 
-	if run.TemporalWorkflowID != "" && s.workflows.Enabled() {
+	if run.TemporalWorkflowID != "" {
 		if err = s.workflows.CancelWorkflow(
 			ctx, run.TemporalWorkflowID, run.TemporalRunID,
 		); err != nil {

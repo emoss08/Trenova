@@ -1035,7 +1035,7 @@ func newIntegrationHarness(
 ) *integrationHarness {
 	t.Helper()
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	logger := zap.NewNop()
 	invoiceRepo := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})
 	adjustmentRepo := invoiceadjustmentrepository.New(

@@ -32,10 +32,10 @@ type Params struct {
 	SearchRepo   customerports.SearchRepository
 	ShipmentRead shipmentports.ShipmentSearchCardReader
 	Permissions  permissionports.PermissionEngine
-	States       usstateports.UsStateRepository `optional:"true"`
+	States       usstateports.UsStateRepository
 	Visibility   kernelports.RecordVisibility
-	Balances     kernelports.CustomerOpenBalanceReader `optional:"true"`
-	RecordLabels captureports.CaptureRecordFinder      `optional:"true"`
+	Balances     kernelports.CustomerOpenBalanceReader
+	RecordLabels captureports.CaptureRecordFinder
 	Views        permissionports.ReferenceViews
 }
 
@@ -303,9 +303,6 @@ func (s *Service) linkedFields(
 ) permissionports.LinkedFields {
 	check := func(_ context.Context, kind permission.Resource) (bool, error) {
 		return readable[kind], nil
-	}
-	if s.views == nil {
-		return readsOnly{check: check}
 	}
 
 	return s.views.Person(&permissionports.RequestActor{

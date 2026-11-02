@@ -143,10 +143,6 @@ func (s *Service) PreviewCancelNotices(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) ([]*PartnerNotice, error) {
-	if s.shipmentLinkRepo == nil {
-		return nil, nil
-	}
-
 	links, err := s.shipmentLinkRepo.GetShipmentLinksByShipmentID(
 		ctx,
 		editenderports.GetEDIShipmentLinksByShipmentIDRequest{
@@ -184,7 +180,7 @@ func (s *Service) partnerName(
 	ctx context.Context,
 	recipient *editenderchange.TenderRecipient,
 ) string {
-	if recipient.EDIPartnerID.IsNil() || s.partnerRepo == nil {
+	if recipient.EDIPartnerID.IsNil() {
 		return "Linked trading partner"
 	}
 

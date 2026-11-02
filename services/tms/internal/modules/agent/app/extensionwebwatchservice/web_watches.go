@@ -256,9 +256,6 @@ func (s *Service) WatchWeb(
 	if _, err = s.planWith(ctx, req, call); err != nil {
 		return nil, err
 	}
-	if s.workflows == nil {
-		return nil, errortypes.NewBusinessError("Web watches cannot be followed here")
-	}
 	base, err := s.webhookBase()
 	if err != nil {
 		return nil, err
@@ -458,11 +455,9 @@ func (s *Service) StopWebWatch(
 	if err != nil {
 		return nil, err
 	}
-	if s.workflows != nil {
-		if signalErr := webwatchcontract.Check(ctx, s.workflows, updated.ID); signalErr != nil {
-			s.l.Warn("could not tell a stopped web watch's workflow to end",
-				zap.String("webWatch", updated.ID.String()), zap.Error(signalErr))
-		}
+	if signalErr := webwatchcontract.Check(ctx, s.workflows, updated.ID); signalErr != nil {
+		s.l.Warn("could not tell a stopped web watch's workflow to end",
+			zap.String("webWatch", updated.ID.String()), zap.Error(signalErr))
 	}
 
 	view := webWatchView(updated)
@@ -741,7 +736,7 @@ func (s *Service) ReceiveWebWatchDelivery(
 	); err != nil {
 		return errortypes.NewAuthenticationError("The delivery's signature is not valid")
 	}
-	if !watch.Active() || s.workflows == nil {
+	if !watch.Active() {
 		return nil
 	}
 

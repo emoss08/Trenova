@@ -517,9 +517,6 @@ func (e *FieldGuardExtension) newPersonAccess(ctx context.Context) *refview.Pers
 		e.engine,
 		actorutil.FromAuthContext(authCtx),
 		func(ctx context.Context, kind permission.Resource) (bool, error) {
-			if e.engine == nil {
-				return false, nil
-			}
 			return resolvercore.CheckPermission(ctx, e.engine, authCtx, kind, permission.OpRead)
 		},
 	)

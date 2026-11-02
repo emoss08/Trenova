@@ -100,10 +100,6 @@ func (s *Service) applyMode(
 	rateCtx *RateContext,
 	entity *shipment.Shipment,
 ) {
-	if s.modeProfile == nil {
-		return
-	}
-
 	policy, err := s.modeProfile.Resolve(ctx, &modeprofileports.ResolveModeProfileRequest{
 		TenantInfo:     rateCtx.TenantInfo,
 		CustomerID:     entity.CustomerID,

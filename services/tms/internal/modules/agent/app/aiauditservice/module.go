@@ -39,9 +39,9 @@ type Params struct {
 	Storage          kernelports.Client
 	Workflows        kernelports.WorkflowStarter
 	Notifications    *notificationservice.Service
-	Realtime         realtimeports.RealtimeService `optional:"true"`
+	Realtime         realtimeports.RealtimeService
 	Audit            auditports.AuditService
-	Metrics          *metrics.Registry `optional:"true"`
+	Metrics          *metrics.Registry
 	AIAuditConfig    *aiauditconfig.Config
 	MonitoringConfig *monitoringconfig.Config
 	SecurityConfig   *securityconfig.Config

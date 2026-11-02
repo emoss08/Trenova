@@ -70,41 +70,39 @@ const (
 type ActivitiesParams struct {
 	fx.In
 
-	Logger       *zap.Logger
-	Definitions  agentdefinitionports.AgentDefinitionRepository
-	Controls     tenantports.AgentControlRepository
-	RunRepo      agentruntimeports.AgentRunRepository
-	ProposalRepo agentproposalports.AgentProposalRepository
-	Runs         agentruntimeports.AgentRunService
-	Runtime      *agentruntime.Service
-	Steps        agentruntimeports.RunStepLedger
-	Trajectory   agentruntimeports.AgentRunEventRecorder `optional:"true"`
-	Contexts     agentruntimeports.RuntimeContextBuilder
-	Recorder     *proposalrecorder.Service
-	Subjects     agentruntimeports.AgentSubjectDescriber
-	Activity     agentactivityports.AgentActivityPublisher `optional:"true"`
-	Notifier     agentproposalports.AgentProposalNotifier  `optional:"true"`
-	Plans        agentplanports.AgentPlanRepository        `optional:"true"`
-	// Baselines is optional; with it the expiry sweep removes baselines whose
-	// proposal was never filed.
-	Baselines     agentproposalports.AgentProposalBaselineRepository `optional:"true"`
+	Logger        *zap.Logger
+	Definitions   agentdefinitionports.AgentDefinitionRepository
+	Controls      tenantports.AgentControlRepository
+	RunRepo       agentruntimeports.AgentRunRepository
+	ProposalRepo  agentproposalports.AgentProposalRepository
+	Runs          agentruntimeports.AgentRunService
+	Runtime       *agentruntime.Service
+	Steps         agentruntimeports.RunStepLedger
+	Trajectory    agentruntimeports.AgentRunEventRecorder
+	Contexts      agentruntimeports.RuntimeContextBuilder
+	Recorder      *proposalrecorder.Service
+	Subjects      agentruntimeports.AgentSubjectDescriber
+	Activity      agentactivityports.AgentActivityPublisher
+	Notifier      agentproposalports.AgentProposalNotifier
+	Plans         agentplanports.AgentPlanRepository
+	Baselines     agentproposalports.AgentProposalBaselineRepository
 	Evaluations   agentevaluationports.AgentEvaluationRepository
 	EvalCases     agentqualityports.AgentEvalCaseRepository
 	Users         tenantports.UserRepository
-	QueryTools    agenttoolports.AgentQueryToolRegistry `optional:"true"`
-	ActionTools   agenttoolports.AgentToolRegistry      `optional:"true"`
+	QueryTools    agenttoolports.AgentQueryToolRegistry
+	ActionTools   agenttoolports.AgentToolRegistry
 	Decisions     agentdecisionports.AgentDecisionRepository
-	Conversations conversationports.ConversationRepository `optional:"true"`
+	Conversations conversationports.ConversationRepository
 	// PaletteQuestions ages out the record of command palette questions.
-	PaletteQuestions paletteports.QuestionRepository `optional:"true"`
+	PaletteQuestions paletteports.QuestionRepository
 	// Watchtower puts a run that could not finish on the feed, so a
 	// failure nobody was watching for still reaches someone.
-	Watchtower    watchtowerports.WatchtowerProjector           `optional:"true"`
-	Reflections   agentreflectionports.AgentReflectionScheduler `optional:"true"`
+	Watchtower    watchtowerports.WatchtowerProjector
+	Reflections   agentreflectionports.AgentReflectionScheduler
 	Schedules     *agentcontract.DefinitionSchedules
-	PlatformPlans platformplanports.PlanService `optional:"true"`
+	PlatformPlans platformplanports.PlanService
 	// Waits reads the wait whose ending started a run that picks up work.
-	Waits agentwaitports.AgentWaitRepository `optional:"true"`
+	Waits agentwaitports.AgentWaitRepository
 }
 
 type Activities struct {
@@ -241,10 +239,6 @@ func (a *Activities) trajectoryFor(
 	tenant pagination.TenantInfo,
 	runID pulid.ID,
 ) agentruntimeports.AgentRunEventWriter {
-	if a.trajectory == nil {
-		return nil
-	}
-
 	return a.trajectory.Recorder(ctx, tenant, agentruntimeports.RunStepOwner{
 		Kind: agentruntimeports.RunStepOwnerAgentRun,
 		ID:   runID,
@@ -579,12 +573,10 @@ func (a *Activities) CompleteRunActivity(ctx context.Context, input *CompleteRun
 	}
 
 	a.projectFailedRun(ctx, input.TenantInfo, completed)
-	if a.reflections != nil {
-		a.reflections.AfterRun(ctx, &agentreflectionports.ReflectOnRunRequest{
-			TenantInfo: input.TenantInfo,
-			RunID:      input.RunID,
-		})
-	}
+	a.reflections.AfterRun(ctx, &agentreflectionports.ReflectOnRunRequest{
+		TenantInfo: input.TenantInfo,
+		RunID:      input.RunID,
+	})
 
 	return nil
 }
@@ -597,7 +589,7 @@ func (a *Activities) projectFailedRun(
 	tenant pagination.TenantInfo,
 	run *agent.AgentRun,
 ) {
-	if a.watchtower == nil || run == nil || run.Status != agent.RunStatusFailed {
+	if run == nil || run.Status != agent.RunStatusFailed {
 		return
 	}
 
@@ -789,10 +781,6 @@ func (a *Activities) updateRun(
 // announceRun tells connected clients the run moved. The worker announces
 // as the system, since no person is acting.
 func (a *Activities) announceRun(ctx context.Context, run *agent.AgentRun) {
-	if a.activity == nil {
-		return
-	}
-
 	a.activity.RunChanged(
 		ctx,
 		run,
@@ -845,7 +833,7 @@ func (a *Activities) resumedWait(
 	ctx context.Context,
 	payload *agentcontract.AgentRunPayload,
 ) (*agentwait.Wait, error) {
-	if payload.WaitID.IsNil() || a.waits == nil {
+	if payload.WaitID.IsNil() {
 		return nil, nil //nolint:nilnil // a run no wait started picks nothing up
 	}
 	wait, err := a.waits.Get(ctx, &agentwaitports.GetAgentWaitRequest{
@@ -939,18 +927,16 @@ func (a *Activities) ExpireStaleProposalsActivity(
 	a.purgeOrphanBaselines(ctx, input.Now)
 
 	// A plan outlives none of its steps: once they have expired, so has it.
-	if a.plans != nil {
-		expiredPlans, planErr := a.plans.ExpirePending(ctx, agentplanports.ExpireAgentPlansRequest{
-			Before: input.Now,
-		})
-		if planErr != nil {
-			return nil, fmt.Errorf("expire pending plans: %w", planErr)
-		}
-		if expiredPlans > 0 {
-			a.logger.Info("expired agent plans past their decision window",
-				zap.Int("expired", expiredPlans),
-			)
-		}
+	expiredPlans, planErr := a.plans.ExpirePending(ctx, agentplanports.ExpireAgentPlansRequest{
+		Before: input.Now,
+	})
+	if planErr != nil {
+		return nil, fmt.Errorf("expire pending plans: %w", planErr)
+	}
+	if expiredPlans > 0 {
+		a.logger.Info("expired agent plans past their decision window",
+			zap.Int("expired", expiredPlans),
+		)
 	}
 
 	return &ExpireStaleProposalsResult{Expired: expired}, nil
@@ -967,10 +953,6 @@ const orphanBaselineAge = 48 * time.Hour
 // It rides the expiry sweep inside its activity, so it adds no command, and a
 // failure is logged rather than allowed to fail the sweep.
 func (a *Activities) purgeOrphanBaselines(ctx context.Context, now int64) {
-	if a.baselines == nil {
-		return
-	}
-
 	purged, err := a.baselines.PurgeOrphans(
 		ctx,
 		agentproposalports.PurgeOrphanProposalBaselinesRequest{
@@ -997,10 +979,6 @@ func (a *Activities) DeleteStaleFormulaDraftsActivity(
 	ctx context.Context,
 	input *RetentionInput,
 ) (*RetentionBatch, error) {
-	if a.conversations == nil {
-		return &RetentionBatch{}, nil
-	}
-
 	drafts, err := a.conversations.DeleteStaleThreads(
 		ctx,
 		conversationports.DeleteStaleThreadsRequest{
@@ -1027,10 +1005,6 @@ func (a *Activities) DeleteStalePaletteQuestionsActivity(
 	ctx context.Context,
 	input *RetentionInput,
 ) (*RetentionBatch, error) {
-	if a.paletteQuestions == nil {
-		return &RetentionBatch{}, nil
-	}
-
 	deleted, err := a.paletteQuestions.DeleteBefore(ctx, input.Before, deleteStaleDraftBatch)
 	if err != nil {
 		return nil, fmt.Errorf("delete stale palette questions: %w", err)
@@ -1047,10 +1021,6 @@ func (a *Activities) RemindPendingProposalsActivity(
 	ctx context.Context,
 	input *RemindPendingProposalsInput,
 ) (*RemindPendingProposalsResult, error) {
-	if a.notifier == nil {
-		return &RemindPendingProposalsResult{}, nil
-	}
-
 	reminded, err := a.notifier.RemindPending(ctx, agentproposalports.RemindPendingProposalsRequest{
 		Now:       input.Now,
 		OlderThan: time.Duration(input.OlderThanSeconds) * time.Second,

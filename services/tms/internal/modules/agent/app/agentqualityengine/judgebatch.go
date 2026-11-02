@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -54,10 +53,6 @@ func (s *Engine) SubmitJudgeBatch(
 	ctx context.Context,
 	req *SubmitJudgeBatchRequest,
 ) (*JudgeBatch, error) {
-	if s.batches == nil || s.completion == nil {
-		return &JudgeBatch{Note: batchUnavailableNote}, nil
-	}
-
 	decision, err := s.CheckBudget(ctx, &CheckBudgetRequest{
 		TenantInfo:   req.TenantInfo,
 		DayStart:     req.DayStart,
@@ -210,10 +205,6 @@ func (s *Engine) CheckJudgeBatch(
 	ctx context.Context,
 	req *CheckJudgeBatchRequest,
 ) (*JudgeBatchStatus, error) {
-	if s.batches == nil {
-		return nil, errortypes.NewBusinessError(batchUnavailableNote)
-	}
-
 	status, err := s.batches.BatchStatus(ctx, &llmports.BatchStatusRequest{
 		TenantInfo: req.TenantInfo,
 		ProviderID: req.Batch.ProviderID,
@@ -248,10 +239,6 @@ func (s *Engine) CollectJudgeBatch(
 	ctx context.Context,
 	req *CollectJudgeBatchRequest,
 ) (*CollectedJudgeBatch, error) {
-	if s.batches == nil {
-		return &CollectedJudgeBatch{Retry: req.Batch.Submitted}, nil
-	}
-
 	evaluations, err := s.suiteEvaluationIndex(ctx, req.TenantInfo, req.SuiteRunID)
 	if err != nil {
 		return nil, err

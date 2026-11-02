@@ -33,7 +33,7 @@ type Params struct {
 	References  accountingmappingports.AccountingReferenceObjectRepository
 	Mappings    accountingmappingports.AccountingMappingRepository
 	Sessions    accountingconnectionports.AccountingSessionProvider
-	Nova        llmports.TaskRunner `optional:"true"`
+	Nova        llmports.TaskRunner
 	Kit         *accountingmappingkit.Kit
 	Catalog     *accountingmappingtargets.Catalog
 }
@@ -71,7 +71,7 @@ func (s *Service) ModelPass(
 	connectionID pulid.ID,
 	mappingIDs []pulid.ID,
 ) (int, error) {
-	if s.nova == nil || len(mappingIDs) == 0 {
+	if len(mappingIDs) == 0 {
 		return 0, nil
 	}
 	if len(mappingIDs) > maxModelTargets {

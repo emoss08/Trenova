@@ -33,9 +33,6 @@ func newAgentsPausedLoader(f *AgentsPausedLoaderFactory,
 	return loadercore.NewLoader(loadercore.BatchValueFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID]bool, error) {
 			paused := make(map[pulid.ID]bool, len(ids))
-			if f.controls == nil {
-				return paused, nil
-			}
 			control, err := f.controls.GetOrCreate(ctx, tenantInfo)
 			if err != nil {
 				return nil, err
@@ -70,9 +67,6 @@ func newAgentPlanHoldLoader(f *AgentPlanHoldLoaderFactory,
 ) *dataloadgen.Loader[string, *assistantproposalports.ProposalHold] {
 	return loadercore.NewLoader(loadercore.BatchValueFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID]*assistantproposalports.ProposalHold, error) {
-			if f.plans == nil || f.planService == nil {
-				return map[pulid.ID]*assistantproposalports.ProposalHold{}, nil
-			}
 			plans, err := f.plans.ListByIDs(ctx, agentplanports.ListAgentPlansByIDsRequest{
 				IDs:        ids,
 				TenantInfo: tenantInfo,

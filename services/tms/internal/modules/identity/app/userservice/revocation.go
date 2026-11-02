@@ -239,8 +239,5 @@ func (s *Service) recordSessionsEnded(
 	userID pulid.ID,
 	scope string,
 ) {
-	if s.authEvents == nil {
-		return
-	}
 	s.authEvents.Record(ctx, iamports.SessionRevokedEvent(tenantInfo, userID, scope))
 }

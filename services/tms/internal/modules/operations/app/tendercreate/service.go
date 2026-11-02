@@ -73,7 +73,7 @@ func (s *Service) priceGuideEntry(
 ) offerPrice {
 	frozen := offerPrice{method: entry.RateMethod, rate: entry.Rate}
 
-	if !entry.UseContractRate || s.rateEngine == nil || entity == nil {
+	if !entry.UseContractRate || entity == nil {
 		return frozen
 	}
 
@@ -116,7 +116,7 @@ func (s *Service) shipmentForContractPricing(
 	guide *tender.RoutingGuide,
 	move *shipment.ShipmentMove,
 ) *shipment.Shipment {
-	if s.rateEngine == nil || move == nil || move.ShipmentID.IsNil() {
+	if move == nil || move.ShipmentID.IsNil() {
 		return nil
 	}
 
@@ -885,7 +885,7 @@ type Params struct {
 	HoldRepo              shipmentholdports.ShipmentHoldRepository
 	Workflows             kernelports.WorkflowStarter
 	Invalidator           shipmentinvalidationports.ShipmentInvalidator
-	RateEngine            ratequoteports.RateEngine `optional:"true"`
+	RateEngine            ratequoteports.RateEngine
 	Effects               *tendereffects.Effects
 }
 

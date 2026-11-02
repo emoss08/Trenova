@@ -36,10 +36,13 @@ func (s *Service) SetUnattendedRole(
 		return nil, err
 	}
 
-	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID:         req.AgentID,
-		TenantInfo: req.TenantInfo,
-	})
+	definition, err := s.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         req.AgentID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -70,9 +73,7 @@ func (s *Service) SetUnattendedRole(
 	}
 	definition.UnattendedRoleID = req.RoleID
 
-	if s.notifier != nil {
-		s.notifier.OrganizationChanged(ctx, req.TenantInfo)
-	}
+	s.notifier.OrganizationChanged(ctx, req.TenantInfo)
 	s.logUnattendedRoleAudit(definition, previous, actor)
 
 	return definition, nil

@@ -45,8 +45,7 @@ func (s *Service) StartAutomatic(
 ) (*billingtransfer.BillingTransferRun, error) {
 	control := req.Control
 	if control == nil ||
-		control.BillingQueueTransferMode != billingcontrol.BillingQueueTransferModeAutomaticWhenReady ||
-		s.shipments == nil {
+		control.BillingQueueTransferMode != billingcontrol.BillingQueueTransferModeAutomaticWhenReady {
 		return nil, nil //nolint:nilnil // automatic transfer is off for this organization
 	}
 

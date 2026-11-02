@@ -61,9 +61,6 @@ func (s *Service) handOffToAgent(
 	item *watchtower.Item,
 	actor *permissionports.RequestActor,
 ) (*watchtowerports.HandOffWatchtowerItemResult, error) {
-	if s.runs == nil {
-		return nil, errortypes.NewBusinessError("Agents cannot be started on this deployment")
-	}
 	if item.IsResolved() {
 		return nil, errortypes.NewBusinessError("This exception is resolved; reopen it first")
 	}
@@ -102,7 +99,7 @@ func (s *Service) assertNoAgentWorking(
 	tenant pagination.TenantInfo,
 	item *watchtower.Item,
 ) error {
-	if !item.HasAgent() || s.runRepo == nil {
+	if !item.HasAgent() {
 		return nil
 	}
 

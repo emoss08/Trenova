@@ -70,7 +70,7 @@ func TestRoleRepository_DeletesAndUpdatesStayInsideTheTenant(t *testing.T) {
 	fixtureA := seedRoleTenantFixture(t, ctx, db, tenantA)
 	fixtureB := seedRoleTenantFixture(t, ctx, db, tenantB)
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	ctx = tenantA.Ctx(ctx)
 	ura := rbacdb.UserRoleAssignments
 	rps := rbacdb.ResourcePermissions

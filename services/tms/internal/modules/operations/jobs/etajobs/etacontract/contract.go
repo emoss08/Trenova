@@ -41,7 +41,7 @@ func RefreshWorkflowID(shipmentID pulid.ID) string {
 type RequesterParams struct {
 	fx.In
 
-	Signals kernelports.WorkflowSignalStarter `optional:"true"`
+	Signals kernelports.WorkflowSignalStarter
 	Logger  *zap.Logger
 }
 
@@ -61,7 +61,7 @@ func (r *Requester) RequestRefresh(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) {
-	if r.signals == nil || shipmentID.IsNil() || tenantInfo.OrgID.IsNil() {
+	if shipmentID.IsNil() || tenantInfo.OrgID.IsNil() {
 		return
 	}
 

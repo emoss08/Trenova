@@ -272,7 +272,7 @@ func (a *Activities) publishRealtimeInvalidation(
 	},
 	entries []*audit.Entry,
 ) {
-	if a.rt == nil || len(entries) == 0 {
+	if len(entries) == 0 {
 		return
 	}
 
@@ -369,9 +369,7 @@ func (a *Activities) FlushFromRedisActivity(
 
 	duration := time.Since(startTime)
 
-	if a.metrics != nil {
-		a.metrics.Audit.RecordBufferFlush(true, duration.Seconds(), result.EntryCount)
-	}
+	a.metrics.Audit.RecordBufferFlush(true, duration.Seconds(), result.EntryCount)
 
 	if result.EntryCount == 0 {
 		logger.Info("No entries in Redis buffer to flush")
@@ -431,9 +429,7 @@ func (a *Activities) MoveToDLQActivity(
 		return temporaltype.NewRetryableError("Failed to insert DLQ entries", err).ToTemporalError()
 	}
 
-	if a.metrics != nil {
-		a.metrics.Audit.RecordDLQPush(len(dlqEntries))
-	}
+	a.metrics.Audit.RecordDLQPush(len(dlqEntries))
 
 	logger.Info("Moved entries to DLQ", "count", len(dlqEntries))
 	return nil
@@ -519,17 +515,15 @@ func (a *Activities) RetryDLQEntriesActivity(
 			}
 			result.FailedCount++
 			result.FailedIDs = append(result.FailedIDs, dlqEntry.ID)
-			if a.metrics != nil {
-				a.metrics.Audit.RecordDLQRetry(false)
-			}
+			a.metrics.Audit.RecordDLQRetry(false)
+
 			continue
 		}
 
 		result.SuccessCount++
 		result.RecoveredIDs = append(result.RecoveredIDs, dlqEntry.ID)
-		if a.metrics != nil {
-			a.metrics.Audit.RecordDLQRetry(true)
-		}
+		a.metrics.Audit.RecordDLQRetry(true)
+
 	}
 
 	if len(result.RecoveredIDs) > 0 {
@@ -563,10 +557,8 @@ func (a *Activities) GetBufferStatusActivity(ctx context.Context) (*AuditBufferS
 		dlqSize = 0
 	}
 
-	if a.metrics != nil {
-		a.metrics.Audit.SetBufferSize(size)
-		a.metrics.Audit.SetDLQSize(dlqSize)
-	}
+	a.metrics.Audit.SetBufferSize(size)
+	a.metrics.Audit.SetDLQSize(dlqSize)
 
 	status := &AuditBufferStatus{
 		BufferedEntries: int(size),

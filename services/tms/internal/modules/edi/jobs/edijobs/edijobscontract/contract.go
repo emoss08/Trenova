@@ -56,7 +56,7 @@ type TimerSchedulerParams struct {
 	fx.In
 
 	Logger  *zap.Logger
-	Signals kernelports.WorkflowSignalStarter `optional:"true"`
+	Signals kernelports.WorkflowSignalStarter
 }
 
 type TimerScheduler struct {
@@ -73,9 +73,6 @@ func (s *TimerScheduler) Schedule(
 	ctx context.Context,
 	req *ladingports.ScheduleFlowTimerRequest,
 ) error {
-	if s.signals == nil {
-		return nil
-	}
 	tenant := pagination.TenantInfo{OrgID: req.TenantInfo.OrgID, BuID: req.TenantInfo.BuID}
 	_, err := s.signals.SignalWithStartWorkflow(
 		ctx,
@@ -98,7 +95,7 @@ type ShipmentObserverParams struct {
 
 	Logger    *zap.Logger
 	Flows     ladingports.FlowRepository
-	Workflows kernelports.WorkflowStarter `optional:"true"`
+	Workflows kernelports.WorkflowStarter
 }
 
 type ShipmentObserver struct {
@@ -118,7 +115,7 @@ func NewShipmentObserver(p ShipmentObserverParams) shipmenteventports.ShipmentEv
 // OnShipmentEvent hands an event to a worker when a partner's flow follows the shipment; the
 // check is one indexed read, and a shipment no flow follows costs nothing more.
 func (o *ShipmentObserver) OnShipmentEvent(ctx context.Context, event *shipmentevent.Event) error {
-	if o.workflows == nil || !o.workflows.Enabled() || !edioutbound.FlowShipmentEvent(event.Type) {
+	if !edioutbound.FlowShipmentEvent(event.Type) {
 		return nil
 	}
 	tenant := pagination.TenantInfo{OrgID: event.OrganizationID, BuID: event.BusinessUnitID}

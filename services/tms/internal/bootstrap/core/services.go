@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/editenderchangeservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editenderservice"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/internaledistatussync"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderderivation"
 	"github.com/emoss08/trenova/internal/modules/operations/app/servicefailureservice"
@@ -37,9 +38,12 @@ import (
 )
 
 var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
-	workflowstarter.New,
-	workflowstarter.NewSignalStarter,
-	workflowstarter.NewResults,
+	fx.Annotate(
+		workflowstarter.New,
+		fx.As(new(kernelports.WorkflowStarter)),
+		fx.As(new(kernelports.WorkflowSignalStarter)),
+		fx.As(new(kernelports.WorkflowResults)),
+	),
 	newDetectorRegistry,
 	newBriefingSources,
 	crossref.VisibleRecordSources,

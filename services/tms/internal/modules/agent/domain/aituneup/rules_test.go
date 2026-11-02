@@ -118,22 +118,22 @@ func TestReorderWhenTheFirstProviderFailsAndTheNextCatchesIt(t *testing.T) {
 		10,
 		aitask.TaskAssistantChat,
 		aitask.TaskGeneral,
-		aitask.TaskDailyBriefing,
+		aitask.TaskEvaluationJudge,
 	)
 	local := provider(
 		"aip_local",
 		20,
 		aitask.TaskAssistantChat,
 		aitask.TaskGeneral,
-		aitask.TaskDailyBriefing,
+		aitask.TaskEvaluationJudge,
 	)
 	usage := []aituneup.ProviderTaskUsage{
 		{ProviderID: vllm.ID, Task: aitask.TaskAssistantChat, Calls: 100, Failed: 24},
 		{ProviderID: local.ID, Task: aitask.TaskAssistantChat, Calls: 60, Failed: 0, Rescued: 24},
 		{ProviderID: vllm.ID, Task: aitask.TaskGeneral, Calls: 50, Failed: 10},
 		{ProviderID: local.ID, Task: aitask.TaskGeneral, Calls: 40, Failed: 1, Rescued: 10},
-		{ProviderID: vllm.ID, Task: aitask.TaskDailyBriefing, Calls: 100, Failed: 9},
-		{ProviderID: local.ID, Task: aitask.TaskDailyBriefing, Calls: 10, Rescued: 9},
+		{ProviderID: vllm.ID, Task: aitask.TaskEvaluationJudge, Calls: 100, Failed: 9},
+		{ProviderID: local.ID, Task: aitask.TaskEvaluationJudge, Calls: 10, Rescued: 9},
 	}
 
 	got := ofKind(aituneup.Suggest(&aituneup.Inputs{
@@ -147,7 +147,7 @@ func TestReorderWhenTheFirstProviderFailsAndTheNextCatchesIt(t *testing.T) {
 		t,
 		[]aitask.Task{aitask.TaskAssistantChat, aitask.TaskGeneral},
 		got[0].Evidence.Tasks,
-		"daily briefing failed 9 times, under the floor of 10",
+		"the evaluation judge failed 9 times, under the floor of 10",
 	)
 	assert.Equal(t, 34, got[0].Evidence.Failed)
 	assert.Equal(t, 34, got[0].Evidence.Rescued)
@@ -208,26 +208,23 @@ func TestAssignTaskToAProviderThatCanTakeIt(t *testing.T) {
 	t.Parallel()
 
 	local := provider("aip_local", 10, aitask.TaskAssistantChat)
-	trusted := provider("aip_trusted", 20, aitask.TaskGeneral)
-	trusted.Trusted = true
+	other := provider("aip_other", 20, aitask.TaskGeneral)
 
 	got := ofKind(aituneup.Suggest(&aituneup.Inputs{
-		Now: now, Enabled: []*aiprovider.Provider{local, trusted},
+		Now: now, Enabled: []*aiprovider.Provider{local, other},
 	}), aituneup.KindAssignTask)
 
 	byTask := map[aitask.Task]pulid.ID{}
 	for _, tuneUp := range got {
 		byTask[tuneUp.Task] = tuneUp.ProviderID
 	}
-	assert.Equal(t, local.ID, byTask[aitask.TaskDocumentExtraction], "first in line takes it")
-	assert.Equal(
-		t,
-		trusted.ID,
-		byTask[aitask.TaskBillingDiagnosis],
-		"only a trusted provider may diagnose billing",
-	)
+	assert.Equal(t, local.ID, byTask[aitask.TaskScopeClassification], "first in line takes it")
+	assert.Equal(t, local.ID, byTask[aitask.TaskEvaluationJudge])
 	assert.NotContains(t, byTask, aitask.TaskAssistantChat, "already covered")
 	assert.NotContains(t, byTask, aitask.TaskEmbedding, "neither protocol embeds")
+	for task := range byTask {
+		assert.Falsef(t, task.Nova(), "%s is Nova's and is never assigned", task)
+	}
 	assert.Equal(t, "model-aip_local", got[0].Evidence.Model)
 }
 

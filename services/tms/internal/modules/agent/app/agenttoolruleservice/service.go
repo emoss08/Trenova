@@ -241,10 +241,6 @@ type recordRequest struct {
 }
 
 func (s *Service) record(ctx context.Context, req *recordRequest) {
-	if s.auditor == nil {
-		return
-	}
-
 	changed := changedOnly(req.affected)
 	agents := make([]map[string]string, 0, len(changed))
 	for _, impact := range changed {

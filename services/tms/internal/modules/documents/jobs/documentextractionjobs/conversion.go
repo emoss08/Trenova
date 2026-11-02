@@ -47,9 +47,8 @@ const (
 		"An administrator needs to set ai.documentExtraction to true, " +
 		"then extract the document again."
 	extractionNotInPlanMessage  = "Your plan does not include document extraction."
-	extractionNoProviderMessage = "No AI provider is assigned to document extraction. " +
-		"In AI settings, add a provider or assign an existing one to the Document extraction " +
-		"task, then extract the document again."
+	extractionNoProviderMessage = "Nova reads documents, and no provider is chosen for Nova. " +
+		"In AI settings, choose an Anthropic provider for Nova, then extract the document again."
 	converterUnavailableMessage = "Document extraction is not set up on this server: " +
 		"the document converter is not configured."
 	converterUnreachableMessage = "The document converter could not be reached. " +
@@ -254,7 +253,7 @@ func (a *Activities) planConversion(
 		return stoppedPlan(ExtractionRouteStopped, doc), nil
 	case formatPlainText:
 	case formatPDF, formatImage, formatOffice, formatEmail:
-		if a.converter == nil || !a.converter.Enabled() {
+		if !a.converter.Enabled() {
 			if err = a.markExtractionUnavailable(ctx, doc, &extractionUnavailable{
 				code:    documentupload.FailureConverterUnavailable,
 				reason:  reasonConverterUnconfigured,
@@ -596,12 +595,6 @@ func (a *Activities) convertDocument(
 	tenantInfo pagination.TenantInfo,
 	ocr bool,
 ) (*convertedFile, *conversionFailure, error) {
-	if a.encryption == nil {
-		return nil, &conversionFailure{
-			code:    documentupload.FailureReadFailed,
-			message: "Document encryption is not configured",
-		}, nil
-	}
 	source := a.documentSource(doc, tenantInfo)
 	format := conversionFormatOf(doc.FileType, doc.OriginalName)
 	if format == formatPlainText {
@@ -710,9 +703,6 @@ func (a *Activities) pdfTextProfile(
 	ctx context.Context,
 	source kernelports.ImagingSource,
 ) (pageCount int, native map[int]bool, err error) {
-	if a.imaging == nil {
-		return 0, nil, nil
-	}
 	source.ContentType = "application/pdf"
 	probe, err := a.imaging.Probe(ctx, &kernelports.ImagingProbeRequest{
 		Source:      source,
@@ -757,7 +747,7 @@ func (a *Activities) convertWithConverter(
 	req *kernelports.ConvertRequest,
 	resumable bool,
 ) (*kernelports.ConvertedDocument, error) {
-	if a.converter == nil || !a.converter.Enabled() {
+	if !a.converter.Enabled() {
 		return nil, kernelports.ErrDocumentConverterUnavailable
 	}
 
@@ -947,14 +937,6 @@ func (a *Activities) storeRawConversion(
 	doc *document.Document,
 	raw []byte,
 ) (string, error) {
-	if a.encryption == nil {
-		return "", temporal.NewNonRetryableApplicationError(
-			"Document encryption is not configured",
-			temporaltype.ErrorTypeNonRetryable.String(),
-			nil,
-		)
-	}
-
 	var compressed bytes.Buffer
 	writer := gzip.NewWriter(&compressed)
 	if _, err := writer.Write(raw); err != nil {
@@ -1146,9 +1128,6 @@ func (a *Activities) ReconcileDocumentExtractionActivity(
 	ctx context.Context,
 	payload *documentanalysis.ReconcileDocumentIntelligencePayload,
 ) (*documentanalysis.ReconcileDocumentIntelligenceResult, error) {
-	if !a.workflowStarter.Enabled() {
-		return &documentanalysis.ReconcileDocumentIntelligenceResult{}, nil
-	}
 
 	olderThan := time.Now().Add(-time.Duration(payload.OlderThanSeconds) * time.Second).Unix()
 	docs, err := a.contentRepo.ListPendingExtraction(

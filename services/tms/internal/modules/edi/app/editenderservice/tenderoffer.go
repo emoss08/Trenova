@@ -34,11 +34,6 @@ func (s *Service) SendTenderOffer(
 			"Tender offer is required",
 		)
 	}
-	if s.tenderRepo == nil || s.carrierRepo == nil {
-		return nil, errortypes.NewBusinessError(
-			"EDI tender delivery is not configured for this environment",
-		)
-	}
 
 	offer, err := s.tenderRepo.GetOfferByID(ctx, tenderports.GetTenderOfferByIDRequest{
 		TenantInfo:    req.TenantInfo,

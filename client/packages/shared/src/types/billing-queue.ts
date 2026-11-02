@@ -720,6 +720,8 @@ export const billingQueueUpdateChargesSchema = z.object({
     .optional(),
   /** Retries an edit refused because it left an amount split that no longer adds up. */
   convertAmountSplitsToPercent: z.boolean().optional(),
+  /** Answers with the saved item as `getById` expands it, so the caller can show it. */
+  expandShipmentDetails: z.boolean().optional(),
 });
 export type BillingQueueUpdateChargesInput = z.infer<typeof billingQueueUpdateChargesSchema>;
 

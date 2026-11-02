@@ -37,9 +37,6 @@ func (s *Service) Attachables(
 	if err != nil {
 		return nil, err
 	}
-	if s.documents == nil {
-		return []*inboundreplyports.ReplyAttachable{}, nil
-	}
 
 	sources := []attachableSource{{
 		source: documentports.MailDocumentSource{

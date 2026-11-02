@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -187,10 +186,6 @@ func (s *Service) dispatch(
 	reply *triage.Reply,
 	attachments []emailports.EmailAttachment,
 ) (*triage.Reply, error) {
-	if s.email == nil {
-		return s.fail(ctx, &failure{message: message, reply: reply, text: failureNoOutbound})
-	}
-
 	sent, err := s.email.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     tenantOf(message),
 		Purpose:        email.PurposeOperations,
@@ -237,8 +232,6 @@ func sendFailureText(err error) string {
 	switch {
 	case errors.Is(err, emailports.ErrNoEmailProfile):
 		return failureNoProfile
-	case errors.Is(err, kernelports.ErrWorkflowStarterDisabled):
-		return failureUnqueued
 	case errortypes.IsMultiError(err), errortypes.IsBusinessError(err),
 		errortypes.IsPlanRestrictionError(err), errortypes.IsError(err):
 		return emailutils.CleanFailureText(err.Error())

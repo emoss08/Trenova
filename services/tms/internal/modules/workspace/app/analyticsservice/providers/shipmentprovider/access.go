@@ -55,12 +55,8 @@ func (p *Provider) accessFor(
 ) *cardAccess {
 	actor := analyticsActor(opts)
 	access := &cardAccess{}
-	if p.views != nil {
-		access.linked = p.views.Person(actor, permissionports.PersonGrants{})
-	}
-	if p.fieldAccess != nil {
-		access.groups = p.fieldAccess.Visible(ctx, actor)
-	}
+	access.linked = p.views.Person(actor, permissionports.PersonGrants{})
+	access.groups = p.fieldAccess.Visible(ctx, actor)
 
 	return access
 }

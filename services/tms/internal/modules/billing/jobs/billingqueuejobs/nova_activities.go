@@ -32,9 +32,6 @@ func (a *Activities) SubmitNovaReviewsActivity(
 	ctx context.Context,
 	input *SubmitNovaReviewsInput,
 ) (*billingqueueports.ReviewSubmission, error) {
-	if a.assist == nil {
-		return &billingqueueports.ReviewSubmission{}, nil
-	}
 	tenant := input.Payload.Tenant()
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 
@@ -45,10 +42,10 @@ func (a *Activities) SubmitNovaReviewsActivity(
 	})
 }
 
-func (a *Activities) NovaBatchEndedActivity(ctx context.Context, input *NovaBatchInput) (bool, error) {
-	if a.assist == nil {
-		return true, nil
-	}
+func (a *Activities) NovaBatchEndedActivity(
+	ctx context.Context,
+	input *NovaBatchInput,
+) (bool, error) {
 	tenant := input.Payload.Tenant()
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 
@@ -56,19 +53,16 @@ func (a *Activities) NovaBatchEndedActivity(ctx context.Context, input *NovaBatc
 }
 
 func (a *Activities) CancelNovaReviewsActivity(ctx context.Context, input *NovaBatchInput) error {
-	if a.assist == nil {
-		return nil
-	}
 	tenant := input.Payload.Tenant()
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 
 	return a.assist.CancelReviews(ctx, tenant, input.Submission)
 }
 
-func (a *Activities) ApplyNovaReviewsActivity(ctx context.Context, input *NovaBatchInput) (int, error) {
-	if a.assist == nil {
-		return 0, nil
-	}
+func (a *Activities) ApplyNovaReviewsActivity(
+	ctx context.Context,
+	input *NovaBatchInput,
+) (int, error) {
 	tenant := input.Payload.Tenant()
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 
@@ -84,9 +78,6 @@ func (a *Activities) NovaLeftUnreviewedActivity(
 	ctx context.Context,
 	payload *billingqueuecontract.NovaGenerationPayload,
 ) (bool, error) {
-	if a.assist == nil {
-		return false, nil
-	}
 	tenant := payload.Tenant()
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 
@@ -95,10 +86,10 @@ func (a *Activities) NovaLeftUnreviewedActivity(
 
 // PublishNovaProgressActivity tells the queue's readers the generation moved,
 // and, when reviews or the brief were written, that the queue changed.
-func (a *Activities) PublishNovaProgressActivity(ctx context.Context, input *NovaProgressInput) error {
-	if a.realtime == nil {
-		return nil
-	}
+func (a *Activities) PublishNovaProgressActivity(
+	ctx context.Context,
+	input *NovaProgressInput,
+) error {
 	tenant := input.Payload.Tenant()
 	resources := []string{billingqueuecontract.NovaGenerationRealtimeResource}
 	if input.Records {
@@ -122,9 +113,6 @@ func (a *Activities) PublishNovaProgressActivity(ctx context.Context, input *Nov
 // RequestNovaGenerationsActivity starts a generation for each organization
 // with items Nova has not reviewed, when Nova can review for it.
 func (a *Activities) RequestNovaGenerationsActivity(ctx context.Context) (int, error) {
-	if a.assist == nil || a.generator == nil {
-		return 0, nil
-	}
 	tenants, err := a.queueRepo.ListNovaBacklogTenants(ctx, novaSweepTenants)
 	if err != nil {
 		return 0, err

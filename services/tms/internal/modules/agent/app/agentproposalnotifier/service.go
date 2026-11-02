@@ -113,21 +113,18 @@ type definitionReader interface {
 type Params struct {
 	fx.In
 
-	Logger      *zap.Logger
-	AppConfig   *appconfig.Config
-	Roles       permissionports.RoleRepository
-	Proposals   agentproposalports.AgentProposalRepository
-	Runs        agentruntimeports.AgentRunRepository
-	Definitions agentdefinitionports.AgentDefinitionRepository
-	Orgs        tenantports.OrganizationRepository
-	Shadow      *agentshadow.Resolver
-	// The channels are optional: an in-app notice needs the notification
-	// service, an email needs the email service and a template resolver, and
-	// the ledger of who was reminded is kept either way.
-	Notifications *notificationservice.Service                   `optional:"true"`
-	Email         emailports.EmailService                        `optional:"true"`
-	Templates     documenttemplateports.DocumentTemplateResolver `optional:"true"`
-	Inliner       documenttemplateports.AssetInliner             `optional:"true"`
+	Logger        *zap.Logger
+	AppConfig     *appconfig.Config
+	Roles         permissionports.RoleRepository
+	Proposals     agentproposalports.AgentProposalRepository
+	Runs          agentruntimeports.AgentRunRepository
+	Definitions   agentdefinitionports.AgentDefinitionRepository
+	Orgs          tenantports.OrganizationRepository
+	Shadow        *agentshadow.Resolver
+	Notifications *notificationservice.Service
+	Email         emailports.EmailService
+	Templates     documenttemplateports.DocumentTemplateResolver
+	Inliner       documenttemplateports.AssetInliner
 }
 
 type Service struct {
@@ -157,18 +154,10 @@ func New(p Params) agentproposalports.AgentProposalNotifier {
 		shadow:      p.Shadow,
 		inliner:     p.Inliner,
 	}
-	if p.AppConfig != nil {
-		svc.webBaseURL = p.AppConfig.GetWebBaseURL()
-	}
-	if p.Notifications != nil {
-		svc.notifications = p.Notifications
-	}
-	if p.Email != nil {
-		svc.email = p.Email
-	}
-	if p.Templates != nil {
-		svc.templates = p.Templates
-	}
+	svc.webBaseURL = p.AppConfig.GetWebBaseURL()
+	svc.notifications = p.Notifications
+	svc.email = p.Email
+	svc.templates = p.Templates
 
 	return svc
 }
@@ -351,10 +340,6 @@ func (s *Service) inShadow(
 	tenantInfo pagination.TenantInfo,
 	definition *agentdefinition.Definition,
 ) (bool, error) {
-	if s.shadow == nil {
-		return false, nil
-	}
-
 	organizationShadow, err := s.shadow.Organization(ctx, tenantInfo)
 	if err != nil {
 		return false, fmt.Errorf("read organization shadow: %w", err)
@@ -401,10 +386,6 @@ func (s *Service) notify(
 	decider permissionports.PermittedUser,
 	n deciderNotice,
 ) {
-	if s.notifications == nil {
-		return
-	}
-
 	buID := group.tenant.BuID
 	userID := decider.UserID
 	correlation := group.runID.String()
@@ -450,7 +431,7 @@ func (s *Service) mail(
 	waitingHours int,
 ) {
 	address := strings.TrimSpace(decider.EmailAddress)
-	if s.email == nil || s.templates == nil || s.webBaseURL == "" || address == "" {
+	if s.webBaseURL == "" || address == "" {
 		return
 	}
 
@@ -508,10 +489,6 @@ func (s *Service) brand(
 	tenantInfo pagination.TenantInfo,
 	out *portaltemplate.AgentProposalReminderContext,
 ) {
-	if s.orgs == nil {
-		return
-	}
-
 	org, err := s.orgs.GetByID(ctx, tenantports.GetOrganizationByIDRequest{TenantInfo: tenantInfo})
 	if err != nil || org == nil {
 		return

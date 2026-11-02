@@ -33,10 +33,6 @@ func (e *resetEvent) deny(outcome iam.AuthEventOutcome, code string) {
 }
 
 func (s *Service) recordResetEvent(ctx context.Context, event *resetEvent, err error) {
-	if s.authEvents == nil {
-		return
-	}
-
 	rec := iamports.AuthEventRecord{
 		Provider:       event.provider,
 		Outcome:        event.outcome,

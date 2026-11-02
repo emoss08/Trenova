@@ -24,7 +24,7 @@ func TestCreateRefusesAWorkerPastTheQuota(t *testing.T) {
 
 	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	repo := &repository{
-		db:    postgres.NewTestConnection(keeltest.RenderDB(t)),
+		db:    postgres.WrapDB(keeltest.RenderDB(t)),
 		l:     zap.NewNop(),
 		quota: guard,
 	}
@@ -36,9 +36,12 @@ func TestCreateRefusesAWorkerPastTheQuota(t *testing.T) {
 	}
 
 	guard.EXPECT().Enforce(mock.Anything, &platformplanports.QuotaRequest{
-		TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
-		Meter:      platformcatalog.MeterWorkersTotal,
-		Quantity:   1,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+		Meter:    platformcatalog.MeterWorkersTotal,
+		Quantity: 1,
 	}).Return(errortypes.NewQuotaExceededError(string(platformcatalog.MeterWorkersTotal), 3, 3, "free_demo"))
 
 	created, err := repo.Create(t.Context(), entity)

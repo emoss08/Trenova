@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/onboarding"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -49,12 +48,12 @@ func TestNormalizeAppliesDefaultsAndCanonicalForms(t *testing.T) {
 	assert.Equal(t, DefaultTimezone, got.Timezone)
 	assert.Equal(t, "TX", got.State)
 	assert.Equal(t, "ACME", got.SCAC)
-	assert.Equal(t, onboarding.PlaceholderCity, got.City)
-	assert.Equal(t, onboarding.PlaceholderPostalCode, got.PostalCode)
-	assert.Equal(t, onboarding.PlaceholderDOTNumber, got.DOTNumber)
+	assert.Equal(t, PlaceholderCity, got.City)
+	assert.Equal(t, PlaceholderPostalCode, got.PostalCode)
+	assert.Equal(t, PlaceholderDOTNumber, got.DOTNumber)
 
 	assert.Equal(t, DefaultState, validInputs().Normalize().State)
-	assert.Equal(t, onboarding.PlaceholderSCAC, validInputs().Normalize().SCAC)
+	assert.Equal(t, PlaceholderSCAC, validInputs().Normalize().SCAC)
 }
 
 func TestValidateAcceptsTheMinimalInputs(t *testing.T) {
@@ -72,7 +71,11 @@ func TestValidateReportsEachInvalidField(t *testing.T) {
 		mutate func(*Inputs)
 		field  string
 	}{
-		{"missing organization", func(i *Inputs) { i.OrganizationName = "" }, FieldOrganizationName},
+		{
+			"missing organization",
+			func(i *Inputs) { i.OrganizationName = "" },
+			FieldOrganizationName,
+		},
 		{
 			"long organization",
 			func(i *Inputs) { i.OrganizationName = strings.Repeat("a", MaxOrganizationNameLength+1) },

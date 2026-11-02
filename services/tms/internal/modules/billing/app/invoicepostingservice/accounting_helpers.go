@@ -13,7 +13,7 @@ import (
 func (s *Service) invoiceLedger() *invoiceledger.Poster {
 	return &invoiceledger.Poster{
 		Controls: s.accountingRepo,
-		Policy:   s.accountingPolicyService(),
+		Policy:   s.accountingPolicy,
 		Ledger:   s.customerLedgerRepo,
 		Writer: journalposting.Writer{
 			Periods:  s.fiscalPeriodRepo,

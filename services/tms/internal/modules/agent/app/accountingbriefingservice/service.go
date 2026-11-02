@@ -41,16 +41,6 @@ type Params struct {
 	Logger        *zap.Logger
 }
 
-type Dependencies struct {
-	Receivables   customerledgerports.ARSnapshotReader
-	Collections   collectionports.Service
-	Briefs        accountingbriefports.AccountingBriefRepository
-	Organizations tenantports.OrganizationRepository
-	Nova          llmports.TaskRunner
-	Logger        *zap.Logger
-	Now           func() time.Time
-}
-
 type Service struct {
 	receivables   customerledgerports.ARSnapshotReader
 	collections   collectionports.Service
@@ -68,26 +58,14 @@ var (
 
 //nolint:gocritic // dependency injection
 func New(p Params) *Service {
-	return NewWithDependencies(&Dependencies{
-		Receivables:   p.Receivables,
-		Collections:   p.Collections,
-		Briefs:        p.Briefs,
-		Organizations: p.Organizations,
-		Nova:          p.Nova,
-		Logger:        p.Logger,
-		Now:           time.Now,
-	})
-}
-
-func NewWithDependencies(d *Dependencies) *Service {
 	return &Service{
-		receivables:   d.Receivables,
-		collections:   d.Collections,
-		briefs:        d.Briefs,
-		organizations: d.Organizations,
-		nova:          d.Nova,
-		l:             d.Logger.Named("service.accounting-briefing"),
-		now:           d.Now,
+		receivables:   p.Receivables,
+		collections:   p.Collections,
+		briefs:        p.Briefs,
+		organizations: p.Organizations,
+		nova:          p.Nova,
+		l:             p.Logger.Named("service.accounting-briefing"),
+		now:           time.Now,
 	}
 }
 

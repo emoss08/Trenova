@@ -50,18 +50,6 @@ type Params struct {
 	Logger       *zap.Logger
 }
 
-type Dependencies struct {
-	Board        shipmentboardports.ShipmentBoardRepository
-	Watchlist    shipmentboardports.ShipmentWatchlistRepository
-	QuickFilters shipmentports.ShipmentQuickFilterBasisResolver
-	Controls     tenantports.ShipmentControlRepository
-	Accessorials accessorialchargeports.AccessorialChargeRepository
-	Moves        BoardMoveLister
-	Detention    DetentionDesk
-	Cache        shipmentboardports.ShipmentBoardCache
-	Logger       *zap.Logger
-}
-
 type Service struct {
 	board        shipmentboardports.ShipmentBoardRepository
 	watchlist    shipmentboardports.ShipmentWatchlistRepository
@@ -78,30 +66,16 @@ var _ shipmentboardports.ShipmentWatchlistReader = (*Service)(nil)
 
 //nolint:gocritic // dependency injection
 func New(p Params) shipmentboardports.ShipmentWatchlistReader {
-	return NewWithDependencies(&Dependencies{
-		Board:        p.Board,
-		Watchlist:    p.Watchlist,
-		QuickFilters: p.QuickFilters,
-		Controls:     p.Controls,
-		Accessorials: p.Accessorials,
-		Moves:        p.Console,
-		Detention:    p.Detention,
-		Cache:        p.Cache,
-		Logger:       p.Logger,
-	})
-}
-
-func NewWithDependencies(d *Dependencies) *Service {
 	return &Service{
-		board:        d.Board,
-		watchlist:    d.Watchlist,
-		quickFilters: d.QuickFilters,
-		controls:     d.Controls,
-		accessorials: d.Accessorials,
-		moves:        d.Moves,
-		detention:    d.Detention,
-		cache:        d.Cache,
-		l:            d.Logger.Named("service.shipment-watchlist"),
+		board:        p.Board,
+		watchlist:    p.Watchlist,
+		quickFilters: p.QuickFilters,
+		controls:     p.Controls,
+		accessorials: p.Accessorials,
+		moves:        p.Console,
+		detention:    p.Detention,
+		cache:        p.Cache,
+		l:            p.Logger.Named("service.shipment-watchlist"),
 	}
 }
 

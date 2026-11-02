@@ -120,9 +120,9 @@ type Params struct {
 	PTOLedger     *ptoledgerservice.Service
 	DriverPay     *driverpayservice.Service
 	AuditService  auditports.AuditService
-	Realtime      realtimeports.RealtimeService         `optional:"true"`
-	Checklists    workerchecklistports.ChecklistSpawner `optional:"true"`
-	Training      workertrainingports.TrainingAssigner  `optional:"true"`
+	Realtime      realtimeports.RealtimeService
+	Checklists    workerchecklistports.ChecklistSpawner
+	Training      workertrainingports.TrainingAssigner
 }
 
 type Service struct {
@@ -161,51 +161,6 @@ func New(p Params) *Service {
 		realtime:      p.Realtime,
 		checklists:    p.Checklists,
 		training:      p.Training,
-	}
-}
-
-// Deps lets tests assemble a service from narrow fakes without Uber FX.
-type Deps struct {
-	Logger        *zap.Logger
-	Repo          workeremploymentports.WorkerEmploymentEventRepository
-	WorkerRepo    workerports.WorkerRepository
-	FleetCodeRepo fleetcodeports.FleetCodeRepository
-	DocumentRepo  documentports.DocumentRepository
-	PayAssignRepo driverpayports.WorkerPayAssignmentRepository
-	Workers       WorkerUpdater
-	PTOPolicies   PTOPolicyManager
-	PTO           workerptoports.WorkerPTOService
-	PTOLedger     PTOSettler
-	DriverPay     PayAssignmentManager
-	AuditService  auditports.AuditService
-	Realtime      realtimeports.RealtimeService
-	Checklists    workerchecklistports.ChecklistSpawner
-	Training      workertrainingports.TrainingAssigner
-	Portal        portalaccessports.PortalAccessRevoker
-}
-
-func NewWithDeps(d Deps) *Service {
-	logger := d.Logger
-	if logger == nil {
-		logger = zap.NewNop()
-	}
-	return &Service{
-		l:             logger.Named("service.worker-employment"),
-		repo:          d.Repo,
-		workerRepo:    d.WorkerRepo,
-		fleetCodeRepo: d.FleetCodeRepo,
-		documentRepo:  d.DocumentRepo,
-		payAssignRepo: d.PayAssignRepo,
-		workers:       d.Workers,
-		ptoPolicies:   d.PTOPolicies,
-		pto:           d.PTO,
-		ptoLedger:     d.PTOLedger,
-		driverPay:     d.DriverPay,
-		auditService:  d.AuditService,
-		realtime:      d.Realtime,
-		checklists:    d.Checklists,
-		training:      d.Training,
-		portal:        d.Portal,
 	}
 }
 
@@ -425,9 +380,6 @@ func (s *Service) closeChecklists(
 	userID pulid.ID,
 	log *zap.Logger,
 ) int {
-	if s.checklists == nil {
-		return 0
-	}
 	closed, err := s.checklists.CloseForEvent(ctx, event, wrk, userID)
 	if err != nil {
 		log.Warn("failed to close checklists for employment event", zap.Error(err))
@@ -445,9 +397,6 @@ func (s *Service) spawnChecklist(
 	userID pulid.ID,
 	log *zap.Logger,
 ) bool {
-	if s.checklists == nil {
-		return false
-	}
 	checklist, err := s.checklists.SpawnForEvent(ctx, event, wrk, userID)
 	if err != nil {
 		log.Warn("failed to start checklist for employment event", zap.Error(err))
@@ -660,17 +609,16 @@ func (s *Service) cascade(
 			return summary, err
 		}
 		summary.UpcomingPTOCancelled = cancelled
-		if s.ptoLedger != nil {
-			settlement, settleErr := s.ptoLedger.SettleOnTermination(
-				ctx, req.TenantInfo, req.WorkerID, req.EffectiveAt,
-				ptoledgerservice.UserActor(req.UserID),
-			)
-			if settleErr != nil {
-				return summary, fmt.Errorf("settle PTO balances: %w", settleErr)
-			}
-			summary.PTOPaidOutDays = settlement.PaidOutDays
-			summary.PTOForfeitedDays = settlement.ForfeitedDays
+		settlement, settleErr := s.ptoLedger.SettleOnTermination(
+			ctx, req.TenantInfo, req.WorkerID, req.EffectiveAt,
+			ptoledgerservice.UserActor(req.UserID),
+		)
+		if settleErr != nil {
+			return summary, fmt.Errorf("settle PTO balances: %w", settleErr)
 		}
+		summary.PTOPaidOutDays = settlement.PaidOutDays
+		summary.PTOForfeitedDays = settlement.ForfeitedDays
+
 		summary.PortalAccessRevoked, summary.PortalRevocationError = s.revokePortalAccess(
 			ctx, req, actor, log,
 		)
@@ -724,9 +672,6 @@ func (s *Service) revokePortalAccess(
 // hire, rehire or driver-type change. Best-effort: a training gap must not
 // undo an employment change that has already been recorded.
 func (s *Service) assignTraining(ctx context.Context, req *RecordRequest, log *zap.Logger) int {
-	if s.training == nil {
-		return 0
-	}
 	records, err := s.training.AssignRequired(ctx, req.TenantInfo, req.WorkerID, req.UserID)
 	if err != nil {
 		log.Warn("failed to assign required training", zap.Error(err))
@@ -972,7 +917,7 @@ func (s *Service) audit(
 	comment string,
 	log *zap.Logger,
 ) {
-	if s.auditService == nil || userID.IsNil() {
+	if userID.IsNil() {
 		return
 	}
 	params := &auditports.LogActionParams{
@@ -1001,7 +946,7 @@ func (s *Service) publish(
 	operation permission.Operation,
 	userID pulid.ID,
 ) {
-	if s.realtime == nil || event == nil {
+	if event == nil {
 		return
 	}
 	for _, resource := range []string{realtimeResource, realtimeWorkers} {

@@ -47,7 +47,7 @@ func (s *Service) actorSensitivity(
 	ctx context.Context,
 	actor *permissionports.RequestActor,
 ) (permission.FieldSensitivity, error) {
-	if actor == nil || !actor.IsUser() || s.permissions == nil {
+	if actor == nil || !actor.IsUser() {
 		return permission.SensitivityInternal, nil
 	}
 

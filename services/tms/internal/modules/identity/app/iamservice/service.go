@@ -39,8 +39,8 @@ type Params struct {
 	Validator      *Validator
 	Auditor        permissionports.SecurityAuditor
 	Logger         *zap.Logger
-	SecurityConfig *securityconfig.Config        `optional:"true"`
-	Plans          platformplanports.PlanService `optional:"true"`
+	SecurityConfig *securityconfig.Config
+	Plans          platformplanports.PlanService
 }
 
 type service struct {

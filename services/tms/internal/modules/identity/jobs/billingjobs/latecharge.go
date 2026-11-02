@@ -106,10 +106,6 @@ func LateChargeAssessmentWorkflow(ctx workflow.Context) (*LateChargeAssessmentRe
 func (a *Activities) ListLateChargeTenantsActivity(
 	ctx context.Context,
 ) ([]pagination.TenantInfo, error) {
-	if a.lateChargeRepo == nil {
-		return []pagination.TenantInfo{}, nil
-	}
-
 	return a.lateChargeRepo.ListLateChargeTenants(ctx, lateChargeTenantBatch)
 }
 
@@ -123,9 +119,6 @@ func (a *Activities) AssessTenantLateChargesActivity(
 	result := &LateChargeTenantResult{
 		OrganizationID: tenantInfo.OrgID.String(),
 		BusinessUnitID: tenantInfo.BuID.String(),
-	}
-	if a.lateChargeService == nil {
-		return result, nil
 	}
 
 	control, err := a.billingControlRepo.GetByOrgID(ctx, tenantInfo.OrgID)

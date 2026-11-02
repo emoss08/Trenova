@@ -49,11 +49,11 @@ type Params struct {
 	Organization tenantports.OrganizationRepository
 	Writer       *briefingwriter.Service
 	Permissions  permissionports.PermissionEngine
-	Realtime     realtimeports.RealtimeService `optional:"true"`
+	Realtime     realtimeports.RealtimeService
 	// Days writes a page a person asked for again, on a worker.
 	Days    briefingports.BriefingDayWriter
 	Sources briefingfacts.Sources
-	Plans   platformplanports.PlanService `optional:"true"`
+	Plans   platformplanports.PlanService
 }
 
 type Service struct {
@@ -199,7 +199,7 @@ func (s *Service) writeRole(
 		entity.Headline = sections[0].Summary
 	}
 
-	if p.narrate && s.writer != nil && len(sections) > 0 {
+	if p.narrate && len(sections) > 0 {
 		written := s.writer.Write(ctx, &briefingwriter.Request{
 			TenantInfo:       p.tenant,
 			Role:             p.role,
@@ -396,7 +396,7 @@ func (s *Service) assertMay(
 	actor *permissionports.RequestActor,
 	operation permission.Operation,
 ) error {
-	if s.permissions == nil || actor == nil {
+	if actor == nil {
 		return nil
 	}
 
@@ -424,10 +424,6 @@ func (s *Service) assertMay(
 }
 
 func (s *Service) publish(ctx context.Context, tenant pagination.TenantInfo) {
-	if s.realtime == nil {
-		return
-	}
-
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,

@@ -64,11 +64,11 @@ type Params struct {
 	StorageConfig      *storageconfig.Config
 	ThumbnailGenerator *thumbnailservice.Generator
 	WorkflowStarter    kernelports.WorkflowStarter
-	UsageProvider      platformcatalogports.UsageProvider `optional:"true"`
+	UsageProvider      platformcatalogports.UsageProvider
 	DocTypeRepo        documenttypeports.DocumentTypeRepository
-	Redis              *goredis.Client `optional:"true"`
+	Redis              *goredis.Client
 	Encryption         *encryptionservice.Service
-	Triage             inboundmessageports.TriageEventSink `optional:"true"`
+	Triage             inboundmessageports.TriageEventSink
 	ContentGate        contentscanports.Gate
 }
 
@@ -217,7 +217,7 @@ func (s *Service) CreateSession(
 	session.Strategy = documentupload.StrategySingle
 	session.PartSize = req.FileSize
 	session.Status = documentupload.StatusInitiated
-	session.MalwareScan = s.contentGate != nil && s.contentGate.Enabled()
+	session.MalwareScan = s.contentGate.Enabled()
 
 	return s.sessionRepo.Create(ctx, session)
 }
@@ -488,16 +488,6 @@ func (s *Service) Complete(
 		return nil, err
 	}
 
-	if !s.workflowStarter.Enabled() {
-		if _, err = s.runSynchronousFinalization(ctx, req, session); err != nil {
-			return nil, err
-		}
-		return s.sessionRepo.GetByID(ctx, documentuploadports.GetDocumentUploadSessionByIDRequest{
-			ID:         req.SessionID,
-			TenantInfo: req.TenantInfo,
-		})
-	}
-
 	acquired, leaseErr := s.acquireCompletionLease(ctx, session.ID.String())
 	if leaseErr != nil {
 		s.l.Warn(
@@ -683,10 +673,6 @@ func normalizeSession(session *documentupload.DocumentUploadSession) {
 }
 
 func (s *Service) acquireCompletionLease(ctx context.Context, sessionID string) (bool, error) {
-	if s.redis == nil {
-		return true, nil
-	}
-
 	_, err := s.redis.SetArgs(ctx, completionLeaseKey(sessionID), "1", goredis.SetArgs{
 		Mode: "NX",
 		TTL:  5 * time.Minute,
@@ -967,9 +953,6 @@ func (s *Service) isSupersededByNewerVersion(
 }
 
 func (s *Service) startThumbnailWorkflow(ctx context.Context, doc *document.Document) {
-	if !s.workflowStarter.Enabled() {
-		return
-	}
 
 	if doc.PreviewStatus != document.PreviewStatusPending || doc.PreviewStoragePath != "" {
 		doc.PreviewStatus = document.PreviewStatusPending
@@ -1058,7 +1041,7 @@ func (s *Service) ensureThumbnailForSession(
 	ctx context.Context,
 	session *documentupload.DocumentUploadSession,
 ) {
-	if session.DocumentID == nil || s.thumbnailGenerator == nil {
+	if session.DocumentID == nil {
 		return
 	}
 

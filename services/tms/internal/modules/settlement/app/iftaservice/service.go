@@ -48,7 +48,7 @@ type Params struct {
 	Organizations tenantports.OrganizationRepository
 	AuditService  auditports.AuditService
 	ReferenceData *referencedataguard.Guard
-	Realtime      realtimeports.RealtimeService `optional:"true"`
+	Realtime      realtimeports.RealtimeService
 }
 
 type Service struct {
@@ -77,40 +77,6 @@ func New(p Params) *Service {
 	}
 }
 
-type Deps struct {
-	Logger        *zap.Logger
-	Repo          iftaports.IFTARepository
-	Fuel          FuelAccumulator
-	TractorRepo   tractorports.TractorRepository
-	Organizations tenantports.OrganizationRepository
-	AuditService  auditports.AuditService
-	ReferenceData *referencedataguard.Guard
-	Realtime      realtimeports.RealtimeService
-	Now           func() int64
-}
-
-func NewWithDeps(d Deps) *Service {
-	logger := d.Logger
-	if logger == nil {
-		logger = zap.NewNop()
-	}
-	now := d.Now
-	if now == nil {
-		now = timeutils.NowUnix
-	}
-	return &Service{
-		l:             logger.Named("service.ifta"),
-		repo:          d.Repo,
-		fuel:          d.Fuel,
-		tractorRepo:   d.TractorRepo,
-		organizations: d.Organizations,
-		auditService:  d.AuditService,
-		referenceData: d.ReferenceData,
-		realtime:      d.Realtime,
-		now:           now,
-	}
-}
-
 type auditParams struct {
 	resource   permission.Resource
 	resourceID string
@@ -123,7 +89,7 @@ type auditParams struct {
 }
 
 func (s *Service) audit(p *auditParams) {
-	if s.auditService == nil || p.userID.IsNil() {
+	if p.userID.IsNil() {
 		return
 	}
 	params := &auditports.LogActionParams{
@@ -153,9 +119,6 @@ func (s *Service) publish(
 	recordID pulid.ID,
 	userID pulid.ID,
 ) {
-	if s.realtime == nil {
-		return
-	}
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,

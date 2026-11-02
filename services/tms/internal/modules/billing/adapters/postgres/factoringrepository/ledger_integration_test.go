@@ -50,7 +50,7 @@ type ledgerEnv struct {
 func setupLedgerEnv(t *testing.T) *ledgerEnv {
 	t.Helper()
 	e := setupFactoringEnv(t)
-	conn := postgres.NewTestConnection(e.db)
+	conn := postgres.WrapDB(e.db)
 	logger := zap.NewNop()
 	p := Params{DB: conn, Logger: logger}
 
@@ -408,7 +408,7 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 	)
 
 	reminders := paymentreminderrepository.New(paymentreminderrepository.Params{
-		DB: postgres.NewTestConnection(e.db), Logger: zap.NewNop(),
+		DB: postgres.WrapDB(e.db), Logger: zap.NewNop(),
 	})
 	overdue, err := reminders.ListOverdueInvoices(
 		e.ctx,

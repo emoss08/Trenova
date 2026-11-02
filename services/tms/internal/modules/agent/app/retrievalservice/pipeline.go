@@ -91,10 +91,6 @@ func (s *Service) adoptConfiguredModel(
 	tenant pagination.TenantInfo,
 	settings *airetrieval.Settings,
 ) (*airetrieval.Settings, airetrieval.UnavailableReason, error) {
-	if s.embeddings == nil {
-		return settings, airetrieval.UnavailableReasonNoProvider, nil
-	}
-
 	configured, err := s.embeddings.ConfiguredModelKey(ctx, tenant)
 	if err != nil {
 		if isNoProvider(err) {
@@ -261,9 +257,6 @@ func (s *Service) IndexBatch(
 	if !ok {
 		return result, fmt.Errorf("%w: model key %q names no allowed dimension",
 			airetrieval.ErrInvalidStorageRequest, req.ModelKey)
-	}
-	if s.embeddings == nil {
-		return result, nil
 	}
 
 	settings, err := s.repo.GetSettings(ctx, req.TenantInfo)

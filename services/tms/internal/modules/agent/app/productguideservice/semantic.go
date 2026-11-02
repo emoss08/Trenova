@@ -72,7 +72,7 @@ func NewOffline(catalog *productguide.Catalog) *Service {
 		l:         zap.NewNop(),
 		catalog:   catalog,
 		index:     buildIndex(catalog),
-		resources: permissioncatalog.NewRegistry(),
+		resources: permissioncatalog.Default(),
 		items:     CatalogItems(catalog),
 	}
 }
@@ -118,9 +118,8 @@ func (s *Service) similarities(
 	ctx context.Context,
 	req *productguideports.ProductGuideSearchRequest,
 ) retrievalports.CatalogSimilarities {
-	if s.vectorizer == nil || s.vectors == nil || len(s.items) == 0 ||
-		strings.TrimSpace(req.Query) == "" ||
-		req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
+	if len(s.items) == 0 || strings.TrimSpace(req.Query) == "" || req.TenantInfo.OrgID.IsNil() ||
+		req.TenantInfo.BuID.IsNil() {
 		return retrievalports.CatalogSimilarities{}
 	}
 

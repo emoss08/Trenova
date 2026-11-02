@@ -609,9 +609,6 @@ func (s *RemittanceService) preparePdf(
 	doc *document.Document,
 	wait bool,
 ) (*preparedStage, error) {
-	if s.nova == nil || s.content == nil {
-		return &preparedStage{problem: problemNoPdfModel}, nil
-	}
 	content, err := s.content.GetContent(ctx, doc.ID, remittanceTenant(rem))
 	if err != nil && !errortypes.IsNotFoundError(err) {
 		return nil, err
@@ -663,8 +660,6 @@ func (s *RemittanceService) awaitPdf(
 	}
 	s.record(ctx, in.actor, before, updated, permission.OpUpdate,
 		"Remittance "+updated.FileName+" is waiting for its PDF to be read")
-	if s.starter != nil {
-		s.starter.StartStage(ctx, remittanceTenant(updated), updated)
-	}
+	s.starter.StartStage(ctx, remittanceTenant(updated), updated)
 	return updated, nil
 }

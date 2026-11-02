@@ -62,7 +62,7 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	logger := zap.NewNop()
 	invoiceRepo := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})
 	billingQueueRepo := billingqueuerepository.New(
@@ -289,7 +289,7 @@ func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T)
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	logger := zap.NewNop()
 	invoiceRepo := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})
 	billingQueueRepo := billingqueuerepository.New(

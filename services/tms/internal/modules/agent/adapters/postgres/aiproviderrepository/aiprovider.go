@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -228,6 +227,33 @@ func selectOptionsQuery(task aitask.Task) keel.Query[*aiprovider.Provider] {
 	return q.Order(p.Priority.Asc(), p.Name.Asc(), p.ID.Asc())
 }
 
+// GetNova returns the provider Nova runs on, with its credential, or nil when
+// the organization has not chosen one. The unique index on nova serves it.
+func (r *repository) GetNova(
+	ctx context.Context,
+	_ pagination.TenantInfo,
+) (*aiprovider.Provider, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aiprovider.Provider, error) {
+		entity, err := novaQuery().First(ctx, r.db.Keel(ctx))
+		if err != nil {
+			if dberror.IsNotFoundError(err) {
+				return nil, nil //nolint:nilnil // no Nova provider is an answer, not a failure
+			}
+			return nil, fmt.Errorf("get the nova ai provider: %w", err)
+		}
+
+		return entity, nil
+	})
+}
+
+// novaQuery reads the provider Nova runs on, enabled or not, so a Nova
+// provider that is off is reported as off rather than as missing.
+func novaQuery() keel.Query[*aiprovider.Provider] {
+	p := aiproviderdb.Providers
+
+	return p.Where(p.Nova.IsTrue())
+}
+
 func providersForTaskQuery(task aitask.Task) keel.Query[*aiprovider.Provider] {
 	p := aiproviderdb.Providers
 
@@ -240,10 +266,10 @@ func (r *repository) Create(
 	entity *aiprovider.Provider,
 ) (*aiprovider.Provider, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiprovider.Provider, error) {
+		if err := r.releaseNova(ctx, entity); err != nil {
+			return nil, err
+		}
 		if err := aiproviderdb.Providers.Create(ctx, r.db.Keel(ctx), entity); err != nil {
-			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, duplicateProviderName(entity.Name)
-			}
 			r.l.Error("failed to create ai provider",
 				zap.String("name", entity.Name),
 				zap.Error(err),
@@ -255,35 +281,38 @@ func (r *repository) Create(
 	})
 }
 
-// duplicateProviderName surfaces the unique index on (organization, business
-// unit, lower(name)) as a field error, since the name is how an operator tells
-// two endpoints apart when assigning tasks.
-func duplicateProviderName(name string) error {
-	multiErr := errortypes.NewMultiError()
-	multiErr.Add(
-		"name",
-		errortypes.ErrDuplicate,
-		fmt.Sprintf("An AI provider named %q already exists", name),
-	)
-
-	return multiErr
-}
-
 func (r *repository) Update(
 	ctx context.Context,
 	entity *aiprovider.Provider,
 ) (*aiprovider.Provider, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiprovider.Provider, error) {
+		if err := r.releaseNova(ctx, entity); err != nil {
+			return nil, err
+		}
 		p := aiproviderdb.Providers
 		if err := p.SaveExcept(ctx, r.db.Keel(ctx), entity, p.LastTest); err != nil {
-			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, duplicateProviderName(entity.Name)
-			}
 			return nil, providerErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
 	})
+}
+
+// releaseNova moves Nova to entity: choosing a provider for Nova takes it from
+// the one that had it, in the same transaction, so an organization never has
+// two and never has none in between.
+func (r *repository) releaseNova(ctx context.Context, entity *aiprovider.Provider) error {
+	if !entity.Nova {
+		return nil
+	}
+
+	p := aiproviderdb.Providers
+	if _, err := p.Where(p.Nova.IsTrue(), p.ID.Ne(entity.ID)).
+		Update(ctx, r.db.Keel(ctx), p.Nova.To(false)); err != nil {
+		return fmt.Errorf("move nova to ai provider %s: %w", entity.ID, err)
+	}
+
+	return nil
 }
 
 func (r *repository) Delete(

@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -77,14 +79,14 @@ func newEvalHarness(t *testing.T) (*evalHarness, evalSuites) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	h := &evalHarness{
 		ctx:  ctx,
 		db:   db,
 		conn: conn,
 		repo: airetrievalrepository.New(airetrievalrepository.Params{
 			DB:     conn,
-			Probe:  postgres.NewTestCapabilityProbe(conn),
+			Probe:  dbtest.CapabilityProbe(conn),
 			Logger: zap.NewNop(),
 		}),
 		sources: retrievalsourcerepository.New(retrievalsourcerepository.Params{

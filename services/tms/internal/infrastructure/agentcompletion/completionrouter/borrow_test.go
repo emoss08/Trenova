@@ -44,6 +44,6 @@ func TestUsableFor_OtherTasksBorrowNothing(t *testing.T) {
 	chat.Tasks = []aitask.Task{aitask.TaskAssistantChat}
 
 	_, err := newTestService(t, chat).
-		UsableFor(t.Context(), aitask.TaskDocumentExtraction, availabilityTenant())
+		UsableFor(t.Context(), aitask.TaskEvaluationJudge, availabilityTenant())
 	require.Error(t, err)
 }

@@ -27,9 +27,6 @@ func (s *Service) autoStopActualsEnabled(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) bool {
-	if s.dispatchControlRepo == nil {
-		return false
-	}
 	dc, err := s.dispatchControlRepo.GetOrCreate(ctx, tenantInfo.OrgID, tenantInfo.BuID)
 	if err != nil {
 		s.l.Warn("failed to load dispatch control for auto stop actuals",
@@ -52,9 +49,6 @@ func (s *Service) applyStopEvent(ctx context.Context, event *stopEvent) {
 	// recorded from it: a wait on a truck reaching a stop is about the truck,
 	// not about the paperwork.
 	autoActuals := s.autoStopActualsEnabled(ctx, event.tenantInfo)
-	if !autoActuals && s.waits == nil {
-		return
-	}
 
 	assignment, err := s.resolveActiveAssignment(
 		ctx,
@@ -116,9 +110,6 @@ func (s *Service) notifyVisitWaits(
 	event *stopEvent,
 	move *shipment.ShipmentMove,
 ) {
-	if s.waits == nil {
-		return
-	}
 	stop, match := stopvisit.MatchObserved(move, event.record.LocationID, event.visit)
 	if stop == nil || match == stopvisit.MatchNoStop {
 		return
@@ -200,10 +191,6 @@ func (s *Service) projectStopVisit(
 	record *telematics.TelematicsEvent,
 	shipmentID pulid.ID,
 ) {
-	if s.watchtower == nil {
-		return
-	}
-
 	switch {
 	case record.StopOutcome.NeedsReview():
 		s.watchtower.Upsert(ctx, watchtowershipment.DescribeTelematicsStopVisit(
@@ -261,9 +248,6 @@ func (s *Service) resolveActiveAssignment(
 	tractorID pulid.ID,
 	workerID pulid.ID,
 ) (*shipment.Assignment, error) {
-	if s.assignmentRepo == nil {
-		return nil, nil
-	}
 	if !tractorID.IsNil() {
 		assignment, err := s.assignmentRepo.FindActiveByTractorID(ctx, tenantInfo, tractorID)
 		if err != nil {

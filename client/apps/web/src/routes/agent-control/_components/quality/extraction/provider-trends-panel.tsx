@@ -4,7 +4,7 @@ import {
   EXTRACTION_PROVIDER_TRENDS_KEY,
   fetchExtractionProviderTrends,
   type ExtractionProviderTrend,
-} from "@/lib/graphql/extraction-eval";
+} from "@/lib/graphql/extraction-accuracy";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import {

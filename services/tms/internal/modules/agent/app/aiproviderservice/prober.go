@@ -49,14 +49,15 @@ type ProberParams struct {
 
 	Logger   *zap.Logger
 	AIConfig *aiconfig.Config
-	Prices   aiproviderports.ModelPriceReference `optional:"true"`
+	Prices   aiproviderports.ModelPriceReference
+	Adapters *adapterregistry.Registry
 }
 
 func NewProber(p ProberParams) *Prober {
 	return &Prober{
 		logger:   p.Logger.Named("service.aiprovider.prober"),
 		cfg:      p.AIConfig,
-		adapters: adapterregistry.NewRegistry(),
+		adapters: p.Adapters,
 		prices:   p.Prices,
 		clients:  make(map[bool]*http.Client, 2),
 	}
@@ -468,10 +469,6 @@ func (p *Prober) estimateMissingPrices(
 	kind aiprovider.Kind,
 	options []aiproviderports.AIProviderModelOption,
 ) {
-	if p.prices == nil {
-		return
-	}
-
 	missing := make([]string, 0, len(options))
 	for idx := range options {
 		if options[idx].InputCostPerMillion == nil {

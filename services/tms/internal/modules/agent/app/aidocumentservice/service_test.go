@@ -371,7 +371,7 @@ func TestSubmitBackgroundExtraction_AttributesTheCallToThePersonAndDocument(t *t
 	)
 }
 
-func TestSubmitBackgroundExtraction_AsksARolloutCandidateFirstWithoutRequiringIt(t *testing.T) {
+func TestSubmitBackgroundExtraction_RunsOnNovaWhateverProviderTheRolloutPrefers(t *testing.T) {
 	t.Parallel()
 
 	completion := &stubCompletion{
@@ -388,30 +388,15 @@ func TestSubmitBackgroundExtraction_AsksARolloutCandidateFirstWithoutRequiringIt
 	require.NoError(t, err)
 
 	require.NotNil(t, completion.sawRequest)
-	assert.Equal(t, request.PreferredProviderID, completion.sawRequest.PreferredProviderID)
-	assert.False(t, completion.sawRequest.RequireProvider,
-		"production falls back to the usual providers when the candidate cannot answer")
-	assert.Empty(t, completion.sawRequest.Attribution.Purpose,
-		"a served extraction is production usage, not evaluation")
-}
-
-func TestSubmitBackgroundExtraction_LeavesTheOrderAloneWithoutAPreference(t *testing.T) {
-	t.Parallel()
-
-	completion := &stubCompletion{
-		submission: &llmports.BackgroundSubmission{
-			Handle:     "resp_123",
-			ProviderID: pulid.MustNew("aipr_"),
-		},
-	}
-	service := newTestService(t, completion)
-
-	_, err := service.SubmitRateConfirmationBackgroundExtraction(t.Context(), extractRequest())
-	require.NoError(t, err)
-
-	require.NotNil(t, completion.sawRequest)
+	assert.True(
+		t,
+		completion.sawRequest.Nova,
+		"extraction is Nova's, so it runs on Nova's provider",
+	)
 	assert.True(t, completion.sawRequest.PreferredProviderID.IsNil())
 	assert.False(t, completion.sawRequest.RequireProvider)
+	assert.Empty(t, completion.sawRequest.Attribution.Purpose,
+		"a served extraction is production usage, not evaluation")
 }
 
 func TestPollBackgroundExtraction_AttributesTheOutcomeToThePersonAndDocument(t *testing.T) {
@@ -676,7 +661,7 @@ func TestFailureOutcome_KeepsTheMetricLabelForAnUnconfiguredProvider(t *testing.
 	assert.Equal(t, "error", failureOutcome(errors.New("connection refused")))
 }
 
-func TestExtractRateConfirmationForEvaluation_PinsTheProviderAndBillsTheEvaluation(t *testing.T) {
+func TestExtractRateConfirmationForEvaluation_RunsOnNovaAndBillsTheEvaluation(t *testing.T) {
 	t.Parallel()
 
 	providerID := pulid.MustNew("aiprv_")
@@ -709,8 +694,9 @@ func TestExtractRateConfirmationForEvaluation_PinsTheProviderAndBillsTheEvaluati
 	request := completion.sawRequest
 	require.NotNil(t, request)
 	assert.Equal(t, aitask.TaskDocumentExtraction, request.Task)
-	assert.Equal(t, providerID, request.PreferredProviderID)
-	assert.True(t, request.RequireProvider)
+	assert.True(t, request.Nova)
+	assert.True(t, request.PreferredProviderID.IsNil(), "Nova chooses no provider of its own")
+	assert.False(t, request.RequireProvider)
 	assert.Equal(t, aiusageports.AIUsagePurposeEvaluation, request.Attribution.Purpose)
 	assert.Equal(t, aiusage.FeatureDocumentIntelligenceExtract, request.Attribution.Feature)
 
@@ -725,21 +711,7 @@ func TestExtractRateConfirmationForEvaluation_PinsTheProviderAndBillsTheEvaluati
 	assert.True(t, cost.Equal(*result.CostUSD))
 }
 
-func TestExtractRateConfirmationForEvaluation_RequiresAProvider(t *testing.T) {
-	t.Parallel()
-
-	completion := &stubCompletion{}
-	service := newTestService(t, completion)
-
-	_, err := service.ExtractRateConfirmationForEvaluation(
-		t.Context(),
-		&documentaiextractionports.AIEvaluationExtractRequest{FileName: "rc.pdf"},
-	)
-	require.Error(t, err)
-	assert.Nil(t, completion.sawRequest)
-}
-
-func TestExtractRateConfirmationForShadow_SendsProductionsInputToThePinnedProvider(t *testing.T) {
+func TestExtractRateConfirmationForShadow_SendsProductionsInputToNova(t *testing.T) {
 	t.Parallel()
 
 	providerID := pulid.MustNew("aiprv_")
@@ -770,8 +742,9 @@ func TestExtractRateConfirmationForShadow_SendsProductionsInputToThePinnedProvid
 
 	request := completion.sawRequest
 	require.NotNil(t, request)
-	assert.Equal(t, providerID, request.PreferredProviderID)
-	assert.True(t, request.RequireProvider)
+	assert.True(t, request.Nova)
+	assert.True(t, request.PreferredProviderID.IsNil())
+	assert.False(t, request.RequireProvider)
 	assert.Equal(t, aiusageports.AIUsagePurposeEvaluation, request.Attribution.Purpose,
 		"shadow calls are billed to the evaluation budget, not live usage")
 	assert.Equal(t, aiusage.SubjectTypeDocument, request.Attribution.Subject.Type)
@@ -782,7 +755,7 @@ func TestExtractRateConfirmationForShadow_SendsProductionsInputToThePinnedProvid
 	assert.Equal(t, int64(900), result.LatencyMs)
 }
 
-func TestExtractRateConfirmation_LiveCallsAreNotPinned(t *testing.T) {
+func TestExtractRateConfirmation_LiveCallsRunOnNova(t *testing.T) {
 	t.Parallel()
 
 	completion := &stubCompletion{
@@ -792,6 +765,7 @@ func TestExtractRateConfirmation_LiveCallsAreNotPinned(t *testing.T) {
 
 	_, err := service.ExtractRateConfirmation(t.Context(), extractRequest())
 	require.NoError(t, err)
+	assert.True(t, completion.sawRequest.Nova)
 	assert.False(t, completion.sawRequest.RequireProvider)
 	assert.Equal(t, kernelports.AIUsagePurposeLive, completion.sawRequest.Attribution.Purpose)
 }

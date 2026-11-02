@@ -29,7 +29,7 @@ type ActivitiesParams struct {
 	Upkeep     *inboundupkeep.Service
 	Tenants    tenantports.TenantSyncRepository
 	Logger     *zap.Logger
-	Conflicts  *triageconflictservice.Service `optional:"true"`
+	Conflicts  *triageconflictservice.Service
 }
 
 // settledPurger is the retention slice of the inbox, narrow so the sweep can be
@@ -61,9 +61,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		tenants:    p.Tenants,
 		l:          p.Logger.Named("inbound-activities"),
 	}
-	if p.Conflicts != nil {
-		activities.conflicts = p.Conflicts
-	}
+	activities.conflicts = p.Conflicts
 
 	return activities
 }
@@ -72,10 +70,6 @@ func (a *Activities) CheckInboundConflictsActivity(
 	ctx context.Context,
 	payload *ProcessInboundMessagePayload,
 ) error {
-	if a.conflicts == nil {
-		return nil
-	}
-
 	return a.conflicts.CheckMessage(ctx, triageconflictservice.CheckMessageRequest{
 		TenantInfo: tenantOf(payload.BasePayload),
 		MessageID:  payload.MessageID,

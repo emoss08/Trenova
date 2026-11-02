@@ -49,9 +49,6 @@ func (s *Service) ReviewMany(
 			return nil, errortypes.NewValidationError("teach", errortypes.ErrInvalid,
 				"Nova cannot learn that action")
 		}
-		if s.ruleTeacher == nil {
-			return nil, errortypes.NewBusinessError("Rules are not available on this installation")
-		}
 	}
 
 	ids, err := s.resolveSelection(ctx, req.TenantInfo, req.Selection)

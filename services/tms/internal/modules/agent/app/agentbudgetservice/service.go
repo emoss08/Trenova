@@ -269,9 +269,6 @@ func (s *Service) functionalCurrency(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (string, error) {
-	if s.books == nil {
-		return "", errNoCurrency
-	}
 	books, err := s.books.GetByOrgID(ctx, tenantInfo.OrgID)
 	if err != nil {
 		return "", fmt.Errorf("read the organization's functional currency: %w", err)

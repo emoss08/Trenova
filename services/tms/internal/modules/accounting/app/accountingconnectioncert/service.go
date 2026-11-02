@@ -30,9 +30,9 @@ type Params struct {
 	Logger        *zap.Logger
 	DB            kernelports.Transactor
 	Connections   accountingconnectionports.AccountingConnectionRepository
-	Certificates  accountingconnectionports.AccountingPendingCertificateRepository `optional:"true"`
+	Certificates  accountingconnectionports.AccountingPendingCertificateRepository
 	Encryption    *encryptionservice.Service
-	Organizations tenantports.OrganizationRepository `optional:"true"`
+	Organizations tenantports.OrganizationRepository
 	Kit           *accountingconnectionkit.Kit
 	Auth          *accountingconnectionauth.Service
 }
@@ -71,7 +71,7 @@ func (s *Service) requireCertificates(
 	if err != nil {
 		return nil, err
 	}
-	if !accountingprovider.MustProfile(typ).ClientCredentials || s.certificates == nil {
+	if !accountingprovider.MustProfile(typ).ClientCredentials {
 		return nil, accountingconnectionkit.ErrCertificatesUnsupported(
 			accountingprovider.ProviderName(typ),
 		)
@@ -80,9 +80,6 @@ func (s *Service) requireCertificates(
 }
 
 func (s *Service) certificateSubject(ctx context.Context, tenantInfo pagination.TenantInfo) string {
-	if s.organizations == nil {
-		return strings.TrimSpace(certificateSubjectPrefix)
-	}
 	org, err := s.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})

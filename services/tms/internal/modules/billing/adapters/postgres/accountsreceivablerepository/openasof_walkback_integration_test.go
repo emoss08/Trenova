@@ -302,7 +302,7 @@ func TestOpenAsOfWalkBackMatchesFullSum(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	logger := zap.NewNop()
 	repo := NewAnalytics(Params{DB: conn, Logger: logger})
 
@@ -366,7 +366,13 @@ func TestOpenAsOfWalkBackMatchesFullSum(t *testing.T) {
 	f.pay("PAY-WB-ACROSS-2", across, 20_000, 0, ago(10), nil)
 	f.pay("PAY-WB-ACROSS-SHORT", across, 15_000, 5_000, ago(4), nil)
 
-	reversedIn := f.post("INV-WB-REVERSED-IN", billingqueue.BillTypeInvoice, 800, ago(9), at(ago(5)))
+	reversedIn := f.post(
+		"INV-WB-REVERSED-IN",
+		billingqueue.BillTypeInvoice,
+		800,
+		ago(9),
+		at(ago(5)),
+	)
 	f.pay("PAY-WB-REVERSED-IN", reversedIn, 80_000, 0, ago(7), at(ago(2)))
 	f.credit(memo, reversedIn, 10_000, ago(1), nil)
 
@@ -380,7 +386,13 @@ func TestOpenAsOfWalkBackMatchesFullSum(t *testing.T) {
 	f.pay("PAY-WB-REVERSED-ACROSS", reversedAcross, 60_000, 0, ago(13), at(ago(6)))
 	f.pay("PAY-WB-REPAID-ACROSS", reversedAcross, 60_000, 0, ago(1), nil)
 
-	oldReversal := f.post("INV-WB-OLD-REVERSAL", billingqueue.BillTypeInvoice, 500, ago(30), at(ago(26)))
+	oldReversal := f.post(
+		"INV-WB-OLD-REVERSAL",
+		billingqueue.BillTypeInvoice,
+		500,
+		ago(30),
+		at(ago(26)),
+	)
 	f.pay("PAY-WB-OLD-REVERSAL", oldReversal, 50_000, 0, ago(28), at(ago(26)))
 
 	credited := f.post("INV-WB-CREDIT", billingqueue.BillTypeInvoice, 400, ago(16), nil)
@@ -412,7 +424,13 @@ func TestOpenAsOfWalkBackMatchesFullSum(t *testing.T) {
 	debit := f.post("DM-WB-NEW", billingqueue.BillTypeDebitMemo, 250, ago(2), at(exactly(-2)))
 	f.pay("PAY-WB-DEBIT", debit, 5_000, 0, ago(1), nil)
 
-	reversedLate := f.post("INV-WB-REVERSED-LATE", billingqueue.BillTypeInvoice, 350, ago(20), at(ago(16)))
+	reversedLate := f.post(
+		"INV-WB-REVERSED-LATE",
+		billingqueue.BillTypeInvoice,
+		350,
+		ago(20),
+		at(ago(16)),
+	)
 	f.pay("PAY-WB-REVERSED-LATE", reversedLate, 35_000, 0, ago(16), at(ago(1)))
 
 	f.storeApplied()

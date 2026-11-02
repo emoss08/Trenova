@@ -36,7 +36,7 @@ func (s *Service) confirmAdvisor(
 	check *advisorCheck,
 	multiErr *errortypes.MultiError,
 ) {
-	if !check.needed() || s.tester == nil {
+	if !check.needed() {
 		return
 	}
 

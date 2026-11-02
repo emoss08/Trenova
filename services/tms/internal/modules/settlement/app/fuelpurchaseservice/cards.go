@@ -66,12 +66,8 @@ func (s *Service) CreateCard(
 	card.CancelledAt = nil
 	card.CancelReason = ""
 
-	if s.validator != nil {
-		if multiErr := s.validator.ValidateCreate(ctx, card); multiErr != nil {
-			return nil, multiErr
-		}
-	} else if err := validateEntity(card); err != nil {
-		return nil, err
+	if multiErr := s.validator.ValidateCreate(ctx, card); multiErr != nil {
+		return nil, multiErr
 	}
 
 	created, err := s.repo.CreateCard(ctx, card)
@@ -138,12 +134,8 @@ func (s *Service) UpdateCard(
 	card.CancelReason = ""
 	card.CreatedAt = stored.CreatedAt
 
-	if s.validator != nil {
-		if multiErr := s.validator.ValidateUpdate(ctx, card); multiErr != nil {
-			return nil, multiErr
-		}
-	} else if vErr := validateEntity(card); vErr != nil {
-		return nil, vErr
+	if multiErr := s.validator.ValidateUpdate(ctx, card); multiErr != nil {
+		return nil, multiErr
 	}
 
 	previous := *stored

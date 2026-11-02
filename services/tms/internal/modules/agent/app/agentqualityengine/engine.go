@@ -64,10 +64,10 @@ type Params struct {
 	Providers     aiproviderports.AIProviderRepository
 	Settings      *agentqualitysettings.Reader
 	Runtime       *agentruntime.Service
-	Completion    llmports.CompletionService          `optional:"true"`
-	Batches       llmports.BatchCompletionService     `optional:"true"`
-	Watchtower    watchtowerports.WatchtowerProjector `optional:"true"`
-	Notifications *notificationservice.Service        `optional:"true"`
+	Completion    llmports.CompletionService
+	Batches       llmports.BatchCompletionService
+	Watchtower    watchtowerports.WatchtowerProjector
+	Notifications *notificationservice.Service
 }
 
 type Engine struct {
@@ -91,13 +91,9 @@ type Engine struct {
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Engine {
 	var notifier regressionNotifier
-	if p.Notifications != nil {
-		notifier = p.Notifications
-	}
+	notifier = p.Notifications
 	var runtime fingerprinter
-	if p.Runtime != nil {
-		runtime = p.Runtime
-	}
+	runtime = p.Runtime
 
 	return &Engine{
 		l:           p.Logger.Named("service.agentquality"),

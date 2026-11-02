@@ -164,7 +164,7 @@ function ClassificationAndExtractionCard() {
         <CardTitle>{t("Classification and extraction")}</CardTitle>
         <CardDescription>
           {t(
-            "Manage automatic routing, document type assignment, and optional AI-assisted extraction. AI toggles here depend on an enabled AI provider that serves document work.",
+            "Manage automatic routing, document type assignment, and optional AI-assisted extraction. AI toggles here depend on Nova, which runs on the provider chosen for it in Agent Control.",
           )}
         </CardDescription>
       </CardHeader>

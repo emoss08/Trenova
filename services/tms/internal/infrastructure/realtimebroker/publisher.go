@@ -24,7 +24,7 @@ type PublisherParams struct {
 	Client         *redis.Client
 	RealtimeConfig *realtimeconfig.Config
 	Logger         *zap.Logger
-	Metrics        *metrics.Registry `optional:"true"`
+	Metrics        *metrics.Registry
 	LC             fx.Lifecycle
 }
 
@@ -59,9 +59,7 @@ func NewPublisher(p PublisherParams) *Publisher {
 		stop:   make(chan struct{}),
 		done:   make(chan struct{}),
 	}
-	if p.Metrics != nil {
-		pub.metrics = p.Metrics.Realtime
-	}
+	pub.metrics = p.Metrics.Realtime
 
 	p.LC.Append(fx.Hook{
 		OnStart: func(context.Context) error {

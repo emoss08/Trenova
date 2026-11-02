@@ -54,7 +54,7 @@ type Params struct {
 	Cache      aicontrolsummaryports.AIControlSummaryCache
 	Dismissals aiproviderports.AIProviderFailureDismissalRepository
 	Usage      aiusageports.AIUsageRepository
-	Nova       llmports.TaskRunner `optional:"true"`
+	Nova       llmports.TaskRunner
 }
 
 type Service struct {
@@ -126,7 +126,7 @@ func (s *Service) Summary(
 		GeneratedAt: s.now().Unix(),
 		Facts:       *facts,
 	}
-	if facts.NoProvider() || s.nova == nil || err != nil {
+	if facts.NoProvider() || err != nil {
 		return plain, nil
 	}
 
@@ -271,7 +271,7 @@ func failingProviders(
 
 func uncoveredTasks(enabled []*aiprovider.Provider) int {
 	uncovered := 0
-	for _, task := range aitask.AllTasks() {
+	for _, task := range aitask.RoutedTasks() {
 		if airouting.RouteFor(enabled, task) == nil {
 			uncovered++
 		}

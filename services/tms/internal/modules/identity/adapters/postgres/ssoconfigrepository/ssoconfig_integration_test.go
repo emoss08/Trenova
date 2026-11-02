@@ -20,7 +20,7 @@ func TestSavingOktaSettingsKeepsTheFederatedMFATrustAnAdministratorChose(t *test
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	okta := &sso.SSOConfig{
 		OrganizationID:   data.Organization.ID,

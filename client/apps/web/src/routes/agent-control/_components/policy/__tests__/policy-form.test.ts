@@ -21,7 +21,6 @@ const loaded: PolicyFormValues = {
     dayCalls: 50,
     dayAmountCents: 2_500_000,
   },
-  aiTrainingConsent: false,
   version: 4,
 };
 
@@ -37,14 +36,13 @@ function servedControl(): Partial<AgentControl> {
     agentMoneyRunAmount: "5000.00",
     agentMoneyDayCalls: 50,
     agentMoneyDayAmount: "25000.00",
-    aiTrainingConsent: false,
     version: 4,
   };
 }
 
 describe("toControlInput", () => {
-  it("keeps the pause switch and leaves consent out unless it changed", () => {
-    const input = toControlInput({ ...loaded, learnsFromWork: false }, loaded, true);
+  it("keeps the pause switch as it stands", () => {
+    const input = toControlInput({ ...loaded, learnsFromWork: false }, true);
 
     expect(input).toEqual({
       shadowMode: true,
@@ -63,19 +61,12 @@ describe("toControlInput", () => {
   });
 
   it("sends chapters named by a model as their off switch", () => {
-    expect(toControlInput({ ...loaded, chaptersByModel: false }, loaded, false)).toMatchObject({
+    expect(toControlInput({ ...loaded, chaptersByModel: false }, false)).toMatchObject({
       autoChaptersOff: true,
     });
     expect(
-      toPolicyForm({ ...servedControl(), autoChaptersOff: true } as AgentControl)
-        .chaptersByModel,
+      toPolicyForm({ ...servedControl(), autoChaptersOff: true } as AgentControl).chaptersByModel,
     ).toBe(false);
-  });
-
-  it("sends consent when it changed", () => {
-    expect(toControlInput({ ...loaded, aiTrainingConsent: true }, loaded, false)).toMatchObject({
-      aiTrainingConsent: true,
-    });
   });
 });
 
@@ -101,7 +92,6 @@ describe("money limits", () => {
       agentMoneyRunAmount: "2500.00",
       agentMoneyDayCalls: 20,
       agentMoneyDayAmount: "10000.00",
-      aiTrainingConsent: false,
       version: 2,
     } as AgentControl);
 
@@ -112,7 +102,7 @@ describe("money limits", () => {
       dayCalls: 20,
       dayAmountCents: 1_000_000,
     });
-    expect(toControlInput(form, form, false)).toMatchObject({
+    expect(toControlInput(form, false)).toMatchObject({
       agentMoneyCallCeiling: "1250.50",
       agentMoneyRunCalls: 3,
       agentMoneyRunAmount: "2500.00",

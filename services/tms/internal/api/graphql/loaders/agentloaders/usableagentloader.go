@@ -62,7 +62,7 @@ func (f *UsableAgentByIDLoaderFactory) usable(
 	tenantInfo pagination.TenantInfo,
 	ids []pulid.ID,
 ) ([]*agentdefinition.Definition, error) {
-	if tenantInfo.UserID.IsNil() || f.permissions == nil {
+	if tenantInfo.UserID.IsNil() {
 		return []*agentdefinition.Definition{}, nil
 	}
 

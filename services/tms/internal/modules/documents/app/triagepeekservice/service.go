@@ -35,8 +35,8 @@ type Params struct {
 	Work      triageworkports.TriageWorkRepository
 	Customers customerports.CustomerRepository
 	Orgs      tenantports.OrganizationRepository
-	Peeks     triageworkports.TriageShipmentPeeker  `optional:"true"`
-	Stops     triageworkports.TriageStopTimesReader `optional:"true"`
+	Peeks     triageworkports.TriageShipmentPeeker
+	Stops     triageworkports.TriageStopTimesReader
 }
 
 type Service struct {
@@ -84,9 +84,6 @@ func (s *Service) shipmentPeeks(
 	tenantInfo pagination.TenantInfo,
 	shipmentIDs []pulid.ID,
 ) (map[pulid.ID]*inboundmessageports.ShipmentPeek, error) {
-	if s.peeks == nil {
-		return nil, errNoShipmentReader
-	}
 	if len(shipmentIDs) == 0 {
 		return map[pulid.ID]*inboundmessageports.ShipmentPeek{}, nil
 	}
@@ -149,7 +146,7 @@ func (s *Service) CustomerPeek(
 		Shipments:       []*inboundmessageports.ShipmentPeek{},
 		Messages:        triage.Recent,
 	}
-	if !req.WithShipments || s.peeks == nil {
+	if !req.WithShipments {
 		return peek, nil
 	}
 
@@ -197,7 +194,7 @@ func (s *Service) StopTimes(
 	if err != nil {
 		return nil, err
 	}
-	if message.MatchedShipmentID.IsNil() || s.stops == nil {
+	if message.MatchedShipmentID.IsNil() {
 		return nil, nil //nolint:nilnil // no shipment is linked, so there are no stop times
 	}
 

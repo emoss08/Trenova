@@ -37,9 +37,9 @@ type Params struct {
 	Logger              *zap.Logger
 	AccountingPolicy    *accountingcontrolpolicyservice.Service
 	AccountingRepo      tenantports.AccountingControlRepository
-	AccountingSync      accountingsyncports.AccountingSyncEnqueuer     `optional:"true"`
-	AdjustmentCtrlRepo  tenantports.InvoiceAdjustmentControlRepository `optional:"true"`
-	AgreementRepo       factoringports.AgreementRepository             `optional:"true"`
+	AccountingSync      accountingsyncports.AccountingSyncEnqueuer
+	AdjustmentCtrlRepo  tenantports.InvoiceAdjustmentControlRepository
+	AgreementRepo       factoringports.AgreementRepository
 	AuditService        auditports.AuditService
 	BillingPolicy       *billingcontrolpolicyservice.Service
 	BillingQueueRepo    billingqueueports.BillingQueueRepository
@@ -50,7 +50,7 @@ type Params struct {
 	EDI                 *invoiceediservice.Service
 	FactoringRepo       factoringcompanyports.FactoringCompanyRepository
 	FiscalPeriodRepo    fiscalperiodports.FiscalPeriodRepository
-	GLAccounts          glaccountports.GLAccountRepository `optional:"true"`
+	GLAccounts          glaccountports.GLAccountRepository
 	JournalRepo         journalentryports.JournalPostingRepository
 	NotificationService *notificationservice.Service
 	OrderDerivation     orderports.OrderDerivationService

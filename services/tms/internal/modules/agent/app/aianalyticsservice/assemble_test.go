@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/novamodel"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,17 +31,16 @@ func providers() []*aiprovider.Provider {
 		{
 			ID: vllmID, Name: "Workstation vLLM", Kind: aiprovider.KindOpenAIChat, Enabled: true,
 			Model: "meta-llama/Llama-3.3-70B-Instruct", TimeoutSeconds: 60, Priority: 10,
-			Tasks: []aitask.Task{aitask.TaskAssistantChat, aitask.TaskFormulaAssistant},
+			Tasks: []aitask.Task{aitask.TaskAssistantChat, aitask.TaskScopeClassification},
 		},
 		{
 			ID: groqID, Name: "Groq", Kind: aiprovider.KindOpenAIChat, Enabled: true,
 			Model: "llama-3.3-70b-versatile", Priority: 20,
-			Tasks: []aitask.Task{aitask.TaskOperationalInsights},
+			Tasks: []aitask.Task{aitask.TaskGeneral},
 		},
 		{
 			ID: bedrockID, Name: "AWS Bedrock", Kind: aiprovider.KindAnthropicMessages, Enabled: true,
-			Model: "claude-sonnet-5", Priority: 30, Trusted: true,
-			Tasks: []aitask.Task{aitask.TaskBillingDiagnosis},
+			Model: "claude-sonnet-5", Priority: 30, Trusted: true, Nova: true,
 		},
 		{
 			ID: localID, Name: "Local LM Studio", Kind: aiprovider.KindOpenAIChat, Enabled: true,
@@ -205,7 +205,7 @@ func fixture() *readings {
 			},
 			{
 				DeploymentKey: at(llamaKey, groqID),
-				Task:          aitask.TaskOperationalInsights,
+				Task:          aitask.TaskGeneral,
 				Runs:          40,
 				Completed:     36,
 			},
@@ -362,16 +362,19 @@ func TestTaskFitSuggestsRoutingToTheProviderOfTheModelThatFinishesMore(t *testin
 	assert.Equal(t, bedrockID, chat.Suggestion.Provider.ID)
 	assert.InDelta(t, 24, chat.Suggestion.GainPoints, 1e-9)
 
-	insights := got.Tasks[1]
-	assert.Equal(t, aitask.TaskOperationalInsights, insights.Task)
-	assert.Equal(t, "Groq", insights.Current.Name)
-	assert.Empty(t, insights.BestSeriesKey, "one series cannot be the best of one")
-	assert.Nil(t, insights.Suggestion, "nothing else took the task")
+	general := got.Tasks[1]
+	assert.Equal(t, aitask.TaskGeneral, general.Task)
+	assert.Equal(t, "Groq", general.Current.Name)
+	assert.Empty(t, general.BestSeriesKey, "one series cannot be the best of one")
+	assert.Nil(t, general.Suggestion, "nothing else took the task")
 
 	billing := got.Tasks[2]
-	assert.Equal(t, "AWS Bedrock", billing.Current.Name)
+	assert.Equal(t, aitask.TaskBillingDiagnosis, billing.Task)
+	assert.Equal(t, "AWS Bedrock", billing.Current.Name, "a Nova task runs on the Nova provider")
+	assert.Equal(t, aianalytics.CanonicalModel(novamodel.ID), billing.CurrentSeriesKey,
+		"with Nova's model, whatever model the provider serves the Desk with")
 	assert.Empty(t, billing.BestSeriesKey, "ten runs are too few to call a best")
-	assert.Nil(t, billing.Suggestion)
+	assert.Nil(t, billing.Suggestion, "Nova's tasks are not routed")
 }
 
 func TestTaskFitSuggestsNoRouteWhenTheViewIsNarrowedToOneAgent(t *testing.T) {
@@ -404,24 +407,24 @@ func TestTaskFitRoutesToTheDeploymentThatFinishesTheTaskBest(t *testing.T) {
 
 	data := fixture()
 	local := data.providers[3]
-	local.Tasks = append(local.Tasks, aitask.TaskDailyBriefing)
+	local.Tasks = append(local.Tasks, aitask.TaskEvaluationJudge)
 	data.providers = append([]*aiprovider.Provider{local}, data.providers[:3]...)
 	data.taskCells = []aianalyticsports.TaskCellRow{
 		{
 			DeploymentKey: at(llamaKey, vllmID),
-			Task:          aitask.TaskDailyBriefing,
+			Task:          aitask.TaskEvaluationJudge,
 			Runs:          40,
 			Completed:     32,
 		},
 		{
 			DeploymentKey: at(llamaKey, groqID),
-			Task:          aitask.TaskDailyBriefing,
+			Task:          aitask.TaskEvaluationJudge,
 			Runs:          30,
 			Completed:     29,
 		},
 		{
 			DeploymentKey: at(qwenKey, localID),
-			Task:          aitask.TaskDailyBriefing,
+			Task:          aitask.TaskEvaluationJudge,
 			Runs:          40,
 			Completed:     28,
 		},
@@ -430,19 +433,19 @@ func TestTaskFitRoutesToTheDeploymentThatFinishesTheTaskBest(t *testing.T) {
 	got := analyticsFor(data, aianalytics.CompareByModel)
 
 	require.Len(t, got.Tasks, 1)
-	briefing := got.Tasks[0]
-	assert.Equal(t, "Local LM Studio", briefing.Current.Name)
-	assert.Equal(t, qwenKey, briefing.CurrentSeriesKey)
-	assert.Equal(t, llamaKey, briefing.BestSeriesKey)
-	require.NotNil(t, briefing.Suggestion)
+	judge := got.Tasks[0]
+	assert.Equal(t, "Local LM Studio", judge.Current.Name)
+	assert.Equal(t, qwenKey, judge.CurrentSeriesKey)
+	assert.Equal(t, llamaKey, judge.BestSeriesKey)
+	require.NotNil(t, judge.Suggestion)
 	assert.Equal(
 		t,
 		groqID,
-		briefing.Suggestion.Provider.ID,
-		"Groq finished the briefings, not the workstation",
+		judge.Suggestion.Provider.ID,
+		"Groq finished the judging, not the workstation",
 	)
-	assert.Equal(t, llamaKey, briefing.Suggestion.SeriesKey)
-	assert.InDelta(t, (29.0/30.0-0.7)*100, briefing.Suggestion.GainPoints, 1e-9)
+	assert.Equal(t, llamaKey, judge.Suggestion.SeriesKey)
+	assert.InDelta(t, (29.0/30.0-0.7)*100, judge.Suggestion.GainPoints, 1e-9)
 }
 
 func TestTaskFitWithholdsASuggestionWhenTheCurrentRouteHasTooFewRuns(t *testing.T) {

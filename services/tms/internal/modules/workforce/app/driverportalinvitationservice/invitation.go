@@ -462,11 +462,6 @@ func (s *Service) sendInvitationEmail(
 ) bool {
 	log := s.l.With(zap.String("workerId", p.Worker.ID.String()))
 
-	if s.templates == nil {
-		log.Warn("template rendering is not configured; share the invite link manually")
-		return false
-	}
-
 	rendered, err := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo: p.TenantInfo,
 		Kind:       documenttemplate.KindDriverPortalInvitationEmail,

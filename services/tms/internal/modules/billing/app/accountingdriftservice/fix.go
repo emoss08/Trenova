@@ -568,9 +568,6 @@ func (s *Service) kickDispatcher(
 	ctx context.Context,
 	finding *accountingdrift.AccountingDriftFinding,
 ) {
-	if s.dispatcher == nil {
-		return
-	}
 	if err := s.dispatcher.Kick(ctx, finding.TenantInfo(), finding.ConnectionID); err != nil {
 		s.l.Warn("failed to wake the accounting dispatcher; the schedule will pick it up",
 			zap.String("connectionId", finding.ConnectionID.String()), zap.Error(err))

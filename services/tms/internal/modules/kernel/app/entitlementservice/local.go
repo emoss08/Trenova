@@ -4,32 +4,19 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
-	"go.uber.org/fx"
 )
 
-const (
-	reasonCommunityMode   = "community_mode"
-	reasonFeatureNotFound = "feature_not_found"
-)
+const reasonCommunityMode = "community_mode"
 
-type LocalEntitlementProviderParams struct {
-	fx.In
-
-	Catalog platformcatalog.FeatureCatalog `optional:"true"`
-}
-
-type LocalEntitlementProvider struct {
-	catalog platformcatalog.FeatureCatalog
-}
+// LocalEntitlementProvider is the entitlements of a self-hosted install: every
+// feature is allowed.
+type LocalEntitlementProvider struct{}
 
 var _ platformcatalogports.EntitlementProvider = (*LocalEntitlementProvider)(nil)
 
-func NewLocalEntitlementProvider(p LocalEntitlementProviderParams) *LocalEntitlementProvider {
-	return &LocalEntitlementProvider{
-		catalog: p.Catalog,
-	}
+func NewLocalEntitlementProvider() *LocalEntitlementProvider {
+	return &LocalEntitlementProvider{}
 }
 
 func (p *LocalEntitlementProvider) CheckFeature(
@@ -39,17 +26,6 @@ func (p *LocalEntitlementProvider) CheckFeature(
 	checkedAt := req.CheckedAt
 	if checkedAt == 0 {
 		checkedAt = time.Now().Unix()
-	}
-
-	if p.catalog != nil {
-		if _, ok := p.catalog.GetFeature(req.FeatureKey); !ok {
-			return &platformcatalogports.FeatureCheckResult{
-				FeatureKey: req.FeatureKey,
-				Allowed:    false,
-				Reason:     reasonFeatureNotFound,
-				CheckedAt:  checkedAt,
-			}, nil
-		}
 	}
 
 	return &platformcatalogports.FeatureCheckResult{
@@ -69,23 +45,8 @@ func (p *LocalEntitlementProvider) ListEntitlements(
 		checkedAt = time.Now().Unix()
 	}
 
-	var features []platformcatalog.Feature
-	if p.catalog != nil {
-		features = p.catalog.ListFeatures()
-	}
-
-	results := make([]platformcatalogports.FeatureCheckResult, 0, len(features))
-	for i := range features {
-		results = append(results, platformcatalogports.FeatureCheckResult{
-			FeatureKey: features[i].Key,
-			Allowed:    true,
-			Reason:     reasonCommunityMode,
-			CheckedAt:  checkedAt,
-		})
-	}
-
 	return &platformcatalogports.EntitlementsResult{
-		Features:  results,
+		Features:  []platformcatalogports.FeatureCheckResult{},
 		CheckedAt: checkedAt,
 	}, nil
 }

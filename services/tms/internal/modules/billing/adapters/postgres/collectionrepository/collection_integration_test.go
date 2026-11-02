@@ -53,7 +53,7 @@ type nonRecourseEnv struct {
 
 func TestNonRecourseFactoredInvoicesLeaveCollectionsAndCreditExposure(t *testing.T) {
 	env := setupNonRecourseEnv(t)
-	repo := New(Params{DB: postgres.NewTestConnection(env.db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(env.db), Logger: zap.NewNop()})
 
 	recourse := env.createFactor(t, "RECRS", false)
 	nonRecourse := env.createFactor(t, "NONREC", true)
@@ -107,9 +107,9 @@ func TestNonRecourseFactoredInvoicesLeaveCollectionsAndCreditExposure(t *testing
 
 func TestStampedAgreementDecidesRecourse(t *testing.T) {
 	env := setupNonRecourseEnv(t)
-	repo := New(Params{DB: postgres.NewTestConnection(env.db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(env.db), Logger: zap.NewNop()})
 	agreements := factoringrepository.NewAgreementRepository(factoringrepository.Params{
-		DB:     postgres.NewTestConnection(env.db),
+		DB:     postgres.WrapDB(env.db),
 		Logger: zap.NewNop(),
 	})
 
@@ -223,7 +223,7 @@ func setupNonRecourseEnv(t *testing.T) *nonRecourseEnv {
 	)
 	require.NoError(t, err)
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	logger := zap.NewNop()
 	return &nonRecourseEnv{
 		ctx:        ctx,

@@ -53,7 +53,7 @@ func (s *Service) resolveAcceptedTenderOffer(
 	offerID pulid.ID,
 	references []string,
 ) (*tender.TenderOffer, error) {
-	if s.tenderRepo == nil || (offerID.IsNil() && len(references) == 0) {
+	if offerID.IsNil() && len(references) == 0 {
 		return nil, errortypes.NewNotFoundError("Tender offer")
 	}
 	return s.tenderRepo.GetAcceptedOfferForPartnerReference(
@@ -201,7 +201,7 @@ func (s *Service) autoMatchInboundFreightInvoice(
 	file *ediinboundfile.EDIInboundFile,
 	invoice *edicarrierinvoice.CarrierInvoice,
 ) []string {
-	if s.invoiceMatcher == nil || invoice == nil {
+	if invoice == nil {
 		return nil
 	}
 	if invoice.CarrierID.IsNil() ||

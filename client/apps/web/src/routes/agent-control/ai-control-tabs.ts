@@ -165,19 +165,8 @@ export const CLEARED_TABLE_STATE = {
   modalType: null,
 } as const;
 
-/**
- * Document extraction is six views: accuracy, corrections, the evaluation set,
- * its runs, the candidate shadowing production, and the candidate rolled out to
- * a share of it.
- */
-export const extractionViews = [
-  "accuracy",
-  "corrections",
-  "cases",
-  "runs",
-  "shadow",
-  "rollout",
-] as const;
+/** Document extraction is two views: production accuracy and the corrections it is read from. */
+export const extractionViews = ["accuracy", "corrections"] as const;
 export type ExtractionView = (typeof extractionViews)[number];
 
 export const EXTRACTION_VIEW_PARAM = "extraction";
@@ -250,14 +239,6 @@ export const sweepSettingsParser = parseAsBoolean.withOptions(dialogOptions);
 export const AUDIT_EXPORT_PARAM = "exportTrail";
 export const auditExportParser = parseAsBoolean.withOptions(dialogOptions);
 
-/** Document extraction's dialogs: a new evaluation run, the shadow's and the rollout's settings. */
-export const extractionDialogs = ["newRun", "shadow", "rollout"] as const;
-export type ExtractionDialog = (typeof extractionDialogs)[number];
-
-export const EXTRACTION_DIALOG_PARAM = "extractionDialog";
-export const extractionDialogParser =
-  parseAsStringLiteral(extractionDialogs).withOptions(dialogOptions);
-
 /** The retrieval source asked to be indexed again. */
 export const REINDEX_PARAM = "reindex";
 export const reindexParser = parseAsStringLiteral(retrievalSourceValues).withOptions(dialogOptions);
@@ -312,7 +293,6 @@ export const aiControlDialogParsers = {
   [QUALITY_SHEET_PARAM]: qualitySheetParser,
   [SWEEP_SETTINGS_PARAM]: sweepSettingsParser,
   [AUDIT_EXPORT_PARAM]: auditExportParser,
-  [EXTRACTION_DIALOG_PARAM]: extractionDialogParser,
   [REINDEX_PARAM]: reindexParser,
   [MEMORY_STARTER_PARAM]: memoryStarterParser,
   [MEMORY_SUGGESTION_PARAM]: memorySuggestionParser,
@@ -336,7 +316,6 @@ export const CLEARED_DIALOG_STATE = {
   [QUALITY_SHEET_PARAM]: null,
   [SWEEP_SETTINGS_PARAM]: null,
   [AUDIT_EXPORT_PARAM]: null,
-  [EXTRACTION_DIALOG_PARAM]: null,
   [REINDEX_PARAM]: null,
   [MEMORY_STARTER_PARAM]: null,
   [MEMORY_SUGGESTION_PARAM]: null,

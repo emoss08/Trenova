@@ -232,12 +232,6 @@ func (s *Service) planGenerate(
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
 ) (*generatePlan, error) {
-	if s.templates == nil {
-		return nil, errortypes.NewBusinessError(
-			"Document templates are not configured; the rate confirmation cannot be rendered",
-		)
-	}
-
 	assignment, err := s.carrierAssignmentRepo.GetActiveByMoveID(ctx, tenantInfo, moveID)
 	if err != nil {
 		return nil, err
@@ -277,12 +271,6 @@ func (s *Service) planSend(
 	tenantInfo pagination.TenantInfo,
 	rateConfirmationID pulid.ID,
 ) (*sendPlan, error) {
-	if s.templates == nil {
-		return nil, errortypes.NewBusinessError(
-			"Document templates are not configured; the rate confirmation cannot be rendered",
-		)
-	}
-
 	entity, err := s.repo.GetByID(ctx, &rateconfirmationports.GetRateConfirmationByIDRequest{
 		TenantInfo:         tenantInfo,
 		RateConfirmationID: rateConfirmationID,
@@ -293,11 +281,6 @@ func (s *Service) planSend(
 	if !entity.CanSend() {
 		return nil, errortypes.NewBusinessError(
 			"A {0} rate confirmation cannot be sent", entity.Status,
-		)
-	}
-	if s.emailService == nil {
-		return nil, errortypes.NewBusinessError(
-			"No email service is configured. Download the rate confirmation and deliver it manually",
 		)
 	}
 	if len(entity.PayloadSnapshot) == 0 {
@@ -446,8 +429,7 @@ func dispatcherConfirmation(name string, at int64) rateconfirmation.Confirmation
 }
 
 func (s *Service) signLinkConfigured() bool {
-	return s.appConfig != nil && s.tenderingConfig != nil &&
-		s.tenderingConfig.PublicLinkBaseURL(s.appConfig) != ""
+	return s.tenderingConfig.PublicLinkBaseURL(s.appConfig) != ""
 }
 
 func copyRateCon(

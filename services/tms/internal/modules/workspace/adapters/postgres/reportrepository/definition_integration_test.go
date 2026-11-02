@@ -32,7 +32,7 @@ func TestListDefinitionsPagesOnlyWhatTheViewerMaySee(t *testing.T) {
 		Build(t, ctx, db)
 
 	definitions := NewDefinitionRepository(DefinitionParams{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 

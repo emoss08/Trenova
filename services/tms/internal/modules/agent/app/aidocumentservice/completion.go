@@ -26,7 +26,6 @@ type structuredCall struct {
 	schemaName string
 	context    llmports.DelimitedContext
 	schema     map[string]any
-	providerID pulid.ID
 	evaluation bool
 }
 
@@ -37,18 +36,16 @@ func (c *structuredCall) novaTask(maxTokens int) *llmports.NovaTask {
 	}
 
 	return &llmports.NovaTask{
-		Name:                c.task,
-		Feature:             c.feature,
-		Instructions:        c.system,
-		SchemaName:          c.schemaName,
-		Schema:              c.schema,
-		Context:             c.context,
-		MaxTokens:           maxTokens,
-		TenantInfo:          c.tenant,
-		UserID:              c.tenant.UserID,
-		Attribution:         &attribution,
-		PreferredProviderID: c.providerID,
-		RequireProvider:     c.evaluation,
+		Name:         c.task,
+		Feature:      c.feature,
+		Instructions: c.system,
+		SchemaName:   c.schemaName,
+		Schema:       c.schema,
+		Context:      c.context,
+		MaxTokens:    maxTokens,
+		TenantInfo:   c.tenant,
+		UserID:       c.tenant.UserID,
+		Attribution:  &attribution,
 	}
 }
 

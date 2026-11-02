@@ -14,7 +14,7 @@ func (s *Service) guardPoster(
 	req *invoiceports.PostInvoiceRequest,
 	actor *permissionports.RequestActor,
 ) error {
-	if req.Automatic || s.permissions == nil {
+	if req.Automatic {
 		return nil
 	}
 	if actor == nil || actor.PrincipalType == permissionports.PrincipalTypeSystem {

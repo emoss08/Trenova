@@ -163,13 +163,9 @@ func (s *Service) verifyLinkTargets(ctx context.Context, req *LinkRequest) error
 		{field: "customerId", id: req.CustomerID, label: "customer"},
 		{field: "carrierId", id: req.CarrierID, label: "carrier"},
 	}
-	if s.shipments != nil {
-		checks[0].exists = s.shipments.ShipmentExists
-	}
-	if s.parties != nil {
-		checks[1].exists = s.parties.CustomerExists
-		checks[2].exists = s.parties.CarrierExists
-	}
+	checks[0].exists = s.shipments.ShipmentExists
+	checks[1].exists = s.parties.CustomerExists
+	checks[2].exists = s.parties.CarrierExists
 
 	multiErr := errortypes.NewMultiError()
 	for _, check := range checks {

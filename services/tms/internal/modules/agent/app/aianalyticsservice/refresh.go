@@ -187,7 +187,7 @@ func (s *Service) invalidate(
 	tenant pagination.TenantInfo,
 	result *aianalyticsports.RefreshResult,
 ) {
-	if s.cache == nil || (result.Units == 0 && result.Hours == 0) {
+	if result.Units == 0 && result.Hours == 0 {
 		return
 	}
 	if err := s.cache.BumpEpoch(ctx, tenant); err != nil {

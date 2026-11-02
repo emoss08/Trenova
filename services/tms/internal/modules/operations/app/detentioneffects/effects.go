@@ -39,16 +39,13 @@ type Params struct {
 	EvidenceRepo  detentionports.DetentionEvidenceRepository
 	Organizations tenantports.OrganizationRepository
 	AuditService  auditports.AuditService
-	Realtime      realtimeports.RealtimeService `optional:"true"`
-	Now           func() int64                  `optional:"true"`
+	Realtime      realtimeports.RealtimeService
+	Now           timeutils.Clock
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Effects {
 	now := p.Now
-	if now == nil {
-		now = timeutils.NowUnix
-	}
 	return &Effects{
 		l:             p.Logger.Named("service.detention"),
 		evidenceRepo:  p.EvidenceRepo,
@@ -67,10 +64,6 @@ func (s *Effects) AppendEvidence(
 	summary string,
 	observedAt int64,
 ) {
-	if s.evidenceRepo == nil {
-		return
-	}
-
 	entry := &detentionevidence.DetentionEvidence{
 		OrganizationID:        occurrence.OrganizationID,
 		BusinessUnitID:        occurrence.BusinessUnitID,
@@ -108,7 +101,7 @@ func (s *Effects) PublishBillingHoldChange(
 	previous, saved *detention.DetentionOccurrence,
 	actorUserID pulid.ID,
 ) {
-	if s.realtime == nil || saved == nil {
+	if saved == nil {
 		return
 	}
 
@@ -142,10 +135,6 @@ func (s *Effects) Audit(
 	userID pulid.ID,
 	comment string,
 ) {
-	if s.auditService == nil {
-		return
-	}
-
 	if err := s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDetention,
 		ResourceID:     updated.ID.String(),

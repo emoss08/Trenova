@@ -33,9 +33,10 @@ func (s *structured) CompleteStructured(
 	return &llmports.StructuredCompletionResult{Text: s.text, ModelIdentifier: "haiku"}, nil
 }
 
+// serves is whether the organization has a provider chosen for Nova.
 type serves bool
 
-func (s serves) CanServe(context.Context, aitask.Task, pagination.TenantInfo) (bool, error) {
+func (s serves) NovaReady(context.Context, pagination.TenantInfo) (bool, error) {
 	return bool(s), nil
 }
 
@@ -118,7 +119,7 @@ func TestRun_ReturnsTheResultWithErrOutsideSchemaWhenTheAnswerIsNotItsShape(t *t
 	assert.Equal(t, "not json", result.Text)
 }
 
-func TestRun_RefusesATaskNoProviderServes(t *testing.T) {
+func TestRun_RefusesATaskWhileNoProviderIsChosenForNova(t *testing.T) {
 	t.Parallel()
 
 	completion := &structured{text: `{}`}
@@ -181,7 +182,10 @@ func TestSubmitTasks_SendsEveryTaskWithNovasIdentity(t *testing.T) {
 	require.Len(t, service.submitted.Items, 2)
 	assert.Equal(t, "b", service.submitted.Items[1].CustomID)
 	assert.True(t, strings.HasPrefix(service.submitted.Items[1].Request.System, "You are Nova"))
-	assert.True(t, strings.HasSuffix(service.submitted.Items[1].Request.System, "Your task: read the seal."))
+	assert.True(
+		t,
+		strings.HasSuffix(service.submitted.Items[1].Request.System, "Your task: read the seal."),
+	)
 }
 
 func TestSubmitTasks_IsUnsupportedWithoutABatchService(t *testing.T) {
@@ -271,7 +275,11 @@ func TestConverse_ReadsThenAnswersStreamingEachStep(t *testing.T) {
 	assert.Equal(t, []string{"Looking it up."}, events.messages)
 	require.Len(t, events.started, 1)
 	assert.NotEqual(t, "call_0", events.started[0], "a synthesized call id is replaced")
-	assert.Equal(t, "Dana is driving S-104.", strings.Join(events.deltas[len(events.deltas)-2:], ""))
+	assert.Equal(
+		t,
+		"Dana is driving S-104.",
+		strings.Join(events.deltas[len(events.deltas)-2:], ""),
+	)
 
 	require.Len(t, router.Requests, 2)
 	first, second := router.Requests[0], router.Requests[1]

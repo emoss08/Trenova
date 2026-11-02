@@ -22,7 +22,7 @@ func (c *Calculator) loadAgreementByID(
 	entity *shipment.Shipment,
 	agreementID *pulid.ID,
 ) *rateagreement.RateAgreement {
-	if c.agreementRepo == nil || agreementID == nil || agreementID.IsNil() {
+	if agreementID == nil || agreementID.IsNil() {
 		return nil
 	}
 

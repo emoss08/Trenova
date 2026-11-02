@@ -35,7 +35,7 @@ type Params struct {
 	Scopes   permissionports.ScopePolicy
 
 	SecurityConfig *securityconfig.Config
-	Plans          platformplanports.PlanService `optional:"true"`
+	Plans          platformplanports.PlanService
 }
 
 type Service struct {

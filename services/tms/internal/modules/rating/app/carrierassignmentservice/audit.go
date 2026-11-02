@@ -23,10 +23,6 @@ type carrierAssignmentAuditParams struct {
 }
 
 func (s *Service) logCarrierAssignmentAudit(p *carrierAssignmentAuditParams) {
-	if s.auditService == nil {
-		return
-	}
-
 	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceShipmentMove,
 		ResourceID:     p.MoveID.String(),

@@ -40,7 +40,7 @@ type IdempotencyParams struct {
 
 	ServerConfig   *serverconfig.Config
 	SecurityConfig *securityconfig.Config
-	Store          kernelports.IdempotencyStore `optional:"true"`
+	Store          kernelports.IdempotencyStore
 	ErrorHandler   *helpers.ErrorHandler
 	Logger         *zap.Logger
 }
@@ -62,21 +62,14 @@ func NewIdempotencyMiddleware(p IdempotencyParams) *IdempotencyMiddleware {
 	cfg := securityconfig.IdempotencyConfig{}
 	var requestTimeout time.Duration
 	var secret string
-	if p.SecurityConfig != nil {
-		cfg = p.SecurityConfig.Idempotency
-		secret = p.SecurityConfig.Session.Secret
-	}
-	if p.ServerConfig != nil {
-		requestTimeout = p.ServerConfig.RequestTimeout
-	}
+	cfg = p.SecurityConfig.Idempotency
+	secret = p.SecurityConfig.Session.Secret
+	requestTimeout = p.ServerConfig.RequestTimeout
 
 	logger := p.Logger
-	if logger == nil {
-		logger = zap.NewNop()
-	}
 
 	return &IdempotencyMiddleware{
-		enabled:          !cfg.Disabled && p.Store != nil,
+		enabled:          !cfg.Disabled,
 		store:            p.Store,
 		errorHandler:     p.ErrorHandler,
 		logger:           logger.Named("idempotency"),

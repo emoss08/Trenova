@@ -105,7 +105,7 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 	}
 
 	repo := edimessagerepository.New(edimessagerepository.Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 	pendingSince := now - overdueAge
@@ -360,7 +360,7 @@ func TestDevelopmentSeed_TheEDIPartnerHasAcknowledgmentsInEveryState(t *testing.
 	ctx = scope.Ctx
 	tenant := scope.Info
 	repo := edimessagerepository.New(edimessagerepository.Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 

@@ -275,7 +275,12 @@ func TestExplainFormula_BoundsTheModelAndFillsEveryStep(t *testing.T) {
 
 	require.Len(t, f.completer.requests, 1)
 	request := f.completer.requests[0]
-	assert.Equal(t, f.definition.PreferredProviderID, request.PreferredProviderID)
+	assert.True(
+		t,
+		request.Nova,
+		"the studio's answers are Nova's, whatever model the agent prefers",
+	)
+	assert.True(t, request.PreferredProviderID.IsNil())
 	assert.Equal(t, f.definition.ID, request.Attribution.AgentDefinitionID)
 	assert.Equal(t, f.tenant.UserID, request.Attribution.UserID)
 	assert.Equal(t, aiusage.FeatureFormulaExplain, request.Attribution.Feature)

@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/turnlimits"
 	"github.com/emoss08/trenova/internal/modules/agent/app/paletteanswer"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/palettequestion"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/palettejobs/palettecontract"
@@ -43,7 +42,10 @@ func (q *questions) Create(_ context.Context, question *palettequestion.Question
 	return nil
 }
 
-func (q *questions) Get(_ context.Context, ref paletteports.AskRef) (*palettequestion.Question, error) {
+func (q *questions) Get(
+	_ context.Context,
+	ref paletteports.AskRef,
+) (*palettequestion.Question, error) {
 	row, ok := q.rows[ref.AskID]
 	if !ok || row.UserID != ref.TenantInfo.UserID {
 		return nil, errortypes.NewNotFoundError("Question not found")
@@ -183,17 +185,24 @@ type monthly struct {
 	limit int
 }
 
-func (m monthly) GetOrCreate(context.Context, pagination.TenantInfo) (*agentcontrol.AgentControl, error) {
+func (m monthly) GetOrCreate(
+	context.Context,
+	pagination.TenantInfo,
+) (*agentcontrol.AgentControl, error) {
 	return &agentcontrol.AgentControl{PersonMonthlyMessages: m.limit}, nil
 }
 
 type anyTask struct{}
 
-func (anyTask) Available(context.Context, aitask.Task, pagination.TenantInfo) (bool, error) {
+func (anyTask) Available(context.Context, pagination.TenantInfo) (bool, error) {
 	return true, nil
 }
 
-func (anyTask) Run(context.Context, *llmports.NovaTask, any) (*llmports.StructuredCompletionResult, error) {
+func (anyTask) Run(
+	context.Context,
+	*llmports.NovaTask,
+	any,
+) (*llmports.StructuredCompletionResult, error) {
 	return &llmports.StructuredCompletionResult{}, nil
 }
 

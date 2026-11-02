@@ -23,18 +23,16 @@ type WorkerManagerParams struct {
 	Logger         *zap.Logger
 	LC             fx.Lifecycle
 	TemporalConfig *temporalconfig.Config
-	Metrics        *metrics.Registry         `optional:"true"`
+	Metrics        *metrics.Registry
 	Registries     []registry.WorkerRegistry `group:"worker_registries"`
-	QueueFilter    *registry.QueueFilter     `optional:"true"`
+	QueueFilter    *registry.QueueFilter
 }
 
 func NewWorkerManager(p WorkerManagerParams) (*registry.WorkerManager, error) {
 	manager := registry.NewWorkerManager(p.Client, p.Logger)
 
 	var temporalMetrics *platformmetrics.Temporal
-	if p.Metrics != nil {
-		temporalMetrics = p.Metrics.Temporal
-	}
+	temporalMetrics = p.Metrics.Temporal
 	manager.SetInterceptors(interceptors.BuildWorkerInterceptorChain(interceptors.ChainParams{
 		TemporalConfig: p.TemporalConfig,
 		Logger:         p.Logger,
@@ -42,9 +40,6 @@ func NewWorkerManager(p WorkerManagerParams) (*registry.WorkerManager, error) {
 	}))
 
 	queueFilter := p.QueueFilter
-	if queueFilter == nil && len(p.TemporalConfig.Worker.Queues) > 0 {
-		queueFilter = &registry.QueueFilter{Queues: p.TemporalConfig.Worker.Queues}
-	}
 
 	for _, reg := range p.Registries {
 		if !queueFilter.Allows(reg.GetTaskQueue()) {
@@ -76,6 +71,8 @@ func NewHealthChecker(manager *registry.WorkerManager, logger *zap.Logger) *heal
 }
 
 var Module = fx.Module("temporaljobs",
+	fx.Provide(NewSDKLogger),
+	fx.Provide(NewQueueFilter),
 	fx.Provide(NewTemporalClient),
 	fx.Provide(NewWorkerManager),
 	fx.Provide(NewHealthChecker),
@@ -88,3 +85,9 @@ var WorkerModule = fx.Module("temporal-workers",
 var UnscheduledWorkerModule = fx.Module("temporal-workers-unscheduled",
 	fx.Invoke(func(_ *registry.WorkerManager) {}),
 )
+
+// NewQueueFilter is the task queues this process works, from configuration. A
+// worker started with --queues replaces it (workerapp.Run).
+func NewQueueFilter(cfg *temporalconfig.Config) *registry.QueueFilter {
+	return &registry.QueueFilter{Queues: cfg.Worker.Queues}
+}

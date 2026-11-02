@@ -28,9 +28,9 @@ type ActivitiesParams struct {
 	ProposalRepo        agentproposalports.AgentProposalRepository
 	AutoAssign          dispatchconsoleports.DispatchAutoAssignService
 	// Watchtower puts a load about to leave with nobody on it on the feed.
-	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
+	Watchtower watchtowerports.WatchtowerProjector
 	// Publisher wakes whichever agent covers dispatch for the same moves.
-	Publisher agenteventports.AgentEventPublisher `optional:"true"`
+	Publisher agenteventports.AgentEventPublisher
 	Logger    *zap.Logger
 }
 
@@ -182,9 +182,8 @@ func (a *Activities) raiseCoverageRisk(
 			StartsAt:   move.StartsAt,
 			HoursOut:   (move.StartsAt - now) / secondsPerHour,
 		}
-		if a.watchtower != nil {
-			a.watchtower.Upsert(ctx, watchtowersources.DescribeMoveCoverageRisk(item))
-		}
+		a.watchtower.Upsert(ctx, watchtowersources.DescribeMoveCoverageRisk(item))
+
 		agenteventports.PublishAgentEvent(ctx, a.publisher, agenteventports.AgentEvent{
 			Kind:       agenttrigger.EventShipmentMoveCoverageAtRisk,
 			SubjectID:  move.MoveID,

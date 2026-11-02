@@ -208,10 +208,6 @@ type accessChange struct {
 }
 
 func (s *Service) recordAccessChange(ctx context.Context, change *accessChange) {
-	if s.auditor == nil {
-		return
-	}
-
 	s.auditor.RecordChange(ctx, &permissionports.SecurityChange{
 		Resource:       permission.ResourceUser,
 		ResourceID:     change.after.ID.String(),

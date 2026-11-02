@@ -41,10 +41,6 @@ func (s *Service) checkAvailability(
 	pto *worker.WorkerPTO,
 	excludeID pulid.ID,
 ) (*ptoledgerservice.AvailabilityResult, error) {
-	if s.ledger == nil {
-		return &ptoledgerservice.AvailabilityResult{Allowed: true, Days: pto.Days}, nil
-	}
-
 	return s.ledger.CheckAvailability(ctx, &ptoledgerservice.AvailabilityRequest{
 		TenantInfo:   tenantOf(pto),
 		WorkerID:     pto.WorkerID,

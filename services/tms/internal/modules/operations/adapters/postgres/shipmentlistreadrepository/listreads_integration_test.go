@@ -72,7 +72,7 @@ func TestListReads_FindTheOrdersPOAndTheHoldsInForce(t *testing.T) {
 		BusinessUnitID: held.BusinessUnitID,
 	})
 
-	matcher := NewOrderReferenceMatcher(ListReadParams{DB: postgres.NewTestConnection(db)})
+	matcher := NewOrderReferenceMatcher(ListReadParams{DB: postgres.WrapDB(db)})
 	orders, err := matcher.MatchOrderReferences(tenantCtx,
 		&shipmentports.MatchOrderReferencesRequest{Query: "77Q-4182"})
 	require.NoError(t, err)

@@ -41,8 +41,8 @@ type Params struct {
 	Usages        formulatemplateports.FormulaTemplateVersionRepository
 	Validator     *Validator
 	AuditService  auditports.AuditService
-	Notifications *notificationservice.Service   `optional:"true"`
-	Roles         permissionports.RoleRepository `optional:"true"`
+	Notifications *notificationservice.Service
+	Roles         permissionports.RoleRepository
 }
 
 type Service struct {

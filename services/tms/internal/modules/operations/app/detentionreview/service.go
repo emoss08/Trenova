@@ -30,15 +30,12 @@ type Params struct {
 	fx.In
 
 	OccurrenceRepo detentionports.DetentionOccurrenceRepository
-	Now            func() int64 `optional:"true"`
+	Now            timeutils.Clock
 	Effects        *detentioneffects.Effects
 }
 
 func New(p Params) *Service {
 	now := p.Now
-	if now == nil {
-		now = timeutils.NowUnix
-	}
 	return &Service{
 		occurrenceRepo: p.OccurrenceRepo,
 		now:            now,

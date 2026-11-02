@@ -45,9 +45,9 @@ type Params struct {
 	Logger        *zap.Logger
 	Apps          accountingconnectionports.AccountingAppCredentialRepository
 	Connections   accountingconnectionports.AccountingConnectionRepository
-	Subscriptions accountingconnectionports.AccountingWebhookSubscriptionRepository `optional:"true"`
+	Subscriptions accountingconnectionports.AccountingWebhookSubscriptionRepository
 	Encryption    *encryptionservice.Service
-	Poller        accountinginboundports.AccountingChangePoller `optional:"true"`
+	Poller        accountinginboundports.AccountingChangePoller
 	Kit           *accountingconnectionkit.Kit
 }
 
@@ -252,9 +252,6 @@ func (s *Service) pollChanged(
 	holders []*accountingconnection.AccountingConnection,
 	verified []string,
 ) {
-	if s.poller == nil {
-		return
-	}
 	for _, holder := range holders {
 		if !slices.Contains(verified, holder.ExternalRealmID) || !holder.ReadsChanges() {
 			continue
@@ -308,7 +305,7 @@ func (s *Service) receiveSubscribedWebhook(
 	req *accountingconnectionports.ReceiveAccountingWebhookRequest,
 ) error {
 	subscribing, ok := provider.(accountingconnectorports.AccountingSubscriptionProvider)
-	if !ok || s.subscriptions == nil {
+	if !ok {
 		return errWebhookUnverified()
 	}
 	sender, err := s.subscribedSender(ctx, provider, req)

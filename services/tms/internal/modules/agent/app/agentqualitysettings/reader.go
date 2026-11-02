@@ -58,18 +58,16 @@ func (r *Reader) Timezone(
 	tenant pagination.TenantInfo,
 ) string {
 	organizationTimezone := ""
-	if r.organizations != nil {
-		organization, err := r.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
-			TenantInfo: tenant,
-		})
-		if err != nil {
-			r.l.Warn("could not read the organization's timezone; reading windows in UTC",
-				zap.String("organization", tenant.OrgID.String()),
-				zap.Error(err),
-			)
-		} else {
-			organizationTimezone = organization.Timezone
-		}
+	organization, err := r.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		r.l.Warn("could not read the organization's timezone; reading windows in UTC",
+			zap.String("organization", tenant.OrgID.String()),
+			zap.Error(err),
+		)
+	} else {
+		organizationTimezone = organization.Timezone
 	}
 
 	return control.EffectiveTimezone(organizationTimezone)

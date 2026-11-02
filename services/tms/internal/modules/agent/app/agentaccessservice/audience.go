@@ -155,7 +155,7 @@ func (s *Service) audience(
 // of the person using it and where its work can go. A tool that acts only on
 // the person's own records needs no grant and names no resource.
 func (s *Service) HeldTools(definition *agentdefinition.Definition) []HeldTool {
-	if s.runtime == nil || definition == nil {
+	if definition == nil {
 		return []HeldTool{}
 	}
 

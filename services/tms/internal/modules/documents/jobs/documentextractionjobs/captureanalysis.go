@@ -47,7 +47,7 @@ func (c *CaptureAnalyzer) Analyze(
 	if err != nil {
 		return nil, err
 	}
-	if !availability.Available() || a.converter == nil || !a.converter.Enabled() ||
+	if !availability.Available() || !a.converter.Enabled() ||
 		int64(len(req.PDF)) > a.conversionCfg.GetMaxFileBytes() {
 		return &captureports.CaptureAnalysis{}, nil
 	}

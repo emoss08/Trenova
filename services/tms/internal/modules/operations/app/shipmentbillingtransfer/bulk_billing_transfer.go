@@ -74,10 +74,8 @@ func newBulkTransferResult(
 	if attempt.entity != nil {
 		result.ProNumber = attempt.entity.ProNumber
 	}
-	if attempt.readiness != nil {
-		result.MissingRequirements = attempt.readiness.MissingRequirements
-		result.ValidationFailures = attempt.readiness.ValidationFailures
-	}
+	result.MissingRequirements = attempt.readiness.MissingRequirements
+	result.ValidationFailures = attempt.readiness.ValidationFailures
 
 	if attempt.err == nil {
 		result.Success = true

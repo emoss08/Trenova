@@ -20,7 +20,7 @@ type nova struct {
 	task *llmports.NovaTask
 }
 
-func (n *nova) Available(context.Context, aitask.Task, pagination.TenantInfo) (bool, error) {
+func (n *nova) Available(context.Context, pagination.TenantInfo) (bool, error) {
 	return n.err == nil, nil
 }
 
@@ -43,7 +43,11 @@ func TestRun_FilesTheInboxsTasksUnderInboundMail(t *testing.T) {
 	runner := &nova{}
 	caller := triagenova.New(triagenova.Params{Nova: runner})
 
-	_, err := caller.Run(t.Context(), &llmports.NovaTask{Instructions: "Your task: draft a reply."}, &map[string]any{})
+	_, err := caller.Run(
+		t.Context(),
+		&llmports.NovaTask{Instructions: "Your task: draft a reply."},
+		&map[string]any{},
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, aitask.TaskInboundClassification, runner.task.Name)
@@ -56,7 +60,9 @@ func TestRun_SaysWhenNovaCannotDraftOrCannotBeReached(t *testing.T) {
 	_, err := triagenova.New(triagenova.Params{}).Run(t.Context(), &llmports.NovaTask{}, nil)
 	require.ErrorIs(t, err, triagenova.ErrUnavailable)
 
-	unconfigured := triagenova.New(triagenova.Params{Nova: &nova{err: llmports.ErrNoProviderConfigured}})
+	unconfigured := triagenova.New(
+		triagenova.Params{Nova: &nova{err: llmports.ErrNoProviderConfigured}},
+	)
 	_, err = unconfigured.Run(t.Context(), &llmports.NovaTask{}, nil)
 	require.ErrorIs(t, err, triagenova.ErrUnavailable)
 

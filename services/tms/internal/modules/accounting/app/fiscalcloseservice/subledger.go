@@ -34,7 +34,7 @@ func (s *Service) reconcileSubledgers(
 ) ([]*fiscalclose.SubledgerCheck, error) {
 	checks := make([]*fiscalclose.SubledgerCheck, 0, 1)
 
-	if control == nil || control.DefaultARAccountID.IsNil() || s.customerLedgerRepo == nil {
+	if control == nil || control.DefaultARAccountID.IsNil() {
 		return checks, nil
 	}
 

@@ -1,7 +1,9 @@
 package shipment
 
 import (
+	"cmp"
 	"context"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/keel"
@@ -284,39 +286,6 @@ func (s *Shipment) ShipperStop() *Stop {
 	return FirstShipperStop(s.Moves)
 }
 
-func FirstShipperStop(moves []*ShipmentMove) *Stop {
-	var best *Stop
-	var bestMoveSeq int64
-	var bestStopSeq int64
-	bestStopID := ""
-
-	for _, move := range moves {
-		if move == nil {
-			continue
-		}
-		for _, stop := range move.Stops {
-			if stop == nil || !stop.IsOriginStop() {
-				continue
-			}
-			stopID := stop.ID.String()
-			if best == nil ||
-				move.Sequence < bestMoveSeq ||
-				(move.Sequence == bestMoveSeq &&
-					(stop.Sequence < bestStopSeq ||
-						(stop.Sequence == bestStopSeq && stopID < bestStopID))) {
-				best = stop
-				bestMoveSeq = move.Sequence
-				bestStopSeq = stop.Sequence
-				bestStopID = stopID
-			}
-		}
-	}
-
-	return best
-}
-
-// DeliveryStop is the last place the shipment is delivered to, which is the
-// destination end of the lane a rate is written against.
 func (s *Shipment) DeliveryStop() *Stop {
 	if s == nil {
 		return nil
@@ -325,40 +294,51 @@ func (s *Shipment) DeliveryStop() *Stop {
 	return LastConsigneeStop(s.Moves)
 }
 
-// LastConsigneeStop mirrors FirstShipperStop from the other end of the trip.
-//
-// The ordering is the same one read backwards — latest move, then latest stop
-// within it — and the stop id settles a tie so the answer never depends on the
-// order the moves happened to be loaded in.
-func LastConsigneeStop(moves []*ShipmentMove) *Stop {
-	var best *Stop
-	var bestMoveSeq int64
-	var bestStopSeq int64
-	bestStopID := ""
+func FirstShipperStop(moves []*ShipmentMove) *Stop {
+	stops := routeStopsWhere(moves, (*Stop).IsOriginStop)
+	if len(stops) == 0 {
+		return nil
+	}
 
+	return slices.MinFunc(stops, routeStop.compare).stop
+}
+
+func LastConsigneeStop(moves []*ShipmentMove) *Stop {
+	stops := routeStopsWhere(moves, (*Stop).IsDestinationStop)
+	if len(stops) == 0 {
+		return nil
+	}
+
+	return slices.MaxFunc(stops, routeStop.compare).stop
+}
+
+type routeStop struct {
+	moveSequence int64
+	stop         *Stop
+}
+
+func (a routeStop) compare(b routeStop) int {
+	return cmp.Or(
+		cmp.Compare(a.moveSequence, b.moveSequence),
+		cmp.Compare(a.stop.Sequence, b.stop.Sequence),
+		cmp.Compare(a.stop.ID.String(), b.stop.ID.String()),
+	)
+}
+
+func routeStopsWhere(moves []*ShipmentMove, match func(*Stop) bool) []routeStop {
+	var stops []routeStop
 	for _, move := range moves {
 		if move == nil {
 			continue
 		}
 		for _, stop := range move.Stops {
-			if stop == nil || !stop.IsDestinationStop() {
-				continue
-			}
-			stopID := stop.ID.String()
-			if best == nil ||
-				move.Sequence > bestMoveSeq ||
-				(move.Sequence == bestMoveSeq &&
-					(stop.Sequence > bestStopSeq ||
-						(stop.Sequence == bestStopSeq && stopID > bestStopID))) {
-				best = stop
-				bestMoveSeq = move.Sequence
-				bestStopSeq = stop.Sequence
-				bestStopID = stopID
+			if stop != nil && match(stop) {
+				stops = append(stops, routeStop{moveSequence: move.Sequence, stop: stop})
 			}
 		}
 	}
 
-	return best
+	return stops
 }
 
 func (s *Shipment) GetID() pulid.ID {
@@ -404,8 +384,8 @@ func (s *Shipment) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		Relationships: []*domaintypes.RelationshipDefintion{
 			{Field: "customer", Queryable: true},
 			{Field: "billToCustomer", Queryable: true},
-			{Field: ShipperStopRelationship, Queryable: true},
-			{Field: ConsigneeStopRelationship, Queryable: true},
+			{Field: "shipperStop", Queryable: true},
+			{Field: "consigneeStop", Queryable: true},
 			{Field: "pickupAppointment", Queryable: true},
 			{Field: "deliveryAppointment", Queryable: true},
 			{Field: "owner", Queryable: true},

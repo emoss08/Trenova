@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -43,8 +42,8 @@ type Params struct {
 	FiscalPeriodRepo  fiscalperiodports.FiscalPeriodRepository
 	Generator         seqgen.Generator
 	AuditService      auditports.AuditService
-	Realtime          realtimeports.RealtimeService
-	Sync              accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
+	Publisher         carriersettlementrealtime.Publisher
+	Sync              accountingsyncports.AccountingSyncEnqueuer
 }
 
 type Service struct {
@@ -79,7 +78,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		generator:         p.Generator,
 		auditService:      p.AuditService,
 		sync:              p.Sync,
-		publisher:         carriersettlementrealtime.NewPublisher(l, p.Realtime),
+		publisher:         p.Publisher,
 		journals: carriersettlementjournal.New(&carriersettlementjournal.Params{
 			AccountingRepo:    p.AccountingRepo,
 			SettlementControl: p.SettlementControl,

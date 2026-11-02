@@ -65,12 +65,12 @@ type ActivitiesParams struct {
 	Renderers           reportports.ReportRendererRegistry
 	Storage             kernelports.Client
 	NotificationService *notificationservice.Service
-	EmailService        emailports.EmailService `optional:"true"`
+	EmailService        emailports.EmailService
 	Templates           documenttemplateports.DocumentTemplateResolver
-	RealtimeService     realtimeports.RealtimeService `optional:"true"`
+	RealtimeService     realtimeports.RealtimeService
 	ReadScopes          permissionports.ReadScopes
 	AuditService        auditports.AuditService
-	Metrics             *metrics.Registry `optional:"true"`
+	Metrics             *metrics.Registry
 	ReportingConfig     *reportingconfig.Config
 	Logger              *zap.Logger
 }
@@ -445,12 +445,6 @@ func (a *Activities) withReadScope(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) (context.Context, error) {
-	if a.readScopes == nil {
-		return nil, temporal.NewNonRetryableApplicationError(
-			"report runs cannot be narrowed to what their requester may read",
-			ErrTypeReportAuthorization, nil,
-		)
-	}
 	principal := permissionports.UserActor(tenant).PermissionCheck("", "")
 
 	return readscope.With(ctx, a.readScopes.Resolver(principal)), nil
@@ -728,9 +722,6 @@ func (a *Activities) emitNotification(ctx context.Context, run *report.ReportRun
 }
 
 func (a *Activities) emitInvalidation(ctx context.Context, run *report.ReportRun) {
-	if a.realtime == nil {
-		return
-	}
 	if err := a.realtime.PublishResourceInvalidation(
 		ctx,
 		&realtimeports.PublishResourceInvalidationRequest{

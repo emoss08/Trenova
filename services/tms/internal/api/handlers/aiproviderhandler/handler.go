@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/novamodel"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -28,7 +29,7 @@ type Params struct {
 	Service              aiproviderports.AIProviderService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
-	AIConfig             *aiconfig.Config `optional:"true"`
+	AIConfig             *aiconfig.Config
 }
 
 type Handler struct {
@@ -109,6 +110,7 @@ type saveProviderRequest struct {
 	EmbeddingInputStyle      aiprovider.EmbeddingInputStyle  `json:"embeddingInputStyle"`
 	Trusted                  bool                            `json:"trusted"`
 	Enabled                  bool                            `json:"enabled"`
+	Nova                     bool                            `json:"nova"`
 	TimeoutSeconds           int                             `json:"timeoutSeconds"`
 	MaxConcurrent            int                             `json:"maxConcurrent"`
 	MonthlyCapUSD            *decimal.Decimal                `json:"monthlyCapUsd"`
@@ -152,6 +154,7 @@ func (r *saveProviderRequest) toServiceRequest(
 		EmbeddingInputStyle:      r.EmbeddingInputStyle,
 		Trusted:                  r.Trusted,
 		Enabled:                  r.Enabled,
+		Nova:                     r.Nova,
 		TimeoutSeconds:           r.TimeoutSeconds,
 		MaxConcurrent:            r.MaxConcurrent,
 		MonthlyCapUSD:            r.MonthlyCapUSD,
@@ -266,6 +269,10 @@ func (h *Handler) catalog(c *gin.Context) {
 		"embeddingDimensions":  aiprovider.AllowedEmbeddingDimensions(),
 		"embeddingInputStyles": embeddingInputStyleDescriptors(),
 		"platforms":            platformDescriptors(),
+		// nova is the model Nova runs on, whichever provider is chosen for it,
+		// and the platforms an Anthropic provider must reach Claude through to
+		// be chosen.
+		"nova": gin.H{"model": novamodel.ID, "platforms": aiprovider.NovaPlatforms()},
 		// serverCloudCredentials says whether a platform provider may sign in
 		// with this server's own cloud identity, so the editor offers it only
 		// where saving it would be accepted.

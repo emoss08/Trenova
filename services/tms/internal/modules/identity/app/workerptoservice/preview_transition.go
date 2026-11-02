@@ -74,10 +74,8 @@ func (s *Service) previewTransition(
 		ReturnsLedger: releasesUsage(current, params.target),
 		Location:      time.UTC,
 	}
-	if s.ledger != nil {
-		if preview.Location, err = s.ledger.OrgLocation(ctx, params.req.TenantInfo); err != nil {
-			return nil, err
-		}
+	if preview.Location, err = s.ledger.OrgLocation(ctx, params.req.TenantInfo); err != nil {
+		return nil, err
 	}
 	if !params.notifyWorker {
 		return preview, nil
@@ -86,8 +84,7 @@ func (s *Service) previewTransition(
 	if notice, ok := transitionNotice(
 		params.target,
 		params.req.Reason,
-	); ok &&
-		s.driverNotify != nil {
+	); ok {
 		preview.Driver, err = s.driverNotify.Preview(
 			ctx,
 			ptoDriverNotification(params.req.TenantInfo, after, notice),
@@ -97,11 +94,9 @@ func (s *Service) previewTransition(
 		}
 	}
 
-	if s.sendsSMS() {
-		preview.SMS, err = s.transitionSMS(ctx, params.req, after, params.target)
-		if err != nil {
-			return nil, err
-		}
+	preview.SMS, err = s.transitionSMS(ctx, params.req, after, params.target)
+	if err != nil {
+		return nil, err
 	}
 
 	return preview, nil
@@ -192,10 +187,6 @@ func transitionNotice(target worker.PTOStatus, reason string) (driverPTONotice, 
 	default:
 		return driverPTONotice{}, false
 	}
-}
-
-func (s *Service) sendsSMS() bool {
-	return s.workflowStarter != nil && s.workflowStarter.Enabled()
 }
 
 // transitionSMS is the text a decision sends the driver's phone, signed with

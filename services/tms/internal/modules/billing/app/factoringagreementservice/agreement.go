@@ -34,10 +34,10 @@ type AgreementParams struct {
 	DB        kernelports.Transactor
 	Repo      factoringports.AgreementRepository
 	Factors   factoringcompanyports.FactoringCompanyRepository
-	Accounts  glaccountports.GLAccountRepository `optional:"true"`
-	Requester factoringports.EvaluationRequester `optional:"true"`
+	Accounts  glaccountports.GLAccountRepository
+	Requester factoringports.EvaluationRequester
 	Audit     auditports.AuditService
-	Realtime  realtimeports.RealtimeService `optional:"true"`
+	Realtime  realtimeports.RealtimeService
 	Logger    *zap.Logger
 }
 
@@ -356,7 +356,7 @@ func (s *AgreementService) validateAccounts(
 			ids = append(ids, id)
 		}
 	}
-	if len(ids) == 0 || s.accounts == nil {
+	if len(ids) == 0 {
 		return nil
 	}
 	found, err := s.accounts.GetByIDs(ctx, glaccountports.GetGLAccountsByIDsRequest{
@@ -416,9 +416,6 @@ func (s *AgreementService) requestFactor(
 	tenantInfo pagination.TenantInfo,
 	factorID pulid.ID,
 ) {
-	if s.requester == nil {
-		return
-	}
 	s.requester.RequestEvaluation(ctx, tenantInfo, &factoringports.EvaluationTargets{
 		FactoringCompanyIDs: []pulid.ID{factorID},
 	})

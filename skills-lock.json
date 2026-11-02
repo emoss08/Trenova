@@ -5,6 +5,24 @@
       "source": "remorses/playwriter",
       "sourceType": "github",
       "computedHash": "0bc049738095d117531cc6e4e461d55a432d0d8000b3279d76d47891e55c7152"
+    },
+    "rust-best-practices": {
+      "source": "morganlinton/BeautifulRust",
+      "sourceType": "github",
+      "skillPath": "skills/rust-best-practices/SKILL.md",
+      "computedHash": "33e21c7a60ee545691185a3c499908dfc10205cde95c855e31975f3e4c264bee"
+    },
+    "rust-port": {
+      "source": "morganlinton/BeautifulRust",
+      "sourceType": "github",
+      "skillPath": "skills/rust-port/SKILL.md",
+      "computedHash": "049b502f5aded5b47f79892687f8a922d52b388755e9792e4b0714a3e97cd409"
+    },
+    "rust-review": {
+      "source": "morganlinton/BeautifulRust",
+      "sourceType": "github",
+      "skillPath": "skills/rust-review/SKILL.md",
+      "computedHash": "af430a1aeaed47f1052b48ec974a6a5360c4e4f2b26c83f1d4ae0f88ae174e72"
     }
   }
 }

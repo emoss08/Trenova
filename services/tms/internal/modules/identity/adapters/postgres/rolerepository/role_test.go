@@ -40,7 +40,7 @@ func newRoleFixture(t *testing.T) *roleFixture {
 	return &roleFixture{
 		ctx:  data.Ctx(ctx),
 		db:   db,
-		repo: New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()}),
+		repo: New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()}),
 		data: data,
 	}
 }

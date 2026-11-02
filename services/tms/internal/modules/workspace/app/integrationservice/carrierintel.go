@@ -21,8 +21,7 @@ func (c *carrierIntelRoleChange) wantsFallback() bool {
 }
 
 func (s *Service) checkCarrierIntelRole(ctx context.Context, change *carrierIntelRoleChange) error {
-	if s.carrierIntelControls == nil || !change.typ.SupportsCarrierIntelligence() ||
-		!change.enabled || change.wantsFallback() {
+	if !change.typ.SupportsCarrierIntelligence() || !change.enabled || change.wantsFallback() {
 		return nil
 	}
 	control, err := s.carrierIntelControls.GetOrCreate(ctx, change.tenant)
@@ -51,7 +50,7 @@ func (s *Service) checkCarrierIntelRole(ctx context.Context, change *carrierInte
 }
 
 func (s *Service) syncCarrierIntelRole(ctx context.Context, change *carrierIntelRoleChange) error {
-	if s.carrierIntelControls == nil || !change.typ.SupportsCarrierIntelligence() {
+	if !change.typ.SupportsCarrierIntelligence() {
 		return nil
 	}
 	control, err := s.carrierIntelControls.GetOrCreate(ctx, change.tenant)

@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentqualityjobs/agentqualitycontract"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityengine"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
@@ -52,7 +54,7 @@ func TestRecordQualityHistories(t *testing.T) {
 			queue := "replay-record-quality-" + rec.name
 			w := worker.New(c, queue, worker.Options{})
 			w.RegisterWorkflowWithOptions(AgentSuiteRunWorkflow,
-				workflow.RegisterOptions{Name: AgentSuiteRunWorkflowName})
+				workflow.RegisterOptions{Name: agentqualitycontract.AgentSuiteRunWorkflowName})
 			w.RegisterWorkflowWithOptions(
 				func(workflow.Context, *agentcontract.AgentEvaluationPayload) error { return nil },
 				workflow.RegisterOptions{Name: agentcontract.AgentEvaluationWorkflowName},
@@ -61,7 +63,7 @@ func TestRecordQualityHistories(t *testing.T) {
 			require.NoError(t, w.Start())
 			defer w.Stop()
 
-			payload := &SuiteRunPayload{
+			payload := &agentqualitycontract.SuiteRunPayload{
 				OrganizationID:    pulid.MustNew("org_"),
 				BusinessUnitID:    pulid.MustNew("bu_"),
 				SuiteRunID:        agentqualitysuite.NewSuiteRunID(),
@@ -77,7 +79,7 @@ func TestRecordQualityHistories(t *testing.T) {
 			run, err := c.ExecuteWorkflow(t.Context(), client.StartWorkflowOptions{
 				ID:        fmt.Sprintf("replay-record/%s/%d", rec.name, time.Now().UnixNano()),
 				TaskQueue: queue,
-			}, AgentSuiteRunWorkflowName, payload)
+			}, agentqualitycontract.AgentSuiteRunWorkflowName, payload)
 			require.NoError(t, err)
 			require.NoError(t, run.Get(t.Context(), nil))
 

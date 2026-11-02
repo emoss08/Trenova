@@ -31,9 +31,6 @@ var agentControlsTable = schema.Table{
 		{Name: "promotion_threshold", Quoted: `"promotion_threshold"`, Field: "PromotionThreshold", Kind: schema.KindInt64, Flags: 0, Label: `Promotion Threshold`, JSON: `promotionThreshold`},
 		{Name: "briefing_enabled", Quoted: `"briefing_enabled"`, Field: "BriefingEnabled", Kind: schema.KindBool, Flags: 0, Label: `Briefing Enabled`, Doc: `BriefingEnabled turns the morning briefing on, and BriefingHourLocal is the hour it is written in the organization's own timezone. The hour is local rather than UTC because a briefing is read at the start of a working day, and a company with offices in two timezones would otherwise get one of them yesterday's page.`, JSON: `briefingEnabled`},
 		{Name: "briefing_hour_local", Quoted: `"briefing_hour_local"`, Field: "BriefingHourLocal", Kind: schema.KindInt64, Flags: 0, Label: `Briefing Hour Local`, JSON: `briefingHourLocal`},
-		{Name: "ai_training_consent", Quoted: `"ai_training_consent"`, Field: "AITrainingConsent", Kind: schema.KindBool, Flags: 0, Label: `AI Training Consent`, JSON: `aiTrainingConsent`},
-		{Name: "ai_training_consent_changed_at", Quoted: `"ai_training_consent_changed_at"`, Field: "AITrainingConsentChangedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `AI Training Consent Changed At`, JSON: `aiTrainingConsentChangedAt`},
-		{Name: "ai_training_consent_changed_by_id", Quoted: `"ai_training_consent_changed_by_id"`, Field: "AITrainingConsentChangedByID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `AI Training Consent Changed By ID`, JSON: `aiTrainingConsentChangedById`},
 		{Name: "person_monthly_messages", Quoted: `"person_monthly_messages"`, Field: "PersonMonthlyMessages", Kind: schema.KindInt64, Flags: 0, Label: `Person Monthly Messages`, Doc: `PersonMonthlyMessages is how many questions one person may ask the agents in a calendar month; nought leaves it unlimited.`, JSON: `personMonthlyMessages`},
 		{Name: "learning_off", Quoted: `"learning_off"`, Field: "LearningOff", Kind: schema.KindBool, Flags: 0, Label: `Learning Off`, JSON: `learningOff`},
 		{Name: "auto_chapters_off", Quoted: `"auto_chapters_off"`, Field: "AutoChaptersOff", Kind: schema.KindBool, Flags: 0, Label: `Auto Chapters Off`, Doc: `AutoChaptersOff stops a model splitting Desk conversations into chapters and naming them. On by default: it is one short call per question on the cheapest model, and people can still start chapters by hand while it is off.`, JSON: `autoChaptersOff`},
@@ -48,14 +45,14 @@ var agentControlsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18},
 	Returning:    nil,
-	Version:      19,
+	Version:      16,
 	AutoID:       0,
-	AutoCreate:   20,
-	AutoUpdate:   21,
+	AutoCreate:   17,
+	AutoUpdate:   18,
 	IDPrefix:     "agc_",
 	New:          newAgentControl,
 	NewN:         newNAgentControl,
@@ -70,83 +67,74 @@ var agentControlsRef = keel.Ref{Table: &agentControlsTable}
 // AgentControlsTable is the table of agentcontrol.AgentControl.
 type AgentControlsTable struct {
 	keel.TableBase
-	ID                           keelkinds.PulidIDCol
-	BusinessUnitID               keelkinds.PulidIDCol
-	OrganizationID               keelkinds.PulidIDCol
-	ShadowMode                   keel.BoolCol
-	EarnedAutonomy               keel.BoolCol
-	PromotionThreshold           keel.Int64Col
-	BriefingEnabled              keel.BoolCol
-	BriefingHourLocal            keel.Int64Col
-	AITrainingConsent            keel.BoolCol
-	AITrainingConsentChangedAt   keel.Int64Col
-	AITrainingConsentChangedByID keelkinds.PulidIDCol
-	PersonMonthlyMessages        keel.Int64Col
-	LearningOff                  keel.BoolCol
-	AutoChaptersOff              keel.BoolCol
-	AgentMoneyCallCeilingMinor   keel.Int64Col
-	AgentMoneyRunCalls           keel.Int64Col
-	AgentMoneyRunAmountMinor     keel.Int64Col
-	AgentMoneyDayCalls           keel.Int64Col
-	AgentMoneyDayAmountMinor     keel.Int64Col
-	Version                      keel.Int64Col
-	CreatedAt                    keel.Int64Col
-	UpdatedAt                    keel.Int64Col
+	ID                         keelkinds.PulidIDCol
+	BusinessUnitID             keelkinds.PulidIDCol
+	OrganizationID             keelkinds.PulidIDCol
+	ShadowMode                 keel.BoolCol
+	EarnedAutonomy             keel.BoolCol
+	PromotionThreshold         keel.Int64Col
+	BriefingEnabled            keel.BoolCol
+	BriefingHourLocal          keel.Int64Col
+	PersonMonthlyMessages      keel.Int64Col
+	LearningOff                keel.BoolCol
+	AutoChaptersOff            keel.BoolCol
+	AgentMoneyCallCeilingMinor keel.Int64Col
+	AgentMoneyRunCalls         keel.Int64Col
+	AgentMoneyRunAmountMinor   keel.Int64Col
+	AgentMoneyDayCalls         keel.Int64Col
+	AgentMoneyDayAmountMinor   keel.Int64Col
+	Version                    keel.Int64Col
+	CreatedAt                  keel.Int64Col
+	UpdatedAt                  keel.Int64Col
 }
 
 // AgentControls references the agent_controls table.
 var AgentControls = &AgentControlsTable{
-	TableBase:                    keel.TableBase{Ref: &agentControlsRef},
-	ID:                           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentControlsRef, Index: 0}}},
-	BusinessUnitID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentControlsRef, Index: 1}}},
-	OrganizationID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentControlsRef, Index: 2}}},
-	ShadowMode:                   keel.BoolCol{Col: keel.Col{Ref: &agentControlsRef, Index: 3}},
-	EarnedAutonomy:               keel.BoolCol{Col: keel.Col{Ref: &agentControlsRef, Index: 4}},
-	PromotionThreshold:           keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 5}},
-	BriefingEnabled:              keel.BoolCol{Col: keel.Col{Ref: &agentControlsRef, Index: 6}},
-	BriefingHourLocal:            keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 7}},
-	AITrainingConsent:            keel.BoolCol{Col: keel.Col{Ref: &agentControlsRef, Index: 8}},
-	AITrainingConsentChangedAt:   keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 9}},
-	AITrainingConsentChangedByID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentControlsRef, Index: 10}}},
-	PersonMonthlyMessages:        keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 11}},
-	LearningOff:                  keel.BoolCol{Col: keel.Col{Ref: &agentControlsRef, Index: 12}},
-	AutoChaptersOff:              keel.BoolCol{Col: keel.Col{Ref: &agentControlsRef, Index: 13}},
-	AgentMoneyCallCeilingMinor:   keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 14}},
-	AgentMoneyRunCalls:           keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 15}},
-	AgentMoneyRunAmountMinor:     keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 16}},
-	AgentMoneyDayCalls:           keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 17}},
-	AgentMoneyDayAmountMinor:     keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 18}},
-	Version:                      keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 19}},
-	CreatedAt:                    keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 20}},
-	UpdatedAt:                    keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 21}},
+	TableBase:                  keel.TableBase{Ref: &agentControlsRef},
+	ID:                         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentControlsRef, Index: 0}}},
+	BusinessUnitID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentControlsRef, Index: 1}}},
+	OrganizationID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentControlsRef, Index: 2}}},
+	ShadowMode:                 keel.BoolCol{Col: keel.Col{Ref: &agentControlsRef, Index: 3}},
+	EarnedAutonomy:             keel.BoolCol{Col: keel.Col{Ref: &agentControlsRef, Index: 4}},
+	PromotionThreshold:         keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 5}},
+	BriefingEnabled:            keel.BoolCol{Col: keel.Col{Ref: &agentControlsRef, Index: 6}},
+	BriefingHourLocal:          keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 7}},
+	PersonMonthlyMessages:      keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 8}},
+	LearningOff:                keel.BoolCol{Col: keel.Col{Ref: &agentControlsRef, Index: 9}},
+	AutoChaptersOff:            keel.BoolCol{Col: keel.Col{Ref: &agentControlsRef, Index: 10}},
+	AgentMoneyCallCeilingMinor: keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 11}},
+	AgentMoneyRunCalls:         keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 12}},
+	AgentMoneyRunAmountMinor:   keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 13}},
+	AgentMoneyDayCalls:         keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 14}},
+	AgentMoneyDayAmountMinor:   keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 15}},
+	Version:                    keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 16}},
+	CreatedAt:                  keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 17}},
+	UpdatedAt:                  keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 18}},
 }
 
 // BuildAgentControls builds the table of agent_controls for ref. Generated relation and alias methods call it.
 func BuildAgentControls(r *keel.Ref) *AgentControlsTable {
 	return &AgentControlsTable{
-		TableBase:                    keel.TableBase{Ref: r},
-		ID:                           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ShadowMode:                   keel.BoolCol{Col: keel.Col{Ref: r, Index: 3}},
-		EarnedAutonomy:               keel.BoolCol{Col: keel.Col{Ref: r, Index: 4}},
-		PromotionThreshold:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
-		BriefingEnabled:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 6}},
-		BriefingHourLocal:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
-		AITrainingConsent:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
-		AITrainingConsentChangedAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		AITrainingConsentChangedByID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		PersonMonthlyMessages:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		LearningOff:                  keel.BoolCol{Col: keel.Col{Ref: r, Index: 12}},
-		AutoChaptersOff:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 13}},
-		AgentMoneyCallCeilingMinor:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		AgentMoneyRunCalls:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		AgentMoneyRunAmountMinor:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		AgentMoneyDayCalls:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		AgentMoneyDayAmountMinor:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		Version:                      keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
-		CreatedAt:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
-		UpdatedAt:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
+		TableBase:                  keel.TableBase{Ref: r},
+		ID:                         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ShadowMode:                 keel.BoolCol{Col: keel.Col{Ref: r, Index: 3}},
+		EarnedAutonomy:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 4}},
+		PromotionThreshold:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
+		BriefingEnabled:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 6}},
+		BriefingHourLocal:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
+		PersonMonthlyMessages:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+		LearningOff:                keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
+		AutoChaptersOff:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
+		AgentMoneyCallCeilingMinor: keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
+		AgentMoneyRunCalls:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
+		AgentMoneyRunAmountMinor:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
+		AgentMoneyDayCalls:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		AgentMoneyDayAmountMinor:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		Version:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
+		CreatedAt:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		UpdatedAt:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 	}
 }
 
@@ -548,32 +536,26 @@ func ptrAgentControl(p unsafe.Pointer, c int32) any {
 	case 7:
 		return (*int64)(unsafe.Pointer(&r.BriefingHourLocal))
 	case 8:
-		return &r.AITrainingConsent
-	case 9:
-		return &r.AITrainingConsentChangedAt
-	case 10:
-		return (**string)(unsafe.Pointer(&r.AITrainingConsentChangedByID))
-	case 11:
 		return (*int64)(unsafe.Pointer(&r.PersonMonthlyMessages))
-	case 12:
+	case 9:
 		return &r.LearningOff
-	case 13:
+	case 10:
 		return &r.AutoChaptersOff
-	case 14:
+	case 11:
 		return &r.AgentMoneyCallCeilingMinor
-	case 15:
+	case 12:
 		return (*int64)(unsafe.Pointer(&r.AgentMoneyRunCalls))
-	case 16:
+	case 13:
 		return &r.AgentMoneyRunAmountMinor
-	case 17:
+	case 14:
 		return (*int64)(unsafe.Pointer(&r.AgentMoneyDayCalls))
-	case 18:
+	case 15:
 		return &r.AgentMoneyDayAmountMinor
-	case 19:
+	case 16:
 		return &r.Version
-	case 20:
+	case 17:
 		return &r.CreatedAt
-	case 21:
+	case 18:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -599,38 +581,26 @@ func valueAgentControl(p unsafe.Pointer, c int32) any {
 	case 7:
 		return int64(r.BriefingHourLocal)
 	case 8:
-		return r.AITrainingConsent
-	case 9:
-		if r.AITrainingConsentChangedAt == nil {
-			return nil
-		}
-		return *r.AITrainingConsentChangedAt
-	case 10:
-		if r.AITrainingConsentChangedByID == nil {
-			return nil
-		}
-		return string(*r.AITrainingConsentChangedByID)
-	case 11:
 		return int64(r.PersonMonthlyMessages)
-	case 12:
+	case 9:
 		return r.LearningOff
-	case 13:
+	case 10:
 		return r.AutoChaptersOff
-	case 14:
+	case 11:
 		return r.AgentMoneyCallCeilingMinor
-	case 15:
+	case 12:
 		return int64(r.AgentMoneyRunCalls)
-	case 16:
+	case 13:
 		return r.AgentMoneyRunAmountMinor
-	case 17:
+	case 14:
 		return int64(r.AgentMoneyDayCalls)
-	case 18:
+	case 15:
 		return r.AgentMoneyDayAmountMinor
-	case 19:
+	case 16:
 		return r.Version
-	case 20:
+	case 17:
 		return r.CreatedAt
-	case 21:
+	case 18:
 		return r.UpdatedAt
 	}
 	return nil

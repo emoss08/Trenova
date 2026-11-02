@@ -40,7 +40,7 @@ type Params struct {
 	Indexer    retrievalports.RetrievalIndexer
 	Pipeline   retrievalports.RetrievalIndexPipeline
 	Audit      auditports.AuditService
-	Embeddings aiusageports.EmbeddingService `optional:"true"`
+	Embeddings aiusageports.EmbeddingService
 }
 
 type Service struct {
@@ -243,10 +243,6 @@ func (s *Service) configuredModelKey(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) (string, error) {
-	if s.embeddings == nil {
-		return "", nil
-	}
-
 	key, err := s.embeddings.ConfiguredModelKey(ctx, tenant)
 	switch {
 	case err == nil:

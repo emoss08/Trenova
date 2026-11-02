@@ -45,7 +45,7 @@ type answeringNova struct {
 	calls int
 }
 
-func (n *answeringNova) Available(context.Context, aitask.Task, pagination.TenantInfo) (bool, error) {
+func (n *answeringNova) Available(context.Context, pagination.TenantInfo) (bool, error) {
 	return true, nil
 }
 
@@ -113,7 +113,11 @@ func narratingService(
 }
 
 func ontime(findings ...detector.Finding) *stubDetector {
-	return &stubDetector{key: "ontime", category: insight.CategoryServiceQuality, findings: findings}
+	return &stubDetector{
+		key:      "ontime",
+		category: insight.CategoryServiceQuality,
+		findings: findings,
+	}
 }
 
 func TestRefresh_KeepsTheWordingOfAFindingWhoseFiguresHaveNotMoved(t *testing.T) {
@@ -139,7 +143,10 @@ func TestRefresh_KeepsTheWordingOfAFindingWhoseFiguresHaveNotMoved(t *testing.T)
 	nova := &answeringNova{text: `{"insights":[]}`}
 	svc := narratingService(repo, nova, nil, ontime(same, moved))
 
-	result, err := svc.Refresh(t.Context(), RefreshRequest{TenantInfo: tenant(), Now: 1_800_000_000})
+	result, err := svc.Refresh(
+		t.Context(),
+		RefreshRequest{TenantInfo: tenant(), Now: 1_800_000_000},
+	)
 	require.NoError(t, err)
 
 	stored := repo.replaced[0].Insights

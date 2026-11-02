@@ -22,7 +22,7 @@ func (s *service) runHOSComplianceChecks(
 	secondaryWorkerID *pulid.ID,
 	multiErr *errortypes.MultiError,
 ) error {
-	if !dc.EnforceHOSCompliance || s.telematicsRepo == nil || s.integrationRepo == nil {
+	if !dc.EnforceHOSCompliance {
 		return nil
 	}
 

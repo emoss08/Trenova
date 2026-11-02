@@ -15,8 +15,8 @@ type StoreParams struct {
 	fx.In
 
 	SecurityConfig *securityconfig.Config
-	Client         *redis.Client     `optional:"true"`
-	Metrics        *metrics.Registry `optional:"true"`
+	Client         *redis.Client
+	Metrics        *metrics.Registry
 	Logger         *zap.Logger
 }
 
@@ -31,16 +31,13 @@ func NewStore(p StoreParams) (kernelports.RateLimitStore, error) {
 		)
 		return memory, nil
 	case securityconfig.RateLimitStoreRedis:
-		if p.Client == nil {
-			return nil, ErrMissingClient
-		}
 		primary, err := NewRedisStore(p.Client, cfg.GetKeyPrefix())
 		if err != nil {
 			return nil, err
 		}
 
 		var onFailure func(mode string)
-		if p.Metrics != nil && p.Metrics.RateLimit != nil {
+		if p.Metrics.RateLimit != nil {
 			onFailure = p.Metrics.RateLimit.RecordStoreFailure
 		}
 

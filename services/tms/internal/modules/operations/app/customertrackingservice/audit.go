@@ -22,9 +22,6 @@ type auditParams struct {
 }
 
 func (s *Service) audit(p *auditParams) {
-	if s.auditService == nil {
-		return
-	}
 	params := &auditports.LogActionParams{
 		Resource:       p.resource,
 		ResourceID:     p.resourceID,

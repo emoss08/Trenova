@@ -71,32 +71,32 @@ type Params struct {
 	BillingQueue      billingqueueports.BillingQueueService
 	Shipments         shipmentserviceports.ShipmentReader
 	Readiness         shipmentserviceports.ShipmentBillingReadinessReader
-	Console           dispatchboardports.DispatchConsoleRepository             `optional:"true"`
-	Content           documentports.DocumentContentService                     `optional:"true"`
-	Insights          insightports.InsightRepository                           `optional:"true"`
-	BankReceipts      bankreceiptports.BankReceiptService                      `optional:"true"`
-	WorkItems         bankreceiptworkitemports.BankReceiptWorkItemRepository   `optional:"true"`
-	Occurrences       detentionports.DetentionOccurrenceRepository             `optional:"true"`
-	Workers           workerports.WorkerRepository                             `optional:"true"`
-	Credentials       workercredentialports.WorkerCredentialRepository         `optional:"true"`
-	CarrierIntel      carrierintelports.CarrierIntelEventRepository            `optional:"true"`
-	EDIFiles          edimessageports.EDIInboundFileRepository                 `optional:"true"`
-	Inbound           inboundmessageports.InboundMessageRepository             `optional:"true"`
-	Reports           reportports.ReportDefinitionRepository                   `optional:"true"`
-	Dashboards        reportports.ReportDashboardRepository                    `optional:"true"`
-	Accounting        accountingconnectionports.AccountingConnectionRepository `optional:"true"`
-	SyncRecords       accountingsyncports.AccountingSyncRecordRepository       `optional:"true"`
-	AccountingInbound accountinginboundports.AccountingInboundChangeRepository `optional:"true"`
-	AccountingDrift   accountingdriftports.AccountingDriftFindingRepository    `optional:"true"`
-	Dispatch          dispatchcontrolports.DispatchControlRepository           `optional:"true"`
-	Formulas          formulatemplateports.FormulaTemplateRepository           `optional:"true"`
-	FormulaLibraries  formulalibraryports.FormulaLibraryRepository             `optional:"true"`
-	Invoices          invoiceports.InvoiceRepository                           `optional:"true"`
-	Disputes          invoiceports.InvoiceDisputeRepository                    `optional:"true"`
-	Noas              factoringports.NoaRepository                             `optional:"true"`
-	Submissions       factoringsubmissionports.SubmissionRepository            `optional:"true"`
-	Remittances       factoringremittanceports.RemittanceRepository            `optional:"true"`
-	StopEtas          stopetaports.Repository                                  `optional:"true"`
+	Console           dispatchboardports.DispatchConsoleRepository
+	Content           documentports.DocumentContentService
+	Insights          insightports.InsightRepository
+	BankReceipts      bankreceiptports.BankReceiptService
+	WorkItems         bankreceiptworkitemports.BankReceiptWorkItemRepository
+	Occurrences       detentionports.DetentionOccurrenceRepository
+	Workers           workerports.WorkerRepository
+	Credentials       workercredentialports.WorkerCredentialRepository
+	CarrierIntel      carrierintelports.CarrierIntelEventRepository
+	EDIFiles          edimessageports.EDIInboundFileRepository
+	Inbound           inboundmessageports.InboundMessageRepository
+	Reports           reportports.ReportDefinitionRepository
+	Dashboards        reportports.ReportDashboardRepository
+	Accounting        accountingconnectionports.AccountingConnectionRepository
+	SyncRecords       accountingsyncports.AccountingSyncRecordRepository
+	AccountingInbound accountinginboundports.AccountingInboundChangeRepository
+	AccountingDrift   accountingdriftports.AccountingDriftFindingRepository
+	Dispatch          dispatchcontrolports.DispatchControlRepository
+	Formulas          formulatemplateports.FormulaTemplateRepository
+	FormulaLibraries  formulalibraryports.FormulaLibraryRepository
+	Invoices          invoiceports.InvoiceRepository
+	Disputes          invoiceports.InvoiceDisputeRepository
+	Noas              factoringports.NoaRepository
+	Submissions       factoringsubmissionports.SubmissionRepository
+	Remittances       factoringremittanceports.RemittanceRepository
+	StopEtas          stopetaports.Repository
 }
 
 // Service describes the record an agent run or a conversation is about, so
@@ -252,7 +252,7 @@ func (s *Service) billingQueueItem(
 	}
 
 	sections := map[string]any{"billingQueueItem": item}
-	if item.ShipmentID.IsNotNil() && s.shipments != nil {
+	if item.ShipmentID.IsNotNil() {
 		readiness, rErr := s.readiness.GetBillingReadiness(ctx, item.ShipmentID, tenant)
 		if rErr != nil {
 			s.logger.Warn("agent subject: billing readiness unavailable", zap.Error(rErr))
@@ -290,14 +290,6 @@ func (s *Service) shipmentMove(
 	tenant pagination.TenantInfo,
 	moveID pulid.ID,
 ) (*agentturn.RuntimeSubject, error) {
-	if s.console == nil {
-		return &agentturn.RuntimeSubject{
-			Type:  agent.SubjectShipmentMove,
-			ID:    moveID.String(),
-			Label: "Shipment move",
-		}, nil
-	}
-
 	moves, err := s.console.ListBoardMoves(ctx, everyMove(tenant, []pulid.ID{moveID}))
 	if err != nil {
 		return nil, fmt.Errorf("load shipment move: %w", err)
@@ -349,7 +341,7 @@ func (s *Service) moveCoverage(
 	tenant pagination.TenantInfo,
 	move *dispatchboardports.BoardMove,
 ) *moveCoverage {
-	if s.dispatch == nil || move == nil || move.OriginWindowStart <= 0 {
+	if move == nil || move.OriginWindowStart <= 0 {
 		return nil
 	}
 
@@ -399,9 +391,6 @@ func (s *Service) shipment(
 		ID:    shipmentID.String(),
 		Label: "Shipment",
 	}
-	if s.shipments == nil {
-		return subject, nil
-	}
 
 	entity, err := s.shipments.Get(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,
@@ -416,7 +405,7 @@ func (s *Service) shipment(
 	}
 
 	assignments := make(map[pulid.ID]*dispatchboardports.BoardMove, len(entity.Moves))
-	if s.console != nil && len(entity.Moves) > 0 {
+	if len(entity.Moves) > 0 {
 		moveIDs := make([]pulid.ID, 0, len(entity.Moves))
 		for _, move := range entity.Moves {
 			if move != nil {
@@ -467,9 +456,6 @@ func (s *Service) document(
 		ID:    documentID.String(),
 		Label: "Document",
 	}
-	if s.content == nil {
-		return subject, nil
-	}
 
 	draft, err := s.content.GetShipmentDraft(ctx, documentID, tenant)
 	if err != nil {
@@ -509,9 +495,6 @@ func (s *Service) insight(
 		Type:  agent.SubjectInsight,
 		ID:    insightID.String(),
 		Label: "Insight",
-	}
-	if s.insights == nil {
-		return subject, nil
 	}
 
 	found, err := s.insights.GetByID(ctx, insightports.GetInsightByIDRequest{
@@ -561,9 +544,6 @@ func (s *Service) bankReceipt(
 		ID:    receiptID.String(),
 		Label: "Bank receipt",
 	}
-	if s.receipts == nil {
-		return subject, nil
-	}
 
 	req := &bankreceiptports.GetBankReceiptRequest{ReceiptID: receiptID, TenantInfo: tenant}
 	receipt, err := s.receipts.Get(ctx, req)
@@ -611,17 +591,15 @@ func (s *Service) bankReceipt(
 		}
 	}
 
-	if s.workItems != nil {
-		item, iErr := s.workItems.GetActiveByReceiptID(ctx, tenant, receiptID)
-		switch {
-		case iErr != nil && !errortypes.IsNotFoundError(iErr):
-			s.logger.Warn("bank receipt subject: work item unavailable", zap.Error(iErr))
-		case item != nil:
-			notes["workItem"] = map[string]any{
-				"id":               item.ID.String(),
-				"status":           item.Status,
-				"assignedToUserId": item.AssignedToUserID.String(),
-			}
+	item, iErr := s.workItems.GetActiveByReceiptID(ctx, tenant, receiptID)
+	switch {
+	case iErr != nil && !errortypes.IsNotFoundError(iErr):
+		s.logger.Warn("bank receipt subject: work item unavailable", zap.Error(iErr))
+	case item != nil:
+		notes["workItem"] = map[string]any{
+			"id":               item.ID.String(),
+			"status":           item.Status,
+			"assignedToUserId": item.AssignedToUserID.String(),
 		}
 	}
 	subject.Notes = marshalNotes(notes)
@@ -643,9 +621,6 @@ func (s *Service) detentionOccurrence(
 		Type:  agent.SubjectDetentionOccurrence,
 		ID:    occurrenceID.String(),
 		Label: "Detention occurrence",
-	}
-	if s.occurrences == nil {
-		return subject, nil
 	}
 
 	occurrence, err := s.occurrences.GetByID(ctx, &detentionports.GetDetentionOccurrenceByIDRequest{
@@ -708,9 +683,6 @@ func (s *Service) worker(
 		ID:    workerID.String(),
 		Label: "Driver",
 	}
-	if s.workers == nil {
-		return subject, nil
-	}
 
 	entity, err := s.workers.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:             workerID,
@@ -738,9 +710,7 @@ func (s *Service) worker(
 		notes["physicalDueDate"] = entity.Profile.PhysicalDueDate
 		notes["mvrDueDate"] = entity.Profile.MVRDueDate
 	}
-	if s.credentials != nil {
-		notes["credentials"] = s.workerCredentials(ctx, tenant, workerID)
-	}
+	notes["credentials"] = s.workerCredentials(ctx, tenant, workerID)
 	subject.Notes = marshalNotes(notes)
 
 	return subject, nil
@@ -819,9 +789,6 @@ func (s *Service) carrierIntelEvent(
 		ID:    eventID.String(),
 		Label: "Carrier finding",
 	}
-	if s.carrierIntel == nil {
-		return subject, nil
-	}
 
 	events, err := s.carrierIntel.GetByIDs(ctx, tenant, []pulid.ID{eventID})
 	if err != nil {
@@ -874,9 +841,6 @@ func (s *Service) ediInboundFile(
 		ID:    fileID.String(),
 		Label: "EDI inbound file",
 	}
-	if s.ediFiles == nil {
-		return subject, nil
-	}
 
 	file, err := s.ediFiles.GetInboundFileByID(ctx, edimessageports.GetEDIInboundFileByIDRequest{
 		ID:              fileID,
@@ -925,9 +889,6 @@ func (s *Service) inboundMessage(
 		Type:  agent.SubjectInboundMessage,
 		ID:    messageID.String(),
 		Label: "Inbound message",
-	}
-	if s.inbound == nil {
-		return subject, nil
 	}
 
 	message, err := s.inbound.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
@@ -983,9 +944,6 @@ func (s *Service) report(
 		ID:    definitionID.String(),
 		Label: "Report",
 	}
-	if s.reports == nil {
-		return subject, nil
-	}
 
 	found, err := s.reports.GetByID(ctx, &reportports.GetReportDefinitionRequest{
 		TenantInfo:   tenant,
@@ -1022,9 +980,6 @@ func (s *Service) dashboard(
 		Type:  agent.SubjectDashboard,
 		ID:    dashboardID.String(),
 		Label: "Dashboard",
-	}
-	if s.dashboards == nil {
-		return subject, nil
 	}
 
 	found, err := s.dashboards.GetByID(ctx, &reportports.GetReportDashboardRequest{
@@ -1063,9 +1018,6 @@ func (s *Service) formulaTemplate(
 		ID:    templateID.String(),
 		Label: "Formula template",
 	}
-	if s.formulas == nil {
-		return subject, nil
-	}
 
 	found, err := s.formulas.GetByID(ctx, formulatemplateports.GetFormulaTemplateByIDRequest{
 		TemplateID: templateID,
@@ -1099,9 +1051,6 @@ func (s *Service) formulaLibrary(
 		Type:  agent.SubjectFormulaLibrary,
 		ID:    libraryID.String(),
 		Label: "Formula library",
-	}
-	if s.formulaLibraries == nil {
-		return subject, nil
 	}
 
 	found, err := s.formulaLibraries.GetByID(ctx, &formulalibraryports.GetLibraryByIDRequest{
@@ -1161,9 +1110,6 @@ func (s *Service) accountingConnection(
 		ID:    connectionID.String(),
 		Label: "Accounting connection",
 	}
-	if s.accounting == nil {
-		return subject, nil
-	}
 
 	found, err := s.accounting.GetByID(
 		ctx,
@@ -1202,9 +1148,6 @@ func (s *Service) accountingSyncRecord(
 		ID:    recordID.String(),
 		Label: "Accounting sync record",
 	}
-	if s.syncRecords == nil {
-		return subject, nil
-	}
 
 	found, err := s.syncRecords.GetByID(ctx, accountingsyncports.GetAccountingSyncRecordRequest{
 		TenantInfo: tenant,
@@ -1241,9 +1184,6 @@ func (s *Service) accountingInboundChange(
 		Type:  agent.SubjectAccountingInbound,
 		ID:    changeID.String(),
 		Label: "Payment recorded in the books",
-	}
-	if s.accountingInbound == nil {
-		return subject, nil
 	}
 
 	found, err := s.accountingInbound.GetByID(
@@ -1283,9 +1223,6 @@ func (s *Service) accountingDriftFinding(
 		ID:    findingID.String(),
 		Label: "Books differ from Trenova",
 	}
-	if s.accountingDrift == nil {
-		return subject, nil
-	}
 
 	found, err := s.accountingDrift.GetByID(
 		ctx,
@@ -1324,9 +1261,6 @@ func (s *Service) stopEtasFor(
 	tenant pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) map[pulid.ID]*stopeta.StopETA {
-	if s.stopEtas == nil {
-		return nil
-	}
 	rows, err := s.stopEtas.ListByShipmentIDs(ctx, tenant, []pulid.ID{shipmentID})
 	if err != nil {
 		s.logger.Warn("shipment subject: projected arrivals unavailable", zap.Error(err))

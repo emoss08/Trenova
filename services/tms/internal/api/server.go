@@ -27,7 +27,7 @@ type Params struct {
 	// Realtime ends its event streams as soon as shutdown begins. Shutdown
 	// otherwise waits on every open stream until its deadline, since a stream
 	// is a request that never finishes on its own.
-	Realtime realtimeports.RealtimeGateway `optional:"true"`
+	Realtime realtimeports.RealtimeGateway
 }
 
 type Server struct {
@@ -60,9 +60,7 @@ func NewServer(p Params) (*Server, error) {
 		WriteTimeout:      p.ServerConfig.WriteTimeout,
 		IdleTimeout:       p.ServerConfig.IdleTimeout,
 	}
-	if p.Realtime != nil {
-		httpServer.RegisterOnShutdown(p.Realtime.Drain)
-	}
+	httpServer.RegisterOnShutdown(p.Realtime.Drain)
 
 	server := &Server{
 		router:     router,

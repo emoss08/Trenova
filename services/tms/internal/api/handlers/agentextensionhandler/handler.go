@@ -23,7 +23,7 @@ type Params struct {
 	Service              *agentextensionservice.Service
 	Portals              *extensionportalservice.Service
 	WebWatches           *extensionwebwatchservice.Service
-	Waits                agentextensionports.WebWatchWaits `optional:"true"`
+	Waits                agentextensionports.WebWatchWaits
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }

@@ -40,15 +40,7 @@ type Service struct {
 var _ shipmentports.ShipmentQuickFilterBasisResolver = (*Service)(nil)
 
 func New(p Params) shipmentports.ShipmentQuickFilterBasisResolver {
-	return NewWithDependencies(p.ShipmentControlRepo, p.CostingService, time.Now)
-}
-
-func NewWithDependencies(
-	controls tenantports.ShipmentControlRepository,
-	costs CostProfileResolver,
-	now func() time.Time,
-) *Service {
-	return &Service{controls: controls, costs: costs, now: now}
+	return &Service{controls: p.ShipmentControlRepo, costs: p.CostingService, now: time.Now}
 }
 
 func (s *Service) Prepare(

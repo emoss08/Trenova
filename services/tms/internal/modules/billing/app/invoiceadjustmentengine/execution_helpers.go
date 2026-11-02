@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -19,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
-	"go.uber.org/zap"
 )
 
 func replacementQueueStatus(reviewRequired bool) billingqueue.Status {
@@ -178,24 +176,16 @@ func (s *Engine) createWriteOffJournalEntry(
 }
 
 func (s *Engine) creditMemoLedger() *invoiceledger.Poster {
-	policy := s.accountingPolicy
-	if policy == nil {
-		policy = accountingcontrolpolicyservice.New(
-			accountingcontrolpolicyservice.Params{Logger: zap.NewNop()},
-		)
-	}
 	poster := &invoiceledger.Poster{
 		Controls: s.accountingRepo,
-		Policy:   policy,
+		Policy:   s.accountingPolicy,
 		Writer: journalposting.Writer{
 			Periods:  s.fiscalPeriodRepo,
 			Numbers:  s.sequenceGenerator,
 			Journals: s.journalRepo,
 		},
 	}
-	if s.customerLedgerRepo != nil {
-		poster.Ledger = s.customerLedgerRepo
-	}
+	poster.Ledger = s.customerLedgerRepo
 	return poster
 }
 

@@ -196,10 +196,6 @@ func (s *Service) trustFor(
 	tenantInfo pagination.TenantInfo,
 	definitions []*agentdefinition.Definition,
 ) (map[pulid.ID][]*agenttooltrust.ToolTrust, error) {
-	if s.trust == nil {
-		return map[pulid.ID][]*agenttooltrust.ToolTrust{}, nil
-	}
-
 	ids := make([]pulid.ID, 0, len(definitions))
 	for _, definition := range definitions {
 		ids = append(ids, definition.ID)

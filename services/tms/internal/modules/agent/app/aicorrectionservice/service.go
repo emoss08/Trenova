@@ -10,8 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -71,8 +69,6 @@ type Params struct {
 	Contents    documentcontentports.DocumentContentRepository
 	Extractions documentaiextractionports.DocumentAIExtractionRepository
 	Retention   tenantports.DataRetentionRepository
-	Shadows     extractionshadowports.ExtractionShadowScorer  `optional:"true"`
-	Rollout     extractionrolloutports.ExtractionRolloutGuard `optional:"true"`
 }
 
 type Service struct {
@@ -82,8 +78,6 @@ type Service struct {
 	contents    contentReader
 	extractions extractionReader
 	retention   retentionReader
-	shadows     extractionshadowports.ExtractionShadowScorer
-	rollout     extractionrolloutports.ExtractionRolloutGuard
 	now         func() int64
 }
 
@@ -95,8 +89,6 @@ func New(p Params) aicorrectionports.AICorrectionService {
 		contents:    p.Contents,
 		extractions: p.Extractions,
 		retention:   p.Retention,
-		shadows:     p.Shadows,
-		rollout:     p.Rollout,
 		now:         timeutils.NowUnix,
 	}
 }
@@ -177,34 +169,7 @@ func (s *Service) CaptureShipmentDraft(
 	if err != nil {
 		return nil, err
 	}
-	s.scoreShadows(ctx, saved)
-	s.guardRollout(ctx, saved)
-
 	return saved, nil
-}
-
-func (s *Service) scoreShadows(ctx context.Context, correction *aicorrection.Correction) {
-	if s.shadows == nil {
-		return
-	}
-	if err := s.shadows.ScoreCorrection(ctx, correction); err != nil {
-		s.l.Warn("failed to score shadow extractions for ai correction",
-			zap.String("correctionId", correction.ID.String()),
-			zap.Error(err),
-		)
-	}
-}
-
-func (s *Service) guardRollout(ctx context.Context, correction *aicorrection.Correction) {
-	if s.rollout == nil {
-		return
-	}
-	if err := s.rollout.ObserveCorrection(ctx, correction); err != nil {
-		s.l.Warn("failed to check the extraction rollout for ai correction",
-			zap.String("correctionId", correction.ID.String()),
-			zap.Error(err),
-		)
-	}
 }
 
 func (s *Service) attachExtractionModel(

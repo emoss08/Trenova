@@ -22,7 +22,7 @@ func TestStartControlNumber_CreatesASequenceAndNeverMovesItBack(t *testing.T) {
 	defer cleanup()
 
 	repo := edicontrolnumberrepository.New(edicontrolnumberrepository.Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 	scope := editest.FirstTenant(t, ctx, db)

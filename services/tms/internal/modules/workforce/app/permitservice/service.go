@@ -507,10 +507,6 @@ func (s *service) resync(
 	tenantInfo pagination.TenantInfo,
 	actor *permissionports.RequestActor,
 ) {
-	if s.shipmentRepo == nil {
-		return
-	}
-
 	entity, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,
 		TenantInfo: tenantInfo,

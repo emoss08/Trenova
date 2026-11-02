@@ -31,7 +31,7 @@ type TransportParams struct {
 	Cipher     kernelports.SecretCipher
 	Transports []factoringsubmissionports.FactoringTransport `group:"factoring_transports"`
 	Audit      auditports.AuditService
-	Realtime   realtimeports.RealtimeService `                             optional:"true"`
+	Realtime   realtimeports.RealtimeService
 	Logger     *zap.Logger
 }
 

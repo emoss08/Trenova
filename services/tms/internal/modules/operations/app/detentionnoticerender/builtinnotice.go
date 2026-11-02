@@ -53,7 +53,7 @@ func RenderBuiltInNotice(
 	}
 
 	engine := builtInNoticeEngine()
-	allowed := templateregistry.NewRegistry().Paths(documenttemplate.KindDetentionNoticeEmail)
+	allowed := templateregistry.Default().Paths(documenttemplate.KindDetentionNoticeEmail)
 
 	var content NoticeContent
 	for _, channel := range []struct {

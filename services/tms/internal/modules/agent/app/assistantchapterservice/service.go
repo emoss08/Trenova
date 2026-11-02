@@ -27,8 +27,8 @@ type Params struct {
 	Conversations conversationports.ConversationRepository
 	Turns         assistantturnports.AssistantTurnRepository
 	Controls      tenantports.AgentControlRepository
-	Scheduler     assistantchapterports.ChapterScheduler `optional:"true"`
-	Realtime      realtimeports.RealtimeService          `optional:"true"`
+	Scheduler     assistantchapterports.ChapterScheduler
+	Realtime      realtimeports.RealtimeService
 	Logger        *zap.Logger
 }
 
@@ -171,7 +171,7 @@ func (s *Service) cueNaming(
 	turn *assistantchapterports.ChapterTurnRequest,
 	turnID pulid.ID,
 ) {
-	if s.scheduler == nil || turnID.IsNil() {
+	if turnID.IsNil() {
 		return
 	}
 	s.scheduler.Cue(ctx, &assistantchapterports.ChapterTurnRequest{
@@ -352,9 +352,6 @@ func (s *Service) announce(
 	tenant pagination.TenantInfo,
 	userID, threadID pulid.ID,
 ) {
-	if s.realtime == nil {
-		return
-	}
 	if err := s.realtime.PublishResourceInvalidation(
 		context.WithoutCancel(ctx),
 		&realtimeports.PublishResourceInvalidationRequest{

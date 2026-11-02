@@ -7,6 +7,7 @@ import { Switch } from "../kit/layout";
 import { Mark } from "../kit/marks";
 import { formatLatency, type LiveState } from "./provider-model";
 import { Button } from "@trenova/shared/components/ui/button";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 
 /** What the chain shows of a provider's week: from the usage summary and its daily series. */
 export type ProviderWeek = {
@@ -108,6 +109,11 @@ export function ProviderLine({
         ) : (
           <span className="pl-f dim">{t("backup")}</span>
         )}
+        {provider.nova && (
+          <span className="tg b" title={t("Runs Nova")}>
+            <NovaBadge size="xs" label={t("Runs Nova")} />
+          </span>
+        )}
         {provider.trusted && (
           <span className="tg b" title={t("Trusted")}>
             <Ic n="shield" s={10} />
@@ -144,7 +150,9 @@ export function ProviderLine({
         ) : (
           <Button
             type="button"
-            variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground"
+            variant="ghost"
+            size="icon-sm"
+            className="text-muted-foreground hover:text-foreground"
             title={t("Test connection")}
             aria-label={t("Test connection")}
             disabled={live === "run" || !canTest}

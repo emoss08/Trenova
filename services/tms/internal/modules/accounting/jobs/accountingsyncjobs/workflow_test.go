@@ -6,6 +6,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/jobs/accountingsyncjobs/accountingsynccontract"
+
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -34,8 +36,8 @@ func (s *WorkflowTestSuite) AfterTest(_, _ string) {
 	s.env.AssertExpectations(s.T())
 }
 
-func refreshPayload() *RefreshReferencePayload {
-	return &RefreshReferencePayload{
+func refreshPayload() *accountingsynccontract.RefreshReferencePayload {
+	return &accountingsynccontract.RefreshReferencePayload{
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		ConnectionID:   pulid.MustNew("acctc_"),
@@ -49,7 +51,7 @@ type finishRecorder struct {
 
 func (r *finishRecorder) record(
 	_ context.Context,
-	_ *RefreshReferencePayload,
+	_ *accountingsynccontract.RefreshReferencePayload,
 	failure string,
 ) error {
 	r.mu.Lock()
@@ -76,7 +78,7 @@ func (s *WorkflowTestSuite) TestRefreshPullsEveryKindThenRescoresAndAsksTheModel
 	var mu sync.Mutex
 	s.env.OnActivity(a.PullAccountingReferenceActivity, mock.Anything, mock.Anything, mock.Anything).
 		Return(
-			func(_ context.Context, _ *RefreshReferencePayload, kind accountingprovider.ReferenceKind) (*ReferenceKindResult, error) {
+			func(_ context.Context, _ *accountingsynccontract.RefreshReferencePayload, kind accountingprovider.ReferenceKind) (*ReferenceKindResult, error) {
 				mu.Lock()
 				defer mu.Unlock()
 				pulled = append(pulled, kind)
@@ -155,8 +157,8 @@ func (s *WorkflowTestSuite) TestRefreshKeepsDeterministicProposalsWhenTheModelFa
 	s.Equal([]string{""}, recorder.failures)
 }
 
-func connections(n int) []RefreshReferencePayload {
-	out := make([]RefreshReferencePayload, 0, n)
+func connections(n int) []accountingsynccontract.RefreshReferencePayload {
+	out := make([]accountingsynccontract.RefreshReferencePayload, 0, n)
 	for range n {
 		out = append(out, *refreshPayload())
 	}
@@ -172,7 +174,7 @@ func (s *WorkflowTestSuite) TestSweepStartsARefreshPerConnection() {
 	started := make([]pulid.ID, 0, len(page))
 	var mu sync.Mutex
 	s.env.OnWorkflow(RefreshAccountingReferenceWorkflow, mock.Anything, mock.Anything).Return(
-		func(_ workflow.Context, payload *RefreshReferencePayload) (*RefreshReferenceResult, error) {
+		func(_ workflow.Context, payload *accountingsynccontract.RefreshReferencePayload) (*RefreshReferenceResult, error) {
 			mu.Lock()
 			defer mu.Unlock()
 			started = append(started, payload.ConnectionID)
@@ -211,7 +213,7 @@ func (s *WorkflowTestSuite) TestSweepContinuesAsNewWhenThereIsAnotherPage() {
 func TestReferenceWorkflowIDIsPerConnection(t *testing.T) {
 	t.Parallel()
 	id := pulid.MustNew("acctc_")
-	if got := ReferenceWorkflowID(id); got != "accounting-reference:"+id.String() {
+	if got := accountingsynccontract.ReferenceWorkflowID(id); got != "accounting-reference:"+id.String() {
 		t.Fatalf("unexpected workflow id %q", got)
 	}
 }

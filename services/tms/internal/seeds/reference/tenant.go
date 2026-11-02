@@ -92,7 +92,7 @@ var TableChangeAlertAllowlist = perTenant(tenantSeed{
 var AdministratorPermissions = perTenant(tenantSeed{
 	name:        "administrator_permissions",
 	description: "Grants every registered resource and operation to the administrator role",
-	fingerprint: func() string { return permissioncatalog.NewRegistry().GrantFingerprint() },
+	fingerprint: func() string { return permissioncatalog.Default().GrantFingerprint() },
 	apply:       reconcileAdministratorPermissions,
 })
 
@@ -105,7 +105,7 @@ func reconcileAdministratorPermissions(
 		ctx,
 		db,
 		scope,
-		permissioncatalog.NewRegistry(),
+		permissioncatalog.Default(),
 	)
 	return result.GrantsAdded + result.GrantsExtended, err
 }

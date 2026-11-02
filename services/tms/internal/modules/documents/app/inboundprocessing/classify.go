@@ -147,10 +147,6 @@ func (s *Service) classify(
 		Reasoning:  "The message was not read by a model, so it goes to a person.",
 	}
 
-	if s.nova == nil {
-		return fallback, nil
-	}
-
 	var answer map[string]any
 	result, err := s.nova.Run(ctx, &llmports.NovaTask{
 		Name:         aitask.TaskInboundClassification,
@@ -187,10 +183,6 @@ func (s *Service) senderHints(
 	message *inboundmessage.InboundMessage,
 	tenantInfo pagination.TenantInfo,
 ) []*triage.SenderHint {
-	if s.hints == nil {
-		return nil
-	}
-
 	domain := stringutils.FirstNonEmpty(
 		message.SenderDomain,
 		emailutils.Domain(message.FromAddress),

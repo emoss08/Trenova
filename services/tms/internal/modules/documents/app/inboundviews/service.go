@@ -9,7 +9,7 @@ import (
 type Params struct {
 	fx.In
 
-	Now      func() int64 `optional:"true"`
+	Now      timeutils.Clock
 	ViewRepo inboundmessageports.TriageViewRepository
 }
 
@@ -20,9 +20,6 @@ type Service struct {
 
 func New(p Params) *Service {
 	now := p.Now
-	if now == nil {
-		now = timeutils.NowUnix
-	}
 	return &Service{
 		now:      now,
 		viewRepo: p.ViewRepo,

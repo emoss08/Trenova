@@ -1,5 +1,5 @@
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
-import type { ExtractionAccuracy } from "@/lib/graphql/extraction-eval";
+import type { ExtractionAccuracy } from "@/lib/graphql/extraction-accuracy";
 import {
   Table,
   TableBody,

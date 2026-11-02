@@ -28,6 +28,7 @@ type Params struct {
 	fx.In
 
 	Logger           *zap.Logger
+	Registry         *permissioncatalog.Registry
 	DefinitionRepo   reportports.ReportDefinitionRepository
 	RunRepo          reportports.ReportRunRepository
 	ScheduleRepo     reportports.ReportScheduleRepository
@@ -38,8 +39,8 @@ type Params struct {
 	ReferenceViews   permissionports.ReferenceViews
 	WorkflowStarter  kernelports.WorkflowStarter
 	Storage          kernelports.Client
-	AuditService     auditports.AuditService `optional:"true"`
-	Metrics          *metrics.Registry       `optional:"true"`
+	AuditService     auditports.AuditService
+	Metrics          *metrics.Registry
 	ReportingConfig  *reportingconfig.Config
 }
 
@@ -63,14 +64,12 @@ type Service struct {
 //nolint:gocritic // fx.In parameter structs must be passed by value
 func New(p Params) (*Service, error) {
 	var reportMetrics *documentmetrics.Report
-	if p.Metrics != nil {
-		reportMetrics = p.Metrics.Report
-	}
+	reportMetrics = p.Metrics.Report
 
 	access, err := reportaccess.New(reportaccess.Params{
 		Catalog:  p.Engine.Catalog(),
 		Engine:   p.PermissionEngine,
-		Registry: permissioncatalog.NewRegistry(),
+		Registry: p.Registry,
 		Views:    p.ReferenceViews,
 		Fields:   p.FieldAccess,
 	})

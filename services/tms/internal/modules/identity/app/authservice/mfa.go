@@ -47,10 +47,6 @@ func (s *Service) issueMFAChallenge(
 	attempt *authAttempt,
 	federation *iamports.MFAChallengeFederation,
 ) (*tenantports.LoginResponse, error) {
-	if s.mfa == nil || s.challenges == nil {
-		return nil, nil //nolint:nilnil // no second factor is configured for this process
-	}
-
 	active, err := s.mfa.HasActiveFactor(ctx, usr.ID)
 	if err != nil {
 		return nil, err
@@ -104,11 +100,6 @@ func (s *Service) VerifyMFAChallenge(
 	attempt := newAuthAttempt(iamports.AuthEventProviderMFA)
 	attempt.aal = mfaAssuranceLevel
 	defer func() { s.recordAuthAttempt(ctx, attempt, err) }()
-
-	if s.mfa == nil || s.challenges == nil {
-		attempt.fail(authErrorMFAChallenge)
-		return nil, errMFAChallengeExpired
-	}
 
 	tokenHash := tokenutils.Hash(strings.TrimSpace(req.ChallengeToken))
 	challenge, err := s.challenges.Get(ctx, tokenHash)

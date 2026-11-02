@@ -29,7 +29,7 @@ var (
 
 var plannedDomainPackages = []string{
 	"usstate", "platformcatalog", "editchange", "configspec", "settingversion",
-	"tenant", "iam", "permission", "apikey", "session", "onboarding",
+	"tenant", "iam", "permission", "apikey", "session",
 	"instancebootstrap", "platformplan", "subscription",
 	"audit", "notification", "email", "customfield", "homelayout", "pagedraft",
 	"pagefavorite", "sidebarpreference", "tablelayout", "tableconfiguration",
@@ -46,8 +46,7 @@ var plannedDomainPackages = []string{
 	"worker", "permit", "telematics",
 	"document", "documentaiextraction", "documentcontent", "documentpacketrule",
 	"documentsearchprojection", "documenttemplate",
-	"documentupload", "capture", "inboundmessage", "extractioneval",
-	"extractionrollout", "extractionshadow",
+	"documentupload", "capture", "inboundmessage",
 	"rateagreement", "rateconfirmation", "rateimport", "ratematrix", "ratequote",
 	"ratesimulation", "ratezone", "fuelsurcharge", "formulatemplate",
 	"shipment", "shipmentevent", "shipmentstate", "shipmentsuggestion", "order",
@@ -65,7 +64,7 @@ var plannedDomainPackages = []string{
 	"agent", "agentdefinition", "agentdryrun", "agentextension", "agentlint",
 	"agentquality", "agentroster", "agentshadow", "agentwait", "aiaudit",
 	"aicontrolsummary", "aicorrection", "aifeedback", "aiprovider", "airetrieval",
-	"aitraining", "aituneup", "aiusage", "assistantartifact", "conversation",
+	"aituneup", "aiusage", "assistantartifact", "conversation",
 	"conversationschedule", "deskcase", "insight", "watchtower", "briefing",
 	"shipmentbrief", "shipmentimportchat",
 }

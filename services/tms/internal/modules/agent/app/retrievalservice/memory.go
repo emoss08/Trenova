@@ -101,9 +101,6 @@ func (s *Searcher) memoryQuery(
 	if req.Query.Usable() {
 		return req.Query, ""
 	}
-	if s.vectorizer == nil {
-		return retrievalports.QueryVector{}, airetrieval.UnavailableReasonNoProvider
-	}
 	if strings.TrimSpace(req.Text) == "" {
 		reason := req.Query.Reason
 		if reason == "" {
@@ -190,7 +187,6 @@ func similarCandidates(
 	similar []retrievalports.MemorySimilarity,
 	floor float64,
 ) []pulid.ID {
-
 	known := make(map[pulid.ID]struct{}, len(candidates))
 	for _, memory := range candidates {
 		known[memory.ID] = struct{}{}

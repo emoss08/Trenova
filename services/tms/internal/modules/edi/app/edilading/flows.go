@@ -33,7 +33,7 @@ type FlowsParams struct {
 	Logger  *zap.Logger
 	Runtime *Runtime
 	Flows   ladingports.FlowRepository
-	Timers  ladingports.FlowTimerScheduler `optional:"true"`
+	Timers  ladingports.FlowTimerScheduler
 }
 
 type Flows struct {
@@ -347,7 +347,7 @@ func (f *Flows) schedule(
 	instance *ladingproject.FlowInstance,
 	previous *int64,
 ) {
-	if f.timers == nil || instance.WakeAt == nil {
+	if instance.WakeAt == nil {
 		return
 	}
 	if previous != nil && *previous == *instance.WakeAt {

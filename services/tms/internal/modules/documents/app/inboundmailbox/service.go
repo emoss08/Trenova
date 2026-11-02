@@ -14,13 +14,13 @@ type Params struct {
 	fx.In
 
 	// Audit records mailbox configuration changes.
-	Audit        auditports.AuditService `optional:"true"`
-	Email        emailports.EmailService `optional:"true"`
+	Audit        auditports.AuditService
+	Email        emailports.EmailService
 	Encryption   SecretKeeper
 	Logger       *zap.Logger
 	MailboxRepo  inboundmessageports.InboundMailboxRepository
 	MailboxState inboundmessageports.TriageMailboxStateRepository
-	Now          func() int64 `optional:"true"`
+	Now          timeutils.Clock
 }
 
 type Service struct {
@@ -36,9 +36,6 @@ type Service struct {
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	now := p.Now
-	if now == nil {
-		now = timeutils.NowUnix
-	}
 	return &Service{
 		audit:        p.Audit,
 		email:        p.Email,

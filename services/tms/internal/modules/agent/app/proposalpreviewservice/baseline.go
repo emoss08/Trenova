@@ -110,7 +110,7 @@ func (s *Service) keepBaseline(
 	req *agentruntimeports.ProposalBaselineRequest,
 	result *agentruntimeports.ProposalBaselineResult,
 ) {
-	if s.baselines == nil || result.Preview == nil || req.ProposalID.IsNil() {
+	if result.Preview == nil || req.ProposalID.IsNil() {
 		return
 	}
 
@@ -162,7 +162,7 @@ func (s *Service) markChangedSinceProposed(
 	tenant pagination.TenantInfo,
 	drafts []*draft,
 ) {
-	if s.baselines == nil || len(drafts) == 0 {
+	if len(drafts) == 0 {
 		return
 	}
 
@@ -261,24 +261,22 @@ func (s *Service) recordedFor(
 	proposal *agent.AgentProposal,
 	a readerAccess,
 ) (*agentpreview.ProposalPreview, error) {
-	if s.decisions != nil {
-		decisions, err := s.decisions.ListByProposals(
-			ctx,
-			agentdecisionports.ListAgentDecisionsByProposalsRequest{
-				ProposalIDs: []pulid.ID{proposal.ID},
-				TenantInfo:  tenantOf(proposal),
-			},
-		)
-		if err != nil {
-			return nil, err
+	decisions, err := s.decisions.ListByProposals(
+		ctx,
+		agentdecisionports.ListAgentDecisionsByProposalsRequest{
+			ProposalIDs: []pulid.ID{proposal.ID},
+			TenantInfo:  tenantOf(proposal),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	for _, decision := range decisions {
+		if decision == nil || decision.Preview == nil {
+			continue
 		}
-		for _, decision := range decisions {
-			if decision == nil || decision.Preview == nil {
-				continue
-			}
-			if recorded := s.recorded(ctx, decision, a); recorded != nil {
-				return recorded, nil
-			}
+		if recorded := s.recorded(ctx, decision, a); recorded != nil {
+			return recorded, nil
 		}
 	}
 

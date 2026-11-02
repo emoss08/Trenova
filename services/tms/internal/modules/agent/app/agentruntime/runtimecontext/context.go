@@ -36,16 +36,16 @@ type BuilderParams struct {
 	Organizations tenantports.OrganizationRepository
 	Users         tenantports.UserRepository
 	Runtime       agentruntimeports.AgentRuntime
-	Memories      agentmemoryports.AgentMemoryService `optional:"true"`
-	Guide         productguideports.ProductGuide      `optional:"true"`
+	Memories      agentmemoryports.AgentMemoryService
+	Guide         productguideports.ProductGuide
 	// Definitions and Permissions name the agents a conversation's agent may
-	// hand work to. Without them it is offered none.
-	Definitions agentdefinitionports.AgentDefinitionRepository `optional:"true"`
-	Permissions permissionports.PermissionEngine               `optional:"true"`
-	Vectorizer  retrievalports.QueryVectorizer                 `optional:"true"`
-	// Profiles tells the turn what kind of business the organization is and
-	// what the person works on. Without it the turn goes without.
-	Profiles agentprofileports.Reader `optional:"true"`
+	// hand work to.
+	Definitions agentdefinitionports.AgentDefinitionRepository
+	Permissions permissionports.PermissionEngine
+	Vectorizer  retrievalports.QueryVectorizer
+	// Profiles tells the turn what kind of business the organization is and what the person works
+	// on.
+	Profiles agentprofileports.Reader
 }
 
 type Builder struct {
@@ -124,16 +124,14 @@ func (b *Builder) Build(
 	// about: a correction to dispatch_assign_move belongs in the prompt of an agent
 	// that can assign, and what was recorded about Acme belongs in a turn
 	// about one of Acme's shipments. The prompt keeps what its budget holds.
-	if definition.HasContextProvider(agentdefinition.ContextMemory) && b.memories != nil {
+	if definition.HasContextProvider(agentdefinition.ContextMemory) {
 		records := rc.MemoryRecords()
 		toolNames := agentturn.ToolNamesOf(rc.Tools)
 		wg.Go(func() { memories = b.readMemories(ctx, req, records, toolNames, tenant) })
 	}
-	if b.profiles != nil {
-		wg.Go(
-			func() { profiles = b.readProfiles(ctx, definition, req.Actor.PersonUserID(), tenant) },
-		)
-	}
+	wg.Go(
+		func() { profiles = b.readProfiles(ctx, definition, req.Actor.PersonUserID(), tenant) },
+	)
 	wg.Wait()
 
 	if delegator != "" {
@@ -273,10 +271,6 @@ func (b *Builder) describeTrenova(
 	rc *agentturn.RuntimeContext,
 	req *agentruntimeports.RuntimeContextRequest,
 ) {
-	if b.guide == nil {
-		return
-	}
-
 	rc.Guide = req.Trigger == agent.RunTriggerChat &&
 		req.Actor != nil &&
 		req.Actor.PrincipalType == permissionports.PrincipalTypeUser &&
@@ -316,8 +310,7 @@ func (b *Builder) delegates(
 	req *agentruntimeports.RuntimeContextRequest,
 ) []agentturn.RuntimeDelegate {
 	definition := req.Definition
-	if req.Trigger != agent.RunTriggerChat || !definition.Delegates() ||
-		b.definitions == nil || req.Actor == nil {
+	if req.Trigger != agent.RunTriggerChat || !definition.Delegates() || req.Actor == nil {
 		return nil
 	}
 	usable := usableagents.For(ctx, b.permissions, req.Actor, b.logger)
@@ -383,8 +376,8 @@ func (b *Builder) memoryQuery(
 	ctx context.Context,
 	req *retrievalports.QueryVectorRequest,
 ) retrievalports.QueryVector {
-	if b.vectorizer == nil || req == nil || strings.TrimSpace(req.Text) == "" ||
-		req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
+	if req == nil || strings.TrimSpace(req.Text) == "" || req.TenantInfo.OrgID.IsNil() ||
+		req.TenantInfo.BuID.IsNil() {
 		return retrievalports.QueryVector{}
 	}
 

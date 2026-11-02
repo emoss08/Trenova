@@ -50,24 +50,20 @@ type Params struct {
 	DB        kernelports.Transactor
 	Runs      agentruntimeports.AgentRunRepository
 	Proposals agentproposalports.AgentProposalRepository
-	// Trust learns from a tool that ran on its own and failed. Optional, so
-	// the recorder still stores proposals where no ledger is wired.
-	Trust agenttrustports.AgentTrustService `optional:"true"`
+	// Trust learns from a tool that ran on its own and failed.
+	Trust agenttrustports.AgentTrustService
 	// Notifier tells the people who can decide that a background run left
-	// something waiting. Optional for the same reason.
-	Notifier agentproposalports.AgentProposalNotifier `optional:"true"`
-	// Plans groups a run's pending proposals into one decision. Without it
-	// every proposal stands on its own, which is how things worked before.
-	Plans PlanStore `optional:"true"`
+	// something waiting.
+	Notifier agentproposalports.AgentProposalNotifier
+	// Plans groups a run's pending proposals into one decision.
+	Plans PlanStore
 	// Activity tells connected clients a proposal or plan is waiting.
-	Activity agentactivityports.AgentActivityPublisher `optional:"true"`
-	// Watchtower puts what is waiting on a person onto the one feed they
-	// read; without it the decision still stands, unannounced.
-	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
-	// ScriptSteps reads back the script a batch came from, so the plan keeps
-	// it after the run's steps are swept. Without it a batch is filed with
-	// its script step's key alone.
-	ScriptSteps ScriptStepReader `optional:"true"`
+	Activity agentactivityports.AgentActivityPublisher
+	// Watchtower puts what is waiting on a person onto the one feed they read.
+	Watchtower watchtowerports.WatchtowerProjector
+	// ScriptSteps reads back the script a batch came from, so the plan keeps it after the run's
+	// steps are swept.
+	ScriptSteps ScriptStepReader
 }
 
 // ScriptStepReader is the one read the recorder makes on the step ledger.
@@ -355,10 +351,6 @@ func planDefinition(groups []*runGroup, plan *agentplan.AgentPlan) *agentdefinit
 // proposal are one decision; a failure on the last of them must not leave the
 // first ones waiting on a person with the rest missing.
 func (s *Service) inTx(ctx context.Context, fn func(context.Context) error) error {
-	if s.tx == nil {
-		return fn(ctx)
-	}
-
 	return s.tx.Transact(ctx, kernelports.TxOptions{}, fn)
 }
 
@@ -565,7 +557,7 @@ func (s *Service) openPlan(
 ) (*agentplan.AgentPlan, error) {
 	actor, groups, steps := opening.actor, opening.groups, opening.steps
 	scriptStepKey, now := opening.scriptStepKey, opening.now
-	if s.plans == nil || len(steps) < 2 {
+	if len(steps) < 2 {
 		return nil, nil
 	}
 
@@ -644,10 +636,6 @@ func (s *Service) notifyPending(
 	run *agent.AgentRun,
 	proposals []*agent.AgentProposal,
 ) {
-	if s.notifier == nil {
-		return
-	}
-
 	if err := s.notifier.NotifyPending(ctx, agentproposalports.PendingProposalsNotice{
 		Definition: definition,
 		Run:        run,
@@ -811,7 +799,7 @@ func nonNilParams(params map[string]any) map[string]any {
 // and did not go through. A person never decided on it, so nothing else would
 // count the failure against the tier that let it run unasked.
 func (s *Service) recordAutomaticFailure(ctx context.Context, proposal *agent.AgentProposal) {
-	if s.trust == nil || proposal.Status != agent.ProposalStatusExecutionFailed {
+	if proposal.Status != agent.ProposalStatusExecutionFailed {
 		return
 	}
 
@@ -833,10 +821,6 @@ func (s *Service) announce(
 	proposals []*agent.AgentProposal,
 	plans []*agentplan.AgentPlan,
 ) {
-	if s.activity == nil {
-		return
-	}
-
 	auditActor := actor.AuditActorOrSystem()
 	for _, proposal := range proposals {
 		s.activity.ProposalChanged(ctx, proposal, auditActor, agentactivityports.ActivityCreated)
@@ -851,7 +835,7 @@ func (s *Service) projectPlan(
 	definition *agentdefinition.Definition,
 	plan *agentplan.AgentPlan,
 ) {
-	if s.watchtower == nil || plan == nil {
+	if plan == nil {
 		return
 	}
 
@@ -865,10 +849,6 @@ func (s *Service) project(
 	definition *agentdefinition.Definition,
 	proposals []*agent.AgentProposal,
 ) {
-	if s.watchtower == nil {
-		return
-	}
-
 	name := definitionName(definition)
 	for _, proposal := range proposals {
 		if proposal == nil || proposal.Status != agent.ProposalStatusPending ||
@@ -896,7 +876,7 @@ func (s *Service) scriptOrigin(
 	req *RecordRequest,
 	scriptStepKey string,
 ) *agentplan.ScriptOrigin {
-	if s.scripts == nil || scriptStepKey == "" {
+	if scriptStepKey == "" {
 		return nil
 	}
 	owner := pulid.Nil

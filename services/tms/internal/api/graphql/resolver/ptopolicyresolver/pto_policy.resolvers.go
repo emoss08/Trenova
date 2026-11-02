@@ -198,13 +198,6 @@ func (r *MutationResolver) RunPTOAccrual(ctx context.Context, input gqlmodel.Run
 	}
 
 	if input.WorkerID == nil || *input.WorkerID == "" {
-		if !r.WorkflowStarter.Enabled() {
-			return nil, errortypes.NewValidationError(
-				"workerId",
-				errortypes.ErrInvalidOperation,
-				"Background jobs are disabled; run accrual for a single worker instead",
-			)
-		}
 		run, startErr := r.WorkflowStarter.StartWorkflow(ctx, client.StartWorkflowOptions{
 			ID:        fmt.Sprintf("pto-accrual-%s-%d", info.OrgID.String(), timeutils.NowUnix()),
 			TaskQueue: temporaltype.TaskQueueSystem.String(),

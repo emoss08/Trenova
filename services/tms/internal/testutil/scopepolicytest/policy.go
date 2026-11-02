@@ -11,7 +11,7 @@ type Policy struct {
 }
 
 func Enforcing() *Policy {
-	return &Policy{Registry: permissioncatalog.NewRegistry(), DatabaseEnforcing: true}
+	return &Policy{Registry: permissioncatalog.Default(), DatabaseEnforcing: true}
 }
 
 func (p *Policy) Enforced(resource string, scope permission.DataScope) bool {

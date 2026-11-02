@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
@@ -54,11 +53,9 @@ func (s *Service) PlanSend(
 		return nil, err
 	}
 	var profile *email.Profile
-	if s.emailRepo != nil {
-		profile, err = s.emailRepo.GetAssignedProfile(ctx, req.TenantInfo, email.PurposeBilling)
-		if err != nil && !errortypes.IsNotFoundError(err) {
-			return nil, err
-		}
+	profile, err = s.emailRepo.GetAssignedProfile(ctx, req.TenantInfo, email.PurposeBilling)
+	if err != nil && !errortypes.IsNotFoundError(err) {
+		return nil, err
 	}
 	recipients := invoicedocument.ResolveRecipients(entity, deliveryProfile.Email)
 	if err = s.resolveDeliveryOrganization(ctx, deliveryProfile, req.TenantInfo); err != nil {
@@ -204,12 +201,6 @@ func (s *Service) Send(
 	req *invoiceports.InvoiceSendRequest,
 	actor *permissionports.RequestActor,
 ) (*invoiceports.InvoiceSendResult, error) {
-	if s.documentService == nil {
-		return nil, errortypes.NewBusinessError("Invoice document delivery is not configured")
-	}
-	if !s.workflowStarter.Enabled() {
-		return nil, kernelports.ErrWorkflowStarterDisabled
-	}
 
 	plan, err := s.PlanSend(ctx, &invoiceports.InvoiceSendPlanRequest{
 		InvoiceID:  req.InvoiceID,
@@ -282,10 +273,6 @@ func (s *Service) SendFromWorkflow(
 		}
 	}()
 
-	if s.emailService == nil || s.documentService == nil {
-		return nil, errortypes.NewBusinessError("Invoice email delivery is not configured")
-	}
-
 	plan, err := s.PlanSend(ctx, &invoiceports.InvoiceSendPlanRequest{
 		InvoiceID:  req.InvoiceID,
 		TenantInfo: req.TenantInfo,
@@ -302,9 +289,6 @@ func (s *Service) SendFromWorkflow(
 		)
 	}
 
-	if s.emailRepo == nil {
-		return nil, errortypes.NewBusinessError("Email profile repository is not configured")
-	}
 	profile, err := s.emailRepo.GetAssignedProfile(ctx, req.TenantInfo, email.PurposeBilling)
 	if err != nil {
 		return nil, err
@@ -558,7 +542,7 @@ func (s *Service) checkSuppressedRecipients(
 	profile *email.Profile,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	if s.emailSenders == nil || profile == nil || len(plan.Recipients.To) == 0 {
+	if profile == nil || len(plan.Recipients.To) == 0 {
 		return nil
 	}
 	sender, err := s.emailSenders.ResolveSender(ctx, &emailports.SendEmailRequest{

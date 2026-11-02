@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/novamodel"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -142,6 +143,7 @@ func batchRuns(req *llmports.BatchCompletionRequest) ([]*completionengine.RunReq
 		run := completionengine.StructuredRun(&item.Request)
 		run.TenantInfo = req.TenantInfo
 		run.Task = task
+		run.Nova = req.Nova
 		runs = append(runs, run)
 	}
 
@@ -234,11 +236,14 @@ func (s *Batch) batchCall(provider *aiprovider.Provider, apiKey string) *modelad
 	}
 }
 
+// batchProvider is the provider that took a batch. A batch of Nova's tasks
+// reads it as Nova calls it, so the answers are priced as Nova's model.
 func (s *Batch) batchProvider(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	providerID pulid.ID,
 	batchID string,
+	nova bool,
 ) (*aiprovider.Provider, modeladapter.BatchRunner, error) {
 	if !s.AI.AIEnabled() {
 		return nil, nil, errortypes.NewBusinessError(completionengine.AIDisabledMessage)
@@ -259,6 +264,9 @@ func (s *Batch) batchProvider(
 			"The AI provider that took this batch no longer exists",
 		)
 	}
+	if nova {
+		provider = novamodel.Provider(provider)
+	}
 
 	adapter, err := s.Adapters.Get(provider.Kind)
 	if err != nil {
@@ -276,7 +284,13 @@ func (s *Batch) BatchStatus(
 	ctx context.Context,
 	req *llmports.BatchStatusRequest,
 ) (*llmports.BatchStatus, error) {
-	provider, runner, err := s.batchProvider(ctx, req.TenantInfo, req.ProviderID, req.BatchID)
+	provider, runner, err := s.batchProvider(
+		ctx,
+		req.TenantInfo,
+		req.ProviderID,
+		req.BatchID,
+		req.Nova,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -309,7 +323,13 @@ func (s *Batch) BatchStatus(
 }
 
 func (s *Batch) CancelBatch(ctx context.Context, req *llmports.BatchCancelRequest) error {
-	provider, runner, err := s.batchProvider(ctx, req.TenantInfo, req.ProviderID, req.BatchID)
+	provider, runner, err := s.batchProvider(
+		ctx,
+		req.TenantInfo,
+		req.ProviderID,
+		req.BatchID,
+		req.Nova,
+	)
 	if err != nil {
 		return err
 	}
@@ -329,7 +349,13 @@ func (s *Batch) BatchResults(
 	ctx context.Context,
 	req *llmports.BatchResultsRequest,
 ) (map[string]llmports.BatchItemResult, error) {
-	provider, runner, err := s.batchProvider(ctx, req.TenantInfo, req.ProviderID, req.BatchID)
+	provider, runner, err := s.batchProvider(
+		ctx,
+		req.TenantInfo,
+		req.ProviderID,
+		req.BatchID,
+		req.Nova,
+	)
 	if err != nil {
 		return nil, err
 	}

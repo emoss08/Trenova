@@ -32,7 +32,7 @@ type Params struct {
 
 	Logger      *zap.Logger
 	Repo        aianalyticsports.AnalyticsRepository
-	Cache       aianalyticsports.AnalyticsCache `optional:"true"`
+	Cache       aianalyticsports.AnalyticsCache
 	Providers   aiproviderports.AIProviderRepository
 	Definitions agentdefinitionports.AgentDefinitionRepository
 }
@@ -345,9 +345,6 @@ func (s *Service) cached(
 	ctx context.Context,
 	key *aianalyticsports.CacheKey,
 ) (*aianalyticsports.CacheKey, *aianalyticsports.Analytics) {
-	if s.cache == nil {
-		return nil, nil
-	}
 	epoch, err := s.cache.Epoch(ctx, key.Request.TenantInfo)
 	if err != nil {
 		s.l.Warn("failed to read the ai analytics epoch", zap.Error(err))

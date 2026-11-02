@@ -19,7 +19,7 @@ func TestInviteTokensKeepTheirPurposeAndStayOutOfTheResetAllowance(t *testing.T)
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
 	now := timeutils.NowUnix()

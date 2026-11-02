@@ -27,7 +27,7 @@ type Params struct {
 	ContentScanConfig *contentscanconfig.Config
 	Audit             auditports.AuditService
 	Logger            *zap.Logger
-	Lifecycle         fx.Lifecycle `optional:"true"`
+	Lifecycle         fx.Lifecycle
 }
 
 type Service struct {
@@ -46,9 +46,7 @@ func New(p Params) contentscanports.Gate {
 		scanner = clamav.New(cfg.ClamAV)
 	}
 	svc := NewWithScanner(scanner, cfg.FailOpen, p.Audit, p.Logger)
-	if p.Lifecycle != nil {
-		p.Lifecycle.Append(fx.Hook{OnStart: svc.announce})
-	}
+	p.Lifecycle.Append(fx.Hook{OnStart: svc.announce})
 	return svc
 }
 

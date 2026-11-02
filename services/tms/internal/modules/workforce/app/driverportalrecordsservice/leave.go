@@ -71,9 +71,6 @@ func (s *Service) MyLeave(
 	if err != nil {
 		return nil, err
 	}
-	if s.leave == nil {
-		return &PortalLeave{Cases: []*PortalLeaveCase{}}, nil
-	}
 
 	entitlement, err := s.leave.Entitlement(ctx, tenantInfo, wrk.ID, timeutils.NowUnix())
 	if err != nil {
@@ -141,9 +138,6 @@ func (s *Service) leaveVisible(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) (bool, error) {
-	if s.leave == nil {
-		return false, nil
-	}
 	count, err := s.leave.CountCases(ctx, &workerleaveports.ListLeaveCasesRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,

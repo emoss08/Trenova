@@ -204,7 +204,7 @@ func (s *Service) applyRules(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
 ) *inboundmessageports.RuleApplication {
-	if s.ruleEvaluator == nil || !message.IsWaiting() {
+	if !message.IsWaiting() {
 		return nil
 	}
 

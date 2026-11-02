@@ -90,9 +90,6 @@ func (s *Access) profileHolds(
 }
 
 func (s *Access) LooksUp(name string) bool {
-	if s.queryTools == nil {
-		return false
-	}
 	tool, ok := s.queryTools.Get(name)
 
 	return ok && agenttoolports.EffectOf(tool) == agenttooltrust.ToolEffectLookup
@@ -109,7 +106,7 @@ func (s *Access) beyondFor(
 	mode ProfileMode,
 	held []string,
 ) map[string]agent.AutonomyTier {
-	if !reachesBeyond(req, mode) || s.definitions == nil {
+	if !reachesBeyond(req, mode) {
 		return nil
 	}
 	others, err := usableagents.Others(ctx, &usableagents.OthersRequest{

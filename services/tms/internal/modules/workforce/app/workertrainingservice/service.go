@@ -40,7 +40,7 @@ type Params struct {
 	WorkerRepo   workerports.WorkerRepository
 	DocumentRepo documentports.DocumentRepository
 	AuditService auditports.AuditService
-	Realtime     realtimeports.RealtimeService `optional:"true"`
+	Realtime     realtimeports.RealtimeService
 }
 
 type Service struct {
@@ -78,7 +78,7 @@ type auditParams struct {
 }
 
 func (s *Service) audit(p *auditParams) {
-	if s.auditService == nil || p.userID.IsNil() {
+	if p.userID.IsNil() {
 		return
 	}
 	params := &auditports.LogActionParams{
@@ -148,9 +148,6 @@ func (s *Service) publish(
 	recordID pulid.ID,
 	userID pulid.ID,
 ) {
-	if s.realtime == nil {
-		return
-	}
 	actorType := permissionports.PrincipalTypeUser
 	if userID.IsNil() {
 		actorType = permissionports.PrincipalTypeSystem

@@ -27,8 +27,8 @@ type Params struct {
 	Logger      *zap.Logger
 	Definitions agentdefinitionports.AgentDefinitionRepository
 	RunService  agentruntimeports.AgentRunService
-	Plans       platformplanports.PlanService    `optional:"true"`
-	Waits       agentwaitports.AgentWaitNotifier `optional:"true"`
+	Plans       platformplanports.PlanService
+	Waits       agentwaitports.AgentWaitNotifier
 }
 
 type Publisher struct {
@@ -111,9 +111,7 @@ func (p *Publisher) Publish(ctx context.Context, event *agenteventports.AgentEve
 	// A wait is the agent's own work parked on what this event says
 	// happened. It is told before the plan is consulted: an organization
 	// without automated agents still has conversations that wait.
-	if p.waits != nil {
-		p.waits.NotifyEvent(ctx, event)
-	}
+	p.waits.NotifyEvent(ctx, event)
 	// A file read for a conversation is shown there whatever the plan says
 	// of automated agents: the person asked for it by attaching it.
 	if event.Kind == agenttrigger.EventDocumentExtracted {

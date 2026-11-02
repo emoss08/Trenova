@@ -28,7 +28,7 @@ type Params struct {
 	Records    accountingsyncports.AccountingSyncRecordRepository
 	Backfills  accountingsyncports.AccountingBackfillRepository
 	Enqueuer   *accountingsyncenqueue.Enqueuer
-	Dispatcher accountingsyncports.AccountingSyncDispatcher `optional:"true"`
+	Dispatcher accountingsyncports.AccountingSyncDispatcher
 	Effects    *accountingsynceffects.Effects
 }
 
@@ -54,11 +54,6 @@ func (s *Service) RequestBackfill(
 	ctx context.Context,
 	req *accountingsyncports.RequestAccountingBackfillRequest,
 ) (*accountingbackfill.AccountingBackfill, error) {
-	if s.dispatcher == nil {
-		return nil, errortypes.NewBusinessError(
-			"Background work is not available on this server, so a backfill cannot run",
-		)
-	}
 	conn, err := s.effects.SyncingConnection(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
 		return nil, err
@@ -232,7 +227,7 @@ func (s *Service) ChangeBackfill(
 		Previous:   before,
 		Comment:    comment,
 	})
-	if req.Action == accountingsyncports.AccountingBackfillResume && s.dispatcher != nil {
+	if req.Action == accountingsyncports.AccountingBackfillResume {
 		if err = s.dispatcher.StartBackfill(ctx, updated); err != nil {
 			return updated, err
 		}

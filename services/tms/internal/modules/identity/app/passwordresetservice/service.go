@@ -17,10 +17,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -58,9 +56,6 @@ type Params struct {
 	Templates        documenttemplateports.DocumentTemplateResolver
 	AuditService     auditports.AuditService
 	AuthEvents       iamports.AuthEventRecorder
-	Plans            platformplanports.PlanService           `optional:"true"`
-	PlatformEmail    kernelports.PlatformEmailService        `optional:"true"`
-	PlatformInvites  kernelports.PlatformAccountInviteSender `optional:"true"`
 	SecurityConfig   *securityconfig.Config
 	Logger           *zap.Logger
 }
@@ -74,9 +69,6 @@ type Service struct {
 	templates    documenttemplateports.DocumentTemplateResolver
 	audit        auditports.AuditService
 	authEvents   iamports.AuthEventRecorder
-	plans        platformplanports.PlanService
-	platform     kernelports.PlatformEmailService
-	invites      kernelports.PlatformAccountInviteSender
 	cfg          *securityconfig.Config
 	l            *zap.Logger
 }
@@ -91,9 +83,6 @@ func New(p Params) *Service {
 		templates:    p.Templates,
 		audit:        p.AuditService,
 		authEvents:   p.AuthEvents,
-		plans:        p.Plans,
-		platform:     p.PlatformEmail,
-		invites:      p.PlatformInvites,
 		cfg:          p.SecurityConfig,
 		l:            p.Logger.Named("service.password-reset"),
 	}
@@ -270,10 +259,6 @@ type adminLinkAudit struct {
 }
 
 func (s *Service) auditAdminLink(ctx context.Context, entry *adminLinkAudit) {
-	if s.audit == nil {
-		return
-	}
-
 	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceUser,
 		ResourceID:     entry.user.ID.String(),
@@ -509,29 +494,6 @@ func (s *Service) sendResetEmail(
 	ttl := s.cfg.PasswordReset.GetTokenTTL()
 	idempotencyKey := "password-reset-" + tokenutils.Hash(rawToken)
 
-	if s.usesPlatformSender(ctx, tenantInfo) {
-		if err = s.platform.SendPasswordReset(ctx, &kernelports.PasswordResetEmail{
-			To:               user.EmailAddress,
-			Locale:           i18n.Locale(user.Locale),
-			Name:             user.Name,
-			CompanyName:      s.companyName(ctx, user),
-			ResetURL:         resetURL,
-			ExpiresInMinutes: int(ttl.Minutes()),
-			ExpiresAt:        expiresAt,
-			Timezone:         user.Timezone,
-			IdempotencyKey:   idempotencyKey,
-		}); err != nil {
-			log.Error("failed to send the password reset email through the platform sender",
-				zap.Error(err))
-		}
-		return
-	}
-
-	if s.templates == nil || s.emailService == nil {
-		log.Error("password reset email cannot be sent: templating or email is not configured")
-		return
-	}
-
 	rendered, renderErr := s.templates.RenderMessage(
 		ctx,
 		&documenttemplateports.RenderMessageRequest{
@@ -570,22 +532,6 @@ func (s *Service) sendResetEmail(
 	}); err != nil {
 		log.Error("failed to send the password reset email", zap.Error(err))
 	}
-}
-
-func (s *Service) usesPlatformSender(ctx context.Context, tenantInfo pagination.TenantInfo) bool {
-	if s.plans == nil || s.platform == nil || !s.plans.EnforcesPlans() {
-		return false
-	}
-
-	resolved, err := s.plans.Resolve(ctx, tenantInfo.OrgID, tenantInfo.BuID)
-	if err != nil {
-		s.l.Warn("could not resolve the plan for a password reset; using the tenant sender",
-			zap.String("organizationId", tenantInfo.OrgID.String()),
-			zap.Error(err))
-		return false
-	}
-
-	return resolved.IsManaged()
 }
 
 var errNoResetBaseURL = errors.New(
@@ -635,31 +581,6 @@ func (s *Service) sendInviteEmail(
 
 	hours := int(s.linkTTL(link.purpose).Hours())
 	idempotencyKey := "account-invite-" + tokenutils.Hash(rawToken)
-
-	if s.invites != nil && s.usesPlatformSender(ctx, tenantInfo) {
-		if err = s.invites.SendAccountInvite(ctx, &kernelports.AccountInviteEmail{
-			To:             user.EmailAddress,
-			Locale:         i18n.Locale(user.Locale),
-			Name:           user.Name,
-			Username:       user.Username,
-			CompanyName:    s.companyName(ctx, user),
-			InvitedByName:  link.invitedBy,
-			SetupURL:       setupURL,
-			ExpiresInHours: hours,
-			ExpiresAt:      expiresAt,
-			Timezone:       user.Timezone,
-			IdempotencyKey: idempotencyKey,
-		}); err != nil {
-			log.Error("failed to send the account invitation through the platform sender",
-				zap.Error(err))
-		}
-		return
-	}
-
-	if s.templates == nil || s.emailService == nil {
-		log.Error("account invitation email cannot be sent: templating or email is not configured")
-		return
-	}
 
 	rendered, renderErr := s.templates.RenderMessage(
 		ctx,

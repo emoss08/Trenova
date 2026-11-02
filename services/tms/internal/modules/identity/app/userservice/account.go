@@ -447,9 +447,6 @@ func (s *Service) ListMySignIns(
 	tenantInfo pagination.TenantInfo,
 	limit int,
 ) ([]SignInSummary, error) {
-	if s.signIns == nil {
-		return []SignInSummary{}, nil
-	}
 	if limit <= 0 {
 		limit = defaultSignInWindow
 	}

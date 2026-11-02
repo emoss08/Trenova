@@ -161,9 +161,6 @@ func (f *facts) reading(
 	tenant pagination.TenantInfo,
 	id pulid.ID,
 ) (*fileReading, error) {
-	if f.documents == nil {
-		return nil, errortypes.NewBusinessError("Files cannot be waited on here")
-	}
 	doc, err := f.documents.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         id,
 		TenantInfo: tenant,
@@ -172,9 +169,6 @@ func (f *facts) reading(
 		return nil, missing(err, "file")
 	}
 	reading := &fileReading{doc: doc}
-	if f.contents == nil {
-		return reading, nil
-	}
 	content, err := f.contents.GetByDocumentID(ctx, id, tenant)
 	switch {
 	case err == nil:

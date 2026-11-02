@@ -50,7 +50,7 @@ type ActivitiesParams struct {
 	Controls       tenantports.AgentControlRepository
 	Tenants        tenantports.TenantSyncRepository
 	Orgs           tenantports.OrganizationRepository
-	Plans          platformplanports.PlanService `optional:"true"`
+	Plans          platformplanports.PlanService
 }
 
 type Activities struct {

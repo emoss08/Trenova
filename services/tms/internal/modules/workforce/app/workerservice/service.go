@@ -43,11 +43,11 @@ type Params struct {
 	AuditService              auditports.AuditService
 	Realtime                  realtimeports.RealtimeService
 	CustomFieldsValuesService *customfieldservice.ValuesService
-	PTOPolicyService          *ptopolicyservice.Service                  `optional:"true"`
-	CredentialService         *workercredentialservice.Service           `optional:"true"`
-	DB                        kernelports.Transactor                     `optional:"true"`
-	Sync                      accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
-	Fields                    permissionports.FieldAccess                `optional:"true"`
+	PTOPolicyService          *ptopolicyservice.Service
+	CredentialService         *workercredentialservice.Service
+	DB                        kernelports.Transactor
+	Sync                      accountingsyncports.AccountingSyncEnqueuer
+	Fields                    permissionports.FieldAccess
 }
 
 type Service struct {
@@ -93,10 +93,6 @@ func (s *Service) updateAndQueueSync(
 	entity *worker.Worker,
 	original *worker.Worker,
 ) (*worker.Worker, error) {
-	if s.db == nil || s.sync == nil {
-		return s.repo.Update(ctx, entity)
-	}
-
 	var updated *worker.Worker
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
@@ -506,7 +502,7 @@ func (s *Service) syncCredentials(
 	userID pulid.ID,
 	log *zap.Logger,
 ) {
-	if s.credentialService == nil || entity == nil || entity.Profile == nil {
+	if entity == nil || entity.Profile == nil {
 		return
 	}
 	if err := s.credentialService.SyncFromProfile(ctx, entity, userID); err != nil {
@@ -520,9 +516,6 @@ func (s *Service) assignDefaultPTOPolicy(
 	userID pulid.ID,
 	log *zap.Logger,
 ) {
-	if s.ptoPolicyService == nil {
-		return
-	}
 	effectiveFrom := int64(0)
 	if entity.Profile != nil {
 		effectiveFrom = entity.Profile.HireDate

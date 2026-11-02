@@ -254,12 +254,6 @@ func (s *Service) rateRecorded(
 	candidate *ratedContent,
 	limit int,
 ) (*BacktestResponse, error) {
-	if s.rated == nil {
-		return nil, errortypes.NewBusinessError(
-			"Backtesting a formula against past shipments is not available on this server",
-		)
-	}
-
 	tenant := formulatemplateservice.TemplateTenant(template)
 	records, err := s.rated.RatedByTemplate(ctx, &tariffports.RatedByTemplateRequest{
 		TenantInfo: tenant,

@@ -2607,28 +2607,3 @@ func (c EnforcementLevelCol) In(vs ...tenant.EnforcementLevel) keel.Pred {
 func (c EnforcementLevelCol) NotIn(vs ...tenant.EnforcementLevel) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
-
-// OperationTypeCol is a column of tenant.OperationType values.
-type OperationTypeCol struct{ keel.StringCol }
-
-func (c OperationTypeCol) Eq(v tenant.OperationType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c OperationTypeCol) Ne(v tenant.OperationType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c OperationTypeCol) Gt(v tenant.OperationType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c OperationTypeCol) Gte(v tenant.OperationType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c OperationTypeCol) Lt(v tenant.OperationType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c OperationTypeCol) Lte(v tenant.OperationType) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c OperationTypeCol) IsDistinctFrom(v tenant.OperationType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c OperationTypeCol) Between(lo, hi tenant.OperationType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c OperationTypeCol) To(v tenant.OperationType) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c OperationTypeCol) In(vs ...tenant.OperationType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c OperationTypeCol) NotIn(vs ...tenant.OperationType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}

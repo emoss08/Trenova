@@ -35,9 +35,6 @@ func (s *Service) ThreadBudget(
 	); err != nil {
 		return nil, err
 	}
-	if s.budgets == nil {
-		return out, nil
-	}
 
 	definition, err := s.definitions.GetByID(
 		ctx,

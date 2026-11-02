@@ -71,8 +71,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
@@ -647,8 +645,10 @@ type AIProviderModelOption struct {
 
 // The fields of a provider that change on their own, from its row and read sheet.
 type AIProviderPatchInput struct {
-	Enabled             graphql.Omittable[*bool]         `json:"enabled,omitempty"`
-	Trusted             graphql.Omittable[*bool]         `json:"trusted,omitempty"`
+	Enabled graphql.Omittable[*bool] `json:"enabled,omitempty"`
+	Trusted graphql.Omittable[*bool] `json:"trusted,omitempty"`
+	// Run Nova on this provider, taking it from the one that had it.
+	Nova                graphql.Omittable[*bool]         `json:"nova,omitempty"`
 	AllowPrivateNetwork graphql.Omittable[*bool]         `json:"allowPrivateNetwork,omitempty"`
 	Tasks               graphql.Omittable[[]aitask.Task] `json:"tasks,omitempty"`
 	// A new credential. It replaces the stored one and is never returned.
@@ -1082,8 +1082,6 @@ type AgentControlInput struct {
 	EarnedAutonomy *bool `json:"earnedAutonomy,omitempty"`
 	// Absent leaves the promotion threshold as it is; 1 to 1000 approvals.
 	PromotionThreshold *int `json:"promotionThreshold,omitempty"`
-	// Absent leaves training consent as it is. Only a signed-in person can change it.
-	AiTrainingConsent *bool `json:"aiTrainingConsent,omitempty"`
 	// Absent leaves the per-person monthly allowance as it is; 0 is unlimited.
 	PersonMonthlyMessages *int `json:"personMonthlyMessages,omitempty"`
 	// Absent leaves whether agents learn from their work as it is.
@@ -5491,58 +5489,6 @@ type ExternalIdentityEdge struct {
 	Cursor string                `json:"cursor"`
 }
 
-type ExtractionEvalCaseConnection struct {
-	Edges      []*ExtractionEvalCaseEdge `json:"edges"`
-	PageInfo   *PageInfo                 `json:"pageInfo"`
-	TotalCount *int                      `json:"totalCount,omitempty"`
-	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
-	TotalCountExact bool `json:"totalCountExact"`
-}
-
-type ExtractionEvalCaseEdge struct {
-	Node   *extractioneval.ExtractionCase `json:"node"`
-	Cursor string                         `json:"cursor"`
-}
-
-type ExtractionEvalResultConnection struct {
-	Edges      []*ExtractionEvalResultEdge `json:"edges"`
-	PageInfo   *PageInfo                   `json:"pageInfo"`
-	TotalCount *int                        `json:"totalCount,omitempty"`
-	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
-	TotalCountExact bool `json:"totalCountExact"`
-}
-
-type ExtractionEvalResultEdge struct {
-	Node   *extractioneval.ExtractionResult `json:"node"`
-	Cursor string                           `json:"cursor"`
-}
-
-type ExtractionEvalRunConnection struct {
-	Edges      []*ExtractionEvalRunEdge `json:"edges"`
-	PageInfo   *PageInfo                `json:"pageInfo"`
-	TotalCount *int                     `json:"totalCount,omitempty"`
-	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
-	TotalCountExact bool `json:"totalCountExact"`
-}
-
-type ExtractionEvalRunEdge struct {
-	Node   *extractioneval.ExtractionRun `json:"node"`
-	Cursor string                        `json:"cursor"`
-}
-
-type ExtractionShadowResultConnection struct {
-	Edges      []*ExtractionShadowResultEdge `json:"edges"`
-	PageInfo   *PageInfo                     `json:"pageInfo"`
-	TotalCount *int                          `json:"totalCount,omitempty"`
-	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
-	TotalCountExact bool `json:"totalCountExact"`
-}
-
-type ExtractionShadowResultEdge struct {
-	Node   *extractionshadow.ShadowResult `json:"node"`
-	Cursor string                         `json:"cursor"`
-}
-
 type ExtractionSnapshotField struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
@@ -7848,13 +7794,6 @@ type ProfileFieldChange struct {
 	To    string `json:"to"`
 }
 
-type PromoteAICorrectionInput struct {
-	CorrectionID string  `json:"correctionId"`
-	Title        *string `json:"title,omitempty"`
-	// Start the case as Active rather than Candidate.
-	Activate *bool `json:"activate,omitempty"`
-}
-
 type ProposeMyShiftSwapInput struct {
 	CounterpartyWorkerID *string `json:"counterpartyWorkerId,omitempty"`
 	// The day being given up.
@@ -8417,11 +8356,6 @@ type RecurringShipmentConnection struct {
 type RecurringShipmentEdge struct {
 	Node   *recurringshipment.RecurringShipment `json:"node"`
 	Cursor string                               `json:"cursor"`
-}
-
-type RefreezeExtractionEvalCasesInput struct {
-	// The cases to freeze again; every active case when empty.
-	CaseIds []string `json:"caseIds,omitempty"`
 }
 
 type RejectInvoiceAdjustmentInput struct {
@@ -11567,12 +11501,6 @@ type StartBillingTransferRunInput struct {
 	MarkCompletedReadyToInvoice *bool `json:"markCompletedReadyToInvoice,omitempty"`
 }
 
-type StartExtractionEvalRunInput struct {
-	ProviderID string `json:"providerId"`
-	// How many active cases to run, newest first; 50 by default, at most 500.
-	CaseLimit *int `json:"caseLimit,omitempty"`
-}
-
 type StartWorkerChecklistInput struct {
 	WorkerID   string `json:"workerId"`
 	TemplateID string `json:"templateId"`
@@ -12325,30 +12253,6 @@ type UpdateEscrowAccountInput struct {
 	WorkerID           string `json:"workerId"`
 	TargetAmountMinor  int    `json:"targetAmountMinor"`
 	AnnualInterestRate string `json:"annualInterestRate"`
-}
-
-type UpdateExtractionEvalCaseInput struct {
-	Version int                        `json:"version"`
-	Title   *string                    `json:"title,omitempty"`
-	Notes   *string                    `json:"notes,omitempty"`
-	Status  *extractioneval.CaseStatus `json:"status,omitempty"`
-}
-
-type UpdateExtractionRolloutInput struct {
-	Enabled                    bool    `json:"enabled"`
-	ProviderID                 *string `json:"providerId,omitempty"`
-	Percent                    int     `json:"percent"`
-	MaxAccuracyDropPoints      int     `json:"maxAccuracyDropPoints"`
-	MaxRejectionIncreasePoints int     `json:"maxRejectionIncreasePoints"`
-	Version                    int     `json:"version"`
-}
-
-type UpdateExtractionShadowSettingsInput struct {
-	Enabled       bool    `json:"enabled"`
-	ProviderID    *string `json:"providerId,omitempty"`
-	SamplePercent int     `json:"samplePercent"`
-	DailyLimit    int     `json:"dailyLimit"`
-	Version       int     `json:"version"`
 }
 
 type UpdateFactoringAgreementInput struct {

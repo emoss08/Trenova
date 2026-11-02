@@ -28,7 +28,7 @@ type Params struct {
 	fx.In
 
 	Logger   *zap.Logger
-	Realtime realtimeports.RealtimeService `optional:"true"`
+	Realtime realtimeports.RealtimeService
 }
 
 // Publisher announces agent record changes to connected clients. Without a
@@ -56,7 +56,7 @@ type change struct {
 }
 
 func (p *Publisher) publish(ctx context.Context, actor kernelports.AuditActor, c change) {
-	if p == nil || p.realtime == nil {
+	if p == nil {
 		return
 	}
 

@@ -13,10 +13,6 @@ func (h *Harness) Defer(
 	ctx context.Context,
 	task *llmports.NovaTask,
 ) (*llmports.BackgroundSubmission, error) {
-	if h == nil || h.router == nil {
-		return nil, llmports.ErrNoProviderConfigured
-	}
-
 	submission, err := h.router.SubmitBackground(ctx, request(task))
 	if err != nil {
 		return nil, fmt.Errorf("nova %s: %w", task.Name, err)
@@ -30,9 +26,8 @@ func (h *Harness) Collect(
 	ctx context.Context,
 	req *llmports.BackgroundPollRequest,
 ) (*llmports.BackgroundOutcome, error) {
-	if h == nil || h.router == nil {
-		return nil, llmports.ErrNoProviderConfigured
-	}
+	nova := *req
+	nova.Nova = true
 
-	return h.router.PollBackground(ctx, req)
+	return h.router.PollBackground(ctx, &nova)
 }

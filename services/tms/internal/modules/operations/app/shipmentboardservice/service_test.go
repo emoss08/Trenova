@@ -5,9 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
@@ -83,19 +81,15 @@ func (s *stubBasis) Prepare(
 	return nil
 }
 
-type stubAI struct {
-	aiproviderports.AIProviderRepository
-	tasks map[aitask.Task]bool
+// stubNova is whether Nova, which writes the board's briefings and insights,
+// runs for the tenant.
+type stubNova struct {
+	llmports.TaskRunner
+	ready bool
 }
 
-func (s *stubAI) ListForTask(
-	_ context.Context,
-	req aiproviderports.ListAIProvidersForTaskRequest,
-) ([]*aiprovider.Provider, error) {
-	if s.tasks[req.Task] {
-		return []*aiprovider.Provider{{}}, nil
-	}
-	return nil, nil
+func (s stubNova) Available(context.Context, pagination.TenantInfo) (bool, error) {
+	return s.ready, nil
 }
 
 type stubOrgs struct {
@@ -155,9 +149,7 @@ func TestCapabilities(t *testing.T) {
 	t.Parallel()
 
 	svc := NewWithDependencies(&Dependencies{
-		AIProviders: &stubAI{
-			tasks: map[aitask.Task]bool{aitask.TaskOperationalInsights: true},
-		},
+		Nova: stubNova{ready: true},
 		Organizations: &stubOrgs{caps: &tenantports.OrganizationCapabilities{
 			BrokerageEnabled: true,
 		}},
@@ -177,7 +169,7 @@ func TestCapabilities(t *testing.T) {
 	assert.True(t, caps.Maps)
 
 	svc = NewWithDependencies(&Dependencies{
-		AIProviders: &stubAI{},
+		Nova: stubNova{},
 		Organizations: &stubOrgs{caps: &tenantports.OrganizationCapabilities{
 			AssetOperationsEnabled: true,
 		}},

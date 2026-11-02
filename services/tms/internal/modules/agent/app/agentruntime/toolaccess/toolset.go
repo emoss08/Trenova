@@ -174,8 +174,8 @@ func (s *Access) openToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet 
 		Self: req.Definition.ID,
 	}
 
-	disclosed := len(selected) > s.toolThreshold() && s.catalog != nil
-	searchable := disclosed || (len(set.Beyond) > 0 && s.catalog != nil)
+	disclosed := len(selected) > s.toolThreshold()
+	searchable := disclosed || len(set.Beyond) > 0
 	text := rankingText(req.Input, req.History)
 	if req.Need != "" {
 		text = req.Need + "\n" + req.Input
@@ -334,18 +334,16 @@ func (s *Access) Load(set *ToolSet, name string) bool {
 		return false
 	}
 
-	if s.catalog != nil {
-		for _, prerequisite := range s.catalog.Prerequisites(name) {
-			if slices.Contains(set.Allowed, prerequisite) {
-				s.loadOne(set, prerequisite)
-			}
+	for _, prerequisite := range s.catalog.Prerequisites(name) {
+		if slices.Contains(set.Allowed, prerequisite) {
+			s.loadOne(set, prerequisite)
 		}
-		for _, companion := range s.catalog.Companions(name) {
-			s.Load(set, companion)
-		}
-		if fed := soleFed(set.Allowed, s.catalog.Feeds(name)); fed != "" {
-			s.Load(set, fed)
-		}
+	}
+	for _, companion := range s.catalog.Companions(name) {
+		s.Load(set, companion)
+	}
+	if fed := soleFed(set.Allowed, s.catalog.Feeds(name)); fed != "" {
+		s.Load(set, fed)
 	}
 
 	return true
@@ -504,9 +502,6 @@ func (s *Access) ResolveFind(
 		return FindAnswer{
 			Content: "Say what you need in a few words — the tools are matched against it.",
 		}
-	}
-	if s.catalog == nil {
-		return FindAnswer{Content: "No other tools are available. Use the ones you have."}
 	}
 	// A turn that was sent everything has nothing left to load; the answer
 	// can still say what exists beyond the agent.
@@ -751,9 +746,7 @@ func (s *Access) unheldRefusal(set *ToolSet, name string, exists bool) string {
 	}
 
 	var nearest []agenttoolports.AgentToolDescriptor
-	if s.catalog != nil {
-		nearest = s.catalog.Find(set.Allowed, strings.ReplaceAll(name, "_", " "), 3)
-	}
+	nearest = s.catalog.Find(set.Allowed, strings.ReplaceAll(name, "_", " "), 3)
 	if len(nearest) > 0 {
 		b.WriteString(" Tools this agent holds that may do the job, now callable:\n")
 		for idx := range nearest {
@@ -801,9 +794,6 @@ func (s *Access) UnheldOutcome(set *ToolSet, name string) toolcall.Result {
 // for the agent; whether a turn is shown it is the code-mode gate's to decide.
 func (s *Access) HeldTools(definition *agentdefinition.Definition) []string {
 	names := definition.EffectiveToolNames()
-	if s.catalog == nil {
-		return s.withScripts(definition, names)
-	}
 
 	selected := len(names)
 	for idx := range selected {
@@ -938,7 +928,7 @@ func (s *Access) PermittedWith(
 	// Never nil: the catalog reads nil as "everything", and a person who may
 	// use nothing must be offered nothing.
 	permitted := make([]string, 0, len(names))
-	if s.permissions == nil || actor == nil {
+	if actor == nil {
 		return permitted
 	}
 	// An extension's tools exist only while the organization has it on and
@@ -1144,7 +1134,7 @@ func (s *Access) NotePreselected(
 	req *agentruntimeports.RunRequest,
 	set *ToolSet,
 ) {
-	if s.disclosures == nil || !set.Disclosed {
+	if !set.Disclosed {
 		return
 	}
 
@@ -1163,9 +1153,6 @@ func (s *Access) NoteFound(
 	arguments map[string]any,
 	answer *FindAnswer,
 ) {
-	if s.disclosures == nil {
-		return
-	}
 	need, _ := arguments["need"].(string)
 
 	s.disclosures.Found(ctx, &agenttoolports.ToolDisclosure{

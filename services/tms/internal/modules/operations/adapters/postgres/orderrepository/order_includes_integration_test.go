@@ -62,7 +62,7 @@ func TestGetByID_LoadsTheCustomerAndChargesWithoutTheShipments(t *testing.T) {
 	require.NoError(t, err)
 
 	repo := orderrepository.New(orderrepository.Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 	tenant := pagination.TenantInfo{OrgID: seeded.OrganizationID, BuID: seeded.BusinessUnitID}

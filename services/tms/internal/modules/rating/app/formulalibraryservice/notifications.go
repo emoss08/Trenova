@@ -38,9 +38,6 @@ func (s *Service) notify(
 	entity *notification.Notification,
 	libraryID pulid.ID,
 ) {
-	if s.notifications == nil {
-		return
-	}
 	if _, err := s.notifications.Create(ctx, entity); err != nil {
 		s.l.Warn("failed to create formula library notification",
 			zap.String("event", entity.EventType),

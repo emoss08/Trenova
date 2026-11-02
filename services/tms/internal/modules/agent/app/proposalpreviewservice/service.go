@@ -88,15 +88,15 @@ type Params struct {
 	Logger      *zap.Logger
 	DB          kernelports.Transactor
 	Tools       agenttoolports.AgentToolRegistry
-	Versions    agenttoolports.RecordVersionReader `optional:"true"`
-	Labeler     agentruntimeports.RecordLabeler    `optional:"true"`
+	Versions    agenttoolports.RecordVersionReader
+	Labeler     agentruntimeports.RecordLabeler
 	Baselines   agentproposalports.AgentProposalBaselineRepository
 	Decisions   agentdecisionports.AgentDecisionRepository
 	Proposals   agentproposalports.AgentProposalRepository
 	Executor    *proposalexecutor.Service
 	Permissions permissionports.PermissionEngine
-	Metrics     *metrics.Registry                   `optional:"true"`
-	Zones       agenttoolports.TenantTimezoneReader `optional:"true"`
+	Metrics     *metrics.Registry
+	Zones       agenttoolports.TenantTimezoneReader
 	Runs        agentruntimeports.AgentRunRepository
 }
 
@@ -133,24 +133,12 @@ func New(p Params) agentruntimeports.ProposalPreviewService {
 		readTimeout: ReadTimeout,
 		fileTimeout: BaselineTimeout,
 	}
-	if p.Baselines != nil {
-		svc.baselines = p.Baselines
-	}
-	if p.Decisions != nil {
-		svc.decisions = p.Decisions
-	}
-	if p.Proposals != nil {
-		svc.steps = p.Proposals
-	}
-	if p.Executor != nil {
-		svc.checker = p.Executor
-	}
-	if p.Metrics != nil {
-		svc.metrics = p.Metrics.ProposalPreview
-	}
-	if p.Runs != nil {
-		svc.runs = p.Runs
-	}
+	svc.baselines = p.Baselines
+	svc.decisions = p.Decisions
+	svc.steps = p.Proposals
+	svc.checker = p.Executor
+	svc.metrics = p.Metrics.ProposalPreview
+	svc.runs = p.Runs
 
 	return svc
 }
@@ -196,10 +184,6 @@ func (s *Service) ForProposal(
 }
 
 func (s *Service) reviewRequired(proposal *agent.AgentProposal, modifications map[string]any) bool {
-	if s.checker == nil {
-		return proposal.ApprovalNeedsReview() || len(modifications) > 0
-	}
-
 	return s.checker.ReviewRequired(proposal, modifications)
 }
 
@@ -343,9 +327,6 @@ func (s *Service) planSteps(
 ) ([]*agent.AgentProposal, error) {
 	steps := given
 	if steps == nil {
-		if s.steps == nil {
-			return nil, errortypes.NewBusinessError("The plan's steps cannot be read")
-		}
 		var err error
 		steps, err = s.steps.ListByPlan(ctx, agentproposalports.ListAgentProposalsByPlanRequest{
 			PlanID:     plan.ID,

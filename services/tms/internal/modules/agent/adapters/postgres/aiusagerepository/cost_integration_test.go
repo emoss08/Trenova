@@ -42,7 +42,7 @@ func TestCostByDefinition_LeavesEvaluationSpendOut(t *testing.T) {
 		BusinessUnitID: row.BusinessUnitID,
 	})
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	since := timeutils.NowUnix() - 60
 
 	record := func(surface aiusage.Surface, cost string, runPrefix string) {

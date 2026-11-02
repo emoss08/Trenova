@@ -58,20 +58,7 @@ type Params struct {
 	Detentions  detentionports.DetentionOccurrenceRepository
 	Pricer      *detentionreview.Service
 	Orgs        tenantports.OrganizationRepository
-}
-
-type Dependencies struct {
-	Logger      *zap.Logger
-	Permissions permissionports.PermissionEngine
-	Tracking    shipmenttrackingports.ShipmentTrackingReader
-	Invoices    invoiceports.InvoiceRepository
-	Tractors    tractorports.TractorRepository
-	Trailers    trailerports.TrailerRepository
-	Telematics  telematicsports.TelematicsRepository
-	Detentions  detentionports.DetentionOccurrenceRepository
-	Pricer      clockPricer
-	Orgs        orgzone.OrganizationReader
-	Now         func() int64
+	Now         timeutils.Clock
 }
 
 type kindRead struct {
@@ -98,59 +85,20 @@ var _ recordanchorports.RecordAnchorReader = (*Service)(nil)
 func New(
 	p Params, //nolint:gocritic // fx params are passed by value
 ) recordanchorports.RecordAnchorReader {
-	return NewWithDependencies(&Dependencies{
-		Logger:      p.Logger,
-		Permissions: p.Permissions,
-		Tracking:    p.Tracking,
-		Invoices:    p.Invoices,
-		Tractors:    p.Tractors,
-		Trailers:    p.Trailers,
-		Telematics:  p.Telematics,
-		Detentions:  p.Detentions,
-		Pricer:      p.Pricer,
-		Orgs:        p.Orgs,
-		Now:         timeutils.NowUnix,
-	})
-}
-
-func NewWithDependencies(d *Dependencies) *Service {
-	now := d.Now
-	if now == nil {
-		now = timeutils.NowUnix
-	}
-	logger := d.Logger
-	if logger == nil {
-		logger = zap.NewNop()
-	}
 	readers := make(map[recordkind.Kind]kindReader, 6)
-	if d.Tracking != nil {
-		readers[recordkind.Kind(permission.ResourceShipment)] = shipmentReader(d.Tracking)
-	}
-	if d.Invoices != nil {
-		readers[recordkind.Kind(permission.ResourceInvoice)] = invoiceReader(d.Invoices)
-	}
-	if d.Tractors != nil {
-		readers[recordkind.Kind(permission.ResourceTractor)] = tractorReader(
-			d.Tractors,
-			d.Telematics,
-		)
-	}
-	if d.Trailers != nil {
-		readers[recordkind.Kind(permission.ResourceTrailer)] = trailerReader(d.Trailers)
-	}
-	if d.Telematics != nil {
-		readers[recordkind.Kind(permission.ResourceWorker)] = workerReader(d.Telematics)
-	}
-	if d.Detentions != nil {
-		readers[recordkind.DetentionOccurrence] = detentionReader(d.Detentions, d.Pricer)
-	}
+	readers[recordkind.Kind(permission.ResourceShipment)] = shipmentReader(p.Tracking)
+	readers[recordkind.Kind(permission.ResourceInvoice)] = invoiceReader(p.Invoices)
+	readers[recordkind.Kind(permission.ResourceTractor)] = tractorReader(p.Tractors, p.Telematics)
+	readers[recordkind.Kind(permission.ResourceTrailer)] = trailerReader(p.Trailers)
+	readers[recordkind.Kind(permission.ResourceWorker)] = workerReader(p.Telematics)
+	readers[recordkind.DetentionOccurrence] = detentionReader(p.Detentions, p.Pricer)
 
 	return &Service{
-		logger:      logger.Named("record-anchor-service"),
-		orgs:        d.Orgs,
-		permissions: d.Permissions,
+		logger:      p.Logger.Named("record-anchor-service"),
+		orgs:        p.Orgs,
+		permissions: p.Permissions,
 		readers:     readers,
-		now:         now,
+		now:         p.Now,
 	}
 }
 
@@ -229,7 +177,7 @@ func (s *Service) Anchor(
 }
 
 func (s *Service) timezone(ctx context.Context, req *recordanchorports.RecordAnchorRequest) string {
-	if req.Timezone != "" || s.orgs == nil {
+	if req.Timezone != "" {
 		return req.Timezone
 	}
 	zone, err := orgzone.Location(ctx, s.orgs, req.TenantInfo)

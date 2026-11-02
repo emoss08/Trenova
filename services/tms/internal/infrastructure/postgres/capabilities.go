@@ -45,10 +45,6 @@ func NewCapabilityProbe(p CapabilityProbeParams) *CapabilityProbe {
 	return probe
 }
 
-func NewTestCapabilityProbe(db *Connection) *CapabilityProbe {
-	return newCapabilityProbe(db, zap.NewNop())
-}
-
 func newCapabilityProbe(db *Connection, logger *zap.Logger) *CapabilityProbe {
 	return &CapabilityProbe{
 		db:     db,

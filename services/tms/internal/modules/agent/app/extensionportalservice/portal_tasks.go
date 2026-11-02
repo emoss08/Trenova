@@ -736,10 +736,6 @@ func (s *Service) TrackPortalRun(
 	runID pulid.ID,
 	siteName string,
 ) error {
-	if s.workflows == nil {
-		return errortypes.NewBusinessError("Portal tasks cannot be followed here")
-	}
-
 	return portalcontract.Start(ctx, &portalcontract.StartParams{
 		Workflows: s.workflows,
 		Tenant:    tenantInfo,

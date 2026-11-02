@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/fuelpurchaserepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/iftarepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementcostservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementrealtime"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementworkspaceservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
@@ -30,6 +31,7 @@ import (
 func SharedOptions() fx.Option {
 	return fx.Options(
 		fx.Provide(
+			carriersettlementrealtime.NewPublisher,
 			carrierinvoicematchrepository.New,
 			benefitrepository.New,
 			driverpayrepository.NewPayProfile,

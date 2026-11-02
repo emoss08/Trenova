@@ -68,19 +68,6 @@ type Params struct {
 	Logger       *zap.Logger
 }
 
-type Dependencies struct {
-	Console      dispatchconsoleports.DispatchConsoleService
-	Capabilities shipmentboardports.ShipmentBoardCapabilitiesReader
-	Postings     carriercapacityports.CarrierCapacityPostingRepository
-	Performance  shipmentboardports.CarrierPerformanceRepository
-	Carriers     carrierports.CarrierRepository
-	Shipments    shipmentports.ShipmentRepository
-	Shopper      shopper
-	Tenderer     tenderer
-	Logger       *zap.Logger
-	Now          func() time.Time
-}
-
 type Service struct {
 	console      dispatchconsoleports.DispatchConsoleService
 	capabilities shipmentboardports.ShipmentBoardCapabilitiesReader
@@ -102,40 +89,19 @@ var (
 
 //nolint:gocritic // dependency injection
 func New(p Params) *Service {
-	return NewWithDependencies(&Dependencies{
-		Console:      p.Console,
-		Capabilities: p.Capabilities,
-		Postings:     p.Postings,
-		Performance:  p.Performance,
-		Carriers:     p.Carriers,
-		Shipments:    p.Shipments,
-		Shopper:      p.RateQuotes,
-		Tenderer:     p.Tenders,
-		Logger:       p.Logger,
-	})
-}
-
-func NewWithDependencies(d *Dependencies) *Service {
-	now := d.Now
-	if now == nil {
-		now = time.Now
-	}
-	logger := d.Logger
-	if logger == nil {
-		logger = zap.NewNop()
-	}
+	logger := p.Logger
 
 	return &Service{
-		console:      d.Console,
-		capabilities: d.Capabilities,
-		postings:     d.Postings,
-		performance:  d.Performance,
-		carriers:     d.Carriers,
-		shipments:    d.Shipments,
-		shopper:      d.Shopper,
-		tenderer:     d.Tenderer,
+		console:      p.Console,
+		capabilities: p.Capabilities,
+		postings:     p.Postings,
+		performance:  p.Performance,
+		carriers:     p.Carriers,
+		shipments:    p.Shipments,
+		shopper:      p.RateQuotes,
+		tenderer:     p.Tenders,
 		l:            logger.Named("service.shipment-capacity"),
-		now:          now,
+		now:          time.Now,
 	}
 }
 

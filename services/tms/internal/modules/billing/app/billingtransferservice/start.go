@@ -61,12 +61,6 @@ func (s *Service) start(
 ) (*billingtransfer.BillingTransferRun, error) {
 	log := s.l.With(zap.String("operation", "StartRun"))
 
-	if !s.workflows.Enabled() {
-		return nil, errortypes.NewBusinessError(
-			"Transferring to billing is temporarily unavailable — the background worker is not connected",
-		)
-	}
-
 	run, err := s.buildRun(req)
 	if err != nil {
 		return nil, err

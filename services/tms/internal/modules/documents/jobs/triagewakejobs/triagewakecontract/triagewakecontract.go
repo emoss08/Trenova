@@ -92,8 +92,8 @@ var _ inboundmessageports.TriageWakeScheduler = (*Scheduler)(nil)
 type SchedulerParams struct {
 	fx.In
 
-	Workflows kernelports.WorkflowStarter       `optional:"true"`
-	Signals   kernelports.WorkflowSignalStarter `optional:"true"`
+	Workflows kernelports.WorkflowStarter
+	Signals   kernelports.WorkflowSignalStarter
 }
 
 type Scheduler struct {
@@ -105,19 +105,11 @@ func NewScheduler(p SchedulerParams) *Scheduler {
 	return &Scheduler{workflows: p.Workflows, signals: p.Signals}
 }
 
-func (s *Scheduler) Enabled() bool {
-	return s.workflows != nil && s.signals != nil && s.workflows.Enabled()
-}
-
 func (s *Scheduler) ScheduleWake(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	messageID pulid.ID,
 ) error {
-	if !s.Enabled() {
-		return kernelports.ErrWorkflowStarterDisabled
-	}
-
 	if _, err := s.signals.SignalWithStartWorkflow(
 		ctx,
 		WorkflowIDFor(messageID),
@@ -144,10 +136,6 @@ func (s *Scheduler) ScheduleWake(
 }
 
 func (s *Scheduler) CancelWake(ctx context.Context, messageID pulid.ID) error {
-	if !s.Enabled() {
-		return kernelports.ErrWorkflowStarterDisabled
-	}
-
 	err := s.workflows.CancelWorkflow(ctx, WorkflowIDFor(messageID), "")
 	var gone *serviceerror.NotFound
 	if err == nil || errors.As(err, &gone) {
@@ -162,10 +150,6 @@ func (s *Scheduler) RecomputeDue(
 	tenantInfo pagination.TenantInfo,
 	classifications []inboundmessage.Classification,
 ) error {
-	if !s.Enabled() {
-		return kernelports.ErrWorkflowStarterDisabled
-	}
-
 	if _, err := s.workflows.StartWorkflow(
 		ctx,
 		client.StartWorkflowOptions{

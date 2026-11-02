@@ -35,11 +35,6 @@ func (s *Service) OpenPageThread(
 	if actor == nil || actor.UserID.IsNil() {
 		return nil, agentaccess.ErrAgentsWithheld()
 	}
-	if s.systemAgents == nil || s.pageThreads == nil {
-		return nil, errortypes.NewBusinessError(
-			"The {0} assistant is not available on this server", subject.Title,
-		)
-	}
 
 	usable, err := s.access().UsableAgents(ctx, actor)
 	if err != nil {

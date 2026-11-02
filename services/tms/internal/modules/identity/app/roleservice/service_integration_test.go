@@ -308,7 +308,7 @@ func setupIntegrationService(t *testing.T) *integrationFixture {
 	redisClient := sharedtestutil.SetupTestRedis(t)
 
 	roleRepo := rolerepository.New(rolerepository.Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 	cacheRepo := &integrationPermCacheRepo{client: redisClient}

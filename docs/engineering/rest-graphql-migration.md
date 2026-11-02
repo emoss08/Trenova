@@ -296,9 +296,6 @@ before converting: other work may have changed them.
   GET /push/public-key/
   DELETE /push/subscriptions/
   POST /push/subscriptions/
-## onboardinghandler
-  GET /onboarding/
-  POST /onboarding/complete/
 ## searchhandler
   GET /search/global/
 ## analyticshandler

@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
@@ -97,11 +96,6 @@ func (s *Service) PreviewSendEDI(
 	entity, plan, err := s.planEDISend(ctx, req, actor)
 	if err != nil {
 		return nil, err
-	}
-	if s.workflowStarter == nil || !s.workflowStarter.Enabled() {
-		return nil, errortypes.NewBusinessError(
-			"Invoice EDI delivery requires workflow processing to be enabled",
-		).WithInternal(kernelports.ErrWorkflowStarterDisabled)
 	}
 
 	return &invoiceports.InvoiceEDISendPreview{Invoice: entity, Plan: plan}, nil

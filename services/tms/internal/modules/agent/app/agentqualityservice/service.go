@@ -59,8 +59,8 @@ type Params struct {
 	Audit       auditports.AuditService
 	Settings    *agentqualitysettings.Reader
 	Engine      *agentqualityengine.Engine
-	Scheduler   agentqualityports.AgentQualityScheduler `optional:"true"`
-	Starter     agentqualityports.AgentSuiteStarter     `optional:"true"`
+	Scheduler   agentqualityports.AgentQualityScheduler
+	Starter     agentqualityports.AgentSuiteStarter
 }
 
 type Service struct {
@@ -131,9 +131,7 @@ func (s *Service) UpdateControl(
 	}
 
 	s.logControl(saved, previous, actor)
-	if s.scheduler != nil {
-		s.scheduler.Sync(ctx, tenant)
-	}
+	s.scheduler.Sync(ctx, tenant)
 
 	return saved, nil
 }

@@ -23,9 +23,6 @@ func (a *Activities) AutomaticTransferSweepActivity(
 	ctx context.Context,
 ) (*AutomaticTransferSweepResult, error) {
 	result := new(AutomaticTransferSweepResult)
-	if a.controls == nil || a.users == nil || a.transfers == nil {
-		return result, nil
-	}
 
 	controls, err := a.controls.ListAutomaticTransfer(ctx)
 	if err != nil {
@@ -157,9 +154,6 @@ func (a *Activities) notifyOnAutoInvoices(
 	ctx context.Context,
 	run *billingtransfer.BillingTransferRun,
 ) bool {
-	if a.controls == nil {
-		return false
-	}
 	control, err := a.controls.GetByOrgID(ctx, run.OrganizationID)
 	if err != nil {
 		a.l.Warn("could not read billing control for an automatic transfer notice",

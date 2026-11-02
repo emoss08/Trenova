@@ -707,7 +707,7 @@ func (fx *localEffects) Observe(
 func (*localEffects) NewCallID() string { return NewCallID() }
 
 func (fx *localEffects) Interject(t *Turn, check *worldwatch.Check) worldwatch.Interjections {
-	if check == nil || fx.s.changes == nil || t.req.Actor == nil {
+	if check == nil || t.req.Actor == nil {
 		return worldwatch.Interjections{}
 	}
 	found, err := fx.s.changes.Since(fx.ctx, &realtimeports.RecordChangesRequest{

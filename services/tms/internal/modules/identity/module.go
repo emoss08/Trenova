@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/driverportalrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/iamrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/invoiceadjustmentcontrolrepository"
-	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/onboardingrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/organizationrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/orgstructurerepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/passwordresetrepository"
@@ -46,7 +45,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/journalreviewservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/locationcodegenerator"
 	"github.com/emoss08/trenova/internal/modules/identity/app/mfaservice"
-	"github.com/emoss08/trenova/internal/modules/identity/app/onboardingservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/organizationservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/pageaccessservice"
@@ -89,7 +87,6 @@ func SharedOptions() fx.Option {
 			orgstructurerepository.New,
 			orgstructureservice.New,
 			tenantsyncrepository.New,
-			onboardingrepository.New,
 			iamrepository.New,
 			iamrepository.NewAuthEventRepository,
 			iamrepository.NewAccessSettingsRepository,
@@ -152,15 +149,13 @@ func SharedOptions() fx.Option {
 			func(s *readscopeservice.Service) permissionports.ReadScopes { return s },
 			roleservice.New,
 			pageaccessservice.New,
-			permissioncatalog.NewRegistry,
+			permissioncatalog.Default,
 			routeaccess.NewRouteRegistry,
 			roleassignmentservice.New,
 			tenanttimezone.New,
 			passwordresetservice.New,
 			func(s *roleservice.Service) userservice.RoleAssigner { return s },
 			func(s *passwordresetservice.Service) userservice.AccountInviter { return s },
-			onboardingservice.New,
-			onboardingservice.NewSampleData,
 			sequenceconfigservice.New,
 			shipmentcontrolservice.New,
 			dataretentionservice.New,

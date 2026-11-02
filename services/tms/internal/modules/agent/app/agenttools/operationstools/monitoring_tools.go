@@ -247,7 +247,7 @@ type emailCustomerParams struct {
 	Customers customerports.CustomerRepository
 	Shipments shipmentports.ShipmentRepository
 	Comments  shipmentcommentports.ShipmentCommentService
-	Senders   emailports.EmailSenderResolver `optional:"true"`
+	Senders   emailports.EmailSenderResolver
 }
 
 type EmailCustomerTool struct {
@@ -365,10 +365,6 @@ func (t *EmailCustomerTool) record(
 	ctx context.Context,
 	composed *outboundpreview.CustomerEmail,
 ) error {
-	if t.Deps.Comments == nil {
-		return nil
-	}
-
 	if _, err := t.Deps.Comments.CreateSystem(
 		ctx,
 		outboundpreview.CustomerUpdateComment(composed),

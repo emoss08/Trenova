@@ -3,9 +3,10 @@ package agentqualityjobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentqualityjobs/agentqualitycontract"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
@@ -22,12 +23,12 @@ var DomainConfig = registry.DomainConfig{
 func workflows() []registry.WorkflowDefinition {
 	return []registry.WorkflowDefinition{
 		{
-			Name:        AgentQualitySweepWorkflowName,
+			Name:        agentqualitycontract.AgentQualitySweepWorkflowName,
 			Fn:          AgentQualitySweepWorkflow,
 			Description: "Plan an organization's nightly agent quality sweep and run each changed agent's suite",
 		},
 		{
-			Name:        AgentSuiteRunWorkflowName,
+			Name:        agentqualitycontract.AgentSuiteRunWorkflowName,
 			Fn:          AgentSuiteRunWorkflow,
 			Description: "Replay one agent's sampled evaluation cases within budget, score them and finalize the run",
 		},
@@ -63,9 +64,6 @@ func NewRegistry(p RegistryParams) registry.WorkerRegistry {
 var Module = fx.Module("agent-quality-jobs",
 	fx.Provide(
 		NewActivities,
-		NewQualitySchedules,
-		func(s *QualitySchedules) agentqualityports.AgentQualityScheduler { return s },
-		func(s *QualitySchedules) agentqualityports.AgentSuiteStarter { return s },
 	),
 	fx.Provide(schedule.AsProvider(NewScheduleProvider)),
 	fx.Provide(fx.Annotate(

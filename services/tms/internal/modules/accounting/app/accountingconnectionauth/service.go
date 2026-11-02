@@ -32,7 +32,7 @@ type Params struct {
 	DB           kernelports.Transactor
 	Connections  accountingconnectionports.AccountingConnectionRepository
 	States       accountingconnectionports.AccountingOAuthStateRepository
-	Certificates accountingconnectionports.AccountingPendingCertificateRepository `optional:"true"`
+	Certificates accountingconnectionports.AccountingPendingCertificateRepository
 	Encryption   *encryptionservice.Service
 	Kit          *accountingconnectionkit.Kit
 	Subs         *accountingconnectionsubscriptions.Service
@@ -264,9 +264,6 @@ func (s *Service) ChooseCompany(
 	grant := held.tokenGrant()
 	var certificate *accountingconnectionkit.HeldCertificate
 	if held.CertificateID != "" {
-		if s.certificates == nil {
-			return nil, accountingconnectionkit.ErrCertificatesUnsupported(app.Provider)
-		}
 		if certificate, err = s.kit.HeldPendingCertificate(
 			ctx,
 			req.TenantInfo,

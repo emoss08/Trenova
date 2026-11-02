@@ -42,7 +42,7 @@ import {
   resolvedAuth,
   settingRequired,
 } from "./platform-model";
-import { baseUrlProblem } from "./provider-model";
+import { baseUrlProblem, canRunNova } from "./provider-model";
 
 /** What the catalog says about platforms, which the payload builders read. */
 export type PlatformCatalog = {
@@ -101,6 +101,7 @@ export const providerEditorSchema = z
     keepPreviousKey: z.boolean(),
     tasks: z.array(aiTaskSchema),
     trusted: z.boolean(),
+    nova: z.boolean(),
     allowPrivateNetwork: z.boolean(),
     timeoutSeconds: wholeIn(PROVIDER_TIMEOUT_SECONDS, () =>
       translate(
@@ -201,6 +202,7 @@ export function editorValuesFromProvider(provider: AIProviderWithLimits): Provid
     keepPreviousKey: true,
     tasks: [...provider.tasks],
     trusted: provider.trusted,
+    nova: provider.nova,
     allowPrivateNetwork: provider.allowPrivateNetwork,
     timeoutSeconds: String(provider.timeoutSeconds),
     maxConcurrent: String(provider.maxConcurrent),
@@ -238,15 +240,19 @@ function presetName(preset: AIProviderPreset): string {
 
 /**
  * A new provider as a preset starts it, at the end of the chain. A preset on a
- * platform starts with the platform's usual way of signing in.
+ * platform starts with the platform's usual way of signing in. One that can run Nova
+ * starts running it while no provider does, so adding the first Anthropic provider is
+ * all it takes to set Nova up.
  */
 export function editorValuesFromPreset(
   preset: AIProviderPreset,
-  providers: readonly Pick<AIProviderRow, "priority">[],
+  providers: readonly Pick<AIProviderRow, "priority" | "nova">[],
   catalog?: PlatformCatalog,
+  novaPlatforms: readonly AIProviderPlatform[] = [],
 ): ProviderEditorValues {
   const last = providers.reduce((most, provider) => Math.max(most, provider.priority), 0);
   const platform = preset.kind === "AnthropicMessages" ? preset.platform : "Direct";
+  const novaUnclaimed = !providers.some((provider) => provider.nova);
   return {
     preset: preset.key,
     name: presetName(preset),
@@ -269,6 +275,7 @@ export function editorValuesFromPreset(
     keepPreviousKey: false,
     tasks: [...preset.tasks],
     trusted: preset.kind === "AnthropicMessages" && !preset.selfHosted,
+    nova: novaUnclaimed && canRunNova({ kind: preset.kind, platform }, novaPlatforms),
     allowPrivateNetwork: preset.allowPrivateNetwork,
     timeoutSeconds: String(PROVIDER_TIMEOUT_SECONDS.initial),
     maxConcurrent: String(PROVIDER_MAX_CONCURRENT.initial),
@@ -515,6 +522,7 @@ function savePayload(
       embeddingDimensionsChoice: values.embeddingDimensionsChoice,
       embeddingInputStyle: values.embeddingInputStyle,
       trusted: values.trusted,
+      nova: values.nova,
       enabled: context.editing ? values.enabled : context.enable,
       timeoutSeconds: Number(values.timeoutSeconds),
       maxConcurrent: Number(values.maxConcurrent),

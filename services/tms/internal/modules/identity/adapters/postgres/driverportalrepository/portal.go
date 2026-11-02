@@ -57,7 +57,7 @@ type Params struct {
 
 	DB     *postgres.Connection
 	Logger *zap.Logger
-	Quota  platformplanports.QuotaGuard `optional:"true"`
+	Quota  platformplanports.QuotaGuard
 }
 
 type portalAccessRepository struct {

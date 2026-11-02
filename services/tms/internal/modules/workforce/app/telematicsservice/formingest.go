@@ -127,7 +127,7 @@ func (s *Service) applyFormMapping(
 		}
 		applied += n
 	}
-	if len(customFieldValues) > 0 && s.customFieldValues != nil {
+	if len(customFieldValues) > 0 {
 		if multiErr := s.customFieldValues.ValidateAndSave(
 			ctx,
 			tenantInfo,

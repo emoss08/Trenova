@@ -71,7 +71,7 @@ type Provider struct {
 	BaseURL string `json:"baseUrl" keel:"base_url,nullzero"`
 	// Model is free text on purpose. Self-hosted deployments name models whatever
 	// they like ("llama3.3:70b", "qwen2.5-coder:32b"), so no closed set can hold.
-	Model string `json:"model" keel:"model"`
+	Model string `json:"model"   keel:"model"`
 
 	// APIKey holds the credential encrypted at rest. It is cleared before the
 	// entity leaves the service layer.
@@ -89,18 +89,18 @@ type Provider struct {
 	// operator knows it better than the model id does: a self-hosted model
 	// served with a shorter context than its family's, or an id nothing here
 	// can place. Nil reads the window off the model id.
-	ContextWindowTokens *int `json:"contextWindow" keel:"context_window"`
+	ContextWindowTokens *int `json:"contextWindow"        keel:"context_window"`
 	// ReasoningEffort asks a model that can think to do so before answering.
 	// Off is the default: the parameter is refused by models without it.
-	ReasoningEffort aireasoning.ReasoningEffort `json:"reasoningEffort" keel:"reasoning_effort,nullzero"`
+	ReasoningEffort aireasoning.ReasoningEffort `json:"reasoningEffort"      keel:"reasoning_effort,nullzero"`
 	// ThinkingStyle says how a Claude model behind an id the adapter cannot
 	// read takes thinking. Auto reads the id.
-	ThinkingStyle aireasoning.ThinkingStyle `json:"thinkingStyle" keel:"thinking_style,nullzero"`
+	ThinkingStyle aireasoning.ThinkingStyle `json:"thinkingStyle"        keel:"thinking_style,nullzero"`
 	// Platform is the service an Anthropic Messages provider reaches Claude
 	// through, and PlatformSettings what that service needs besides the
 	// credential. Every other kind is called directly.
-	Platform         aiplatform.Platform          `json:"platform"         keel:"platform,nullzero"`
-	PlatformSettings *aiplatform.PlatformSettings `json:"platformSettings" keel:"platform_settings,jsonb"`
+	Platform         aiplatform.Platform          `json:"platform"             keel:"platform,nullzero"`
+	PlatformSettings *aiplatform.PlatformSettings `json:"platformSettings"     keel:"platform_settings,jsonb"`
 
 	// AdvisorEnabled has every chat call routed to this provider declare
 	// Anthropic's advisor tool, so the model consults AdvisorModel (empty is
@@ -118,8 +118,8 @@ type Provider struct {
 	// ScriptWrites lets those scripts prepare writes, proposed as one batch for
 	// a person, and is off by default. Both need the person's code_mode
 	// permission.
-	Scripts      bool `json:"scripts"      keel:"code_mode_scripts"`
-	ScriptWrites bool `json:"scriptWrites" keel:"code_mode_writes"`
+	Scripts      bool `json:"scripts"        keel:"code_mode_scripts"`
+	ScriptWrites bool `json:"scriptWrites"   keel:"code_mode_writes"`
 
 	// ExtraBody is merged into the request an OpenAI-compatible endpoint
 	// receives, for the fields that are the server's own rather than the
@@ -165,10 +165,14 @@ type Provider struct {
 	EmbeddingDimensions *int                `json:"embeddingDimensions" keel:"embedding_dimensions"`
 	EmbeddingInputStyle EmbeddingInputStyle `json:"embeddingInputStyle" keel:"embedding_input_style"`
 
-	// Trusted marks a provider an administrator vouches for. A task that can drive
-	// a financial mutation will not route to an untrusted provider.
+	// Trusted marks a provider an administrator vouches for, shown beside it
+	// where a person picks a Desk model.
 	Trusted bool `json:"trusted" keel:"trusted"`
 	Enabled bool `json:"enabled" keel:"enabled"`
+	// Nova marks the provider Nova runs on: its credential, platform, limits
+	// and cap serve every Nova task, with Nova's own model (novamodel.ID)
+	// whatever Model says. An organization has at most one.
+	Nova bool `json:"nova"    keel:"nova"`
 
 	// LastTest is the outcome of the most recent live probe, kept so the
 	// configuration UI can show whether an endpoint was ever reachable without
@@ -180,19 +184,19 @@ type Provider struct {
 	TimeoutSeconds int `json:"timeoutSeconds" keel:"timeout_seconds,nullzero"`
 	// MaxConcurrent is how many calls this provider takes at once across
 	// every server. Past it, work moves to the next provider.
-	MaxConcurrent int `json:"maxConcurrent" keel:"max_concurrent,nullzero"`
+	MaxConcurrent int `json:"maxConcurrent"  keel:"max_concurrent,nullzero"`
 	// MonthlyCapUSD is the most this provider may spend in a UTC calendar
 	// month, over the calls that carried a price. Nil means no cap.
-	MonthlyCapUSD *decimal.Decimal `json:"monthlyCapUsd" keel:"monthly_cap_usd"`
-	OnCap         CapAction        `json:"onCap"         keel:"on_cap,nullzero"`
+	MonthlyCapUSD *decimal.Decimal `json:"monthlyCapUsd"  keel:"monthly_cap_usd"`
+	OnCap         CapAction        `json:"onCap"          keel:"on_cap,nullzero"`
 
 	// APIKeyPrefix and APIKeyLastFour are the only parts of the key kept in
 	// the clear: enough to tell two keys apart, never enough to use one.
-	APIKeyPrefix     string   `json:"apiKeyPrefix"     keel:"api_key_prefix,nullzero"`
-	APIKeyLastFour   string   `json:"apiKeyLastFour"   keel:"api_key_last_four,nullzero"`
-	APIKeyAddedAt    *int64   `json:"apiKeyAddedAt"    keel:"api_key_added_at"`
-	APIKeyAddedByID  pulid.ID `json:"apiKeyAddedById"  keel:"api_key_added_by_id,nullzero"`
-	APIKeyLastUsedAt *int64   `json:"apiKeyLastUsedAt" keel:"api_key_last_used_at"`
+	APIKeyPrefix     string   `json:"apiKeyPrefix"      keel:"api_key_prefix,nullzero"`
+	APIKeyLastFour   string   `json:"apiKeyLastFour"    keel:"api_key_last_four,nullzero"`
+	APIKeyAddedAt    *int64   `json:"apiKeyAddedAt"     keel:"api_key_added_at"`
+	APIKeyAddedByID  pulid.ID `json:"apiKeyAddedById"   keel:"api_key_added_by_id,nullzero"`
+	APIKeyLastUsedAt *int64   `json:"apiKeyLastUsedAt"  keel:"api_key_last_used_at"`
 	// PreviousAPIKey is the key a rotation replaced, encrypted like APIKey,
 	// kept until RotationExpiresAt so calls refused with the new key can
 	// still be served while the change reaches the vendor.
@@ -428,10 +432,10 @@ func (p *Provider) CanServeTask(t aitask.Task) (servable bool, reason string) {
 	switch {
 	case !p.Enabled:
 		return false, "provider is disabled"
+	case t.Nova():
+		return false, "Nova's tasks run on the Nova provider, not by assignment"
 	case !p.ServesTask(t):
 		return false, "provider is not assigned to this task"
-	case t.WritesToLedger() && !p.Trusted:
-		return false, "provider is not marked trusted, and this task can change financial records"
 	case t == aitask.TaskEmbedding && !p.Kind.SupportsEmbedding():
 		return false, "provider protocol has no embedding endpoint"
 	case t == aitask.TaskEmbedding && !IsAllowedEmbeddingDimension(p.ResolvedEmbeddingDimensions()):
@@ -578,6 +582,7 @@ func (p *Provider) Validate(multiErr *errortypes.MultiError) {
 
 	p.validatePlatform(multiErr)
 	p.validateTasks(multiErr)
+	p.validateNova(multiErr)
 	p.validateEmbedding(multiErr)
 	p.validateEndpoint(multiErr)
 	p.validateExtraBody(multiErr)
@@ -758,37 +763,32 @@ func validMonthlyCap(value any) error {
 
 func (p *Provider) validateTasks(multiErr *errortypes.MultiError) {
 	for idx, task := range p.Tasks {
-		if !task.IsValid() {
+		switch {
+		case !task.IsValid():
 			multiErr.Add(
 				fmt.Sprintf("tasks[%d]", idx),
 				errortypes.ErrInvalid,
 				"Task is not one this system routes",
 			)
-		}
-	}
-
-	if !p.Enabled {
-		return
-	}
-
-	// An enabled provider serving nothing is almost always a half-finished setup,
-	// and it fails silently at call time rather than at save time.
-	if len(p.Tasks) == 0 {
-		multiErr.Add(
-			"tasks",
-			errortypes.ErrInvalid,
-			"An enabled provider must serve at least one task",
-		)
-	}
-
-	for idx, task := range p.Tasks {
-		if task.WritesToLedger() && !p.Trusted {
+		case task.Nova():
 			multiErr.Add(
 				fmt.Sprintf("tasks[%d]", idx),
 				errortypes.ErrInvalid,
-				"This task can change financial records, so it can only be served by a provider marked trusted",
+				"{0} is Nova's: it runs on the provider chosen for Nova, not by assignment",
+				string(task),
 			)
 		}
+	}
+
+	// An enabled provider serving nothing is almost always a half-finished setup,
+	// and it fails silently at call time rather than at save time. The provider
+	// Nova runs on serves Nova, which is enough.
+	if p.Enabled && !p.Nova && len(p.Tasks) == 0 {
+		multiErr.Add(
+			"tasks",
+			errortypes.ErrInvalid,
+			"An enabled provider must serve at least one task or be the one Nova runs on",
+		)
 	}
 }
 

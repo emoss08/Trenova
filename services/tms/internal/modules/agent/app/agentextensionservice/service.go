@@ -44,7 +44,7 @@ type Params struct {
 	Encryption   *encryptionservice.Service
 	AuditService auditports.AuditService
 	Connectors   []agentextensionports.ExtensionConnector `group:"agent_extension_connectors"`
-	Plans        platformplanports.PlanService            `                                   optional:"true"`
+	Plans        platformplanports.PlanService
 }
 
 type Service struct {

@@ -38,9 +38,6 @@ func (s *Service) summarize(
 		return ""
 	}
 	fallback := truncateRunes(Transcript(history, 1200), conversation.MaxHandoffSummaryRunes)
-	if s.completion == nil {
-		return fallback
-	}
 
 	result, err := s.completion.CompleteStructured(ctx, &llmports.StructuredCompletionRequest{
 		TenantInfo: tenant,

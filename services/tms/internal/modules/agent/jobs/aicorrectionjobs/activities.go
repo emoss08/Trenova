@@ -6,9 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionaccuracyports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"go.uber.org/fx"
@@ -19,20 +17,14 @@ type ActivitiesParams struct {
 	fx.In
 
 	Corrections aicorrectionports.AICorrectionService
-	Evaluations extractionevalports.ExtractionEvalRunner          `optional:"true"`
-	Shadows     extractionshadowports.ExtractionShadowRetention   `optional:"true"`
-	Rollout     extractionrolloutports.ExtractionRolloutRetention `optional:"true"`
-	Drift       extractionevalports.ExtractionDriftChecker        `optional:"true"`
+	Drift       extractionaccuracyports.ExtractionDriftChecker
 	Tenants     tenantports.TenantSyncRepository
 	Logger      *zap.Logger
 }
 
 type Activities struct {
 	corrections aicorrectionports.AICorrectionService
-	evaluations extractionevalports.ExtractionEvalRunner
-	shadows     extractionshadowports.ExtractionShadowRetention
-	rollout     extractionrolloutports.ExtractionRolloutRetention
-	drift       extractionevalports.ExtractionDriftChecker
+	drift       extractionaccuracyports.ExtractionDriftChecker
 	tenants     tenantports.TenantSyncRepository
 	l           *zap.Logger
 }
@@ -40,9 +32,6 @@ type Activities struct {
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
 		corrections: p.Corrections,
-		evaluations: p.Evaluations,
-		shadows:     p.Shadows,
-		rollout:     p.Rollout,
 		drift:       p.Drift,
 		tenants:     p.Tenants,
 		l:           p.Logger.Named("job.aicorrection-retention"),
@@ -73,48 +62,6 @@ func (a *Activities) PurgeOrganizationAICorrectionsActivity(
 	})
 	if err != nil {
 		return nil, fmt.Errorf("purge expired ai corrections: %w", err)
-	}
-
-	if a.evaluations != nil {
-		runs, runErr := a.evaluations.PurgeExpiredRuns(
-			ctx,
-			kernelports.PurgeExpiredAICorrectionsRequest{
-				TenantInfo: tenant,
-				Now:        input.Now,
-			},
-		)
-		if runErr != nil {
-			return nil, fmt.Errorf("purge expired extraction evaluation runs: %w", runErr)
-		}
-		purged += runs
-	}
-
-	if a.shadows != nil {
-		shadows, shadowErr := a.shadows.PurgeExpiredShadows(
-			ctx,
-			kernelports.PurgeExpiredAICorrectionsRequest{
-				TenantInfo: tenant,
-				Now:        input.Now,
-			},
-		)
-		if shadowErr != nil {
-			return nil, fmt.Errorf("purge expired extraction shadows: %w", shadowErr)
-		}
-		purged += shadows
-	}
-
-	if a.rollout != nil {
-		assignments, rolloutErr := a.rollout.PurgeExpiredAssignments(
-			ctx,
-			kernelports.PurgeExpiredAICorrectionsRequest{
-				TenantInfo: tenant,
-				Now:        input.Now,
-			},
-		)
-		if rolloutErr != nil {
-			return nil, fmt.Errorf("purge expired extraction rollout assignments: %w", rolloutErr)
-		}
-		purged += assignments
 	}
 
 	a.l.Debug("ai corrections purged",

@@ -1,12 +1,9 @@
 package aidocumentservice
 
 import (
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
@@ -155,30 +152,4 @@ func TestContractParseReplyRejectsMalformedText(t *testing.T) {
 
 	_, err := Contract{}.ParseReply("not json")
 	require.ErrorIs(t, err, llmports.ErrModelSchemaValidation)
-}
-
-const pipelineSchemaFixture = "../../../../../../../tools/extraction-finetune/tests/fixtures/extraction-schema.json"
-
-func TestFineTuningPipelineSchemaFixtureIsCurrent(t *testing.T) {
-	t.Parallel()
-
-	schema := buildExtractSchema()
-	encoded, err := sonic.ConfigStd.MarshalIndent(schema, "", "  ")
-	require.NoError(t, err)
-	encoded = append(encoded, '\n')
-
-	if os.Getenv("TRENOVA_UPDATE_FIXTURES") == "1" {
-		require.NoError(t, os.MkdirAll(filepath.Dir(pipelineSchemaFixture), 0o755))
-		require.NoError(t, os.WriteFile(pipelineSchemaFixture, encoded, 0o644))
-	}
-
-	fixture, err := os.ReadFile(pipelineSchemaFixture)
-	require.NoError(
-		t,
-		err,
-		"regenerate with TRENOVA_UPDATE_FIXTURES=1 go test ./internal/modules/agent/app/aidocumentservice/",
-	)
-	assert.JSONEq(t, string(encoded), string(fixture),
-		"the fine-tuning pipeline's schema fixture is stale; regenerate it with "+
-			"TRENOVA_UPDATE_FIXTURES=1 go test ./internal/modules/agent/app/aidocumentservice/")
 }

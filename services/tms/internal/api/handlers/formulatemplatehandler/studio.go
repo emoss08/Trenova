@@ -55,17 +55,6 @@ func (h *Handler) studioActor(authCtx *authctx.AuthContext) *permissionports.Req
 	}
 }
 
-func (h *Handler) studioAvailable(c *gin.Context) bool {
-	if h.studio != nil {
-		return true
-	}
-
-	h.eh.HandleError(c, errortypes.NewBusinessError(
-		"The formula assistant is not available on this server",
-	))
-	return false
-}
-
 func (r *formulaDraftRequest) toDraft() (formulastudioports.FormulaStudioDraft, error) {
 	multiErr := errortypes.NewMultiError()
 	draft := formulastudioports.FormulaStudioDraft{
@@ -126,10 +115,6 @@ func (h *Handler) explainFormula(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	if !h.studioAvailable(c) {
-		return
-	}
-
 	draft, err := req.toDraft()
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -194,10 +179,6 @@ func (h *Handler) describeInputs(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	if !h.studioAvailable(c) {
-		return
-	}
-
 	draft, err := req.toDraft()
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -243,10 +224,6 @@ func (h *Handler) suggestTests(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	if !h.studioAvailable(c) {
-		return
-	}
-
 	draft, err := req.toDraft()
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -292,10 +269,6 @@ func (h *Handler) explainTest(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	if !h.studioAvailable(c) {
-		return
-	}
-
 	draft, err := req.toDraft()
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -351,10 +324,6 @@ func (h *Handler) reviewNote(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	if !h.studioAvailable(c) {
-		return
-	}
-
 	resp, err := h.studio.DraftReviewNote(
 		c.Request.Context(),
 		&formulastudioports.DraftFormulaReviewNoteRequest{

@@ -2,11 +2,9 @@ package accountingsynccontract
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -48,10 +46,5 @@ func (c *DriftChecker) CheckNow(
 		BusinessUnitID: tenantInfo.BuID,
 		ConnectionID:   connectionID,
 	})
-	if errors.Is(err, kernelports.ErrWorkflowStarterDisabled) {
-		return errortypes.NewBusinessError(
-			"Background work is not available on this server, so the books cannot be checked now",
-		).WithInternal(err)
-	}
 	return err
 }

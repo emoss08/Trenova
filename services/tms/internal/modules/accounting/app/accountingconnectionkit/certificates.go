@@ -164,7 +164,7 @@ func (k *Kit) ConsumePendingCertificate(
 	conn *accountingconnection.AccountingConnection,
 	certificate *HeldCertificate,
 ) error {
-	if certificate == nil || k.certificates == nil {
+	if certificate == nil {
 		return nil
 	}
 	return k.certificates.Delete(txCtx, accountingconnectionports.GetAccountingConnectionRequest{
@@ -181,7 +181,7 @@ func (k *Kit) PendingCertificate(
 	tenantInfo pagination.TenantInfo,
 	typ integration.Type,
 ) (*accountingconnectionports.AccountingPreparedCertificate, error) {
-	if k.certificates == nil || !accountingprovider.MustProfile(typ).ClientCredentials {
+	if !accountingprovider.MustProfile(typ).ClientCredentials {
 		return nil, nil //nolint:nilnil // no certificate is waiting
 	}
 	pending, err := k.certificates.GetByType(

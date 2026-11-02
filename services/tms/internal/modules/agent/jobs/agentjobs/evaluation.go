@@ -155,10 +155,6 @@ func (a *Activities) openReplay(
 func (a *Activities) fingerprintOf(
 	definition *agentdefinition.Definition,
 ) *agentfingerprint.Fingerprint {
-	if a.runtime == nil {
-		return agentquality.FingerprintOf(definition, promptVersion)
-	}
-
 	return a.runtime.Fingerprint(definition, definition.PreferredProviderID, "")
 }
 
@@ -311,12 +307,6 @@ func (a *Activities) threadActor(
 	tenant pagination.TenantInfo,
 	threadID pulid.ID,
 ) (*permissionports.RequestActor, error) {
-	if a.conversations == nil {
-		return nil, temporal.NewNonRetryableApplicationError(
-			"conversation history unavailable", "HistoryUnavailable", nil,
-		)
-	}
-
 	thread, err := a.conversations.GetThreadOwned(ctx, conversationports.GetThreadOwnedRequest{
 		ID:         threadID,
 		TenantInfo: tenant,
@@ -745,12 +735,6 @@ func (a *Activities) chatReplayInput(
 	definition *agentdefinition.Definition,
 	actor *permissionports.RequestActor,
 ) (*replayInput, error) {
-	if a.conversations == nil {
-		return nil, temporal.NewNonRetryableApplicationError(
-			"conversation history unavailable", "HistoryUnavailable", nil,
-		)
-	}
-
 	messages, err := a.conversations.ListMessages(ctx, &conversationports.ListMessagesRequest{
 		ThreadID:     source.SubjectID,
 		TenantInfo:   tenant,

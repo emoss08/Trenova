@@ -79,7 +79,7 @@ func setup(t *testing.T) *fixture {
 		db:   db,
 		dsn:  dsn,
 		repo: iftarepository.New(iftarepository.Params{
-			DB:     postgres.NewTestConnection(db),
+			DB:     postgres.WrapDB(db),
 			Logger: zap.NewNop(),
 		}),
 		tenantA: tenantA,
@@ -790,7 +790,7 @@ func TestJurisdictionLookupsShareOneCachedCatalogRead(t *testing.T) {
 
 	cached := cachetest.Open(t, f.ctx, f.dsn)
 	repo := iftarepository.New(iftarepository.Params{
-		DB:     postgres.NewTestConnection(cached),
+		DB:     postgres.WrapDB(cached),
 		Logger: zap.NewNop(),
 	})
 

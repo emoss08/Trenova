@@ -170,8 +170,8 @@ type Params struct {
 	Retention     tenantports.DataRetentionRepository
 	Organizations tenantports.OrganizationRepository
 	Permissions   permissionports.PermissionEngine
-	Tools         agenttoolports.AgentToolRegistry      `optional:"true"`
-	QueryTools    agenttoolports.AgentQueryToolRegistry `optional:"true"`
+	Tools         agenttoolports.AgentToolRegistry
+	QueryTools    agenttoolports.AgentQueryToolRegistry
 }
 
 type Service struct {

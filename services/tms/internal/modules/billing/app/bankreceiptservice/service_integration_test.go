@@ -44,7 +44,7 @@ func TestImportAndMatchBankReceiptToCustomerPayment(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	logger := zap.NewNop()
 	receiptRepo := bankreceiptrepository.New(bankreceiptrepository.Params{DB: conn, Logger: logger})
 	paymentRepo := customerpaymentrepository.New(

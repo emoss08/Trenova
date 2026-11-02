@@ -64,8 +64,8 @@ func NovaGenerationWorkflowID(tenantInfo pagination.TenantInfo) string {
 type NovaGeneratorParams struct {
 	fx.In
 
-	Signals kernelports.WorkflowSignalStarter `optional:"true"`
-	Client  client.Client                     `optional:"true"`
+	Signals kernelports.WorkflowSignalStarter
+	Client  client.Client
 	Logger  *zap.Logger
 }
 
@@ -92,7 +92,7 @@ func (g *NovaGenerator) RequestGeneration(
 	tenantInfo pagination.TenantInfo,
 	trigger billingqueueports.NovaTrigger,
 ) {
-	if g.signals == nil || tenantInfo.OrgID.IsNil() || tenantInfo.BuID.IsNil() {
+	if tenantInfo.OrgID.IsNil() || tenantInfo.BuID.IsNil() {
 		return
 	}
 
@@ -124,9 +124,6 @@ func (g *NovaGenerator) Generation(
 	tenantInfo pagination.TenantInfo,
 ) (billingqueueports.NovaGenerationState, error) {
 	state := billingqueueports.NovaGenerationState{}
-	if g.client == nil {
-		return state, nil
-	}
 
 	id := NovaGenerationWorkflowID(tenantInfo)
 	described, err := g.client.DescribeWorkflowExecution(ctx, id, "")

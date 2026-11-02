@@ -37,8 +37,8 @@ type Params struct {
 	Organizations tenantports.OrganizationRepository
 	Permissions   permissionports.PermissionEngine
 	Activities    inboundmessageports.TriageActivityRecorder
-	Cache         triageports.TriageCache `optional:"true"`
-	Audit         auditports.AuditService `optional:"true"`
+	Cache         triageports.TriageCache
+	Audit         auditports.AuditService
 }
 
 type Service struct {
@@ -99,14 +99,12 @@ func enabledRules(
 	deps ruleSource,
 	tenantInfo pagination.TenantInfo,
 ) ([]*triage.Rule, error) {
-	if deps.cache != nil {
-		cached, hit, err := deps.cache.EnabledRules(ctx, tenantInfo)
-		if err != nil {
-			deps.l.Warn("triage rule cache unavailable", zap.Error(err))
-		}
-		if hit {
-			return cached, nil
-		}
+	cached, hit, err := deps.cache.EnabledRules(ctx, tenantInfo)
+	if err != nil {
+		deps.l.Warn("triage rule cache unavailable", zap.Error(err))
+	}
+	if hit {
+		return cached, nil
 	}
 
 	rules, err := deps.rules.List(ctx, triageports.ListRulesRequest{
@@ -117,10 +115,8 @@ func enabledRules(
 		return nil, err
 	}
 
-	if deps.cache != nil {
-		if err = deps.cache.SetEnabledRules(ctx, tenantInfo, rules); err != nil {
-			deps.l.Warn("could not cache the enabled triage rules", zap.Error(err))
-		}
+	if err = deps.cache.SetEnabledRules(ctx, tenantInfo, rules); err != nil {
+		deps.l.Warn("could not cache the enabled triage rules", zap.Error(err))
 	}
 
 	return rules, nil
@@ -133,9 +129,6 @@ type ruleSource struct {
 }
 
 func (s *Service) rulesChanged(ctx context.Context, tenantInfo pagination.TenantInfo) {
-	if s.cache == nil {
-		return
-	}
 	if err := s.cache.DropEnabledRules(ctx, tenantInfo); err != nil {
 		s.l.Warn("could not drop the cached triage rules",
 			zap.String("organizationId", tenantInfo.OrgID.String()), zap.Error(err))

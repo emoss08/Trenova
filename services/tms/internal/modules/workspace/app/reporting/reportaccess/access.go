@@ -124,9 +124,6 @@ func New(p Params) (*Resolver, error) {
 	if p.Catalog == nil {
 		return nil, errNoCatalog
 	}
-	if p.Registry == nil {
-		p.Registry = permissioncatalog.NewRegistry()
-	}
 	r := &Resolver{
 		catalog:  p.Catalog,
 		engine:   p.Engine,

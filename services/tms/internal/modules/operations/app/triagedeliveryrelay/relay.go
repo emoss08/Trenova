@@ -30,7 +30,7 @@ type Params struct {
 	fx.In
 
 	Shipments shipmentports.ShipmentRepository
-	Sink      inboundmessageports.TriageEventSink `optional:"true"`
+	Sink      inboundmessageports.TriageEventSink
 }
 
 type Relay struct {
@@ -62,7 +62,7 @@ func Delivered(status shipmentvocab.Status) bool {
 }
 
 func (r *Relay) OnShipmentEvent(ctx context.Context, event *shipmentevent.Event) error {
-	if r.sink == nil || event == nil || event.Type != shipmentevent.TypeStatusChanged {
+	if event == nil || event.Type != shipmentevent.TypeStatusChanged {
 		return nil
 	}
 
@@ -86,7 +86,7 @@ func (r *Relay) AfterMoveStatusChange(
 	move *shipment.ShipmentMove,
 	previous shipmentvocab.MoveStatus,
 ) error {
-	if r.sink == nil || move == nil || move.Status != shipmentvocab.MoveStatusCompleted ||
+	if move == nil || move.Status != shipmentvocab.MoveStatusCompleted ||
 		previous == shipmentvocab.MoveStatusCompleted {
 		return nil
 	}

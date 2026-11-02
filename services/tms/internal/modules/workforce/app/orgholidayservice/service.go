@@ -31,7 +31,7 @@ type Params struct {
 	Logger       *zap.Logger
 	Repo         orgholidayports.OrgHolidayRepository
 	AuditService auditports.AuditService
-	Realtime     realtimeports.RealtimeService `optional:"true"`
+	Realtime     realtimeports.RealtimeService
 }
 
 type Service struct {
@@ -186,7 +186,7 @@ func (s *Service) audit(
 	comment string,
 	log *zap.Logger,
 ) {
-	if s.auditService == nil || userID.IsNil() {
+	if userID.IsNil() {
 		return
 	}
 	params := &auditports.LogActionParams{
@@ -214,7 +214,7 @@ func (s *Service) publish(
 	operation permission.Operation,
 	userID pulid.ID,
 ) {
-	if s.realtime == nil || entity == nil {
+	if entity == nil {
 		return
 	}
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{

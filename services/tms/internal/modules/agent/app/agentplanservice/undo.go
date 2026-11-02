@@ -27,13 +27,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// defers says whether there is a workflow engine to hold an approval for its
-// undo window. Without one a plan approved from a conversation runs at once,
-// as it always has.
-func (s *Service) defers() bool {
-	return s.workflows != nil && s.workflows.Enabled()
-}
-
 // approveDeferred approves a plan that runs when the undo window closes. It
 // is checked as a decision is, now, and moved to Approving; nothing runs until
 // the window closes, when it is checked again against the world as it is then.
@@ -272,9 +265,6 @@ func (s *Service) ownApproving(
 			"Only a human user can decide on agent plans",
 		)
 	}
-	if s.workflows == nil {
-		return nil, errAlreadyCommitted()
-	}
 	if err := s.AssertOwnPlan(ctx, req.PlanID, req.TenantInfo, actor); err != nil {
 		return nil, err
 	}
@@ -329,10 +319,6 @@ func (s *Service) reopenPlan(
 }
 
 func (s *Service) logUndo(plan *agentplan.AgentPlan, actor *permissionports.RequestActor) {
-	if s.audit == nil {
-		return
-	}
-
 	auditActor := actor.AuditActor()
 	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAgentProposal,

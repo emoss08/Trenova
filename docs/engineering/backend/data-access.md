@@ -555,9 +555,6 @@ A new column, relation or table needs `task keel-gen` in the same change, and
   `reconcile-automatic`, `notx-idempotent`, `tenant-rls`) over pending migrations;
   `TestMigrationsSinceTheMoveToKeelPassLint` fails CI on an error finding in a new migration.
   `--keel:lint_ignore rule` at the top of a file skips a rule, with the reason in the PR.
-- **Editions** add migration sources through `edition.Edition.Migrations`, merged into one version
-  line; the db binaries read them, the server binaries never link them
-  ([editions.md](../editions.md)).
 
 ## Tests
 

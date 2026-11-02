@@ -37,7 +37,7 @@ func TestCreateOrSkip_CountsABatchReadTwiceOnce(t *testing.T) {
 		BusinessUnitID: row.BusinessUnitID,
 	})
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	since := timeutils.NowUnix() - 60
 	submittedAt := time.Unix(since, 0)
 	batchID := pulid.MustNew("msgbatch_").String()

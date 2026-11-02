@@ -279,7 +279,7 @@ func (s *Service) prepareTurn(
 		// activity that runs the publish rather than on this request. The
 		// palette has nothing beside its answer, so there the reply holds
 		// everything.
-		runReq.Publishes = s.artifacts != nil
+		runReq.Publishes = true
 		runReq.Directed = checks.directed
 		runReq.Command = command
 		plan.Timezone = runReq.Context.Timezone

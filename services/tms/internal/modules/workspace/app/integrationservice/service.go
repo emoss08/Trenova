@@ -38,10 +38,10 @@ type Params struct {
 	AuditService auditports.AuditService
 	Registry     *permissioncatalog.Registry
 
-	FuelCardConnectors     []fuelpurchaseports.FuelCardProvider            `group:"fuelCardConnectors"`
-	CarrierIntelConnectors []carrierintelports.CarrierIntelConnector       `group:"carrierIntelConnectors"`
-	CarrierIntelControls   carrierintelports.CarrierIntelControlRepository `                               optional:"true"`
-	Plans                  platformplanports.PlanService                   `                               optional:"true"`
+	FuelCardConnectors     []fuelpurchaseports.FuelCardProvider      `group:"fuelCardConnectors"`
+	CarrierIntelConnectors []carrierintelports.CarrierIntelConnector `group:"carrierIntelConnectors"`
+	CarrierIntelControls   carrierintelports.CarrierIntelControlRepository
+	Plans                  platformplanports.PlanService
 }
 
 type Service struct {

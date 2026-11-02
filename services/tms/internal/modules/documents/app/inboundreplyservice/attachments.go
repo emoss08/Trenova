@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -27,11 +26,6 @@ func (s *Service) resolveAttachments(
 ) ([]*documentports.MailAttachment, error) {
 	if len(req.DocumentIDs) == 0 {
 		return []*documentports.MailAttachment{}, nil
-	}
-	if s.documents == nil {
-		return nil, errortypes.NewBusinessError(
-			"Files cannot be attached to replies on this installation",
-		)
 	}
 	if req.Field == "" {
 		req.Field = attachmentsField
@@ -164,7 +158,7 @@ func (s *Service) detentionEvidence(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
 ) *triage.ReplyAttachment {
-	if s.evidence == nil || s.documents == nil || !standingBy(message) {
+	if !standingBy(message) {
 		return nil
 	}
 

@@ -21,8 +21,8 @@ type SchedulerParams struct {
 	fx.In
 
 	Logger    *zap.Logger
-	Signals   kernelports.WorkflowSignalStarter `optional:"true"`
-	Workflows kernelports.WorkflowStarter       `optional:"true"`
+	Signals   kernelports.WorkflowSignalStarter
+	Workflows kernelports.WorkflowStarter
 }
 
 type Scheduler struct {
@@ -43,7 +43,7 @@ func (s *Scheduler) AfterTurn(
 	ctx context.Context,
 	req *agentreflectionports.ReflectOnThreadRequest,
 ) {
-	if s.signals == nil || req == nil || req.ThreadID.IsNil() {
+	if req == nil || req.ThreadID.IsNil() {
 		return
 	}
 
@@ -74,7 +74,7 @@ func (s *Scheduler) AfterTurn(
 }
 
 func (s *Scheduler) AfterRun(ctx context.Context, req *agentreflectionports.ReflectOnRunRequest) {
-	if s.workflows == nil || req == nil || req.RunID.IsNil() {
+	if req == nil || req.RunID.IsNil() {
 		return
 	}
 

@@ -106,7 +106,7 @@ type Params struct {
 	Occurrences detentionports.DetentionOccurrenceRepository
 	Review      *detentionreview.Service
 	Notices     *detentionnoticeservice.Service
-	Credits     detentionports.BilledDetentionCreditor `optional:"true"`
+	Credits     detentionports.BilledDetentionCreditor
 }
 
 type Service struct {

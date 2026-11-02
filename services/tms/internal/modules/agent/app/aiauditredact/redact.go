@@ -52,7 +52,7 @@ func New(
 	masker Masker,
 ) *Redactor {
 	if registry == nil {
-		registry = permissioncatalog.NewRegistry()
+		registry = permissioncatalog.Default()
 	}
 
 	return &Redactor{registry: registry, policies: policies, masker: masker}

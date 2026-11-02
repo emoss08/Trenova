@@ -38,10 +38,10 @@ type Params struct {
 	Organizations tenantports.OrganizationRepository
 	Nova          *triagenova.Caller
 	Documents     documentports.DocumentMailAttachments
-	Email         emailports.EmailService                       `optional:"true"`
-	Peeks         triageworkports.TriageShipmentPeeker          `optional:"true"`
-	Stops         triageworkports.TriageStopTimesReader         `optional:"true"`
-	Evidence      triageworkports.TriageDetentionEvidenceSource `optional:"true"`
+	Email         emailports.EmailService
+	Peeks         triageworkports.TriageShipmentPeeker
+	Stops         triageworkports.TriageStopTimesReader
+	Evidence      triageworkports.TriageDetentionEvidenceSource
 }
 
 type tracker struct {

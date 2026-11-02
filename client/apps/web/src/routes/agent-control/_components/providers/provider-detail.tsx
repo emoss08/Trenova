@@ -203,7 +203,6 @@ export function ProviderDetail({
                 >
                   <Ic n={on ? "check" : "plus"} s={11} w={2.2} />
                   {meta.label}
-                  {meta.trust && <Ic n="shield" s={10} />}
                 </button>
               );
             })}

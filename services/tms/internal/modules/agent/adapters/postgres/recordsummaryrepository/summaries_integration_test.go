@@ -65,7 +65,7 @@ func TestSummaries_ReadEachRecordOnceWithItsLaneStatusAndMeasures(t *testing.T) 
 	refs[permission.ResourceShipment] = append(refs[permission.ResourceShipment], missing)
 
 	repo := recordsummaryrepository.New(recordsummaryrepository.Params{
-		DB: postgres.NewTestConnection(db),
+		DB: postgres.WrapDB(db),
 	})
 	summaries, err := repo.Summaries(ctx, &recordsummaryports.RecordSummaryRequest{
 		Tenant: tenant,
@@ -112,7 +112,7 @@ func TestSummaries_ReadNothingOfAnotherTenant(t *testing.T) {
 	other := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	ctx = dbscope.WithTenant(ctx, other.DBTenant())
 	repo := recordsummaryrepository.New(recordsummaryrepository.Params{
-		DB: postgres.NewTestConnection(db),
+		DB: postgres.WrapDB(db),
 	})
 
 	summaries, err := repo.Summaries(ctx, &recordsummaryports.RecordSummaryRequest{
@@ -181,7 +181,7 @@ func TestSummaries_ReadALoadEstimatedToMissAWindowStillOpenAsProjected(t *testin
 	}))
 
 	repo := recordsummaryrepository.New(recordsummaryrepository.Params{
-		DB: postgres.NewTestConnection(db),
+		DB: postgres.WrapDB(db),
 	})
 	summaries, err := repo.Summaries(ctx, &recordsummaryports.RecordSummaryRequest{
 		Tenant: tenant,

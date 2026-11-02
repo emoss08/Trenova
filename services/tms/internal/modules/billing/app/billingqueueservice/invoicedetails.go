@@ -136,7 +136,7 @@ func (s *Service) ensurePacketDocuments(
 	if len(packet) == 0 {
 		return nil
 	}
-	if s.documentRepo == nil || item.ShipmentID.IsNil() {
+	if item.ShipmentID.IsNil() {
 		return errortypes.NewValidationError(
 			"packetDocumentIds",
 			errortypes.ErrInvalid,

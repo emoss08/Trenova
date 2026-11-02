@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -105,12 +104,6 @@ func (s *Service) renderInvoiceEmail(
 	ctx context.Context,
 	p *invoiceEmailRenderParams,
 ) (*invoiceEmailWording, error) {
-	if s.templates == nil {
-		return nil, errortypes.NewBusinessError(
-			"Invoice email rendering is not configured on this deployment",
-		)
-	}
-
 	var customerID *pulid.ID
 	if p.Profile != nil && p.Profile.Customer != nil && !p.Profile.Customer.ID.IsNil() {
 		customerID = &p.Profile.Customer.ID

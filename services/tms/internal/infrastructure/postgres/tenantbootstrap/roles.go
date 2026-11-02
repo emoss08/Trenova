@@ -49,7 +49,7 @@ func CreateAdminRole(
 
 	registry := params.Registry
 	if registry == nil {
-		registry = permissioncatalog.NewRegistry()
+		registry = permissioncatalog.Default()
 	}
 
 	grants := planAdminGrants(registry, role.ID, nil, now).add

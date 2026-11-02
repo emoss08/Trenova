@@ -201,7 +201,7 @@ func setupIntegrationEngine(t *testing.T) (*engine, *integrationEnv, *redis.Clie
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	redisClient := sharedtestutil.SetupTestRedis(t)
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	cacheRepo := &testPermCacheRepo{client: redisClient}
 
 	metricsRegistry, err := metrics.NewRegistry(&monitoringconfig.Config{}, zap.NewNop())

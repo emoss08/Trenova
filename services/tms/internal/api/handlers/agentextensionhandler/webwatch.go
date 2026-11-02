@@ -129,12 +129,10 @@ func (h *Handler) stopWebWatch(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	if h.waits != nil {
-		h.waits.EndWebWatchWaits(c.Request.Context(), tenant, &extensionwebwatch.WebWatch{
-			ID:     watch.ID,
-			Status: watch.Status,
-		})
-	}
+	h.waits.EndWebWatchWaits(c.Request.Context(), tenant, &extensionwebwatch.WebWatch{
+		ID:     watch.ID,
+		Status: watch.Status,
+	})
 
 	helpers.JSON(c, http.StatusOK, watch)
 }

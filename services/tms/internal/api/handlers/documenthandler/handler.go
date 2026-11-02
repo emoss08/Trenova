@@ -40,12 +40,12 @@ type Params struct {
 	UploadService          *documentuploadservice.Service
 	DocumentContentService documentports.DocumentContentService
 	ExtractionStatus       documentports.ExtractionStatusReader
-	Reader                 documentports.DocumentReader `optional:"true"`
+	Reader                 documentports.DocumentReader
 	ImportAssistant        shipmentimportassistantports.ShipmentImportAssistantService
-	PageAssistant          assistantports.PageAssistant `optional:"true"`
+	PageAssistant          assistantports.PageAssistant
 	ErrorHandler           *helpers.ErrorHandler
 	PermissionMiddleware   *middleware.PermissionMiddleware
-	StorageConfig          *storageconfig.Config `optional:"true"`
+	StorageConfig          *storageconfig.Config
 	Logger                 *zap.Logger
 }
 
@@ -78,9 +78,7 @@ const multipartFormOverheadBytes int64 = 1 << 20
 
 func New(p Params) *Handler {
 	storageConfig := storageconfig.Config{}
-	if p.StorageConfig != nil {
-		storageConfig = *p.StorageConfig
-	}
+	storageConfig = *p.StorageConfig
 
 	return &Handler{
 		service:         p.Service,
@@ -119,33 +117,6 @@ func (h *Handler) maxUploadBodyBytes(maxFiles int) int64 {
 	}
 
 	return int64(maxFiles) * (h.storageConfig.GetMaxFileSize() + multipartFormOverheadBytes)
-}
-
-func NewTestHandlerWithConfig(
-	service *documentservice.Service,
-	eh *helpers.ErrorHandler,
-	pm *middleware.PermissionMiddleware,
-	cfg *storageconfig.Config,
-	importAssistant ...shipmentimportassistantports.ShipmentImportAssistantService,
-) *Handler {
-	var assistant shipmentimportassistantports.ShipmentImportAssistantService
-	if len(importAssistant) > 0 {
-		assistant = importAssistant[0]
-	}
-
-	storageConfig := storageconfig.Config{}
-	if cfg != nil {
-		storageConfig = *cfg
-	}
-
-	return &Handler{
-		service:         service,
-		importAssistant: assistant,
-		eh:              eh,
-		pm:              pm,
-		storageConfig:   storageConfig,
-		logger:          zap.NewNop(),
-	}
 }
 
 //nolint:funlen // existing workflow or route registration is intentionally kept together
@@ -1038,7 +1009,7 @@ func (h *Handler) getByResource(c *gin.Context) {
 	resourceID := c.Param("resourceID")
 	searchQuery := helpers.QueryString(c, "query", "")
 
-	if searchQuery != "" && h.contentService != nil {
+	if searchQuery != "" {
 		documents, err := h.contentService.SearchDocuments(
 			c.Request.Context(),
 			pagination.TenantInfo{
@@ -1106,11 +1077,6 @@ func (h *Handler) getPacketSummary(c *gin.Context) {
 // @Security BearerAuth
 // @Router /documents/{documentID}/reading/ [get]
 func (h *Handler) getReading(c *gin.Context) {
-	if h.reader == nil {
-		helpers.JSON(c, http.StatusNotImplemented, contentServiceUnavailable())
-		return
-	}
-
 	authCtx := authctx.GetAuthContext(c)
 	documentID, err := pulid.MustParse(c.Param("documentID"))
 	if err != nil {
@@ -1132,15 +1098,6 @@ func (h *Handler) getReading(c *gin.Context) {
 }
 
 func (h *Handler) getContent(c *gin.Context) {
-	if h.contentService == nil {
-		helpers.JSON(
-			c,
-			http.StatusNotImplemented,
-			contentServiceUnavailable(),
-		)
-		return
-	}
-
 	authCtx := authctx.GetAuthContext(c)
 	documentID, err := pulid.MustParse(c.Param("documentID"))
 	if err != nil {
@@ -1165,15 +1122,6 @@ func (h *Handler) getContent(c *gin.Context) {
 }
 
 func (h *Handler) getShipmentDraft(c *gin.Context) {
-	if h.contentService == nil {
-		helpers.JSON(
-			c,
-			http.StatusNotImplemented,
-			contentServiceUnavailable(),
-		)
-		return
-	}
-
 	authCtx := authctx.GetAuthContext(c)
 	documentID, err := pulid.MustParse(c.Param("documentID"))
 	if err != nil {
@@ -1198,15 +1146,6 @@ func (h *Handler) getShipmentDraft(c *gin.Context) {
 }
 
 func (h *Handler) reextractDocumentContent(c *gin.Context) {
-	if h.contentService == nil {
-		helpers.JSON(
-			c,
-			http.StatusNotImplemented,
-			contentServiceUnavailable(),
-		)
-		return
-	}
-
 	authCtx := authctx.GetAuthContext(c)
 	documentID, err := pulid.MustParse(c.Param("documentID"))
 	if err != nil {
@@ -1228,19 +1167,17 @@ func (h *Handler) reextractDocumentContent(c *gin.Context) {
 		return
 	}
 
-	if h.importAssistant != nil {
-		if archiveErr := h.importAssistant.ArchiveHistory(
-			c.Request.Context(),
-			documentID.String(),
-			pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
-		); archiveErr != nil {
-			h.eh.HandleError(c, archiveErr)
-			return
-		}
+	if archiveErr := h.importAssistant.ArchiveHistory(
+		c.Request.Context(),
+		documentID.String(),
+		pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+	); archiveErr != nil {
+		h.eh.HandleError(c, archiveErr)
+		return
 	}
 
 	c.Status(http.StatusAccepted)
@@ -1411,19 +1348,17 @@ func (h *Handler) attachToShipment(c *gin.Context) {
 		return
 	}
 
-	if h.importAssistant != nil {
-		if completeErr := h.importAssistant.CompleteHistory(
-			c.Request.Context(),
-			documentID.String(),
-			pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
-		); completeErr != nil {
-			h.eh.HandleError(c, completeErr)
-			return
-		}
+	if completeErr := h.importAssistant.CompleteHistory(
+		c.Request.Context(),
+		documentID.String(),
+		pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+	); completeErr != nil {
+		h.eh.HandleError(c, completeErr)
+		return
 	}
 
 	helpers.JSON(c, http.StatusOK, updated)
@@ -1456,13 +1391,6 @@ func (h *Handler) openImportAssistantThread(c *gin.Context) {
 				"Invalid document ID",
 			),
 		)
-		return
-	}
-
-	if h.pageAssistant == nil {
-		h.eh.HandleError(c, errortypes.NewBusinessError(
-			"The import assistant is not available on this server",
-		))
 		return
 	}
 

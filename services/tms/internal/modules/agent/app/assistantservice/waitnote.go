@@ -32,9 +32,6 @@ func (s *Service) waitNote(
 	threadID, waitID pulid.ID,
 	tenant pagination.TenantInfo,
 ) (resumedWaitNote, error) {
-	if s.waits == nil {
-		return resumedWaitNote{}, errWaitsUnavailable
-	}
 	wait, err := s.waits.Get(ctx, &agentwaitports.GetAgentWaitRequest{
 		ID:         waitID,
 		TenantInfo: pagination.TenantInfo{OrgID: tenant.OrgID, BuID: tenant.BuID},

@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -36,7 +37,6 @@ type Params struct {
 	IntegrationService  *integrationservice.Service
 	NotificationService *notificationservice.Service
 	AuditService        auditports.AuditService
-	HTTPClient          *http.Client `optional:"true"`
 }
 
 type Service struct {
@@ -53,12 +53,10 @@ type Service struct {
 	now                 func() int64
 }
 
-func New(p Params) *Service {
-	httpClient := p.HTTPClient
-	if httpClient == nil {
-		httpClient = newDefaultHTTPClient()
-	}
+// fuelIndexRequestTimeout bounds one call to the fuel price index.
+const fuelIndexRequestTimeout = 15 * time.Second
 
+func New(p Params) *Service {
 	return &Service{
 		l:                   p.Logger.Named("service.fuel-surcharge"),
 		indexRepo:           p.IndexRepo,
@@ -69,23 +67,8 @@ func New(p Params) *Service {
 		integrationService:  p.IntegrationService,
 		notificationService: p.NotificationService,
 		auditService:        p.AuditService,
-		httpClient:          httpClient,
+		httpClient:          httpsafe.NewClient(fuelIndexRequestTimeout),
 		now:                 timeutils.NowUnix,
-	}
-}
-
-func newDefaultHTTPClient() *http.Client {
-	return &http.Client{
-		Timeout: 15 * time.Second,
-		Transport: &http.Transport{
-			Proxy:                 http.ProxyFromEnvironment,
-			MaxIdleConns:          100,
-			MaxIdleConnsPerHost:   10,
-			IdleConnTimeout:       90 * time.Second,
-			TLSHandshakeTimeout:   10 * time.Second,
-			ResponseHeaderTimeout: 10 * time.Second,
-			ExpectContinueTimeout: time.Second,
-		},
 	}
 }
 

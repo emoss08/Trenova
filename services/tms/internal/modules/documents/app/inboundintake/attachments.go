@@ -49,7 +49,7 @@ func (s *Service) stageAttachments(
 	message *inboundmessage.InboundMessage,
 	parsed *providerMessage,
 ) {
-	if s.uploads == nil || len(message.Attachments) == 0 {
+	if len(message.Attachments) == 0 {
 		return
 	}
 
@@ -216,7 +216,7 @@ func (s *Service) PollAttachmentExtraction(
 	if err != nil {
 		return nil, err
 	}
-	if row.DocumentID.IsNil() || s.documents == nil {
+	if row.DocumentID.IsNil() {
 		return &AttachmentExtractionState{
 			Status:   document.ContentStatusFailed,
 			Terminal: true,

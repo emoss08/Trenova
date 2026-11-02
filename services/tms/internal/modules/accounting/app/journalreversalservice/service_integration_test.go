@@ -41,7 +41,7 @@ func TestJournalReversalPostingCreatesReversalEntryAndMarksOriginal(t *testing.T
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	logger := zap.NewNop()
 	entryRepo := journalentryrepository.New(journalentryrepository.Params{DB: conn, Logger: logger})
 	reversalRepo := journalreversalrepository.New(

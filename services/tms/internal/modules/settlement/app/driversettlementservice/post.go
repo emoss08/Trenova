@@ -71,24 +71,22 @@ func (s *Service) Post(
 	}
 	s.LogSettlementAudit(ctx, updated, &previous, actor.UserID, permission.OpApprove,
 		"Settlement posted to general ledger")
-	if s.driverNotify != nil {
-		s.driverNotify.Notify(ctx, &drivernotificationservice.DriverNotification{
-			TenantInfo: tenantInfo,
-			WorkerID:   updated.WorkerID,
-			EventType:  "dash.settlement_posted",
-			Priority:   notification.PriorityHigh,
-			Context: notificationtemplate.SettlementNotificationContext{
-				SettlementNumber: updated.SettlementNumber,
-				Amount: money.FormatMinor(
-					updated.NetPayMinor, updated.CurrencyCode,
-				),
-				Currency: updated.CurrencyCode,
-			},
-			Link: "/dash/pay/" + updated.ID.String(),
-			RelatedEntities: map[string]any{
-				"settlementId": updated.ID.String(),
-			},
-		})
-	}
+	s.driverNotify.Notify(ctx, &drivernotificationservice.DriverNotification{
+		TenantInfo: tenantInfo,
+		WorkerID:   updated.WorkerID,
+		EventType:  "dash.settlement_posted",
+		Priority:   notification.PriorityHigh,
+		Context: notificationtemplate.SettlementNotificationContext{
+			SettlementNumber: updated.SettlementNumber,
+			Amount: money.FormatMinor(
+				updated.NetPayMinor, updated.CurrencyCode,
+			),
+			Currency: updated.CurrencyCode,
+		},
+		Link: "/dash/pay/" + updated.ID.String(),
+		RelatedEntities: map[string]any{
+			"settlementId": updated.ID.String(),
+		},
+	})
 	return updated, nil
 }

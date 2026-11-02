@@ -13,21 +13,18 @@ import (
 type Params struct {
 	fx.In
 
-	Briefing    inboundmessageports.TriageBriefingInvalidator `optional:"true"`
+	Briefing    inboundmessageports.TriageBriefingInvalidator
 	Logger      *zap.Logger
 	MessageRepo inboundmessageports.InboundMessageRepository
 	// Realtime keeps an open inbox current, and Notifications tells the people
-	// who read the inbox that a message is waiting on them. Both optional: the
-	// inbox is still right on the next load without either.
-	Realtime realtimeports.RealtimeService `optional:"true"`
-	// Remittances opens a factor's remittance from a FactorRemittance message.
-	// Billing provides it; without it those messages wait in the inbox.
-	Remittances inboundmessageports.RemittanceIntake `optional:"true"`
+	// who read the inbox that a message is waiting on them.
+	Realtime realtimeports.RealtimeService
+	// Remittances opens a factor's remittance from a FactorRemittance message. Billing provides it.
+	Remittances inboundmessageports.RemittanceIntake
 	Storage     kernelports.Client
 	// Watchtower and Events are how a message that needs a person, or a desk,
-	// gets one. Both are optional: without them the inbox still holds every
-	// message and its reason, and nothing else is told about it.
-	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
+	// gets one.
+	Watchtower watchtowerports.WatchtowerProjector
 }
 
 type Service struct {

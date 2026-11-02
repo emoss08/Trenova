@@ -75,7 +75,7 @@ func setup(t *testing.T) *fixture {
 		db:  db,
 		repo: shipmentmovejurisdictionmilerepository.New(
 			shipmentmovejurisdictionmilerepository.Params{
-				DB:     postgres.NewTestConnection(db),
+				DB:     postgres.WrapDB(db),
 				Logger: zap.NewNop(),
 			},
 		),
@@ -255,11 +255,14 @@ func TestListUnattributedMovesCountsCompletedMovesInPeriod(t *testing.T) {
 	f := setup(t)
 	move := f.insertCompletedMove(t, 120, completedAt)
 
-	page, err := f.repo.ListUnattributedMoves(f.ctx, &shipmentdistanceports.UnattributedMovesRequest{
-		TenantInfo: f.tenantInfo,
-		Start:      completedAt - 100,
-		End:        completedAt + 100,
-	})
+	page, err := f.repo.ListUnattributedMoves(
+		f.ctx,
+		&shipmentdistanceports.UnattributedMovesRequest{
+			TenantInfo: f.tenantInfo,
+			Start:      completedAt - 100,
+			End:        completedAt + 100,
+		},
+	)
 	require.NoError(t, err)
 	assert.Contains(t, page.MoveIDs, move.ID)
 	assert.GreaterOrEqual(t, page.TotalMoves, 1)
@@ -328,11 +331,14 @@ func TestListUnattributedMovesSkipsMovesWithoutDistance(t *testing.T) {
 	f := setup(t)
 	move := f.insertCompletedMove(t, 0, completedAt)
 
-	page, err := f.repo.ListUnattributedMoves(f.ctx, &shipmentdistanceports.UnattributedMovesRequest{
-		TenantInfo: f.tenantInfo,
-		Start:      completedAt - 100,
-		End:        completedAt + 100,
-	})
+	page, err := f.repo.ListUnattributedMoves(
+		f.ctx,
+		&shipmentdistanceports.UnattributedMovesRequest{
+			TenantInfo: f.tenantInfo,
+			Start:      completedAt - 100,
+			End:        completedAt + 100,
+		},
+	)
 	require.NoError(t, err)
 	assert.NotContains(t, page.MoveIDs, move.ID)
 }

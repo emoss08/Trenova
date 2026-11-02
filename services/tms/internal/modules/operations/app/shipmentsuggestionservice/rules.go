@@ -507,9 +507,6 @@ func (detentionRule) collect(
 	s *Service,
 	in *ruleInput,
 ) ([]*shipmentsuggestionports.ShipmentSuggestion, error) {
-	if s.detention == nil {
-		return nil, nil
-	}
 	desk, err := s.detention.ListDesk(ctx, in.tenant)
 	if err != nil {
 		return nil, err

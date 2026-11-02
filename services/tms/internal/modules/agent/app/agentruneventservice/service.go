@@ -52,7 +52,7 @@ type Params struct {
 
 	Logger  *zap.Logger
 	Repo    agentruntimeports.AgentRunEventRepository
-	Metrics *metrics.Registry `optional:"true"`
+	Metrics *metrics.Registry
 }
 
 type Service struct {
@@ -68,9 +68,7 @@ func New(p Params) agentruntimeports.AgentRunEventRecorder {
 		l:    p.Logger.Named("service.agentrunevent"),
 		repo: p.Repo,
 	}
-	if p.Metrics != nil {
-		service.metrics = p.Metrics.Assistant
-	}
+	service.metrics = p.Metrics.Assistant
 
 	return service
 }

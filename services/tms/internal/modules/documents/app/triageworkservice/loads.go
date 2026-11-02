@@ -503,12 +503,6 @@ func (s *Service) PlanCreateLoad(
 	ctx context.Context,
 	req *CreateLoadRequest,
 ) (*CreateLoadPlan, error) {
-	if s.loads == nil {
-		return nil, errortypes.NewBusinessError(
-			"Loads cannot be created from messages on this installation",
-		)
-	}
-
 	fields, err := validateLoadFields(req.Fields)
 	if err != nil {
 		return nil, err

@@ -38,45 +38,10 @@ type ListAICorrectionsForAccuracyRequest struct {
 	Limit      int
 }
 
-type ListAICorrectionsForTrainingRequest struct {
-	TenantInfo       pagination.TenantInfo
-	Task             aicorrection.Task
-	CapturedFrom     int64
-	CapturedTo       int64
-	BeforeCapturedAt int64
-	BeforeID         pulid.ID
-	Limit            int
-}
-
-type TotalAICorrectionsByProviderRequest struct {
-	TenantInfo pagination.TenantInfo
-	Task       aicorrection.Task
-	ProviderID pulid.ID
-	Since      int64
-}
-
-type AICorrectionProviderTotal struct {
-	Candidate bool
-	Scored    int
-	Correct   int
-}
-
 type WeeklyAICorrectionTotalsRequest struct {
 	TenantInfo pagination.TenantInfo
 	Task       aicorrection.Task
 	Since      int64
-}
-
-type CountTrainableAICorrectionsRequest struct {
-	Task               aicorrection.Task
-	CapturedFrom       int64
-	CapturedTo         int64
-	PerOrganizationCap int
-}
-
-type WeeklyTrainableAICorrectionTotalsRequest struct {
-	Task  aicorrection.Task
-	Since int64
 }
 
 type AICorrectionRepository interface {
@@ -94,22 +59,9 @@ type AICorrectionRepository interface {
 		ctx context.Context,
 		req ListAICorrectionsForAccuracyRequest,
 	) ([]*aicorrection.Correction, error)
-	ListForTraining(
-		ctx context.Context,
-		req *ListAICorrectionsForTrainingRequest,
-	) ([]*aicorrection.Correction, error)
-	TotalsByProvider(
-		ctx context.Context,
-		req *TotalAICorrectionsByProviderRequest,
-	) ([]AICorrectionProviderTotal, error)
 	WeeklyTotalsByProvider(
 		ctx context.Context,
 		req *WeeklyAICorrectionTotalsRequest,
-	) ([]aicorrection.WeekTotal, error)
-	CountTrainable(ctx context.Context, req *CountTrainableAICorrectionsRequest) (int, error)
-	WeeklyTrainableTotalsByProvider(
-		ctx context.Context,
-		req *WeeklyTrainableAICorrectionTotalsRequest,
 	) ([]aicorrection.WeekTotal, error)
 	PurgeBefore(ctx context.Context, req PurgeAICorrectionsRequest) (int64, error)
 }

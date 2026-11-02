@@ -41,7 +41,7 @@ func TestListSchedulesShowsOwnSchedulesAndThoseOnOwnedReports(t *testing.T) {
 		WithPassword("password123").
 		Build(t, ctx, db)
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	definitions := NewDefinitionRepository(DefinitionParams{DB: conn, Logger: zap.NewNop()})
 	schedules := NewScheduleRepository(ScheduleParams{DB: conn, Logger: zap.NewNop()})
 

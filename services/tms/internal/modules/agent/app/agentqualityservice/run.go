@@ -20,10 +20,6 @@ func (s *Service) RunSuite(
 	req *agentqualityports.RunAgentSuiteRequest,
 	actor *permissionports.RequestActor,
 ) (*agentqualitysuite.SuiteRun, error) {
-	if s.starter == nil {
-		return nil, errortypes.NewBusinessError("The workflow engine is not available")
-	}
-
 	plan, err := s.suites.PlanSweep(ctx, &agentqualityengine.SweepRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,

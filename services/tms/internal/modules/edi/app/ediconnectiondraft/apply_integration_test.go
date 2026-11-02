@@ -54,7 +54,7 @@ func realService(t *testing.T) (context.Context, *keel.DB, *Service, pagination.
 		pagination.TenantInfo{OrgID: pulid.ID(orgID), BuID: pulid.ID(buID)},
 	)
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	logger := zap.NewNop()
 	documentTypes := edidocumenttyperepository.New(
 		edidocumenttyperepository.Params{DB: conn, Logger: logger},

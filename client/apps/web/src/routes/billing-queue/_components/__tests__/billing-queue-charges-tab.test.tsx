@@ -9,16 +9,26 @@ import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BillingQueueChargesTab } from "../billing-queue-charges-tab";
-import { ACME_SHARE_JSON, DETENTION_ID, queueItem } from "./split-shipment-fixture";
+import { billingQueue } from "@/lib/queries/billing-queue";
+import { useQuery } from "@tanstack/react-query";
+import {
+  ACME_SHARE_JSON,
+  DETENTION_ID,
+  LUMPER_ID,
+  acmeItemWithLumper,
+  acmeItemWithoutDetention,
+  queueItem,
+} from "./split-shipment-fixture";
 
-const { updateCharges, reassignCharge, resolveIssue } = vi.hoisted(() => ({
+const { updateCharges, reassignCharge, resolveIssue, getById } = vi.hoisted(() => ({
   updateCharges: vi.fn(),
   reassignCharge: vi.fn(),
   resolveIssue: vi.fn(),
+  getById: vi.fn(),
 }));
 
 vi.mock("@/services/api", () => ({
-  apiService: { billingQueueService: { updateCharges, reassignCharge, resolveIssue } },
+  apiService: { billingQueueService: { updateCharges, reassignCharge, resolveIssue, getById } },
 }));
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),
@@ -29,6 +39,13 @@ const { fetchGraphQLSelectOptions } = vi.hoisted(() => ({
 vi.mock("@/lib/graphql/select-options", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/graphql/select-options")>()),
   fetchGraphQLSelectOptions,
+}));
+const { getShipmentProfitabilityGraphQL } = vi.hoisted(() => ({
+  getShipmentProfitabilityGraphQL: vi.fn(),
+}));
+vi.mock("@/lib/graphql/shipment", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/graphql/shipment")>()),
+  getShipmentProfitabilityGraphQL,
 }));
 vi.mock("../billing-queue-rerate-dialog", () => ({ BillingQueueRerateDialog: () => null }));
 vi.mock("../billing-queue-reassign-charge-dialog", () => ({
@@ -46,7 +63,51 @@ beforeEach(() => {
   // A test that fails before using its queued responses must not hand them to the next.
   vi.resetAllMocks();
   fetchGraphQLSelectOptions.mockResolvedValue({ count: 0, results: [] });
+  getShipmentProfitabilityGraphQL.mockResolvedValue(null);
 });
+
+/**
+ * The tab as the detail pane mounts it: reading the item from its query, which already
+ * holds `item`. The refetch a save triggers never answers, so whatever the sheet shows
+ * after a save came from the save's own response.
+ */
+function renderFromQuery(item: BillingQueueItem) {
+  getById.mockReturnValue(new Promise(() => {}));
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  client.setQueryData(billingQueue.get(item.id).queryKey, item);
+  function FromQuery() {
+    const { data } = useQuery(billingQueue.get(item.id));
+    return data ? <BillingQueueChargesTab item={data} /> : null;
+  }
+  return render(
+    <MemoryRouter>
+      <NuqsTestingAdapter>
+        <QueryClientProvider client={client}>
+          <FromQuery />
+        </QueryClientProvider>
+      </NuqsTestingAdapter>
+    </MemoryRouter>,
+  );
+}
+
+/** `shipmentProfitability` as the schema returns it: Decimals arrive as strings. */
+function profitability(revenue: string, profit: string, marginPercent: string) {
+  return {
+    shipmentId: "shp_1",
+    loadedMiles: 412,
+    deadheadMiles: 38,
+    totalMiles: 450,
+    revenue,
+    estimatedCost: "1800.00",
+    profit,
+    marginPercent,
+    revenuePerLoadedMile: null,
+    breakEvenRpm: null,
+    missingDistance: false,
+    breakdown: [],
+    profile: { targetMarginPercent: "15" },
+  };
+}
 
 function renderTab(item: BillingQueueItem) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -355,6 +416,7 @@ describe("BillingQueueChargesTab editing a line in place", () => {
             unit: 2,
           },
         ],
+        expandShipmentDetails: true,
       },
     ]);
   });
@@ -421,6 +483,45 @@ describe("BillingQueueChargesTab editing a line in place", () => {
         ],
       },
     ]);
+  });
+});
+
+describe("BillingQueueChargesTab removing a line", () => {
+  it("takes the line off the sheet from the save's answer, without waiting for a refetch", async () => {
+    const user = userEvent.setup();
+    updateCharges.mockResolvedValueOnce(acmeItemWithoutDetention());
+    renderFromQuery(queueItem({ payer: "acme" }));
+
+    await user.click(screen.getByRole("button", { name: "Edit Detention Fee" }));
+    await user.click(screen.getByRole("button", { name: "Remove line" }));
+
+    await waitFor(() =>
+      expect(screen.queryByTestId(`payer-line-${DETENTION_ID}`)).not.toBeInTheDocument(),
+    );
+    expect(screen.queryByRole("button", { name: "Save line" })).not.toBeInTheDocument();
+    expect(screen.getByTestId("payer-bill-total")).toHaveTextContent("$1,350.00");
+    expect(updateCharges.mock.calls[0]).toEqual([
+      "bqi_acme",
+      { additionalCharges: [], expandShipmentDetails: true },
+    ]);
+  });
+
+  it("refreshes the shipment's margin once the charges change", async () => {
+    const user = userEvent.setup();
+    getShipmentProfitabilityGraphQL
+      .mockResolvedValueOnce(profitability("4004.38", "2204.38", "55.05"))
+      .mockResolvedValue(profitability("2850.00", "1050.00", "36.84"));
+    updateCharges.mockResolvedValueOnce(queueItem({ payer: "acme" }));
+    renderTab(queueItem({ payer: "acme" }));
+
+    expect(await screen.findByText("$2,204.38 · 55%")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Edit Detention Fee" }));
+    await user.click(screen.getByRole("button", { name: "Remove line" }));
+
+    expect(await screen.findByText("$1,050.00 · 37%")).toBeInTheDocument();
+    expect(screen.queryByText("$2,204.38 · 55%")).not.toBeInTheDocument();
+    expect(getShipmentProfitabilityGraphQL).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -511,6 +612,68 @@ describe("BillingQueueChargesTab adding a line in place", () => {
         ],
       },
     ]);
+  });
+
+  it("puts the added line on the sheet from the save's answer and closes its editor", async () => {
+    const user = userEvent.setup();
+    fetchGraphQLSelectOptions.mockResolvedValue(accessorials);
+    updateCharges.mockResolvedValueOnce(acmeItemWithLumper());
+    renderFromQuery(queueItem({ payer: "acme" }));
+
+    await user.click(screen.getByRole("button", { name: "Add charge" }));
+    const row = screen.getByRole("row", { name: "New charge line" });
+    const [accessorial] = within(row).getAllByRole("combobox");
+    await user.click(accessorial!);
+    await user.click(await screen.findByRole("option", { name: /LUMP/u }));
+    await user.click(within(row).getByRole("button", { name: "Add line" }));
+
+    expect(await screen.findByTestId(`payer-line-${LUMPER_ID}`)).toHaveTextContent("$185.00");
+    await waitFor(() =>
+      expect(screen.queryByRole("row", { name: "New charge line" })).not.toBeInTheDocument(),
+    );
+    expect(screen.getByTestId("payer-bill-total")).toHaveTextContent("$2,689.38");
+    expect(reassignCharge).not.toHaveBeenCalled();
+  });
+
+  it("closes the new line once the retry that converts a stale split adds it", async () => {
+    const user = userEvent.setup();
+    fetchGraphQLSelectOptions.mockResolvedValue(accessorials);
+    updateCharges
+      .mockRejectedValueOnce(
+        new ApiRequestError(422, {
+          type: "https://api.trenova.app/problems/validation-error",
+          title: "Validation failed",
+          status: 422,
+          errors: [
+            {
+              field: "convertAmountSplitsToPercent",
+              code: "INVALID_OPERATION",
+              message:
+                "The freight split no longer adds up: the payer amounts total 2850.00 but the charge is now 3000.00. Convert the split to percentages to keep each payer's proportion, or change the split on the shipment.",
+            },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(acmeItemWithLumper());
+    renderFromQuery(queueItem({ payer: "acme" }));
+
+    await user.click(screen.getByRole("button", { name: "Add charge" }));
+    const row = screen.getByRole("row", { name: "New charge line" });
+    const [accessorial] = within(row).getAllByRole("combobox");
+    await user.click(accessorial!);
+    await user.click(await screen.findByRole("option", { name: /LUMP/u }));
+    await user.click(within(row).getByRole("button", { name: "Add line" }));
+    const dialog = await screen.findByRole("alertdialog");
+    await user.click(within(dialog).getByRole("button", { name: "Convert to percentages" }));
+
+    expect(await screen.findByTestId(`payer-line-${LUMPER_ID}`)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByRole("row", { name: "New charge line" })).not.toBeInTheDocument(),
+    );
+    expect(updateCharges.mock.calls[1]![1]).toMatchObject({
+      convertAmountSplitsToPercent: true,
+      expandShipmentDetails: true,
+    });
   });
 
   it("refuses a line with no accessorial or rate", async () => {

@@ -2,7 +2,6 @@ package assistantchapterservice
 
 import (
 	"strings"
-	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
@@ -21,7 +20,6 @@ const (
 	recentLineRunes = 400
 	recentMessages  = 6
 	titleMaxTokens  = 80
-	hedgeAfter      = 4 * time.Second
 )
 
 const titleRules = `Title rules:
@@ -85,7 +83,6 @@ func baseTask(turn *assistantchapterports.ChapterTurnRequest) *llmports.NovaTask
 		Feature:    aiusage.FeatureConversationChapters,
 		UserID:     turn.UserID,
 		MaxTokens:  titleMaxTokens,
-		HedgeAfter: hedgeAfter,
 		Reasoning:  aireasoning.ReasoningOff,
 		Attribution: &aiusageports.AIUsageAttribution{
 			UserID:    turn.UserID,

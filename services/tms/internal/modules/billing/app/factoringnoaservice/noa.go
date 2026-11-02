@@ -52,11 +52,11 @@ type NoaParams struct {
 	Documents     documentports.DocumentRepository
 	Organizations tenantports.OrganizationRepository
 	Templates     documenttemplateports.DocumentTemplateResolver
-	Inliner       documenttemplateports.AssetInliner `optional:"true"`
+	Inliner       documenttemplateports.AssetInliner
 	Email         emailports.EmailService
-	Requester     factoringports.EvaluationRequester `optional:"true"`
+	Requester     factoringports.EvaluationRequester
 	Audit         auditports.AuditService
-	Realtime      realtimeports.RealtimeService `optional:"true"`
+	Realtime      realtimeports.RealtimeService
 	Logger        *zap.Logger
 }
 
@@ -592,9 +592,6 @@ func (s *NoaService) requestCustomer(
 	tenantInfo pagination.TenantInfo,
 	customerID pulid.ID,
 ) {
-	if s.requester == nil {
-		return
-	}
 	s.requester.RequestEvaluation(ctx, tenantInfo, &factoringports.EvaluationTargets{
 		CustomerIDs: []pulid.ID{customerID},
 	})

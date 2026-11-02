@@ -20,7 +20,7 @@ func (s *Service) MyPortalFeatures(
 		return nil, err
 	}
 	ptoBalances := false
-	if control.AllowPtoRequests && s.ptoLedger != nil {
+	if control.AllowPtoRequests {
 		resolved, resolveErr := s.ptoLedger.ResolvePolicy(
 			ctx,
 			tenantInfo,

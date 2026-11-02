@@ -647,8 +647,7 @@ func (s *Service) factorOf(
 	tenantInfo pagination.TenantInfo,
 	cus *customer.Customer,
 ) (*factoringcompany.FactoringCompany, error) {
-	if s.factors == nil || cus.BillingProfile == nil ||
-		cus.BillingProfile.FactoringCompanyID == nil ||
+	if cus.BillingProfile == nil || cus.BillingProfile.FactoringCompanyID == nil ||
 		cus.BillingProfile.FactoringCompanyID.IsNil() {
 		return nil, nil //nolint:nilnil // the customer has no factor
 	}

@@ -21,7 +21,7 @@ func (s *Service) memoriesForPrompt(
 	}
 
 	fit := agentmemoryprompt.PlanMemories(req.Definition, rc)
-	if len(fit.Used) == 0 || s.memories == nil || req.Actor == nil {
+	if len(fit.Used) == 0 || req.Actor == nil {
 		return fit
 	}
 

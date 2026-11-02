@@ -45,10 +45,10 @@ type Params struct {
 	PolicyRepo   ptopolicyports.PTOPolicyRepository
 	WorkerRepo   workerports.WorkerRepository
 	OrgRepo      tenantports.OrganizationRepository
-	Settlement   tenantports.SettlementControlRepository `optional:"true"`
-	Holidays     orgholidayports.OrgHolidayRepository    `optional:"true"`
+	Settlement   tenantports.SettlementControlRepository
+	Holidays     orgholidayports.OrgHolidayRepository
 	AuditService auditports.AuditService
-	Realtime     realtimeports.RealtimeService `optional:"true"`
+	Realtime     realtimeports.RealtimeService
 }
 
 type Service struct {
@@ -85,9 +85,6 @@ func (s *Service) PayPeriodSpec(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*PayPeriodSpec, error) {
-	if s.settlement == nil {
-		return nil, nil //nolint:nilnil // no settlement calendar configured
-	}
 	control, err := s.settlement.GetOrCreate(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -104,9 +101,6 @@ func (s *Service) HolidayCalendar(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*pto.HolidayCalendar, error) {
-	if s.holidays == nil {
-		return pto.NewHolidayCalendar(nil), nil
-	}
 	rows, err := s.holidays.List(
 		ctx,
 		&orgholidayports.ListOrgHolidaysRequest{TenantInfo: tenantInfo},
@@ -293,9 +287,6 @@ func (s *Service) skipEntry(
 }
 
 func (s *Service) publish(ctx context.Context, key *ptoledgerports.PTOBalanceKey, actor Actor) {
-	if s.realtime == nil {
-		return
-	}
 	actorType := permissionports.PrincipalTypeUser
 	actorID := actor.UserID
 	if actor.Type == pto.PTOLedgerActorSystem {

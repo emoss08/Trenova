@@ -24,13 +24,13 @@ type Params struct {
 	fx.In
 
 	Logger               *zap.Logger
-	AdjustmentService    invoiceadjustmentports.InvoiceAdjustmentService `optional:"true"`
+	AdjustmentService    invoiceadjustmentports.InvoiceAdjustmentService
 	BillingQueueRepo     billingqueueports.BillingQueueRepository
 	ChargeAllocationRepo chargeallocationports.ChargeAllocationRepository
 	CustomerRepo         customerports.CustomerRepository
 	DB                   kernelports.Transactor
 	DetentionBilling     detentionports.DetentionBillingService
-	LateChargeRepo       latechargeports.LateChargeRepository `optional:"true"`
+	LateChargeRepo       latechargeports.LateChargeRepository
 	OrderDerivation      orderports.OrderDerivationService
 	OrderRepo            orderports.OrderRepository
 	Repo                 invoiceports.InvoiceRepository

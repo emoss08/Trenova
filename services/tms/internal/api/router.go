@@ -70,7 +70,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/notificationpreferencehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/onboardinghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/palettehandler"
@@ -116,7 +115,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/responseguard"
-	"github.com/emoss08/trenova/internal/api/routegroup"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
@@ -150,14 +148,12 @@ type RouterParams struct {
 	TenantBoundaryMiddleware        *middleware.TenantBoundaryMiddleware
 	ResponseGuard                   *responseguard.Guard
 	ErrorHandler                    *helpers.ErrorHandler
-	EditionRoutes                   routegroup.Registrars
 	OrganizationHandler             *organizationhandler.Handler
 	DataRetentionHandler            *dataretentionhandler.Handler
 	IAMHandler                      *iamhandler.Handler
 	UserHandler                     *userhandler.Handler
 	AuthHandler                     *authhandler.Handler
 	PublicConfigHandler             *publicconfighandler.Handler
-	OnboardingHandler               *onboardinghandler.Handler
 	DriverPortalHandler             *driverportalhandler.Handler
 	PushHandler                     *pushhandler.Handler
 	NotificationPreferenceHandler   *notificationpreferencehandler.Handler
@@ -279,14 +275,12 @@ type Router struct {
 	securityConfig                  *securityconfig.Config
 	serverConfig                    *serverconfig.Config
 	errorHandler                    *helpers.ErrorHandler
-	editionRoutes                   routegroup.Registrars
 	organizationHandler             *organizationhandler.Handler
 	dataRetentionHandler            *dataretentionhandler.Handler
 	iamHandler                      *iamhandler.Handler
 	userHandler                     *userhandler.Handler
 	authHandler                     *authhandler.Handler
 	publicConfigHandler             *publicconfighandler.Handler
-	onboardingHandler               *onboardinghandler.Handler
 	driverPortalHandler             *driverportalhandler.Handler
 	pushHandler                     *pushhandler.Handler
 	notificationPreferenceHandler   *notificationpreferencehandler.Handler
@@ -410,14 +404,12 @@ func NewRouter(p RouterParams) *Router {
 		tenantBoundaryMiddleware:        p.TenantBoundaryMiddleware,
 		responseGuard:                   p.ResponseGuard,
 		errorHandler:                    p.ErrorHandler,
-		editionRoutes:                   p.EditionRoutes,
 		organizationHandler:             p.OrganizationHandler,
 		dataRetentionHandler:            p.DataRetentionHandler,
 		iamHandler:                      p.IAMHandler,
 		userHandler:                     p.UserHandler,
 		authHandler:                     p.AuthHandler,
 		publicConfigHandler:             p.PublicConfigHandler,
-		onboardingHandler:               p.OnboardingHandler,
 		driverPortalHandler:             p.DriverPortalHandler,
 		pushHandler:                     p.PushHandler,
 		notificationPreferenceHandler:   p.NotificationPreferenceHandler,
@@ -607,7 +599,6 @@ func (r *Router) setupPublicRoutes(parent *gin.RouterGroup) {
 	r.rateConfirmationPublicHandler.RegisterPublicRoutes(rg)
 	r.carrierTrackingPublicHandler.RegisterPublicRoutes(rg)
 	r.shipmentTrackingPublicHandler.RegisterPublicRoutes(rg)
-	r.editionRoutes.RegisterPublic(rg)
 }
 
 //nolint:funlen // existing workflow or route registration is intentionally kept together
@@ -618,7 +609,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.pushHandler.RegisterRoutes(protected)
 	r.notificationPreferenceHandler.RegisterRoutes(protected)
 	r.organizationHandler.RegisterRoutes(protected)
-	r.onboardingHandler.RegisterRoutes(protected)
 	r.dataRetentionHandler.RegisterRoutes(protected)
 	r.iamHandler.RegisterRoutes(protected)
 	r.userHandler.RegisterRoutes(protected)
@@ -712,7 +702,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.documentPacketRuleHandler.RegisterRoutes(protected)
 	r.documentTemplateHandler.RegisterRoutes(protected)
 	r.captureHandler.RegisterRoutes(protected)
-	r.editionRoutes.RegisterProtected(protected)
 }
 
 func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
@@ -728,7 +717,6 @@ func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	// handler: a session that owes a password change may only reach the endpoints that
 	// let it resolve one.
 	protected.Use(middleware.NewPasswordChangeMiddleware(r.errorHandler).RequireCurrentPassword())
-	r.editionRoutes.UseProtectedMiddleware(protected)
 	protected.Use(r.readOnlyGuard.Guard())
 	protected.Use(r.idempotencyMiddleware.Handle())
 	return protected
@@ -742,7 +730,6 @@ func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 func (r *Router) captureDeviceGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	device := rg.Group("")
 	device.Use(r.captureHandler.RequireDevice())
-	r.editionRoutes.UseProtectedMiddleware(device)
 	device.Use(r.readOnlyGuard.Guard())
 	return device
 }

@@ -132,11 +132,6 @@ func (s *Service) settleParams(
 
 	changed := toolschema.Changed(proposal.ToolParams, in.modifications)
 	if len(changed) > 0 {
-		if s.checker == nil {
-			return nil, nil, errortypes.NewBusinessError(
-				"Changes to a proposal cannot be checked right now. Try again shortly",
-			)
-		}
 		params, err := s.checker.CheckModifications(ctx, proposal, changed, in.actor)
 		if err != nil {
 			return nil, nil, err
@@ -315,7 +310,7 @@ func (s *Service) snapshot(ctx context.Context, in *snapshotInput) (*snapshotRes
 }
 
 func (s *Service) readPin(ctx context.Context, in *snapshotInput, result *snapshotResult) error {
-	if in.pin == nil || s.versions == nil {
+	if in.pin == nil {
 		return nil
 	}
 
@@ -425,7 +420,7 @@ func (s *Service) toolRemoved(d *draft) {
 // preview snapshot will read.
 func (s *Service) pinOutside(ctx context.Context, d *draft) error {
 	p := pinOf(d.proposal)
-	if p == nil || s.versions == nil {
+	if p == nil {
 		return nil
 	}
 
@@ -486,10 +481,6 @@ func (s *Service) labels(
 	tenant pagination.TenantInfo,
 	changes []agentpreview.RecordChange,
 ) agentruntimeports.RecordLabels {
-	if s.labeler == nil {
-		return nil
-	}
-
 	refs := make(map[permission.Resource][]pulid.ID, 4)
 	add := func(resource permission.Resource, id pulid.ID) {
 		if resource != "" && id.IsNotNil() {

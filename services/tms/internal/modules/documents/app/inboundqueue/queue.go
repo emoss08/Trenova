@@ -150,14 +150,6 @@ func (s *Service) syncWake(
 	tenantInfo pagination.TenantInfo,
 	before, after *inboundmessageports.QueueState,
 ) {
-	if s.wakes == nil || !s.wakes.Enabled() {
-		if after.HasTimer() {
-			s.l.Warn("a parked inbound message has no worker to wake it",
-				zap.String("messageId", after.ID.String()))
-		}
-
-		return
-	}
 
 	switch {
 	case after.HasTimer():

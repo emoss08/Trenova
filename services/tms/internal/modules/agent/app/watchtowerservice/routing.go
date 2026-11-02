@@ -17,7 +17,7 @@ type RouterParams struct {
 	fx.In
 
 	Logger   *zap.Logger
-	Controls dispatchcontrolports.DispatchControlRepository `optional:"true"`
+	Controls dispatchcontrolports.DispatchControlRepository
 }
 
 type Router struct {
@@ -36,7 +36,7 @@ func (r *Router) Policy(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) dispatchcontrol.ExceptionPolicy {
-	if r == nil || r.controls == nil {
+	if r == nil {
 		return (*dispatchcontrol.DispatchControl)(nil).ExceptionPolicy()
 	}
 

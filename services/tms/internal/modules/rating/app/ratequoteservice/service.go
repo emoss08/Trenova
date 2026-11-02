@@ -28,7 +28,7 @@ type Params struct {
 	BillingControlRepo tenantports.BillingControlRepository
 	Engine             ratequoteports.RateEngine
 	Hydrator           ratequoteports.ShipmentRatingHydrator
-	Distances          shipmentdistanceports.DistanceCalculationService `optional:"true"`
+	Distances          shipmentdistanceports.DistanceCalculationService
 }
 
 type Service struct {
@@ -186,10 +186,6 @@ func (s *Service) hydrateFromRecords(
 	entity *shipment.Shipment,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	if s.hydrator == nil {
-		return nil
-	}
-
 	return s.hydrator.HydrateShipment(ctx, &ratequoteports.HydrateShipmentRequest{
 		Shipment:   entity,
 		TenantInfo: tenantInfo,
@@ -198,9 +194,6 @@ func (s *Service) hydrateFromRecords(
 }
 
 func (s *Service) fillMissingDistances(ctx context.Context, entity *shipment.Shipment) error {
-	if s.distances == nil {
-		return nil
-	}
 	missing := make([]*shipment.ShipmentMove, 0, len(entity.Moves))
 	for _, move := range entity.Moves {
 		if moveWithoutDistance(move) {

@@ -130,7 +130,7 @@ func (s *Service) OpenDelegate(
 		Context:    s.delegateContext(ctx, parent, delegate, req),
 		Input:      delegation.Input(req.Call.Task, req.Call.Context),
 		ThreadID:   req.ThreadID,
-		Publishes:  s.artifacts != nil && !readOnly,
+		Publishes:  !readOnly,
 		StepOwner:  req.StepOwner,
 		Delegation: &agentruntimeports.Delegation{
 			ParentAgentID:   parent.ID,
@@ -167,9 +167,6 @@ func (s *Service) delegateContext(
 		Trigger:          agent.RunTriggerChat,
 		DelegatedBy:      parent.Name,
 		DelegatorRecords: req.Records,
-	}
-	if s.contexts == nil {
-		return bare
 	}
 
 	built, err := s.contexts.Build(ctx, &agentruntimeports.RuntimeContextRequest{

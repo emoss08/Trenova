@@ -59,7 +59,7 @@ func (s *Service) readAccess(
 	ctx context.Context,
 	actor *permissionports.RequestActor,
 ) (readAccess, error) {
-	if s.permissions == nil || actor == nil {
+	if actor == nil {
 		return readAccess{}, nil
 	}
 

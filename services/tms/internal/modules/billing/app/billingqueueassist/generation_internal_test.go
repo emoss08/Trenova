@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -24,11 +23,7 @@ import (
 
 type servesEverything struct{ llmports.TaskRunner }
 
-func (servesEverything) Available(
-	context.Context,
-	aitask.Task,
-	pagination.TenantInfo,
-) (bool, error) {
+func (servesEverything) Available(context.Context, pagination.TenantInfo) (bool, error) {
 	return true, nil
 }
 

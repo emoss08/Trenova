@@ -20,7 +20,7 @@ type Params struct {
 
 	Logger      *zap.Logger
 	Repo        tableconfigurationports.TableConfigurationRepository
-	Permissions permissionports.PermissionEngine `optional:"true"`
+	Permissions permissionports.PermissionEngine
 }
 
 type Service struct {
@@ -46,7 +46,7 @@ func (s *Service) mayPublish(
 	if entity.Visibility == tableconfiguration.VisibilityPrivate {
 		return nil
 	}
-	if actor != nil && s.permissions != nil {
+	if actor != nil {
 		result, err := s.permissions.Check(
 			ctx,
 			actor.PermissionCheck(permission.ResourceTableConfiguration, operation),
@@ -149,7 +149,8 @@ func (s *Service) Update(
 
 	entity.UserID = existing.UserID
 	entity.Version = existing.Version
-	entity.IsOrgDefault = existing.IsOrgDefault && entity.Visibility == tableconfiguration.VisibilityPublic
+	entity.IsOrgDefault = existing.IsOrgDefault &&
+		entity.Visibility == tableconfiguration.VisibilityPublic
 
 	if entity.IsDefault {
 		if err := s.repo.ClearDefaultForResource(

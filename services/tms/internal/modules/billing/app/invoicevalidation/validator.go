@@ -181,10 +181,6 @@ func (v *Validator) validatePostingPeriodPolicy(
 	postedAt int64,
 	multiErr *errortypes.MultiError,
 ) {
-	if v.accountingRepo == nil || v.fiscalPeriodRepo == nil {
-		return
-	}
-
 	control, err := v.accountingRepo.GetByOrgID(ctx, entity.OrganizationID)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
@@ -193,7 +189,7 @@ func (v *Validator) validatePostingPeriodPolicy(
 		multiErr.Add("postedAt", errortypes.ErrSystemError, "Failed to load accounting control")
 		return
 	}
-	if v.accountingPolicyService().
+	if v.accountingPolicy.
 		CanCreateInvoiceLedgerEntry(control, invoiceledger.SourceEvent(entity.BillType)) &&
 		!invoiceledger.HasRequiredAccounts(control) {
 		multiErr.Add(
@@ -243,25 +239,12 @@ func (v *Validator) validatePostingPeriodPolicy(
 	}
 }
 
-func (v *Validator) accountingPolicyService() *accountingcontrolpolicyservice.Service {
-	if v.accountingPolicy != nil {
-		return v.accountingPolicy
-	}
-	return accountingcontrolpolicyservice.New(
-		accountingcontrolpolicyservice.Params{Logger: zap.NewNop()},
-	)
-}
-
 func (v *Validator) validatePostingReconciliation(
 	ctx context.Context,
 	entity *invoice.Invoice,
 	tenantInfo pagination.TenantInfo,
 	multiErr *errortypes.MultiError,
 ) {
-	if v.accountingRepo == nil || v.shipmentRepo == nil {
-		return
-	}
-
 	control, err := v.accountingRepo.GetByOrgID(ctx, entity.OrganizationID)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {

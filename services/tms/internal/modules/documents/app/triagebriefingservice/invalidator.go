@@ -15,7 +15,7 @@ type InvalidatorParams struct {
 	fx.In
 
 	Logger *zap.Logger
-	Cache  triageports.TriageCache `optional:"true"`
+	Cache  triageports.TriageCache
 }
 
 type Invalidator struct {

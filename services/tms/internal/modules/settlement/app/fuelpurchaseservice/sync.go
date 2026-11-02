@@ -59,10 +59,6 @@ func (s *Service) SyncFeed(
 		zap.String("provider", string(req.Provider)),
 	)
 
-	if s.feeds == nil {
-		return nil, errortypes.NewBusinessError("Fuel card feeds are not configured")
-	}
-
 	feed, err := s.feeds.ResolveFuelFeed(ctx, req.TenantInfo, req.Provider)
 	if err != nil {
 		return nil, err
@@ -83,10 +79,6 @@ func (s *Service) SyncAllFeeds(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*SyncFeedResult, error) {
-	if s.feeds == nil {
-		return nil, errortypes.NewBusinessError("Fuel card feeds are not configured")
-	}
-
 	feeds, err := s.feeds.ListFuelFeeds(ctx, tenantInfo)
 	if err != nil {
 		return nil, err

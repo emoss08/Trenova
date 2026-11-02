@@ -30,9 +30,8 @@ func (k *Kit) AfterHealthChange(
 	tenant := pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
 
 	if item, open := watchtoweraccounting.DescribeAccountingConnectionHealth(conn); open {
-		if k.watchtower != nil {
-			k.watchtower.Upsert(ctx, item)
-		}
+		k.watchtower.Upsert(ctx, item)
+
 		if worsened(before, conn.Status) {
 			agenteventports.PublishAgentEvent(ctx, k.publisher, agenteventports.AgentEvent{
 				Kind:       agenttrigger.EventAccountingConnectionDegraded,
@@ -40,7 +39,7 @@ func (k *Kit) AfterHealthChange(
 				TenantInfo: tenant,
 			})
 		}
-	} else if k.watchtower != nil {
+	} else {
 		k.watchtower.Resolve(
 			ctx,
 			tenant,
@@ -49,17 +48,15 @@ func (k *Kit) AfterHealthChange(
 		)
 	}
 
-	if k.watchtower != nil {
-		if item, open := watchtoweraccounting.DescribeAccountingReconnect(conn, now); open {
-			k.watchtower.Upsert(ctx, item)
-		} else {
-			k.watchtower.Resolve(
-				ctx,
-				tenant,
-				watchtower.SourceAccountingSync,
-				watchtoweraccounting.AccountingReconnectSourceID(conn),
-			)
-		}
+	if item, open := watchtoweraccounting.DescribeAccountingReconnect(conn, now); open {
+		k.watchtower.Upsert(ctx, item)
+	} else {
+		k.watchtower.Resolve(
+			ctx,
+			tenant,
+			watchtower.SourceAccountingSync,
+			watchtoweraccounting.AccountingReconnectSourceID(conn),
+		)
 	}
 
 	if before != conn.Status {
@@ -72,9 +69,6 @@ func (k *Kit) ResolveWatchtower(
 	ctx context.Context,
 	conn *accountingconnection.AccountingConnection,
 ) {
-	if k.watchtower == nil {
-		return
-	}
 	tenant := pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
 	k.watchtower.Resolve(
 		ctx,
@@ -176,9 +170,6 @@ func (k *Kit) PublishInvalidation(
 	conn *accountingconnection.AccountingConnection,
 	userID pulid.ID,
 ) {
-	if k.realtime == nil {
-		return
-	}
 	if err := realtimeinvalidation.Publish(ctx, k.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: conn.OrganizationID,
 		BusinessUnitID: conn.BusinessUnitID,

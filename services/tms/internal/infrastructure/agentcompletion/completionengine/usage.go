@@ -68,7 +68,7 @@ const recordTimeout = 5 * time.Second
 // never slows an answer or turns a success into an error. Its failure is
 // logged and nothing else: the row is telemetry, not the transaction.
 func (s *Engine) Record(ctx context.Context, attempt *UsageAttempt) {
-	if s.Usage == nil || attempt.Provider == nil {
+	if attempt.Provider == nil {
 		return
 	}
 

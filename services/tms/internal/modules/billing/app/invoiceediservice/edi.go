@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -45,21 +44,6 @@ func (s *Service) ResolveEDISendPlans(
 ) (map[pulid.ID]*invoiceports.InvoiceEDISendPlan, error) {
 	plans := make(map[pulid.ID]*invoiceports.InvoiceEDISendPlan, len(req.Invoices))
 	if len(req.Invoices) == 0 {
-		return plans, nil
-	}
-	if s.ediPartnerRepo == nil {
-		// EDI is not wired into this process: every plan is unconfigured, and no
-		// customer lookup is needed to say so.
-		for _, inv := range req.Invoices {
-			if inv == nil {
-				continue
-			}
-			plans[inv.ID] = &invoiceports.InvoiceEDISendPlan{
-				InvoiceID: inv.ID,
-				Status:    inv.EDISendStatus,
-				Blockers:  []string{ediBlockerNotWired},
-			}
-		}
 		return plans, nil
 	}
 
@@ -134,7 +118,7 @@ func (s *Service) outboundPartnersByCustomer(
 	customerIDs []pulid.ID,
 ) (map[pulid.ID]*edi.EDIPartner, error) {
 	result := make(map[pulid.ID]*edi.EDIPartner, len(customerIDs))
-	if len(customerIDs) == 0 || s.ediPartnerRepo == nil {
+	if len(customerIDs) == 0 {
 		return result, nil
 	}
 	partners, err := s.ediPartnerRepo.ListOutboundPartnersByCustomerIDs(
@@ -182,10 +166,6 @@ func (s *Service) resolvePartnerTarget(
 		target.CommunicationMethod = edi.ConnectionMethodInternal
 		return target, nil
 	}
-	if s.ediCommunicationProfileRepo == nil {
-		target.Blockers = append(target.Blockers, ediBlockerNoCommunication)
-		return target, nil
-	}
 	commProfile, err := s.ediCommunicationProfileRepo.GetActiveProfileByPartner(
 		ctx,
 		edipartnerports.GetActiveEDICommunicationProfileByPartnerRequest{
@@ -212,9 +192,6 @@ func (s *Service) invoiceLadingVersion(
 	tenantInfo pagination.TenantInfo,
 	partner *edi.EDIPartner,
 ) (version *ladingproject.LadingVersion, found bool, err error) {
-	if s.ediLadingProjects == nil {
-		return nil, false, nil
-	}
 	runnable, err := s.ediLadingProjects.GetRunnableVersions(
 		ctx,
 		ladingports.GetRunnableLadingVersionRequest{TenantInfo: tenantInfo, PartnerID: partner.ID},
@@ -308,7 +285,7 @@ func (s *Service) EnqueueAfterPost(
 	tenantInfo pagination.TenantInfo,
 	actor *permissionports.RequestActor,
 ) {
-	if entity == nil || s.ediPartnerRepo == nil {
+	if entity == nil {
 		return
 	}
 	plans, err := s.ResolveEDISendPlans(ctx, &invoiceports.ResolveInvoiceEDISendPlansRequest{
@@ -349,11 +326,6 @@ func (s *Service) startEDISendWorkflow(
 	actor *permissionports.RequestActor,
 	force bool,
 ) (*invoiceports.InvoiceEDISendResult, error) {
-	if s.workflowStarter == nil || !s.workflowStarter.Enabled() {
-		return nil, errortypes.NewBusinessError(
-			"Invoice EDI delivery requires workflow processing to be enabled",
-		).WithInternal(kernelports.ErrWorkflowStarterDisabled)
-	}
 	auditActor := actor.AuditActorOrSystem()
 	run, err := s.workflowStarter.StartWorkflow(
 		ctx,

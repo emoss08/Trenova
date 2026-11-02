@@ -36,7 +36,7 @@ type Params struct {
 	AccountingRepo   tenantports.AccountingControlRepository
 	FiscalPeriodRepo fiscalperiodports.FiscalPeriodRepository
 	AuditService     auditports.AuditService
-	Realtime         realtimeports.RealtimeService `optional:"true"`
+	Realtime         realtimeports.RealtimeService
 }
 
 type Service struct {
@@ -347,20 +347,15 @@ func (s *Service) record(
 	if current == nil {
 		return
 	}
-	if s.realtime != nil {
-		if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
-			OrganizationID: current.OrganizationID,
-			BusinessUnitID: current.BusinessUnitID,
-			ActorUserID:    actorID,
-			Resource:       permission.ResourceJournalEntry.String(),
-			Action:         string(permission.OpApprove),
-			RecordID:       current.ID,
-		}); err != nil {
-			s.l.Warn("failed to publish journal entry invalidation", zap.Error(err))
-		}
-	}
-	if s.audit == nil {
-		return
+	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
+		OrganizationID: current.OrganizationID,
+		BusinessUnitID: current.BusinessUnitID,
+		ActorUserID:    actorID,
+		Resource:       permission.ResourceJournalEntry.String(),
+		Action:         string(permission.OpApprove),
+		RecordID:       current.ID,
+	}); err != nil {
+		s.l.Warn("failed to publish journal entry invalidation", zap.Error(err))
 	}
 
 	params := &auditports.LogActionParams{

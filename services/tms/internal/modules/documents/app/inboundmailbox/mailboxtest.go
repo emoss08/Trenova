@@ -30,12 +30,6 @@ func (s *Service) SendMailboxTest(
 	ctx context.Context,
 	req MailboxActionRequest,
 ) (*inboundmessage.Mailbox, error) {
-	if s.email == nil {
-		return nil, errortypes.NewBusinessError(
-			"Outbound email is not set up for this organization",
-		)
-	}
-
 	tenantInfo := req.Actor.TenantInfo()
 	mailbox, err := s.getMailbox(ctx, req.ID, tenantInfo)
 	if err != nil {

@@ -49,8 +49,8 @@ type Params struct {
 	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Artifacts     assistantartifactports.AssistantArtifactRepository
 	Assistant     assistantports.AssistantService
-	Completion    llmports.StructuredCompleter                  `optional:"true"`
-	Chapters      assistantchapterports.AssistantChapterService `optional:"true"`
+	Completion    llmports.StructuredCompleter
+	Chapters      assistantchapterports.AssistantChapterService
 }
 
 type Service struct {
@@ -269,9 +269,6 @@ func (s *Service) chapterSpan(
 ) (*assistantchapterports.ChapterSpan, error) {
 	if req.ChapterID.IsNil() {
 		return nil, nil
-	}
-	if s.chapters == nil {
-		return nil, errortypes.NewBusinessError("Chapters are not available here")
 	}
 
 	return s.chapters.Span(ctx, &assistantchapterports.ChapterSpanRequest{

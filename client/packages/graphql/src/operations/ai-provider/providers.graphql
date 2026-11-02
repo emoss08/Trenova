@@ -44,6 +44,7 @@ fragment AIProviderCardFields on AIProvider {
   embeddingDimensions
   embeddingInputStyle
   trusted
+  nova
   enabled
   lastTest {
     success

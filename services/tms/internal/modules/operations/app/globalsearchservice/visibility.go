@@ -48,7 +48,7 @@ func (s *Service) restrictToVisible(
 }
 
 func (s *Service) scoped(kind string) bool {
-	return kind != "" && s.visibility != nil && s.visibility.Scoped(kind)
+	return kind != "" && s.visibility.Scoped(kind)
 }
 
 func (s *Service) groupNarrowed(access *searchAccess, definition *entitySearchDefinition) bool {

@@ -56,16 +56,15 @@ type Params struct {
 	Facts            agentprofileports.FactsReader
 	Organizations    tenantports.OrganizationRepository
 	Controls         tenantports.AgentControlRepository
-	DispatchControls dispatchcontrolports.DispatchControlRepository `optional:"true"`
-	BillingControls  tenantports.BillingControlRepository           `optional:"true"`
-	ShipmentControls tenantports.ShipmentControlRepository          `optional:"true"`
-	Plans            platformplanports.PlanService                  `optional:"true"`
-	Scheduler        agentprofileports.Scheduler                    `optional:"true"`
-	Audit            auditports.AuditService                        `optional:"true"`
-	Realtime         realtimeports.RealtimeService                  `optional:"true"`
-	// Memories says who manages agent memory, and so keeps guidance about
-	// the organization at once. Without it everyone offers it.
-	Memories agentmemoryports.AgentMemoryService `optional:"true"`
+	DispatchControls dispatchcontrolports.DispatchControlRepository
+	BillingControls  tenantports.BillingControlRepository
+	ShipmentControls tenantports.ShipmentControlRepository
+	Plans            platformplanports.PlanService
+	Scheduler        agentprofileports.Scheduler
+	Audit            auditports.AuditService
+	Realtime         realtimeports.RealtimeService
+	// Memories says who manages agent memory, and so keeps guidance about the organization at once.
+	Memories agentmemoryports.AgentMemoryService
 }
 
 type Service struct {
@@ -116,7 +115,7 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 // the one who keeps guidance about the organization at once and decides what
 // others offered. The memory service owns that question.
 func (s *Service) manages(ctx context.Context, actor *permissionports.RequestActor) bool {
-	if s.memories == nil || actor == nil || !actor.IsUser() || actor.UserID.IsNil() {
+	if actor == nil || !actor.IsUser() || actor.UserID.IsNil() {
 		return false
 	}
 
@@ -264,18 +263,16 @@ func (s *Service) gate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (agentprofileports.SkipReason, error) {
-	if s.plans != nil {
-		if err := s.plans.RequireCapability(
-			ctx,
-			tenantInfo,
-			platformplan.CapabilityAgentAutomation,
-		); err != nil {
-			if errortypes.IsPlanRestrictionError(err) {
-				return agentprofileports.SkipNotAllowed, nil
-			}
-
-			return "", fmt.Errorf("read the organization's plan: %w", err)
+	if err := s.plans.RequireCapability(
+		ctx,
+		tenantInfo,
+		platformplan.CapabilityAgentAutomation,
+	); err != nil {
+		if errortypes.IsPlanRestrictionError(err) {
+			return agentprofileports.SkipNotAllowed, nil
 		}
+
+		return "", fmt.Errorf("read the organization's plan: %w", err)
 	}
 
 	control, err := s.controls.GetOrCreate(ctx, tenantInfo)
@@ -354,9 +351,6 @@ func (s *Service) dispatchControl(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) *dispatchcontrol.DispatchControl {
-	if s.dispatchControls == nil {
-		return nil
-	}
 	dc, err := s.dispatchControls.GetByOrgID(ctx, dispatchcontrolports.GetDispatchControlRequest{
 		TenantInfo: tenantInfo,
 	})
@@ -372,9 +366,6 @@ func (s *Service) billingControl(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) *billingcontrol.BillingControl {
-	if s.billingControls == nil {
-		return nil
-	}
 	bc, err := s.billingControls.GetByOrgID(ctx, tenantInfo.OrgID)
 	if err != nil {
 		s.l.Warn("agent profile: billing settings could not be read", zap.Error(err))
@@ -388,9 +379,6 @@ func (s *Service) shipmentControl(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) *shipmentcontrol.ShipmentControl {
-	if s.shipmentControls == nil {
-		return nil
-	}
 	sc, err := s.shipmentControls.Get(ctx, tenantports.GetShipmentControlRequest{
 		TenantInfo: tenantInfo,
 	})
@@ -884,11 +872,6 @@ func (s *Service) Regenerate(ctx context.Context, req *agentprofileports.Regener
 		agentprofileports.SkipTooSoon,
 		agentprofileports.SkipNoActivity:
 	}
-	if s.scheduler == nil {
-		return errortypes.NewBusinessError(
-			"Profiles cannot be written right now. Try again shortly.",
-		)
-	}
 	if req.Ref.Subject == agentprofile.SubjectUser {
 		facts, _, factsErr := s.workOutFacts(ctx, req.Ref)
 		if factsErr != nil {
@@ -914,9 +897,6 @@ func (s *Service) schedule(
 	trigger agentprofile.Trigger,
 	by pulid.ID,
 ) {
-	if s.scheduler == nil {
-		return
-	}
 	if err := s.scheduler.Request(ctx, &agentprofileports.GenerateRequest{
 		Ref:           ref,
 		Trigger:       trigger,
@@ -976,10 +956,6 @@ func (s *Service) announce(
 	recordID pulid.ID,
 	action string,
 ) {
-	if s.realtime == nil {
-		return
-	}
-
 	req := &realtimeports.PublishResourceInvalidationRequest{
 		OrganizationID: ref.OrganizationID,
 		BusinessUnitID: ref.BusinessUnitID,
@@ -1016,10 +992,6 @@ func (s *Service) logGuidance(
 	op permission.Operation,
 	comment string,
 ) {
-	if s.audit == nil {
-		return
-	}
-
 	auditActor := actor.AuditActorOrSystem()
 	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAgentMemory,

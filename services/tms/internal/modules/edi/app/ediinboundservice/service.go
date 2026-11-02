@@ -56,22 +56,22 @@ type Params struct {
 	DocumentTypeRepo    edipartnerports.EDIDocumentTypeRepository
 	TransferRepo        editenderports.EDILoadTenderTransferRepository
 	TenderRecipientRepo editenderports.EDITenderRecipientRepository
-	TenderRepo          tenderports.TenderRepository           `optional:"true"`
-	TenderResponses     tenderports.TenderResponseRecorder     `optional:"true"`
-	InvoiceMatcher      carrierports.CarrierInvoiceAutoMatcher `optional:"true"`
+	TenderRepo          tenderports.TenderRepository
+	TenderResponses     tenderports.TenderResponseRecorder
+	InvoiceMatcher      carrierports.CarrierInvoiceAutoMatcher
 	InboundApply        *ediinboundapply.Service
 	Outbound            *edioutbound.Service
 	Alerts              *edialert.Service
 	Lading              *edilading.Runtime
 	Flows               *edilading.Flows
-	Replayer            *edilading.Replayer `optional:"true"`
+	Replayer            *edilading.Replayer
 	ContentGate         contentscanports.Gate
-	Metrics             *metrics.Registry `optional:"true"`
+	Metrics             *metrics.Registry
 	// Watchtower puts a held-back file on the feed a person reads.
-	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
+	Watchtower watchtowerports.WatchtowerProjector
 	// Publisher wakes whichever agent covers intake on a file that could
 	// not be turned into shipments or updates.
-	Publisher agenteventports.AgentEventPublisher `optional:"true"`
+	Publisher agenteventports.AgentEventPublisher
 }
 
 type Service struct {
@@ -99,9 +99,7 @@ type Service struct {
 
 func New(p Params) *Service {
 	ediMetrics := documentmetrics.NewEDI(nil, p.Logger, false)
-	if p.Metrics != nil {
-		ediMetrics = p.Metrics.EDI
-	}
+	ediMetrics = p.Metrics.EDI
 	return &Service{
 		contentGate:         p.ContentGate,
 		l:                   p.Logger.Named("service.edi-inbound"),
@@ -378,9 +376,7 @@ func (s *Service) quarantineFile(
 }
 
 func (s *Service) notifyQuarantinedFile(ctx context.Context, file *ediinboundfile.EDIInboundFile) {
-	if s.watchtower != nil {
-		s.watchtower.Upsert(ctx, watchtowersources.DescribeQuarantinedFile(file))
-	}
+	s.watchtower.Upsert(ctx, watchtowersources.DescribeQuarantinedFile(file))
 
 	agenteventports.PublishAgentEvent(ctx, s.publisher, agenteventports.AgentEvent{
 		Kind:       agenttrigger.EventEDIFileQuarantined,

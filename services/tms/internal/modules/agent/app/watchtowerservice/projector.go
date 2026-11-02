@@ -26,9 +26,9 @@ type ProjectorParams struct {
 	Logger        *zap.Logger
 	Repo          watchtowerports.WatchtowerRepository
 	Router        *Router
-	Permissions   permissionports.PermissionEngine `optional:"true"`
-	Realtime      realtimeports.RealtimeService    `optional:"true"`
-	Notifications *notificationservice.Service     `optional:"true"`
+	Permissions   permissionports.PermissionEngine
+	Realtime      realtimeports.RealtimeService
+	Notifications *notificationservice.Service
 }
 
 // Projector is the watchtower's write face: what the sources put on the
@@ -189,7 +189,7 @@ func (p *Projector) Resolve(
 }
 
 func (p *Projector) publish(ctx context.Context, item *watchtower.Item, action string) {
-	if p.realtime == nil || item == nil {
+	if item == nil {
 		return
 	}
 
@@ -208,10 +208,6 @@ func (p *Projector) publish(ctx context.Context, item *watchtower.Item, action s
 }
 
 func (p *Projector) publishBulk(ctx context.Context, tenant pagination.TenantInfo, action string) {
-	if p.realtime == nil {
-		return
-	}
-
 	if err := realtimeinvalidation.Publish(ctx, p.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
@@ -229,10 +225,6 @@ func (p *Projector) publishBulk(ctx context.Context, tenant pagination.TenantInf
 // bounded, so a critical weather warning reaches dispatch and not the whole
 // company.
 func (p *Projector) notifyCritical(ctx context.Context, item *watchtower.Item) {
-	if p.notifications == nil {
-		return
-	}
-
 	correlation := item.ID.String()
 	link := item.Path
 	if link == "" {

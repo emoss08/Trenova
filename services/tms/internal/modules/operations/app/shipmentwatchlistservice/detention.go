@@ -204,7 +204,7 @@ func (s *Service) nameCoverage(
 	accruals []shipmentboardports.DetentionAccrual,
 	moveIDs []pulid.ID,
 ) error {
-	if len(moveIDs) == 0 || s.moves == nil {
+	if len(moveIDs) == 0 {
 		return nil
 	}
 

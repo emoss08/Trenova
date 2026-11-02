@@ -20,7 +20,7 @@ func TestAgentControlIsCreatedOnceThenServedFromTheCacheUntilAnUpdate(t *testing
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	cached := cachetest.Open(t, ctx, dsn)
-	repo := New(Params{DB: postgres.NewTestConnection(cached), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(cached), Logger: zap.NewNop()})
 	tctx := data.Ctx(ctx)
 
 	created, err := repo.GetOrCreate(tctx, data.Info())

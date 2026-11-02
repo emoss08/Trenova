@@ -52,10 +52,10 @@ type Params struct {
 	Generator          seqgen.Generator
 	Validator          *Validator
 	AuditService       auditports.AuditService
-	AccountingSync     accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
-	Realtime           realtimeports.RealtimeService              `optional:"true"`
-	Triage             inboundmessageports.TriageEventSink        `optional:"true"`
-	ReceiptMatches     bankreceiptports.BankReceiptService        `optional:"true"`
+	AccountingSync     accountingsyncports.AccountingSyncEnqueuer
+	Realtime           realtimeports.RealtimeService
+	Triage             inboundmessageports.TriageEventSink
+	ReceiptMatches     bankreceiptports.BankReceiptService
 }
 
 type Service struct {
@@ -103,9 +103,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		realtime:           p.Realtime,
 		triage:             p.Triage,
 	}
-	if p.ReceiptMatches != nil {
-		svc.receiptMatches = p.ReceiptMatches
-	}
+	svc.receiptMatches = p.ReceiptMatches
 
 	return svc
 }
@@ -317,19 +315,17 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 		}); txErr != nil {
 			return txErr
 		}
-		if s.customerLedgerRepo != nil {
-			if txErr = s.customerLedgerRepo.AppendEntries(
-				txCtx,
-				applicationLedgerEntries(&applicationLedgerParams{
-					payment:         created,
-					applications:    created.Applications,
-					appliedEvent:    accountingcontrol.JournalSourceEventCustomerPaymentPosted.String(),
-					transactionDate: created.AccountingDate,
-					actorID:         actor.UserID,
-				}),
-			); txErr != nil {
-				return txErr
-			}
+		if txErr = s.customerLedgerRepo.AppendEntries(
+			txCtx,
+			applicationLedgerEntries(&applicationLedgerParams{
+				payment:         created,
+				applications:    created.Applications,
+				appliedEvent:    accountingcontrol.JournalSourceEventCustomerPaymentPosted.String(),
+				transactionDate: created.AccountingDate,
+				actorID:         actor.UserID,
+			}),
+		); txErr != nil {
+			return txErr
 		}
 
 		created.PostedBatchID = batchID
@@ -468,20 +464,19 @@ func (s *Service) ApplyUnapplied( //nolint:funlen // legacy workflow
 		); txErr != nil {
 			return txErr
 		}
-		if s.customerLedgerRepo != nil {
-			if txErr = s.customerLedgerRepo.AppendEntries(
-				txCtx,
-				applicationLedgerEntries(&applicationLedgerParams{
-					payment:         payment,
-					applications:    applications,
-					appliedEvent:    customerledger.EventPaymentApplied,
-					transactionDate: req.AccountingDate,
-					actorID:         actor.UserID,
-				}),
-			); txErr != nil {
-				return txErr
-			}
+		if txErr = s.customerLedgerRepo.AppendEntries(
+			txCtx,
+			applicationLedgerEntries(&applicationLedgerParams{
+				payment:         payment,
+				applications:    applications,
+				appliedEvent:    customerledger.EventPaymentApplied,
+				transactionDate: req.AccountingDate,
+				actorID:         actor.UserID,
+			}),
+		); txErr != nil {
+			return txErr
 		}
+
 		return accountingsyncports.EnqueueAccountingSync(
 			txCtx,
 			s.accountingSync,
@@ -609,33 +604,30 @@ func (s *Service) Reverse( //nolint:funlen // legacy workflow
 		); txErr != nil {
 			return txErr
 		}
-		if s.receiptMatches != nil {
-			if _, txErr := s.receiptMatches.ReleasePaymentMatch(
-				txCtx,
-				&bankreceiptports.ReleasePaymentMatchRequest{
-					PaymentID:        payment.ID,
-					PaymentReference: payment.DocumentLabel(),
-					Reason:           req.Reason,
-					TenantInfo:       req.TenantInfo,
-				},
-				actor,
-			); txErr != nil {
-				return txErr
-			}
+		if _, txErr := s.receiptMatches.ReleasePaymentMatch(
+			txCtx,
+			&bankreceiptports.ReleasePaymentMatchRequest{
+				PaymentID:        payment.ID,
+				PaymentReference: payment.DocumentLabel(),
+				Reason:           req.Reason,
+				TenantInfo:       req.TenantInfo,
+			},
+			actor,
+		); txErr != nil {
+			return txErr
 		}
-		if s.customerLedgerRepo != nil {
-			if txErr := s.customerLedgerRepo.AppendEntries(
-				txCtx,
-				applicationLedgerEntries(&applicationLedgerParams{
-					payment:         payment,
-					applications:    payment.Applications,
-					transactionDate: req.AccountingDate,
-					actorID:         actor.UserID,
-					reversal:        true,
-				}),
-			); txErr != nil {
-				return txErr
-			}
+
+		if txErr := s.customerLedgerRepo.AppendEntries(
+			txCtx,
+			applicationLedgerEntries(&applicationLedgerParams{
+				payment:         payment,
+				applications:    payment.Applications,
+				transactionDate: req.AccountingDate,
+				actorID:         actor.UserID,
+				reversal:        true,
+			}),
+		); txErr != nil {
+			return txErr
 		}
 
 		markReversed(payment, req, actor.UserID, now)
@@ -761,9 +753,6 @@ func (s *Service) announceInvoice(
 		return
 	}
 	s.wakeTriageOnPaid(ctx, inv)
-	if s.realtime == nil {
-		return
-	}
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: inv.OrganizationID,
 		BusinessUnitID: inv.BusinessUnitID,
@@ -869,7 +858,7 @@ func applicationLedgerEntries(
 }
 
 func (s *Service) wakeTriageOnPaid(ctx context.Context, inv *invoice.Invoice) {
-	if s.triage == nil || inv.SettlementStatus != invoice.SettlementStatusPaid {
+	if inv.SettlementStatus != invoice.SettlementStatusPaid {
 		return
 	}
 

@@ -72,11 +72,11 @@ type ActivitiesParams struct {
 	Logger    *zap.Logger
 	Runtime   *agentruntime.Service
 	Steps     agentruntimeports.RunStepLedger
-	Observer  ToolObserver                   `optional:"true"`
-	Delegates DelegateOpener                 `optional:"true"`
-	Metrics   *metrics.Registry              `optional:"true"`
-	Changes   realtimeports.RecordChangeFeed `optional:"true"`
-	Scopes    permissionports.ReadScopes     `optional:"true"`
+	Observer  ToolObserver
+	Delegates DelegateOpener
+	Metrics   *metrics.Registry
+	Changes   realtimeports.RecordChangeFeed
+	Scopes    permissionports.ReadScopes
 }
 
 // Activities are a turn's effects, one activity each.
@@ -113,10 +113,6 @@ func (a *Activities) CheckWorldActivity(
 	ctx context.Context,
 	in *WorldCheckInput,
 ) (*realtimeports.RecordChanges, error) {
-	if a.changes == nil {
-		return &realtimeports.RecordChanges{Cursor: in.Check.Cursor}, nil
-	}
-
 	return a.changes.Since(ctx, &realtimeports.RecordChangesRequest{
 		OrganizationID: in.OrganizationID,
 		BusinessUnitID: in.BusinessUnitID,
@@ -252,12 +248,6 @@ func (a *Activities) OpenDelegateActivity(
 	ctx context.Context,
 	in *OpenDelegateInput,
 ) (*DelegateOpening, error) {
-	if a.delegates == nil {
-		return nil, temporal.NewNonRetryableApplicationError(
-			in.Call.Delegate.Name+" cannot be asked from here.",
-			ErrTypeDelegateDeclined, nil,
-		)
-	}
 
 	ctx, span := startDelegateOpen(ctx, in)
 	defer span.End()
@@ -332,9 +322,7 @@ func (a *Activities) runTool(
 		)
 	}
 	ctx = dbscope.WithTenant(ctx, tenant)
-	if a.scopes != nil {
-		ctx = readscope.With(ctx, a.scopes.Resolver(in.Run.Actor.PermissionCheck("", "")))
-	}
+	ctx = readscope.With(ctx, a.scopes.Resolver(in.Run.Actor.PermissionCheck("", "")))
 
 	req := in.Run.request()
 	req.Steps = a.steps
@@ -369,7 +357,7 @@ func (a *Activities) observing(
 	run *RunContext,
 ) (agentruntimeports.ToolObserver, *[]*assistantartifact.Artifact, func()) {
 	kept := new([]*assistantartifact.Artifact)
-	if a.observer == nil || run.ThreadID.IsNil() {
+	if run.ThreadID.IsNil() {
 		return nil, kept, func() {}
 	}
 

@@ -10,7 +10,7 @@ import (
 )
 
 func (s *Service) queueForRetrieval(ctx context.Context, memory *agentmemory.Memory) {
-	if s.indexer == nil || memory == nil {
+	if memory == nil {
 		return
 	}
 

@@ -189,9 +189,6 @@ func (s *Service) startApprovalWorkflow(
 	tenantInfo pagination.TenantInfo,
 	actor *permissionports.RequestActor,
 ) (string, error) {
-	if s.workflowStarter == nil || !s.workflowStarter.Enabled() {
-		return "", errortypes.NewBusinessError("EDI approval workflow is not configured")
-	}
 
 	payload := &ApproveLoadTenderTransferWorkflowPayload{
 		TransferID: transfer.ID,
@@ -800,7 +797,7 @@ func (s *Service) saveTenderCustomFields(
 	created *shipment.Shipment,
 	values map[string]any,
 ) error {
-	if len(values) == 0 || s.customFields == nil {
+	if len(values) == 0 {
 		return nil
 	}
 	if multiErr := s.customFields.SaveNamed(

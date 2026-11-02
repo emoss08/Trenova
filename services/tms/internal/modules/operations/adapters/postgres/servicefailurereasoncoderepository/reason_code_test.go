@@ -27,7 +27,7 @@ func TestReasonCodesByIDsIsOneBoundedStatementInsideTheTenant(t *testing.T) {
 func TestGetByIDsSkipsTheQueryForAnEmptyIDSet(t *testing.T) {
 	t.Parallel()
 
-	repo := &repository{db: postgres.NewTestConnection(keeltest.RenderDB(t)), l: zap.NewNop()}
+	repo := &repository{db: postgres.WrapDB(keeltest.RenderDB(t)), l: zap.NewNop()}
 
 	entities, err := repo.GetByIDs(
 		keeltest.TenantContext(t),

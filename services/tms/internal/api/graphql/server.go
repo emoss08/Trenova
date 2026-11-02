@@ -1,7 +1,6 @@
 package graphql
 
 import (
-	"github.com/99designs/gqlgen/graphql"
 	gqlhandler "github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/lru"
@@ -19,22 +18,12 @@ const (
 	parserTokenLimit = 15000
 )
 
-const ExtensionsGroup = gqlext.ExtensionsGroup
-
 type ServerParams struct {
 	fx.In
 	gqlext.Params
 
 	AppConfig *appconfig.Config
 	Resolver  *resolver.Resolver
-}
-
-func AsExtension(constructor any) any {
-	return fx.Annotate(
-		constructor,
-		fx.As(new(graphql.HandlerExtension)),
-		fx.ResultTags(`group:"`+ExtensionsGroup+`"`),
-	)
 }
 
 func NewServer(p ServerParams) *gqlhandler.Server {

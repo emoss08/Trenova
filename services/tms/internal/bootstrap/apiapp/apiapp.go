@@ -1,7 +1,6 @@
 package apiapp
 
 import (
-	"github.com/emoss08/trenova/internal/bootstrap/edition"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/api"
 	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/schemaversion"
@@ -25,10 +24,6 @@ import (
 )
 
 func Options() fx.Option {
-	return OptionsFor(edition.Current())
-}
-
-func OptionsFor(e *edition.Edition) fx.Option {
 	return fx.Options(
 		api.HelpersModule,
 		api.GraphQLModule,
@@ -55,7 +50,6 @@ func OptionsFor(e *edition.Edition) fx.Option {
 		billing.APIOptions(),
 		settlement.APIOptions(),
 		agent.APIOptions(),
-		e.APIOption(),
 	)
 }
 

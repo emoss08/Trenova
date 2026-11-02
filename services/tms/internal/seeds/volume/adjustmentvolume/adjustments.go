@@ -24,7 +24,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol/invoiceadjustmentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
@@ -1834,7 +1833,7 @@ func (g *adjustmentPhase) adjBuildBatch(rows *adjRows, b *adjBatchPlan) {
 	switch {
 	case b.startErr:
 		batch.Status = invoiceadjustment.BatchStatusFailed
-		batch.Metadata["workflowError"] = kernelports.ErrWorkflowStarterDisabled.Error()
+		batch.Metadata["workflowError"] = "background work is not available on this server"
 	case batch.Status == invoiceadjustment.BatchStatusSubmitted:
 		batch.Metadata["workflowId"] = workflowID
 		batch.Metadata["runId"] = adjRunID(g.Generator)

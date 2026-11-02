@@ -81,10 +81,6 @@ func (a *Activities) NotifyUnseenTurnActivity(
 	ctx context.Context,
 	in *NotifyUnseenTurnInput,
 ) error {
-	if a.notifications == nil || a.threads == nil {
-		return nil
-	}
-
 	payload := in.Payload
 	tenant := payload.TenantInfo()
 	correlation := payload.TurnID.String()

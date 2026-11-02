@@ -303,12 +303,10 @@ func (s *Service) captureMessage(
 		},
 		CapturedFingerprint: agentquality.FingerprintOf(definition, promptVersion),
 	}
-	if req.feedback != nil {
-		feedbackID := req.feedback.ID
-		evalCase.SourceFeedbackID = &feedbackID
-		evalCase.SourceTurnID = req.feedback.TurnID
-		evalCase.SourceRunID = req.feedback.RunID
-	}
+	feedbackID := req.feedback.ID
+	evalCase.SourceFeedbackID = &feedbackID
+	evalCase.SourceTurnID = req.feedback.TurnID
+	evalCase.SourceRunID = req.feedback.RunID
 	applyFrozen(evalCase, frozen, redacted, s.now())
 	if evalCase.Title == "" {
 		evalCase.Title = titleFromInput(evalCase.Input)
@@ -383,16 +381,14 @@ func (s *Service) backgroundInput(
 	run *agent.AgentRun,
 ) string {
 	var subject *agentturn.RuntimeSubject
-	if s.subjects != nil {
-		described, err := s.subjects.Describe(ctx, tenantInfo, run.SubjectType, run.SubjectID)
-		if err != nil {
-			s.l.Warn("subject could not be described for an evaluation case",
-				zap.String("runId", run.ID.String()),
-				zap.Error(err),
-			)
-		} else {
-			subject = described
-		}
+	described, err := s.subjects.Describe(ctx, tenantInfo, run.SubjectType, run.SubjectID)
+	if err != nil {
+		s.l.Warn("subject could not be described for an evaluation case",
+			zap.String("runId", run.ID.String()),
+			zap.Error(err),
+		)
+	} else {
+		subject = described
 	}
 	if subject == nil {
 		subject = &agentturn.RuntimeSubject{

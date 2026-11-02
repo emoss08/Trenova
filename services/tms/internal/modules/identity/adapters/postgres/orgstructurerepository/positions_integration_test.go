@@ -43,12 +43,12 @@ func TestGetPositionsByIDsReturnsOnlyTheTenantsPositions(t *testing.T) {
 	second := seedJobPosition(t, ctx, db, tenantA, "DISPATCH")
 	foreign := seedJobPosition(t, ctx, db, tenantB, "MECHANIC")
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	entities, err := repo.GetPositionsByIDs(
 		tenantA.Ctx(ctx),
 		&orgstructureports.GetJobPositionsByIDsRequest{
-			TenantInfo: tenantA.Info(),
+			TenantInfo:  tenantA.Info(),
 			PositionIDs: []pulid.ID{second.ID, foreign.ID, first.ID, pulid.MustNew("jpos_")},
 		},
 	)

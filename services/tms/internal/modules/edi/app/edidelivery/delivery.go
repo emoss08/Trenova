@@ -430,9 +430,6 @@ func (s *Service) startDeliveryWorkflow(
 	message *edimessage.EDIMessage,
 	profile *edi.EDICommunicationProfile,
 ) error {
-	if s.workflowStarter == nil || !s.workflowStarter.Enabled() {
-		return errortypes.NewBusinessError("EDI delivery workflow is not configured")
-	}
 	payload := &DeliverEDIMessageWorkflowPayload{
 		MessageID:  message.ID,
 		TenantInfo: editenderrecipient.MessageTenantInfo(message),
@@ -521,7 +518,7 @@ func (s *Service) syncInvoiceEDIStatus(
 	sentAt *int64,
 ) {
 	if message == nil || message.InvoiceID.IsNil() ||
-		message.TransactionSet != edidocument.TransactionSet210 || s.invoiceRepo == nil {
+		message.TransactionSet != edidocument.TransactionSet210 {
 		return
 	}
 	if err := s.invoiceRepo.UpdateEDISendStatus(ctx, invoiceports.UpdateInvoiceEDISendStatusRequest{
@@ -544,9 +541,6 @@ func (s *Service) syncInvoiceEDIStatus(
 }
 
 func (s *Service) publishInvoiceEDIStatus(ctx context.Context, message *edimessage.EDIMessage) {
-	if s.realtime == nil {
-		return
-	}
 	entity, err := s.invoiceRepo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         message.InvoiceID,
 		TenantInfo: editenderrecipient.MessageTenantInfo(message),

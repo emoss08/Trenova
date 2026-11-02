@@ -483,9 +483,6 @@ func (s *SubmissionService) invoicePDF(
 		s.l.Warn("could not read an invoice's stored PDF; rendering it again",
 			zap.String("invoiceId", inv.ID.String()), zap.Error(err))
 	}
-	if s.invoicePreviews == nil {
-		return nil, errortypes.NewBusinessError("Invoice {0} has no PDF yet", inv.Number)
-	}
 	rendered, err := s.invoicePreviews.RenderPreview(ctx, &invoiceports.InvoicePreviewRequest{
 		InvoiceID:  inv.ID,
 		TenantInfo: tenantInfo,

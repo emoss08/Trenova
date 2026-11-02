@@ -44,10 +44,9 @@ type Params struct {
 	AccountingRepo      tenantports.AccountingControlRepository
 	NotificationService *notificationservice.Service
 	AuditService        auditports.AuditService
-	// Events is told about each receipt that could not be matched on its
-	// own, so an agent subscribed to bank_receipt.exception can work it. It
-	// is optional because an import is worth running with nobody listening.
-	Events agenteventports.AgentEventPublisher `optional:"true"`
+	// Events is told about each receipt that could not be matched on its own, so an agent
+	// subscribed to bank_receipt.exception can work it.
+	Events agenteventports.AgentEventPublisher
 }
 
 type Service struct {
@@ -295,7 +294,7 @@ func (s *Service) applyReconciliationPolicy(
 	receipt *bankreceipt.BankReceipt,
 	actor *permissionports.RequestActor,
 ) (*bankreceipt.BankReceipt, error) {
-	if receipt == nil || s.accountingRepo == nil {
+	if receipt == nil {
 		return receipt, nil
 	}
 	control, err := s.accountingRepo.GetByOrgID(ctx, receipt.OrganizationID)
@@ -373,7 +372,7 @@ func (s *Service) markException(
 		OrgID: receipt.OrganizationID,
 		BuID:  receipt.BusinessUnitID,
 	}
-	if s.workItemRepo != nil && s.activeWorkItem(ctx, tenantInfo, receipt.ID) == nil {
+	if s.activeWorkItem(ctx, tenantInfo, receipt.ID) == nil {
 		if _, createErr := s.workItemRepo.Create(
 			ctx,
 			&bankreceiptworkitem.WorkItem{
@@ -398,28 +397,26 @@ func (s *Service) markException(
 			"Bank receipt marked as reconciliation exception",
 		)
 	}
-	if s.notificationService != nil && s.accountingRepo != nil {
-		control, controlErr := s.accountingRepo.GetByOrgID(ctx, receipt.OrganizationID)
-		if controlErr == nil && control.NotifyOnReconciliationException {
-			_, _ = s.notificationService.Create(
-				ctx,
-				&notification.Notification{
-					OrganizationID: receipt.OrganizationID,
-					BusinessUnitID: &receipt.BusinessUnitID,
-					EventType:      "bank_receipt_reconciliation_exception",
-					Priority:       notification.PriorityMedium,
-					Channel:        notification.ChannelGlobal,
-					Title:          "Bank receipt requires reconciliation",
-					Message:        reason,
-					Data: map[string]any{
-						"amountMinor":     receipt.AmountMinor,
-						"referenceNumber": receipt.ReferenceNumber,
-					},
-					RelatedEntities: map[string]any{"bankReceiptId": receipt.ID.String()},
-					Source:          "bankreceiptservice.Import",
+	control, controlErr := s.accountingRepo.GetByOrgID(ctx, receipt.OrganizationID)
+	if controlErr == nil && control.NotifyOnReconciliationException {
+		_, _ = s.notificationService.Create(
+			ctx,
+			&notification.Notification{
+				OrganizationID: receipt.OrganizationID,
+				BusinessUnitID: &receipt.BusinessUnitID,
+				EventType:      "bank_receipt_reconciliation_exception",
+				Priority:       notification.PriorityMedium,
+				Channel:        notification.ChannelGlobal,
+				Title:          "Bank receipt requires reconciliation",
+				Message:        reason,
+				Data: map[string]any{
+					"amountMinor":     receipt.AmountMinor,
+					"referenceNumber": receipt.ReferenceNumber,
 				},
-			)
-		}
+				RelatedEntities: map[string]any{"bankReceiptId": receipt.ID.String()},
+				Source:          "bankreceiptservice.Import",
+			},
+		)
 	}
 	agenteventports.PublishAgentEvent(ctx, s.events, agenteventports.AgentEvent{
 		Kind:       agenttrigger.EventBankReceiptException,

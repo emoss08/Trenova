@@ -51,7 +51,7 @@ func newHarness(t *testing.T) *harness {
 		ctx: dbscope.WithTenant(ctx, tenant.DBTenant()),
 		db:  db,
 		reader: exceptionsourcerepository.New(
-			exceptionsourcerepository.Params{DB: postgres.NewTestConnection(db)},
+			exceptionsourcerepository.Params{DB: postgres.WrapDB(db)},
 		),
 		tenant:  tenant,
 		data:    data,

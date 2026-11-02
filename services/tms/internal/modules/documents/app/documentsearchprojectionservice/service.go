@@ -19,7 +19,7 @@ type Params struct {
 
 	Logger  *zap.Logger
 	Repo    documentsearchprojectionports.DocumentSearchProjectionRepository
-	Indexer retrievalports.RetrievalIndexer `optional:"true"`
+	Indexer retrievalports.RetrievalIndexer
 }
 
 type Service struct {
@@ -63,7 +63,7 @@ func (s *Service) Delete(
 }
 
 func (s *Service) markStale(ctx context.Context, doc *document.Document) {
-	if s.indexer == nil || doc == nil {
+	if doc == nil {
 		return
 	}
 
@@ -86,10 +86,6 @@ func (s *Service) deleteFromIndex(
 	documentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) {
-	if s.indexer == nil {
-		return
-	}
-
 	if err := s.indexer.DeleteSource(
 		ctx,
 		tenantInfo,

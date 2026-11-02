@@ -46,10 +46,10 @@ type LedgerParams struct {
 	Periods     fiscalperiodports.FiscalPeriodRepository
 	Sequences   seqgen.Generator
 	Journals    journalentryports.JournalPostingRepository
-	Requester   factoringports.EvaluationRequester  `optional:"true"`
-	Events      agenteventports.AgentEventPublisher `optional:"true"`
+	Requester   factoringports.EvaluationRequester
+	Events      agenteventports.AgentEventPublisher
 	Audit       auditports.AuditService
-	Realtime    realtimeports.RealtimeService `optional:"true"`
+	Realtime    realtimeports.RealtimeService
 	Logger      *zap.Logger
 }
 
@@ -231,7 +231,7 @@ func (s *LedgerService) finish(
 			actor,
 			"updated",
 		)
-		if s.requester != nil && len(invoiceIDs) > 0 {
+		if len(invoiceIDs) > 0 {
 			s.requester.RequestEvaluation(
 				committedCtx,
 				tenantInfo,

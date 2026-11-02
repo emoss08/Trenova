@@ -121,8 +121,8 @@ type Params struct {
 	Turns         *assistantturnservice.Service
 	Workflows     kernelports.WorkflowStarter
 	Syncer        conversationscheduleports.ConversationScheduleSyncer
-	Realtime      realtimeports.RealtimeService `optional:"true"`
-	Plans         platformplanports.PlanService `optional:"true"`
+	Realtime      realtimeports.RealtimeService
+	Plans         platformplanports.PlanService
 }
 
 type Service struct {
@@ -883,10 +883,6 @@ func (s *Service) announce(
 	schedule *conversationschedule.Schedule,
 	action string,
 ) {
-	if s.realtime == nil {
-		return
-	}
-
 	publishCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), announceTimeout)
 	defer cancel()
 
@@ -934,9 +930,6 @@ func (c repositoryClocks) userTimezone(
 	tenant pagination.TenantInfo,
 	userID pulid.ID,
 ) string {
-	if c.users == nil {
-		return ""
-	}
 	user, err := c.users.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:   tenant,
 		LookupUserID: userID,
@@ -952,9 +945,6 @@ func (c repositoryClocks) organizationTimezone(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) string {
-	if c.organizations == nil {
-		return ""
-	}
 	org, err := c.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenant,
 	})

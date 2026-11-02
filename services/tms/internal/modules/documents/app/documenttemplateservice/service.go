@@ -164,10 +164,6 @@ func (s *Service) localeFor(
 		return req.Locale
 	}
 
-	if s.orgRepo == nil {
-		return i18n.Default
-	}
-
 	org, err := s.orgRepo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: req.TenantInfo,
 	})

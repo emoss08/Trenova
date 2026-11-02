@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
@@ -32,11 +31,9 @@ type NovaTask struct {
 	// Attribution overrides the usage record when a task bills against more
 	// than a user and its feature; Feature and UserID fill it otherwise.
 	Attribution *aiusageports.AIUsageAttribution
-	// The routing a caller bounded by a deadline or tied to one provider needs.
-	PreferredProviderID pulid.ID
-	RequireProvider     bool
-	HedgeAfter          time.Duration
-	Reasoning           aireasoning.ReasoningEffort
+	// Reasoning overrides how hard Nova's model thinks for this task; empty
+	// keeps Nova's own.
+	Reasoning aireasoning.ReasoningEffort
 	// Reads are tools the task may call before it answers. The answer is then
 	// itself a call, so a task that needs no read still answers in one model
 	// call; MaxCalls bounds them, and the last answers with what was read.
@@ -64,10 +61,12 @@ func DecodeAnswer(task aitask.Task, text string, out any) error {
 }
 
 // TaskRunner runs Nova's background tasks with Nova's identity in front of
-// each task's instructions. The agent module's harness implements it.
+// each task's instructions, on the provider the organization chose for Nova
+// and with Nova's own model. The agent module's harness implements it.
 type TaskRunner interface {
-	// Available reports whether a provider serves the task for the tenant.
-	Available(ctx context.Context, task aitask.Task, tenantInfo pagination.TenantInfo) (bool, error)
+	// Available reports whether Nova can run for the tenant: AI is on and the
+	// organization has chosen an enabled provider for Nova.
+	Available(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error)
 	// Run does the task and decodes its answer into out, returning what the
 	// call cost and which model answered.
 	Run(ctx context.Context, task *NovaTask, out any) (*StructuredCompletionResult, error)

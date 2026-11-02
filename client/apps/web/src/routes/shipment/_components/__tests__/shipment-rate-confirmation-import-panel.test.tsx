@@ -103,7 +103,7 @@ describe("ShipmentRateConfirmationImportPanel", () => {
   it("keeps retry and replace under the provider alert for a document no provider could read", async () => {
     await renderBlockedImport();
 
-    expect(screen.getAllByText("Extraction needs a model provider").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Extraction needs Nova").length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Retry extraction" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Replace file" })).toBeEnabled();
   });

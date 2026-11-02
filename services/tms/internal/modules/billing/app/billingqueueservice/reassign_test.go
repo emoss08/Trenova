@@ -694,6 +694,63 @@ func TestUpdateCharges_ConvertsAStaleAmountSplitWhenAsked(t *testing.T) {
 	)
 }
 
+func TestUpdateCharges_AnswersWithTheItemAsTheDetailReadsItWhenExpanded(t *testing.T) {
+	t.Parallel()
+
+	h := newReassignHarness(t)
+	f := h.f
+	h.expectItem(f.acmeItem)
+	h.shipmentRepo.EXPECT().
+		UpdateDerivedState(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, shp *shipment.Shipment) (*shipment.Shipment, error) {
+			return shp, nil
+		}).
+		Once()
+
+	saved, err := h.svc.UpdateCharges(t.Context(), &billingqueueports.UpdateChargesRequest{
+		ItemID:                f.acmeItem.ID,
+		TenantInfo:            f.tenantInfo,
+		AdditionalCharges:     []*shipment.AdditionalCharge{f.detention},
+		ExpandShipmentDetails: true,
+	}, testActor(f.tenantInfo))
+	require.NoError(t, err)
+
+	read, err := h.svc.GetByID(t.Context(), &billingqueueports.GetBillingQueueItemByIDRequest{
+		ItemID:                f.acmeItem.ID,
+		TenantInfo:            f.tenantInfo,
+		ExpandShipmentDetails: true,
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, saved.Shipment)
+	require.NotNil(t, saved.PayerShare)
+	assert.Equal(t, read, saved)
+}
+
+func TestUpdateCharges_AnswersWithTheBareItemUnlessExpanded(t *testing.T) {
+	t.Parallel()
+
+	h := newReassignHarness(t)
+	f := h.f
+	h.expectItem(f.acmeItem)
+	h.shipmentRepo.EXPECT().
+		UpdateDerivedState(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, shp *shipment.Shipment) (*shipment.Shipment, error) {
+			return shp, nil
+		}).
+		Once()
+
+	saved, err := h.svc.UpdateCharges(t.Context(), &billingqueueports.UpdateChargesRequest{
+		ItemID:            f.acmeItem.ID,
+		TenantInfo:        f.tenantInfo,
+		AdditionalCharges: []*shipment.AdditionalCharge{f.detention},
+	}, testActor(f.tenantInfo))
+
+	require.NoError(t, err)
+	assert.Nil(t, saved.PayerShare)
+	assert.Nil(t, saved.Shipment)
+}
+
 func TestGetByID_AttachesTheItemsOwnBill(t *testing.T) {
 	t.Parallel()
 

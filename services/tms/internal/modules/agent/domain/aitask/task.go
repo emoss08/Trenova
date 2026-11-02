@@ -1,9 +1,10 @@
 package aitask
 
-// Task names a unit of AI work that can be routed to a provider independently.
-// Splitting them is the point of the abstraction: classification is high-volume
-// and cheap enough for a local model, while a billing diagnosis writes to the
-// ledger and warrants a frontier model.
+// Task names a unit of AI work. A Desk task (the chat, its scope guard, quality
+// judging) and embedding are routed to whichever providers an organization
+// assigns them, since the Desk lets an organization pick its model. Nova's
+// tasks (see Nova) all run on the organization's Nova provider with Nova's own
+// model; their names say what the usage was for.
 type Task string
 
 const (
@@ -18,43 +19,39 @@ const (
 	// TaskAssistantChat answers a person's question and drives the tool loop.
 	TaskAssistantChat = Task("AssistantChat")
 	// TaskOperationalInsights writes the prose on a home-screen insight. It never
-	// produces a number, a severity or a link — those are computed before it runs
-	// and checked after it — so it is safe to route to whatever is cheapest.
+	// produces a number, a severity or a link: those are computed before it runs
+	// and checked after it.
 	TaskOperationalInsights = Task("OperationalInsights")
 	// TaskDailyBriefing writes the morning page from figures already
 	// gathered. Like the insight narration it produces only wording, and
-	// every number it writes is checked against those figures afterwards,
-	// so it is safe to route wherever is cheapest.
+	// every number it writes is checked against those figures afterwards.
 	TaskDailyBriefing = Task("DailyBriefing")
 	// TaskQueryCompose turns a sentence into a table's filters. It names
 	// fields and values from a catalogue it is shown and writes no SQL;
 	// everything it names is compiled against that catalogue afterwards, so a
-	// cheap model that guesses wrong produces an unresolved line rather than a
-	// wrong answer.
+	// wrong guess produces an unresolved line rather than a wrong answer.
 	TaskQueryCompose = Task("QueryCompose")
 	// TaskChapterTitling decides whether a Desk question starts a new
 	// chapter and names it in a few words. It runs once per question on a
 	// short prompt and its answer is cleaned and checked against the
-	// conversation afterwards, so the cheapest fast model is the right one.
+	// conversation afterwards.
 	TaskChapterTitling = Task("ChapterTitling")
 	// TaskInboundClassification decides what an email that arrived actually is.
 	// Like the other classifiers it answers with a label from a fixed set, and
-	// the label is re-checked against that set afterwards — a model that invents
+	// the label is re-checked against that set afterwards: a model that invents
 	// a category produces a message for a person, not a new kind of work.
 	TaskInboundClassification = Task("InboundClassification")
 	TaskAccountingMapping     = Task("AccountingMapping")
 	// TaskRemittanceExtraction reads the lines of a factor's PDF remittance.
-	// It is kept apart from DocumentExtraction because the fine-tuned
-	// extraction model, its shadow runs and its training data all key on that
-	// task, and a remittance is not the kind of document they were built for.
-	// What it reads is matched to schedule items and a person applies it, so
-	// it never books anything on its own.
+	// It is kept apart from DocumentExtraction so its usage and its training
+	// data are its own: a remittance is not the kind of document extraction
+	// reads. What it reads is matched to schedule items and a person applies
+	// it, so it never books anything on its own.
 	TaskRemittanceExtraction = Task("RemittanceExtraction")
 	// TaskPaperworkReading reads a shipment's billing paperwork (a proof of
-	// delivery, a bill of lading, a receipt) for the facts billing checks. It
-	// runs through the Nova harness, a single structured call that reads the
-	// file itself, so a fast model answers in seconds without waiting for the
-	// document to be converted.
+	// delivery, a bill of lading, a receipt) for the facts billing checks, in a
+	// single structured call that reads the file itself, without waiting for
+	// the document to be converted.
 	TaskPaperworkReading = Task("PaperworkReading")
 	// TaskPaletteAnswer answers a quick question typed into the command
 	// palette: a short streamed answer from a few read-only lookups, run
@@ -69,15 +66,41 @@ const (
 // scope classifier falls back to the model answering the Desk, so a guard that
 // no provider was assigned to, or whose providers are down, still runs.
 func (t Task) BorrowsFrom() Task {
-	switch t {
-	case TaskScopeClassification, TaskChapterTitling, TaskPaletteAnswer, TaskFormulaAssistant:
+	if t == TaskScopeClassification {
 		return TaskAssistantChat
-	case TaskPaperworkReading:
-		// Paperwork reading wants a fast model that reads files; until one is
-		// assigned to it, the document classifier's providers serve it.
-		return TaskDocumentClassification
+	}
+
+	return ""
+}
+
+// Nova reports a task Nova does through its harness. Nova's tasks are never
+// assigned to providers: each runs on the organization's Nova provider with
+// aiprovider.NovaModel, so an organization chooses only whose key Nova uses.
+// The Desk's tasks and embeddings are routed by assignment.
+func (t Task) Nova() bool {
+	switch t {
+	case TaskDocumentClassification,
+		TaskDocumentExtraction,
+		TaskBillingDiagnosis,
+		TaskFormulaAssistant,
+		TaskOperationalInsights,
+		TaskDailyBriefing,
+		TaskQueryCompose,
+		TaskChapterTitling,
+		TaskInboundClassification,
+		TaskAccountingMapping,
+		TaskRemittanceExtraction,
+		TaskPaperworkReading,
+		TaskPaletteAnswer:
+		return true
+	case TaskScopeClassification,
+		TaskAssistantChat,
+		TaskEvaluationJudge,
+		TaskEmbedding,
+		TaskGeneral:
+		return false
 	default:
-		return ""
+		return false
 	}
 }
 
@@ -107,7 +130,7 @@ func (t Task) IsValid() bool {
 	}
 }
 
-// AllTasks lists every routable task, for building configuration UIs.
+// AllTasks lists every task, Nova's included, for reading usage by task.
 func AllTasks() []Task {
 	return []Task{
 		TaskDocumentClassification,
@@ -131,11 +154,18 @@ func AllTasks() []Task {
 	}
 }
 
-// WritesToLedger reports whether a task's output can drive a financial mutation.
-// Such a task is refused a provider that has not been marked trusted, so a
-// misconfigured 7B model cannot quietly propose ledger corrections.
-func (t Task) WritesToLedger() bool {
-	return t == TaskBillingDiagnosis
+// RoutedTasks lists the tasks an organization assigns to its providers, for
+// building configuration UIs and route previews: every task but Nova's.
+func RoutedTasks() []Task {
+	all := AllTasks()
+	routed := make([]Task, 0, len(all))
+	for _, task := range all {
+		if !task.Nova() {
+			routed = append(routed, task)
+		}
+	}
+
+	return routed
 }
 
 func (t Task) Generates() bool {

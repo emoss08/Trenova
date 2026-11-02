@@ -55,7 +55,7 @@ type Service struct {
 // the reason next to the money, where anyone reopening the shipment will find
 // it.
 func (s *Service) recordChargeComment(ctx context.Context, p chargeCommentParams) {
-	if s.commentRepo == nil || p.occurrence == nil || p.occurrence.ShipmentID.IsNil() {
+	if p.occurrence == nil || p.occurrence.ShipmentID.IsNil() {
 		return
 	}
 
@@ -106,8 +106,7 @@ func (s *Service) resolveContractPrices(
 	tenantInfo pagination.TenantInfo,
 	ratedAt int64,
 ) *contractPrices {
-	if s.agreementRepo == nil || entity.RateAgreementID == nil ||
-		entity.RateAgreementID.IsNil() {
+	if entity.RateAgreementID == nil || entity.RateAgreementID.IsNil() {
 		return nil
 	}
 
@@ -160,18 +159,15 @@ type Params struct {
 	PayAssignmentRepo driverpayports.WorkerPayAssignmentRepository
 	PayProfileRepo    driverpayports.PayProfileRepository
 	CommentRepo       shipmentcommentports.ShipmentCommentRepository
-	Watchtower        watchtowerports.WatchtowerProjector `optional:"true"`
-	Publisher         agenteventports.AgentEventPublisher `optional:"true"`
-	Now               func() int64                        `optional:"true"`
+	Watchtower        watchtowerports.WatchtowerProjector
+	Publisher         agenteventports.AgentEventPublisher
+	Now               timeutils.Clock
 	Effects           *detentioneffects.Effects
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	now := p.Now
-	if now == nil {
-		now = timeutils.NowUnix
-	}
 	return &Service{
 		l:                 p.Logger.Named("service.detention"),
 		policyRepo:        p.PolicyRepo,
@@ -424,7 +420,7 @@ func (s *Service) recordRecalculation(
 	saved *detention.DetentionOccurrence,
 	existing *detention.DetentionOccurrence,
 ) {
-	if s.evidenceRepo == nil || saved == nil {
+	if saved == nil {
 		return
 	}
 
@@ -463,10 +459,6 @@ func (s *Service) resolveDriverPayRate(
 	move *shipment.ShipmentMove,
 	asOf int64,
 ) decimal.NullDecimal {
-	if s.payAssignmentRepo == nil || s.payProfileRepo == nil {
-		return decimal.NullDecimal{}
-	}
-
 	if move.Assignment == nil || move.Assignment.PrimaryWorkerID == nil ||
 		move.Assignment.PrimaryWorkerID.IsNil() {
 		return decimal.NullDecimal{}
@@ -513,7 +505,7 @@ func (s *Service) projectToWatchtower(
 	saved *detention.DetentionOccurrence,
 	p *computeStopParams,
 ) {
-	if s.watchtower == nil || saved == nil {
+	if saved == nil {
 		return
 	}
 

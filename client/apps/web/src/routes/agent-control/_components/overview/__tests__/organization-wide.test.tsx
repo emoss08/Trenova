@@ -18,7 +18,6 @@ function control(overrides: Partial<AgentControl> = {}): AgentControl {
     agentMoneyDayCalls: 50,
     agentMoneyDayAmount: "25000.00",
     agentMoneyCurrency: "CAD",
-    aiTrainingConsent: false,
     shadowMode: false,
     version: 1,
     ...overrides,

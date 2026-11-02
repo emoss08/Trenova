@@ -48,7 +48,7 @@ func (s *Service) PurgeSettled(ctx context.Context, req PurgeSettledRequest) (in
 
 	ids := make([]pulid.ID, 0, len(settled))
 	for _, message := range settled {
-		if message.HTMLKey != "" && s.storage != nil {
+		if message.HTMLKey != "" {
 			if dErr := s.storage.Delete(ctx, message.HTMLKey); dErr != nil {
 				s.l.Warn("kept a settled message whose stored copy could not be removed",
 					zap.String("messageId", message.ID.String()), zap.Error(dErr))

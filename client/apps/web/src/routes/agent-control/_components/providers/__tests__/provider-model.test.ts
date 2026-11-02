@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { AIProviderKind } from "@/types/ai-provider";
 import {
   baseUrlProblem,
+  canRunNova,
   firstsOf,
   formatLatency,
   formatContext,
@@ -28,7 +29,6 @@ function provider(overrides: Partial<RoutingProvider> & { id: string }): Routing
     name: overrides.id,
     kind: "OpenAIChat",
     tasks: [],
-    trusted: false,
     enabled: true,
     hasApiKey: false,
     embeddingDimensions: null,
@@ -36,14 +36,14 @@ function provider(overrides: Partial<RoutingProvider> & { id: string }): Routing
   };
 }
 
-const chat: TaskMeta = { task: "AssistantChat", label: "Assistant chat", trust: false };
-const billing: TaskMeta = { task: "BillingDiagnosis", label: "Billing diagnosis", trust: true };
-const embedding: TaskMeta = { task: "Embedding", label: "Embedding", trust: false };
+const chat: TaskMeta = { task: "AssistantChat", label: "Assistant chat" };
+const judge: TaskMeta = { task: "EvaluationJudge", label: "Evaluation judge" };
+const embedding: TaskMeta = { task: "Embedding", label: "Embedding" };
 
 /**
- * The rule is the server's Provider.CanServeTask: enabled, assigned, trusted for a task
- * that writes to the ledger, and for Embedding a protocol with an embedding endpoint and
- * a supported vector size. The grid must never show a route the router would refuse.
+ * The rule is the server's Provider.CanServeTask: enabled, assigned, and for Embedding a
+ * protocol with an embedding endpoint and a supported vector size. The grid must never
+ * show a route the router would refuse.
  */
 describe("routeOf", () => {
   it("takes the first enabled, assigned provider in order and names the next", () => {
@@ -64,15 +64,6 @@ describe("routeOf", () => {
       provider({ id: "b", tasks: ["AssistantChat"] }),
     ];
     expect(routeOf(chat, providers, keyRequired).first?.id).toBe("b");
-  });
-
-  it("refuses an untrusted provider a task that writes to the ledger", () => {
-    const providers = [
-      provider({ id: "a", tasks: ["BillingDiagnosis"] }),
-      provider({ id: "b", tasks: ["BillingDiagnosis"], trusted: true }),
-    ];
-    expect(routeOf(billing, providers, keyRequired).first?.id).toBe("b");
-    expect(skipReason(providers[0]!, billing, keyRequired)).toBe("untrusted");
   });
 
   it("refuses Embedding to a protocol without an endpoint or without a vector size", () => {
@@ -104,15 +95,15 @@ describe("routeOf", () => {
   it("counts what a provider takes first and what nobody takes", () => {
     const providers = [
       provider({ id: "a", tasks: ["AssistantChat", "Embedding"] }),
-      provider({ id: "b", tasks: ["AssistantChat", "BillingDiagnosis"] }),
+      provider({ id: "b", tasks: ["AssistantChat"] }),
     ];
-    const metas = [chat, billing, embedding];
+    const metas = [chat, judge, embedding];
     expect(firstsOf(providers[0]!, metas, providers, keyRequired).map((m) => m.task)).toEqual([
       "AssistantChat",
     ]);
     expect(firstsOf(providers[1]!, metas, providers, keyRequired)).toEqual([]);
     expect(uncovered(metas, providers, keyRequired).map((m) => m.task)).toEqual([
-      "BillingDiagnosis",
+      "EvaluationJudge",
       "Embedding",
     ]);
   });
@@ -121,34 +112,36 @@ describe("routeOf", () => {
 describe("taskMetas", () => {
   it("lists the catalog's tasks in grid order with General last and drops unknown ones", () => {
     const metas = taskMetas([
-      {
-        task: "General",
-        label: "General",
-        description: "",
-        requiresTrust: false,
-        volumeGuidance: "",
-      },
-      {
-        task: "BillingDiagnosis",
-        label: "Billing diagnosis",
-        description: "",
-        requiresTrust: true,
-        volumeGuidance: "",
-      },
-      {
-        task: "AssistantChat",
-        label: "Assistant chat",
-        description: "",
-        requiresTrust: false,
-        volumeGuidance: "",
-      },
+      { task: "General", label: "General", description: "", volumeGuidance: "" },
+      { task: "BillingDiagnosis", label: "Billing diagnosis", description: "", volumeGuidance: "" },
+      { task: "EvaluationJudge", label: "Evaluation judge", description: "", volumeGuidance: "" },
+      { task: "AssistantChat", label: "Assistant chat", description: "", volumeGuidance: "" },
     ]);
-    expect(metas.map((meta) => meta.task)).toEqual([
-      "AssistantChat",
-      "BillingDiagnosis",
-      "General",
+    expect(metas).toEqual([
+      { task: "AssistantChat", label: "Assistant chat" },
+      { task: "EvaluationJudge", label: "Evaluation judge" },
+      { task: "General", label: "General" },
     ]);
-    expect(metas[1]!.trust).toBe(true);
+  });
+});
+
+describe("canRunNova", () => {
+  const platforms = [
+    "Direct",
+    "ClaudePlatformAWS",
+    "ClaudePlatformGoogleCloud",
+    "VertexAI",
+  ] as const;
+
+  it("takes an Anthropic provider on a platform the catalog names for Nova", () => {
+    expect(canRunNova({ kind: "AnthropicMessages", platform: "Direct" }, platforms)).toBe(true);
+    expect(canRunNova({ kind: "AnthropicMessages", platform: "VertexAI" }, platforms)).toBe(true);
+  });
+
+  it("refuses another platform or another protocol", () => {
+    expect(canRunNova({ kind: "AnthropicMessages", platform: "Bedrock" }, platforms)).toBe(false);
+    expect(canRunNova({ kind: "AnthropicMessages", platform: "Foundry" }, platforms)).toBe(false);
+    expect(canRunNova({ kind: "OpenAIChat", platform: "Direct" }, platforms)).toBe(false);
   });
 });
 

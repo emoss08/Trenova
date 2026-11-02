@@ -86,15 +86,15 @@ func newInvestigation(task *llmports.NovaTask) *investigation {
 
 func (r *investigation) request() *llmports.ChatCompletionRequest {
 	return &llmports.ChatCompletionRequest{
-		TenantInfo:          r.task.TenantInfo,
-		Task:                r.task.Name,
-		System:              identity + "\n\n" + r.task.Instructions + "\n\n" + readsGuide,
-		Messages:            r.messages,
-		Tools:               r.specs,
-		MaxTokens:           r.task.MaxTokens,
-		PreferredProviderID: r.task.PreferredProviderID,
-		Reasoning:           r.task.Reasoning,
-		Attribution:         attribution(r.task),
+		TenantInfo:  r.task.TenantInfo,
+		Task:        r.task.Name,
+		System:      identity + "\n\n" + r.task.Instructions + "\n\n" + readsGuide,
+		Messages:    r.messages,
+		Tools:       r.specs,
+		MaxTokens:   r.task.MaxTokens,
+		Reasoning:   r.task.Reasoning,
+		Attribution: attribution(r.task),
+		Nova:        true,
 	}
 }
 
@@ -159,7 +159,10 @@ func answerOf(result *llmports.ChatCompletionResult) (string, bool) {
 	return "", false
 }
 
-func answerResult(result *llmports.ChatCompletionResult, text string) *llmports.StructuredCompletionResult {
+func answerResult(
+	result *llmports.ChatCompletionResult,
+	text string,
+) *llmports.StructuredCompletionResult {
 	return &llmports.StructuredCompletionResult{
 		Text:             text,
 		ModelIdentifier:  result.ModelIdentifier,

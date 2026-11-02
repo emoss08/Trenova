@@ -24,7 +24,7 @@ type Params struct {
 	Logger        *zap.Logger
 	ChatRepo      shipmentimportchatports.ShipmentImportChatRepository
 	ChatCacheRepo shipmentimportchatports.ShipmentImportChatCacheRepository
-	PageThreads   conversationports.PageThreadRepository `optional:"true"`
+	PageThreads   conversationports.PageThreadRepository
 }
 
 type Service struct {
@@ -99,17 +99,15 @@ func (s *Service) getHistorySnapshot(
 	documentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*shipmentimportchat.HistorySnapshot, error) {
-	if s.chatCacheRepo != nil {
-		snapshot, err := s.chatCacheRepo.GetHistory(ctx, documentID, tenantInfo)
-		if err == nil && snapshot != nil {
-			return snapshot, nil
-		}
-		if err != nil {
-			s.logger.Warn(
-				"failed to read shipment import chat cache; rebuilding from postgres",
-				zap.Error(err),
-			)
-		}
+	cached, err := s.chatCacheRepo.GetHistory(ctx, documentID, tenantInfo)
+	if err == nil && cached != nil {
+		return cached, nil
+	}
+	if err != nil {
+		s.logger.Warn(
+			"failed to read shipment import chat cache; rebuilding from postgres",
+			zap.Error(err),
+		)
 	}
 
 	chat, err := s.chatRepo.GetConversationByDocument(
@@ -171,10 +169,8 @@ func (s *Service) getHistorySnapshot(
 		UpdatedAt:      chat.UpdatedAt,
 	}
 
-	if s.chatCacheRepo != nil {
-		if cacheErr := s.chatCacheRepo.SetHistory(ctx, snapshot, tenantInfo); cacheErr != nil {
-			s.logger.Warn("failed to cache shipment import chat history", zap.Error(cacheErr))
-		}
+	if cacheErr := s.chatCacheRepo.SetHistory(ctx, snapshot, tenantInfo); cacheErr != nil {
+		s.logger.Warn("failed to cache shipment import chat history", zap.Error(cacheErr))
 	}
 
 	return snapshot, nil
@@ -206,10 +202,8 @@ func (s *Service) updateConversationStatus(
 		return err
 	}
 
-	if s.chatCacheRepo != nil {
-		if cacheErr := s.chatCacheRepo.DeleteHistory(ctx, id, tenantInfo); cacheErr != nil {
-			s.logger.Warn("failed to clear shipment import chat cache", zap.Error(cacheErr))
-		}
+	if cacheErr := s.chatCacheRepo.DeleteHistory(ctx, id, tenantInfo); cacheErr != nil {
+		s.logger.Warn("failed to clear shipment import chat cache", zap.Error(cacheErr))
 	}
 
 	return nil
@@ -283,9 +277,6 @@ func (s *Service) closeConversations(
 ) error {
 	if err := s.updateConversationStatus(ctx, documentID, tenantInfo, status, reason); err != nil {
 		return err
-	}
-	if s.pageThreads == nil {
-		return nil
 	}
 
 	id, err := pulid.Parse(documentID)

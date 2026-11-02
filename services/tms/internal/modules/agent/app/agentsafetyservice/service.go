@@ -50,7 +50,7 @@ type Params struct {
 	Controls    tenantports.AgentControlRepository
 	Trust       agenttoolports.AgentToolTrustRepository
 	Registry    *permissioncatalog.Registry
-	Rules       agenttoolports.ToolRuleOverrides `optional:"true"`
+	Rules       agenttoolports.ToolRuleOverrides
 }
 
 type Service struct {
@@ -153,7 +153,7 @@ func (s *Service) overridesFor(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (map[string]*agenttooltrust.ToolRuleOverride, error) {
-	if s.rules == nil || tenantInfo.OrgID.IsNil() {
+	if tenantInfo.OrgID.IsNil() {
 		return map[string]*agenttooltrust.ToolRuleOverride{}, nil
 	}
 
@@ -294,10 +294,6 @@ func (s *Service) sensitiveTools(policies []agenttoolports.ToolPolicy) []string 
 }
 
 func (s *Service) heldPolicies(definition *agentdefinition.Definition) []agenttoolports.ToolPolicy {
-	if s.holder == nil || s.policies == nil {
-		return []agenttoolports.ToolPolicy{}
-	}
-
 	summaries := s.holder.ToolSummaries(definition)
 	out := make([]agenttoolports.ToolPolicy, 0, len(summaries))
 	seen := make(map[string]struct{}, len(summaries))

@@ -27,7 +27,6 @@ import { Callout } from "../edit/callout";
 import { useEditFlow } from "../edit/use-edit-flow";
 import { Ic } from "../kit/ic";
 import { Switch } from "../kit/layout";
-import { TrainingExportHistory } from "../training-export-history";
 import {
   policyFormSchema,
   promotesOnSave,
@@ -69,7 +68,7 @@ export function PolicyEditor({ open, control, onClose }: PolicyEditorProps) {
     async (next: PolicyFormValues) => {
       const before = form.formState.defaultValues as PolicyFormValues;
       const moved = promotesOnSave(next, before) ? (preview.data?.length ?? 0) : 0;
-      const saved = await updateAgentControl(toControlInput(next, before, control.shadowMode));
+      const saved = await updateAgentControl(toControlInput(next, control.shadowMode));
       queryClient.setQueryData(AGENT_CONTROL_QUERY_KEY, saved);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: aiControl._def }),
@@ -123,7 +122,6 @@ export function PolicyEditor({ open, control, onClose }: PolicyEditorProps) {
         );
       },
     },
-    aiTrainingConsent: { label: t("Share corrections") },
   };
 
   const sections: EditSection[] = [
@@ -270,28 +268,6 @@ export function PolicyEditor({ open, control, onClose }: PolicyEditorProps) {
         </>
       ),
     },
-    {
-      id: "share",
-      label: t("Share corrections for model training"),
-      keys: ["aiTrainingConsent"],
-      actions: (
-        <HeaderSwitch
-          control={form.control}
-          name="aiTrainingConsent"
-          label={t("Share corrections for model training")}
-        />
-      ),
-      content: (
-        <>
-          <p className="es-note">
-            {t(
-              "Anonymized document corrections help improve extraction for every customer. Trenova keeps what was read from a document beside what a person confirmed, so accuracy can be measured. Turning this on lets those corrections be anonymized and used for training. Turning it off keeps them out of any training after the change.",
-            )}
-          </p>
-          <TrainingExportHistory />
-        </>
-      ),
-    },
   ];
 
   return (
@@ -318,7 +294,7 @@ function HeaderSwitch({
   label,
 }: {
   control: Control<PolicyFormValues>;
-  name: "earnedAutonomy" | "learnsFromWork" | "chaptersByModel" | "aiTrainingConsent";
+  name: "earnedAutonomy" | "learnsFromWork" | "chaptersByModel";
   label: string;
 }) {
   return (

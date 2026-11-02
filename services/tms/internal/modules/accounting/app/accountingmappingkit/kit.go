@@ -28,9 +28,9 @@ type Params struct {
 
 	Logger      *zap.Logger
 	Audit       auditports.AuditService
-	Realtime    realtimeports.RealtimeService                      `optional:"true"`
-	SyncRecords accountingsyncports.AccountingSyncRecordRepository `optional:"true"`
-	Dispatcher  accountingsyncports.AccountingSyncDispatcher       `optional:"true"`
+	Realtime    realtimeports.RealtimeService
+	SyncRecords accountingsyncports.AccountingSyncRecordRepository
+	Dispatcher  accountingsyncports.AccountingSyncDispatcher
 }
 
 type Kit struct {
@@ -80,7 +80,7 @@ func (k *Kit) PublishInvalidation(
 	userID pulid.ID,
 	rows []*accountingmapping.AccountingMapping,
 ) {
-	if k.realtime == nil || len(rows) == 0 {
+	if len(rows) == 0 {
 		return
 	}
 	recordID := rows[0].ID
@@ -104,9 +104,6 @@ func (k *Kit) PublishConnectionInvalidation(
 	conn *accountingconnection.AccountingConnection,
 	userID pulid.ID,
 ) {
-	if k.realtime == nil {
-		return
-	}
 	if err := realtimeinvalidation.Publish(ctx, k.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: conn.OrganizationID,
 		BusinessUnitID: conn.BusinessUnitID,
@@ -124,7 +121,7 @@ func (k *Kit) historyUse(
 	tenantInfo pagination.TenantInfo,
 	row *accountingmapping.AccountingMapping,
 ) (int, error) {
-	if k.syncRecords == nil || row.State != accountingmapping.MappingStateConfirmed {
+	if row.State != accountingmapping.MappingStateConfirmed {
 		return 0, nil
 	}
 	usage, err := k.syncRecords.MappingUsage(
@@ -173,9 +170,6 @@ func (k *Kit) RequeueMappingBlocked(
 	tenantInfo pagination.TenantInfo,
 	connectionIDs ...pulid.ID,
 ) {
-	if k.syncRecords == nil {
-		return
-	}
 	seen := make(map[pulid.ID]struct{}, len(connectionIDs))
 	for _, connectionID := range connectionIDs {
 		if _, ok := seen[connectionID]; ok || connectionID.IsNil() {
@@ -199,7 +193,7 @@ func (k *Kit) RequeueMappingBlocked(
 				zap.String("connectionId", connectionID.String()), zap.Error(err))
 			continue
 		}
-		if requeued == 0 || k.dispatcher == nil {
+		if requeued == 0 {
 			continue
 		}
 		if err = k.dispatcher.Kick(ctx, tenantInfo, connectionID); err != nil {

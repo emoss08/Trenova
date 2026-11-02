@@ -24,8 +24,8 @@ type Params struct {
 	Checker       *tariff.Checker
 	Resolver      *tariff.TemplateResolver
 	Dependents    rateagreementports.TemplateInputsLister
-	Notifications *notificationservice.Service   `optional:"true"`
-	Roles         permissionports.RoleRepository `optional:"true"`
+	Notifications *notificationservice.Service
+	Roles         permissionports.RoleRepository
 }
 
 type Service struct {

@@ -77,10 +77,6 @@ func (s *Service) renderNotification(
 	req *DriverNotification,
 	wrk *worker.Worker,
 ) (title, message string, err error) {
-	if s.templates == nil {
-		return "", "", errRenderingNotConfigured
-	}
-
 	rendered, err := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo:        req.TenantInfo,
 		Kind:              notificationKind(req.EventType),

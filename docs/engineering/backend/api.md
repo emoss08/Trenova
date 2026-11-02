@@ -125,5 +125,4 @@ rather than raising the ceiling.
   Desk turn is many requests. Bound what a person can cost with the GraphQL cost budget and a
   targeted limit on the expensive action itself (sign-in, reset email, report run), never a
   per-session request count.
-- Edition routes join through `internal/api/routegroup`, never by editing `router.go` from Cloud.
 - Every write route needs write coverage ([agent-write-coverage.md](../agent-write-coverage.md)).

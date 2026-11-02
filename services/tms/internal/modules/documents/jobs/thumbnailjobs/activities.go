@@ -47,9 +47,7 @@ type Activities struct {
 
 func NewActivities(p ActivitiesParams) *Activities {
 	imagingConfig := &imagingconfig.Config{}
-	if p.ImagingConfig != nil {
-		imagingConfig = p.ImagingConfig
-	}
+	imagingConfig = p.ImagingConfig
 	return &Activities{
 		docRepo:            p.DocumentRepository,
 		storage:            p.Storage,
@@ -71,9 +69,6 @@ func (a *Activities) PrerenderPagesActivity(
 	}
 	if !document.SupportsPreview(doc.FileType) {
 		return 0, nil
-	}
-	if a.encryption == nil {
-		return 0, a.retryable("Failed to read the document", storedobject.ErrNotAvailable)
 	}
 
 	var previous pagerender.Progress
@@ -122,11 +117,6 @@ func (a *Activities) GenerateThumbnailActivity(
 	doc, result, err := a.getDocument(ctx, payload)
 	if err != nil {
 		return result, err
-	}
-
-	if a.encryption == nil {
-		return a.failure(payload, "failed to read file data: %v", storedobject.ErrNotAvailable),
-			a.retryable("Failed to read the document", storedobject.ErrNotAvailable)
 	}
 
 	thumbData, result, err := a.generateThumbnail(

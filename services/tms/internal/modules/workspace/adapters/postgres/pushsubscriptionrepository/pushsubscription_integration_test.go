@@ -24,7 +24,7 @@ func TestSaveNeverReassignsAnotherUsersSubscription(t *testing.T) {
 		WithEmail("push-other@example.com").
 		Build(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	owner := pagination.TenantInfo{
 		OrgID:  data.Organization.ID,

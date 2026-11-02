@@ -130,7 +130,7 @@ func TestRewrapMovesStoredSecretsToTheActiveKey(t *testing.T) {
 	err = integrationdb.Integrations.CreateMany(ctx, db, integrations)
 	require.NoError(t, err)
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	service := enveloperewrapservice.New(enveloperewrapservice.Deps{
 		Repository: enveloperepository.New(enveloperepository.Params{DB: conn}),
 		Tenants:    tenantsyncrepository.NewTenantLister(tenantsyncrepository.Params{DB: conn}),

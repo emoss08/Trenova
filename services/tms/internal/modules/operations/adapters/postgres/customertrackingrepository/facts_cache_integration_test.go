@@ -26,7 +26,7 @@ func TestNotifyingCustomersAreCachedPerTenantUntilAProfileChanges(t *testing.T) 
 
 	cached := cachetest.Open(t, t.Context(), h.dsn)
 	params := customertrackingrepository.Params{
-		DB:     postgres.NewTestConnection(cached),
+		DB:     postgres.WrapDB(cached),
 		Logger: zap.NewNop(),
 	}
 	facts := customertrackingrepository.NewFacts(params)

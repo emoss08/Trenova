@@ -38,9 +38,9 @@ type Params struct {
 	Sources    retrievalports.RetrievalSourceRepository
 	Usage      aiusageports.AIUsageRepository
 	Registry   *permissioncatalog.Registry
-	Embeddings aiusageports.EmbeddingService     `optional:"true"`
-	Signals    kernelports.WorkflowSignalStarter `optional:"true"`
-	Workflows  kernelports.WorkflowStarter       `optional:"true"`
+	Embeddings aiusageports.EmbeddingService
+	Signals    kernelports.WorkflowSignalStarter
+	Workflows  kernelports.WorkflowStarter
 }
 
 type Service struct {
@@ -57,9 +57,6 @@ type Service struct {
 
 func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
 	registry := p.Registry
-	if registry == nil {
-		registry = permissioncatalog.NewRegistry()
-	}
 
 	return &Service{
 		l:          p.Logger.Named("service.retrieval-indexer"),
@@ -149,10 +146,6 @@ func (s *Service) markStale(
 }
 
 func (s *Service) wake(ctx context.Context, tenant pagination.TenantInfo, signal IndexSignal) {
-	if s.signals == nil {
-		return
-	}
-
 	if _, err := s.signals.SignalWithStartWorkflow(
 		ctx,
 		IndexWorkflowID(tenant.OrgID),
@@ -204,11 +197,6 @@ func (s *Service) Reindex(
 ) error {
 	if err := validateSourceType(sourceType); err != nil {
 		return err
-	}
-	if s.workflows == nil {
-		return errortypes.NewBusinessError(
-			"Background work is not available, so the source cannot be re-indexed.",
-		).WithInternal(kernelports.ErrWorkflowStarterDisabled)
 	}
 
 	if _, err := s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{

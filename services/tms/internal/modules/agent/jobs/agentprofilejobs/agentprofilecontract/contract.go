@@ -68,7 +68,7 @@ type SchedulerParams struct {
 	fx.In
 
 	Logger  *zap.Logger
-	Signals kernelports.WorkflowSignalStarter `optional:"true"`
+	Signals kernelports.WorkflowSignalStarter
 }
 
 type Scheduler struct {
@@ -86,9 +86,6 @@ func NewScheduler(p SchedulerParams) agentprofileports.Scheduler {
 // Request starts the profile's request workflow, or joins the one already
 // waiting, so asking twice while a write waits costs one write.
 func (s *Scheduler) Request(ctx context.Context, req *agentprofileports.GenerateRequest) error {
-	if s.signals == nil {
-		return errNoWorkflowClient
-	}
 	if req == nil || !req.Ref.Valid() {
 		return errRequestUnnamed
 	}

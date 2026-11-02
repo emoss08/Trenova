@@ -26,7 +26,7 @@ func TestListPageReadsEveryVersionOfThePagesLineages(t *testing.T) {
 	ctx = data.Ctx(ctx)
 	tenant := data.Info()
 	repo := assistantartifactrepository.New(assistantartifactrepository.Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 
@@ -73,7 +73,10 @@ func TestListPageReadsEveryVersionOfThePagesLineages(t *testing.T) {
 		SourceToolCallID: "call_3",
 		LineageSeq:       1,
 		Pinned:           true,
-		Payload:          map[string]any{"entity": "shipment", "fields": map[string]any{"pro": "1"}},
+		Payload: map[string]any{
+			"entity": "shipment",
+			"fields": map[string]any{"pro": "1"},
+		},
 	})
 
 	summary, err := repo.ListPage(ctx, assistantartifactports.ListArtifactsRequest{

@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/authctx"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 )
@@ -24,10 +23,6 @@ type handoffRequest struct {
 // it, opened with a summary, the pinned facts and the pinned artifacts, and a
 // card in this one saying so.
 func (h *Handler) handoff(c *gin.Context) {
-	if h.handoffs == nil {
-		h.eh.HandleError(c, errortypes.NewBusinessError("Handing off is not available"))
-		return
-	}
 	req, err := threadRequest(c)
 	if err != nil {
 		h.eh.HandleError(c, err)

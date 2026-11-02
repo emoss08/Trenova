@@ -35,6 +35,7 @@ function formValues(overrides: Partial<ProviderFormValues> = {}): ProviderFormVa
     embeddingInputStyle: "None",
     trusted: false,
     enabled: true,
+    nova: false,
     timeoutSeconds: 60,
     maxConcurrent: 8,
     monthlyCapUsd: null,
@@ -129,6 +130,7 @@ describe("buildSavePayload field mapping", () => {
         priority: 20,
         trusted: true,
         enabled: true,
+        nova: true,
         version: 7,
       }),
       true,
@@ -145,6 +147,7 @@ describe("buildSavePayload field mapping", () => {
       priority: 20,
       trusted: true,
       enabled: true,
+      nova: true,
       version: 7,
     });
   });

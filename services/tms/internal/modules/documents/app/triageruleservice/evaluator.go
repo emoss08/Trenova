@@ -34,11 +34,11 @@ type EvaluatorParams struct {
 	Messages    inboundmessageports.InboundMessageRepository
 	Parties     inboundmessageports.InboundPartyFinder
 	Permissions permissionports.PermissionEngine
-	Cache       triageports.TriageCache                `optional:"true"`
-	Filer       inboundmessageports.TriageFiler        `optional:"true"`
-	Drafter     inboundmessageports.TriageDrafter      `optional:"true"`
-	Replies     inboundmessageports.InboundReplyReader `optional:"true"`
-	Conflicts   triageports.TriageConflictChecker      `optional:"true"`
+	Cache       triageports.TriageCache
+	Filer       inboundmessageports.TriageFiler
+	Drafter     inboundmessageports.TriageDrafter
+	Replies     inboundmessageports.InboundReplyReader
+	Conflicts   triageports.TriageConflictChecker
 }
 
 type Evaluator struct {
@@ -239,19 +239,16 @@ func (e *Evaluator) file(
 	rule *triage.Rule,
 	message *inboundmessage.InboundMessage,
 ) (outcome, bool, error) {
-	if e.filer == nil || message.MatchedShipmentID.IsNil() ||
-		!triage.FilesAttachments(message.Classification) {
+	if message.MatchedShipmentID.IsNil() || !triage.FilesAttachments(message.Classification) {
 		return outcome{}, false, nil
 	}
 
-	if e.conflicts != nil {
-		conflicts, err := e.conflicts.CheckConflicts(ctx, message)
-		if err != nil {
-			return outcome{}, false, err
-		}
-		if blocksFiling(conflicts) {
-			return outcome{}, false, nil
-		}
+	conflicts, err := e.conflicts.CheckConflicts(ctx, message)
+	if err != nil {
+		return outcome{}, false, err
+	}
+	if blocksFiling(conflicts) {
+		return outcome{}, false, nil
 	}
 
 	filed, err := e.filer.FileOnMatchedShipment(ctx, inboundmessageports.FileOnMatchedRequest{
@@ -305,18 +302,12 @@ func (e *Evaluator) draftReply(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
 ) (outcome, bool, error) {
-	if e.drafter == nil {
-		return outcome{}, false, nil
+	latest, err := e.replies.LatestByMessageIDs(ctx, tenantOf(message), []pulid.ID{message.ID})
+	if err != nil {
+		return outcome{}, false, err
 	}
-
-	if e.replies != nil {
-		latest, err := e.replies.LatestByMessageIDs(ctx, tenantOf(message), []pulid.ID{message.ID})
-		if err != nil {
-			return outcome{}, false, err
-		}
-		if latest[message.ID] != nil {
-			return outcome{}, true, nil
-		}
+	if latest[message.ID] != nil {
+		return outcome{}, true, nil
 	}
 
 	if err := e.drafter.DraftReplyFor(ctx, message); err != nil {
@@ -330,7 +321,7 @@ func (e *Evaluator) draftLoad(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
 ) (outcome, bool, error) {
-	if e.drafter == nil || message.ActionState.CreatedShipmentID.IsNotNil() {
+	if message.ActionState.CreatedShipmentID.IsNotNil() {
 		return outcome{}, false, nil
 	}
 	if message.LoadDraft != nil {

@@ -22,8 +22,8 @@ type Params struct {
 	Reviews              *formulatemplatereviewservice.Service
 	StudioService        *formulatemplatestudioservice.Service
 	Imports              *formulatemplateimportservice.Service
-	PageAssistant        assistantports.PageAssistant           `optional:"true"`
-	StudioAssist         formulastudioports.FormulaStudioAssist `optional:"true"`
+	PageAssistant        assistantports.PageAssistant
+	StudioAssist         formulastudioports.FormulaStudioAssist
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	PermissionEngine     permissionports.PermissionEngine

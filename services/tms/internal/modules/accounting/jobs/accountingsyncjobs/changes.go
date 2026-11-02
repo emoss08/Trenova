@@ -4,27 +4,23 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/jobs/accountingsyncjobs/accountingsynccontract"
+
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/activity"
-	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
-	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const (
-	PollAccountingChangesWorkflowName = "PollAccountingChangesWorkflow"
 	KickAccountingChangesWorkflowName = "KickAccountingChangesWorkflow"
-	ChangesWorkflowIDPrefix           = "accounting-changes:"
-	ChangesSignalName                 = "accounting-changes-kick"
 	changesReadsPerRun                = 50
 	changesIdleWait                   = 30 * time.Second
 	changesEvaluationRounds           = 10
@@ -41,19 +37,6 @@ var changesActivityOptions = workflow.ActivityOptions{
 		MaximumInterval:    time.Minute,
 	},
 }
-
-type ChangesPayload struct {
-	OrganizationID pulid.ID `json:"organizationId"`
-	BusinessUnitID pulid.ID `json:"businessUnitId"`
-	ConnectionID   pulid.ID `json:"connectionId"`
-	Reads          int      `json:"reads"`
-}
-
-func (p *ChangesPayload) TenantInfo() pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: p.OrganizationID, BuID: p.BusinessUnitID}
-}
-
-type ChangesSignal struct{}
 
 type ChangesRunResult struct {
 	Reads     int  `json:"reads"`
@@ -74,14 +57,10 @@ type (
 	ChangesEvaluationResult = accountinginboundports.AccountingInboundEvaluation
 )
 
-func ChangesWorkflowID(connectionID pulid.ID) string {
-	return ChangesWorkflowIDPrefix + connectionID.String()
-}
-
 func changesWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
-			Name:        PollAccountingChangesWorkflowName,
+			Name:        accountingsynccontract.PollAccountingChangesWorkflowName,
 			Fn:          PollAccountingChangesWorkflow,
 			TaskQueue:   temporaltype.IntegrationTaskQueue,
 			Description: "Read what changed in one connection's accounting system and bring payments in",
@@ -97,10 +76,10 @@ func changesWorkflows() []temporaltype.WorkflowDefinition {
 
 func PollAccountingChangesWorkflow(
 	ctx workflow.Context,
-	payload *ChangesPayload,
+	payload *accountingsynccontract.ChangesPayload,
 ) (*ChangesRunResult, error) {
 	var a *Activities
-	signals := workflow.GetSignalChannel(ctx, ChangesSignalName)
+	signals := workflow.GetSignalChannel(ctx, accountingsynccontract.ChangesSignalName)
 	actx := workflow.WithActivityOptions(
 		ctx,
 		withFairness(&changesActivityOptions, payload.OrganizationID),
@@ -113,7 +92,7 @@ func PollAccountingChangesWorkflow(
 			return result, workflow.NewContinueAsNewError(
 				ctx,
 				PollAccountingChangesWorkflow,
-				&ChangesPayload{
+				&accountingsynccontract.ChangesPayload{
 					OrganizationID: payload.OrganizationID,
 					BusinessUnitID: payload.BusinessUnitID,
 					ConnectionID:   payload.ConnectionID,
@@ -156,7 +135,7 @@ func PollAccountingChangesWorkflow(
 func evaluateChanges(
 	actx workflow.Context,
 	a *Activities,
-	payload *ChangesPayload,
+	payload *accountingsynccontract.ChangesPayload,
 	result *ChangesRunResult,
 ) error {
 	for range changesEvaluationRounds {
@@ -177,7 +156,7 @@ func evaluateChanges(
 
 func drainChangeSignals(signals workflow.ReceiveChannel) {
 	for {
-		var signal ChangesSignal
+		var signal accountingsynccontract.ChangesSignal
 		if !signals.ReceiveAsync(&signal) {
 			return
 		}
@@ -191,7 +170,7 @@ func waitForChangeSignal(ctx workflow.Context, signals workflow.ReceiveChannel) 
 	received := false
 	selector := workflow.NewSelector(ctx)
 	selector.AddReceive(signals, func(channel workflow.ReceiveChannel, _ bool) {
-		var signal ChangesSignal
+		var signal accountingsynccontract.ChangesSignal
 		channel.Receive(ctx, &signal)
 		received = true
 	})
@@ -210,7 +189,7 @@ func KickAccountingChangesWorkflow(ctx workflow.Context) (*KickChangesResult, er
 
 func (a *Activities) PollAccountingChangesActivity(
 	ctx context.Context,
-	payload *ChangesPayload,
+	payload *accountingsynccontract.ChangesPayload,
 ) (*ChangesReadResult, error) {
 	result, err := a.inbound.PollChanges(ctx, &accountinginboundports.PollAccountingChangesRequest{
 		TenantInfo:   payload.TenantInfo(),
@@ -224,7 +203,7 @@ func (a *Activities) PollAccountingChangesActivity(
 
 func (a *Activities) EvaluateAccountingInboundActivity(
 	ctx context.Context,
-	payload *ChangesPayload,
+	payload *accountingsynccontract.ChangesPayload,
 ) (*ChangesEvaluationResult, error) {
 	result, err := a.inbound.Evaluate(ctx, &accountinginboundports.EvaluateAccountingInboundRequest{
 		TenantInfo:   payload.TenantInfo(),
@@ -275,49 +254,4 @@ func (a *Activities) KickAccountingChangesActivity(
 			return result, nil
 		}
 	}
-}
-
-type ChangesPollerParams struct {
-	fx.In
-
-	Signals kernelports.WorkflowSignalStarter `optional:"true"`
-}
-
-type ChangesPoller struct {
-	signals kernelports.WorkflowSignalStarter
-}
-
-var _ accountinginboundports.AccountingChangePoller = (*ChangesPoller)(nil)
-
-func NewChangesPoller(p ChangesPollerParams) *ChangesPoller {
-	return &ChangesPoller{signals: p.Signals}
-}
-
-func (p *ChangesPoller) PollNow(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	connectionID pulid.ID,
-) error {
-	if p.signals == nil {
-		return kernelports.ErrWorkflowStarterDisabled
-	}
-	_, err := p.signals.SignalWithStartWorkflow(
-		ctx,
-		ChangesWorkflowID(connectionID),
-		ChangesSignalName,
-		ChangesSignal{},
-		client.StartWorkflowOptions{
-			ID:        ChangesWorkflowID(connectionID),
-			TaskQueue: temporaltype.IntegrationTaskQueue,
-			StaticSummary: "Read changes from the accounting system for connection " +
-				connectionID.String(),
-		},
-		PollAccountingChangesWorkflowName,
-		&ChangesPayload{
-			OrganizationID: tenantInfo.OrgID,
-			BusinessUnitID: tenantInfo.BuID,
-			ConnectionID:   connectionID,
-		},
-	)
-	return err
 }

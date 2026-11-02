@@ -34,7 +34,7 @@ type Params struct {
 	EvidenceRepo   detentionports.DetentionEvidenceRepository
 	InvoiceRepo    invoiceports.InvoiceRepository
 	AuditService   auditports.AuditService
-	Watchtower     watchtowerports.WatchtowerProjector `optional:"true"`
+	Watchtower     watchtowerports.WatchtowerProjector
 }
 
 type Service struct {
@@ -225,28 +225,26 @@ func (s *Service) settle(ctx context.Context, p settleParams) error {
 		return err
 	}
 
-	if s.evidenceRepo != nil {
-		if _, err = s.evidenceRepo.Append(ctx, &detentionports.AppendEvidenceRequest{
-			Entry: &detentionevidence.DetentionEvidence{
-				OrganizationID:        saved.OrganizationID,
-				BusinessUnitID:        saved.BusinessUnitID,
-				DetentionOccurrenceID: saved.ID,
-				Kind:                  kind,
-				Source:                detentionevidence.EvidenceSourceSystem,
-				Summary:               summary,
-				ObservedAt:            p.now,
-				RecordedAt:            p.now,
-				RecordedByID:          pulid.PtrOrNil(p.req.ActorUserID),
-			},
-		}); err != nil {
-			return fmt.Errorf("record detention billing evidence: %w", err)
-		}
+	if _, err = s.evidenceRepo.Append(ctx, &detentionports.AppendEvidenceRequest{
+		Entry: &detentionevidence.DetentionEvidence{
+			OrganizationID:        saved.OrganizationID,
+			BusinessUnitID:        saved.BusinessUnitID,
+			DetentionOccurrenceID: saved.ID,
+			Kind:                  kind,
+			Source:                detentionevidence.EvidenceSourceSystem,
+			Summary:               summary,
+			ObservedAt:            p.now,
+			RecordedAt:            p.now,
+			RecordedByID:          pulid.PtrOrNil(p.req.ActorUserID),
+		},
+	}); err != nil {
+		return fmt.Errorf("record detention billing evidence: %w", err)
 	}
 
 	updated := *saved
 	kernelports.AfterCommit(ctx, func(runCtx context.Context) {
 		s.audit(&original, &updated, p.req.ActorUserID, comment)
-		if updated.Status == detention.OccurrenceStatusBilled && s.watchtower != nil {
+		if updated.Status == detention.OccurrenceStatusBilled {
 			s.watchtower.Resolve(
 				runCtx,
 				p.req.TenantInfo,
@@ -326,10 +324,6 @@ func (s *Service) audit(
 	userID pulid.ID,
 	comment string,
 ) {
-	if s.auditService == nil {
-		return
-	}
-
 	if err := s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDetention,
 		ResourceID:     updated.ID.String(),

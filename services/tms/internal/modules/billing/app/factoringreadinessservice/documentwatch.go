@@ -15,7 +15,7 @@ type DocumentObserverParams struct {
 	fx.In
 
 	Invoices  invoiceports.InvoiceRepository
-	Requester factoringports.EvaluationRequester `optional:"true"`
+	Requester factoringports.EvaluationRequester
 	Logger    *zap.Logger
 }
 
@@ -39,7 +39,7 @@ func (o *DocumentObserver) DocumentsChanged(
 	ctx context.Context,
 	change *documentports.DocumentChange,
 ) {
-	if o.requester == nil || change == nil {
+	if change == nil {
 		return
 	}
 	ids := parseIDs(change.ResourceIDs)

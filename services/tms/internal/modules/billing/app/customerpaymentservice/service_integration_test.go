@@ -46,7 +46,7 @@ func TestPostAndApplyCreatesPaymentApplicationJournalAndSettlementUpdate(t *test
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	logger := zap.NewNop()
 	paymentRepo := customerpaymentrepository.New(
 		customerpaymentrepository.Params{DB: conn, Logger: logger},
@@ -220,7 +220,7 @@ func TestPostAndApplySupportsUnappliedCash(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	logger := zap.NewNop()
 	paymentRepo := customerpaymentrepository.New(
 		customerpaymentrepository.Params{DB: conn, Logger: logger},
@@ -391,7 +391,7 @@ func TestApplyUnappliedLaterCreatesReclassificationEntry(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	logger := zap.NewNop()
 	paymentRepo := customerpaymentrepository.New(
 		customerpaymentrepository.Params{DB: conn, Logger: logger},
@@ -624,7 +624,7 @@ func TestReversePaymentRestoresInvoiceAndBalances(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	logger := zap.NewNop()
 	paymentRepo := customerpaymentrepository.New(
 		customerpaymentrepository.Params{DB: conn, Logger: logger},
@@ -822,7 +822,7 @@ func TestPostAndApplyRecognizesShortPayAndSettlesInvoice(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	logger := zap.NewNop()
 	paymentRepo := customerpaymentrepository.New(
 		customerpaymentrepository.Params{DB: conn, Logger: logger},
@@ -984,7 +984,7 @@ func TestListAndGetCustomerPayments(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	logger := zap.NewNop()
 	paymentRepo := customerpaymentrepository.New(
 		customerpaymentrepository.Params{DB: conn, Logger: logger},

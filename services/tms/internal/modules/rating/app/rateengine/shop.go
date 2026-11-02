@@ -125,10 +125,6 @@ func (s *Service) shopCandidates(
 		return candidates
 	}
 
-	if s.routingGuides == nil {
-		return nil
-	}
-
 	guide, err := s.routingGuides.MatchLane(ctx, matchLaneRequest(req))
 	if err != nil {
 		s.l.Warn("failed to match a routing guide while shopping",

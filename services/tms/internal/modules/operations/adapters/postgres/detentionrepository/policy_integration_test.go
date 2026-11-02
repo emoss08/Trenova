@@ -62,7 +62,7 @@ func TestGetByIDsReturnsOnlyTheTenantsPolicies(t *testing.T) {
 	own := seedDetentionPolicies(t, ctx, db, tenantA, "SHIPPER", "RECEIVER")
 	foreign := seedDetentionPolicies(t, ctx, db, tenantB, "FOREIGN")[0]
 
-	repo := NewPolicyRepository(PolicyParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := NewPolicyRepository(PolicyParams{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	policies, err := repo.GetByIDs(
 		tenantA.Ctx(ctx),

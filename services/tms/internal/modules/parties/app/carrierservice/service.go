@@ -29,8 +29,8 @@ type Params struct {
 	Validator    *Validator
 	AuditService auditports.AuditService
 	Realtime     realtimeports.RealtimeService
-	DB           kernelports.Transactor                     `optional:"true"`
-	Sync         accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
+	DB           kernelports.Transactor
+	Sync         accountingsyncports.AccountingSyncEnqueuer
 }
 
 type Service struct {
@@ -61,10 +61,6 @@ func (s *Service) updateAndQueueSync(
 	entity *carrier.Carrier,
 	original *carrier.Carrier,
 ) (*carrier.Carrier, error) {
-	if s.db == nil || s.sync == nil {
-		return s.repo.Update(ctx, entity)
-	}
-
 	var updated *carrier.Carrier
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error

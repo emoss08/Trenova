@@ -60,7 +60,7 @@ func (s *Service) deliver(
 	}
 	path := invoiceSharePath(p.invoice.ID.String(), p.tab)
 	baseURL := s.cfg.GetWebBaseURL()
-	canEmail := baseURL != "" && s.emailService != nil && s.templates != nil
+	canEmail := baseURL != ""
 
 	companyName := ""
 	if canEmail {
@@ -107,10 +107,6 @@ func (s *Service) notify(
 	recipient *tenant.User,
 	path string,
 ) {
-	if s.notificationService == nil || s.templates == nil {
-		return
-	}
-
 	rendered, err := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo: tenantInfo,
 		Kind:       documenttemplate.KindNotificationInvoiceShared,
@@ -235,10 +231,6 @@ func recipientLocale(user *tenant.User) i18n.Locale {
 }
 
 func (s *Service) companyName(ctx context.Context, tenantInfo pagination.TenantInfo) string {
-	if s.organizationRepo == nil {
-		return ""
-	}
-
 	org, err := s.organizationRepo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})

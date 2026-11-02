@@ -98,9 +98,6 @@ func (s *Service) downloadFileName(
 }
 
 func (s *Service) auditDownload(run *report.ReportRun) {
-	if s.audit == nil {
-		return
-	}
 	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceReport,
 		ResourceID:     run.ID.String(),

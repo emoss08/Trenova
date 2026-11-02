@@ -53,13 +53,11 @@ type Params struct {
 	Detectors   *detector.Registry
 	Narrator    *narrator.Service
 	Permissions permissionports.PermissionEngine
-	// Events is told about each finding the first time it appears, so an
-	// agent subscribed to insight.detected can act on it. It is optional
-	// because the refresh is worth running with no agent to hear about it.
-	Events agenteventports.AgentEventPublisher `optional:"true"`
-	// Watchtower puts each finding on the one feed a person reads. Optional
-	// for the same reason: the refresh is worth running without it.
-	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
+	// Events is told about each finding the first time it appears, so an agent subscribed to
+	// insight.detected can act on it.
+	Events agenteventports.AgentEventPublisher
+	// Watchtower puts each finding on the one feed a person reads.
+	Watchtower watchtowerports.WatchtowerProjector
 }
 
 // permissionChecker is the slice of PermissionEngine this service uses. It asks
@@ -264,10 +262,6 @@ func (s *Service) announce(
 	tenant pagination.TenantInfo,
 	detected []*insight.Insight,
 ) {
-	if s.events == nil {
-		return
-	}
-
 	for _, entity := range detected {
 		if entity == nil || entity.ID.IsNil() {
 			continue
@@ -285,10 +279,6 @@ func (s *Service) announce(
 // finding that resolves on a later refresh is closed by the nightly
 // reconcile, which reads what is still active.
 func (s *Service) project(ctx context.Context, detected []*insight.Insight) {
-	if s.watchtower == nil {
-		return
-	}
-
 	for _, entity := range detected {
 		if entity == nil || entity.ID.IsNil() {
 			continue

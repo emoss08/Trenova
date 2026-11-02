@@ -178,9 +178,6 @@ func (s *Service) waive(
 	if occurrence.Status == detention.OccurrenceStatusWaived {
 		return settledOf(occurrence.WaivedAmount, occurrence.Currency), nil
 	}
-	if s.credits == nil {
-		return waivedOf(s.detention.Waive(ctx, &params))
-	}
 	if occurrence.AdditionalChargeID == nil {
 		return waivedOf(s.detention.WaiveUninvoiced(ctx, &params))
 	}

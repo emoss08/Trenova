@@ -55,7 +55,7 @@ func newHarness(t *testing.T) *harness {
 		db:     db,
 		tenant: tenant,
 		repo: tenderrepository.New(tenderrepository.Params{
-			DB:     postgres.NewTestConnection(db),
+			DB:     postgres.WrapDB(db),
 			Logger: zap.NewNop(),
 		}),
 		graph: graph,

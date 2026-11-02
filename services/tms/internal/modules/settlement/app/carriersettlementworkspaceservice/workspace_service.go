@@ -1,7 +1,6 @@
 package carriersettlementworkspaceservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementrealtime"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
@@ -19,7 +18,7 @@ type Params struct {
 	CostEventRepo     carriersettlementports.CarrierCostEventRepository
 	SettlementControl tenantports.CarrierSettlementControlRepository
 	AuditService      auditports.AuditService
-	Realtime          realtimeports.RealtimeService
+	Publisher         carriersettlementrealtime.Publisher
 }
 
 type Service struct {
@@ -37,7 +36,7 @@ func New(p Params) *Service {
 	l := p.Logger.Named("service.carrier-settlement")
 	return &Service{
 		l:                 l,
-		publisher:         carriersettlementrealtime.NewPublisher(l, p.Realtime),
+		publisher:         p.Publisher,
 		settlementRepo:    p.SettlementRepo,
 		batchRepo:         p.BatchRepo,
 		costEventRepo:     p.CostEventRepo,

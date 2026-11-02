@@ -12,13 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentaiextraction"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/boolutils"
@@ -55,14 +52,6 @@ func (a *Activities) submitAIExtraction( //nolint:funlen // async submission wit
 	ctx context.Context,
 	payload *documentanalysis.ProcessDocumentAIExtractionPayload,
 ) (*documentanalysis.AsyncAIExtractionCompletion, error) {
-	if a.aiExtractionRepo == nil {
-		return nil, temporal.NewNonRetryableApplicationError(
-			"Document AI extraction repository is not configured",
-			temporaltype.ErrorTypeNonRetryable.String(),
-			nil,
-		)
-	}
-
 	tenantInfo := pagination.TenantInfo{
 		OrgID:  payload.OrganizationID,
 		BuID:   payload.BusinessUnitID,
@@ -147,7 +136,6 @@ func (a *Activities) submitAIExtraction( //nolint:funlen // async submission wit
 	}
 
 	if strings.TrimSpace(row.ResponseID) == "" {
-		preferred := a.rolloutPreference(ctx, tenantInfo, payload)
 		submission, submitErr := a.aiDocumentService.SubmitRateConfirmationBackgroundExtraction(
 			ctx,
 			&documentaiextractionports.AIExtractRequest{
@@ -158,8 +146,7 @@ func (a *Activities) submitAIExtraction( //nolint:funlen // async submission wit
 					content.ContentText,
 					a.cfg.GetMaxInputChars(),
 				),
-				Pages:               toAIDocumentPages(pages, a.cfg.GetMaxInputChars()),
-				PreferredProviderID: preferred,
+				Pages: toAIDocumentPages(pages, a.cfg.GetMaxInputChars()),
 			},
 		)
 		if submitErr != nil {
@@ -421,8 +408,7 @@ func (a *Activities) ApplyDocumentAIExtractionResultActivity(
 	}
 
 	if content.LastExtractedAt == nil || *content.LastExtractedAt != payload.ExtractedAt {
-		skipped := a.markExtractionSkipped(ctx, payload, tenantInfo)
-		a.settleRollout(ctx, payload, tenantInfo, extractionrollout.OutcomeSuperseded, skipped)
+		a.markExtractionSkipped(ctx, payload, tenantInfo)
 		return &documentanalysis.ProcessDocumentAIExtractionResult{
 			DocumentID:      payload.DocumentID,
 			ExtractedAt:     payload.ExtractedAt,
@@ -469,14 +455,7 @@ func (a *Activities) ApplyDocumentAIExtractionResultActivity(
 		indexedText = ""
 	}
 	a.support.SyncSearchProjection(ctx, doc, indexedText)
-	applied := a.markExtractionApplied(ctx, payload, tenantInfo)
-	a.settleRollout(
-		ctx,
-		payload,
-		tenantInfo,
-		rolloutOutcome(payload.Completion, diagnostics.AcceptanceStatus),
-		applied,
-	)
+	a.markExtractionApplied(ctx, payload, tenantInfo)
 
 	return &documentanalysis.ProcessDocumentAIExtractionResult{
 		DocumentID:      payload.DocumentID,
@@ -485,53 +464,11 @@ func (a *Activities) ApplyDocumentAIExtractionResultActivity(
 	}, nil
 }
 
-func (a *Activities) ConsiderDocumentAIExtractionShadowActivity(
-	ctx context.Context,
-	input *documentanalysis.ConsiderDocumentAIExtractionShadowInput,
-) (*extractionshadowports.ExtractionShadowDecision, error) {
-	if a.shadowSampler == nil {
-		return &extractionshadowports.ExtractionShadowDecision{Reason: "unavailable"}, nil
-	}
-
-	tenantInfo := pagination.TenantInfo{
-		OrgID:  input.OrganizationID,
-		BuID:   input.BusinessUnitID,
-		UserID: input.UserID,
-	}
-	req := &extractionshadowports.ConsiderExtractionShadowRequest{
-		TenantInfo:  tenantInfo,
-		DocumentID:  input.DocumentID,
-		ExtractedAt: input.ExtractedAt,
-	}
-	if a.aiExtractionRepo != nil {
-		row, err := a.aiExtractionRepo.GetByDocumentExtractedAt(
-			ctx,
-			documentaiextractionports.GetDocumentAIExtractionRequest{
-				DocumentID:  input.DocumentID,
-				ExtractedAt: input.ExtractedAt,
-				TenantInfo:  tenantInfo,
-			},
-		)
-		switch {
-		case err == nil:
-			req.ProductionProviderID = row.ProviderID
-			req.ProductionModel = row.Model
-		case !errortypes.IsNotFoundError(err):
-			return nil, err
-		}
-	}
-
-	return a.shadowSampler.ConsiderExtraction(ctx, req)
-}
-
 func (a *Activities) markExtractionSkipped(
 	ctx context.Context,
 	payload *ApplyDocumentAIExtractionPayload,
 	tenantInfo pagination.TenantInfo,
-) *documentaiextraction.Extraction {
-	if a.aiExtractionRepo == nil {
-		return nil
-	}
+) {
 	row, repoErr := a.aiExtractionRepo.GetByDocumentExtractedAt(
 		ctx,
 		documentaiextractionports.GetDocumentAIExtractionRequest{
@@ -541,7 +478,7 @@ func (a *Activities) markExtractionSkipped(
 		},
 	)
 	if repoErr != nil {
-		return nil
+		return
 	}
 	row.Status = documentaiextraction.StatusSkipped
 	row.FailureCode = "stale_extraction"
@@ -553,18 +490,13 @@ func (a *Activities) markExtractionSkipped(
 			zap.Error(repoErr),
 		)
 	}
-
-	return row
 }
 
 func (a *Activities) markExtractionApplied(
 	ctx context.Context,
 	payload *ApplyDocumentAIExtractionPayload,
 	tenantInfo pagination.TenantInfo,
-) *documentaiextraction.Extraction {
-	if a.aiExtractionRepo == nil {
-		return nil
-	}
+) {
 	row, repoErr := a.aiExtractionRepo.GetByDocumentExtractedAt(
 		ctx,
 		documentaiextractionports.GetDocumentAIExtractionRequest{
@@ -574,7 +506,7 @@ func (a *Activities) markExtractionApplied(
 		},
 	)
 	if repoErr != nil {
-		return nil
+		return
 	}
 	row.Status = documentaiextraction.StatusApplied
 	if _, repoErr = a.aiExtractionRepo.Update(ctx, row); repoErr != nil {
@@ -584,8 +516,6 @@ func (a *Activities) markExtractionApplied(
 			zap.Error(repoErr),
 		)
 	}
-
-	return row
 }
 
 func (a *Activities) mergeCompletionIntoIntelligence(

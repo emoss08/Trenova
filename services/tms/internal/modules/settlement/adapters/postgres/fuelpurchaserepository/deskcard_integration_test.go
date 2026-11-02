@@ -22,7 +22,7 @@ import (
 
 func (f *fixture) deskReader() fuelpurchaseports.FuelDeskCardReader {
 	return fuelpurchaserepository.NewDeskCardReader(fuelpurchaserepository.Params{
-		DB:     postgres.NewTestConnection(f.db),
+		DB:     postgres.WrapDB(f.db),
 		Logger: zap.NewNop(),
 	})
 }
@@ -71,13 +71,25 @@ func TestDeskSumsTotalOneCardPerCurrencyInsideTheWindow(t *testing.T) {
 		return s
 	}
 
-	f.createPurchase(t, cardPurchase{spec: spec("SUM-1", "100", true, windowStart+10), cardID: card.ID})
-	f.createPurchase(t, cardPurchase{spec: spec("SUM-2", "15", false, windowStart+20), cardID: card.ID})
+	f.createPurchase(
+		t,
+		cardPurchase{spec: spec("SUM-1", "100", true, windowStart+10), cardID: card.ID},
+	)
+	f.createPurchase(
+		t,
+		cardPurchase{spec: spec("SUM-2", "15", false, windowStart+20), cardID: card.ID},
+	)
 	f.createPurchase(t, cardPurchase{
 		spec: spec("SUM-3", "50", true, windowStart+30), cardID: card.ID, currency: "CAD",
 	})
-	f.createPurchase(t, cardPurchase{spec: spec("SUM-4", "70", true, windowEnd+10), cardID: card.ID})
-	f.createPurchase(t, cardPurchase{spec: spec("SUM-5", "40", true, windowStart+40), cardID: other.ID})
+	f.createPurchase(
+		t,
+		cardPurchase{spec: spec("SUM-4", "70", true, windowEnd+10), cardID: card.ID},
+	)
+	f.createPurchase(
+		t,
+		cardPurchase{spec: spec("SUM-5", "40", true, windowStart+40), cardID: other.ID},
+	)
 
 	rows, err := desk.SumPurchases(f.ctxA, &fuelpurchaseports.SumFuelPurchasesRequest{
 		TenantInfo: f.tenantA,
@@ -218,7 +230,11 @@ func (f *fixture) feedBatch(
 	return created
 }
 
-func heldRow(number int, cardID pulid.ID, status fuelpurchase.ImportRowStatus) *fuelpurchase.ImportRow {
+func heldRow(
+	number int,
+	cardID pulid.ID,
+	status fuelpurchase.ImportRowStatus,
+) *fuelpurchase.ImportRow {
 	card := cardID
 	row := &fuelpurchase.ImportRow{
 		RowNumber:          number,
@@ -242,7 +258,12 @@ func TestDeskHeldCardRowsAreTheCardsRowsStillWaitingInAnOpenImport(t *testing.T)
 	other, err := f.repo.CreateCard(f.ctxA, f.newCard(f.tenantA, "0931"))
 	require.NoError(t, err)
 
-	feed := f.feedBatch(t, f.tenantA, fuelpurchase.ImportOriginFeed, fuelpurchase.ImportStatusCommitted)
+	feed := f.feedBatch(
+		t,
+		f.tenantA,
+		fuelpurchase.ImportOriginFeed,
+		fuelpurchase.ImportStatusCommitted,
+	)
 	require.NoError(t, f.repo.ReplaceImportRows(f.ctxA, feed, []*fuelpurchase.ImportRow{
 		heldRow(2, card.ID, fuelpurchase.ImportRowStatusError),
 		heldRow(3, card.ID, fuelpurchase.ImportRowStatusError),
@@ -257,7 +278,12 @@ func TestDeskHeldCardRowsAreTheCardsRowsStillWaitingInAnOpenImport(t *testing.T)
 		heldRow(2, card.ID, fuelpurchase.ImportRowStatusError),
 	}))
 
-	upload := f.feedBatch(t, f.tenantA, fuelpurchase.ImportOriginUpload, fuelpurchase.ImportStatusPending)
+	upload := f.feedBatch(
+		t,
+		f.tenantA,
+		fuelpurchase.ImportOriginUpload,
+		fuelpurchase.ImportStatusPending,
+	)
 	require.NoError(t, f.repo.ReplaceImportRows(f.ctxA, upload, []*fuelpurchase.ImportRow{
 		heldRow(2, card.ID, fuelpurchase.ImportRowStatusNew),
 	}))
@@ -304,7 +330,12 @@ func TestDeskPurchaseImportRowIsTheRowThePurchaseWasCommittedFrom(t *testing.T) 
 		gallons: "50", taxPaid: true, reference: "PROV-2",
 	}})
 
-	batch := f.feedBatch(t, f.tenantA, fuelpurchase.ImportOriginFeed, fuelpurchase.ImportStatusCommitted)
+	batch := f.feedBatch(
+		t,
+		f.tenantA,
+		fuelpurchase.ImportOriginFeed,
+		fuelpurchase.ImportStatusCommitted,
+	)
 	purchaseID := purchase.ID
 	require.NoError(t, f.repo.ReplaceImportRows(f.ctxA, batch, []*fuelpurchase.ImportRow{{
 		RowNumber:       37,
@@ -332,10 +363,13 @@ func TestDeskPurchaseImportRowIsTheRowThePurchaseWasCommittedFrom(t *testing.T) 
 	require.NoError(t, err)
 	assert.Nil(t, none)
 
-	elsewhere, err := desk.GetPurchaseImportRow(f.ctxB, &fuelpurchaseports.GetPurchaseImportRowRequest{
-		TenantInfo: f.tenantB,
-		PurchaseID: purchase.ID,
-	})
+	elsewhere, err := desk.GetPurchaseImportRow(
+		f.ctxB,
+		&fuelpurchaseports.GetPurchaseImportRowRequest{
+			TenantInfo: f.tenantB,
+			PurchaseID: purchase.ID,
+		},
+	)
 	require.NoError(t, err)
 	assert.Nil(t, elsewhere)
 }

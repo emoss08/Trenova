@@ -22,7 +22,7 @@ type rateConfirmationAuditParams struct {
 }
 
 func (s *Service) logRateConfirmationAudit(p *rateConfirmationAuditParams) {
-	if s.auditService == nil || p.Current == nil {
+	if p.Current == nil {
 		return
 	}
 

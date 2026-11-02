@@ -44,7 +44,7 @@ type Params struct {
 
 	Logger  *zap.Logger
 	Nova    llmports.TaskRunner
-	Batches llmports.TaskBatcher `optional:"true"`
+	Batches llmports.TaskBatcher
 }
 
 type Service struct {
@@ -111,7 +111,11 @@ func (s *Service) narrateBatch(
 	into map[string]Narration,
 ) {
 	var envelope narrationEnvelope
-	completion, err := s.nova.Run(ctx, narrationTask(req.TenantInfo, batch, req.WindowDays), &envelope)
+	completion, err := s.nova.Run(
+		ctx,
+		narrationTask(req.TenantInfo, batch, req.WindowDays),
+		&envelope,
+	)
 	if errors.Is(err, llmports.ErrOutsideSchema) {
 		s.l.Warn("insight narration could not be parsed",
 			zap.String("model", completion.ModelIdentifier),

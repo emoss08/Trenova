@@ -87,9 +87,6 @@ func NewPersistedOperationManifest(
 
 	if path := developmentManifestSource(p.AppConfig, p.SecurityConfig); path != "" {
 		logger := p.Logger
-		if logger == nil {
-			logger = zap.NewNop()
-		}
 		manifest.enableReload(path, logger.Named("api.graphql.persisted"))
 	}
 

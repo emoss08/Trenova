@@ -418,9 +418,6 @@ func (s *Service) recordPlan(
 }
 
 func (s *Service) egressOf(proposal *agent.AgentProposal) agent.EgressClass {
-	if s.executor == nil {
-		return ""
-	}
 	egress, ok := s.executor.CallEgress(proposal, nil)
 	if !ok {
 		s.l.Warn("the auto-assign tool is not registered; its proposal is held for review",

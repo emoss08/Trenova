@@ -19,12 +19,10 @@ type Params struct {
 
 	Logger     *zap.Logger
 	Completion llmports.CompletionService
-	// Verdicts is the store every replica shares. Optional: without it each
-	// replica remembers only its own classifications, which is what this
-	// service did before and what a test wants.
-	Verdicts agenttoolports.ScopeVerdictCacheRepository `optional:"true"`
-	AIConfig *aiconfig.Config                           `optional:"true"`
-	Metrics  *metrics.Registry                          `optional:"true"`
+	// Verdicts is the store every replica shares.
+	Verdicts agenttoolports.ScopeVerdictCacheRepository
+	AIConfig *aiconfig.Config
+	Metrics  *metrics.Registry
 }
 
 /*
@@ -236,19 +234,5 @@ func reasonForCategory(category Category) Reason {
 		return ReasonPromptManipulation
 	default:
 		return ReasonOffDomain
-	}
-}
-
-// SetCompletionForTest wires a stub classifier onto a Service built as a
-// literal. The field is unexported because nothing outside this package has
-// any business swapping the classifier at runtime; a test that needs a slow
-// or failing one does.
-func SetCompletionForTest(s *Service, completion llmports.CompletionService) {
-	s.completion = completion
-	if s.logger == nil {
-		s.logger = zap.NewNop()
-	}
-	if s.verdicts == nil {
-		s.verdicts = newVerdictCache(nil, 0, s.logger)
 	}
 }

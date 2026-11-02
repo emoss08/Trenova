@@ -66,7 +66,7 @@ const (
 // notifyNeedsReview tells the people who read the inbox that a message is
 // waiting on them, in the words the watchtower uses for the same message.
 func (s *Service) notifyNeedsReview(ctx context.Context, message *inboundmessage.InboundMessage) {
-	if s.notifier == nil || message.Status != inboundmessage.StatusInReview {
+	if message.Status != inboundmessage.StatusInReview {
 		return
 	}
 

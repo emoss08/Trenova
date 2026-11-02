@@ -2,9 +2,6 @@
 import { PROVIDER_CATALOG } from "../fixtures/aicontrol.mjs";
 
 const DAY = 86400;
-const TRUSTED_TASKS = new Set(
-  PROVIDER_CATALOG.tasks.filter((task) => task.requiresTrust).map((task) => task.task),
-);
 const ALL_TASKS = PROVIDER_CATALOG.tasks.map((task) => task.task);
 const KEYED_KINDS = new Set(
   PROVIDER_CATALOG.kinds.filter((kind) => kind.requiresApiKey).map((kind) => kind.kind),
@@ -56,10 +53,19 @@ function servable(node, task) {
   return (
     node.enabled &&
     node.tasks.includes(task) &&
-    (!TRUSTED_TASKS.has(task) || node.trusted) &&
     (task !== "Embedding" ||
       (node.kind !== "AnthropicMessages" && [768, 1024, 1536].includes(node.embeddingDimensions)))
   );
+}
+
+// Choosing a provider for Nova takes Nova from the one that had it, as the server does.
+function releaseNova(state, keep) {
+  for (const provider of state.ai.providers) {
+    if (provider.node.id !== keep.id && provider.node.nova) {
+      provider.node.nova = false;
+      bump(state, provider);
+    }
+  }
 }
 
 function routeFor(nodes, task) {
@@ -217,6 +223,7 @@ function saveRequestToNode(state, body, existing) {
     embeddingInputStyle: body.embeddingInputStyle ?? "None",
     trusted: !!body.trusted,
     enabled: !!body.enabled,
+    nova: !!body.nova,
     timeoutSeconds: body.timeoutSeconds ?? 60,
     maxConcurrent: body.maxConcurrent ?? 8,
     monthlyCapUsd: body.monthlyCapUsd == null ? null : String(body.monthlyCapUsd),
@@ -274,6 +281,7 @@ export const PROVIDER_HANDLERS = {
       provider.node.apiKey = keyInfo(state, apiKey.trim());
       provider.node.hasApiKey = true;
     }
+    if (rest.nova) releaseNova(state, provider.node);
     bump(state, provider);
     return { patchAIProvider: provider.node };
   },
@@ -286,6 +294,7 @@ export const PROVIDER_ROUTES = [
     (state, _path, body) => {
       const node = saveRequestToNode(state, body, null);
       state.ai.providers.push({ key: node.id, week: null, failing: 0, node });
+      if (node.nova) releaseNova(state, node);
       return node;
     },
   ],
@@ -329,6 +338,7 @@ export const PROVIDER_ROUTES = [
         };
       }
       saveRequestToNode(state, body, provider.node);
+      if (provider.node.nova) releaseNova(state, provider.node);
       return provider.node;
     },
   ],

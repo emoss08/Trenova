@@ -294,15 +294,6 @@ func (s *Service) BulkSubmit( //nolint:funlen // legacy workflow
 		return s.repo.UpdateBatch(ctx, created)
 	}
 
-	if !s.workflowStarter.Enabled() {
-		created.Status = invoiceadjustment.BatchStatusFailed
-		created.Metadata["workflowError"] = kernelports.ErrWorkflowStarterDisabled.Error()
-		if _, err = s.repo.UpdateBatch(ctx, created); err != nil {
-			return nil, err
-		}
-		return nil, kernelports.ErrWorkflowStarterDisabled
-	}
-
 	workflowID := fmt.Sprintf(
 		"invoice-adjustment-batch-%s-%s-%s",
 		req.TenantInfo.OrgID.String(),

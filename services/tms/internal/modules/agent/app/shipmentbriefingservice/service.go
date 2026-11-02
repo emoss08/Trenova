@@ -57,19 +57,6 @@ type Params struct {
 	Logger        *zap.Logger
 }
 
-type Dependencies struct {
-	Board         shipmentboardports.ShipmentBoardRepository
-	Briefing      shipmentboardports.ShipmentBriefingRepository
-	Briefs        shipmentbriefports.ShipmentBriefRepository
-	QuickFilters  shipmentports.ShipmentQuickFilterBasisResolver
-	Organizations tenantports.OrganizationRepository
-	Suggestions   shipmentbriefports.ShipmentSuggestionCandidates
-	Nova          llmports.TaskRunner
-	Cache         shipmentboardports.ShipmentBoardCache
-	Logger        *zap.Logger
-	Now           func() time.Time
-}
-
 type Service struct {
 	board         shipmentboardports.ShipmentBoardRepository
 	briefing      shipmentboardports.ShipmentBriefingRepository
@@ -90,32 +77,17 @@ var (
 
 //nolint:gocritic // dependency injection
 func New(p Params) *Service {
-	return NewWithDependencies(&Dependencies{
-		Board:         p.Board,
-		Briefing:      p.Briefing,
-		Briefs:        p.Briefs,
-		QuickFilters:  p.QuickFilters,
-		Organizations: p.Organizations,
-		Suggestions:   p.Suggestions,
-		Nova:          p.Nova,
-		Cache:         p.Cache,
-		Logger:        p.Logger,
-		Now:           time.Now,
-	})
-}
-
-func NewWithDependencies(d *Dependencies) *Service {
 	return &Service{
-		board:         d.Board,
-		briefing:      d.Briefing,
-		briefs:        d.Briefs,
-		quickFilters:  d.QuickFilters,
-		organizations: d.Organizations,
-		suggestions:   d.Suggestions,
-		nova:          d.Nova,
-		cache:         d.Cache,
-		l:             d.Logger.Named("service.shipment-briefing"),
-		now:           d.Now,
+		board:         p.Board,
+		briefing:      p.Briefing,
+		briefs:        p.Briefs,
+		quickFilters:  p.QuickFilters,
+		organizations: p.Organizations,
+		suggestions:   p.Suggestions,
+		nova:          p.Nova,
+		cache:         p.Cache,
+		l:             p.Logger.Named("service.shipment-briefing"),
+		now:           time.Now,
 	}
 }
 

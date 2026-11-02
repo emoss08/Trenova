@@ -132,9 +132,6 @@ func (s *Service) SubmitExpense(
 }
 
 func (s *Service) notifyExpenseSubmitted(ctx context.Context, expense *payexpense.Expense) {
-	if s.notificationService == nil {
-		return
-	}
 	buID := expense.BusinessUnitID
 	entity := &notification.Notification{
 		OrganizationID: expense.OrganizationID,
@@ -324,9 +321,6 @@ func (s *Service) notifyExpenseReviewed(
 	expense *payexpense.Expense,
 	approved bool,
 ) {
-	if s.driverNotify == nil {
-		return
-	}
 	s.driverNotify.Notify(ctx, &drivernotificationservice.DriverNotification{
 		TenantInfo: tenantInfo,
 		WorkerID:   expense.WorkerID,

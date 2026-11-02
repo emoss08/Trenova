@@ -20,7 +20,7 @@ var ErrUnavailable = errortypes.NewBusinessError(
 type Params struct {
 	fx.In
 
-	Nova llmports.TaskRunner `optional:"true"`
+	Nova llmports.TaskRunner
 }
 
 // Caller runs the inbox's Nova tasks through the harness, which decides
@@ -35,11 +35,7 @@ func New(p Params) *Caller {
 }
 
 func (c *Caller) Available(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error) {
-	if c.nova == nil {
-		return false, nil
-	}
-
-	return c.nova.Available(ctx, aitask.TaskInboundClassification, tenantInfo)
+	return c.nova.Available(ctx, tenantInfo)
 }
 
 func (c *Caller) Run(
@@ -47,9 +43,6 @@ func (c *Caller) Run(
 	task *llmports.NovaTask,
 	out any,
 ) (*llmports.StructuredCompletionResult, error) {
-	if c.nova == nil {
-		return nil, ErrUnavailable
-	}
 	if task.Name == "" {
 		task.Name = aitask.TaskInboundClassification
 	}

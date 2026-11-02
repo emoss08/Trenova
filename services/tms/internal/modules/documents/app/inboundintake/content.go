@@ -68,10 +68,6 @@ func (s *Service) fetchContent(
 	if err != nil {
 		return err
 	}
-	if s.fetcher == nil {
-		return fmt.Errorf("%w: this installation cannot read %s messages",
-			inboundmessageports.ErrInboundContentRejected, mailbox.Provider)
-	}
 
 	content, err := s.fetcher.Fetch(ctx, &inboundmessageports.InboundContentRequest{
 		Provider:          mailbox.Provider,
@@ -201,9 +197,6 @@ func (s *Service) stageFetchedAttachments(
 			s.recordAttachmentFailure(ctx, row, "The provider did not return this file.")
 		case fetched.FailureText != "":
 			s.recordAttachmentFailure(ctx, row, fetched.FailureText)
-		case s.uploads == nil:
-			s.recordAttachmentFailure(ctx, row,
-				"This installation cannot store attachments, so the file was not kept.")
 		default:
 			row.ByteSize = int64(len(fetched.Content))
 			s.stageAttachment(ctx, tenantInfo, message, row, fetched.Content)

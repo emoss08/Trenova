@@ -31,7 +31,7 @@ func TestConnectionRepository_TokensAreReadOnlyUnderLockAndNeverOverwrittenByUpd
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	repo := NewConnectionRepository(ConnectionParams{DB: conn, Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
@@ -128,7 +128,7 @@ func TestConnectionRepository_RealmIsHeldByOneTenantAtATime(t *testing.T) {
 	ctx = first.Ctx(ctx)
 	second := seedtest.SeedAdditionalTenant(t, ctx, db, "QB")
 	repo := NewConnectionRepository(
-		ConnectionParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()},
+		ConnectionParams{DB: postgres.WrapDB(db), Logger: zap.NewNop()},
 	)
 	firstTenant := pagination.TenantInfo{OrgID: first.Organization.ID, BuID: first.BusinessUnit.ID}
 	secondTenant := pagination.TenantInfo{
@@ -195,7 +195,7 @@ func TestConnectionRepository_HealthQueueWebhooksAndVersioning(t *testing.T) {
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
 	repo := NewConnectionRepository(
-		ConnectionParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()},
+		ConnectionParams{DB: postgres.WrapDB(db), Logger: zap.NewNop()},
 	)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
@@ -276,7 +276,7 @@ func TestConnectionRepository_ReferenceRefreshRunsUntilItFinishesEitherWay(t *te
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
 	repo := NewConnectionRepository(
-		ConnectionParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()},
+		ConnectionParams{DB: postgres.WrapDB(db), Logger: zap.NewNop()},
 	)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
@@ -343,7 +343,7 @@ func TestConnectionRepository_DriftCheckKeepsItsLastSuccessThroughAFailure(t *te
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
 	repo := NewConnectionRepository(
-		ConnectionParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()},
+		ConnectionParams{DB: postgres.WrapDB(db), Logger: zap.NewNop()},
 	)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()

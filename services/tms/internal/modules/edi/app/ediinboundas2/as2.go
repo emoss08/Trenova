@@ -186,28 +186,26 @@ func (s *Service) startInboundProcessing(
 			BuID:  profile.BusinessUnitID,
 		},
 	}
-	if s.workflowStarter != nil && s.workflowStarter.Enabled() {
-		if _, err := s.workflowStarter.StartWorkflow(
-			ctx,
-			client.StartWorkflowOptions{
-				ID:        "edi-process-inbound-file-" + file.ID.String(),
-				TaskQueue: temporaltype.EDITaskQueue,
-				StaticSummary: fmt.Sprintf(
-					"Process inbound AS2 EDI file %s",
-					file.ID.String(),
-				),
-			},
-			temporaltype.ProcessInboundEDIFileWorkflowName,
-			request,
-		); err != nil {
-			s.l.Warn(
-				"failed to start inbound AS2 processing workflow; processing inline",
-				zap.String("fileId", file.ID.String()),
-				zap.Error(err),
-			)
-		} else {
-			return
-		}
+	if _, err := s.workflowStarter.StartWorkflow(
+		ctx,
+		client.StartWorkflowOptions{
+			ID:        "edi-process-inbound-file-" + file.ID.String(),
+			TaskQueue: temporaltype.EDITaskQueue,
+			StaticSummary: fmt.Sprintf(
+				"Process inbound AS2 EDI file %s",
+				file.ID.String(),
+			),
+		},
+		temporaltype.ProcessInboundEDIFileWorkflowName,
+		request,
+	); err != nil {
+		s.l.Warn(
+			"failed to start inbound AS2 processing workflow; processing inline",
+			zap.String("fileId", file.ID.String()),
+			zap.Error(err),
+		)
+	} else {
+		return
 	}
 	if _, err := s.inbound.ProcessInboundFile(ctx, request); err != nil {
 		s.l.Error(

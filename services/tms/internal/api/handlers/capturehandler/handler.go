@@ -53,7 +53,7 @@ type Params struct {
 	Intake         *captureintake.Service
 	Filing         *capturefiling.Service
 	Releases       *capturereleaseservice.Service
-	Gateway        realtimeports.RealtimeGateway `optional:"true"`
+	Gateway        realtimeports.RealtimeGateway
 	Edition        ediports.EditionInfo
 	ErrorHandler   *helpers.ErrorHandler
 	AppConfig      *appconfig.Config

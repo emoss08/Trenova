@@ -20,8 +20,8 @@ type Params struct {
 	Checker         *tariff.Checker
 	Resolver        *tariff.TemplateResolver
 	Rater           tariffports.Rater
-	Records         tariffports.RecordBuilder  `optional:"true"`
-	RatedShipments  tariffports.RatedShipments `optional:"true"`
+	Records         tariffports.RecordBuilder
+	RatedShipments  tariffports.RatedShipments
 }
 
 type Service struct {

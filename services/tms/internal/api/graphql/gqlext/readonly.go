@@ -62,7 +62,7 @@ func (e *ReadOnlyExtension) MutateOperationContext(
 	if authctx.UsesSupersededSessionSecret(ctx) {
 		return supersededSecretRefusal(ctx)
 	}
-	if e.plans == nil || !e.plans.EnforcesPlans() {
+	if !e.plans.EnforcesPlans() {
 		return nil
 	}
 

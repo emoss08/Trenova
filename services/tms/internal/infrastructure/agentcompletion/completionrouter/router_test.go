@@ -28,7 +28,15 @@ type fakeRepo struct {
 
 	providers []*aiprovider.Provider
 	byID      *aiprovider.Provider
+	nova      *aiprovider.Provider
 	Err       error
+}
+
+func (f *fakeRepo) GetNova(
+	_ context.Context,
+	_ pagination.TenantInfo,
+) (*aiprovider.Provider, error) {
+	return f.nova, f.Err
 }
 
 func (f *fakeRepo) ListForTask(

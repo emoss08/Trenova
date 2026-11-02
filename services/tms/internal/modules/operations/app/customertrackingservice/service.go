@@ -30,11 +30,11 @@ type Params struct {
 	ShipmentRepo    shipmentports.ShipmentRepository
 	StopEtas        stopetaports.Repository
 	CustomerRepo    customerports.CustomerRepository
-	OrgRepo         tenantports.OrganizationRepository             `optional:"true"`
-	Templates       documenttemplateports.DocumentTemplateResolver `optional:"true"`
-	EmailService    emailports.EmailService                        `optional:"true"`
-	Documents       documentports.InvoiceDocumentService           `optional:"true"`
-	AuditService    auditports.AuditService                        `optional:"true"`
+	OrgRepo         tenantports.OrganizationRepository
+	Templates       documenttemplateports.DocumentTemplateResolver
+	EmailService    emailports.EmailService
+	Documents       documentports.InvoiceDocumentService
+	AuditService    auditports.AuditService
 }
 
 type Service struct {
@@ -81,7 +81,3 @@ var (
 	_ customertrackingports.CustomerTrackingService = (*Service)(nil)
 	_ customertrackingports.StatusNotifier          = (*Service)(nil)
 )
-
-func (s *Service) canEmail() bool {
-	return s.templates != nil && s.emailService != nil
-}

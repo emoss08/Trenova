@@ -22,7 +22,7 @@ func TestIntegrationByTypeIsCachedIncludingItsAbsence(t *testing.T) {
 	tenantA := seedtest.SeedFullTestData(t, ctx, db)
 	tenantB := seedtest.SeedAdditionalTenant(t, ctx, db, "IN")
 	cached := cachetest.Open(t, ctx, dsn)
-	repo := New(Params{DB: postgres.NewTestConnection(cached), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(cached), Logger: zap.NewNop()})
 	actx := tenantA.Ctx(ctx)
 
 	var found *integration.Integration

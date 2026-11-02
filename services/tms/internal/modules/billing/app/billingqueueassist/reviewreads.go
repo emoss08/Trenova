@@ -45,8 +45,11 @@ func (s *Service) reviewReads(
 			long = append(long, doc.ID.String())
 		}
 	}
-	if s.content != nil && len(long) > 0 {
-		reads = append(reads, &documentReader{content: s.content, tenant: tenantInfo, ids: long, log: log})
+	if len(long) > 0 {
+		reads = append(
+			reads,
+			&documentReader{content: s.content, tenant: tenantInfo, ids: long, log: log},
+		)
 	}
 
 	return reads
@@ -103,7 +106,10 @@ func (r *documentReader) Spec() kernelports.ToolSpec {
 	}
 }
 
-func (r *documentReader) Call(ctx context.Context, arguments map[string]any) llmports.NovaToolResult {
+func (r *documentReader) Call(
+	ctx context.Context,
+	arguments map[string]any,
+) llmports.NovaToolResult {
 	id, _ := arguments["documentId"].(string)
 	if !slices.Contains(r.ids, id) {
 		return refused("Only these documents have more to read: " + strings.Join(r.ids, ", ") + ".")
@@ -163,7 +169,10 @@ func (h *chargeHistory) Spec() kernelports.ToolSpec {
 	}
 }
 
-func (h *chargeHistory) Call(ctx context.Context, arguments map[string]any) llmports.NovaToolResult {
+func (h *chargeHistory) Call(
+	ctx context.Context,
+	arguments map[string]any,
+) llmports.NovaToolResult {
 	code, _ := arguments["chargeCode"].(string)
 	code = strings.TrimSpace(code)
 	if code == "" {
@@ -180,7 +189,10 @@ func (h *chargeHistory) Call(ctx context.Context, arguments map[string]any) llmp
 }
 
 // chargeLookup is how many of the payer's recent invoices carried a charge.
-func chargeLookup(recent []*billingqueueports.RecentInvoice, code string) reviewprompt.ChargeLookup {
+func chargeLookup(
+	recent []*billingqueueports.RecentInvoice,
+	code string,
+) reviewprompt.ChargeLookup {
 	keep := chargeMatcher(code)
 	carried := 0
 	for _, past := range recent {
@@ -212,7 +224,12 @@ func chargeHistoryText(recent []*billingqueueports.RecentInvoice, payer, code st
 		}
 	}
 	if len(lines) == 0 {
-		return fmt.Sprintf("None of the last %d posted invoices to %s carried %s.", len(recent), payer, code)
+		return fmt.Sprintf(
+			"None of the last %d posted invoices to %s carried %s.",
+			len(recent),
+			payer,
+			code,
+		)
 	}
 
 	return fmt.Sprintf("%d of the last %d posted invoices to %s carried %s:\n%s",

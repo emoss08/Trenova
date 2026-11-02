@@ -88,8 +88,7 @@ func (s *Service) showFinishedAttachments(
 // reply, in the conversation the file was sent in, read as the person who
 // sent it. A file uploaded and never sent gets no card.
 func (s *Service) AttachmentExtracted(ctx context.Context, event *agenteventports.AgentEvent) {
-	if event == nil || event.Kind != agenttrigger.EventDocumentExtracted ||
-		s.documents == nil || s.artifacts == nil {
+	if event == nil || event.Kind != agenttrigger.EventDocumentExtracted {
 		return
 	}
 	log := s.logger.With(zap.String("documentId", event.SubjectID.String()))
@@ -160,8 +159,9 @@ func (s *Service) WaitOnUnreadFile(
 	run *UnreadFileRun,
 	observation *agentruntimeports.ToolObservation,
 ) {
-	if s.readWaits == nil || run == nil || run.Delegated || run.ThreadID.IsNil() ||
-		run.Actor == nil || observation == nil || observation.Failed ||
+	if run == nil || run.Delegated || run.ThreadID.IsNil() || run.Actor == nil ||
+		observation == nil ||
+		observation.Failed ||
 		observation.Call.Name != agentdefinition.CoreToolReadAttachment {
 		return
 	}

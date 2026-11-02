@@ -49,7 +49,7 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 
 	var err error
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 
 	scope := tenantWithoutPartners(t, ctx, db)
 	ctx = scope.Ctx
@@ -431,7 +431,7 @@ func TestCarrierEDIChannelsByPartner(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 
 	rows, err := keel.Pool(db).
 		Query(ctx, `SELECT id, organization_id, business_unit_id, name FROM carriers

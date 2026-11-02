@@ -55,7 +55,7 @@ func TestUpdateSwapsEntryRanksWithoutUniqueViolation(t *testing.T) {
 	ctx = data.Ctx(ctx)
 
 	repo := New(Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 
@@ -121,7 +121,7 @@ func TestRoutingGuidesStayInsideTheirTenant(t *testing.T) {
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	other := seedtest.SeedAdditionalTenant(t, ctx, db, "RG")
 	repo := New(Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 

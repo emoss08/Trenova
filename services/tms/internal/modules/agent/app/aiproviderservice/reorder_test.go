@@ -178,20 +178,34 @@ func TestAssignTaskAddsTheTaskOnce(t *testing.T) {
 	svc, audit, _ := chainService(repo)
 
 	saved, err := svc.AssignTask(t.Context(), &aiproviderports.AssignAIProviderTaskRequest{
-		TenantInfo: chainTenant, ProviderID: "aip_a", Task: aitask.TaskOperationalInsights,
+		TenantInfo: chainTenant, ProviderID: "aip_a", Task: aitask.TaskEvaluationJudge,
 	}, nil)
 	require.NoError(t, err)
 	assert.Equal(t,
-		[]aitask.Task{aitask.TaskAssistantChat, aitask.TaskOperationalInsights},
+		[]aitask.Task{aitask.TaskAssistantChat, aitask.TaskEvaluationJudge},
 		saved.Tasks)
 	assert.Empty(t, saved.APIKey)
 	assert.Equal(t, 1, audit.comments)
 
 	again, err := svc.AssignTask(t.Context(), &aiproviderports.AssignAIProviderTaskRequest{
-		TenantInfo: chainTenant, ProviderID: "aip_a", Task: aitask.TaskOperationalInsights,
+		TenantInfo: chainTenant, ProviderID: "aip_a", Task: aitask.TaskEvaluationJudge,
 	}, nil)
 	require.NoError(t, err)
 	assert.Len(t, again.Tasks, 2)
+}
+
+func TestAssignTaskRefusesANovaTask(t *testing.T) {
+	t.Parallel()
+
+	repo := newChainRepo(chainProvider("aip_a", 10, aitask.TaskAssistantChat))
+	svc, _, _ := chainService(repo)
+
+	_, err := svc.AssignTask(t.Context(), &aiproviderports.AssignAIProviderTaskRequest{
+		TenantInfo: chainTenant, ProviderID: "aip_a", Task: aitask.TaskPaperworkReading,
+	}, nil)
+
+	require.Error(t, err, "Nova's tasks run on the provider chosen for Nova")
+	assert.Empty(t, repo.updated)
 }
 
 func TestAssignTaskRefusesAnUnknownTask(t *testing.T) {

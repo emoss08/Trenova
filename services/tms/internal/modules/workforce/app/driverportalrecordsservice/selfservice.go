@@ -31,13 +31,6 @@ type PortalPolicy struct {
 }
 
 func (s *Service) requireSelfService() error {
-	if s.selfService == nil {
-		return errortypes.NewValidationError(
-			"feature",
-			errortypes.ErrInvalidOperation,
-			"Self-service is not available",
-		)
-	}
 	return nil
 }
 
@@ -203,9 +196,6 @@ func (s *Service) policiesOutstanding(
 	tenantInfo pagination.TenantInfo,
 	wrk *worker.Worker,
 ) (int, error) {
-	if s.selfService == nil {
-		return 0, nil
-	}
 	standings, err := s.selfService.PoliciesForWorker(ctx, tenantInfo, wrk)
 	if err != nil {
 		return 0, err

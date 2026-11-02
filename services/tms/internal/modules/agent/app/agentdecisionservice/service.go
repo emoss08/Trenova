@@ -49,24 +49,24 @@ type Params struct {
 	RunRepo      agentruntimeports.AgentRunRepository
 	// Conversations says whose conversation raised a proposal, for a person
 	// deciding their own.
-	Conversations conversationports.ConversationRepository `optional:"true"`
+	Conversations conversationports.ConversationRepository
 	Shadow        *agentshadow.Resolver
 	Permissions   permissionports.PermissionEngine
 	Workflows     kernelports.WorkflowStarter
 	Executor      *proposalexecutor.Service
 	AuditService  auditports.AuditService
 	Trust         agenttrustports.AgentTrustService
-	Memories      agentmemoryports.AgentMemoryService       `optional:"true"`
-	Activity      agentactivityports.AgentActivityPublisher `optional:"true"`
+	Memories      agentmemoryports.AgentMemoryService
+	Activity      agentactivityports.AgentActivityPublisher
 	// Watchtower takes a decided proposal off the feed.
-	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
+	Watchtower watchtowerports.WatchtowerProjector
 	// FollowUps has the conversation that raised a proposal report what came
 	// of deciding it.
-	FollowUps assistantports.DecisionFollowUps `optional:"true"`
+	FollowUps assistantports.DecisionFollowUps
 	// Previews says what an approval would do, as the decider sees it, so
 	// the decision records what was approved and refuses what moved on.
-	Previews agentruntimeports.ProposalPreviewService `optional:"true"`
-	Metrics  *metrics.Registry                        `optional:"true"`
+	Previews agentruntimeports.ProposalPreviewService
+	Metrics  *metrics.Registry
 }
 
 type Service struct {
@@ -166,7 +166,7 @@ func (s *Service) AssertOwnProposal(
 	notYours := errortypes.NewNotFoundError(
 		"That proposal was not raised in one of your conversations",
 	)
-	if s.threads == nil || actor == nil || actor.UserID.IsNil() {
+	if actor == nil || actor.UserID.IsNil() {
 		return notYours
 	}
 
@@ -435,7 +435,7 @@ func (s *Service) carryOut(
 
 	// Last, once the change has run or failed: the report is of the outcome,
 	// not of the click. A plan's steps are reported once, by the plan.
-	if !req.WithinPlan && s.followUps != nil {
+	if !req.WithinPlan {
 		s.followUps.FollowUp(ctx, &assistantports.DecisionFollowUpRequest{
 			TenantInfo: req.TenantInfo,
 			RunID:      proposal.RunID,
@@ -476,15 +476,13 @@ func (s *Service) settleModifications(
 		return &settled, nil
 	}
 
-	if s.executor != nil {
-		if _, err := s.executor.CheckModifications(
-			ctx,
-			proposal,
-			settled.Modifications,
-			actor,
-		); err != nil {
-			return nil, err
-		}
+	if _, err := s.executor.CheckModifications(
+		ctx,
+		proposal,
+		settled.Modifications,
+		actor,
+	); err != nil {
+		return nil, err
 	}
 
 	return &settled, nil
@@ -630,7 +628,7 @@ func (s *Service) recordTrust(
 	decision *agentdecision.AgentDecision,
 	execErr error,
 ) {
-	if s.trust == nil || errors.Is(execErr, agentplan.ErrTargetChanged) {
+	if errors.Is(execErr, agentplan.ErrTargetChanged) {
 		return
 	}
 
@@ -654,10 +652,6 @@ func (s *Service) recordCorrection(
 	proposal *agent.AgentProposal,
 	decision *agentdecision.AgentDecision,
 ) {
-	if s.memories == nil {
-		return
-	}
-
 	if _, err := s.memories.RecordCorrection(ctx, proposal, decision); err != nil {
 		s.l.Error("failed to record a correction from the decision",
 			zap.String("proposal", proposal.ID.String()),
@@ -741,10 +735,6 @@ func (s *Service) announce(
 	actor kernelports.AuditActor,
 	action string,
 ) {
-	if s.activity == nil {
-		return
-	}
-
 	current, err := s.proposalRepo.GetByID(ctx, agentproposalports.GetAgentProposalByIDRequest{
 		ID:         proposal.ID,
 		TenantInfo: &tenant,
@@ -766,7 +756,7 @@ func (s *Service) clearFromWatchtower(
 	proposal *agent.AgentProposal,
 	tenant pagination.TenantInfo,
 ) {
-	if s.watchtower == nil || proposal == nil {
+	if proposal == nil {
 		return
 	}
 

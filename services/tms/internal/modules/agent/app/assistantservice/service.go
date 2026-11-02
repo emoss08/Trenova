@@ -41,41 +41,40 @@ type Params struct {
 	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Recorder      *proposalrecorder.Service
 	Proposals     agentproposalports.AgentProposalRepository
-	Plans         agentplanports.AgentPlanRepository `optional:"true"`
+	Plans         agentplanports.AgentPlanRepository
 	AIProviders   aiproviderports.AIProviderRepository
 	Shadow        *agentshadow.Resolver
-	Budgets       agentbudgetports.AgentBudgetService        `optional:"true"`
-	Decisions     agentdecisionports.AgentDecisionRepository `optional:"true"`
+	Budgets       agentbudgetports.AgentBudgetService
+	Decisions     agentdecisionports.AgentDecisionRepository
 	// Artifacts keeps what a turn produced besides words; Subjects describes
 	// the record a conversation was opened from.
-	Artifacts assistantartifactports.AssistantArtifactRepository `optional:"true"`
-	Subjects  agentruntimeports.AgentSubjectDescriber            `optional:"true"`
-	Anchors   recordanchorports.RecordAnchorReader               `optional:"true"`
-	Activity  agentactivityports.AgentActivityPublisher          `optional:"true"`
+	Artifacts assistantartifactports.AssistantArtifactRepository
+	Subjects  agentruntimeports.AgentSubjectDescriber
+	Anchors   recordanchorports.RecordAnchorReader
+	Activity  agentactivityports.AgentActivityPublisher
 	// Documents checks that an attached file is the person's own; Contents
 	// reads what document intelligence made of it.
-	Documents documentports.DocumentRepository     `optional:"true"`
-	Contents  documentports.DocumentContentService `optional:"true"`
+	Documents documentports.DocumentRepository
+	Contents  documentports.DocumentContentService
 	// Permissions decides whether the person may read the record a
 	// conversation is about before any of it reaches the model.
 	Permissions permissionports.PermissionEngine
 	// Runs says which agent raised each of a conversation's proposals: its
 	// own, or one it handed a task to.
-	Runs agentruntimeports.AgentRunRepository `optional:"true"`
-	// AgentControls holds the per-person allowance; without it nobody is
-	// limited.
-	AgentControls tenantports.AgentControlRepository `optional:"true"`
+	Runs agentruntimeports.AgentRunRepository
+	// AgentControls holds the per-person allowance.
+	AgentControls tenantports.AgentControlRepository
 	// PaletteQuestions are counted against the same allowance.
-	PaletteQuestions paletteports.QuestionRepository `optional:"true"`
-	Users            tenantports.UserRepository      `optional:"true"`
-	Boards           assistantports.BoardFiller      `optional:"true"`
+	PaletteQuestions paletteports.QuestionRepository
+	Users            tenantports.UserRepository
+	Boards           assistantports.BoardFiller
 	// Memories describes the memories a reply used or saved.
-	Memories agentmemoryports.AgentMemoryService `optional:"true"`
-	Quota    platformplanports.QuotaGuard        `optional:"true"`
+	Memories agentmemoryports.AgentMemoryService
+	Quota    platformplanports.QuotaGuard
 	// Waits reads a wait whose ending a turn picks up.
-	Waits agentwaitports.AgentWaitRepository `optional:"true"`
+	Waits agentwaitports.AgentWaitRepository
 	// ReadWaits parks a conversation on a file still being read.
-	ReadWaits agentwaitports.DocumentReadWaiter `optional:"true"`
+	ReadWaits agentwaitports.DocumentReadWaiter
 }
 
 // Module provides the turn service for the worker that runs turns; the

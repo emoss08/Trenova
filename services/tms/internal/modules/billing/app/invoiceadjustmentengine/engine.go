@@ -56,21 +56,21 @@ type Params struct {
 	JournalRepo        journalentryports.JournalPostingRepository
 	FiscalPeriodRepo   fiscalperiodports.FiscalPeriodRepository
 	DocumentRepo       documentports.DocumentRepository
-	OrderRepo          orderports.OrderRepository                       `optional:"true"`
-	ChargeAllocRepo    chargeallocationports.ChargeAllocationRepository `optional:"true"`
-	OrderDerivation    orderports.OrderDerivationService                `optional:"true"`
+	OrderRepo          orderports.OrderRepository
+	ChargeAllocRepo    chargeallocationports.ChargeAllocationRepository
+	OrderDerivation    orderports.OrderDerivationService
 	DetentionBilling   detentionports.DetentionBillingService
 	Validator          *Validator
 	AuditService       auditports.AuditService
 	Commercial         *shipmentcommercial.Calculator
 	Generator          invoiceadjustmentports.InvoiceAdjustGenerator
 	SequenceGenerator  seqgen.Generator
-	SequenceFormats    seqgen.FormatProvider                       `optional:"true"`
-	CreditApplier      customerpaymentports.CustomerPaymentService `optional:"true"`
-	AccountingSync     accountingsyncports.AccountingSyncEnqueuer  `optional:"true"`
+	SequenceFormats    seqgen.FormatProvider
+	CreditApplier      customerpaymentports.CustomerPaymentService
+	AccountingSync     accountingsyncports.AccountingSyncEnqueuer
 	CustomerLedgerRepo customerledgerports.CustomerLedgerProjectionRepository
 	AccountingPolicy   *accountingcontrolpolicyservice.Service
-	Realtime           realtimeports.RealtimeService `optional:"true"`
+	Realtime           realtimeports.RealtimeService
 }
 
 // Engine computes what an invoice adjustment would do and carries out an
@@ -140,9 +140,7 @@ func New(p Params) *Engine {
 		accountingPolicy:   p.AccountingPolicy,
 		realtime:           p.Realtime,
 	}
-	if p.CreditApplier != nil {
-		engine.credits = p.CreditApplier
-	}
+	engine.credits = p.CreditApplier
 
 	return engine
 }

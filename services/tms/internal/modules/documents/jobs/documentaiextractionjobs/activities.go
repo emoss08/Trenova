@@ -6,8 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -22,8 +20,6 @@ type ActivitiesParams struct {
 	AIExtractionRepo  documentaiextractionports.DocumentAIExtractionRepository
 	AIDocumentService documentaiextractionports.AIDocumentService
 	Support           *documentextractionsupport.Service
-	ShadowSampler     extractionshadowports.ExtractionShadowSampler  `optional:"true"`
-	Rollout           extractionrolloutports.ExtractionRolloutRouter `optional:"true"`
 }
 
 type Activities struct {
@@ -34,16 +30,11 @@ type Activities struct {
 	aiExtractionRepo  documentaiextractionports.DocumentAIExtractionRepository
 	aiDocumentService documentaiextractionports.AIDocumentService
 	support           *documentextractionsupport.Service
-	shadowSampler     extractionshadowports.ExtractionShadowSampler
-	rollout           extractionrolloutports.ExtractionRolloutRouter
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func NewActivities(p ActivitiesParams) *Activities {
 	aiDocumentService := p.AIDocumentService
-	if aiDocumentService == nil {
-		aiDocumentService = documentextractionsupport.NoopAIDocumentService{}
-	}
 
 	return &Activities{
 		logger:            p.Logger.Named("temporal.document-extraction"),
@@ -53,7 +44,5 @@ func NewActivities(p ActivitiesParams) *Activities {
 		aiExtractionRepo:  p.AIExtractionRepo,
 		aiDocumentService: aiDocumentService,
 		support:           p.Support,
-		shadowSampler:     p.ShadowSampler,
-		rollout:           p.Rollout,
 	}
 }

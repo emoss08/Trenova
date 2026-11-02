@@ -46,7 +46,7 @@ type Params struct {
 	StorageConfig  *storageconfig.Config
 	Validator      *Validator
 	Encryption     *encryptionservice.Service
-	Plans          platformplanports.PlanService `optional:"true"`
+	Plans          platformplanports.PlanService
 	ContentGate    contentscanports.Gate
 }
 

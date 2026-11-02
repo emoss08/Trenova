@@ -35,12 +35,12 @@ type Params struct {
 	// The review reads: issues and activity, the shipment's paperwork and
 	// detention evidence, the contract's accessorials, and the driver to ask
 	// for a missing signature.
-	ReviewRepo      billingqueueports.BillingQueueReviewRepository `optional:"true"`
-	DocumentRepo    documentports.DocumentRepository               `optional:"true"`
-	OccurrenceRepo  detentionports.DetentionOccurrenceRepository   `optional:"true"`
-	AgreementRepo   rateagreementports.RateAgreementRepository     `optional:"true"`
-	DriverNotifier  *drivernotificationservice.Service             `optional:"true"`
-	DocumentContent documentports.DocumentContentService           `optional:"true"`
+	ReviewRepo      billingqueueports.BillingQueueReviewRepository
+	DocumentRepo    documentports.DocumentRepository
+	OccurrenceRepo  detentionports.DetentionOccurrenceRepository
+	AgreementRepo   rateagreementports.RateAgreementRepository
+	DriverNotifier  *drivernotificationservice.Service
+	DocumentContent documentports.DocumentContentService
 }
 
 // Service is the review a biller does from one item: settling and

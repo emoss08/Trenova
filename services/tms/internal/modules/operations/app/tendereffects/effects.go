@@ -40,10 +40,6 @@ type Effects struct {
 }
 
 func (s *Effects) LogAudit(p *AuditParams) {
-	if s.auditService == nil {
-		return
-	}
-
 	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceTender,
 		ResourceID:     p.TenderID.String(),
@@ -101,8 +97,8 @@ type Params struct {
 	EventService     shipmenteventports.ShipmentEventService
 	AuditService     auditports.AuditService
 	Invalidator      shipmentinvalidationports.ShipmentInvalidator
-	Notifications    *notificationservice.Service                   `optional:"true"`
-	DispatchControls dispatchcontrolports.DispatchControlRepository `optional:"true"`
+	Notifications    *notificationservice.Service
+	DispatchControls dispatchcontrolports.DispatchControlRepository
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
@@ -149,10 +145,6 @@ func (s *Effects) NotifyDispatch(
 	tenantInfo pagination.TenantInfo,
 	n *DispatchNotification,
 ) {
-	if s.notifications == nil {
-		return
-	}
-
 	link := n.Link
 	if link == "" {
 		link = dispatchConsoleLink
@@ -214,9 +206,6 @@ func (s *Effects) Policy(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) dispatchcontrol.TenderPolicy {
-	if s.dispatchControls == nil {
-		return dispatchcontrol.DefaultTenderPolicy()
-	}
 	control, err := s.dispatchControls.GetByOrgID(
 		ctx,
 		dispatchcontrolports.GetDispatchControlRequest{

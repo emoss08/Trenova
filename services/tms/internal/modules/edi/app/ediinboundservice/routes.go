@@ -205,9 +205,6 @@ func (s *Service) routeTenderOfferResponse(
 	transaction *parsedTransaction,
 	details *tenderResponseDetails,
 ) tenderOfferRouteOutcome {
-	if s.tenderRepo == nil || s.tenderResponses == nil {
-		return tenderOfferRouteOutcome{}
-	}
 	offerID := tenderOfferReference(details)
 	if offerID.IsNil() {
 		return tenderOfferRouteOutcome{}

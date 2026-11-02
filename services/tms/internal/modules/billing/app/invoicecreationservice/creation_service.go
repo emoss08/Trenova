@@ -44,7 +44,7 @@ type Params struct {
 	Validator            *invoicevalidation.Validator
 	AuditService         auditports.AuditService
 	Realtime             realtimeports.RealtimeService
-	Readiness            shipmentserviceports.ShipmentBillingReadinessReader `optional:"true"`
+	Readiness            shipmentserviceports.ShipmentBillingReadinessReader
 }
 
 // Service creates invoices from approved billing queue items, shipments, orders and

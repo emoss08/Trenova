@@ -35,9 +35,9 @@ type Params struct {
 	AuditService auditports.AuditService
 	Realtime     realtimeports.RealtimeService
 	Transformer  accessorialchargeports.DataTransformer
-	DB           kernelports.Transactor                     `optional:"true"`
-	Sync         accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
-	Credit       customerports.CreditReviewer               `optional:"true"`
+	DB           kernelports.Transactor
+	Sync         accountingsyncports.AccountingSyncEnqueuer
+	Credit       customerports.CreditReviewer
 }
 
 type Service struct {
@@ -73,10 +73,6 @@ func (s *Service) updateAndQueueSync(
 	entity *customer.Customer,
 	original *customer.Customer,
 ) (*customer.Customer, error) {
-	if s.db == nil || s.sync == nil {
-		return s.repo.Update(ctx, entity)
-	}
-
 	var updated *customer.Customer
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
@@ -365,8 +361,7 @@ func (s *Service) Update(
 // change, rather than leaving the new limit to the next posting or the
 // nightly sweep, and returns the standing the review left.
 func (s *Service) reviewCredit(ctx context.Context, updated, original *customer.Customer) {
-	if s.credit == nil || updated == nil || !updated.HasBillingProfile() ||
-		!creditTermsChanged(original, updated) {
+	if updated == nil || !updated.HasBillingProfile() || !creditTermsChanged(original, updated) {
 		return
 	}
 	tenant := pagination.TenantInfo{OrgID: updated.OrganizationID, BuID: updated.BusinessUnitID}

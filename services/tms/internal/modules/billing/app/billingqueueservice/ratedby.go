@@ -22,7 +22,7 @@ func (s *Service) ratedBy(
 	if shp == nil {
 		return nil
 	}
-	if shp.RateAgreementID != nil && shp.RateAgreementID.IsNotNil() && s.agreements != nil {
+	if shp.RateAgreementID != nil && shp.RateAgreementID.IsNotNil() {
 		agreement, err := s.agreements.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
 			RateAgreementID: *shp.RateAgreementID,
 			TenantInfo:      tenantInfo,

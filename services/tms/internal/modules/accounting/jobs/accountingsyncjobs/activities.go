@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/jobs/accountingsyncjobs/accountingsynccontract"
+
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
@@ -35,7 +37,7 @@ type ActivitiesParams struct {
 	Poller                accountinginboundports.AccountingChangePoller
 	Drift                 accountingdriftports.AccountingDriftReconciler
 	DriftChecker          accountingdriftports.AccountingDriftChecker
-	Publisher             agenteventports.AgentEventPublisher `optional:"true"`
+	Publisher             agenteventports.AgentEventPublisher
 	Logger                *zap.Logger
 }
 
@@ -115,7 +117,7 @@ func referenceError(err error) error {
 
 func (a *Activities) MarkAccountingReferenceRefreshStartedActivity(
 	ctx context.Context,
-	payload *RefreshReferencePayload,
+	payload *accountingsynccontract.RefreshReferencePayload,
 ) error {
 	return referenceError(
 		a.mappings.MarkRefreshStarted(ctx, payload.TenantInfo(), payload.ConnectionID),
@@ -124,7 +126,7 @@ func (a *Activities) MarkAccountingReferenceRefreshStartedActivity(
 
 func (a *Activities) MarkAccountingReferenceRefreshFinishedActivity(
 	ctx context.Context,
-	payload *RefreshReferencePayload,
+	payload *accountingsynccontract.RefreshReferencePayload,
 	failure string,
 ) error {
 	return referenceError(
@@ -134,7 +136,7 @@ func (a *Activities) MarkAccountingReferenceRefreshFinishedActivity(
 
 func (a *Activities) PullAccountingReferenceActivity(
 	ctx context.Context,
-	payload *RefreshReferencePayload,
+	payload *accountingsynccontract.RefreshReferencePayload,
 	kind accountingprovider.ReferenceKind,
 ) (*ReferenceKindResult, error) {
 	pull, err := a.mappings.PullReference(ctx, payload.TenantInfo(), payload.ConnectionID, kind)
@@ -150,7 +152,7 @@ func (a *Activities) PullAccountingReferenceActivity(
 
 func (a *Activities) RescoreAccountingMappingsActivity(
 	ctx context.Context,
-	payload *RefreshReferencePayload,
+	payload *accountingsynccontract.RefreshReferencePayload,
 ) (*RescoreReferenceResult, error) {
 	result, err := a.mappings.Rescore(ctx, payload.TenantInfo(), payload.ConnectionID)
 	if err != nil {
@@ -167,7 +169,7 @@ func (a *Activities) RescoreAccountingMappingsActivity(
 
 func (a *Activities) AccountingMappingModelPassActivity(
 	ctx context.Context,
-	payload *RefreshReferencePayload,
+	payload *accountingsynccontract.RefreshReferencePayload,
 	mappingIDs []pulid.ID,
 ) (int, error) {
 	stop := modelcall.Heartbeat(ctx)
@@ -208,11 +210,11 @@ func (a *Activities) ListAccountingReferenceConnectionsActivity(
 		return nil, err
 	}
 	page := &ReferenceSweepPage{
-		Connections: make([]RefreshReferencePayload, 0, len(conns)),
+		Connections: make([]accountingsynccontract.RefreshReferencePayload, 0, len(conns)),
 		More:        len(conns) == referenceSweepPageSize,
 	}
 	for _, conn := range conns {
-		page.Connections = append(page.Connections, RefreshReferencePayload{
+		page.Connections = append(page.Connections, accountingsynccontract.RefreshReferencePayload{
 			OrganizationID: conn.OrganizationID,
 			BusinessUnitID: conn.BusinessUnitID,
 			ConnectionID:   conn.ID,

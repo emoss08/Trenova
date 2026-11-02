@@ -14,6 +14,10 @@ yet (absent vs null vs empty, many where every fixture has one, a second tenant)
   whole codebase.
 - Table-driven when the cases share a shape; separate named tests when they don't.
 - Non-test code never imports `testutil`, `testify/mock` or a `*test` helper package (lint).
+- Production files hold no test constructors (`NewTest*`, `*ForTest`, a `testing.go`). A helper one
+  package's tests need lives in that directory's `_test.go` files (`export_test.go` when the
+  external test package uses it); one several packages need lives in a `*test` kit and builds
+  through the real constructor (`dbtest.CapabilityProbe`), never a cut-down twin.
 - Domain-specific helpers live in the module's `<module>test/` package or `internal/testutil/*test`
   (`permtest`, `validationtest`, `imagingtest`, …); look there before writing a fixture.
 

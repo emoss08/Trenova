@@ -37,7 +37,7 @@ func TestDelete_RemovesTheAgentFromEveryAllowlist(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx, tenant := asked.tenant(ctx)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	require.NoError(t, repo.Delete(ctx, agentdefinitionports.DeleteAgentDefinitionRequest{
 		ID:         asked.ID,

@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/documentconversionconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/searchconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	workflowstarterservice "github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentextractioncontract"
@@ -40,7 +39,7 @@ type Params struct {
 	fx.In
 
 	Logger                   *zap.Logger
-	Paperwork                documentports.PaperworkReadRequester `optional:"true"`
+	Paperwork                documentports.PaperworkReadRequester
 	DocumentConversionConfig *documentconversionconfig.Config
 	SearchConfig             *searchconfig.Config
 	Metrics                  *metrics.Registry
@@ -51,8 +50,8 @@ type Params struct {
 	SearchRepo               customerports.SearchRepository
 	SearchProjection         documentsearchprojectionports.DocumentSearchProjectionService
 	WorkflowStarter          kernelports.WorkflowStarter
-	Plans                    platformplanports.PlanService               `optional:"true"`
-	AIDocuments              documentaiextractionports.AIDocumentService `optional:"true"`
+	Plans                    platformplanports.PlanService
+	AIDocuments              documentaiextractionports.AIDocumentService
 }
 
 type Service struct {
@@ -79,14 +78,8 @@ var (
 
 func New(p Params) *Service {
 	searchProjection := p.SearchProjection
-	if searchProjection == nil {
-		searchProjection = noopDocumentSearchProjectionService{}
-	}
 
 	workflowStarter := p.WorkflowStarter
-	if workflowStarter == nil {
-		workflowStarter = workflowstarterservice.New(workflowstarterservice.Params{})
-	}
 
 	return &Service{
 		logger:              p.Logger.Named("service.document-extraction"),
@@ -115,11 +108,9 @@ func (s *Service) ExtractionStatus(
 	tenantInfo pagination.TenantInfo,
 ) (*documentports.ExtractionStatus, error) {
 	availability := documentaiextractionports.ExtractionNoProviderAssigned
-	if s.aiDocuments != nil {
-		var err error
-		if availability, err = s.aiDocuments.ExtractionAvailability(ctx, tenantInfo); err != nil {
-			return nil, err
-		}
+	var err error
+	if availability, err = s.aiDocuments.ExtractionAvailability(ctx, tenantInfo); err != nil {
+		return nil, err
 	}
 
 	providerAvailable := availability.Available()
@@ -262,9 +253,7 @@ func (s *Service) Reextract(
 	if err = s.contentRepo.ReplacePages(ctx, content, nil); err != nil {
 		return err
 	}
-	if s.paperwork != nil {
-		s.paperwork.RequestRead(ctx, doc, tenantInfo.UserID)
-	}
+	s.paperwork.RequestRead(ctx, doc, tenantInfo.UserID)
 
 	return s.EnqueueExtraction(ctx, doc, tenantInfo.UserID)
 }
@@ -276,9 +265,6 @@ func (s *Service) EnqueueExtraction(
 ) error {
 	if !doc.ProcessingProfile.SupportsIntelligence() {
 		s.metrics.Document.RecordExtraction("skipped", "", "processing_profile_disabled")
-		return nil
-	}
-	if !s.workflowStarter.Enabled() {
 		return nil
 	}
 
@@ -328,7 +314,7 @@ func (s *Service) searchDocumentsViaSearchIndex(
 	documentIndex := s.searchConfig.Meilisearch.Indexes.Documents
 
 	query = strings.TrimSpace(query)
-	if query == "" || s.searchRepo == nil || !s.searchRepo.Enabled() || documentIndex == "" {
+	if query == "" || !s.searchRepo.Enabled() || documentIndex == "" {
 		s.metrics.Document.RecordSearchQuery("postgres", "direct")
 		return nil, nil
 	}

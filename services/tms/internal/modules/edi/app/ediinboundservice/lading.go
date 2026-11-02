@@ -429,7 +429,7 @@ func (s *Service) shadow(
 	r *reading,
 	first map[edidocument.TransactionSet]*edimessage.EDIMessage,
 ) {
-	if s.replayer == nil || r.programs.Shadow == nil {
+	if r.programs.Shadow == nil {
 		return
 	}
 	tenantInfo := inboundFileTenant(file)

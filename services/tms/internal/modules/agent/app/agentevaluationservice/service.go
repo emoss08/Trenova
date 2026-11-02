@@ -73,9 +73,6 @@ func (s *Service) Replay(
 	req *agentevaluationports.ReplayAgentRunRequest,
 	actor *permissionports.RequestActor,
 ) (*agentevaluation.Evaluation, error) {
-	if !s.workflows.Enabled() {
-		return nil, errortypes.NewBusinessError("The workflow engine is not available")
-	}
 
 	run, err := s.runs.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         req.RunID,
@@ -122,9 +119,6 @@ func (s *Service) ReplayCase(
 	req *agentevaluationports.ReplayAgentEvalCaseRequest,
 	actor *permissionports.RequestActor,
 ) (*agentevaluation.Evaluation, error) {
-	if !s.workflows.Enabled() {
-		return nil, errortypes.NewBusinessError("The workflow engine is not available")
-	}
 
 	evalCase, err := s.cases.GetByID(ctx, agentqualityports.GetAgentEvalCaseByIDRequest{
 		ID:         req.CaseID,

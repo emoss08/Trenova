@@ -16,7 +16,7 @@ import (
 // construction, the engine owns a compilation cache that is worthless if each
 // caller gets its own, and the inliner holds a pooled SSRF-safe HTTP client.
 var TemplatingModule = fx.Module("templating", fx.Provide(
-	templateregistry.NewRegistry,
+	templateregistry.Default,
 	newTemplateEngine,
 	newAssetInliner,
 ))

@@ -35,7 +35,6 @@ type Loader struct {
 	env        string
 	viper      *viper.Viper
 	validator  *validator.Validate
-	sections   []Section
 }
 
 type LoaderOption func(*Loader)
@@ -58,12 +57,6 @@ func WithEnvPrefix(prefix string) LoaderOption {
 	}
 }
 
-func WithSections(sections ...Section) LoaderOption {
-	return func(l *Loader) {
-		l.sections = slices.Clone(sections)
-	}
-}
-
 func NewLoader(opts ...LoaderOption) *Loader {
 	l := &Loader{
 		configPath: "config",
@@ -83,10 +76,6 @@ func NewLoader(opts ...LoaderOption) *Loader {
 
 // Load loads configuration from all sources
 func (l *Loader) Load() (*Config, error) {
-	if err := validateSections(l.sections); err != nil {
-		return nil, err
-	}
-
 	if err := l.determineEnvironment(); err != nil {
 		return nil, fmt.Errorf("failed to determine environment: %w", err)
 	}
@@ -104,10 +93,6 @@ func (l *Loader) Load() (*Config, error) {
 	}
 
 	if err := l.rejectRetiredSections(); err != nil {
-		return nil, err
-	}
-
-	if err := l.rejectUnownedEditionSections(); err != nil {
 		return nil, err
 	}
 
@@ -145,60 +130,15 @@ var retiredSections = map[string]string{
 		"are gone because Docling reads scans",
 }
 
-func (l *Loader) rejectUnownedEditionSections() error {
-	for _, path := range editionSectionPaths {
-		if !l.viper.IsSet(path) || l.ownedBySection(path) {
-			continue
-		}
-
-		return fmt.Errorf("%w: remove %q", ErrSectionRequiresEdition, path)
-	}
-
-	return nil
-}
-
-func (l *Loader) ownedBySection(path string) bool {
-	for _, section := range l.sections {
-		for _, owned := range section.Paths() {
-			if pathsOverlap(path, owned) {
-				return true
-			}
-		}
-	}
-
-	return false
-}
-
 func (l *Loader) decode() (*Config, error) {
 	settings := l.viper.AllSettings()
-
-	extensions := make(map[string]any, len(l.sections))
-	for _, section := range l.sections {
-		owned := make(map[string]any)
-		for _, path := range section.Paths() {
-			if value, ok := extractPath(settings, path); ok {
-				insertPath(owned, path, value)
-			}
-		}
-
-		sectionViper := viper.New()
-		if err := sectionViper.MergeConfigMap(owned); err != nil {
-			return nil, fmt.Errorf("failed to stage %s configuration: %w", section.Name(), err)
-		}
-
-		value, err := section.Decode(sectionViper)
-		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal %s configuration: %w", section.Name(), err)
-		}
-		extensions[section.Name()] = value
-	}
 
 	base := viper.New()
 	if err := base.MergeConfigMap(settings); err != nil {
 		return nil, fmt.Errorf("failed to stage config: %w", err)
 	}
 
-	config := &Config{extensions: extensions}
+	config := &Config{}
 	if err := base.UnmarshalExact(config); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
@@ -264,9 +204,6 @@ func (l *Loader) configureViper() {
 	l.bindAIAuditEnv()
 	l.bindUnlistedEnv()
 
-	for _, section := range l.sections {
-		section.SetDefaults(l.viper, l.envPrefix)
-	}
 }
 
 const (
@@ -428,9 +365,6 @@ func (l *Loader) validateConfig(config *Config) error {
 		}
 	}
 
-	if err := l.validatePlatformMode(config); err != nil {
-		return err
-	}
 	productionLike := IsProductionLike(l.env)
 	if err := config.Server.ValidateCORS(productionLike); err != nil {
 		return err
@@ -441,28 +375,7 @@ func (l *Loader) validateConfig(config *Config) error {
 		}
 	}
 
-	for _, section := range l.sections {
-		if err := section.Validate(config, l.env); err != nil {
-			return err
-		}
-	}
-
 	return config.Imaging.Validate(productionLike)
-}
-
-func (l *Loader) validatePlatformMode(config *Config) error {
-	mode := config.Platform.GetMode()
-	if !slices.Contains(editionPlatformModes, mode) {
-		return nil
-	}
-
-	for _, section := range l.sections {
-		if slices.Contains(section.PlatformModes(), mode) {
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%w: %q", ErrPlatformModeRequiresEdition, mode)
 }
 
 func validateProductionSecurity(config *Config) error {

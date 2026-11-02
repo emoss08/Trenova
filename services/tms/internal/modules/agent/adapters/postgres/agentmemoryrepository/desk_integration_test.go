@@ -29,7 +29,7 @@ func TestDeskMemories_ReachOnlyTheirReadersAndPauseReachesNobody(t *testing.T) {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	jordanUser := seedtest.NewUser(data.Organization.ID, data.BusinessUnit.ID).
 		WithUsername("jordan").
@@ -192,7 +192,7 @@ func TestDeskMemories_PageNewestFirstAndRevise(t *testing.T) {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	reader := agentmemory.MemoryReader{UserID: data.User.ID}
 
@@ -251,7 +251,7 @@ func TestMemoryPreference_SavesOneRowPerPerson(t *testing.T) {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	req := agentmemoryports.GetAgentMemoryPreferenceRequest{
 		TenantInfo: tenant,

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/novamodel"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -144,6 +145,9 @@ func (s *Background) PollBackground(
 		return nil, errortypes.NewBusinessError(
 			"The AI provider that started this call no longer exists",
 		)
+	}
+	if req.Nova {
+		provider = novamodel.Provider(provider)
 	}
 
 	adapter, err := s.Adapters.Get(provider.Kind)

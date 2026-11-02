@@ -60,6 +60,9 @@ type SaveAIProviderRequest struct {
 	EmbeddingInputStyle aiprovider.EmbeddingInputStyle
 	Trusted             bool
 	Enabled             bool
+	// Nova makes this the provider Nova runs on, taking it from the one that
+	// had it.
+	Nova bool
 	// TimeoutSeconds, MaxConcurrent, MonthlyCapUSD and OnCap are the
 	// provider's limits; zero values take the defaults.
 	TimeoutSeconds int
@@ -82,6 +85,7 @@ type PatchAIProviderRequest struct {
 	TenantInfo               pagination.TenantInfo
 	Enabled                  optional.Value[*bool]
 	Trusted                  optional.Value[*bool]
+	Nova                     optional.Value[*bool]
 	AllowPrivateNetwork      optional.Value[*bool]
 	Tasks                    optional.Value[[]aitask.Task]
 	APIKey                   optional.Value[*string]

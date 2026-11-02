@@ -45,7 +45,7 @@ func newHarness(t *testing.T) *harness {
 	fixture := testutil.SeedShipmentIntegrationFixture(t, ctx, db, data, tenant)
 	graph := createShipment(t, ctx, db, fixture, tenant, "ETA-1", shipmentvocab.StatusInTransit)
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	return &harness{
 		ctx:      dbscope.WithTenant(ctx, tenant.DBTenant()),
 		db:       db,
@@ -256,7 +256,12 @@ func TestListAttention_ReadsPastRowsOfShipmentsNoLongerTracked(t *testing.T) {
 		Limit:      1,
 	})
 	require.NoError(t, err)
-	require.Len(t, stops, 1, "a page of a finished shipment's rows is read past, not returned short")
+	require.Len(
+		t,
+		stops,
+		1,
+		"a page of a finished shipment's rows is read past, not returned short",
+	)
 	assert.Equal(t, tracked, stops[0].ETA.StopID)
 	assert.NotEmpty(t, stops[0].ProNumber)
 }

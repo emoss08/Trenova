@@ -24,7 +24,7 @@ func (s *Access) ReadRecord(
 	actor *permissionports.RequestActor,
 	ref *agentrecord.RecordRef,
 ) (*RecordRead, bool) {
-	if ref == nil || s.queryTools == nil {
+	if ref == nil {
 		return nil, false
 	}
 
@@ -42,7 +42,7 @@ func (s *Access) ReadRecordWith(
 	name string,
 	id string,
 ) (*RecordRead, bool) {
-	if actor == nil || strings.TrimSpace(id) == "" || s.queryTools == nil {
+	if actor == nil || strings.TrimSpace(id) == "" {
 		return nil, false
 	}
 

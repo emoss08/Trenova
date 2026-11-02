@@ -108,6 +108,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
@@ -323,9 +324,13 @@ func SharedOptions() fx.Option {
 			shipmentsuggestionservice.NewReader,
 			shipmentsuggestionservice.NewDecider,
 			shipmentsuggestionservice.NewCandidates,
-			shipmentetaservice.New,
-			shipmentetaservice.NewTrackingReader,
-			shipmentetaservice.NewRefresher,
+			shipmentetaservice.NewSources,
+			fx.Annotate(
+				shipmentetaservice.NewReader,
+				fx.As(new(shipmenttrackingports.ShipmentEtaReader)),
+				fx.As(new(shipmenttrackingports.ShipmentTrackingReader)),
+			),
+			fx.Annotate(shipmentetaservice.NewRefresher, fx.As(new(stopetaports.Refresher))),
 			etacontract.NewRequester,
 			etatrigger.New,
 			fx.Annotate(

@@ -79,7 +79,7 @@ func EvaluateWorkflowID(tenantInfo pagination.TenantInfo) string {
 type RequesterParams struct {
 	fx.In
 
-	Signals kernelports.WorkflowSignalStarter `optional:"true"`
+	Signals kernelports.WorkflowSignalStarter
 	Logger  *zap.Logger
 }
 
@@ -99,7 +99,7 @@ func (r *Requester) RequestEvaluation(
 	tenantInfo pagination.TenantInfo,
 	targets *factoringports.EvaluationTargets,
 ) {
-	if r.signals == nil || targets.Empty() || tenantInfo.OrgID.IsNil() || tenantInfo.BuID.IsNil() {
+	if targets.Empty() || tenantInfo.OrgID.IsNil() || tenantInfo.BuID.IsNil() {
 		return
 	}
 	id := EvaluateWorkflowID(tenantInfo)

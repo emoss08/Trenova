@@ -1,4 +1,4 @@
-import type { ExtractionFieldAccuracy } from "@/lib/graphql/extraction-eval";
+import type { ExtractionFieldAccuracy } from "@/lib/graphql/extraction-accuracy";
 import { Progress } from "@trenova/shared/components/ui/progress";
 import {
   Table,

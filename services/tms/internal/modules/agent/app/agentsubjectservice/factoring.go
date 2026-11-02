@@ -23,9 +23,6 @@ func (s *Service) factoringNoa(
 		ID:    noaID.String(),
 		Label: "Notice of assignment",
 	}
-	if s.noas == nil {
-		return subject, nil
-	}
 
 	found, err := s.noas.GetByID(ctx, factoringports.GetNoaRequest{
 		ID:         noaID,
@@ -57,9 +54,6 @@ func (s *Service) factoringSubmission(
 		Type:  agent.SubjectFactoringSubmission,
 		ID:    submissionID.String(),
 		Label: "Factoring schedule",
-	}
-	if s.submissions == nil {
-		return subject, nil
 	}
 
 	found, err := s.submissions.GetByID(ctx, factoringsubmissionports.GetSubmissionRequest{
@@ -96,9 +90,6 @@ func (s *Service) factoringRemittance(
 		Type:  agent.SubjectFactoringRemittance,
 		ID:    remittanceID.String(),
 		Label: "Factor remittance",
-	}
-	if s.remittances == nil {
-		return subject, nil
 	}
 
 	found, err := s.remittances.Get(ctx, factoringremittanceports.GetRemittanceRequest{

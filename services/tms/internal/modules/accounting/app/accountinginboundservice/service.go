@@ -67,11 +67,11 @@ type Params struct {
 	DriverPayer      carriersettlementports.DriverSettlementPayer
 	AuditService     auditports.AuditService
 	Permissions      permissionports.PermissionEngine
-	Refresher        accountingconnectionports.AccountingReferenceRefresher `optional:"true"`
-	Drift            accountingdriftports.AccountingDriftRechecker          `optional:"true"`
-	Publisher        agenteventports.AgentEventPublisher                    `optional:"true"`
-	Watchtower       watchtowerports.WatchtowerProjector                    `optional:"true"`
-	Realtime         realtimeports.RealtimeService                          `optional:"true"`
+	Refresher        accountingconnectionports.AccountingReferenceRefresher
+	Drift            accountingdriftports.AccountingDriftRechecker
+	Publisher        agenteventports.AgentEventPublisher
+	Watchtower       watchtowerports.WatchtowerProjector
+	Realtime         realtimeports.RealtimeService
 }
 
 type Service struct {
@@ -280,9 +280,6 @@ func (s *Service) logAudit(
 	previous map[string]any,
 	comment string,
 ) {
-	if s.audit == nil {
-		return
-	}
 	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceAccountingSync,
 		ResourceID:     change.ID.String(),
@@ -316,9 +313,6 @@ func (s *Service) refreshAttention(
 	ctx context.Context,
 	conn *accountingconnection.AccountingConnection,
 ) {
-	if s.watchtower == nil {
-		return
-	}
 	tenant := tenantOf(conn)
 	groups, err := s.changes.ListAttention(
 		ctx,
@@ -362,9 +356,6 @@ func (s *Service) publishInvalidation(
 	actorID pulid.ID,
 	recordID pulid.ID,
 ) {
-	if s.realtime == nil {
-		return
-	}
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,

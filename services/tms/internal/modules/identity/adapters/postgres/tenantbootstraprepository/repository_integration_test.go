@@ -77,7 +77,7 @@ func TestBootstrapCreatesEverythingATenantNeeds(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	repo := New(Params{DB: conn, Logger: zap.NewNop()})
 
 	org := newOrganization("Acme Freight, LLC")
@@ -138,7 +138,7 @@ func TestBootstrapResolvesThePlaceholderState(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	result, err := repo.Bootstrap(ctx, &tenantports.BootstrapTenantRequest{
 		BusinessUnitName:  "Beta Haulers",

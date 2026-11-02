@@ -46,7 +46,7 @@ type Params struct {
 	TemplateRepo  formulatemplateports.FormulaTemplateRepository
 	Resolver      tariffports.Resolver
 	AuditService  auditports.AuditService
-	SheetLimits   pkgrateimport.Limits `optional:"true"`
+	SheetLimits   pkgrateimport.Limits
 	ContentGate   contentscanports.Gate
 }
 

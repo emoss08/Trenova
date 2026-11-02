@@ -67,9 +67,7 @@ type Service struct {
 //nolint:gocritic // this is dependency injection
 func New(p Params) *Service {
 	var systemUserPassword string
-	if p.SystemConfig != nil {
-		systemUserPassword = p.SystemConfig.SystemUserPassword
-	}
+	systemUserPassword = p.SystemConfig.SystemUserPassword
 
 	return &Service{
 		db:                 p.DB,
@@ -256,10 +254,6 @@ func organizationFor(inputs *instancebootstrap.Inputs) *tenant.Organization {
 }
 
 func (s *Service) audit(ctx context.Context, out *created) {
-	if s.auditor == nil {
-		return
-	}
-
 	org := out.tenant.Organization
 	owner := out.tenant.Owner
 	actor := permissionports.SystemAuditActor()

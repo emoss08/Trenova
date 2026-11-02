@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.temporal.io/api/enums/v1"
 	"go.uber.org/zap"
@@ -18,11 +17,6 @@ const (
 )
 
 func (s *Service) ReadUnread(ctx context.Context, tenantInfo pagination.TenantInfo) (int, error) {
-	if s.workflows == nil || !s.workflows.Enabled() {
-		return 0, errortypes.NewBusinessError(
-			"Background work is not running, so Nova cannot read messages right now",
-		)
-	}
 
 	started := 0
 	for started < inboundmessageports.MaxBulkSelection {

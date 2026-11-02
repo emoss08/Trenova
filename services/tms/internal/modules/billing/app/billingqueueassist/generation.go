@@ -34,9 +34,6 @@ func (s *Service) NovaGeneration(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*billingqueueports.NovaGeneration, error) {
-	if s.generator == nil {
-		return nil, nil //nolint:nilnil // nothing generates in bulk without the worker's generator
-	}
 	state, err := s.generator.Generation(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -141,7 +138,7 @@ func (s *Service) SubmitReviews(
 		last := pending[len(pending)-1]
 		submission.Next = &billingqueueports.ReviewCursor{CreatedAt: last.CreatedAt, ID: last.ID}
 	}
-	if req.Inline || s.batches == nil {
+	if req.Inline {
 		submission.Inline = make([]pulid.ID, 0, len(pending))
 		for _, unreviewed := range pending {
 			submission.Inline = append(submission.Inline, unreviewed.ID)
@@ -203,7 +200,7 @@ func (s *Service) ReviewBatchEnded(
 	tenantInfo pagination.TenantInfo,
 	submission *billingqueueports.ReviewSubmission,
 ) (bool, error) {
-	if submission.Handle == nil || s.batches == nil {
+	if submission.Handle == nil {
 		return true, nil
 	}
 	status, err := s.batches.BatchStatus(ctx, &llmports.BatchStatusRequest{
@@ -226,7 +223,7 @@ func (s *Service) CancelReviews(
 	tenantInfo pagination.TenantInfo,
 	submission *billingqueueports.ReviewSubmission,
 ) error {
-	if submission.Handle == nil || s.batches == nil {
+	if submission.Handle == nil {
 		return nil
 	}
 
@@ -246,7 +243,7 @@ func (s *Service) ApplyReviews(
 	req *billingqueueports.ApplyReviewsRequest,
 ) (int, error) {
 	submission := req.Submission
-	if submission.Handle == nil || s.batches == nil {
+	if submission.Handle == nil {
 		return 0, nil
 	}
 

@@ -72,7 +72,7 @@ func setupDocumentServiceHarness(t *testing.T) *serviceHarness {
 
 	fixtures := createTestFixtures(t, db, ctx)
 	ctx = fixtures.ctx
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	logger := zap.NewNop()
 
 	cfg := &config.Config{

@@ -3,13 +3,38 @@
 Nova does two kinds of work. The **Desk** is a conversation: an agent with a tool catalog,
 guards and a person waiting on each turn (`agentruntime`, see [agent-runtime](agent-runtime.md)).
 Everything else Nova does is **a task**: one job with its own instructions, its own task (which
-picks the providers and the model) and its own usage feature (where its cost shows). Tasks run
+names the work in usage records) and its own usage feature (where its cost shows). Tasks run
 through the harness, `internal/modules/agent/app/novaharness`, never through the Desk runtime,
 so the Desk's guards and prompt never shape them.
 
 The harness puts Nova's identity (`identity.go`: who Nova is, that it works inside Trenova, the
 rules every task follows) in front of each task's instructions. A task's instructions start
 "Your task: …" and say one thing.
+
+## Where Nova runs
+
+Nova always runs on its own model, `novamodel.ID` (Claude Haiku 5.5), on the one provider the
+organization chose for Nova (`ai_providers.nova`, at most one per organization, chosen on the
+providers tab of Agent Control or in a provider's editor). That provider lends Nova its
+credential, platform, limits, monthly cap and health; its own model, prices, reasoning and
+advisor serve only the Desk. The Desk is the opposite: an organization assigns its tasks to the
+providers and models it picks.
+
+- **The mark.** Every request the harness sends (structured, chat, batch, background, and their
+  polls) carries `Nova: true`. The router answers a Nova request with `Engine.NovaProvider`:
+  the Nova provider as `novamodel.Provider` copies it, with Nova's model and that model's list
+  price. Nothing else sets the mark, and a Nova task never names a provider, a preference or a
+  hedge.
+- **Which tasks.** `aitask.Task.Nova` names Nova's tasks. They are never assigned to providers:
+  the catalog, the routing grid, route previews and tune-ups list only `aitask.RoutedTasks()`,
+  and a provider that lists one fails validation. A task's name still says what the usage was
+  for.
+- **Which providers.** An Anthropic Messages provider reaching Claude through a platform that
+  names models by their Claude API id (`aiprovider.NovaPlatforms`: the Claude API, Claude
+  Platform on AWS or Google Cloud, Vertex AI). Bedrock and Foundry name models their own way.
+- **Readiness.** `TaskRunner.Available(ctx, tenant)` (the router's `NovaReady`) is true when AI is
+  on and the Nova provider exists and is enabled. A feature asks it, never the provider list;
+  without it the error tells the organization to choose an Anthropic provider for Nova.
 
 ## The ports
 
@@ -89,9 +114,8 @@ palette card is unchanged, and ends with `done` naming only the question.
   opens with the question and the answer. The palette's own reads are not replayed (the Desk
   holds none of those tools); the records they found ride on the question as mentions. A
   question with no answer opens an empty conversation and the client asks it there.
-- **Access.** Asking needs a provider for `PaletteAnswer` (it borrows the Desk's until one is
-  assigned), not the general assistant; carrying the answer into the Desk needs the general
-  assistant.
+- **Access.** Asking needs Nova (a provider chosen for it), not the general assistant; carrying
+  the answer into the Desk needs the general assistant.
 - **Retention.** The workflow's input and result (the question, the answer's text and the
   records it read) stay in Temporal history for the namespace's retention period, which is
   what `Keep` reads.

@@ -30,18 +30,10 @@ type Service struct {
 var _ shipmentinvalidationports.ShipmentInvalidator = (*Service)(nil)
 
 func New(p Params) shipmentinvalidationports.ShipmentInvalidator {
-	return NewWithDependencies(p.Realtime, p.Epochs, p.Logger)
-}
-
-func NewWithDependencies(
-	realtime realtimeports.RealtimeService,
-	epochs shipmentboardports.ShipmentBoardEpochBumper,
-	logger *zap.Logger,
-) *Service {
 	return &Service{
-		realtime: realtime,
-		epochs:   epochs,
-		l:        logger.Named("service.shipment-invalidation"),
+		realtime: p.Realtime,
+		epochs:   p.Epochs,
+		l:        p.Logger.Named("service.shipment-invalidation"),
 	}
 }
 
@@ -54,18 +46,12 @@ func (s *Service) InvalidateShipments(
 		return
 	}
 
-	if s.epochs != nil {
-		if err := s.epochs.BumpEpoch(ctx, req.OrganizationID, req.BusinessUnitID); err != nil {
-			s.l.Warn(
-				"failed to bump shipment board epoch",
-				zap.String("organizationId", req.OrganizationID.String()),
-				zap.Error(err),
-			)
-		}
-	}
-
-	if s.realtime == nil {
-		return
+	if err := s.epochs.BumpEpoch(ctx, req.OrganizationID, req.BusinessUnitID); err != nil {
+		s.l.Warn(
+			"failed to bump shipment board epoch",
+			zap.String("organizationId", req.OrganizationID.String()),
+			zap.Error(err),
+		)
 	}
 
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{

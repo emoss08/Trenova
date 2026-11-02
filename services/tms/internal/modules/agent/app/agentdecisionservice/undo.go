@@ -46,11 +46,7 @@ func newUndoWindow(key pulid.ID, now time.Time) *undoWindow {
 // approval does, and only when there is a workflow engine to hold it; without
 // one it goes through at once, as it always has.
 func (s *Service) Defers(decision agentdecision.DecisionType) bool {
-	if decision != agentdecision.DecisionAccepted && decision != agentdecision.DecisionModified {
-		return false
-	}
-
-	return s.workflows != nil && s.workflows.Enabled()
+	return decision == agentdecision.DecisionAccepted || decision == agentdecision.DecisionModified
 }
 
 // ApproveDeferred records approvals that commit when the undo window closes,
@@ -533,7 +529,7 @@ func errAlreadyCommitted() error {
 }
 
 func (s *Service) logUndo(decision *agentdecision.AgentDecision, actor kernelports.AuditActor) {
-	if s.audit == nil || decision.ProposalID == nil {
+	if decision.ProposalID == nil {
 		return
 	}
 

@@ -120,9 +120,3 @@ func noticeHTML(notice *detentionnotice.DetentionNotice) string {
 	return "<pre style=\"font-family:inherit;white-space:pre-wrap\">" +
 		html.EscapeString(notice.Body) + "</pre>"
 }
-
-// NoticeHTMLForTest exposes the send-path HTML reconstruction so the escaping
-// guarantee can be asserted without standing up an email provider.
-func NoticeHTMLForTest(notice *detentionnotice.DetentionNotice) string {
-	return noticeHTML(notice)
-}

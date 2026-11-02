@@ -68,16 +68,14 @@ type Params struct {
 	Logger *zap.Logger
 	// DB holds a tier change and the ledger's record of it in one
 	// transaction, so neither lands without the other.
-	DB           kernelports.Transactor
-	Trust        agenttoolports.AgentToolTrustRepository
-	Definitions  agentdefinitionports.AgentDefinitionRepository
-	Controls     tenantports.AgentControlRepository
-	Runs         agentruntimeports.AgentRunRepository
-	Tools        agenttoolports.AgentToolRegistry
-	AuditService auditports.AuditService
-	// Notifications is optional so the ledger still counts where nothing can
-	// be told about a change; the audit line is the durable record either way.
-	Notifications *notificationservice.Service `optional:"true"`
+	DB            kernelports.Transactor
+	Trust         agenttoolports.AgentToolTrustRepository
+	Definitions   agentdefinitionports.AgentDefinitionRepository
+	Controls      tenantports.AgentControlRepository
+	Runs          agentruntimeports.AgentRunRepository
+	Tools         agenttoolports.AgentToolRegistry
+	AuditService  auditports.AuditService
+	Notifications *notificationservice.Service
 }
 
 type Service struct {
@@ -104,9 +102,7 @@ func New(p Params) agenttrustports.AgentTrustService {
 		tools:       p.Tools,
 		audit:       p.AuditService,
 	}
-	if p.Notifications != nil {
-		svc.notifications = p.Notifications
-	}
+	svc.notifications = p.Notifications
 
 	return svc
 }
@@ -413,9 +409,6 @@ func (s *Service) promotable(toolName string) agent.AutonomyTier {
 }
 
 func (s *Service) policyOf(toolName string) (agenttoolports.ToolPolicy, bool) {
-	if s.tools == nil {
-		return agenttoolports.ToolPolicy{}, false
-	}
 	tool, ok := s.tools.Get(toolName)
 	if !ok {
 		return agenttoolports.ToolPolicy{}, false
@@ -425,10 +418,6 @@ func (s *Service) policyOf(toolName string) (agenttoolports.ToolPolicy, bool) {
 }
 
 func (s *Service) logTierChange(change tierChange, to agent.AutonomyTier, comment string) {
-	if s.audit == nil {
-		return
-	}
-
 	actor := permissionports.SystemAuditActor()
 	if change.decidedBy.IsNotNil() {
 		actor = kernelports.AuditActor{
@@ -475,10 +464,6 @@ func (s *Service) notify(
 	to agent.AutonomyTier,
 	notice tierNotice,
 ) {
-	if s.notifications == nil {
-		return
-	}
-
 	buID := change.tenant.BuID
 	if _, err := s.notifications.Create(ctx, &notification.Notification{
 		OrganizationID: change.tenant.OrgID,

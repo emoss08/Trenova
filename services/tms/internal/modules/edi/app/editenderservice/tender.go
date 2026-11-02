@@ -192,68 +192,53 @@ func (s *Service) SubmitLoadTender(
 	}
 
 	var created *editransfer.EDITransfer
-	if s.db == nil {
-		created, err = s.transferRepo.CreateTransfer(ctx, entity)
-		if err != nil {
-			return nil, err
-		}
-		if err = s.recipient.UpsertInternal(
-			ctx,
-			created,
-			nil,
-			editenderchange.TenderRecipientBaselineStatusSent,
-		); err != nil {
-			return nil, err
-		}
-	} else {
-		err = s.db.Transact(
-			ctx,
-			kernelports.TxOptions{},
-			func(txCtx context.Context) error {
-				lockedShipment, lockErr := s.shipments.Lock(
-					txCtx,
-					req.SourceShipmentID,
-					req.TenantInfo,
-				)
-				if lockErr != nil {
-					return lockErr
-				}
-				if validateErr := validateTenderEligibility(lockedShipment); validateErr != nil {
-					return validateErr
-				}
+	err = s.db.Transact(
+		ctx,
+		kernelports.TxOptions{},
+		func(txCtx context.Context) error {
+			lockedShipment, lockErr := s.shipments.Lock(
+				txCtx,
+				req.SourceShipmentID,
+				req.TenantInfo,
+			)
+			if lockErr != nil {
+				return lockErr
+			}
+			if validateErr := validateTenderEligibility(lockedShipment); validateErr != nil {
+				return validateErr
+			}
 
-				created, err = s.transferRepo.CreateTransfer(txCtx, entity)
-				if err != nil {
-					return err
-				}
-				if err = s.recipient.UpsertInternal(
-					txCtx,
-					created,
-					nil,
-					editenderchange.TenderRecipientBaselineStatusSent,
-				); err != nil {
-					return err
-				}
+			created, err = s.transferRepo.CreateTransfer(txCtx, entity)
+			if err != nil {
+				return err
+			}
+			if err = s.recipient.UpsertInternal(
+				txCtx,
+				created,
+				nil,
+				editenderchange.TenderRecipientBaselineStatusSent,
+			); err != nil {
+				return err
+			}
 
-				if err = s.shipments.SetTenderStatus(
-					txCtx,
-					req.SourceShipmentID,
-					req.TenantInfo,
-					shipmentvocab.TenderStatusTendered,
-				); err != nil {
-					return err
-				}
+			if err = s.shipments.SetTenderStatus(
+				txCtx,
+				req.SourceShipmentID,
+				req.TenantInfo,
+				shipmentvocab.TenderStatusTendered,
+			); err != nil {
+				return err
+			}
 
-				return s.shipments.CreateSystemComment(
-					txCtx,
-					req.SourceShipmentID,
-					req.TenantInfo,
-					"EDI load tender submitted.",
-					map[string]any{"transferId": created.ID},
-				)
-			},
-		)
-	}
+			return s.shipments.CreateSystemComment(
+				txCtx,
+				req.SourceShipmentID,
+				req.TenantInfo,
+				"EDI load tender submitted.",
+				map[string]any{"transferId": created.ID},
+			)
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

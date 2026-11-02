@@ -44,7 +44,7 @@ func newUserFixture(t *testing.T) *userFixture {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	secondOrg := seedtest.NewOrganization(data.BusinessUnit.ID, data.State.ID).
 		WithName("Second Organization").

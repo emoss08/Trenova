@@ -38,7 +38,7 @@ type Params struct {
 	Auditor          permissionports.SecurityAuditor
 	Notifier         permissionports.PermissionChangeNotifier
 	Scopes           permissionports.ScopePolicy
-	RoleActivation   iamports.RoleActivationPolicy `optional:"true"`
+	RoleActivation   iamports.RoleActivationPolicy
 }
 
 type scopePolicy = permissionports.ScopePolicy
@@ -1336,7 +1336,7 @@ func (s *Service) allResourcePermissions() []*rbac.ResourcePermission {
 }
 
 func (s *Service) requireActivationForDSD(ctx context.Context, req *SaveConstraintRequest) error {
-	if req.Constraint.Type != rbac.RoleConstraintTypeDSD || s.activation == nil {
+	if req.Constraint.Type != rbac.RoleConstraintTypeDSD {
 		return nil
 	}
 	required, err := s.activation.RoleActivationRequired(ctx, pagination.TenantInfo{

@@ -43,7 +43,7 @@ func TestGetByIDsReturnsOnlyTheTenantsDocumentTypes(t *testing.T) {
 	second := seedDocumentType(t, ctx, db, tenantA, "BYIDBOL")
 	foreign := seedDocumentType(t, ctx, db, tenantB, "BYIDINV")
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	entities, err := repo.GetByIDs(
 		tenantA.Ctx(ctx),

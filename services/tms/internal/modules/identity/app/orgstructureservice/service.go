@@ -38,7 +38,7 @@ type Params struct {
 	Logger       *zap.Logger
 	Repo         orgstructureports.OrgStructureRepository
 	AuditService auditports.AuditService
-	Realtime     realtimeports.RealtimeService `optional:"true"`
+	Realtime     realtimeports.RealtimeService
 }
 
 type Service struct {
@@ -57,25 +57,6 @@ func New(p Params) *Service {
 	}
 }
 
-// Deps is the constructor shape tests use to swap in fakes.
-type Deps struct {
-	Logger       *zap.Logger
-	Repo         orgstructureports.OrgStructureRepository
-	AuditService auditports.AuditService
-}
-
-func NewWithDeps(d Deps) *Service {
-	logger := d.Logger
-	if logger == nil {
-		logger = zap.NewNop()
-	}
-	return &Service{
-		l:            logger.Named("service.org-structure"),
-		repo:         d.Repo,
-		auditService: d.AuditService,
-	}
-}
-
 type auditParams struct {
 	resource   permission.Resource
 	resourceID string
@@ -88,7 +69,7 @@ type auditParams struct {
 }
 
 func (s *Service) audit(p *auditParams) {
-	if s.auditService == nil || p.userID.IsNil() {
+	if p.userID.IsNil() {
 		return
 	}
 	params := &auditports.LogActionParams{
@@ -118,9 +99,6 @@ func (s *Service) publish(
 	recordID pulid.ID,
 	userID pulid.ID,
 ) {
-	if s.realtime == nil {
-		return
-	}
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,

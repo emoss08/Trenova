@@ -37,7 +37,7 @@ type permissionCacheRepository struct {
 func NewPermissionCacheRepository(
 	p PermissionCacheRepositoryParams,
 ) permissionports.PermissionCacheRepository {
-	grants := permissioncatalog.NewRegistry().GrantFingerprint()[:grantFingerprintPrefix]
+	grants := permissioncatalog.Default().GrantFingerprint()[:grantFingerprintPrefix]
 
 	return &permissionCacheRepository{
 		client: p.Client,

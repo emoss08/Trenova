@@ -40,7 +40,7 @@ func RemittanceStageWorkflowID(remittanceID pulid.ID) string {
 type RemittanceStageStarterParams struct {
 	fx.In
 
-	Workflows kernelports.WorkflowStarter `optional:"true"`
+	Workflows kernelports.WorkflowStarter
 	Logger    *zap.Logger
 }
 
@@ -66,11 +66,6 @@ func (s *RemittanceStageStarter) StartStage(
 	remittance *factoringremittance.Remittance,
 ) {
 	if remittance == nil {
-		return
-	}
-	if s.workflows == nil || !s.workflows.Enabled() {
-		s.l.Warn("remittance reading is not available; the PDF waits to be read again",
-			zap.String("remittanceId", remittance.ID.String()))
 		return
 	}
 	payload := &RemittanceStagePayload{

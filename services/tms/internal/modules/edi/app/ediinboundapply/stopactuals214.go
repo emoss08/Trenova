@@ -147,7 +147,7 @@ func (s *Service) resolveTendered214Target(
 	req *RecordTenderedShipmentStatusRequest,
 ) (*tendered214Target, []string, error) {
 	plan, ok := stopActualsPlanForStatusCode(req.StatusCode)
-	if !ok || s.trackingEvents == nil || s.shipmentMoveRepo == nil {
+	if !ok {
 		return nil, nil, nil
 	}
 	moveID := req.Offer.Tender.ShipmentMoveID

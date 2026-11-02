@@ -50,7 +50,7 @@ func TestGetByIDsReturnsOnlyTheTenantsReasonCodes(t *testing.T) {
 	second := seedReasonCode(t, ctx, db, tenantA, "WX2")
 	foreign := seedReasonCode(t, ctx, db, tenantB, "WX3")
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	entities, err := repo.GetByIDs(
 		tenantA.Ctx(ctx),

@@ -37,7 +37,7 @@ func (s *Engine) applyCreditToSource(
 	actor *permissionports.RequestActor,
 ) (*invoice.Invoice, error) {
 	amount := min(creditMemo.CreditRemainingMinor(), source.OpenBalanceMinor())
-	if s.credits == nil || amount <= 0 {
+	if amount <= 0 {
 		return source, nil
 	}
 

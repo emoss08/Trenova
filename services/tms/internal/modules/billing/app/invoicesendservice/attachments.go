@@ -27,9 +27,6 @@ func (s *Service) documentForID(
 	documentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*document.Document, error) {
-	if s.documentService == nil {
-		return nil, errortypes.NewBusinessError("Document service is not configured")
-	}
 	return s.documentService.Get(
 		ctx,
 		documentports.GetDocumentByIDRequest{ID: documentID, TenantInfo: tenantInfo},

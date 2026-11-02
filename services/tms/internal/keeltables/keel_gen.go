@@ -49,9 +49,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback/aifeedbackdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderdismissal/aiproviderdismissaldb"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/airetraining/airetrainingdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval/airetrievaldb"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining/aitrainingdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup/aituneupdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis/analysisdb"
@@ -107,9 +105,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentsearchprojection/documentsearchprojectiondb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/documenttemplatedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload/documentuploaddb"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval/extractionevaldb"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout/extractionrolloutdb"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow/extractionshadowdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument/generateddocumentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
@@ -139,7 +134,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam/iamdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/instancebootstrap/instancebootstrapdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol/invoiceadjustmentcontroldb"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/onboarding/onboardingdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/passwordreset/passwordresetdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig/sequenceconfigdb"
@@ -331,11 +325,8 @@ func All() []*schema.Table {
 		aiproviderdismissaldb.FailureDismissalsSchema(),
 		aianalyticsdb.ProviderHoursSchema(),
 		aiproviderdb.ProvidersSchema(),
-		airetrainingdb.RetrainingCyclesSchema(),
 		airetrievaldb.SettingsesSchema(),
 		settingversiondb.SettingVersionsSchema(),
-		aitrainingdb.TrainingExportRecordsSchema(),
-		aitrainingdb.TrainingExportsSchema(),
 		aituneupdb.TuneUpsSchema(),
 		aiusagedb.AIUsageRecordsSchema(),
 		aianalyticsdb.UnitToolsSchema(),
@@ -506,14 +497,6 @@ func All() []*schema.Table {
 		exchangeratedb.SettlementQuotesSchema(),
 		exchangeratedb.ExchangeRatesSchema(),
 		iamdb.ExternalIdentitiesSchema(),
-		extractionevaldb.CasePagesesSchema(),
-		extractionevaldb.ExtractionCasesSchema(),
-		extractionevaldb.ExtractionResultsSchema(),
-		extractionevaldb.ExtractionRunsSchema(),
-		extractionrolloutdb.RolloutAssignmentsSchema(),
-		extractionrolloutdb.ExtractionRolloutsSchema(),
-		extractionshadowdb.ShadowResultsSchema(),
-		extractionshadowdb.ShadowSettingsesSchema(),
 		factoringdb.AgreementDocumentTypesSchema(),
 		factoringdb.AgreementsSchema(),
 		factoringcompanydb.FactoringCompaniesSchema(),
@@ -616,7 +599,6 @@ func All() []*schema.Table {
 		orderdb.OrdersSchema(),
 		ptodb.OrgHolidaysSchema(),
 		iamdb.AccessSettingsesSchema(),
-		onboardingdb.OnboardingsSchema(),
 		subscriptiondb.SubscriptionsSchema(),
 		tenantdb.OrganizationsSchema(),
 		workerinjurydb.OSHAAnnualSummariesSchema(),

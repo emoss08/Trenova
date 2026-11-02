@@ -39,7 +39,7 @@ func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	logger := zap.NewNop()
 	manualRepo := manualjournalrepository.New(
 		manualjournalrepository.Params{DB: conn, Logger: logger},

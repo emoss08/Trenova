@@ -195,39 +195,6 @@ func New(p Params) *Service {
 	}
 }
 
-// Deps lets tests assemble the service from narrow fakes without Uber FX.
-type Deps struct {
-	Logger       *zap.Logger
-	WorkerRepo   workerports.WorkerRepository
-	ReviewCounts ReviewCounter
-	Credentials  CredentialSummarizer
-	Training     TrainingSummarizer
-	Safety       SafetyScorer
-	Checklists   ChecklistLister
-	PTO          BalanceReader
-	Reviews      ReviewLister
-	Leave        LeaveCounter
-}
-
-func NewWithDeps(d Deps) *Service {
-	logger := d.Logger
-	if logger == nil {
-		logger = zap.NewNop()
-	}
-	return &Service{
-		l:            logger.Named("service.worker-overview"),
-		workerRepo:   d.WorkerRepo,
-		reviewCounts: d.ReviewCounts,
-		credentials:  d.Credentials,
-		training:     d.Training,
-		safety:       d.Safety,
-		checklists:   d.Checklists,
-		pto:          d.PTO,
-		reviews:      d.Reviews,
-		leave:        d.Leave,
-	}
-}
-
 // Get composes the overview. The sections are read concurrently because this
 // backs a single panel view and running six roll-ups in series would make the
 // panel feel slower than the tabs it replaces. Any section failing fails the
@@ -425,7 +392,7 @@ func (s *Service) RosterAttention(
 		return err
 	})
 	group.Go(func() error {
-		if s.leave == nil || !access.Leave {
+		if !access.Leave {
 			return nil
 		}
 		var err error
@@ -445,7 +412,7 @@ func (s *Service) RosterAttention(
 	if access.Reviews {
 		attention.ReviewsAwaitingSignOff = &reviews
 	}
-	if access.Leave && s.leave != nil {
+	if access.Leave {
 		attention.LeaveCertificationsOutstanding = &leaveCerts
 	}
 	if counts != nil {

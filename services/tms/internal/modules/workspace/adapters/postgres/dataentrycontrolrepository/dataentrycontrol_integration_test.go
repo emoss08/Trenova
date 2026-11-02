@@ -24,7 +24,7 @@ func TestGetOrCreateConcurrentCreatesSingleTenantControl(t *testing.T) {
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	tenantCtx := data.Ctx(ctx)
 	repo := New(Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 
@@ -68,7 +68,7 @@ func TestGetOrCreateInAReadOnlyTransactionWritesNothing(t *testing.T) {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	tenantCtx := data.Ctx(ctx)
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	repo := New(Params{DB: conn, Logger: zap.NewNop()})
 
 	d := dataentrycontroldb.DataEntryControls

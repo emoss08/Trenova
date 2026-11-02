@@ -64,10 +64,6 @@ func identityFromOIDCClaims(
 }
 
 func (s *Service) resolveSSOUser(ctx context.Context, req *ssoUserLookup) (*tenant.User, error) {
-	if s.links == nil {
-		return nil, errortypes.NewBusinessError("SSO is not configured")
-	}
-
 	identity := req.Identity
 	if identity.Issuer == "" || identity.Subject == "" {
 		return nil, errortypes.NewAuthenticationError(

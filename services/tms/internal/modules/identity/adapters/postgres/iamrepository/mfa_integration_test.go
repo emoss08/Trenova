@@ -23,7 +23,7 @@ func TestConsumeRecoveryCodeMatchesEachHashVersionOnlyByItsOwnDigest(t *testing.
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	repo := NewMFARepository(MFARepositoryParams{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 	userID := data.User.ID
@@ -95,9 +95,12 @@ func TestRecoveryCodeHashVersionDefaultsToKeyedForNewRows(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
-	_, err := keel.Exec(ctx, db,
+	_, err := keel.Exec(
+		ctx,
+		db,
 		`INSERT INTO mfa_recovery_codes (id, user_id, organization_id, code_hash) VALUES ('mrc_default', $1, $2, 'digest')`,
-		data.User.ID.String(), data.Organization.ID.String(),
+		data.User.ID.String(),
+		data.Organization.ID.String(),
 	)
 	require.NoError(t, err)
 

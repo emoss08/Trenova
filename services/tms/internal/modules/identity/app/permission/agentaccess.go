@@ -19,7 +19,7 @@ func (e *engine) grantedAgentIDs(
 	orgID pulid.ID,
 	roles []*rbac.Role,
 ) ([]string, error) {
-	if e.agentGrants == nil || len(roles) == 0 {
+	if len(roles) == 0 {
 		return []string{}, nil
 	}
 

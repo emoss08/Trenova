@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/emoss08/trenova/internal/bootstrap/core"
-	"github.com/emoss08/trenova/internal/bootstrap/edition"
 	"github.com/emoss08/trenova/internal/bootstrap/workerapp"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -17,8 +16,7 @@ var rootCmd = &cobra.Command{
 	Use:   "trenova-worker",
 	Short: "Run the Trenova worker service",
 	RunE: func(_ *cobra.Command, _ []string) error {
-		e := edition.Current()
-		workerapp.Run(fx.Options(core.OptionsFor(e), workerapp.Modules()), queues)
+		workerapp.Run(fx.Options(core.Options(), workerapp.Modules()), queues)
 		return nil
 	},
 }

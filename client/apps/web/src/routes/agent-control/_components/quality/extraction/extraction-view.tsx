@@ -1,59 +1,34 @@
-import { usePermission } from "@/hooks/use-permission";
-import { EXTRACTION_ACCURACY_KEY, fetchExtractionAccuracy } from "@/lib/graphql/extraction-eval";
+import {
+  EXTRACTION_ACCURACY_KEY,
+  fetchExtractionAccuracy,
+} from "@/lib/graphql/extraction-accuracy";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
-import { Button } from "@trenova/shared/components/ui/button";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Operation, Resource } from "@trenova/shared/types/permission";
-import { AlertCircleIcon, PlayIcon } from "@trenova/shared/components/icons";
+import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
-import { useQueryStates } from "nuqs";
-import { useCallback, useMemo } from "react";
+import { useQueryState } from "nuqs";
+import { useMemo } from "react";
 import {
-  EXTRACTION_DIALOG_PARAM,
   EXTRACTION_VIEW_PARAM,
-  extractionDialogParser,
   extractionViewParser,
   type ExtractionView as ExtractionSubView,
 } from "../../../ai-control-tabs";
 import { AccuracyPanel } from "./accuracy-panel";
-import { CasesTable } from "./cases-table";
 import { CorrectionsTable } from "./corrections-table";
 import { ExtractionFigures } from "./extraction-figures";
 import { EXTRACTION_STALE_MS, EXTRACTION_WINDOW_DAYS } from "./extraction-model";
 import { AccuracyPanelSkeleton, EXTRACTION_FIGURES } from "./extraction-skeleton";
-import { NewRunDialog } from "./new-run-dialog";
 import { ProviderTrendsPanel } from "./provider-trends-panel";
-import { RolloutView } from "./rollout-view";
-import { RunsTable } from "./runs-table";
-import { ShadowView } from "./shadow-view";
-import { useExtractionDialog } from "./use-extraction-dialog";
-
-const viewParsers = {
-  [EXTRACTION_VIEW_PARAM]: extractionViewParser,
-  [EXTRACTION_DIALOG_PARAM]: extractionDialogParser,
-};
 
 /**
- * How well documents are read into shipment drafts. Production accuracy comes
- * from the corrections people make; the evaluation set freezes the fair ones
- * so any model can be run against the same documents and compared.
+ * How well Nova reads documents into shipment drafts, measured from the corrections people
+ * make when they confirm one.
  */
 export default function ExtractionView() {
   const t = useT();
-  const [{ [EXTRACTION_VIEW_PARAM]: view }, setParams] = useQueryStates(viewParsers);
-  const [newRunOpen, setNewRunOpen] = useExtractionDialog("newRun");
-  // A dialog belongs to the view it was opened over, so another view closes it.
-  const setView = useCallback(
-    (next: ExtractionSubView) =>
-      void setParams(
-        { [EXTRACTION_VIEW_PARAM]: next, [EXTRACTION_DIALOG_PARAM]: null },
-        { history: "replace" },
-      ),
-    [setParams],
-  );
-  const { allowed: canCreate } = usePermission(Resource.AgentEvalSuite, Operation.Create);
+  const [view, setView] = useQueryState(EXTRACTION_VIEW_PARAM, extractionViewParser);
 
   const accuracy = useQuery({
     queryKey: [EXTRACTION_ACCURACY_KEY, EXTRACTION_WINDOW_DAYS],
@@ -65,10 +40,6 @@ export default function ExtractionView() {
     () => [
       { value: "accuracy", label: t("Accuracy") },
       { value: "corrections", label: t("Corrections") },
-      { value: "cases", label: t("Evaluation set") },
-      { value: "runs", label: t("Runs") },
-      { value: "shadow", label: t("Shadow") },
-      { value: "rollout", label: t("Rollout") },
     ],
     [t],
   );
@@ -88,22 +59,14 @@ export default function ExtractionView() {
         <KpiStripSkeleton count={EXTRACTION_FIGURES} />
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="w-full max-w-2xl">
-          <SegmentedControl<string>
-            fullWidth
-            aria-label={t("Document extraction view")}
-            value={view}
-            onValueChange={(value) => setView(value as ExtractionSubView)}
-            items={items}
-          />
-        </div>
-        {canCreate ? (
-          <Button type="button" size="sm" onClick={() => setNewRunOpen(true)}>
-            <PlayIcon />
-            {t("New evaluation run")}
-          </Button>
-        ) : null}
+      <div className="w-full max-w-md">
+        <SegmentedControl<string>
+          fullWidth
+          aria-label={t("Document extraction view")}
+          value={view}
+          onValueChange={(value) => void setView(value as ExtractionSubView)}
+          items={items}
+        />
       </div>
 
       {view === "accuracy" && (
@@ -113,17 +76,6 @@ export default function ExtractionView() {
         </>
       )}
       {view === "corrections" && <CorrectionsTable />}
-      {view === "cases" && <CasesTable />}
-      {view === "runs" && <RunsTable />}
-      {view === "shadow" && <ShadowView />}
-      {view === "rollout" && <RolloutView />}
-
-      <NewRunDialog
-        open={newRunOpen && canCreate}
-        onOpenChange={setNewRunOpen}
-        activeCases={accuracy.data?.cases.active ?? 0}
-        onStarted={() => setView("runs")}
-      />
     </div>
   );
 }

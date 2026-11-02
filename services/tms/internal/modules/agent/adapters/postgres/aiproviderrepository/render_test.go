@@ -55,3 +55,15 @@ func TestSelectOptionsFilterWithoutATaskKeepsEveryEnabledProvider(t *testing.T) 
 	assert.Contains(t, sql, `."enabled" IS TRUE`, sql)
 	assert.NotContains(t, sql, "@>", sql)
 }
+
+// The provider Nova runs on is read by the partial unique index on nova, whose
+// predicate the query has to repeat, and whether it is on is the router's to
+// report, so the read does not filter on enabled.
+func TestNovaQueryReadsTheNovaProviderWhetherOrNotItIsOn(t *testing.T) {
+	t.Parallel()
+
+	sql, _ := keeltest.Render(t, novaQuery())
+
+	assert.Contains(t, sql, `."nova" IS TRUE`, sql)
+	assert.NotContains(t, sql, `."enabled"`, sql)
+}

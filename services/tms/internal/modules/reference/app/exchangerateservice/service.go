@@ -16,16 +16,19 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const (
-	defaultOANDABaseURL = "https://exchange-rates-api.oanda.com"
-	defaultDateLayout   = "2006-01-02"
-	settlementQuoteTTL  = 15 * time.Minute
-	oandaSpotRatesPath  = "/v2/rates/spot.json"
+	// exchangeRateRequestTimeout bounds one call to the rate provider.
+	exchangeRateRequestTimeout = 10 * time.Second
+	defaultOANDABaseURL        = "https://exchange-rates-api.oanda.com"
+	defaultDateLayout          = "2006-01-02"
+	settlementQuoteTTL         = 15 * time.Minute
+	oandaSpotRatesPath         = "/v2/rates/spot.json"
 )
 
 var defaultRefreshTargetCurrencies = []string{
@@ -38,7 +41,6 @@ type Params struct {
 	Logger             *zap.Logger
 	IntegrationService *integrationservice.Service
 	ExchangeRateRepo   exchangerateports.ExchangeRateRepository
-	HTTPClient         *http.Client `optional:"true"`
 }
 
 type Service struct {
@@ -49,31 +51,11 @@ type Service struct {
 }
 
 func New(p Params) *Service {
-	httpClient := p.HTTPClient
-	if httpClient == nil {
-		httpClient = newDefaultHTTPClient()
-	}
-
 	return &Service{
 		l:                  p.Logger.Named("service.exchange-rate"),
 		integrationService: p.IntegrationService,
 		repo:               p.ExchangeRateRepo,
-		httpClient:         httpClient,
-	}
-}
-
-func newDefaultHTTPClient() *http.Client {
-	return &http.Client{
-		Timeout: 10 * time.Second,
-		Transport: &http.Transport{
-			Proxy:                 http.ProxyFromEnvironment,
-			MaxIdleConns:          100,
-			MaxIdleConnsPerHost:   10,
-			IdleConnTimeout:       90 * time.Second,
-			TLSHandshakeTimeout:   10 * time.Second,
-			ResponseHeaderTimeout: 10 * time.Second,
-			ExpectContinueTimeout: time.Second,
-		},
+		httpClient:         httpsafe.NewClient(exchangeRateRequestTimeout),
 	}
 }
 

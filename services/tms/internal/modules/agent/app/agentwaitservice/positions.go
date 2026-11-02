@@ -104,7 +104,7 @@ func (s *Service) watched(
 	cache[moveID] = nil
 
 	move, err := s.facts.move(ctx, tenant, moveID)
-	if err != nil || s.facts.assignments == nil {
+	if err != nil {
 		return nil
 	}
 	assignment, err := s.facts.assignments.GetByMoveID(ctx, tenant, moveID)

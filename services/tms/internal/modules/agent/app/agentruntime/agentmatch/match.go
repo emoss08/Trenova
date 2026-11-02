@@ -43,7 +43,7 @@ func (s *Matcher) MatchAgent(
 	req *agentrecommendationports.AgentMatchRequest,
 ) (*agentrecommendationports.AgentMatch, error) {
 	if req == nil || req.Actor == nil ||
-		req.Actor.PrincipalType != permissionports.PrincipalTypeUser || s.catalog == nil {
+		req.Actor.PrincipalType != permissionports.PrincipalTypeUser {
 		return noMatch(), nil
 	}
 
@@ -166,7 +166,7 @@ func (s *Matcher) matchVector(
 	actor *permissionports.RequestActor,
 	text string,
 ) retrievalports.QueryVector {
-	if s.vectorizer == nil || !s.mayEmbedMatch(ctx, actor) {
+	if !s.mayEmbedMatch(ctx, actor) {
 		return retrievalports.QueryVector{}
 	}
 

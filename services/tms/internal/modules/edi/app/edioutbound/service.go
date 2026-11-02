@@ -28,14 +28,14 @@ type Params struct {
 	Alert             *edialert.Service
 	AuditService      auditports.AuditService
 	ControlNumberRepo edipartnerports.EDIControlNumberRepository
-	CustomFields      customfieldports.NamedValues `optional:"true"`
+	CustomFields      customfieldports.NamedValues
 	Delivery          *edidelivery.Service
 	DocumentTypeRepo  edipartnerports.EDIDocumentTypeRepository
 	FlowRepo          ladingports.FlowRepository
 	Flows             *edilading.Flows
 	InvoiceRepo       invoiceports.InvoiceRepository
 	Lading            *edilading.Runtime
-	LocationRepo      locationports.LocationRepository `optional:"true"`
+	LocationRepo      locationports.LocationRepository
 	Logger            *zap.Logger
 	MessageRepo       edimessageports.EDIMessageRepository
 	PartnerRepo       edipartnerports.EDIPartnerRepository

@@ -83,7 +83,7 @@ func (s *Service) recordCapabilityDeviations(
 	entity *shipment.Shipment,
 	advisories []*errortypes.AdvisoryError,
 ) error {
-	if s.modeProfileService == nil || entity == nil {
+	if entity == nil {
 		return nil
 	}
 
@@ -118,7 +118,7 @@ func (s *Service) syncPermits(
 	entity *shipment.Shipment,
 	actor *permissionports.RequestActor,
 ) error {
-	if s.permitService == nil || entity == nil {
+	if entity == nil {
 		return nil
 	}
 
@@ -202,10 +202,8 @@ func (s *Service) prepareCreate(
 
 	s.effects.ApplyShipmentEnvelope(ctx, entity)
 
-	if s.distanceCalculation != nil {
-		if _, err = s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {
-			return nil, err
-		}
+	if _, err = s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {
+		return nil, err
 	}
 
 	rating, err := s.commercial.RateAndAdoptContract(ctx, entity, control, userID)
@@ -255,14 +253,14 @@ type Params struct {
 	ChargeAllocationRepo chargeallocationports.ChargeAllocationRepository
 	DocumentRepo         documentports.DocumentRepository
 	BillingRepo          tenantports.BillingControlRepository
-	ServiceFailures      servicefailureports.ServiceFailureEvaluator `optional:"true"`
+	ServiceFailures      servicefailureports.ServiceFailureEvaluator
 	Validator            *shipmentvalidator.Validator
 	EventService         shipmenteventports.ShipmentEventService
 	Coordinator          *shipmentstate.Coordinator
 	Invalidator          shipmentinvalidationports.ShipmentInvalidator
 	Commercial           *shipmentcommercial.Calculator
-	DistanceCalculation  shipmentdistanceports.DistanceCalculationService `optional:"true"`
-	AgentEvents          agenteventports.AgentEventPublisher              `optional:"true"`
+	DistanceCalculation  shipmentdistanceports.DistanceCalculationService
+	AgentEvents          agenteventports.AgentEventPublisher
 	Effects              *shipmenteffects.Effects
 	Readiness            *shipmentbillingreadiness.Service
 	Transfer             *shipmentbillingtransfer.Service
@@ -494,10 +492,8 @@ func (s *Service) Update(
 
 	s.effects.ApplyShipmentEnvelope(ctx, entity)
 
-	if s.distanceCalculation != nil {
-		if _, err = s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {
-			return nil, err
-		}
+	if _, err = s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {
+		return nil, err
 	}
 
 	if err = s.commercial.Recalculate(ctx, entity, control, auditActor.UserID); err != nil {
@@ -680,10 +676,7 @@ func (s *Service) autoMarkCompletedShipment(
 	userID pulid.ID,
 	log *zap.Logger,
 ) *shipment.Shipment {
-	if updatedEntity.Status != shipmentvocab.StatusCompleted ||
-		s.customerRepo == nil ||
-		s.documentRepo == nil ||
-		s.billingRepo == nil {
+	if updatedEntity.Status != shipmentvocab.StatusCompleted {
 		return updatedEntity
 	}
 
@@ -768,7 +761,7 @@ func (s *Service) validateExplicitOrder(
 	ctx context.Context,
 	entity *shipment.Shipment,
 ) error {
-	if entity.OrderID.IsNil() || s.orderRepo == nil {
+	if entity.OrderID.IsNil() {
 		return nil
 	}
 
@@ -819,8 +812,7 @@ func (s *Service) syncOrderMembershipForUpdate(
 ) error {
 	entity.OrderID = original.OrderID
 
-	if entity.CustomerID == original.CustomerID || original.OrderID.IsNil() ||
-		s.orderRepo == nil {
+	if entity.CustomerID == original.CustomerID || original.OrderID.IsNil() {
 		return nil
 	}
 
@@ -922,7 +914,7 @@ func (s *Service) advanceContinuityForCompletedMoves(
 	original *shipment.Shipment,
 	updated *shipment.Shipment,
 ) error {
-	if s.continuityRepo == nil || updated == nil {
+	if updated == nil {
 		return nil
 	}
 
@@ -973,7 +965,7 @@ func (s *Service) ensureEquipmentAvailableForShipmentUpdate(
 	original *shipment.Shipment,
 	updated *shipment.Shipment,
 ) error {
-	if s.assignmentRepo == nil || updated == nil {
+	if updated == nil {
 		return nil
 	}
 

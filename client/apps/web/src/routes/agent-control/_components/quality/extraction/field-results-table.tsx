@@ -1,4 +1,4 @@
-import type { AICorrectionFieldResult } from "@/lib/graphql/extraction-eval";
+import type { AICorrectionFieldResult } from "@/lib/graphql/extraction-accuracy";
 import {
   Table,
   TableBody,

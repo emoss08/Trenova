@@ -1,5 +1,5 @@
 import {
-  payerShareSchema,
+  billingQueueItemSchema,
   type BillingQueueItem,
   type BillingQueueStatus,
 } from "@trenova/shared/types/billing-queue";
@@ -93,7 +93,16 @@ const shipment = {
   id: "shp_1",
   proNumber: "SEED-DET-001",
   customerId: "cus_acme",
-  customer: { id: "cus_acme", name: "Acme Manufacturing", code: "ACME" },
+  customer: {
+    id: "cus_acme",
+    status: "Active",
+    code: "ACME",
+    name: "Acme Manufacturing",
+    addressLine1: "4100 Industrial Pkwy",
+    city: "Toledo",
+    stateId: "st_oh",
+    postalCode: "43612",
+  },
   billToCustomerId: null,
   freightChargeAmount: 2850,
   tariffInputs: {},
@@ -139,23 +148,31 @@ const shipment = {
   ],
 };
 
+/**
+ * A billing queue item as the server sends it, parsed by the schema every response goes
+ * through, so a fixture the contract would refuse fails here rather than in a component.
+ */
 export function queueItem({
   payer,
   status = "InReview",
   share,
+  shipment: shipmentJson = shipment,
+  allocatedTotalAmount,
 }: {
   payer: "acme" | "peak";
   status?: BillingQueueStatus;
   share?: unknown;
+  shipment?: unknown;
+  allocatedTotalAmount?: number;
 }): BillingQueueItem {
   const isAcme = payer === "acme";
-  return {
+  return billingQueueItemSchema.parse({
     id: isAcme ? "bqi_acme" : "bqi_peak",
     organizationId: "org_1",
     businessUnitId: "bu_1",
     shipmentId: "shp_1",
     billToCustomerId: isAcme ? "cus_acme" : "cus_peak",
-    allocatedTotalAmount: isAcme ? 2504.38 : 1500,
+    allocatedTotalAmount: allocatedTotalAmount ?? (isAcme ? 2504.38 : 1500),
     number: isAcme ? "INV2609000022" : "INV2609000023",
     status,
     billType: "Invoice",
@@ -165,11 +182,76 @@ export function queueItem({
     version: 1,
     createdAt: 1_789_000_000,
     updatedAt: 1_789_000_000,
-    shipment,
+    shipment: shipmentJson,
     billToCustomer: isAcme
       ? { id: "cus_acme", name: "Acme Manufacturing", code: "ACME" }
       : { id: "cus_peak", name: "Peak Distributing", code: "PEAK" },
-    payerShare: payerShareSchema.parse(share ?? (isAcme ? ACME_SHARE_JSON : PEAK_SHARE_JSON)),
+    payerShare: share ?? (isAcme ? ACME_SHARE_JSON : PEAK_SHARE_JSON),
     detentionHolds: [],
-  } as unknown as BillingQueueItem;
+  });
+}
+
+/** Acme's item as the save answers once the detention line is removed: freight alone. */
+export function acmeItemWithoutDetention(): BillingQueueItem {
+  return queueItem({
+    payer: "acme",
+    allocatedTotalAmount: 1350,
+    share: {
+      ...ACME_SHARE_JSON,
+      lines: [ACME_SHARE_JSON.lines[0]],
+      accessorialAmount: "0",
+      totalAmount: "1350",
+      shipmentTotal: "2850",
+    },
+    shipment: {
+      ...shipment,
+      additionalCharges: [],
+      otherChargeAmount: 0,
+      totalChargeAmount: 2850,
+    },
+  });
+}
+
+export const LUMPER_ID = "ac_lump";
+
+/** Acme's item as the save answers once a $185 lumper is added, billed whole to Acme. */
+export function acmeItemWithLumper(): BillingQueueItem {
+  return queueItem({
+    payer: "acme",
+    allocatedTotalAmount: 2689.38,
+    share: {
+      ...ACME_SHARE_JSON,
+      lines: [
+        ...ACME_SHARE_JSON.lines,
+        {
+          ...detentionLine,
+          additionalChargeId: LUMPER_ID,
+          description: "Lumper",
+          chargeTotal: "185",
+          amount: "185",
+          payers: [{ ...detentionLine.payers[0]!, amount: "185" }],
+        },
+      ],
+      accessorialAmount: "1339.38",
+      totalAmount: "2689.38",
+      shipmentTotal: "4189.38",
+    },
+    shipment: {
+      ...shipment,
+      additionalCharges: [
+        ...shipment.additionalCharges,
+        {
+          id: LUMPER_ID,
+          accessorialChargeId: "acc_lump",
+          method: "Flat",
+          amount: 185,
+          unit: 1,
+          isSystemGenerated: false,
+          accessorialCharge: { id: "acc_lump", code: "LUMP", description: "Lumper" },
+        },
+      ],
+      otherChargeAmount: 1339.38,
+      totalChargeAmount: 4189.38,
+    },
+  });
 }

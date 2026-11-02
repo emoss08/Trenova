@@ -21,9 +21,6 @@ func (s *Service) DownloadSharedDocument(
 	ctx context.Context,
 	req *invoiceports.DownloadInvoiceDocumentRequest,
 ) (*invoiceports.DownloadInvoiceDocumentResult, error) {
-	if s.documentService == nil {
-		return nil, errortypes.NewBusinessError("Document service is not configured")
-	}
 	tokenHash := tokenHash(req.Token)
 	share, err := s.repo.GetDocumentShareToken(
 		ctx,

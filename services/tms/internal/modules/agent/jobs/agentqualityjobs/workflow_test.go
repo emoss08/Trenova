@@ -6,6 +6,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentqualityjobs/agentqualitycontract"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityengine"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
@@ -100,7 +102,7 @@ func newSuiteHarness(t *testing.T, script suiteScript) *suiteHarness {
 	h := &suiteHarness{env: env}
 
 	env.RegisterWorkflowWithOptions(AgentSuiteRunWorkflow,
-		workflow.RegisterOptions{Name: AgentSuiteRunWorkflowName})
+		workflow.RegisterOptions{Name: agentqualitycontract.AgentSuiteRunWorkflowName})
 	env.RegisterWorkflowWithOptions(
 		func(_ workflow.Context, payload *agentcontract.AgentEvaluationPayload) error {
 			h.mu.Lock()
@@ -245,8 +247,8 @@ func newSuiteHarness(t *testing.T, script suiteScript) *suiteHarness {
 	return h
 }
 
-func suitePayload(judge bool) *SuiteRunPayload {
-	return &SuiteRunPayload{
+func suitePayload(judge bool) *agentqualitycontract.SuiteRunPayload {
+	return &agentqualitycontract.SuiteRunPayload{
 		OrganizationID:    pulid.MustNew("org_"),
 		BusinessUnitID:    pulid.MustNew("bu_"),
 		SuiteRunID:        agentqualitysuite.NewSuiteRunID(),
@@ -267,7 +269,7 @@ func TestAgentSuiteRunWorkflow_ReplaysEachCaseThenScoresJudgesAndFinalizes(t *te
 		judgeCases: []pulid.ID{cases[1].EvaluationID},
 	})
 
-	h.env.ExecuteWorkflow(AgentSuiteRunWorkflowName, suitePayload(true))
+	h.env.ExecuteWorkflow(agentqualitycontract.AgentSuiteRunWorkflowName, suitePayload(true))
 	require.True(t, h.env.IsWorkflowCompleted())
 	require.NoError(t, h.env.GetWorkflowError())
 
@@ -296,7 +298,7 @@ func TestAgentSuiteRunWorkflow_SkipsCasesAlreadyReplayed(t *testing.T) {
 	cases[0].Status = agentevaluation.EvaluationStatusCompleted
 	h := newSuiteHarness(t, suiteScript{pages: [][]agentqualityengine.SuiteCase{cases}})
 
-	h.env.ExecuteWorkflow(AgentSuiteRunWorkflowName, suitePayload(false))
+	h.env.ExecuteWorkflow(agentqualitycontract.AgentSuiteRunWorkflowName, suitePayload(false))
 	require.NoError(t, h.env.GetWorkflowError())
 	assert.Equal(t, []pulid.ID{cases[1].EvaluationID}, h.replayed)
 	assert.Zero(t, h.count("JudgeCaseActivity"), "judging is off")
@@ -312,7 +314,7 @@ func TestAgentSuiteRunWorkflow_StopsWhenTheBudgetRunsOut(t *testing.T) {
 		judgeCases:  []pulid.ID{cases[0].EvaluationID},
 	})
 
-	h.env.ExecuteWorkflow(AgentSuiteRunWorkflowName, suitePayload(true))
+	h.env.ExecuteWorkflow(agentqualitycontract.AgentSuiteRunWorkflowName, suitePayload(true))
 	require.True(t, h.env.IsWorkflowCompleted())
 	require.NoError(t, h.env.GetWorkflowError())
 
@@ -336,7 +338,7 @@ func TestAgentSuiteRunWorkflow_ContinuesAsNewEveryHundredCases(t *testing.T) {
 	})
 
 	payload := suitePayload(false)
-	h.env.ExecuteWorkflow(AgentSuiteRunWorkflowName, payload)
+	h.env.ExecuteWorkflow(agentqualitycontract.AgentSuiteRunWorkflowName, payload)
 	require.True(t, h.env.IsWorkflowCompleted())
 
 	err := h.env.GetWorkflowError()
@@ -344,7 +346,7 @@ func TestAgentSuiteRunWorkflow_ContinuesAsNewEveryHundredCases(t *testing.T) {
 	var continued *workflow.ContinueAsNewError
 	require.True(t, errors.As(err, &continued), "the run continues as new, got %v", err)
 
-	var next SuiteRunPayload
+	var next agentqualitycontract.SuiteRunPayload
 	require.NoError(t, converter.GetDefaultDataConverter().FromPayloads(continued.Input, &next))
 	assert.Equal(t, casesPerExecution, next.Cursor, "the cursor is the last case walked past")
 	assert.Equal(t, casesPerExecution, next.Replayed)
@@ -359,7 +361,7 @@ func TestAgentSuiteRunWorkflow_RecordsWhyItFailed(t *testing.T) {
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
 	env.RegisterWorkflowWithOptions(AgentSuiteRunWorkflow,
-		workflow.RegisterOptions{Name: AgentSuiteRunWorkflowName})
+		workflow.RegisterOptions{Name: agentqualitycontract.AgentSuiteRunWorkflowName})
 	env.RegisterActivity(&Activities{})
 
 	var a *Activities
@@ -372,13 +374,13 @@ func TestAgentSuiteRunWorkflow_RecordsWhyItFailed(t *testing.T) {
 			return nil
 		})
 
-	env.ExecuteWorkflow(AgentSuiteRunWorkflowName, suitePayload(false))
+	env.ExecuteWorkflow(agentqualitycontract.AgentSuiteRunWorkflowName, suitePayload(false))
 	require.True(t, env.IsWorkflowCompleted())
 	require.Error(t, env.GetWorkflowError())
 	assert.True(t, failed, "a run that cannot go on is closed as failed, never left Running")
 }
 
-func unattendedPayload() *SuiteRunPayload {
+func unattendedPayload() *agentqualitycontract.SuiteRunPayload {
 	payload := suitePayload(true)
 	payload.Unattended = true
 	payload.CommittedUSD = decimal.RequireFromString("0.10")
@@ -406,7 +408,7 @@ func TestAgentSuiteRunWorkflow_UnattendedRunHandsItsJudgementsToABatch(t *testin
 	})
 
 	payload := unattendedPayload()
-	h.env.ExecuteWorkflow(AgentSuiteRunWorkflowName, payload)
+	h.env.ExecuteWorkflow(agentqualitycontract.AgentSuiteRunWorkflowName, payload)
 	require.True(t, h.env.IsWorkflowCompleted())
 	require.NoError(t, h.env.GetWorkflowError())
 
@@ -441,7 +443,7 @@ func TestAgentSuiteRunWorkflow_JudgesEachCaseWhenTheProviderCannotBatch(t *testi
 		judgeCases: judge,
 	})
 
-	h.env.ExecuteWorkflow(AgentSuiteRunWorkflowName, unattendedPayload())
+	h.env.ExecuteWorkflow(agentqualitycontract.AgentSuiteRunWorkflowName, unattendedPayload())
 	require.True(t, h.env.IsWorkflowCompleted())
 	require.NoError(t, h.env.GetWorkflowError())
 
@@ -465,7 +467,7 @@ func TestAgentSuiteRunWorkflow_StopsWhenTheBudgetCannotTakeTheBatch(t *testing.T
 		batch:      &agentqualityengine.JudgeBatch{StopReason: "Tonight's budget is spent."},
 	})
 
-	h.env.ExecuteWorkflow(AgentSuiteRunWorkflowName, unattendedPayload())
+	h.env.ExecuteWorkflow(agentqualitycontract.AgentSuiteRunWorkflowName, unattendedPayload())
 	require.NoError(t, h.env.GetWorkflowError())
 
 	assert.Zero(t, h.count("JudgeCaseActivity"))
@@ -581,7 +583,7 @@ type sweepHarness struct {
 	env       *testsuite.TestWorkflowEnvironment
 	opened    []pulid.ID
 	skipped   []pulid.ID
-	children  []*SuiteRunPayload
+	children  []*agentqualitycontract.SuiteRunPayload
 	sweepKey  []string
 	committed decimal.Decimal
 }
@@ -612,9 +614,9 @@ func newSweepHarness(t *testing.T, plan *agentqualityengine.SweepPlan) *sweepHar
 	h := &sweepHarness{env: env}
 
 	env.RegisterWorkflowWithOptions(AgentQualitySweepWorkflow,
-		workflow.RegisterOptions{Name: AgentQualitySweepWorkflowName})
+		workflow.RegisterOptions{Name: agentqualitycontract.AgentQualitySweepWorkflowName})
 	env.RegisterWorkflowWithOptions(
-		func(_ workflow.Context, payload *SuiteRunPayload) (*SuiteRunResult, error) {
+		func(_ workflow.Context, payload *agentqualitycontract.SuiteRunPayload) (*SuiteRunResult, error) {
 			h.children = append(h.children, payload)
 
 			return &SuiteRunResult{
@@ -622,7 +624,7 @@ func newSweepHarness(t *testing.T, plan *agentqualityengine.SweepPlan) *sweepHar
 				CommittedUSD: h.committed,
 			}, nil
 		},
-		workflow.RegisterOptions{Name: AgentSuiteRunWorkflowName},
+		workflow.RegisterOptions{Name: agentqualitycontract.AgentSuiteRunWorkflowName},
 	)
 	env.RegisterActivity(&Activities{})
 
@@ -676,16 +678,19 @@ func TestAgentQualitySweepWorkflow_RunsChangedAgentsAndRecordsTheRest(t *testing
 	h := newSweepHarness(t, plan)
 
 	orgID := pulid.MustNew("org_")
-	h.env.ExecuteWorkflow(AgentQualitySweepWorkflowName, &SweepPayload{
-		OrganizationID: orgID,
-		BusinessUnitID: pulid.MustNew("bu_"),
-	})
+	h.env.ExecuteWorkflow(
+		agentqualitycontract.AgentQualitySweepWorkflowName,
+		&agentqualitycontract.SweepPayload{
+			OrganizationID: orgID,
+			BusinessUnitID: pulid.MustNew("bu_"),
+		},
+	)
 	require.True(t, h.env.IsWorkflowCompleted())
 	require.NoError(t, h.env.GetWorkflowError())
 
-	var result SweepResult
+	var result agentqualitycontract.SweepResult
 	require.NoError(t, h.env.GetWorkflowResult(&result))
-	assert.Equal(t, SweepResult{Planned: 2, Ran: 1, Skipped: 1}, result)
+	assert.Equal(t, agentqualitycontract.SweepResult{Planned: 2, Ran: 1, Skipped: 1}, result)
 	assert.Equal(t, []pulid.ID{changed.AgentDefinitionID}, h.opened)
 	assert.Equal(t, []pulid.ID{unchanged.AgentDefinitionID}, h.skipped)
 	require.Len(t, h.children, 1)
@@ -704,10 +709,13 @@ func TestAgentQualitySweepWorkflow_DoesNothingWhenTurnedOff(t *testing.T) {
 		Agents:  []agentqualityengine.PlannedAgent{plannedAgent(false)},
 	})
 
-	h.env.ExecuteWorkflow(AgentQualitySweepWorkflowName, &SweepPayload{
-		OrganizationID: pulid.MustNew("org_"),
-		BusinessUnitID: pulid.MustNew("bu_"),
-	})
+	h.env.ExecuteWorkflow(
+		agentqualitycontract.AgentQualitySweepWorkflowName,
+		&agentqualitycontract.SweepPayload{
+			OrganizationID: pulid.MustNew("org_"),
+			BusinessUnitID: pulid.MustNew("bu_"),
+		},
+	)
 	require.NoError(t, h.env.GetWorkflowError())
 	assert.Empty(t, h.opened)
 	assert.Empty(t, h.children)
@@ -722,16 +730,19 @@ func TestAgentQualitySweepWorkflow_ContinuesAsNewWithItsPlan(t *testing.T) {
 	}
 	h := newSweepHarness(t, &agentqualityengine.SweepPlan{Enabled: true, Agents: agents})
 
-	h.env.ExecuteWorkflow(AgentQualitySweepWorkflowName, &SweepPayload{
-		OrganizationID: pulid.MustNew("org_"),
-		BusinessUnitID: pulid.MustNew("bu_"),
-	})
+	h.env.ExecuteWorkflow(
+		agentqualitycontract.AgentQualitySweepWorkflowName,
+		&agentqualitycontract.SweepPayload{
+			OrganizationID: pulid.MustNew("org_"),
+			BusinessUnitID: pulid.MustNew("bu_"),
+		},
+	)
 	require.True(t, h.env.IsWorkflowCompleted())
 
 	var continued *workflow.ContinueAsNewError
 	require.True(t, errors.As(h.env.GetWorkflowError(), &continued))
 
-	var next SweepPayload
+	var next agentqualitycontract.SweepPayload
 	require.NoError(t, converter.GetDefaultDataConverter().FromPayloads(continued.Input, &next))
 	assert.Equal(t, agentsPerExecution, next.Cursor)
 	require.NotNil(t, next.Plan, "the plan is carried, not made again")
@@ -752,10 +763,13 @@ func TestAgentQualitySweepWorkflow_RunsEachSuiteUnattendedAndHoldsItsBatches(t *
 	})
 	h.committed = decimal.RequireFromString("0.03")
 
-	h.env.ExecuteWorkflow(AgentQualitySweepWorkflowName, &SweepPayload{
-		OrganizationID: pulid.MustNew("org_"),
-		BusinessUnitID: pulid.MustNew("bu_"),
-	})
+	h.env.ExecuteWorkflow(
+		agentqualitycontract.AgentQualitySweepWorkflowName,
+		&agentqualitycontract.SweepPayload{
+			OrganizationID: pulid.MustNew("org_"),
+			BusinessUnitID: pulid.MustNew("bu_"),
+		},
+	)
 	require.True(t, h.env.IsWorkflowCompleted())
 	require.NoError(t, h.env.GetWorkflowError())
 
@@ -767,7 +781,7 @@ func TestAgentQualitySweepWorkflow_RunsEachSuiteUnattendedAndHoldsItsBatches(t *
 	assert.True(t, h.children[1].CommittedUSD.Equal(decimal.RequireFromString("0.03")),
 		"the second suite's budget holds the first suite's running batch")
 
-	var result SweepResult
+	var result agentqualitycontract.SweepResult
 	require.NoError(t, h.env.GetWorkflowResult(&result))
 	assert.True(t, result.CommittedUSD.Equal(decimal.RequireFromString("0.06")))
 }

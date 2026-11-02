@@ -49,7 +49,7 @@ type BrokerParams struct {
 	Client         *redis.Client
 	RealtimeConfig *realtimeconfig.Config
 	Logger         *zap.Logger
-	Metrics        *metrics.Registry `optional:"true"`
+	Metrics        *metrics.Registry
 	LC             fx.Lifecycle
 }
 
@@ -94,9 +94,7 @@ func NewBroker(p BrokerParams) *Broker {
 		ctx:       ctx,
 		cancel:    cancel,
 	}
-	if p.Metrics != nil {
-		b.metrics = p.Metrics.Realtime
-	}
+	b.metrics = p.Metrics.Realtime
 
 	p.LC.Append(fx.Hook{
 		OnStart: b.start,

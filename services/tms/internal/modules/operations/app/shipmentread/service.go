@@ -39,7 +39,7 @@ type Params struct {
 	ModeProfileService  modeprofileports.ModeProfileService
 	QuickFilters        shipmentports.ShipmentQuickFilterBasisResolver
 	Commercial          *shipmentcommercial.Calculator
-	DistanceCalculation shipmentdistanceports.DistanceCalculationService `optional:"true"`
+	DistanceCalculation shipmentdistanceports.DistanceCalculationService
 	Effects             *shipmenteffects.Effects
 }
 
@@ -62,10 +62,6 @@ func (s *Service) PreviewRecalculateDistance(
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*shipmentdistanceports.ShipmentDistancePreview, error) {
-	if s.distanceCalculation == nil {
-		return nil, errortypes.NewBusinessError("distance calculation service is not configured")
-	}
-
 	return s.distanceCalculation.PreviewRecalculateShipment(ctx, shipmentID, tenantInfo)
 }
 
@@ -74,9 +70,6 @@ func (s *Service) List(
 	req *shipmentports.ListShipmentsRequest,
 ) (*pagination.CursorListResult[*shipment.Shipment], error) {
 	if req.ShipmentOptions.HasQuickFilters() {
-		if s.quickFilters == nil {
-			return nil, errQuickFiltersUnavailable
-		}
 		if err := s.quickFilters.Prepare(
 			ctx,
 			req.Filter.TenantInfo,
@@ -145,10 +138,6 @@ func (s *Service) GetUIPolicy(
 		MaxShipmentWeightLimit: control.MaxShipmentWeightLimit,
 	}
 
-	if s.modeProfileService == nil {
-		return policy, nil
-	}
-
 	resolved, err := s.modeProfileService.Resolve(ctx, &modeprofileports.ResolveModeProfileRequest{
 		TenantInfo: tenantInfo,
 	})
@@ -214,10 +203,8 @@ func (s *Service) CalculateTotals(
 
 	s.effects.ApplyShipmentEnvelope(ctx, entity)
 
-	if s.distanceCalculation != nil {
-		if _, err = s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {
-			return nil, err
-		}
+	if _, err = s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {
+		return nil, err
 	}
 
 	resp, err := s.commercial.CalculateTotals(ctx, entity, control, userID)
@@ -233,9 +220,6 @@ func (s *Service) CalculateDistance(
 	ctx context.Context,
 	entity *shipment.Shipment,
 ) (*shipmentdistanceports.DistanceCalculationResponse, error) {
-	if s.distanceCalculation == nil {
-		return nil, errortypes.NewBusinessError("distance calculation service is not configured")
-	}
 	if err := s.effects.HydrateShipmentCommodityDetails(ctx, entity); err != nil {
 		return nil, err
 	}
@@ -247,9 +231,6 @@ func (s *Service) RecalculateDistance(
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*shipmentdistanceports.DistanceCalculationResponse, error) {
-	if s.distanceCalculation == nil {
-		return nil, errortypes.NewBusinessError("distance calculation service is not configured")
-	}
 	return s.distanceCalculation.RecalculateShipment(ctx, shipmentID, tenantInfo)
 }
 

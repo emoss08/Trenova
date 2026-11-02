@@ -8,6 +8,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/airetrievalrepository"
@@ -90,10 +92,10 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 		Items:     inbox.Corpus,
 	})
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	repo := airetrievalrepository.New(airetrievalrepository.Params{
 		DB:     conn,
-		Probe:  postgres.NewTestCapabilityProbe(conn),
+		Probe:  dbtest.CapabilityProbe(conn),
 		Logger: zap.NewNop(),
 	})
 	sources := retrievalsourcerepository.New(retrievalsourcerepository.Params{

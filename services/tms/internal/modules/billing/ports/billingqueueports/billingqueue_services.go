@@ -81,6 +81,9 @@ type UpdateChargesRequest struct {
 	// changes a charge that is split by amount: the split is rewritten as
 	// percentages that keep each payer's proportion.
 	ConvertAmountSplitsToPercent bool
+	// ExpandShipmentDetails returns the saved item as GetByID expands it, so a
+	// caller showing the item draws it from the save instead of reading it again.
+	ExpandShipmentDetails bool
 }
 
 // ChargeUpdatePreview is a billing queue item's shipment before and after a

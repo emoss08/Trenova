@@ -25,7 +25,7 @@ type Params struct {
 	Logger       *zap.Logger
 	Repo         tenantports.DashControlRepository
 	AuditService auditports.AuditService
-	Realtime     realtimeports.RealtimeService `optional:"true"`
+	Realtime     realtimeports.RealtimeService
 }
 
 type Service struct {
@@ -104,9 +104,6 @@ func (s *Service) publishInvalidation(
 	control *dashcontrol.DashControl,
 	userID pulid.ID,
 ) {
-	if s.realtime == nil {
-		return
-	}
 	err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: control.OrganizationID,
 		BusinessUnitID: control.BusinessUnitID,

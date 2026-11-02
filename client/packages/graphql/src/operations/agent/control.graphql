@@ -14,8 +14,6 @@ fragment AgentControlFields on AgentControl {
   agentMoneyDayCalls
   agentMoneyDayAmount
   agentMoneyCurrency
-  aiTrainingConsent
-  aiTrainingConsentChangedAt
   version
   createdAt
   updatedAt
@@ -30,16 +28,5 @@ query AgentControlSettings {
 mutation UpdateAgentControl($input: AgentControlInput!) {
   updateAgentControl(input: $input) {
     ...AgentControlFields
-  }
-}
-
-query AITrainingExportHistory {
-  aiTrainingExportHistory {
-    exportId
-    examples
-    trainExamples
-    validationExamples
-    consentGrantedAt
-    exportedAt
   }
 }

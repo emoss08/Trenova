@@ -83,7 +83,7 @@ func setupFactoringEnv(t *testing.T) *factoringEnv {
 
 	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID}
 	ctx = dbscope.WithTenant(ctx, tenantInfo.DBTenant())
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	logger := zap.NewNop()
 	p := Params{DB: conn, Logger: logger}
 	return &factoringEnv{

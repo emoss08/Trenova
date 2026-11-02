@@ -41,9 +41,7 @@ type reader struct {
 
 func (r *reader) tools() []llmports.NovaTool {
 	tools := make([]llmports.NovaTool, 0, 3)
-	if r.search != nil {
-		tools = append(tools, &searchTool{reader: r})
-	}
+	tools = append(tools, &searchTool{reader: r})
 
 	return append(tools, &getTool{reader: r}, &listTool{reader: r})
 }
@@ -145,7 +143,9 @@ func (t *getTool) Call(ctx context.Context, arguments map[string]any) llmports.N
 	id = strings.TrimSpace(id)
 	resource, ok := resourceOf(id)
 	if !ok {
-		return refused(fmt.Sprintf("%q is not a record id. Find the record with search_records first.", id))
+		return refused(
+			fmt.Sprintf("%q is not a record id. Find the record with search_records first.", id),
+		)
 	}
 	tool, ok := t.reader.catalog.get(resource)
 	if !ok {

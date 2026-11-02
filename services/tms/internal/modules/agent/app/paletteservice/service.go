@@ -49,10 +49,10 @@ type Params struct {
 	Conversations conversationports.ConversationRepository
 	Streams       assistantstreamports.TurnStreamReader
 	Questions     paletteports.QuestionRepository
-	Workflows     kernelports.WorkflowStarter        `optional:"true"`
-	Results       kernelports.WorkflowResults        `optional:"true"`
-	AgentControls tenantports.AgentControlRepository `optional:"true"`
-	Quota         platformplanports.QuotaGuard       `optional:"true"`
+	Workflows     kernelports.WorkflowStarter
+	Results       kernelports.WorkflowResults
+	AgentControls tenantports.AgentControlRepository
+	Quota         platformplanports.QuotaGuard
 }
 
 // Service runs command palette questions: each is a workflow on the chat
@@ -103,11 +103,6 @@ func (s *Service) Ask(
 	question, err := validQuestion(&req.Question)
 	if err != nil {
 		return nil, err
-	}
-	if s.workflows == nil || !s.workflows.Enabled() {
-		return nil, errortypes.NewBusinessError(
-			"Answering questions needs a background worker, which this installation does not run",
-		)
 	}
 
 	tenant := req.TenantInfo
@@ -187,7 +182,11 @@ func (s *Service) assertRoom(ctx context.Context, tenant pagination.TenantInfo) 
 	return nil
 }
 
-func (s *Service) finish(ctx context.Context, ref paletteports.AskRef, status palettequestion.Status) {
+func (s *Service) finish(
+	ctx context.Context,
+	ref paletteports.AskRef,
+	status palettequestion.Status,
+) {
 	if err := s.questions.Finish(ctx, ref, status, timeutils.NowUnix()); err != nil {
 		s.l.Warn("could not record how a palette question ended",
 			zap.String("askId", ref.AskID.String()), zap.Error(err))
@@ -240,12 +239,18 @@ func (s *Service) Relay(ctx context.Context, req *paletteports.RelayRequest) err
 	return req.OnFrame(s.ending(ctx, req.Ref))
 }
 
-func (s *Service) ending(ctx context.Context, ref paletteports.AskRef) assistantstreamports.TurnStreamFrame {
+func (s *Service) ending(
+	ctx context.Context,
+	ref paletteports.AskRef,
+) assistantstreamports.TurnStreamFrame {
 	answer, err := s.outcome(ctx, ref)
 	if err == nil && answer.Failure == "" && answer.Answer != nil {
 		data, _ := sonic.Marshal(paletteports.AnsweredEvent{AskID: ref.AskID})
 
-		return assistantstreamports.TurnStreamFrame{Event: assistantstreamports.AssistantEventDone, Data: data}
+		return assistantstreamports.TurnStreamFrame{
+			Event: assistantstreamports.AssistantEventDone,
+			Data:  data,
+		}
 	}
 
 	message := "Nova couldn't answer that just now. Try again, or open it in the Desk."
@@ -254,7 +259,10 @@ func (s *Service) ending(ctx context.Context, ref paletteports.AskRef) assistant
 	}
 	data, _ := sonic.Marshal(map[string]string{"message": message})
 
-	return assistantstreamports.TurnStreamFrame{Event: assistantstreamports.AssistantEventError, Data: data}
+	return assistantstreamports.TurnStreamFrame{
+		Event: assistantstreamports.AssistantEventError,
+		Data:  data,
+	}
 }
 
 // Stop takes a question back. It is marked stopped at once, so asking the
@@ -264,23 +272,21 @@ func (s *Service) Stop(ctx context.Context, ref paletteports.AskRef) error {
 		return err
 	}
 	s.finish(ctx, ref, palettequestion.StatusStopped)
-	if s.workflows == nil {
-		return nil
-	}
 
 	return s.workflows.CancelWorkflow(ctx, palettecontract.WorkflowID(ref), "")
 }
 
-func (s *Service) outcome(ctx context.Context, ref paletteports.AskRef) (*paletteports.Answer, error) {
-	if s.results == nil {
-		return nil, errortypes.NewNotFoundError("That question is no longer available")
-	}
+func (s *Service) outcome(
+	ctx context.Context,
+	ref paletteports.AskRef,
+) (*paletteports.Answer, error) {
 	waitCtx, cancel := context.WithTimeout(ctx, resultWait)
 	defer cancel()
 
 	var answer paletteports.Answer
 	if err := s.results.WorkflowResult(waitCtx, palettecontract.WorkflowID(ref), &answer); err != nil {
-		return nil, errortypes.NewNotFoundError("That question is no longer available").WithInternal(err)
+		return nil, errortypes.NewNotFoundError("That question is no longer available").
+			WithInternal(err)
 	}
 
 	return &answer, nil

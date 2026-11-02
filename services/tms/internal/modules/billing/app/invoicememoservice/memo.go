@@ -302,7 +302,7 @@ func (s *Service) memoLines(
 			UnitPrice:   amount.Div(quantity),
 			Amount:      amount,
 		}
-		if input.AccessorialChargeID.IsNotNil() && s.accessorialRepo != nil {
+		if input.AccessorialChargeID.IsNotNil() {
 			definition, err := s.accessorialRepo.GetByID(
 				ctx,
 				accessorialchargeports.GetAccessorialChargeByIDRequest{

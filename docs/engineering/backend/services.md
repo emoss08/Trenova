@@ -13,6 +13,23 @@ and announce what happened. The reference is
   `module.go`.
 - Depend on the narrowest port that does the job. A service that needs one method of a wide
   interface gets a narrower port declared next to its consumer.
+- **fx builds every dependency, once.** A service never calls another service's, repository's
+  or client's constructor, never keeps a `Deps` or `Dependencies` twin of its `Params` with a
+  `NewWithDependencies`, and never builds a fallback when a field is nil. A dependency is
+  required, so a nil check on it is noise ([go.md](go.md)), and nothing is `optional:"true"`: a
+  port a process lacks gets a contract implementation or a split caller
+  ([module-architecture.md](../module-architecture.md#inversion-ports)).
+  One type serving several ports is one constructor bound with `fx.As` to each
+  (`workflowstarter.New`, `agentqualitycontract.NewQualitySchedules`), never one constructor
+  per port.
+- **A default a bench replaces** is provided in the base graph and swapped with
+  `fx.Decorate` (`temporaljobs.NewSDKLogger`, `toolaccess.NewIgnoredDisclosures`,
+  `temporaljobs.NewQueueFilter`), not left optional.
+- **Time** comes from `timeutils.Clock` (provided by the kernel module), not a `Now` field a test
+  sets.
+- **An immutable catalog** (`permissioncatalog.Default`, `templateregistry.Default`) is built once
+  and provided by fx; code outside the graph (a domain table, a seed) reads the same instance
+  through `Default()`.
 - **Plan, then persist, then announce.** `PlanCreate`/`PlanUpdate` (`plan.go`) transform,
   validate and load the original as a `kernelports.RecordChange{Before, After}`; the service then
   writes through the repository and records the audit entry (`LogAction` with `WithDiff`). A pure

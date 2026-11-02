@@ -86,7 +86,7 @@ func IsKnownPageEntityType(kind string) bool {
 	return kind != string(recordkind.AssistantThread) && recordkind.Kind(kind).Known()
 }
 
-var pageResources = permissioncatalog.NewRegistry()
+var pageResources = permissioncatalog.Default()
 
 // IsKnownPageResource reports whether a table's resource names something the
 // permission registry knows, which is the set of resources a list page can

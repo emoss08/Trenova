@@ -377,10 +377,6 @@ type auditEntry struct {
 }
 
 func (s *Service) logAudit(_ context.Context, entry *auditEntry) {
-	if s.audit == nil {
-		return
-	}
-
 	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceInboundMessage,
 		Operation:      entry.operation,

@@ -44,7 +44,7 @@ type Params struct {
 	Conversations conversationports.ConversationRepository
 	Turns         *assistantturnservice.Service
 	Workflows     kernelports.WorkflowStarter
-	Realtime      realtimeports.RealtimeService `optional:"true"`
+	Realtime      realtimeports.RealtimeService
 }
 
 // turnStarter is the part of the turn service the queue needs: whether a
@@ -605,9 +605,6 @@ func (s *Service) announce(
 	actor *permissionports.RequestActor,
 	threadID pulid.ID,
 ) {
-	if s.realtime == nil {
-		return
-	}
 	if err := s.realtime.PublishResourceInvalidation(
 		context.WithoutCancel(ctx),
 		&realtimeports.PublishResourceInvalidationRequest{

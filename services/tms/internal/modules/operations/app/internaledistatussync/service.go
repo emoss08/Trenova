@@ -204,7 +204,7 @@ func (o *Observer) handleLink(
 			return txErr
 		}
 
-		if result.updated != nil && o.orderDerivation != nil {
+		if result.updated != nil {
 			if txErr = o.orderDerivation.RecomputeForShipment(
 				txCtx,
 				pagination.TenantInfo{

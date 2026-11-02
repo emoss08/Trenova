@@ -3,7 +3,6 @@ package workerapp
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/bootstrap/edition"
 	apimodule "github.com/emoss08/trenova/internal/bootstrap/modules/api"
 	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
@@ -53,10 +52,6 @@ func Modules() fx.Option {
 }
 
 func Options() fx.Option {
-	return OptionsFor(edition.Current())
-}
-
-func OptionsFor(e *edition.Edition) fx.Option {
 	return fx.Options(
 		// The worker serves its metrics (monitoring.metrics) when they are
 		// enabled, so its Temporal activity, AI and database metrics can be
@@ -68,7 +63,6 @@ func OptionsFor(e *edition.Edition) fx.Option {
 		agentjobs.WorkerModule,
 		conversationschedulejobs.WorkerModule,
 		agentqualityjobs.WorkerModule,
-		e.WorkerOption(),
 	)
 }
 
@@ -89,7 +83,9 @@ type RunParams struct {
 func Run(base fx.Option, queues []string) {
 	opts := []fx.Option{schemaversion.Module, base, Options(), fx.Invoke(logLifecycle)}
 	if len(queues) > 0 {
-		opts = append(opts, fx.Supply(&registry.QueueFilter{Queues: queues}))
+		opts = append(opts, fx.Decorate(func(*registry.QueueFilter) *registry.QueueFilter {
+			return &registry.QueueFilter{Queues: queues}
+		}))
 	}
 
 	fx.New(opts...).Run()

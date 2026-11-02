@@ -43,7 +43,7 @@ func setupMappingFixture(t *testing.T) *mappingFixture {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	connections := accountingconnectionrepository.NewConnectionRepository(
 		accountingconnectionrepository.ConnectionParams{DB: conn, Logger: zap.NewNop()},

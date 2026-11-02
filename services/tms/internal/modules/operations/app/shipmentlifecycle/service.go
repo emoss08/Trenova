@@ -65,8 +65,8 @@ type Params struct {
 	WorkflowStarter kernelports.WorkflowStarter
 	Coordinator     *shipmentstate.Coordinator
 	Invalidator     shipmentinvalidationports.ShipmentInvalidator
-	TenderGuard     tenderports.TenderGuard      `optional:"true"`
-	Quota           platformplanports.QuotaGuard `optional:"true"`
+	TenderGuard     tenderports.TenderGuard
+	Quota           platformplanports.QuotaGuard
 	Effects         *shipmenteffects.Effects
 }
 
@@ -323,10 +323,6 @@ func (s *Service) guardDuplicate(req *shipmentports.BulkDuplicateShipmentRequest
 		return multiErr
 	}
 
-	if !s.workflowStarter.Enabled() {
-		return errortypes.NewBusinessError("shipment duplication is not configured")
-	}
-
 	return nil
 }
 
@@ -511,18 +507,16 @@ func (s *Service) AutoCancelShipments(
 	if err != nil {
 		return nil, err
 	}
-	if s.continuityRepo != nil {
-		for _, canceledShipment := range canceledShipments {
-			if canceledShipment == nil {
-				continue
-			}
-			if err = s.continuityRepo.RollbackCurrentByShipment(ctx,
-				equipmentcontinuityports.RollbackEquipmentContinuityByShipmentRequest{
-					TenantInfo: req.TenantInfo,
-					ShipmentID: canceledShipment.ID,
-				}); err != nil {
-				return nil, err
-			}
+	for _, canceledShipment := range canceledShipments {
+		if canceledShipment == nil {
+			continue
+		}
+		if err = s.continuityRepo.RollbackCurrentByShipment(ctx,
+			equipmentcontinuityports.RollbackEquipmentContinuityByShipmentRequest{
+				TenantInfo: req.TenantInfo,
+				ShipmentID: canceledShipment.ID,
+			}); err != nil {
+			return nil, err
 		}
 	}
 
@@ -582,14 +576,12 @@ func (s *Service) Cancel(
 			return txErr
 		}
 
-		if s.continuityRepo != nil {
-			if txErr = s.continuityRepo.RollbackCurrentByShipment(txCtx,
-				equipmentcontinuityports.RollbackEquipmentContinuityByShipmentRequest{
-					TenantInfo: req.TenantInfo,
-					ShipmentID: req.ShipmentID,
-				}); txErr != nil {
-				return txErr
-			}
+		if txErr = s.continuityRepo.RollbackCurrentByShipment(txCtx,
+			equipmentcontinuityports.RollbackEquipmentContinuityByShipmentRequest{
+				TenantInfo: req.TenantInfo,
+				ShipmentID: req.ShipmentID,
+			}); txErr != nil {
+			return txErr
 		}
 
 		updatedEntity = canceled
@@ -630,12 +622,10 @@ func (s *Service) Cancel(
 		auditActor,
 	))
 
-	if s.tenderGuard != nil {
-		if err = s.tenderGuard.CancelLiveTendersForShipment(
-			ctx, req.TenantInfo, req.ShipmentID, "Shipment was canceled",
-		); err != nil {
-			log.Error("failed to withdraw live tenders for canceled shipment", zap.Error(err))
-		}
+	if err = s.tenderGuard.CancelLiveTendersForShipment(
+		ctx, req.TenantInfo, req.ShipmentID, "Shipment was canceled",
+	); err != nil {
+		log.Error("failed to withdraw live tenders for canceled shipment", zap.Error(err))
 	}
 
 	return updatedEntity, nil
@@ -795,10 +785,6 @@ func (s *Service) validateTransferActor(
 		)
 	}
 
-	if s.permissions == nil {
-		return errortypes.NewBusinessError("Permission engine is not configured")
-	}
-
 	result, err := s.permissions.Check(ctx, &permissionports.PermissionCheckRequest{
 		PrincipalType:  auditActor.PrincipalType,
 		PrincipalID:    auditActor.PrincipalID,
@@ -834,10 +820,6 @@ func (s *Service) validateTransferTarget(
 	ctx context.Context,
 	req *shipmentports.TransferOwnershipRequest,
 ) error {
-	if s.userRepo == nil {
-		return errortypes.NewBusinessError("User repository is not configured")
-	}
-
 	_, err := s.userRepo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  req.TenantInfo.OrgID,

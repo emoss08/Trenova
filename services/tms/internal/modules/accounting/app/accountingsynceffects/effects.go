@@ -23,10 +23,10 @@ type Params struct {
 	Organizations tenantports.OrganizationRepository
 	Controls      tenantports.AccountingControlRepository
 	Audit         auditports.AuditService
-	Dispatcher    accountingsyncports.AccountingSyncDispatcher `optional:"true"`
-	Publisher     agenteventports.AgentEventPublisher          `optional:"true"`
-	Watchtower    watchtowerports.WatchtowerProjector          `optional:"true"`
-	Realtime      realtimeports.RealtimeService                `optional:"true"`
+	Dispatcher    accountingsyncports.AccountingSyncDispatcher
+	Publisher     agenteventports.AgentEventPublisher
+	Watchtower    watchtowerports.WatchtowerProjector
+	Realtime      realtimeports.RealtimeService
 }
 
 type Effects struct {

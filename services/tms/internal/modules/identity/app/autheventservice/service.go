@@ -80,7 +80,7 @@ func (s *Service) Record(ctx context.Context, rec *iamports.AuthEventRecord) {
 }
 
 func (s *Service) recordMetric(success bool) {
-	if s.metrics == nil || s.metrics.Audit == nil {
+	if s.metrics.Audit == nil {
 		return
 	}
 	s.metrics.Audit.RecordSecurityEvent(securityEventKind, success)

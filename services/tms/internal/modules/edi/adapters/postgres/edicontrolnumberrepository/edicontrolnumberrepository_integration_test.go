@@ -56,7 +56,7 @@ func TestAllocateControlNumbersConcurrentAllocationsAreUnique(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	repo := edicontrolnumberrepository.New(edicontrolnumberrepository.Params{
 		DB:     conn,
 		Logger: zap.NewNop(),

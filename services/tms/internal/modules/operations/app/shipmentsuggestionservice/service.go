@@ -52,28 +52,10 @@ type Params struct {
 	Tenders         tenderports.TenderRepository
 	TenderGuard     tenderports.TenderGuard
 	Assignments     assignmentports.AssignmentService
-	Cache           shipmentboardports.ShipmentBoardCache `optional:"true"`
-	Briefs          shipmentbriefports.ShipmentBriefRepository
-	Organizations   tenantports.OrganizationRepository
-	Logger          *zap.Logger
-}
-
-type Dependencies struct {
-	Console         dispatchconsoleports.DispatchConsoleService
-	Capabilities    shipmentboardports.ShipmentBoardCapabilitiesReader
-	Watchlist       shipmentboardports.ShipmentWatchlistReader
-	Comments        shipmentcommentports.ShipmentCommentService
-	Detention       detentionDesk
-	Decisions       shipmentsuggestionports.ShipmentSuggestionDecisionRepository
-	AssignmentReads assignmentports.AssignmentRepository
-	Tenders         tenderports.TenderRepository
-	TenderGuard     tenderports.TenderGuard
-	Assignments     assignmentports.AssignmentService
 	Cache           shipmentboardports.ShipmentBoardCache
 	Briefs          shipmentbriefports.ShipmentBriefRepository
 	Organizations   tenantports.OrganizationRepository
 	Logger          *zap.Logger
-	Now             func() time.Time
 }
 
 type Service struct {
@@ -103,51 +85,25 @@ var (
 
 //nolint:gocritic // dependency injection
 func New(p Params) *Service {
-	return NewWithDependencies(&Dependencies{
-		Console:         p.Console,
-		Capabilities:    p.Capabilities,
-		Watchlist:       p.Watchlist,
-		Comments:        p.Comments,
-		Detention:       p.Detention,
-		Decisions:       p.Decisions,
-		AssignmentReads: p.AssignmentReads,
-		Tenders:         p.Tenders,
-		TenderGuard:     p.TenderGuard,
-		Assignments:     p.Assignments,
-		Cache:           p.Cache,
-		Briefs:          p.Briefs,
-		Organizations:   p.Organizations,
-		Logger:          p.Logger,
-	})
-}
-
-func NewWithDependencies(d *Dependencies) *Service {
-	now := d.Now
-	if now == nil {
-		now = time.Now
-	}
-	logger := d.Logger
-	if logger == nil {
-		logger = zap.NewNop()
-	}
+	logger := p.Logger
 
 	return &Service{
-		console:         d.Console,
-		capabilities:    d.Capabilities,
-		watchlist:       d.Watchlist,
-		comments:        d.Comments,
-		detention:       d.Detention,
-		decisions:       d.Decisions,
-		assignmentReads: d.AssignmentReads,
-		tenders:         d.Tenders,
-		tenderGuard:     d.TenderGuard,
-		assignments:     d.Assignments,
-		cache:           d.Cache,
-		briefs:          d.Briefs,
-		organizations:   d.Organizations,
+		console:         p.Console,
+		capabilities:    p.Capabilities,
+		watchlist:       p.Watchlist,
+		comments:        p.Comments,
+		detention:       p.Detention,
+		decisions:       p.Decisions,
+		assignmentReads: p.AssignmentReads,
+		tenders:         p.Tenders,
+		tenderGuard:     p.TenderGuard,
+		assignments:     p.Assignments,
+		cache:           p.Cache,
+		briefs:          p.Briefs,
+		organizations:   p.Organizations,
 		rules:           defaultRules(),
 		l:               logger.Named("service.shipment-suggestions"),
-		now:             now,
+		now:             time.Now,
 	}
 }
 
@@ -240,7 +196,7 @@ func (s *Service) applyBriefWording(
 	items []*shipmentsuggestionports.ShipmentSuggestion,
 ) ([]*shipmentsuggestionports.ShipmentSuggestion, bool) {
 	copied := copyItems(items)
-	if s.briefs == nil || s.organizations == nil || len(copied) == 0 {
+	if len(copied) == 0 {
 		return copied, false
 	}
 

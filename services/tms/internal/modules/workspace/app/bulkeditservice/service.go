@@ -578,9 +578,6 @@ func (s *Service) mine(
 }
 
 func (s *Service) announce(ctx context.Context, entity *bulkedit.BulkEdit) {
-	if s.realtime == nil {
-		return
-	}
 	if err := s.realtime.PublishResourceInvalidation(
 		ctx,
 		&realtimeports.PublishResourceInvalidationRequest{

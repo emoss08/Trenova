@@ -1,53 +1,12 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { BadgeAttrProps } from "@trenova/shared/lib/status-phase";
-import type {
-  AiCorrectionOutcome,
-  ExtractionEvalCaseStatus,
-  ExtractionEvalResultStatus,
-  ExtractionEvalRunStatus,
-} from "@trenova/graphql/generated/graphql";
+import type { AiCorrectionOutcome } from "@trenova/graphql/generated/graphql";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 
 /** How far back production accuracy is read. */
 export const EXTRACTION_WINDOW_DAYS = 30;
 
 export const EXTRACTION_STALE_MS = 30_000;
-
-/** A run in flight is re-read on this cadence until it finishes. */
-export const ACTIVE_RUN_POLL_MS = 5_000;
-
-export const DEFAULT_CASE_LIMIT = 50;
-export const MAX_CASE_LIMIT = 500;
-
-export const CASE_STATUS: Record<ExtractionEvalCaseStatus, BadgeAttrProps> = {
-  Candidate: {
-    phase: "awaiting",
-    text: "Candidate",
-    description: "Added from a correction and waiting to be activated",
-  },
-  Active: { phase: "active", text: "Active", description: "Run in every evaluation" },
-  Retired: { phase: "closed", text: "Retired", description: "Kept but no longer run" },
-};
-
-export const RUN_STATUS: Record<ExtractionEvalRunStatus, BadgeAttrProps> = {
-  Queued: { phase: "queued", text: "Queued", description: "Waiting for a worker to start it" },
-  Running: { phase: "active", text: "Running", description: "Evaluating cases now" },
-  Completed: { phase: "complete", text: "Completed", description: "Every case ran" },
-  BudgetStopped: {
-    phase: "attention",
-    text: "Budget reached",
-    description: "Stopped when the evaluation budget was spent",
-  },
-  Canceled: { phase: "closed", text: "Canceled", description: "Stopped by a person" },
-  Failed: { phase: "failed", text: "Failed", description: "The run could not continue" },
-};
-
-export const RESULT_STATUS: Record<ExtractionEvalResultStatus, BadgeAttrProps> = {
-  Pending: { phase: "queued", text: "Pending" },
-  Completed: { phase: "complete", text: "Scored" },
-  Failed: { phase: "failed", text: "Failed" },
-  Skipped: { phase: "closed", text: "Skipped" },
-};
 
 export const OUTCOME: Record<AiCorrectionOutcome, BadgeAttrProps> = {
   Correct: { phase: "complete", text: "Correct", description: "Read right" },
@@ -64,31 +23,6 @@ export const OUTCOME: Record<AiCorrectionOutcome, BadgeAttrProps> = {
     description: "Present on both sides but could not be compared",
   },
 };
-
-export const CASE_STATUS_ACTION: Record<ExtractionEvalCaseStatus, string> = defineLabels({
-  Candidate: "Move back to candidates",
-  Active: "Activate",
-  Retired: "Retire",
-});
-
-const NEXT_CASE_STATUSES: Record<ExtractionEvalCaseStatus, ExtractionEvalCaseStatus[]> = {
-  Candidate: ["Active", "Retired"],
-  Active: ["Retired"],
-  Retired: ["Active"],
-};
-
-/** The statuses a case may move to next; the server enforces the same lifecycle. */
-export function nextCaseStatuses(status: ExtractionEvalCaseStatus): ExtractionEvalCaseStatus[] {
-  return NEXT_CASE_STATUSES[status];
-}
-
-export function isRunActive(status: ExtractionEvalRunStatus): boolean {
-  return status === "Queued" || status === "Running";
-}
-
-export function choicesOf<T extends string>(map: Record<T, BadgeAttrProps>) {
-  return (Object.keys(map) as T[]).map((value) => ({ value, label: map[value].text }));
-}
 
 const FIELD_LABEL: Record<string, string> = defineLabels({
   referenceNumber: "Reference number",

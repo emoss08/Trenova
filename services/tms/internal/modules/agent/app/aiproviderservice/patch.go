@@ -76,7 +76,7 @@ func (s *Service) patchEdits(
 	actor *permissionports.RequestActor,
 ) ([]providerEdit, error) {
 	multiErr := errortypes.NewMultiError()
-	edits := make([]providerEdit, 0, 7)
+	edits := make([]providerEdit, 0, 8)
 
 	edits = appendBool(edits, multiErr, &boolPatch{
 		field: "enabled", label: "Enabled", value: req.Enabled,
@@ -85,6 +85,10 @@ func (s *Service) patchEdits(
 	edits = appendBool(edits, multiErr, &boolPatch{
 		field: "trusted", label: "Trusted", value: req.Trusted,
 		set: func(p *aiprovider.Provider, v bool) { p.Trusted = v },
+	})
+	edits = appendBool(edits, multiErr, &boolPatch{
+		field: "nova", label: "Nova", value: req.Nova,
+		set: func(p *aiprovider.Provider, v bool) { p.Nova = v },
 	})
 	edits = appendBool(edits, multiErr, &boolPatch{
 		field: "allowPrivateNetwork", label: "Allow private network",

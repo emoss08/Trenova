@@ -1,4 +1,4 @@
-import type { ExtractionProviderTrend } from "@/lib/graphql/extraction-eval";
+import type { ExtractionProviderTrend } from "@/lib/graphql/extraction-accuracy";
 import type { BadgeAttrProps } from "@trenova/shared/lib/status-phase";
 
 export type TrendState = "drifting" | "steady" | "gathering";

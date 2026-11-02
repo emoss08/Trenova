@@ -147,9 +147,6 @@ packages:
   github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports:
     config:
       all: true
-  github.com/emoss08/trenova/internal/modules/agent/ports/aitrainingports:
-    config:
-      all: true
   github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports:
     config:
       all: true
@@ -300,15 +297,6 @@ packages:
   github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports:
     config:
       all: true
-  github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports:
-    config:
-      all: true
-  github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports:
-    config:
-      all: true
-  github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports:
-    config:
-      all: true
   github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports:
     config:
       all: true
@@ -367,9 +355,6 @@ packages:
     config:
       all: true
   github.com/emoss08/trenova/internal/modules/identity/ports/instancebootstrapports:
-    config:
-      all: true
-  github.com/emoss08/trenova/internal/modules/identity/ports/onboardingports:
     config:
       all: true
   github.com/emoss08/trenova/internal/modules/identity/ports/permissionports:

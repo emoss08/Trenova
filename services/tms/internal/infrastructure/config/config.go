@@ -64,6 +64,10 @@ type Config struct {
 	EDI                 ediconfig.Config                 `mapstructure:"edi"`
 	Imports             importsconfig.Config             `mapstructure:"imports"`
 	ContentScan         contentscanconfig.Config         `mapstructure:"contentScan"`
+}
 
-	extensions map[string]any
+// IsProductionLike reports whether an environment holds real data: production and staging
+// are validated with production's rules.
+func IsProductionLike(env string) bool {
+	return env == appconfig.EnvProduction || env == appconfig.EnvStaging
 }

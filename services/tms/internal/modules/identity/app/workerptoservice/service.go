@@ -49,9 +49,9 @@ type Params struct {
 	Ledger          *ptoledgerservice.Service
 	WorkflowStarter kernelports.WorkflowStarter
 	AuditService    auditports.AuditService
-	DriverNotify    *drivernotificationservice.Service `optional:"true"`
-	Realtime        realtimeports.RealtimeService      `optional:"true"`
-	Plans           platformplanports.PlanService      `optional:"true"`
+	DriverNotify    *drivernotificationservice.Service
+	Realtime        realtimeports.RealtimeService
+	Plans           platformplanports.PlanService
 }
 
 type Service struct {
@@ -402,10 +402,6 @@ func (s *Service) logTransitionAudit(
 	req *workerptoports.UpdatePTOStatusRequest,
 	log *zap.Logger,
 ) {
-	if s.auditService == nil {
-		return
-	}
-
 	comment := fmt.Sprintf("PTO %s", strings.ToLower(string(updated.Status)))
 	// A decision taken under a delegation has to say so. Otherwise the trail
 	// reads as the delegate's own call, and nobody can tell afterwards which
@@ -452,10 +448,6 @@ func (s *Service) sendTransitionSMS(
 	target worker.PTOStatus,
 	log *zap.Logger,
 ) {
-	if !s.sendsSMS() {
-		log.Warn("workflow starter disabled; skipping PTO SMS")
-		return
-	}
 	allowed, err := planservice.Allows(ctx, s.plans, req.TenantInfo, platformplan.CapabilitySMS)
 	if err != nil {
 		log.Error("failed to resolve the organization's plan for PTO SMS", zap.Error(err))
@@ -626,7 +618,7 @@ func (s *Service) publishPTOInvalidation(
 	action permission.Operation,
 	userID pulid.ID,
 ) {
-	if s.realtime == nil || pto == nil {
+	if pto == nil {
 		return
 	}
 	err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
@@ -656,7 +648,7 @@ func (s *Service) notifyDriverPTO(
 	pto *worker.WorkerPTO,
 	notice driverPTONotice,
 ) {
-	if s.driverNotify == nil || pto == nil {
+	if pto == nil {
 		return
 	}
 	s.driverNotify.Notify(ctx, ptoDriverNotification(tenantInfo, pto, notice))
@@ -688,9 +680,6 @@ func tenantOf(pto *worker.WorkerPTO) pagination.TenantInfo {
 }
 
 func (s *Service) inTx(ctx context.Context, fn func(context.Context) error) error {
-	if s.db == nil {
-		return fn(ctx)
-	}
 	return s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		return fn(txCtx)
 	})
@@ -701,11 +690,6 @@ func (s *Service) prepareLedgerFields(
 	entity *worker.WorkerPTO,
 	excludeID pulid.ID,
 ) (*ptoledgerservice.AvailabilityResult, error) {
-	if s.ledger == nil {
-		entity.Days = pto.ComputePTODays(entity.StartDate, entity.EndDate, nil, true, nil)
-		return nil, nil
-	}
-
 	tenantInfo := tenantOf(entity)
 	resolved, err := s.ledger.ResolvePolicy(ctx, tenantInfo, entity.WorkerID, entity.StartDate)
 	if err != nil {
@@ -775,9 +759,6 @@ func (s *Service) bookUsage(
 	pto *worker.WorkerPTO,
 	userID pulid.ID,
 ) error {
-	if s.ledger == nil {
-		return nil
-	}
 	entry, err := s.ledger.PostUsage(ctx, tenantInfo, pto, ptoledgerservice.UserActor(userID))
 	if err != nil || entry == nil {
 		return err
@@ -796,9 +777,6 @@ func (s *Service) releaseUsage(
 	pto *worker.WorkerPTO,
 	userID pulid.ID,
 ) error {
-	if s.ledger == nil {
-		return nil
-	}
 	_, err := s.ledger.PostReversal(ctx, tenantInfo, pto, ptoledgerservice.UserActor(userID))
 	return err
 }

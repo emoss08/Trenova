@@ -40,7 +40,7 @@ var evalCaseSweepOptions = workflow.ActivityOptions{
 type ActivitiesParams struct {
 	fx.In
 
-	CaseService agentqualityports.AgentEvalCaseService `optional:"true"`
+	CaseService agentqualityports.AgentEvalCaseService
 }
 
 type Activities struct {
@@ -153,10 +153,6 @@ func (a *Activities) CaptureEvalCaseCandidatesActivity(
 	ctx context.Context,
 	input *CaptureEvalCaseCandidatesInput,
 ) (*agentqualityports.CaptureEvalCaseCandidatesResult, error) {
-	if a.caseService == nil {
-		return &agentqualityports.CaptureEvalCaseCandidatesResult{}, nil
-	}
-
 	return a.caseService.CaptureCandidates(ctx, agentqualityports.CaptureEvalCaseCandidatesRequest{
 		Since: input.Since,
 		Limit: input.Limit,
@@ -167,9 +163,5 @@ func (a *Activities) PurgeEvalCasesActivity(
 	ctx context.Context,
 	input *PurgeEvalCasesInput,
 ) (*agentqualityports.PurgeEvalCasesResult, error) {
-	if a.caseService == nil {
-		return &agentqualityports.PurgeEvalCasesResult{}, nil
-	}
-
 	return a.caseService.Purge(ctx, agentqualityports.PurgeEvalCasesRequest{Now: input.Now})
 }

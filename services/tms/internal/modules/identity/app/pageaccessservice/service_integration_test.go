@@ -68,7 +68,7 @@ func TestPreview_ReadsASavedRoleAndItsAncestorsFromItsOwnOrganization(t *testing
 	other := insertRole(t, db, tenantB, permission.SensitivityRestricted, nil)
 
 	repo := rolerepository.New(rolerepository.Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 	svc := newService(t, &engine{}, repo)

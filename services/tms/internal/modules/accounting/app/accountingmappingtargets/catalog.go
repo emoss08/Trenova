@@ -30,13 +30,13 @@ type Params struct {
 	Mappings           accountingmappingports.AccountingMappingRepository
 	AccountingControls tenantports.AccountingControlRepository
 	GLAccounts         glaccountports.GLAccountRepository
-	Ledger             journalentryports.AccountingLedgerSource `optional:"true"`
+	Ledger             journalentryports.AccountingLedgerSource
 	Customers          customerports.CustomerRepository
 	Carriers           carrierports.CarrierRepository
 	Accessorials       accessorialchargeports.AccessorialChargeRepository
-	Workers            workerports.WorkerRepository                   `optional:"true"`
-	SettlementControls tenantports.CarrierSettlementControlRepository `optional:"true"`
-	PayCodes           driverpayports.PayCodeRepository               `optional:"true"`
+	Workers            workerports.WorkerRepository
+	SettlementControls tenantports.CarrierSettlementControlRepository
+	PayCodes           driverpayports.PayCodeRepository
 }
 
 type Catalog struct {
@@ -73,9 +73,6 @@ func (c *Catalog) WorkerWithState(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) (*worker.Worker, error) {
-	if c.workers == nil {
-		return nil, errortypes.NewBusinessError("Driver records are not available")
-	}
 	wrk, err := c.workers.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:           workerID,
 		TenantInfo:   tenantInfo,
@@ -403,7 +400,7 @@ func (c *Catalog) glAccountTargets(
 		seen[account.ID] = struct{}{}
 		targets = append(targets, glAccountTarget(account))
 	}
-	if !ledger || c.ledger == nil {
+	if !ledger {
 		return targets, nil
 	}
 	posted, err := c.ledger.ListActiveAccounts(ctx, &journalentryports.ListLedgerAccountsRequest{
@@ -469,26 +466,22 @@ func (c *Catalog) payablesAccountIDs(
 			control.DefaultEscrowLiabilityAccountID,
 		)
 	}
-	if c.settlementControls != nil {
-		carrierControl, getErr := c.settlementControls.GetOrCreate(ctx, tenantInfo)
-		if getErr != nil {
-			return nil, getErr
-		}
-		candidates = append(candidates,
-			pulid.ConvertFromPtr(carrierControl.DefaultAPAccountID),
-			pulid.ConvertFromPtr(carrierControl.DefaultPurchasedTransportationAccountID),
-		)
+	carrierControl, getErr := c.settlementControls.GetOrCreate(ctx, tenantInfo)
+	if getErr != nil {
+		return nil, getErr
 	}
-	if c.payCodes != nil {
-		codes, listErr := c.payCodes.ListActive(ctx, driverpayports.ListActivePayCodesRequest{
-			TenantInfo: tenantInfo,
-		})
-		if listErr != nil {
-			return nil, listErr
-		}
-		for _, code := range codes {
-			candidates = append(candidates, pulid.ConvertFromPtr(code.GLAccountID))
-		}
+	candidates = append(candidates,
+		pulid.ConvertFromPtr(carrierControl.DefaultAPAccountID),
+		pulid.ConvertFromPtr(carrierControl.DefaultPurchasedTransportationAccountID),
+	)
+	codes, listErr := c.payCodes.ListActive(ctx, driverpayports.ListActivePayCodesRequest{
+		TenantInfo: tenantInfo,
+	})
+	if listErr != nil {
+		return nil, listErr
+	}
+	for _, code := range codes {
+		candidates = append(candidates, pulid.ConvertFromPtr(code.GLAccountID))
 	}
 
 	ids := make([]pulid.ID, 0, len(candidates))

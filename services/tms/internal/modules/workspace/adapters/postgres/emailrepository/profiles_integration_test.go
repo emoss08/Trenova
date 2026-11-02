@@ -54,7 +54,7 @@ func TestGetProfilesByIDsReturnsOnlyTheTenantsProfiles(t *testing.T) {
 	tenantA := seedtest.SeedFullTestData(t, ctx, db)
 	tenantB := seedtest.SeedAdditionalTenant(t, ctx, db, "EQ")
 	repo := emailrepository.New(emailrepository.Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 

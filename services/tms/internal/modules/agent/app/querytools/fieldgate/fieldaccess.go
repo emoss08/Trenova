@@ -40,7 +40,7 @@ type Access struct {
 }
 
 func NewAccess(permissions permissionports.PermissionEngine) Access {
-	return Access{Permissions: permissions, registry: permissioncatalog.NewRegistry()}
+	return Access{Permissions: permissions, registry: permissioncatalog.Default()}
 }
 
 func (a Access) WithThreads(threads conversationports.ThreadOwnerRepository) Access {
@@ -352,7 +352,7 @@ func (a Access) gateAt(
 	ceiling permission.FieldSensitivity,
 ) *Gate {
 	if a.registry == nil {
-		a.registry = permissioncatalog.NewRegistry()
+		a.registry = permissioncatalog.Default()
 	}
 
 	return &Gate{access: a, resource: resource, ceiling: ceiling}

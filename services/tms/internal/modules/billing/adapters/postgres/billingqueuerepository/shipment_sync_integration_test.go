@@ -57,7 +57,7 @@ func setupSyncFixture(t *testing.T) *syncFixture {
 
 	tenant := pagination.TenantInfo{OrgID: orgID, BuID: buID}
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	logger := zap.NewNop()
 
 	return &syncFixture{

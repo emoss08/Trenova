@@ -23,7 +23,7 @@ type Params struct {
 	fx.In
 
 	AuditService     auditports.AuditService
-	CustomFields     customfieldports.NamedValues `optional:"true"`
+	CustomFields     customfieldports.NamedValues
 	DB               kernelports.Transactor
 	Logger           *zap.Logger
 	Outbound         *edioutbound.Service

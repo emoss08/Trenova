@@ -9,9 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentsearchprojectionrepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documenttemplaterepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentuploadrepository"
-	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/extractionevalrepository"
-	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/extractionrolloutrepository"
-	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/extractionshadowrepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/inboundmessagerepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/inboundreplyrepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/retrievalsourcerepository"
@@ -39,9 +36,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documenttemplateservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentuploadservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/extractionevalservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/extractionrolloutservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/extractionshadowservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/extractionaccuracyservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundintake"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmailbox"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundprocessing"
@@ -59,12 +54,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagepeekservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageruleservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
-	"github.com/emoss08/trenova/internal/modules/documents/jobs/extractionevaljobs/extractionevalcontract"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/triagewakejobs/triagewakecontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionaccuracyports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
@@ -90,14 +84,6 @@ func SharedOptions() fx.Option {
 			documentcontentrepository.New,
 			documentsearchprojectionrepository.New,
 			documentuploadrepository.New,
-			extractionevalrepository.NewCases,
-			extractionevalrepository.NewRuns,
-			extractionevalrepository.NewResults,
-			extractionevalrepository.NewCasePages,
-			extractionrolloutrepository.NewRollouts,
-			extractionrolloutrepository.NewAssignments,
-			extractionshadowrepository.NewSettings,
-			extractionshadowrepository.NewResults,
 			retrievalsourcerepository.New,
 			inboundmessagerepository.New,
 			inboundmessagerepository.NewMailboxRepository,
@@ -146,29 +132,11 @@ func SharedOptions() fx.Option {
 			),
 			documentuploadservice.New,
 			func(s *documentuploadservice.Service) documentuploadports.DocumentUploadService { return s },
-			extractionevalservice.New,
-			extractionevalservice.AsService,
-			extractionevalservice.AsRunner,
-			extractionevalservice.AsDriftChecker,
-			extractionevalservice.AsCaseFreezer,
-			extractionevalcontract.NewRunStarter,
-			func(s *extractionevalcontract.RunStarter) extractionevalports.ExtractionEvalRunStarter { return s },
-			func(s *extractionevalcontract.RunStarter) extractionevalports.ExtractionEvalRefreezeStarter {
-				return s
-			},
-			extractionrolloutservice.New,
-			extractionrolloutservice.AsService,
-			extractionrolloutservice.AsRouter,
-			extractionrolloutservice.AsGuard,
-			extractionrolloutservice.AsRetention,
-			extractionshadowservice.NewScorer,
-			extractionshadowservice.New,
-			extractionshadowservice.AsService,
-			extractionshadowservice.AsSampler,
-			extractionshadowservice.AsRetention,
-			extractionshadowservice.NewRunner,
-			extractionshadowservice.AsRunner,
-			extractionshadowservice.AsScorer,
+			fx.Annotate(
+				extractionaccuracyservice.New,
+				fx.As(new(extractionaccuracyports.ExtractionAccuracyService)),
+				fx.As(new(extractionaccuracyports.ExtractionDriftChecker)),
+			),
 			inboundqueue.New,
 			inboundviews.New,
 			inboundreads.New,

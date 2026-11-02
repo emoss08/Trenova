@@ -56,10 +56,8 @@ func (s *Service) PreviewContractRate(
 
 	s.effects.ApplyShipmentEnvelope(ctx, entity)
 
-	if s.distanceCalculation != nil {
-		if _, err := s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {
-			return nil, err
-		}
+	if _, err := s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {
+		return nil, err
 	}
 
 	rated, err := s.commercial.RateAgainstContract(ctx, entity, auditActor.UserID, false)
@@ -295,7 +293,7 @@ type Params struct {
 	Repo                shipmentports.ShipmentRepository
 	Invalidator         shipmentinvalidationports.ShipmentInvalidator
 	Commercial          *shipmentcommercial.Calculator
-	DistanceCalculation shipmentdistanceports.DistanceCalculationService `optional:"true"`
+	DistanceCalculation shipmentdistanceports.DistanceCalculationService
 	Effects             *shipmenteffects.Effects
 }
 

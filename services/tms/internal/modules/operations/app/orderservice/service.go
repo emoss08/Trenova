@@ -921,7 +921,7 @@ func (s *Service) validateChargeAllocations(
 	}
 
 	customers := make(map[pulid.ID]*customer.Customer, len(payerIDs))
-	if len(payerIDs) > 0 && s.customerRepo != nil {
+	if len(payerIDs) > 0 {
 		found, err := s.customerRepo.GetByIDs(ctx, customerports.GetCustomersByIDsRequest{
 			TenantInfo:  tenantInfo,
 			CustomerIDs: payerIDs,
@@ -939,7 +939,7 @@ func (s *Service) validateChargeAllocations(
 	}
 
 	locked := make(map[pulid.ID]struct{})
-	if len(rowIDs) > 0 && s.chargeAllocationRepo != nil {
+	if len(rowIDs) > 0 {
 		found, err := s.chargeAllocationRepo.LockedIDs(ctx, tenantInfo, rowIDs)
 		if err != nil {
 			multiErr := errortypes.NewMultiError()
@@ -1017,7 +1017,7 @@ func (s *Service) syncChargeAllocations(
 	charge *order.OrderCharge,
 	allocations []*shipment.ChargeAllocation,
 ) error {
-	if allocations == nil || s.chargeAllocationRepo == nil {
+	if allocations == nil {
 		return nil
 	}
 

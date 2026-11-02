@@ -402,11 +402,6 @@ func (s *Service) storeRawBody(
 // sweep or by a person, and making the provider redeliver a message that landed
 // correctly would be the worse outcome.
 func (s *Service) startProcessing(ctx context.Context, message *inboundmessage.InboundMessage) {
-	if s.workflows == nil || !s.workflows.Enabled() {
-		s.readContentDetached(ctx, message)
-
-		return
-	}
 
 	if err := s.startReading(ctx, message, readingWorkflow{
 		// Keyed by the message, so a redelivery that somehow got past the

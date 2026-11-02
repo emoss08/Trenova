@@ -70,9 +70,9 @@ type Params struct {
 	Repo          selfserviceports.SelfServiceRepository
 	WorkerRepo    workerports.WorkerRepository
 	WorkerUpdater WorkerUpdater
-	Checksums     DocumentChecksums `optional:"true"`
+	Checksums     DocumentChecksums
 	AuditService  auditports.AuditService
-	DriverNotify  *drivernotificationservice.Service `optional:"true"`
+	DriverNotify  *drivernotificationservice.Service
 }
 
 type Service struct {
@@ -97,31 +97,6 @@ func New(p Params) *Service {
 	}
 }
 
-// Deps is the constructor shape tests use to swap in fakes.
-type Deps struct {
-	Logger        *zap.Logger
-	Repo          selfserviceports.SelfServiceRepository
-	WorkerRepo    WorkerReader
-	WorkerUpdater WorkerUpdater
-	Checksums     DocumentChecksums
-	AuditService  auditports.AuditService
-}
-
-func NewWithDeps(d Deps) *Service {
-	logger := d.Logger
-	if logger == nil {
-		logger = zap.NewNop()
-	}
-	return &Service{
-		l:             logger.Named("service.self-service"),
-		repo:          d.Repo,
-		workerRepo:    d.WorkerRepo,
-		workerUpdater: d.WorkerUpdater,
-		checksums:     d.Checksums,
-		auditService:  d.AuditService,
-	}
-}
-
 type auditParams struct {
 	resource   permission.Resource
 	resourceID string
@@ -134,7 +109,7 @@ type auditParams struct {
 }
 
 func (s *Service) audit(p auditParams) {
-	if s.auditService == nil || p.userID.IsNil() {
+	if p.userID.IsNil() {
 		return
 	}
 	params := &auditports.LogActionParams{
@@ -484,7 +459,7 @@ func (s *Service) Acknowledge(
 		SignatureIP:        truncate(req.IP, 64),
 		SignatureUserAgent: truncate(req.UserAgent, 255),
 	}
-	if !policy.DocumentID.IsNil() && s.checksums != nil {
+	if !policy.DocumentID.IsNil() {
 		checksum, cErr := s.checksums.Checksum(ctx, req.TenantInfo, policy.DocumentID)
 		if cErr != nil {
 			return nil, cErr
@@ -540,9 +515,6 @@ func (s *Service) notifyDriver(
 	notice *notificationtemplate.DriverNotificationContext,
 	related map[string]any,
 ) {
-	if s.driverNotify == nil {
-		return
-	}
 	s.driverNotify.Notify(ctx, &drivernotificationservice.DriverNotification{
 		TenantInfo:      tenantInfo,
 		WorkerID:        workerID,

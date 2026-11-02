@@ -25,7 +25,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aifeedbackexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aiproviderexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/airetrievalexec"
-	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aitrainingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aiusageexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/apikeyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/attentionexec"
@@ -65,9 +64,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/equipmentcontinuityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/equipmentmanufacturerexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/equipmenttypeexec"
-	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/extractionevalexec"
-	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/extractionrolloutexec"
-	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/extractionshadowexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/extractionaccuracyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/factoringcompanyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/factoringexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fiscalperiodexec"
@@ -181,7 +178,6 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		aifeedbackexec.Shard,
 		aiproviderexec.Shard,
 		airetrievalexec.Shard,
-		aitrainingexec.Shard,
 		aiusageexec.Shard,
 		apikeyexec.Shard,
 		attentionexec.Shard,
@@ -221,9 +217,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		equipmentcontinuityexec.Shard,
 		equipmentmanufacturerexec.Shard,
 		equipmenttypeexec.Shard,
-		extractionevalexec.Shard,
-		extractionrolloutexec.Shard,
-		extractionshadowexec.Shard,
+		extractionaccuracyexec.Shard,
 		factoringexec.Shard,
 		factoringcompanyexec.Shard,
 		fiscalperiodexec.Shard,

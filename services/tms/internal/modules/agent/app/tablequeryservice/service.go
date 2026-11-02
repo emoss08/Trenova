@@ -176,7 +176,7 @@ func (s *Service) Compose(ctx context.Context, req *ComposeRequest) (*ComposeRes
 // the clock reads as UTC — wrong for some organizations, but never wrong in a
 // way that silently shifts an explicit calendar date.
 func (s *Service) timezone(ctx context.Context, req *ComposeRequest) string {
-	if req.Timezone != "" || s.organizations == nil {
+	if req.Timezone != "" {
 		return req.Timezone
 	}
 

@@ -44,8 +44,8 @@ type Params struct {
 	Connectors []agentextensionports.ExtensionConnector `group:"agent_extension_connectors"`
 	Watches    agentextensionports.WebWatchRepository
 	Findings   agentextensionports.WebWatchFindingRepository
-	Workflows  kernelports.WorkflowStarter `                                   optional:"true"`
-	AppConfig  *appconfig.Config           `                                   optional:"true"`
+	Workflows  kernelports.WorkflowStarter
+	AppConfig  *appconfig.Config
 }
 
 type Service struct {

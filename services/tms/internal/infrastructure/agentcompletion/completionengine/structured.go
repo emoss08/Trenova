@@ -30,6 +30,7 @@ func StructuredRun(req *llmports.StructuredCompletionRequest) *RunRequest {
 		HedgeAfter:          req.HedgeAfter,
 		Reasoning:           req.Reasoning,
 		Attribution:         req.Attribution,
+		Nova:                req.Nova,
 	}
 }
 

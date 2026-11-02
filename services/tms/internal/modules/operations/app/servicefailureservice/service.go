@@ -31,10 +31,10 @@ type Params struct {
 	CommentService  shipmentcommentports.ShipmentCommentService
 	AuditService    auditports.AuditService
 	Realtime        realtimeports.RealtimeService
-	OrderDerivation orderports.OrderDerivationService   `optional:"true"`
-	Publisher       agenteventports.AgentEventPublisher `optional:"true"`
+	OrderDerivation orderports.OrderDerivationService
+	Publisher       agenteventports.AgentEventPublisher
 	// Watchtower puts an open failure on the feed a person reads.
-	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
+	Watchtower watchtowerports.WatchtowerProjector
 }
 
 type EDIServiceSetter interface {

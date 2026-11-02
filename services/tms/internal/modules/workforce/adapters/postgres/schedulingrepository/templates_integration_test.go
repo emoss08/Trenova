@@ -43,12 +43,12 @@ func TestGetTemplatesByIDsReturnsOnlyTheTenantsTemplates(t *testing.T) {
 	second := seedShiftTemplate(t, ctx, db, tenantA, "NIGHTS")
 	foreign := seedShiftTemplate(t, ctx, db, tenantB, "SWING")
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	entities, err := repo.GetTemplatesByIDs(
 		tenantA.Ctx(ctx),
 		&workerscheduleports.GetShiftTemplatesByIDsRequest{
-			TenantInfo: tenantA.Info(),
+			TenantInfo:  tenantA.Info(),
 			TemplateIDs: []pulid.ID{second.ID, foreign.ID, first.ID, pulid.MustNew("shft_")},
 		},
 	)

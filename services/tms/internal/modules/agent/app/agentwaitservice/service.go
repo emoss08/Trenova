@@ -88,11 +88,11 @@ type Params struct {
 	Turns         *assistantturnservice.Service
 	RunService    agentruntimeports.AgentRunService
 	Workflows     kernelports.WorkflowStarter
-	Realtime      realtimeports.RealtimeService                  `optional:"true"`
-	PortalRuns    agentextensionports.PortalRunRepository        `optional:"true"`
-	WebWatches    agentextensionports.WebWatchRepository         `optional:"true"`
-	Documents     documentports.DocumentRepository               `optional:"true"`
-	Contents      documentcontentports.DocumentContentRepository `optional:"true"`
+	Realtime      realtimeports.RealtimeService
+	PortalRuns    agentextensionports.PortalRunRepository
+	WebWatches    agentextensionports.WebWatchRepository
+	Documents     documentports.DocumentRepository
+	Contents      documentcontentports.DocumentContentRepository
 }
 
 type turnStarter interface {
@@ -158,9 +158,7 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 		realtime:      p.Realtime,
 		now:           timeutils.NowUnix,
 	}
-	if p.Turns != nil {
-		s.turns = p.Turns
-	}
+	s.turns = p.Turns
 
 	return s
 }
@@ -881,7 +879,7 @@ func (s *Service) close(
 }
 
 func (s *Service) announce(ctx context.Context, wait *agentwait.Wait) {
-	if s.realtime == nil || wait == nil || !wait.Conversational() {
+	if wait == nil || !wait.Conversational() {
 		return
 	}
 	if err := s.realtime.PublishResourceInvalidation(

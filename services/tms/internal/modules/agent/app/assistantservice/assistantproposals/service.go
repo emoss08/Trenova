@@ -64,9 +64,6 @@ func (s *Service) SaveProposalEdits(
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
-	if s.proposals == nil || s.proposalEdits == nil {
-		return nil, errortypes.NewNotFoundError("Proposal not found in this conversation")
-	}
 
 	stored, err := s.proposals.ListByThread(
 		ctx,
@@ -124,7 +121,7 @@ func (s *Service) SaveProposalEdits(
 // approval checks the values again; this keeps what is saved to what the
 // approval could carry.
 func (s *Service) checkEditedFields(proposal *agent.AgentProposal, changed map[string]any) error {
-	if s.tools == nil || len(changed) == 0 {
+	if len(changed) == 0 {
 		return nil
 	}
 
@@ -225,10 +222,6 @@ func (s *Service) labelChoices(
 	reader pagination.TenantInfo,
 	proposals []assistantproposalports.AssistantProposal,
 ) {
-	if s.labeler == nil {
-		return
-	}
-
 	reads := fieldsensitivity.NewReadAccess(s.permissions, permissionports.UserActor(reader))
 	refs := make(map[permission.Resource][]pulid.ID)
 	for i := range proposals {
@@ -264,7 +257,7 @@ func (s *Service) labelChoices(
 // decided proposal has nothing left to edit and a tool the registry no longer
 // has cannot be edited into running.
 func (s *Service) editableFields(proposal *agent.AgentProposal) []toolschema.Field {
-	if s.tools == nil || proposal.Status != agent.ProposalStatusPending {
+	if proposal.Status != agent.ProposalStatusPending {
 		return []toolschema.Field{}
 	}
 
@@ -347,7 +340,7 @@ func (s *Service) threadPlanSteps(
 	needed bool,
 ) (map[pulid.ID][]*agent.AgentProposal, error) {
 	steps := make(map[pulid.ID][]*agent.AgentProposal)
-	if !needed || s.proposals == nil {
+	if !needed {
 		return steps, nil
 	}
 

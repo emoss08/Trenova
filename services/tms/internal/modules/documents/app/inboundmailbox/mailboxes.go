@@ -417,10 +417,6 @@ func (s *Service) auditMailbox(
 	before, after *inboundmessage.Mailbox,
 	comment string,
 ) {
-	if s.audit == nil {
-		return
-	}
-
 	auditActor := actor.AuditActor()
 	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceInboundMailbox,

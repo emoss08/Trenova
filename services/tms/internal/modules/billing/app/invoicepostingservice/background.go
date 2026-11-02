@@ -71,7 +71,7 @@ func (s *Service) notifyAutoPostFailed(
 	entity *invoice.Invoice,
 	reason string,
 ) bool {
-	if s.notificationService == nil || req.Actor.UserID.IsNil() {
+	if req.Actor.UserID.IsNil() {
 		return false
 	}
 

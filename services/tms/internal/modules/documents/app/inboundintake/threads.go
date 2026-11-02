@@ -65,7 +65,7 @@ func (s *Service) replyThreadKey(
 	tenantInfo pagination.TenantInfo,
 	messageKeys []string,
 ) (string, error) {
-	if s.replies == nil || len(messageKeys) == 0 {
+	if len(messageKeys) == 0 {
 		return "", nil
 	}
 

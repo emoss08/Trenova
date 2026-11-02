@@ -4,9 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
-	"go.uber.org/fx"
 )
 
 const (
@@ -17,22 +15,14 @@ const (
 	localID         = "local"
 )
 
-type LocalBillingProviderParams struct {
-	fx.In
-
-	Catalog platformcatalog.FeatureCatalog `optional:"true"`
-}
-
-type LocalBillingProvider struct {
-	catalog platformcatalog.FeatureCatalog
-}
+// LocalBillingProvider is the billing summary of a self-hosted install: one
+// active community plan with nothing metered.
+type LocalBillingProvider struct{}
 
 var _ platformcatalogports.BillingProvider = (*LocalBillingProvider)(nil)
 
-func NewLocalBillingProvider(p LocalBillingProviderParams) *LocalBillingProvider {
-	return &LocalBillingProvider{
-		catalog: p.Catalog,
-	}
+func NewLocalBillingProvider() *LocalBillingProvider {
+	return &LocalBillingProvider{}
 }
 
 func (p *LocalBillingProvider) GetBillingSummary(
@@ -42,31 +32,6 @@ func (p *LocalBillingProvider) GetBillingSummary(
 	checkedAt := req.CheckedAt
 	if checkedAt == 0 {
 		checkedAt = time.Now().Unix()
-	}
-
-	var (
-		features []platformcatalog.Feature
-		meters   []platformcatalog.Meter
-	)
-	if p.catalog != nil {
-		features = p.catalog.ListFeatures()
-		meters = p.catalog.ListMeters()
-	}
-
-	featureSummaries := make([]platformcatalogports.BillingFeatureSummary, 0, len(features))
-	for i := range features {
-		featureSummaries = append(featureSummaries, platformcatalogports.BillingFeatureSummary{
-			FeatureKey: features[i].Key,
-			Allowed:    true,
-		})
-	}
-
-	usageSummaries := make([]platformcatalogports.BillingUsageSummary, 0, len(meters))
-	for i := range meters {
-		usageSummaries = append(usageSummaries, platformcatalogports.BillingUsageSummary{
-			MeterKey: meters[i].Key,
-			Unit:     meters[i].Unit,
-		})
 	}
 
 	return &platformcatalogports.BillingSummaryResult{
@@ -85,8 +50,8 @@ func (p *LocalBillingProvider) GetBillingSummary(
 			PlanID: communityPlanID,
 			Status: activeStatus,
 		},
-		Features:  featureSummaries,
-		Usage:     usageSummaries,
+		Features:  []platformcatalogports.BillingFeatureSummary{},
+		Usage:     []platformcatalogports.BillingUsageSummary{},
 		CheckedAt: checkedAt,
 	}, nil
 }

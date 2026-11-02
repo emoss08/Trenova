@@ -204,13 +204,6 @@ func (s *Service) ownerMayUseAgent(
 	owner *permissionports.RequestActor,
 	tenant pagination.TenantInfo,
 ) bool {
-	if s.definitions == nil || s.permissions == nil {
-		s.l.Warn("decision follow-up skipped: agent access cannot be checked",
-			zap.String("thread", thread.ID.String()),
-		)
-		return false
-	}
-
 	definition, err := s.definitions.GetByID(
 		ctx,
 		agentdefinitionports.GetAgentDefinitionByIDRequest{

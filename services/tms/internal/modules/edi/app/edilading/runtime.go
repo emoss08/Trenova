@@ -224,9 +224,6 @@ func (r *Runtime) Context(
 	result := &lading.Context{
 		Org: lading.Org{Name: org.Name, SCAC: org.ScacCode, Zone: org.Timezone},
 	}
-	if r.customFields == nil {
-		return result, nil
-	}
 	definitions, err := r.customFields.GetActiveByResourceType(
 		ctx,
 		customfieldports.GetActiveByResourceTypeRequest{
@@ -412,7 +409,7 @@ func (r *Runtime) locationZones(
 	ids []pulid.ID,
 ) (map[pulid.ID]string, error) {
 	zones := make(map[pulid.ID]string, len(ids))
-	if len(ids) == 0 || r.locations == nil {
+	if len(ids) == 0 {
 		return zones, nil
 	}
 	locations, err := r.locations.GetByIDs(ctx, locationports.GetLocationsByIDsRequest{

@@ -25,7 +25,7 @@ func (s *Service) abilities(
 	checklist *deskcase.Checklist,
 ) map[deskcase.StepKey]deskcase.StepAbility {
 	steps := checklist.Steps()
-	if len(steps) == 0 || s.runtime == nil || s.definitions == nil {
+	if len(steps) == 0 {
 		return nil
 	}
 

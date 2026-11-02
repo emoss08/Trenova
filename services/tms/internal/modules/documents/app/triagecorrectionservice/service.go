@@ -31,8 +31,8 @@ type Params struct {
 	Targets    inboundmessageports.TriageTargetRepository
 	Activities inboundmessageports.TriageActivityRecorder
 	Notifier   inboundmessageports.TriageMessageNotifier
-	Cache      triageports.TriageCache               `optional:"true"`
-	Recorder   triageports.InboundCorrectionRecorder `optional:"true"`
+	Cache      triageports.TriageCache
+	Recorder   triageports.InboundCorrectionRecorder
 }
 
 type Service struct {
@@ -291,8 +291,8 @@ func (s *Service) predicted(
 }
 
 func (s *Service) record(ctx context.Context, correction *triageports.InboundCorrection) {
-	if s.recorder == nil || correction.CapturedByID.IsNil() ||
-		correction.PredictedClassification == "" || correction.ConfirmedClassification == "" {
+	if correction.CapturedByID.IsNil() || correction.PredictedClassification == "" ||
+		correction.ConfirmedClassification == "" {
 		return
 	}
 	if err := s.recorder.RecordInboundCorrection(ctx, correction); err != nil {
@@ -306,7 +306,7 @@ func (s *Service) dropHints(
 	tenantInfo pagination.TenantInfo,
 	senderDomain string,
 ) {
-	if s.cache == nil || senderDomain == "" {
+	if senderDomain == "" {
 		return
 	}
 	if err := s.cache.DropSenderHints(ctx, tenantInfo, senderDomain); err != nil {

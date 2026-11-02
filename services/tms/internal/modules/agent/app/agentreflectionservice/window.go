@@ -160,7 +160,7 @@ func (s *Service) negativeRatings(
 	person pulid.ID,
 	messages []conversation.Message,
 ) int {
-	if s.feedback == nil || person.IsNil() {
+	if person.IsNil() {
 		return 0
 	}
 

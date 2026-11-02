@@ -24,7 +24,7 @@ type StatesParams struct {
 	Logger *zap.Logger
 	Cases  deskcaseports.AssistantCaseRepository
 	Waits  agentwaitports.AgentWaitRepository
-	Etas   shipmenttrackingports.ShipmentEtaReader `optional:"true"`
+	Etas   shipmenttrackingports.ShipmentEtaReader
 }
 
 // States works out where cases stand. It holds nothing it could not read
@@ -133,10 +133,6 @@ func (s *States) snoozedETAs(
 	tenant pagination.TenantInfo,
 	threads []*conversation.Thread,
 ) map[pulid.ID]*int64 {
-	if s.etas == nil {
-		return nil
-	}
-
 	shipmentIDs := make([]pulid.ID, 0)
 	for _, thread := range threads {
 		if thread.SnoozeAnchor == deskcase.SnoozeETA &&

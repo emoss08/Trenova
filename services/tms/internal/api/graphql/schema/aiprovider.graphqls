@@ -221,6 +221,11 @@ type AIProvider {
   embeddingInputStyle: AIEmbeddingInputStyle!
   trusted: Boolean!
   enabled: Boolean!
+  """
+  Nova runs on this provider, with Nova's own model whatever model it serves
+  the Desk with. An organization has at most one; choosing another moves it.
+  """
+  nova: Boolean!
   lastTest: AIProviderTestOutcome
   "How long one call may take before it fails and the task moves to the next provider."
   timeoutSeconds: Int!
@@ -382,6 +387,8 @@ type AIProviderDraftTestResult {
 input AIProviderPatchInput {
   enabled: Boolean @goField(omittable: true)
   trusted: Boolean @goField(omittable: true)
+  "Run Nova on this provider, taking it from the one that had it."
+  nova: Boolean @goField(omittable: true)
   allowPrivateNetwork: Boolean @goField(omittable: true)
   tasks: [AITask!] @goField(omittable: true)
   "A new credential. It replaces the stored one and is never returned."

@@ -45,7 +45,7 @@ func TestGetByIDsReturnsOnlyTheTenantsDistanceProfiles(t *testing.T) {
 	second := seedDistanceProfile(t, ctx, db, tenantA, "Fastest")
 	foreign := seedDistanceProfile(t, ctx, db, tenantB, "Foreign")
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	entities, err := repo.GetByIDs(
 		tenantA.Ctx(ctx),

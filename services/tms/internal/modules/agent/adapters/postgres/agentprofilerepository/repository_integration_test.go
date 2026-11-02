@@ -35,7 +35,7 @@ func newProfileFixture(t *testing.T) (context.Context, profileFixture) {
 	t.Cleanup(cleanup)
 	data := seedtest.SeedFullTestData(t, ctx, db)
 
-	params := Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()}
+	params := Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()}
 
 	return data.Ctx(ctx), profileFixture{
 		profiles: NewProfiles(params),
@@ -46,7 +46,10 @@ func newProfileFixture(t *testing.T) (context.Context, profileFixture) {
 	}
 }
 
-func (f profileFixture) version(ref agentprofileports.SubjectRef, content string) *agentprofile.Profile {
+func (f profileFixture) version(
+	ref agentprofileports.SubjectRef,
+	content string,
+) *agentprofile.Profile {
 	return &agentprofile.Profile{
 		OrganizationID: f.tenant.OrgID,
 		BusinessUnitID: f.tenant.BuID,
@@ -54,9 +57,11 @@ func (f profileFixture) version(ref agentprofileports.SubjectRef, content string
 		UserID:         ref.PersonPtr(),
 		Trigger:        agentprofile.TriggerScheduled,
 		Content:        content,
-		Facts:          agentprofile.Facts{{Key: "shipments.volume", Text: "Entered 40 shipments."}},
-		Digest:         hashutils.SHA256Hex(content),
-		CheckedAt:      timeutils.NowUnix(),
+		Facts: agentprofile.Facts{
+			{Key: "shipments.volume", Text: "Entered 40 shipments."},
+		},
+		Digest:    hashutils.SHA256Hex(content),
+		CheckedAt: timeutils.NowUnix(),
 	}
 }
 
@@ -86,7 +91,10 @@ func TestPublish_KeepsOneCurrentVersionPerProfile(t *testing.T) {
 	require.NotNil(t, personal)
 	assert.Equal(t, mine.ID, personal.ID, "the organization's versions never touch a person's")
 
-	history, err := f.profiles.ListHistory(ctx, agentprofileports.ListProfileHistoryRequest{Ref: org})
+	history, err := f.profiles.ListHistory(
+		ctx,
+		agentprofileports.ListProfileHistoryRequest{Ref: org},
+	)
 	require.NoError(t, err)
 	require.Len(t, history, 2)
 	assert.Equal(t, second.ID, history[0].ID)
@@ -152,7 +160,10 @@ func TestPrune_KeepsTheNewestVersionsAndTheCurrentOne(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 3, pruned)
 
-	history, err := f.profiles.ListHistory(ctx, agentprofileports.ListProfileHistoryRequest{Ref: org})
+	history, err := f.profiles.ListHistory(
+		ctx,
+		agentprofileports.ListProfileHistoryRequest{Ref: org},
+	)
 	require.NoError(t, err)
 	require.Len(t, history, 2)
 	assert.Equal(t, last.ID, history[0].ID)
@@ -307,7 +318,10 @@ func TestPublish_TheSameVersionWrittenTwiceIsKeptOnce(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, first.ID, second.ID)
 
-	history, err := f.profiles.ListHistory(ctx, agentprofileports.ListProfileHistoryRequest{Ref: org})
+	history, err := f.profiles.ListHistory(
+		ctx,
+		agentprofileports.ListProfileHistoryRequest{Ref: org},
+	)
 	require.NoError(t, err)
 	require.Len(t, history, 1)
 	assert.Equal(t, agentprofile.StatusCurrent, history[0].Status)

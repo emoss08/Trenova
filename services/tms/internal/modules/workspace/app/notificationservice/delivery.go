@@ -43,8 +43,7 @@ func (s *Service) loadRecipient(
 	entity *notification.Notification,
 	now time.Time,
 ) *recipient {
-	if s.users == nil || entity.TargetUserID == nil || entity.TargetUserID.IsNil() ||
-		entity.BusinessUnitID == nil {
+	if entity.TargetUserID == nil || entity.TargetUserID.IsNil() || entity.BusinessUnitID == nil {
 		return nil
 	}
 
@@ -67,18 +66,16 @@ func (s *Service) loadRecipient(
 	}
 
 	pref := notification.DefaultPreference(tenantInfo.OrgID, tenantInfo.BuID, tenantInfo.UserID)
-	if s.preferences != nil {
-		stored, found, prefErr := s.preferences.Get(ctx, notificationports.GetPreferenceRequest{
-			TenantInfo: tenantInfo,
-		})
-		if prefErr != nil {
-			s.l.Warn("failed to load notification preferences; using defaults",
-				zap.String("userID", tenantInfo.UserID.String()),
-				zap.Error(prefErr),
-			)
-		} else if found {
-			pref = stored
-		}
+	stored, found, prefErr := s.preferences.Get(ctx, notificationports.GetPreferenceRequest{
+		TenantInfo: tenantInfo,
+	})
+	if prefErr != nil {
+		s.l.Warn("failed to load notification preferences; using defaults",
+			zap.String("userID", tenantInfo.UserID.String()),
+			zap.Error(prefErr),
+		)
+	} else if found {
+		pref = stored
 	}
 
 	location, locErr := time.LoadLocation(user.Timezone)
@@ -89,7 +86,10 @@ func (s *Service) loadRecipient(
 	return &recipient{user: user, preference: pref, location: location}
 }
 
-func (r *recipient) decide(entity *notification.Notification, now time.Time) notification.DeliveryDecision {
+func (r *recipient) decide(
+	entity *notification.Notification,
+	now time.Time,
+) notification.DeliveryDecision {
 	return r.preference.Decide(notification.DeliveryInput{
 		EventType:    entity.EventType,
 		Priority:     entity.Priority,
@@ -131,7 +131,7 @@ func (s *Service) sendEmail(
 	to *recipient,
 ) {
 	address := strings.TrimSpace(to.user.EmailAddress)
-	if s.email == nil || address == "" || created.BusinessUnitID == nil {
+	if address == "" || created.BusinessUnitID == nil {
 		return
 	}
 

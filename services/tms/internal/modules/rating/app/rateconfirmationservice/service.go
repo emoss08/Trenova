@@ -663,10 +663,6 @@ func (s *Service) companyName(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) string {
-	if s.orgRepo == nil {
-		return ""
-	}
-
 	org, err := s.orgRepo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})
@@ -681,10 +677,6 @@ func (s *Service) applyLogo(
 	tenantInfo pagination.TenantInfo,
 	out *rateconfirmationtemplate.RateConfirmationContext,
 ) {
-	if s.orgRepo == nil {
-		return
-	}
-
 	org, err := s.orgRepo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})
@@ -714,11 +706,6 @@ func (s *Service) fileDocument(
 		zap.String("operation", "fileDocument"),
 		zap.String("rateConfirmationId", entity.ID.String()),
 	)
-
-	if s.uploadService == nil {
-		log.Warn("document uploads are not configured; the rate confirmation PDF was not filed")
-		return
-	}
 
 	docType, err := s.documentTypeRepo.GetByCode(
 		ctx,

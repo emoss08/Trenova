@@ -23,7 +23,7 @@ type Params struct {
 	Repo     iamports.AccessSettingsRepository
 	RBAC     permissionports.RBACRepository
 	Auditor  permissionports.SecurityAuditor
-	Notifier permissionports.PermissionChangeNotifier `optional:"true"`
+	Notifier permissionports.PermissionChangeNotifier
 }
 
 type Service struct {
@@ -92,9 +92,8 @@ func (s *Service) Update(
 	}
 
 	if before.RequireRoleActivation != saved.RequireRoleActivation {
-		if s.notifier != nil {
-			s.notifier.OrganizationChanged(ctx, req.TenantInfo)
-		}
+		s.notifier.OrganizationChanged(ctx, req.TenantInfo)
+
 		s.auditor.RecordChange(ctx, &permissionports.SecurityChange{
 			Resource:       permission.ResourceAccessPolicy,
 			ResourceID:     tenant.OrgID.String(),

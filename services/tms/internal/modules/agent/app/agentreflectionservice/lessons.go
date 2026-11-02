@@ -367,7 +367,7 @@ func (s *Service) announce(
 	reflection *agentreflection.Reflection,
 ) {
 	kept := reflection.KeptMemoryIDs()
-	if s.realtime == nil || plan.PersonUserID.IsNil() || len(kept) == 0 {
+	if plan.PersonUserID.IsNil() || len(kept) == 0 {
 		return
 	}
 

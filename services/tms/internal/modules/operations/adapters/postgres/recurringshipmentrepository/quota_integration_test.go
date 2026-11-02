@@ -56,7 +56,7 @@ func seriesFromShipment(t *testing.T) quotaCase {
 		Timezone:         "America/New_York",
 		AutoGenerate:     true,
 	}
-	repo := &repository{db: postgres.NewTestConnection(db), l: zap.NewNop()}
+	repo := &repository{db: postgres.WrapDB(db), l: zap.NewNop()}
 	count := func() int64 {
 		n, err := recurringshipmentdb.RecurringShipments.Query().Count(scoped, db)
 		require.NoError(t, err)

@@ -558,7 +558,6 @@ func (r *MutationResolver) UpdateAgentControl(ctx context.Context, input gqlmode
 		ShadowMode:            input.ShadowMode,
 		EarnedAutonomy:        input.EarnedAutonomy,
 		PromotionThreshold:    input.PromotionThreshold,
-		AITrainingConsent:     input.AiTrainingConsent,
 		PersonMonthlyMessages: input.PersonMonthlyMessages,
 		LearningOff:           input.LearningOff,
 		AutoChaptersOff:       input.AutoChaptersOff,

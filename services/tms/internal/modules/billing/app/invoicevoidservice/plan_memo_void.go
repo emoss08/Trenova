@@ -105,11 +105,6 @@ func (s *Service) refuseVoidingPosted(entity *invoice.Invoice) error {
 	if err := refuseAppliedInvoice(entity); err != nil {
 		return err
 	}
-	if s.adjustmentService == nil {
-		return errortypes.NewConflictError(
-			"Invoice adjustments are unavailable; a posted invoice cannot be voided",
-		)
-	}
 
 	return nil
 }

@@ -419,7 +419,6 @@ type InboundDocumentTypeFinder interface {
 }
 
 type TriageWakeScheduler interface {
-	Enabled() bool
 	ScheduleWake(ctx context.Context, tenantInfo pagination.TenantInfo, messageID pulid.ID) error
 	CancelWake(ctx context.Context, messageID pulid.ID) error
 	RecomputeDue(

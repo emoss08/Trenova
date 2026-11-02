@@ -315,7 +315,7 @@ func newIntegrationService(
 ) {
 	t.Helper()
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	moveRepo := shipmentmoverepository.New(shipmentmoverepository.Params{
 		DB:     conn,
 		Logger: zap.NewNop(),

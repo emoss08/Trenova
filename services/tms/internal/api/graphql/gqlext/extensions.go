@@ -10,41 +10,29 @@ import (
 	"go.uber.org/fx"
 )
 
-const ExtensionsGroup = "edition_graphql_extensions"
-
 // Params are the extensions every executor of Trenova's schema runs: the
 // HTTP server and the agent read path take the same list, in the same
 // order, so a limit or a guard added here reaches both.
 type Params struct {
 	fx.In
 
-	Observability     *ObservabilityExtension
-	CostBudget        *CostBudgetExtension
-	ReadOnly          *ReadOnlyExtension
-	FieldGuard        *FieldGuardExtension
-	QueryBudget       *QueryBudgetExtension
-	EditionExtensions []graphql.HandlerExtension `group:"edition_graphql_extensions"`
+	Observability *ObservabilityExtension
+	CostBudget    *CostBudgetExtension
+	ReadOnly      *ReadOnlyExtension
+	FieldGuard    *FieldGuardExtension
+	QueryBudget   *QueryBudgetExtension
 }
 
 func Extensions(p Params) []graphql.HandlerExtension {
-	out := make([]graphql.HandlerExtension, 0, 7+len(p.EditionExtensions))
-	out = append(out,
+	return []graphql.HandlerExtension{
 		operationDepthLimit{max: querycost.MaxOperationDepth},
 		extension.FixedComplexityLimit(querycost.MaxOperationCost),
 		p.CostBudget,
-	)
-	for _, ext := range p.EditionExtensions {
-		if ext != nil {
-			out = append(out, ext)
-		}
+		p.ReadOnly,
+		p.FieldGuard,
+		p.Observability,
+		p.QueryBudget,
 	}
-
-	out = append(out, p.ReadOnly, p.FieldGuard, p.Observability)
-	if p.QueryBudget != nil {
-		out = append(out, p.QueryBudget)
-	}
-
-	return out
 }
 
 func NewCostLimitedSchema(es graphql.ExecutableSchema) graphql.ExecutableSchema {

@@ -27,7 +27,7 @@ type Params struct {
 	DocumentControlRepo tenantports.DocumentControlRepository
 	DraftRepo           documentshipmentdraftports.DocumentShipmentDraftRepository
 	SearchProjection    documentsearchprojectionports.DocumentSearchProjectionService
-	AgentEvents         agenteventports.AgentEventPublisher `optional:"true"`
+	AgentEvents         agenteventports.AgentEventPublisher
 }
 
 type Service struct {
@@ -42,9 +42,6 @@ type Service struct {
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	searchProjection := p.SearchProjection
-	if searchProjection == nil {
-		searchProjection = noopDocumentSearchProjectionService{}
-	}
 
 	return &Service{
 		logger:              p.Logger.Named("temporal.document-extraction"),

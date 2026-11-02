@@ -64,8 +64,8 @@ type Params struct {
 	Repo          collectionports.Repository
 	Customers     customerports.CustomerRepository
 	Users         tenantports.UserRepository
-	Notifications *notificationservice.Service  `optional:"true"`
-	Realtime      realtimeports.RealtimeService `optional:"true"`
+	Notifications *notificationservice.Service
+	Realtime      realtimeports.RealtimeService
 	Logger        *zap.Logger
 }
 
@@ -93,9 +93,7 @@ func New(p Params) *Service {
 		now:       timeutils.NowUnix,
 		l:         p.Logger.Named("service.collection"),
 	}
-	if p.Notifications != nil {
-		s.notifier = p.Notifications
-	}
+	s.notifier = p.Notifications
 	return s
 }
 
@@ -400,8 +398,7 @@ func (s *Service) PlanAssignCollector(
 	actorID := actorUserID(actor, req.TenantInfo)
 	plan.Changed = true
 	plan.Activity = collectorActivity(req, collectorName, actorID)
-	plan.NotifiesCollector = req.CollectorID.IsNotNil() && req.CollectorID != actorID &&
-		s.notifier != nil
+	plan.NotifiesCollector = req.CollectorID.IsNotNil() && req.CollectorID != actorID
 	return plan, nil
 }
 
@@ -600,9 +597,6 @@ func (s *Service) publish(
 	customerID pulid.ID,
 	actor *permissionports.RequestActor,
 ) {
-	if s.realtime == nil {
-		return
-	}
 	auditActor := actor.AuditActor()
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: tenantInfo.OrgID,
@@ -626,7 +620,7 @@ func (s *Service) tellCollector(
 	row *collectionports.WorklistRow,
 	currency string,
 ) {
-	if s.notifier == nil || row == nil {
+	if row == nil {
 		return
 	}
 	buID := tenantInfo.BuID

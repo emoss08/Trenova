@@ -110,7 +110,7 @@ func RunAdminAccount(ctx context.Context, r *seed.Run) error {
 		return fmt.Errorf("create admin user: %w", err)
 	}
 
-	registry := permissioncatalog.NewRegistry()
+	registry := permissioncatalog.Default()
 	for i, org := range orgs {
 		membership := &tenant.OrganizationMembership{
 			BusinessUnitID: bu.ID,

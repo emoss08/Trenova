@@ -166,12 +166,6 @@ func (a *Activities) deliverRunEmail(
 	digest *reportports.ReportDigest,
 	result *DeliverRunResult,
 ) error {
-	if a.email == nil {
-		a.recordEmailFailure(ctx, run, schedule, title, result,
-			"Email delivery is not configured on this instance")
-		return nil
-	}
-
 	attach, attachTooLarge := a.attachmentPlan(run, schedule, title)
 	tenantInfo := pagination.TenantInfo{
 		OrgID:  run.OrganizationID,

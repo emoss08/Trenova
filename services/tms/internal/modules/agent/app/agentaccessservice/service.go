@@ -47,11 +47,11 @@ type Params struct {
 	Definitions  agentdefinitionports.AgentDefinitionRepository
 	Grants       permissionports.RoleAgentGrantRepository
 	Roles        permissionports.RoleRepository
-	Notifier     permissionports.PermissionChangeNotifier `optional:"true"`
+	Notifier     permissionports.PermissionChangeNotifier
 	Permissions  permissionports.PermissionEngine
 	AuditService auditports.AuditService
 	Runtime      agentruntimeports.AgentRuntime
-	Policies     *agenttoolpolicy.Catalog `optional:"true"`
+	Policies     *agenttoolpolicy.Catalog
 	Registry     *permissioncatalog.Registry
 }
 
@@ -584,10 +584,6 @@ func (s *Service) invalidate(
 	tenant pagination.TenantInfo,
 	groups ...[]pulid.ID,
 ) {
-	if s.notifier == nil {
-		return
-	}
-
 	for _, roleIDs := range groups {
 		if len(roleIDs) > 0 {
 			s.notifier.OrganizationChanged(ctx, tenant)

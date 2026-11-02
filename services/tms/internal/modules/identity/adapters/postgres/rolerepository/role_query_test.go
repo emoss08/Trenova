@@ -19,7 +19,10 @@ func TestRolesWithInheritanceIsADedupingRecursiveCTE(t *testing.T) {
 	t.Parallel()
 
 	roleID := pulid.ID("rol_1")
-	sql, args := keeltest.Render(t, rolesWithInheritance(keeltest.TenantContext(t), []pulid.ID{roleID}))
+	sql, args := keeltest.Render(
+		t,
+		rolesWithInheritance(keeltest.TenantContext(t), []pulid.ID{roleID}),
+	)
 
 	assert.Contains(t, sql, "WITH RECURSIVE")
 	assert.Contains(t, sql, `"role_closure"`)
@@ -44,7 +47,7 @@ func TestRolesWithInheritanceCrossesTenantsOnlyUnderASystemScope(t *testing.T) {
 func TestGetRolesWithInheritanceSkipsTheQueryForAnEmptyRoleSet(t *testing.T) {
 	t.Parallel()
 
-	repo := &repository{db: postgres.NewTestConnection(keeltest.RenderDB(t)), l: zap.NewNop()}
+	repo := &repository{db: postgres.WrapDB(keeltest.RenderDB(t)), l: zap.NewNop()}
 
 	roles, err := repo.GetRolesWithInheritance(keeltest.TenantContext(t), nil)
 	require.NoError(t, err)
@@ -73,7 +76,7 @@ func TestRolesByIDsIsOneBoundedStatementInsideTheOrganization(t *testing.T) {
 func TestGetByIDsSkipsTheQueryForAnEmptyRoleSet(t *testing.T) {
 	t.Parallel()
 
-	repo := &repository{db: postgres.NewTestConnection(keeltest.RenderDB(t)), l: zap.NewNop()}
+	repo := &repository{db: postgres.WrapDB(keeltest.RenderDB(t)), l: zap.NewNop()}
 
 	roles, err := repo.GetByIDs(
 		keeltest.TenantContext(t),

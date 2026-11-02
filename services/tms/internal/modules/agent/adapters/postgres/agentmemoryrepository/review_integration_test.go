@@ -29,7 +29,7 @@ func TestReview_ClearsTheTaintOnceAtTheVersionRead(t *testing.T) {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	reviewer := data.User.ID
 	now := timeutils.NowUnix()

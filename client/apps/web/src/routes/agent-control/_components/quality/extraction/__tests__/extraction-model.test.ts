@@ -1,13 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import {
-  accuracyTone,
-  documentKindLabel,
-  fieldLabel,
-  isRunActive,
-  modelLabel,
-  nextCaseStatuses,
-} from "../extraction-model";
+import { accuracyTone, documentKindLabel, fieldLabel, modelLabel } from "../extraction-model";
 
 const t = ((text: string, ...args: unknown[]) =>
   args.reduce<string>(
@@ -25,21 +18,7 @@ describe("fieldLabel", () => {
   });
 });
 
-describe("case lifecycle", () => {
-  it("matches the server's transitions", () => {
-    expect(nextCaseStatuses("Candidate")).toEqual(["Active", "Retired"]);
-    expect(nextCaseStatuses("Active")).toEqual(["Retired"]);
-    expect(nextCaseStatuses("Retired")).toEqual(["Active"]);
-  });
-});
-
-describe("run and accuracy helpers", () => {
-  it("treats queued and running as in flight", () => {
-    expect(isRunActive("Queued")).toBe(true);
-    expect(isRunActive("Running")).toBe(true);
-    expect(isRunActive("BudgetStopped")).toBe(false);
-  });
-
+describe("accuracy helpers", () => {
   it("tones accuracy only when something was scored", () => {
     expect(accuracyTone(0.95, 10)).toBe("success");
     expect(accuracyTone(0.8, 10)).toBe("warning");

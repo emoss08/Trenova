@@ -69,14 +69,21 @@ func tasksNamedIn(t *testing.T, path string) map[string]struct{} {
 // failure message names the thing a person would go and add.
 func goNameOf(task aitask.Task) string { return "Task" + string(task) }
 
-// Without a descriptor a task cannot be assigned to a provider in the admin UI,
-// so nothing serves it and every call fails at runtime.
-func TestEveryTaskHasAProviderDescriptor(t *testing.T) {
+// Without a descriptor a routed task cannot be assigned to a provider in the
+// admin UI, so nothing serves it and every call fails at runtime. Nova's tasks
+// are never assigned, so offering one would let an administrator tick a box
+// that saving refuses.
+func TestEveryRoutedTaskAndNoNovaTaskHasAProviderDescriptor(t *testing.T) {
 	t.Parallel()
 
 	declared := tasksNamedIn(t, descriptorsFile)
 	for _, task := range aitask.AllTasks() {
 		name := goNameOf(task)
+		if task.Nova() {
+			assert.NotContainsf(t, declared, name,
+				"%s is Nova's: it runs on the provider chosen for Nova and is never assigned", name)
+			continue
+		}
 		assert.Containsf(t, declared, name,
 			"%s has no entry in taskDescriptors(); no provider can be assigned to it, "+
 				"so every call routed to it fails with ErrNoProviderConfigured", name)

@@ -63,11 +63,9 @@ func NewValidator(p ValidatorParams) *Validator {
 				WithValidation(validateOperatingCapabilities),
 		)
 
-	if p.DB != nil {
-		builder.WithUniquenessChecker(businessUnitWideChecker{
-			checker: keelcheck.NewChecker(p.DB, tenantdb.OrganizationsSchema()),
-		})
-	}
+	builder.WithUniquenessChecker(businessUnitWideChecker{
+		checker: keelcheck.NewChecker(p.DB, tenantdb.OrganizationsSchema()),
+	})
 
 	return &Validator{
 		validator: builder.Build(),

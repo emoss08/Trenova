@@ -41,7 +41,7 @@ func (s *Service) UpsertInternal(
 	link *edisync.ShipmentLink,
 	status editenderchange.TenderRecipientBaselineStatus,
 ) error {
-	if s.tenderRecipientRepo == nil || transfer == nil {
+	if transfer == nil {
 		return nil
 	}
 	payload := transfer.TenderPayload
@@ -75,7 +75,7 @@ func (s *Service) UpsertExternal(
 	message *edimessage.EDIMessage,
 	partner *edi.EDIPartner,
 ) error {
-	if s.tenderRecipientRepo == nil || message == nil || partner == nil ||
+	if message == nil || partner == nil ||
 		message.TransactionSet != edidocument.TransactionSet204 ||
 		message.Direction != edidocument.DocumentDirectionOutbound ||
 		message.PayloadSnapshot.LoadTender == nil ||

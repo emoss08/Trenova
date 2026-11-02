@@ -206,9 +206,6 @@ func (s *Service) buildContext(
 		Mentions:    req.Mentions,
 		Facts:       req.Facts,
 	}
-	if s.contexts == nil {
-		return bare
-	}
 
 	runtimeContext, err := s.contexts.Build(ctx, &agentruntimeports.RuntimeContextRequest{
 		Definition:  req.Definition,
@@ -259,9 +256,6 @@ func (s *Service) describeSubject(
 		Type:  thread.SubjectType,
 		ID:    thread.SubjectID.String(),
 		Label: textcase.HumanizeSnakeCase(string(thread.SubjectType)),
-	}
-	if s.subjects == nil {
-		return bare
 	}
 	allowed, err := s.access().MayReadSubject(ctx, actor, thread.SubjectType)
 	if err != nil || !allowed {

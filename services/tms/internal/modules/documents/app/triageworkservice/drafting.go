@@ -40,11 +40,6 @@ func (s *Service) DraftMany(ctx context.Context, req *DraftManyRequest) (int, er
 	if !available {
 		return 0, triagenova.ErrUnavailable
 	}
-	if s.workflows == nil || !s.workflows.Enabled() {
-		return 0, errortypes.NewBusinessError(
-			"Drafting many messages at once needs a background worker, which this installation does not run",
-		)
-	}
 
 	batchID := pulid.MustNew("tdrf_")
 	if _, err = s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{

@@ -113,7 +113,7 @@ func For(kind documenttemplate.Kind) (*Starter, error) {
 // catalog at render. A per-locale file is for the cases where the layout itself
 // has to change, not merely the words.
 func ForLocale(kind documenttemplate.Kind, locale i18n.Locale) (*Starter, error) {
-	registry := templateregistry.NewRegistry()
+	registry := templateregistry.Default()
 	def, ok := registry.Get(kind)
 	if !ok {
 		return nil, fmt.Errorf("unknown template kind %q", kind)

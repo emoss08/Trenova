@@ -60,7 +60,7 @@ func setup(t *testing.T) *fixture {
 		base:       ctx,
 		ctx:        dbscope.WithTenant(ctx, tenant.DBTenant()),
 		db:         db,
-		repo:       New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()}),
+		repo:       New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()}),
 		tenant:     tenant,
 		definition: row.ID,
 	}

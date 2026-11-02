@@ -34,7 +34,7 @@ type Params struct {
 	DB           kernelports.Transactor
 	WorkerRepo   workerports.WorkerRepository
 	AuditService auditports.AuditService
-	Realtime     realtimeports.RealtimeService `optional:"true"`
+	Realtime     realtimeports.RealtimeService
 }
 
 type Service struct {
@@ -328,7 +328,7 @@ func (s *Service) publish(
 	operation permission.Operation,
 	userID pulid.ID,
 ) {
-	if s.realtime == nil || entity == nil {
+	if entity == nil {
 		return
 	}
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{

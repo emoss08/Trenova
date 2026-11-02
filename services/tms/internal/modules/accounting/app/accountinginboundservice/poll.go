@@ -118,7 +118,7 @@ func (s *Service) PollChanges(
 			Now:            now,
 			Payments:       profile.InboundPayments,
 			BillPayments:   profile.InboundPayments,
-			Documents:      s.drift != nil,
+			Documents:      true,
 			ReferenceKinds: profile.ReferenceKinds,
 		},
 	)
@@ -165,7 +165,7 @@ func (s *Service) PollChanges(
 			zap.String("connectionId", sess.conn.ID.String()),
 		)
 	}
-	if page.CursorExpired && s.refresher != nil {
+	if page.CursorExpired {
 		if refreshErr := s.refresher.RequestReferenceRefresh(
 			ctx,
 			sess.tenant,
@@ -186,7 +186,7 @@ func (s *Service) recheckDocuments(
 	sess *readSession,
 	documents []accountingconnectorports.AccountingChangedDocument,
 ) int {
-	if s.drift == nil || len(documents) == 0 {
+	if len(documents) == 0 {
 		return 0
 	}
 	checked, err := s.drift.RecheckDocuments(

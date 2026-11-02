@@ -144,7 +144,7 @@ func (s *Service) searchKinds(
 	if len(query) > maxMentionQueryLen {
 		query = query[:maxMentionQueryLen]
 	}
-	if len(search.wanted) == 0 || s.permissions == nil {
+	if len(search.wanted) == 0 {
 		return []assistantports.MentionCandidate{}, nil
 	}
 

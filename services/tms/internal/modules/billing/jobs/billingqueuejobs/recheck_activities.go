@@ -58,9 +58,6 @@ func (a *Activities) AgentReviewActivity(
 	ctx context.Context,
 	payload *billingqueuecontract.RecheckPayload,
 ) (*billingqueueports.AgentReviewOutcome, error) {
-	if a.assist == nil {
-		return &billingqueueports.AgentReviewOutcome{}, nil
-	}
 	tenant := payload.Tenant()
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 
@@ -71,9 +68,6 @@ func (a *Activities) AutoApproveActivity(
 	ctx context.Context,
 	payload *billingqueuecontract.RecheckPayload,
 ) (*billingqueueports.AutoApproveOutcome, error) {
-	if a.assist == nil {
-		return &billingqueueports.AutoApproveOutcome{}, nil
-	}
 	tenant := payload.Tenant()
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 
@@ -89,9 +83,7 @@ func (a *Activities) RequestBriefActivity(
 	ctx context.Context,
 	payload *billingqueuecontract.RecheckPayload,
 ) error {
-	if a.briefs != nil {
-		a.briefs.RequestBrief(ctx, payload.Tenant())
-	}
+	a.briefs.RequestBrief(ctx, payload.Tenant())
 
 	return nil
 }
@@ -100,9 +92,6 @@ func (a *Activities) RefreshBriefActivity(
 	ctx context.Context,
 	payload *billingqueuecontract.BriefPayload,
 ) error {
-	if a.assist == nil {
-		return nil
-	}
 	tenant := payload.Tenant()
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 

@@ -52,17 +52,13 @@ func (c *Connection) slowWaits(pool scopePool) keel.SlowWaitConfig {
 		pool:      string(pool),
 		kinds:     newSlowWaitKinds(slowWaitLogInterval),
 	}
-	if c.metrics != nil {
-		l.metrics = c.metrics.Database
-	}
+	l.metrics = c.metrics.Database
 
 	return keel.SlowWaitConfig{After: after, Report: l.report}
 }
 
 func (l *slowWaitLog) report(ctx context.Context, w *keel.SlowWait) {
-	if l.metrics != nil {
-		l.metrics.RecordSlowWait(l.component, l.pool, w.Kind.String())
-	}
+	l.metrics.RecordSlowWait(l.component, l.pool, w.Kind.String())
 
 	kind := l.kinds[w.Kind]
 	if kind == nil {

@@ -221,6 +221,14 @@ func SharedOptions() fx.Option {
 			accountingsynccontract.NewDriftChecker,
 			fx.As(new(accountingdriftports.AccountingDriftChecker)),
 		)),
+		fx.Provide(fx.Annotate(
+			accountingsynccontract.NewReferenceRefresher,
+			fx.As(new(accountingconnectionports.AccountingReferenceRefresher)),
+		)),
+		fx.Provide(fx.Annotate(
+			accountingsynccontract.NewChangesPoller,
+			fx.As(new(accountinginboundports.AccountingChangePoller)),
+		)),
 	)
 }
 

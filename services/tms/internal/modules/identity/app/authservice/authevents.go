@@ -72,10 +72,6 @@ func (a *authAttempt) fail(code string) {
 }
 
 func (s *Service) recordAuthAttempt(ctx context.Context, attempt *authAttempt, err error) {
-	if s.authEvents == nil {
-		return
-	}
-
 	rec := iamports.AuthEventRecord{
 		Provider:         attempt.provider,
 		Outcome:          authOutcome(err),

@@ -40,7 +40,7 @@ func TestCloseReturnsConflictWhenFiscalPeriodIsLocked(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	fyRepo := fiscalyearrepository.New(fiscalyearrepository.Params{
 		DB:     conn,
 		Logger: zap.NewNop(),
@@ -127,7 +127,7 @@ func TestCloseBlockedByApprovedManualJournalRequest(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	fyRepo := fiscalyearrepository.New(fiscalyearrepository.Params{DB: conn, Logger: zap.NewNop()})
 	fpRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()},
@@ -188,7 +188,7 @@ func TestCloseBlockedByPendingJournalSource(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	fyRepo := fiscalyearrepository.New(fiscalyearrepository.Params{DB: conn, Logger: zap.NewNop()})
 	fpRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()},
@@ -249,7 +249,7 @@ func TestGetCloseBlockersReturnsManualJournalBlocker(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	fyRepo := fiscalyearrepository.New(fiscalyearrepository.Params{DB: conn, Logger: zap.NewNop()})
 	fpRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()},
@@ -321,7 +321,7 @@ func TestLockSucceedsFromOpenStatus(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	fyRepo := fiscalyearrepository.New(fiscalyearrepository.Params{DB: conn, Logger: zap.NewNop()})
 	fpRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()},
@@ -378,7 +378,7 @@ func TestCloseBlockedWhenPeriodCloseModeIsSystemScheduled(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	fyRepo := fiscalyearrepository.New(fiscalyearrepository.Params{DB: conn, Logger: zap.NewNop()})
 	fpRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()},
@@ -452,7 +452,7 @@ func TestCloseBlockedWhenPeriodCloseApprovalRequired(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	fyRepo := fiscalyearrepository.New(fiscalyearrepository.Params{DB: conn, Logger: zap.NewNop()})
 	fpRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()},

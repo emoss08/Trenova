@@ -236,7 +236,7 @@ func (s *Service) reviewerName(
 	tenantInfo pagination.TenantInfo,
 	reviewerID pulid.ID,
 ) string {
-	if reviewerID.IsNil() || s.userRepo == nil {
+	if reviewerID.IsNil() {
 		return ""
 	}
 	user, err := s.userRepo.GetByID(ctx, tenantports.GetUserByIDRequest{

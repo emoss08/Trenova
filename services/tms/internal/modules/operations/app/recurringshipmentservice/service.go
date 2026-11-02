@@ -31,7 +31,7 @@ type Params struct {
 	Repo         recurringshipmentports.RecurringShipmentRepository
 	Validator    *Validator
 	AuditService auditports.AuditService
-	Realtime     realtimeports.RealtimeService `optional:"true"`
+	Realtime     realtimeports.RealtimeService
 	Invalidator  shipmentinvalidationports.ShipmentInvalidator
 }
 
@@ -313,10 +313,6 @@ func (s *Service) publishInvalidation(
 	userID pulid.ID,
 	action string,
 ) {
-	if s.realtime == nil {
-		return
-	}
-
 	if err := realtimeinvalidation.Publish(
 		ctx,
 		s.realtime,

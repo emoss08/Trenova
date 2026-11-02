@@ -73,8 +73,8 @@ type Params struct {
 	AppConfig      *appconfig.Config
 	SecurityConfig *securityconfig.Config
 	Logger         *zap.Logger
-	Throttle       sessionports.LoginThrottleStore `optional:"true"`
-	AuthEvents     iamports.AuthEventRecorder      `optional:"true"`
+	Throttle       sessionports.LoginThrottleStore
+	AuthEvents     iamports.AuthEventRecorder
 }
 
 type Service struct {
@@ -100,7 +100,7 @@ func New(
 
 func newService(p *Params) (*Service, error) {
 	issuer := defaultIssuer
-	if p.AppConfig != nil && strings.TrimSpace(p.AppConfig.Name) != "" {
+	if strings.TrimSpace(p.AppConfig.Name) != "" {
 		issuer = strings.TrimSpace(p.AppConfig.Name)
 	}
 
@@ -630,7 +630,7 @@ func (s *Service) raiseSessionAssurance(
 	req *sessionports.ConfirmTOTPEnrollmentRequest,
 	verifiedAt int64,
 ) *sessionrotation.Rotated {
-	if req.SessionID.IsNil() || s.rotator == nil {
+	if req.SessionID.IsNil() {
 		return nil
 	}
 
@@ -671,9 +671,6 @@ func (s *Service) recordSessionsEnded(
 	tenantInfo pagination.TenantInfo,
 	userID pulid.ID,
 ) {
-	if s.authEvents == nil {
-		return
-	}
 	s.authEvents.Record(
 		ctx,
 		iamports.SessionRevokedEvent(tenantInfo, userID, iamports.SessionRevocationAll),
@@ -681,10 +678,6 @@ func (s *Service) recordSessionsEnded(
 }
 
 func (s *Service) recordChange(ctx context.Context, change *mfaChange) {
-	if s.auditor == nil {
-		return
-	}
-
 	s.auditor.RecordChange(ctx, &permissionports.SecurityChange{
 		Resource:       permission.ResourceMFAAuthenticator,
 		ResourceID:     change.resourceID,

@@ -82,7 +82,7 @@ type Params struct {
 	Documents     PacketSummarizer
 	DrugAlcohol   DrugAlcoholStander
 	AuditService  auditports.AuditService
-	Realtime      realtimeports.RealtimeService `optional:"true"`
+	Realtime      realtimeports.RealtimeService
 }
 
 type Service struct {
@@ -108,35 +108,6 @@ func New(p Params) *Service {
 		drugAlcohol:   p.DrugAlcohol,
 		auditService:  p.AuditService,
 		realtime:      p.Realtime,
-	}
-}
-
-// Deps is the constructor shape tests use to swap in fakes.
-type Deps struct {
-	Logger        *zap.Logger
-	Repo          workerdqfports.WorkerDQFRepository
-	WorkerRepo    workerports.WorkerRepository
-	RetentionRepo tenantports.DataRetentionRepository
-	Credentials   CredentialSummarizer
-	Documents     PacketSummarizer
-	DrugAlcohol   DrugAlcoholStander
-	AuditService  auditports.AuditService
-}
-
-func NewWithDeps(d Deps) *Service {
-	logger := d.Logger
-	if logger == nil {
-		logger = zap.NewNop()
-	}
-	return &Service{
-		l:             logger.Named("service.worker-dqf"),
-		repo:          d.Repo,
-		workerRepo:    d.WorkerRepo,
-		retentionRepo: d.RetentionRepo,
-		credentials:   d.Credentials,
-		documents:     d.Documents,
-		drugAlcohol:   d.DrugAlcohol,
-		auditService:  d.AuditService,
 	}
 }
 
@@ -170,25 +141,21 @@ func (s *Service) File(
 	)
 
 	group, groupCtx := errgroup.WithContext(ctx)
-	if s.credentials != nil {
-		group.Go(func() error {
-			var gErr error
-			credentials, gErr = s.credentials.Summary(groupCtx, tenantInfo, workerID)
-			return gErr
-		})
-	}
-	if s.documents != nil {
-		group.Go(func() error {
-			var gErr error
-			documents, gErr = s.documents.GetPacketSummary(
-				groupCtx,
-				workerResourceType,
-				workerID.String(),
-				tenantInfo,
-			)
-			return gErr
-		})
-	}
+	group.Go(func() error {
+		var gErr error
+		credentials, gErr = s.credentials.Summary(groupCtx, tenantInfo, workerID)
+		return gErr
+	})
+	group.Go(func() error {
+		var gErr error
+		documents, gErr = s.documents.GetPacketSummary(
+			groupCtx,
+			workerResourceType,
+			workerID.String(),
+			tenantInfo,
+		)
+		return gErr
+	})
 	group.Go(func() error {
 		var gErr error
 		verifications, gErr = s.repo.ListVerifications(
@@ -200,13 +167,11 @@ func (s *Service) File(
 		)
 		return gErr
 	})
-	if s.drugAlcohol != nil {
-		group.Go(func() error {
-			var gErr error
-			standing, gErr = s.drugAlcohol.Standing(groupCtx, tenantInfo, workerID)
-			return gErr
-		})
-	}
+	group.Go(func() error {
+		var gErr error
+		standing, gErr = s.drugAlcohol.Standing(groupCtx, tenantInfo, workerID)
+		return gErr
+	})
 
 	if err = group.Wait(); err != nil {
 		return nil, err
@@ -220,9 +185,7 @@ func (s *Service) File(
 		RetentionDays: s.retentionDays(ctx, tenantInfo),
 		Now:           timeutils.NowUnix(),
 	}
-	if s.drugAlcohol != nil {
-		in.DrugAlcohol = &standing
-	}
+	in.DrugAlcohol = &standing
 	if wrk.Profile != nil {
 		in.HireDate = wrk.Profile.HireDate
 		in.TerminationDate = wrk.Profile.TerminationDate
@@ -238,9 +201,6 @@ func (s *Service) retentionDays(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) int {
-	if s.retentionRepo == nil {
-		return workercompliance.DefaultDQFRetentionDays
-	}
 	retention, err := s.retentionRepo.Get(ctx, tenantports.GetDataRetentionRequest{
 		OrgID: tenantInfo.OrgID,
 		BuID:  tenantInfo.BuID,
@@ -282,7 +242,7 @@ type auditParams struct {
 }
 
 func (s *Service) audit(p *auditParams) {
-	if s.auditService == nil || p.userID.IsNil() {
+	if p.userID.IsNil() {
 		return
 	}
 	params := &auditports.LogActionParams{
@@ -311,9 +271,6 @@ func (s *Service) publish(
 	recordID pulid.ID,
 	userID pulid.ID,
 ) {
-	if s.realtime == nil {
-		return
-	}
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,

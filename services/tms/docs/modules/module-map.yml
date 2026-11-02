@@ -49,7 +49,6 @@ modules:
       - iam
       - instancebootstrap
       - invoiceadjustmentcontrol
-      - onboarding
       - operationbits
       - passwordreset
       - payrollperms
@@ -92,7 +91,6 @@ modules:
       - journalreviewservice
       - locationcodegenerator
       - mfaservice
-      - onboardingservice
       - organizationservice
       - orgstructureservice
       - orgzone
@@ -128,7 +126,6 @@ modules:
       - iamrepository
       - instancebootstraprepository
       - invoiceadjustmentcontrolrepository
-      - onboardingrepository
       - organizationrepository
       - orgstructurerepository
       - passwordresetrepository
@@ -449,9 +446,6 @@ modules:
       - detentiontemplate
       - documenttemplate
       - documentupload
-      - extractioneval
-      - extractionrollout
-      - extractionshadow
       - factoringtemplate
       - generateddocument
       - inboundmessage
@@ -483,9 +477,7 @@ modules:
       - documentservice
       - documenttemplateservice
       - documentuploadservice
-      - extractionevalservice
-      - extractionrolloutservice
-      - extractionshadowservice
+      - extractionaccuracyservice
       - inboundintake
       - inboundmailbox
       - inboundprocessing
@@ -506,8 +498,6 @@ modules:
       - documentextractionjobs
       - documentextractionsupport
       - documentuploadjobs
-      - extractionevaljobs
-      - extractionshadowjobs
       - inboundjobs
       - thumbnailjobs
       - triagewakejobs
@@ -520,9 +510,6 @@ modules:
       - documentsearchprojectionrepository
       - documenttemplaterepository
       - documentuploadrepository
-      - extractionevalrepository
-      - extractionrolloutrepository
-      - extractionshadowrepository
       - inboundmessagerepository
       - retrievalsourcerepository
       - triageinsightrepository
@@ -1110,7 +1097,6 @@ modules:
       - agentversion
       - agentwait
       - aianalytics
-      - aianonymizer
       - aiaudit
       - aicontrolsummary
       - aicorrection
@@ -1123,11 +1109,9 @@ modules:
       - aiproviderdismissal
       - aiproviderkey
       - aireasoning
-      - airetraining
       - airetrieval
       - airouting
       - aitask
-      - aitraining
       - aituneup
       - aiusage
       - assistantartifact
@@ -1222,7 +1206,6 @@ modules:
       - aiproviderservice
       - aiproviderspendservice
       - airetrievalstatusservice
-      - aitraininghistoryservice
       - aituneupservice
       - aiusageservice
       - approvalwindow

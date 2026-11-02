@@ -57,7 +57,7 @@ func TestFeedbackRepository_UpsertClearAndTenantIsolation(t *testing.T) {
 	first := seedtest.SeedFullTestData(t, ctx, db)
 	second := seedtest.SeedAdditionalTenant(t, ctx, db, "FK")
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	firstCtx, secondCtx := first.Ctx(ctx), second.Ctx(ctx)
 	firstTenant := pagination.TenantInfo{OrgID: first.Organization.ID, BuID: first.BusinessUnit.ID}
 	secondTenant := pagination.TenantInfo{
@@ -151,7 +151,7 @@ func TestFeedbackRepository_SummaryNegativeScanAndPurge(t *testing.T) {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	other := seedtest.SeedAdditionalTenant(t, ctx, db, "FS")
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	tenantCtx, otherCtx := data.Ctx(ctx), other.Ctx(ctx)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	otherTenant := pagination.TenantInfo{OrgID: other.Organization.ID, BuID: other.BusinessUnit.ID}
@@ -204,10 +204,13 @@ func TestFeedbackRepository_SummaryNegativeScanAndPurge(t *testing.T) {
 	assert.Equal(t, 1, scores[0].Negative)
 	assert.False(t, scores[0].SampleID.IsNil())
 
-	negatives, err := repo.ListNegativeSince(tenantCtx, aifeedbackports.ListNegativeAIFeedbackRequest{
-		TenantInfo: tenant,
-		Since:      window.Since,
-	})
+	negatives, err := repo.ListNegativeSince(
+		tenantCtx,
+		aifeedbackports.ListNegativeAIFeedbackRequest{
+			TenantInfo: tenant,
+			Since:      window.Since,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, negatives, 1)
 	assert.Equal(t, worst.TargetID, negatives[0].TargetID)
@@ -219,10 +222,13 @@ func TestFeedbackRepository_SummaryNegativeScanAndPurge(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), purged)
 
-	survivors, err := repo.ListNegativeSince(otherCtx, aifeedbackports.ListNegativeAIFeedbackRequest{
-		TenantInfo: otherTenant,
-		Since:      window.Since,
-	})
+	survivors, err := repo.ListNegativeSince(
+		otherCtx,
+		aifeedbackports.ListNegativeAIFeedbackRequest{
+			TenantInfo: otherTenant,
+			Since:      window.Since,
+		},
+	)
 	require.NoError(t, err)
 	assert.Len(t, survivors, 1, "purging one tenant leaves the other's ratings")
 }

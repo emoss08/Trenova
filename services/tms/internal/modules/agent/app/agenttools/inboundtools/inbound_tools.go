@@ -453,7 +453,7 @@ type replyToInboundMessageParams struct {
 	Inliner   documenttemplateports.AssetInliner
 	Customers customerports.CustomerRepository
 	Shipments shipmentports.ShipmentRepository
-	Senders   emailports.EmailSenderResolver `optional:"true"`
+	Senders   emailports.EmailSenderResolver
 }
 
 type ReplyToInboundMessageTool struct {
@@ -668,7 +668,7 @@ func (t *ReplyToInboundMessageTool) describeMatch(
 	tenant pagination.TenantInfo,
 	out *portaltemplate.AgentEmailContext,
 ) {
-	if !message.MatchedCustomerID.IsNil() && t.deps.customers != nil {
+	if !message.MatchedCustomerID.IsNil() {
 		customer, err := t.deps.customers.GetByID(ctx, customerports.GetCustomerByIDRequest{
 			ID:         message.MatchedCustomerID,
 			TenantInfo: tenant,
@@ -678,7 +678,7 @@ func (t *ReplyToInboundMessageTool) describeMatch(
 		}
 	}
 
-	if !message.MatchedShipmentID.IsNil() && t.deps.shipments != nil {
+	if !message.MatchedShipmentID.IsNil() {
 		summaries, err := t.deps.shipments.ListSummariesByIDs(
 			ctx,
 			&shipmentports.ListShipmentSummariesRequest{

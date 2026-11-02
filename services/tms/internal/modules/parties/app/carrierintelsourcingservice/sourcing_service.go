@@ -27,7 +27,7 @@ type Params struct {
 	SubjectRepo    carrierintelports.CarrierIntelSubjectRepository
 	UsStateRepo    usstateports.UsStateRepository
 	CarrierService *carrierservice.Service
-	Plans          platformplanports.PlanService `optional:"true"`
+	Plans          platformplanports.PlanService
 }
 
 type Service struct {

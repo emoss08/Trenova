@@ -37,7 +37,7 @@ func TestCreateMessageOnce_Integration(t *testing.T) {
 	)
 
 	repo := emailrepository.New(emailrepository.Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 

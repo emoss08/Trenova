@@ -194,11 +194,6 @@ func (s *Service) deliverByEmail(
 	offer *tender.TenderOffer,
 	expiresAt int64,
 ) error {
-	if s.templates == nil || s.emailService == nil {
-		return errortypes.NewBusinessError(
-			"Email delivery is not configured for this environment",
-		)
-	}
 	if s.tenderingConfig.PublicLinkBaseURL(s.appConfig) == "" {
 		return errortypes.NewBusinessError(
 			"Public links need a base URL; set app.webBaseUrl so offer links can be reached",
@@ -259,11 +254,6 @@ func (s *Service) deliverByEDI(
 	tenantInfo pagination.TenantInfo,
 	offer *tender.TenderOffer,
 ) error {
-	if s.ediChannel == nil {
-		return errortypes.NewBusinessError(
-			"EDI delivery is not configured for this environment",
-		)
-	}
 
 	result, err := s.ediChannel.SendTenderOffer(ctx, &tenderports.SendTenderOfferEDIRequest{
 		TenantInfo: tenantInfo,
@@ -414,10 +404,6 @@ func (s *Service) BuildOfferEmailContext(
 }
 
 func (s *Service) companyName(ctx context.Context, tenantInfo pagination.TenantInfo) string {
-	if s.orgRepo == nil {
-		return ""
-	}
-
 	org, err := s.orgRepo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})
@@ -446,9 +432,8 @@ type Params struct {
 	OrgRepo         tenantports.OrganizationRepository
 	AppConfig       *appconfig.Config
 	TenderingConfig *tenderingconfig.Config
-	Templates       documenttemplateports.DocumentTemplateResolver `optional:"true"`
-	EmailService    emailports.EmailService                        `optional:"true"`
-	EDIChannel      tenderports.EDITenderChannel                   `optional:"true"`
+	Templates       documenttemplateports.DocumentTemplateResolver
+	EmailService    emailports.EmailService
 	Effects         *tendereffects.Effects
 }
 
@@ -464,7 +449,6 @@ func New(p Params) *Service {
 		tenderingConfig: p.TenderingConfig,
 		templates:       p.Templates,
 		emailService:    p.EmailService,
-		ediChannel:      p.EDIChannel,
 		effects:         p.Effects,
 	}
 }

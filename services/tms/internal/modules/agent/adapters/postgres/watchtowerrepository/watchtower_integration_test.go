@@ -39,9 +39,11 @@ func newHarness(t *testing.T) *harness {
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	return &harness{
-		ctx:    dbscope.WithTenant(ctx, tenant.DBTenant()),
-		db:     db,
-		repo:   watchtowerrepository.New(watchtowerrepository.Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()}),
+		ctx: dbscope.WithTenant(ctx, tenant.DBTenant()),
+		db:  db,
+		repo: watchtowerrepository.New(
+			watchtowerrepository.Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()},
+		),
 		tenant: tenant,
 		userID: data.User.ID,
 	}
@@ -59,14 +61,22 @@ func (h *harness) item(sourceID string, severity watchtower.Severity) *watchtowe
 	}
 }
 
-func (h *harness) upsert(t *testing.T, sourceID string, severity watchtower.Severity) *watchtower.Item {
+func (h *harness) upsert(
+	t *testing.T,
+	sourceID string,
+	severity watchtower.Severity,
+) *watchtower.Item {
 	t.Helper()
 	saved, _, err := h.repo.Upsert(h.ctx, h.item(sourceID, severity))
 	require.NoError(t, err)
 	return saved
 }
 
-func (h *harness) update(t *testing.T, item *watchtower.Item, events ...*watchtower.Event) *watchtower.Item {
+func (h *harness) update(
+	t *testing.T,
+	item *watchtower.Item,
+	events ...*watchtower.Event,
+) *watchtower.Item {
 	t.Helper()
 	saved, err := h.repo.UpdateWorkflow(h.ctx, &watchtowerports.UpdateWatchtowerWorkflowRequest{
 		Item:            item,
@@ -105,7 +115,10 @@ func (h *harness) resolveSource(t *testing.T, sourceID string) *watchtower.Item 
 
 func (h *harness) get(t *testing.T, id pulid.ID) *watchtower.Item {
 	t.Helper()
-	item, err := h.repo.GetByID(h.ctx, watchtowerports.GetWatchtowerItemRequest{ID: id, TenantInfo: h.tenant})
+	item, err := h.repo.GetByID(
+		h.ctx,
+		watchtowerports.GetWatchtowerItemRequest{ID: id, TenantInfo: h.tenant},
+	)
 	require.NoError(t, err)
 	return item
 }
@@ -118,12 +131,28 @@ func TestPersonsResolutionHoldsUntilTheSourceClears(t *testing.T) {
 
 	assigned := *created
 	assigned.AssigneeID = h.userID
-	saved := h.update(t, &assigned,
-		watchtower.NewEvent(&assigned, watchtower.EventAssigned, h.userID).WithChange("", h.userID.String()))
+	saved := h.update(
+		t,
+		&assigned,
+		watchtower.NewEvent(&assigned, watchtower.EventAssigned, h.userID).
+			WithChange("", h.userID.String()),
+	)
 
 	resolved := *saved
-	require.NoError(t, resolved.Resolve(watchtower.ResolutionCarrierDelay, "Carrier called", h.userID, baseTime+50))
-	saved = h.update(t, &resolved, watchtower.NewEvent(&resolved, watchtower.EventResolved, h.userID))
+	require.NoError(
+		t,
+		resolved.Resolve(
+			watchtower.ResolutionCarrierDelay,
+			"Carrier called",
+			h.userID,
+			baseTime+50,
+		),
+	)
+	saved = h.update(
+		t,
+		&resolved,
+		watchtower.NewEvent(&resolved, watchtower.EventResolved, h.userID),
+	)
 	assert.Equal(t, watchtower.StatusResolved, saved.Status)
 
 	again := h.upsert(t, "sf_1", watchtower.SeverityCritical)
@@ -364,13 +393,19 @@ func TestRetentionKeepsAPersonsResolutionWhileTheSourceIsOpen(t *testing.T) {
 	cleared := h.upsert(t, "sf_13", watchtower.SeverityWarning)
 	require.NotNil(t, h.resolveSource(t, "sf_13"))
 
-	deleted, err := h.repo.DeleteResolvedBefore(h.ctx, watchtowerports.DeleteResolvedWatchtowerItemsRequest{
-		Before: baseTime + 1_000_000,
-		Limit:  100,
-	})
+	deleted, err := h.repo.DeleteResolvedBefore(
+		h.ctx,
+		watchtowerports.DeleteResolvedWatchtowerItemsRequest{
+			Before: baseTime + 1_000_000,
+			Limit:  100,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, 1, deleted)
 	assert.Equal(t, watchtower.StatusResolved, h.get(t, held.ID).Status)
-	_, err = h.repo.GetByID(h.ctx, watchtowerports.GetWatchtowerItemRequest{ID: cleared.ID, TenantInfo: h.tenant})
+	_, err = h.repo.GetByID(
+		h.ctx,
+		watchtowerports.GetWatchtowerItemRequest{ID: cleared.ID, TenantInfo: h.tenant},
+	)
 	require.Error(t, err)
 }

@@ -22,7 +22,7 @@ type Params struct {
 	Repo         dispatchcontrolports.DispatchControlRepository
 	Validator    *Validator
 	AuditService auditports.AuditService
-	Fields       permissionports.FieldAccess `optional:"true"`
+	Fields       permissionports.FieldAccess
 }
 
 type Service struct {

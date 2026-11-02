@@ -64,9 +64,6 @@ func (s *Service) ResolveIssue(
 	req *billingqueueports.ResolveBillingQueueIssueRequest,
 	actor *permissionports.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
-	if s.reviewRepo == nil {
-		return nil, errChecksUnavailable()
-	}
 	if actor.IsAgent() {
 		return nil, errPersonDecides()
 	}
@@ -119,10 +116,6 @@ func (s *Service) PlanResolveIssue(
 	ctx context.Context,
 	req *billingqueueports.ResolveBillingQueueIssueRequest,
 ) (*billingqueueports.IssueSettlementPlan, error) {
-	if s.reviewRepo == nil {
-		return nil, errChecksUnavailable()
-	}
-
 	settle, err := s.settleableIssue(ctx, req)
 	if err != nil {
 		return nil, err
@@ -236,9 +229,6 @@ func (s *Service) UndoIssue(
 	req *billingqueueports.UndoBillingQueueIssueRequest,
 	actor *permissionports.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
-	if s.reviewRepo == nil {
-		return nil, errChecksUnavailable()
-	}
 	if actor.IsAgent() {
 		return nil, errPersonDecides()
 	}
@@ -302,10 +292,6 @@ func (s *Service) PlanUndoIssue(
 	ctx context.Context,
 	req *billingqueueports.UndoBillingQueueIssueRequest,
 ) (*billingqueueports.IssueSettlementPlan, error) {
-	if s.reviewRepo == nil {
-		return nil, errChecksUnavailable()
-	}
-
 	undo, err := s.undoableIssue(ctx, req)
 	if err != nil {
 		return nil, err
@@ -642,9 +628,6 @@ func (s *Service) Post(
 	if actor.IsAgent() {
 		return nil, errPersonDecides()
 	}
-	if s.invoicePosting == nil || s.invoiceRepo == nil {
-		return nil, errortypes.NewBusinessError("Posting is unavailable")
-	}
 
 	item, err := s.repo.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:     req.ItemID,
@@ -780,19 +763,17 @@ func (s *Service) ApproveIfReady(
 	result.Item = approved
 	result.Approved = true
 
-	if s.invoiceRepo != nil {
-		if inv, invErr := s.invoiceRepo.GetByBillingQueueItemID(
-			ctx,
-			invoiceports.GetInvoiceByBillingQueueItemIDRequest{
-				BillingQueueItemID: approved.ID,
-				TenantInfo:         req.TenantInfo,
-			},
-		); invErr == nil &&
-			inv != nil {
-			id := inv.ID
-			result.InvoiceID = &id
-			result.InvoiceNumber = inv.Number
-		}
+	if inv, invErr := s.invoiceRepo.GetByBillingQueueItemID(
+		ctx,
+		invoiceports.GetInvoiceByBillingQueueItemIDRequest{
+			BillingQueueItemID: approved.ID,
+			TenantInfo:         req.TenantInfo,
+		},
+	); invErr == nil &&
+		inv != nil {
+		id := inv.ID
+		result.InvoiceID = &id
+		result.InvoiceNumber = inv.Number
 	}
 
 	return result, nil

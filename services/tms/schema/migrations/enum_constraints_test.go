@@ -48,9 +48,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/onboarding"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/subscription"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
 	"github.com/stretchr/testify/require"
@@ -604,14 +602,6 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		{
 			name:   "ck_organization_subscriptions_status",
 			values: stringsOf(subscription.AllStatuses()),
-		},
-		{
-			name:   "ck_organization_onboarding_status",
-			values: stringsOf(onboarding.AllStatuses()),
-		},
-		{
-			name:   "ck_organization_onboarding_operation_type",
-			values: stringsOf(tenant.AllOperationTypes()),
 		},
 		{
 			name:   "ck_carrier_capacity_postings_rate_method",

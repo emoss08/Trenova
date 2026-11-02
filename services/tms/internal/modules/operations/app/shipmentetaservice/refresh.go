@@ -2,7 +2,6 @@ package shipmentetaservice
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"slices"
 
@@ -29,17 +28,11 @@ const (
 	maxTrackedShipments = 20000
 )
 
-var errRefresherNotConfigured = errors.New("shipment eta refresher is not configured")
-
-func (s *Service) RefreshTenant(
+func (r *Refresher) RefreshTenant(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*stopetaports.RefreshResult, error) {
-	if s.stopEtas == nil {
-		return nil, errRefresherNotConfigured
-	}
-
-	ids, err := s.stopEtas.ListTrackedShipmentIDs(ctx, &stopetaports.ListTrackedShipmentIDsRequest{
+	ids, err := r.stopEtas.ListTrackedShipmentIDs(ctx, &stopetaports.ListTrackedShipmentIDsRequest{
 		TenantInfo: tenantInfo,
 		Statuses:   stopeta.TrackedShipmentStatuses(),
 		Limit:      maxTrackedShipments,
@@ -48,19 +41,14 @@ func (s *Service) RefreshTenant(
 		return nil, err
 	}
 
-	return s.RefreshShipments(ctx, tenantInfo, ids)
+	return r.RefreshShipments(ctx, tenantInfo, ids)
 }
 
-func (s *Service) RefreshShipments(
+func (r *Refresher) RefreshShipments(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	shipmentIDs []pulid.ID,
 ) (*stopetaports.RefreshResult, error) {
-	if s.stopEtas == nil || s.calls == nil || s.controls == nil || s.routes == nil ||
-		s.workers == nil {
-		return nil, errRefresherNotConfigured
-	}
-
 	result := &stopetaports.RefreshResult{}
 	ids := sliceutils.Dedupe(slices.DeleteFunc(
 		slices.Clone(shipmentIDs),
@@ -70,7 +58,7 @@ func (s *Service) RefreshShipments(
 		return result, nil
 	}
 
-	settings, err := s.loadSettings(ctx, tenantInfo)
+	settings, err := r.loadSettings(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +66,7 @@ func (s *Service) RefreshShipments(
 	changed := make([]pulid.ID, 0, len(ids))
 	for start := 0; start < len(ids); start += RefreshBatchSize {
 		batch := ids[start:min(start+RefreshBatchSize, len(ids))]
-		batchChanged, bErr := s.refreshBatch(ctx, &refreshBatch{
+		batchChanged, bErr := r.refreshBatch(ctx, &refreshBatch{
 			tenant:   tenantInfo,
 			ids:      batch,
 			settings: settings,
@@ -90,7 +78,7 @@ func (s *Service) RefreshShipments(
 		changed = append(changed, batchChanged...)
 	}
 
-	s.announce(ctx, tenantInfo, changed)
+	r.announce(ctx, tenantInfo, changed)
 
 	return result, nil
 }
@@ -102,8 +90,8 @@ type refreshBatch struct {
 	result   *stopetaports.RefreshResult
 }
 
-func (s *Service) refreshBatch(ctx context.Context, b *refreshBatch) ([]pulid.ID, error) {
-	entities, err := s.shipments.ListTrackingShipments(
+func (r *Refresher) refreshBatch(ctx context.Context, b *refreshBatch) ([]pulid.ID, error) {
+	entities, err := r.shipments.ListTrackingShipments(
 		ctx,
 		&shipmentports.ListTrackingShipmentsRequest{TenantInfo: b.tenant, ShipmentIDs: b.ids},
 	)
@@ -118,12 +106,12 @@ func (s *Service) refreshBatch(ctx context.Context, b *refreshBatch) ([]pulid.ID
 		}
 	}
 
-	sources, err := s.collectForRefresh(ctx, b.tenant, tracked)
+	sources, err := r.collectForRefresh(ctx, b.tenant, tracked)
 	if err != nil {
 		return nil, err
 	}
 
-	now := s.now().Unix()
+	now := r.now().Unix()
 	plans := make([]*etaprojection.Plan, 0, len(tracked))
 	legs := make([]routeestimateports.Leg, 0, len(tracked)*2)
 	for _, entity := range tracked {
@@ -141,7 +129,7 @@ func (s *Service) refreshBatch(ctx context.Context, b *refreshBatch) ([]pulid.ID
 		legs = append(legs, plan.Legs()...)
 	}
 
-	estimates, err := s.estimateLegs(ctx, b.tenant, legs)
+	estimates, err := r.estimateLegs(ctx, b.tenant, legs)
 	if err != nil {
 		return nil, err
 	}
@@ -154,12 +142,12 @@ func (s *Service) refreshBatch(ctx context.Context, b *refreshBatch) ([]pulid.ID
 		offset += count
 	}
 
-	previous, err := s.storedRows(ctx, b.tenant, b.ids)
+	previous, err := r.sources.storedRows(ctx, b.tenant, b.ids)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = s.stopEtas.ReplaceForShipments(ctx, &stopetaports.ReplaceForShipmentsRequest{
+	if err = r.stopEtas.ReplaceForShipments(ctx, &stopetaports.ReplaceForShipmentsRequest{
 		TenantInfo:  b.tenant,
 		ShipmentIDs: b.ids,
 		Rows:        rows,
@@ -187,7 +175,7 @@ func (s *Service) refreshBatch(ctx context.Context, b *refreshBatch) ([]pulid.ID
 	return changed, nil
 }
 
-func (s *Service) estimateLegs(
+func (r *Refresher) estimateLegs(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	legs []routeestimateports.Leg,
@@ -195,7 +183,7 @@ func (s *Service) estimateLegs(
 	estimates := make([]routeestimateports.LegEstimate, 0, len(legs))
 	for start := 0; start < len(legs); start += routeestimateports.MaxLegsPerEstimate {
 		batch := legs[start:min(start+routeestimateports.MaxLegsPerEstimate, len(legs))]
-		out, err := s.routes.EstimateLegs(ctx, tenantInfo, batch)
+		out, err := r.routes.EstimateLegs(ctx, tenantInfo, batch)
 		if err != nil {
 			return nil, err
 		}
@@ -211,11 +199,11 @@ func (s *Service) estimateLegs(
 	return estimates, nil
 }
 
-func (s *Service) loadSettings(
+func (r *Refresher) loadSettings(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*dispatchcontrol.DispatchControl, error) {
-	control, err := s.controls.GetByOrgID(ctx, dispatchcontrolports.GetDispatchControlRequest{
+	control, err := r.controls.GetByOrgID(ctx, dispatchcontrolports.GetDispatchControlRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -242,7 +230,7 @@ func settingsFor(
 	}
 }
 
-func (s *Service) announce(
+func (r *Refresher) announce(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	changed []pulid.ID,
@@ -251,17 +239,14 @@ func (s *Service) announce(
 		return
 	}
 
-	for _, observer := range s.observers {
+	for _, observer := range r.observers {
 		if observer != nil {
 			observer.StopEtasRefreshed(ctx, tenantInfo, changed)
 		}
 	}
 
-	if s.realtime == nil {
-		return
-	}
 	for _, id := range changed {
-		err := s.realtime.PublishResourceInvalidation(
+		err := r.realtime.PublishResourceInvalidation(
 			ctx,
 			&realtimeports.PublishResourceInvalidationRequest{
 				OrganizationID: tenantInfo.OrgID,
@@ -272,7 +257,7 @@ func (s *Service) announce(
 			},
 		)
 		if err != nil {
-			s.l.Warn("failed to publish shipment eta invalidation",
+			r.l.Warn("failed to publish shipment eta invalidation",
 				zap.String("shipmentId", id.String()),
 				zap.Error(err))
 		}

@@ -331,7 +331,7 @@ type intakeToolParams struct {
 	Shipments shipmentserviceports.ShipmentWriter
 	Contracts shipmentserviceports.ShipmentAutoRater
 	Locations locationports.LocationRepository
-	Imports   shipmentimportassistantports.ShipmentImportAssistantService `optional:"true"`
+	Imports   shipmentimportassistantports.ShipmentImportAssistantService
 }
 
 func provideCreateShipmentTool(p intakeToolParams) agenttoolports.AgentTool {
@@ -341,9 +341,7 @@ func provideCreateShipmentTool(p intakeToolParams) agenttoolports.AgentTool {
 		Locations: p.Locations,
 		Logger:    p.Logger,
 	}
-	if p.Imports != nil {
-		deps.Imports = p.Imports
-	}
+	deps.Imports = p.Imports
 
 	return intaketools.NewCreateShipmentTool(deps)
 }

@@ -7,6 +7,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
@@ -43,7 +45,7 @@ func newHarness(t *testing.T) *harness {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 
 	return &harness{
 		ctx:    data.Ctx(ctx),
@@ -59,7 +61,7 @@ func newHarness(t *testing.T) *harness {
 func newRepository(conn *postgres.Connection) retrievalports.AIRetrievalRepository {
 	return New(Params{
 		DB:     conn,
-		Probe:  postgres.NewTestCapabilityProbe(conn),
+		Probe:  dbtest.CapabilityProbe(conn),
 		Logger: zap.NewNop(),
 	})
 }

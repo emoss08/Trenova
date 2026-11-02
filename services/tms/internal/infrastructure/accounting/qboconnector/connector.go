@@ -36,7 +36,7 @@ type Params struct {
 	AccountingConfig *accountingconfig.Config
 	AppConfig        *appconfig.Config
 	Logger           *zap.Logger
-	Limiter          restx.Limiter `name:"accountingLimiter" optional:"true"`
+	Limiter          restx.Limiter `name:"accountingLimiter"`
 }
 
 type Provider struct {
@@ -74,9 +74,7 @@ func New(p Params) (*Provider, error) {
 		l:           p.Logger.Named("accounting.quickbooks"),
 		bound:       make(map[string]*Connector),
 	}
-	if p.Limiter != nil {
-		provider.apiOpts = append(provider.apiOpts, quickbooks.WithLimiter(p.Limiter, ""))
-	}
+	provider.apiOpts = append(provider.apiOpts, quickbooks.WithLimiter(p.Limiter, ""))
 	if qbo.IsConfigured(p.AppConfig) {
 		provider.instance = &accountingconnectorports.AccountingApp{
 			Source:               accountingconnection.AppSourceInstance,

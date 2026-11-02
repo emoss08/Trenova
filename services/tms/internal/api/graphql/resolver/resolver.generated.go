@@ -22,7 +22,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aifeedbackexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aiproviderexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/airetrievalexec"
-	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aitrainingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aiusageexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/apikeyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/attentionexec"
@@ -62,9 +61,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/equipmentcontinuityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/equipmentmanufacturerexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/equipmenttypeexec"
-	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/extractionevalexec"
-	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/extractionrolloutexec"
-	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/extractionshadowexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/extractionaccuracyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/factoringcompanyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/factoringexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fiscalperiodexec"
@@ -159,7 +156,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/aifeedbackresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/aiproviderresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/airetrievalresolver"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/aitrainingresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/aiusageresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/apikeyresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/attentionresolver"
@@ -199,9 +195,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/equipmentcontinuityresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/equipmentmanufacturerresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/equipmenttyperesolver"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/extractionevalresolver"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/extractionrolloutresolver"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/extractionshadowresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/extractionaccuracyresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/factoringcompanyresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/factoringresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fiscalperiodresolver"
@@ -406,10 +400,6 @@ func FromServices(s *Services) *Resolver {
 	airetrievalDeps := &airetrievalresolver.Deps{
 		Core:                     s.Core,
 		AiRetrievalStatusService: s.AiRetrievalStatusService,
-	}
-	aitrainingDeps := &aitrainingresolver.Deps{
-		Core:                     s.Core,
-		AiTrainingHistoryService: s.AiTrainingHistoryService,
 	}
 	aiusageDeps := &aiusageresolver.Deps{
 		Core:           s.Core,
@@ -623,17 +613,9 @@ func FromServices(s *Services) *Resolver {
 		Core:                 s.Core,
 		EquipmentTypeService: s.EquipmentTypeService,
 	}
-	extractionevalDeps := &extractionevalresolver.Deps{
-		Core:                  s.Core,
-		ExtractionEvalService: s.ExtractionEvalService,
-	}
-	extractionrolloutDeps := &extractionrolloutresolver.Deps{
-		Core:                     s.Core,
-		ExtractionRolloutService: s.ExtractionRolloutService,
-	}
-	extractionshadowDeps := &extractionshadowresolver.Deps{
-		Core:                    s.Core,
-		ExtractionShadowService: s.ExtractionShadowService,
+	extractionaccuracyDeps := &extractionaccuracyresolver.Deps{
+		Core:                      s.Core,
+		ExtractionAccuracyService: s.ExtractionAccuracyService,
 	}
 	factoringDeps := &factoringresolver.Deps{
 		Core:                       s.Core,
@@ -1066,7 +1048,7 @@ func FromServices(s *Services) *Resolver {
 	aiauditAIAuditExport := &aiauditresolver.AIAuditExportResolver{Deps: aiauditDeps}
 	aicontrolAIControlSegment := &aicontrolresolver.AIControlSegmentResolver{Deps: aicontrolDeps}
 	aicontrolAIControlSummary := &aicontrolresolver.AIControlSummaryResolver{Deps: aicontrolDeps}
-	extractionevalAICorrection := &extractionevalresolver.AICorrectionResolver{Deps: extractionevalDeps}
+	extractionaccuracyAICorrection := &extractionaccuracyresolver.AICorrectionResolver{Deps: extractionaccuracyDeps}
 	aifeedbackAIFeedback := &aifeedbackresolver.AIFeedbackResolver{Deps: aifeedbackDeps}
 	aiproviderAIProvider := &aiproviderresolver.AIProviderResolver{Deps: aiproviderDeps}
 	aiproviderAIProviderKeyInfo := &aiproviderresolver.AIProviderKeyInfoResolver{Deps: aiproviderDeps}
@@ -1188,13 +1170,7 @@ func FromServices(s *Services) *Resolver {
 	equipmentcontinuityEquipmentContinuity := &equipmentcontinuityresolver.EquipmentContinuityResolver{Deps: equipmentcontinuityDeps}
 	driversettlementEscrowAccount := &driversettlementresolver.EscrowAccountResolver{Deps: driversettlementDeps}
 	securityactivityExternalIdentity := &securityactivityresolver.ExternalIdentityResolver{Deps: securityactivityDeps}
-	extractionevalExtractionEvalCase := &extractionevalresolver.ExtractionEvalCaseResolver{Deps: extractionevalDeps}
-	extractionevalExtractionEvalResult := &extractionevalresolver.ExtractionEvalResultResolver{Deps: extractionevalDeps}
-	extractionevalExtractionEvalRun := &extractionevalresolver.ExtractionEvalRunResolver{Deps: extractionevalDeps}
-	extractionrolloutExtractionRollout := &extractionrolloutresolver.ExtractionRolloutResolver{Deps: extractionrolloutDeps}
-	extractionshadowExtractionShadowReport := &extractionshadowresolver.ExtractionShadowReportResolver{Deps: extractionshadowDeps}
-	extractionshadowExtractionShadowResult := &extractionshadowresolver.ExtractionShadowResultResolver{Deps: extractionshadowDeps}
-	extractionevalExtractionSnapshot := &extractionevalresolver.ExtractionSnapshotResolver{Deps: extractionevalDeps}
+	extractionaccuracyExtractionSnapshot := &extractionaccuracyresolver.ExtractionSnapshotResolver{Deps: extractionaccuracyDeps}
 	factoringFactoringAgreement := &factoringresolver.FactoringAgreementResolver{Deps: factoringDeps}
 	factoringFactoringCheck := &factoringresolver.FactoringCheckResolver{Deps: factoringDeps}
 	factoringFactoringCompany := &factoringresolver.FactoringCompanyResolver{Deps: factoringDeps}
@@ -1313,9 +1289,6 @@ func FromServices(s *Services) *Resolver {
 	driversettlementMutation := &driversettlementresolver.MutationResolver{Deps: driversettlementDeps}
 	equipmentmanufacturerMutation := &equipmentmanufacturerresolver.MutationResolver{Deps: equipmentmanufacturerDeps}
 	equipmenttypeMutation := &equipmenttyperesolver.MutationResolver{Deps: equipmenttypeDeps}
-	extractionevalMutation := &extractionevalresolver.MutationResolver{Deps: extractionevalDeps}
-	extractionrolloutMutation := &extractionrolloutresolver.MutationResolver{Deps: extractionrolloutDeps}
-	extractionshadowMutation := &extractionshadowresolver.MutationResolver{Deps: extractionshadowDeps}
 	factoringMutation := &factoringresolver.MutationResolver{Deps: factoringDeps}
 	factoringcompanyMutation := &factoringcompanyresolver.MutationResolver{Deps: factoringcompanyDeps}
 	fleetcodeMutation := &fleetcoderesolver.MutationResolver{Deps: fleetcodeDeps}
@@ -1408,7 +1381,6 @@ func FromServices(s *Services) *Resolver {
 	aifeedbackQuery := &aifeedbackresolver.QueryResolver{Deps: aifeedbackDeps}
 	aiproviderQuery := &aiproviderresolver.QueryResolver{Deps: aiproviderDeps}
 	airetrievalQuery := &airetrievalresolver.QueryResolver{Deps: airetrievalDeps}
-	aitrainingQuery := &aitrainingresolver.QueryResolver{Deps: aitrainingDeps}
 	aiusageQuery := &aiusageresolver.QueryResolver{Deps: aiusageDeps}
 	apikeyQuery := &apikeyresolver.QueryResolver{Deps: apikeyDeps}
 	attentionQuery := &attentionresolver.QueryResolver{Deps: attentionDeps}
@@ -1447,9 +1419,7 @@ func FromServices(s *Services) *Resolver {
 	emailprofileQuery := &emailprofileresolver.QueryResolver{Deps: emailprofileDeps}
 	equipmentmanufacturerQuery := &equipmentmanufacturerresolver.QueryResolver{Deps: equipmentmanufacturerDeps}
 	equipmenttypeQuery := &equipmenttyperesolver.QueryResolver{Deps: equipmenttypeDeps}
-	extractionevalQuery := &extractionevalresolver.QueryResolver{Deps: extractionevalDeps}
-	extractionrolloutQuery := &extractionrolloutresolver.QueryResolver{Deps: extractionrolloutDeps}
-	extractionshadowQuery := &extractionshadowresolver.QueryResolver{Deps: extractionshadowDeps}
+	extractionaccuracyQuery := &extractionaccuracyresolver.QueryResolver{Deps: extractionaccuracyDeps}
 	factoringQuery := &factoringresolver.QueryResolver{Deps: factoringDeps}
 	factoringcompanyQuery := &factoringcompanyresolver.QueryResolver{Deps: factoringcompanyDeps}
 	fiscalperiodQuery := &fiscalperiodresolver.QueryResolver{Deps: fiscalperiodDeps}
@@ -1608,7 +1578,7 @@ func FromServices(s *Services) *Resolver {
 			"AIAuditExport@aiaudit":                                aiauditAIAuditExport,
 			"AIControlSegment@aicontrol":                           aicontrolAIControlSegment,
 			"AIControlSummary@aicontrol":                           aicontrolAIControlSummary,
-			"AICorrection@extractioneval":                          extractionevalAICorrection,
+			"AICorrection@extractionaccuracy":                      extractionaccuracyAICorrection,
 			"AIFeedback@aifeedback":                                aifeedbackAIFeedback,
 			"AIProvider@aiprovider":                                aiproviderAIProvider,
 			"AIProviderKeyInfo@aiprovider":                         aiproviderAIProviderKeyInfo,
@@ -1730,13 +1700,7 @@ func FromServices(s *Services) *Resolver {
 			"EquipmentContinuity@equipmentcontinuity":              equipmentcontinuityEquipmentContinuity,
 			"EscrowAccount@driversettlement":                       driversettlementEscrowAccount,
 			"ExternalIdentity@securityactivity":                    securityactivityExternalIdentity,
-			"ExtractionEvalCase@extractioneval":                    extractionevalExtractionEvalCase,
-			"ExtractionEvalResult@extractioneval":                  extractionevalExtractionEvalResult,
-			"ExtractionEvalRun@extractioneval":                     extractionevalExtractionEvalRun,
-			"ExtractionRollout@extractionrollout":                  extractionrolloutExtractionRollout,
-			"ExtractionShadowReport@extractionshadow":              extractionshadowExtractionShadowReport,
-			"ExtractionShadowResult@extractionshadow":              extractionshadowExtractionShadowResult,
-			"ExtractionSnapshot@extractioneval":                    extractionevalExtractionSnapshot,
+			"ExtractionSnapshot@extractionaccuracy":                extractionaccuracyExtractionSnapshot,
 			"FactoringAgreement@factoring":                         factoringFactoringAgreement,
 			"FactoringCheck@factoring":                             factoringFactoringCheck,
 			"FactoringCompany@factoring":                           factoringFactoringCompany,
@@ -1855,9 +1819,6 @@ func FromServices(s *Services) *Resolver {
 			"Mutation@driversettlement":                            driversettlementMutation,
 			"Mutation@equipmentmanufacturer":                       equipmentmanufacturerMutation,
 			"Mutation@equipmenttype":                               equipmenttypeMutation,
-			"Mutation@extractioneval":                              extractionevalMutation,
-			"Mutation@extractionrollout":                           extractionrolloutMutation,
-			"Mutation@extractionshadow":                            extractionshadowMutation,
 			"Mutation@factoring":                                   factoringMutation,
 			"Mutation@factoringcompany":                            factoringcompanyMutation,
 			"Mutation@fleetcode":                                   fleetcodeMutation,
@@ -1950,7 +1911,6 @@ func FromServices(s *Services) *Resolver {
 			"Query@aifeedback":                                     aifeedbackQuery,
 			"Query@aiprovider":                                     aiproviderQuery,
 			"Query@airetrieval":                                    airetrievalQuery,
-			"Query@aitraining":                                     aitrainingQuery,
 			"Query@aiusage":                                        aiusageQuery,
 			"Query@apikey":                                         apikeyQuery,
 			"Query@attention":                                      attentionQuery,
@@ -1989,9 +1949,7 @@ func FromServices(s *Services) *Resolver {
 			"Query@emailprofile":                                   emailprofileQuery,
 			"Query@equipmentmanufacturer":                          equipmentmanufacturerQuery,
 			"Query@equipmenttype":                                  equipmenttypeQuery,
-			"Query@extractioneval":                                 extractionevalQuery,
-			"Query@extractionrollout":                              extractionrolloutQuery,
-			"Query@extractionshadow":                               extractionshadowQuery,
+			"Query@extractionaccuracy":                             extractionaccuracyQuery,
 			"Query@factoring":                                      factoringQuery,
 			"Query@factoringcompany":                               factoringcompanyQuery,
 			"Query@fiscalperiod":                                   fiscalperiodQuery,
@@ -2155,7 +2113,7 @@ var (
 	_ aiauditexec.AIAuditExportResolver                                = (*aiauditresolver.AIAuditExportResolver)(nil)
 	_ aicontrolexec.AIControlSegmentResolver                           = (*aicontrolresolver.AIControlSegmentResolver)(nil)
 	_ aicontrolexec.AIControlSummaryResolver                           = (*aicontrolresolver.AIControlSummaryResolver)(nil)
-	_ extractionevalexec.AICorrectionResolver                          = (*extractionevalresolver.AICorrectionResolver)(nil)
+	_ extractionaccuracyexec.AICorrectionResolver                      = (*extractionaccuracyresolver.AICorrectionResolver)(nil)
 	_ aifeedbackexec.AIFeedbackResolver                                = (*aifeedbackresolver.AIFeedbackResolver)(nil)
 	_ aiproviderexec.AIProviderResolver                                = (*aiproviderresolver.AIProviderResolver)(nil)
 	_ aiproviderexec.AIProviderKeyInfoResolver                         = (*aiproviderresolver.AIProviderKeyInfoResolver)(nil)
@@ -2277,13 +2235,7 @@ var (
 	_ equipmentcontinuityexec.EquipmentContinuityResolver              = (*equipmentcontinuityresolver.EquipmentContinuityResolver)(nil)
 	_ driversettlementexec.EscrowAccountResolver                       = (*driversettlementresolver.EscrowAccountResolver)(nil)
 	_ securityactivityexec.ExternalIdentityResolver                    = (*securityactivityresolver.ExternalIdentityResolver)(nil)
-	_ extractionevalexec.ExtractionEvalCaseResolver                    = (*extractionevalresolver.ExtractionEvalCaseResolver)(nil)
-	_ extractionevalexec.ExtractionEvalResultResolver                  = (*extractionevalresolver.ExtractionEvalResultResolver)(nil)
-	_ extractionevalexec.ExtractionEvalRunResolver                     = (*extractionevalresolver.ExtractionEvalRunResolver)(nil)
-	_ extractionrolloutexec.ExtractionRolloutResolver                  = (*extractionrolloutresolver.ExtractionRolloutResolver)(nil)
-	_ extractionshadowexec.ExtractionShadowReportResolver              = (*extractionshadowresolver.ExtractionShadowReportResolver)(nil)
-	_ extractionshadowexec.ExtractionShadowResultResolver              = (*extractionshadowresolver.ExtractionShadowResultResolver)(nil)
-	_ extractionevalexec.ExtractionSnapshotResolver                    = (*extractionevalresolver.ExtractionSnapshotResolver)(nil)
+	_ extractionaccuracyexec.ExtractionSnapshotResolver                = (*extractionaccuracyresolver.ExtractionSnapshotResolver)(nil)
 	_ factoringexec.FactoringAgreementResolver                         = (*factoringresolver.FactoringAgreementResolver)(nil)
 	_ factoringexec.FactoringCheckResolver                             = (*factoringresolver.FactoringCheckResolver)(nil)
 	_ factoringexec.FactoringCompanyResolver                           = (*factoringresolver.FactoringCompanyResolver)(nil)
@@ -2402,9 +2354,6 @@ var (
 	_ driversettlementexec.MutationResolver                            = (*driversettlementresolver.MutationResolver)(nil)
 	_ equipmentmanufacturerexec.MutationResolver                       = (*equipmentmanufacturerresolver.MutationResolver)(nil)
 	_ equipmenttypeexec.MutationResolver                               = (*equipmenttyperesolver.MutationResolver)(nil)
-	_ extractionevalexec.MutationResolver                              = (*extractionevalresolver.MutationResolver)(nil)
-	_ extractionrolloutexec.MutationResolver                           = (*extractionrolloutresolver.MutationResolver)(nil)
-	_ extractionshadowexec.MutationResolver                            = (*extractionshadowresolver.MutationResolver)(nil)
 	_ factoringexec.MutationResolver                                   = (*factoringresolver.MutationResolver)(nil)
 	_ factoringcompanyexec.MutationResolver                            = (*factoringcompanyresolver.MutationResolver)(nil)
 	_ fleetcodeexec.MutationResolver                                   = (*fleetcoderesolver.MutationResolver)(nil)
@@ -2497,7 +2446,6 @@ var (
 	_ aifeedbackexec.QueryResolver                                     = (*aifeedbackresolver.QueryResolver)(nil)
 	_ aiproviderexec.QueryResolver                                     = (*aiproviderresolver.QueryResolver)(nil)
 	_ airetrievalexec.QueryResolver                                    = (*airetrievalresolver.QueryResolver)(nil)
-	_ aitrainingexec.QueryResolver                                     = (*aitrainingresolver.QueryResolver)(nil)
 	_ aiusageexec.QueryResolver                                        = (*aiusageresolver.QueryResolver)(nil)
 	_ apikeyexec.QueryResolver                                         = (*apikeyresolver.QueryResolver)(nil)
 	_ attentionexec.QueryResolver                                      = (*attentionresolver.QueryResolver)(nil)
@@ -2536,9 +2484,7 @@ var (
 	_ emailprofileexec.QueryResolver                                   = (*emailprofileresolver.QueryResolver)(nil)
 	_ equipmentmanufacturerexec.QueryResolver                          = (*equipmentmanufacturerresolver.QueryResolver)(nil)
 	_ equipmenttypeexec.QueryResolver                                  = (*equipmenttyperesolver.QueryResolver)(nil)
-	_ extractionevalexec.QueryResolver                                 = (*extractionevalresolver.QueryResolver)(nil)
-	_ extractionrolloutexec.QueryResolver                              = (*extractionrolloutresolver.QueryResolver)(nil)
-	_ extractionshadowexec.QueryResolver                               = (*extractionshadowresolver.QueryResolver)(nil)
+	_ extractionaccuracyexec.QueryResolver                             = (*extractionaccuracyresolver.QueryResolver)(nil)
 	_ factoringexec.QueryResolver                                      = (*factoringresolver.QueryResolver)(nil)
 	_ factoringcompanyexec.QueryResolver                               = (*factoringcompanyresolver.QueryResolver)(nil)
 	_ fiscalperiodexec.QueryResolver                                   = (*fiscalperiodresolver.QueryResolver)(nil)

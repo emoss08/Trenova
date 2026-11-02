@@ -120,7 +120,7 @@ func reorderProviders(in *Inputs) []*TuneUp {
 
 	evidence := map[providerPair]*Evidence{}
 	order := make([]providerPair, 0)
-	for _, task := range aitask.AllTasks() {
+	for _, task := range aitask.RoutedTasks() {
 		chain := chainFor(in.Enabled, task)
 		if len(chain) < 2 {
 			continue
@@ -226,7 +226,7 @@ func assignTasks(in *Inputs) []*TuneUp {
 		return nil
 	}
 	out := make([]*TuneUp, 0)
-	for _, task := range aitask.AllTasks() {
+	for _, task := range aitask.RoutedTasks() {
 		if airouting.RouteFor(in.Enabled, task) != nil {
 			continue
 		}

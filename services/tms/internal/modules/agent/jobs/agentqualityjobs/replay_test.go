@@ -4,6 +4,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentqualityjobs/agentqualitycontract"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/replaytest"
 	"go.temporal.io/sdk/worker"
 	"go.temporal.io/sdk/workflow"
@@ -27,11 +29,11 @@ func TestQualityWorkflows_ReplayRecordedHistories(t *testing.T) {
 	replaytest.Dir(t, replayDir, func(r worker.WorkflowReplayer) {
 		r.RegisterWorkflowWithOptions(
 			AgentQualitySweepWorkflow,
-			workflow.RegisterOptions{Name: AgentQualitySweepWorkflowName},
+			workflow.RegisterOptions{Name: agentqualitycontract.AgentQualitySweepWorkflowName},
 		)
 		r.RegisterWorkflowWithOptions(
 			AgentSuiteRunWorkflow,
-			workflow.RegisterOptions{Name: AgentSuiteRunWorkflowName},
+			workflow.RegisterOptions{Name: agentqualitycontract.AgentSuiteRunWorkflowName},
 		)
 	})
 }

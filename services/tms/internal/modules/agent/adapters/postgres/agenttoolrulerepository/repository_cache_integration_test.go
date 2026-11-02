@@ -21,7 +21,7 @@ func TestToolRuleOverridesAreCachedPerTenantUntilAnOverrideChanges(t *testing.T)
 	tenantA := seedtest.SeedFullTestData(t, ctx, db)
 	tenantB := seedtest.SeedAdditionalTenant(t, ctx, db, "TR")
 	cached := cachetest.Open(t, ctx, dsn)
-	repo := New(Params{DB: postgres.NewTestConnection(cached)})
+	repo := New(Params{DB: postgres.WrapDB(cached)})
 	actx := tenantA.Ctx(ctx)
 
 	var overrides []*agenttooltrust.ToolRuleOverride

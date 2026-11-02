@@ -25,9 +25,6 @@ var dismissPermissions = []requiredPermission{
 }
 
 func (s *Service) toleranceMinor(ctx context.Context, tenant pagination.TenantInfo) (int64, error) {
-	if s.controls == nil {
-		return 0, nil
-	}
 	control, err := s.controls.GetByOrgID(ctx, tenant.OrgID)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
@@ -135,9 +132,6 @@ func (s *Service) logAudit(
 	previous map[string]any,
 	comment string,
 ) {
-	if s.audit == nil {
-		return
-	}
 	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceAccountingSync,
 		ResourceID:     finding.ID.String(),

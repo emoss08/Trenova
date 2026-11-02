@@ -64,7 +64,7 @@ func setup(t *testing.T) *fixture {
 	)
 	require.NoError(t, err)
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	logger := zap.NewNop()
 
 	return &fixture{

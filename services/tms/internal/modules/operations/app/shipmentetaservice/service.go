@@ -75,54 +75,89 @@ type ControlReader interface {
 	) (*dispatchcontrol.DispatchControl, error)
 }
 
-type ReaderParams struct {
+type SourcesParams struct {
 	fx.In
 
-	Shipments       shipmentports.ShipmentTrackingRepository
 	Console         dispatchboardports.DispatchConsoleRepository
 	Telematics      telematicsports.TelematicsRepository
 	ServiceFailures servicefailureports.ServiceFailureRepository
 	StopEtas        stopetaports.Repository
 }
 
+// Sources reads what tracking is built from: the stored stop ETAs, each open move's
+// assignment, its tractor's latest position, its driver's hours of service and exemptions,
+// and the shipment's unresolved service failures. The reader and the refresher share it.
+type Sources struct {
+	board    BoardMoveLister
+	workers  WorkerLister
+	telem    TelematicsReader
+	failures ServiceFailureLister
+	stopEtas stopetaports.Repository
+}
+
+func NewSources(
+	p SourcesParams, //nolint:gocritic // fx params are passed by value
+) *Sources {
+	return &Sources{
+		board:    p.Console,
+		workers:  p.Console,
+		telem:    p.Telematics,
+		failures: p.ServiceFailures,
+		stopEtas: p.StopEtas,
+	}
+}
+
+type ReaderParams struct {
+	fx.In
+
+	Shipments shipmentports.ShipmentTrackingRepository
+	Sources   *Sources
+}
+
+// Reader answers what tracking and ETAs show for a set of shipments, from what was stored
+// at the last refresh and the live sources.
+type Reader struct {
+	shipments shipmentports.ShipmentTrackingRepository
+	sources   *Sources
+	now       func() time.Time
+}
+
+var (
+	_ shipmenttrackingports.ShipmentEtaReader      = (*Reader)(nil)
+	_ shipmenttrackingports.ShipmentTrackingReader = (*Reader)(nil)
+)
+
+// NewReader is the process's one tracking reader, bound to both reader ports:
+// ShipmentEtaReader and ShipmentTrackingReader.
+func NewReader(
+	p ReaderParams, //nolint:gocritic // fx params are passed by value
+) *Reader {
+	return &Reader{
+		shipments: p.Shipments,
+		sources:   p.Sources,
+		now:       time.Now,
+	}
+}
+
 type RefresherParams struct {
 	fx.In
 
 	Shipments        shipmentports.ShipmentTrackingRepository
-	Console          dispatchboardports.DispatchConsoleRepository
-	Telematics       telematicsports.TelematicsRepository
-	ServiceFailures  servicefailureports.ServiceFailureRepository
+	Sources          *Sources
 	StopEtas         stopetaports.Repository
 	CheckCalls       checkcallports.CheckCallRepository
 	DispatchControls dispatchcontrolports.DispatchControlRepository
 	Routes           routeestimateports.RouteEstimator
-	Realtime         realtimeports.RealtimeService `optional:"true"`
-	Observers        []stopetaports.Observer       `group:"stop_eta_observers"`
+	Realtime         realtimeports.RealtimeService
+	Observers        []stopetaports.Observer `group:"stop_eta_observers"`
 	Logger           *zap.Logger
 }
 
-type Dependencies struct {
-	Shipments       shipmentports.ShipmentTrackingRepository
-	Board           BoardMoveLister
-	Workers         WorkerLister
-	Telematics      TelematicsReader
-	ServiceFailures ServiceFailureLister
-	StopEtas        stopetaports.Repository
-	CheckCalls      CheckCallReader
-	Controls        ControlReader
-	Routes          routeestimateports.RouteEstimator
-	Realtime        realtimeports.RealtimeService
-	Observers       []stopetaports.Observer
-	Logger          *zap.Logger
-	Now             func() time.Time
-}
-
-type Service struct {
+// Refresher recomputes stop ETAs, stores them and tells the observers. It is a type apart
+// from the reader because the observers it announces to read tracking.
+type Refresher struct {
 	shipments shipmentports.ShipmentTrackingRepository
-	board     BoardMoveLister
-	workers   WorkerLister
-	telem     TelematicsReader
-	failures  ServiceFailureLister
+	sources   *Sources
 	stopEtas  stopetaports.Repository
 	calls     CheckCallReader
 	controls  ControlReader
@@ -133,79 +168,21 @@ type Service struct {
 	now       func() time.Time
 }
 
-var (
-	_ shipmenttrackingports.ShipmentEtaReader      = (*Service)(nil)
-	_ shipmenttrackingports.ShipmentTrackingReader = (*Service)(nil)
-	_ stopetaports.Refresher                       = (*Service)(nil)
-)
-
-func New(
-	p ReaderParams, //nolint:gocritic // fx params are passed by value
-) shipmenttrackingports.ShipmentEtaReader {
-	return fromReaderParams(p)
-}
-
-func NewTrackingReader(
-	p ReaderParams, //nolint:gocritic // fx params are passed by value
-) shipmenttrackingports.ShipmentTrackingReader {
-	return fromReaderParams(p)
-}
+var _ stopetaports.Refresher = (*Refresher)(nil)
 
 func NewRefresher(
 	p RefresherParams, //nolint:gocritic // fx params are passed by value
-) stopetaports.Refresher {
-	return NewWithDependencies(&Dependencies{
-		Shipments:       p.Shipments,
-		Board:           p.Console,
-		Workers:         p.Console,
-		Telematics:      p.Telematics,
-		ServiceFailures: p.ServiceFailures,
-		StopEtas:        p.StopEtas,
-		CheckCalls:      p.CheckCalls,
-		Controls:        p.DispatchControls,
-		Routes:          p.Routes,
-		Realtime:        p.Realtime,
-		Observers:       p.Observers,
-		Logger:          p.Logger,
-		Now:             time.Now,
-	})
-}
-
-func fromReaderParams(p ReaderParams) *Service { //nolint:gocritic // dependency injection
-	return NewWithDependencies(&Dependencies{
-		Shipments:       p.Shipments,
-		Board:           p.Console,
-		Workers:         p.Console,
-		Telematics:      p.Telematics,
-		ServiceFailures: p.ServiceFailures,
-		StopEtas:        p.StopEtas,
-		Now:             time.Now,
-	})
-}
-
-func NewWithDependencies(d *Dependencies) *Service {
-	logger := d.Logger
-	if logger == nil {
-		logger = zap.NewNop()
-	}
-	now := d.Now
-	if now == nil {
-		now = time.Now
-	}
-
-	return &Service{
-		shipments: d.Shipments,
-		board:     d.Board,
-		workers:   d.Workers,
-		telem:     d.Telematics,
-		failures:  d.ServiceFailures,
-		stopEtas:  d.StopEtas,
-		calls:     d.CheckCalls,
-		controls:  d.Controls,
-		routes:    d.Routes,
-		realtime:  d.Realtime,
-		observers: d.Observers,
-		l:         logger.Named("shipment-eta-service"),
-		now:       now,
+) *Refresher {
+	return &Refresher{
+		shipments: p.Shipments,
+		sources:   p.Sources,
+		stopEtas:  p.StopEtas,
+		calls:     p.CheckCalls,
+		controls:  p.DispatchControls,
+		routes:    p.Routes,
+		realtime:  p.Realtime,
+		observers: p.Observers,
+		l:         p.Logger.Named("shipment-eta-refresher"),
+		now:       time.Now,
 	}
 }

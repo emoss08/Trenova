@@ -26,12 +26,12 @@ type Params struct {
 	Connectors   accountingconnectorports.AccountingConnectorRegistry
 	Encryption   *encryptionservice.Service
 	Audit        auditports.AuditService
-	Realtime     realtimeports.RealtimeService                                    `optional:"true"`
-	Watchtower   watchtowerports.WatchtowerProjector                              `optional:"true"`
-	Publisher    agenteventports.AgentEventPublisher                              `optional:"true"`
-	Refresher    accountingconnectionports.AccountingReferenceRefresher           `optional:"true"`
-	Plans        platformplanports.PlanService                                    `optional:"true"`
-	Certificates accountingconnectionports.AccountingPendingCertificateRepository `optional:"true"`
+	Realtime     realtimeports.RealtimeService
+	Watchtower   watchtowerports.WatchtowerProjector
+	Publisher    agenteventports.AgentEventPublisher
+	Refresher    accountingconnectionports.AccountingReferenceRefresher
+	Plans        platformplanports.PlanService
+	Certificates accountingconnectionports.AccountingPendingCertificateRepository
 }
 
 type Kit struct {

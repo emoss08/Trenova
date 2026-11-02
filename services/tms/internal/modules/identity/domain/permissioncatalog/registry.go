@@ -37,6 +37,15 @@ func NewRegistry() *Registry {
 	return r
 }
 
+// defaultRegistry is built once: every resource the catalog declares. It is not
+// changed after it is built, so every reader in the process shares it.
+var defaultRegistry = sync.OnceValue(NewRegistry)
+
+// Default is the process's permission catalog. fx provides it to services;
+// code that runs outside the graph (domain tables, seeds, tools) reads it here,
+// so the process holds one catalog however it is reached.
+func Default() *Registry { return defaultRegistry() }
+
 func NewEmptyRegistry() *Registry {
 	return &Registry{
 		resources: make(map[string]*permissionspec.ResourceDefinition),

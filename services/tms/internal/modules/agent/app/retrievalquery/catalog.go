@@ -31,7 +31,7 @@ type CatalogParams struct {
 
 	Logger     *zap.Logger
 	Repository retrievalports.AIRetrievalRepository
-	Embeddings aiusageports.EmbeddingService `optional:"true"`
+	Embeddings aiusageports.EmbeddingService
 }
 
 type CatalogIndex struct {
@@ -257,10 +257,6 @@ func (c *CatalogIndex) embedAbsent(
 	merged *catalogVectors,
 	absent []retrievalports.EmbeddingCatalogItem,
 ) airetrieval.UnavailableReason {
-	if c.embeddings == nil {
-		return airetrieval.UnavailableReasonNoProvider
-	}
-
 	inputs := make([]string, 0, len(absent))
 	for _, item := range absent {
 		inputs = append(inputs, item.Text)

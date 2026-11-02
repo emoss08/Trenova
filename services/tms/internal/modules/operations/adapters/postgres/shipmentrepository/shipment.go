@@ -58,7 +58,7 @@ type Params struct {
 	ChargeAllocationRepository chargeallocationports.ChargeAllocationRepository
 	CommodityRepository        shipmentports.ShipmentCommodityRepository
 	OrderRepository            orderports.OrderRepository
-	Quota                      platformplanports.QuotaGuard `optional:"true"`
+	Quota                      platformplanports.QuotaGuard
 }
 
 type repository struct {
@@ -191,7 +191,7 @@ func (r *repository) ListRatedByFormulaTemplate(
 		m := sp.Moves()
 		ac := sp.AdditionalCharges()
 
-		return sp.Where(sp.FormulaTemplateID.Eq(req.TemplateID)).
+		return sp.Where(sp.FormulaTemplateID.Eq(req.TemplateID), sp.RatingDetail.IsNotNull()).
 			Load(
 				sp.Customer(),
 				sp.ServiceType(),
@@ -202,7 +202,7 @@ func (r *repository) ListRatedByFormulaTemplate(
 				ac.Load(ac.AccessorialCharge()),
 				commoditiesWithHazmat(),
 			).
-			Order(sp.CreatedAt.Desc()).
+			Order(sp.CreatedAt.Desc(), sp.ID.Desc()).
 			Limit(limit).
 			List(ctx, r.db.Keel(ctx))
 	})

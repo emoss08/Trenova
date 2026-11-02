@@ -115,7 +115,7 @@ func (s *Service) refuseSelfApproval(
 	req *invoiceadjustmentports.ApproveInvoiceAdjustmentRequest,
 	actor *permissionports.RequestActor,
 ) error {
-	if actor == nil || actor.UserID.IsNil() || s.adjustmentCtrlRepo == nil {
+	if actor == nil || actor.UserID.IsNil() {
 		return nil
 	}
 

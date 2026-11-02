@@ -14,14 +14,13 @@ import (
 type Params struct {
 	fx.In
 
-	Audit           auditports.AuditService `optional:"true"`
+	Audit           auditports.AuditService
 	DocumentControl tenantports.DocumentControlRepository
 	Encryption      *encryptionservice.Service
 	Logger          *zap.Logger
 	Permissions     permissionports.PermissionEngine
-	// Realtime keeps the intake queue and the device's stream current. Without
-	// it both are right on their next load, and the device polls.
-	Realtime realtimeports.RealtimeService `optional:"true"`
+	// Realtime keeps the intake queue and the device's stream current.
+	Realtime realtimeports.RealtimeService
 	Storage  kernelports.Client
 }
 

@@ -28,9 +28,6 @@ func sessionScope(ctx context.Context, sess *session.Session) context.Context {
 }
 
 func (s *Service) roleActivationRequired(ctx context.Context, orgID, buID pulid.ID) bool {
-	if s.activation == nil {
-		return true
-	}
 	required, err := s.activation.RoleActivationRequired(ctx, pagination.TenantInfo{
 		OrgID: orgID,
 		BuID:  buID,

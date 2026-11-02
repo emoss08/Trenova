@@ -22,18 +22,12 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	return newValidator(p.Repo)
-}
-
-func newValidator(users tenantports.UserRepository) *Validator {
-	builder := tenantedvalidation.NewBuilder[*tenant.User]().
-		WithModelName("User")
-
-	if users != nil {
-		builder = builder.WithCustomRule(identityUniquenessRule(users))
+	return &Validator{
+		validator: tenantedvalidation.NewBuilder[*tenant.User]().
+			WithModelName("User").
+			WithCustomRule(identityUniquenessRule(p.Repo)).
+			Build(),
 	}
-
-	return &Validator{validator: builder.Build()}
 }
 
 func identityUniquenessRule(

@@ -36,7 +36,7 @@ type Params struct {
 	Connections accountingconnectionports.AccountingConnectionRepository
 	References  accountingmappingports.AccountingReferenceObjectRepository
 	Mappings    accountingmappingports.AccountingMappingRepository
-	Refresher   accountingconnectionports.AccountingReferenceRefresher `optional:"true"`
+	Refresher   accountingconnectionports.AccountingReferenceRefresher
 	Audit       auditports.AuditService
 	Kit         *accountingmappingkit.Kit
 	Catalog     *accountingmappingtargets.Catalog
@@ -380,11 +380,6 @@ func (s *Service) RequestRefresh(
 		return nil, errortypes.NewBusinessError(
 			"{0} is not connected. A person must connect it from the integrations page.",
 			accountingprovider.ProviderName(conn.IntegrationType),
-		)
-	}
-	if s.refresher == nil {
-		return nil, errortypes.NewBusinessError(
-			"Reference data refresh is not available on this server",
 		)
 	}
 	if err = s.refresher.RequestReferenceRefresh(ctx, req.TenantInfo, conn.ID); err != nil {

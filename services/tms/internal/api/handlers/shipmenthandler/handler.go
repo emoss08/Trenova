@@ -303,7 +303,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	if entity.SourceDocumentID != "" && h.importAssistant != nil {
+	if entity.SourceDocumentID != "" {
 		if completeErr := h.importAssistant.CompleteHistory(
 			c.Request.Context(),
 			entity.SourceDocumentID,

@@ -29,10 +29,6 @@ func (s *Service) beginLoginAttempt(
 	key sessionports.LoginThrottleKey,
 	attempt *authAttempt,
 ) (*sessionports.LoginThrottleDecision, error) {
-	if s.throttle == nil {
-		return nil, nil //nolint:nilnil // no throttle is configured
-	}
-
 	decision, err := s.throttle.Begin(ctx, key)
 	if err != nil {
 		s.l.Warn("login throttle check failed; allowing the attempt", zap.Error(err))
@@ -61,7 +57,7 @@ func (s *Service) recordLoginFailure(
 	ctx context.Context,
 	decision *sessionports.LoginThrottleDecision,
 ) {
-	if decision == nil || !decision.Tripped || s.authEvents == nil {
+	if decision == nil || !decision.Tripped {
 		return
 	}
 
@@ -79,10 +75,6 @@ func (s *Service) recordLoginFailure(
 }
 
 func (s *Service) resetLoginThrottle(ctx context.Context, key sessionports.LoginThrottleKey) {
-	if s.throttle == nil {
-		return
-	}
-
 	if err := s.throttle.Succeed(ctx, key); err != nil {
 		s.l.Warn("failed to clear the sign-in failure counter", zap.Error(err))
 	}
@@ -93,7 +85,7 @@ func (s *Service) enforcePlanLogin(
 	usr *tenant.User,
 	targetOrg *tenant.Organization,
 ) (*tenant.Organization, error) {
-	if s.plans == nil || !s.plans.EnforcesPlans() {
+	if !s.plans.EnforcesPlans() {
 		return targetOrg, nil
 	}
 

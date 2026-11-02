@@ -25,6 +25,8 @@ type BatchCompletionRequest struct {
 	Task          aitask.Task
 	Items         []BatchCompletionItem
 	SpendLimitUSD *decimal.Decimal
+	// Nova marks a batch of Nova's tasks, as on StructuredCompletionRequest.
+	Nova bool
 }
 
 type BatchHandle struct {
@@ -40,12 +42,14 @@ type BatchStatusRequest struct {
 	TenantInfo pagination.TenantInfo
 	ProviderID pulid.ID
 	BatchID    string
+	Nova       bool
 }
 
 type BatchCancelRequest struct {
 	TenantInfo pagination.TenantInfo
 	ProviderID pulid.ID
 	BatchID    string
+	Nova       bool
 }
 
 type BatchStatus struct {
@@ -65,6 +69,9 @@ type BatchResultsRequest struct {
 	BatchID      string
 	SubmittedAt  int64
 	Attributions map[string]aiusageports.AIUsageAttribution
+	// Nova marks a batch of Nova's tasks, so its answers are priced as Nova's
+	// model rather than the provider's own.
+	Nova bool
 }
 
 type BatchItemResult struct {

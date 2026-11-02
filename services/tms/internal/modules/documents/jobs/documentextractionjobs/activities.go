@@ -56,9 +56,9 @@ type ActivitiesParams struct {
 	WorkflowStarter          kernelports.WorkflowStarter
 	Encryption               *encryptionservice.Service
 	Imaging                  kernelports.Imaging
-	Converter                kernelports.DocumentConverter       `optional:"true"`
-	Triage                   inboundmessageports.TriageEventSink `optional:"true"`
-	Realtime                 realtimeports.RealtimeService       `optional:"true"`
+	Converter                kernelports.DocumentConverter
+	Triage                   inboundmessageports.TriageEventSink
+	Realtime                 realtimeports.RealtimeService
 	Support                  *documentextractionsupport.Service
 }
 
@@ -85,14 +85,8 @@ type Activities struct {
 //nolint:gocritic // dependency injection param
 func NewActivities(p ActivitiesParams) *Activities {
 	aiDocumentService := p.AIDocumentService
-	if aiDocumentService == nil {
-		aiDocumentService = documentextractionsupport.NoopAIDocumentService{}
-	}
 
 	workflowStarter := p.WorkflowStarter
-	if workflowStarter == nil {
-		workflowStarter = noopWorkflowStarter{}
-	}
 
 	return &Activities{
 		logger:            p.Logger.Named("temporal.document-extraction"),

@@ -12,7 +12,7 @@ import (
 type Params struct {
 	fx.In
 
-	CarrierRepo        carrierports.CarrierRepository `optional:"true"`
+	CarrierRepo        carrierports.CarrierRepository
 	InboundFileRepo    edimessageports.EDIInboundFileRepository
 	Lading             *edilading.Runtime
 	MappingProfileRepo edipartnerports.EDIMappingProfileRepository

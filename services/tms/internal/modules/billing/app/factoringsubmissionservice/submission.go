@@ -56,7 +56,7 @@ type SubmissionParams struct {
 	States           factoringports.InvoiceStateRepository
 	Agreements       factoringports.AgreementRepository
 	Invoices         invoiceports.InvoiceRepository
-	InvoicePDF       invoiceports.InvoicePDFService `optional:"true"`
+	InvoicePDF       invoiceports.InvoicePDFService
 	InvoiceDocuments documentports.InvoiceDocumentService
 	Documents        documentports.DocumentRepository
 	Store            documentports.DocumentStore
@@ -65,15 +65,15 @@ type SubmissionParams struct {
 	Customers        customerports.CustomerRepository
 	Organizations    tenantports.OrganizationRepository
 	Templates        documenttemplateports.DocumentTemplateResolver
-	Inliner          documenttemplateports.AssetInliner `optional:"true"`
+	Inliner          documenttemplateports.AssetInliner
 	Sequences        seqgen.Generator
 	Cipher           kernelports.SecretCipher
-	Senders          []factoringsubmissionports.FactoringTransport  `                group:"factoring_transports"`
-	Starter          factoringsubmissionports.SubmissionSendStarter `optional:"true"`
-	Requester        factoringports.EvaluationRequester             `optional:"true"`
-	Events           agenteventports.AgentEventPublisher            `optional:"true"`
+	Senders          []factoringsubmissionports.FactoringTransport `group:"factoring_transports"`
+	Starter          factoringsubmissionports.SubmissionSendStarter
+	Requester        factoringports.EvaluationRequester
+	Events           agenteventports.AgentEventPublisher
 	Audit            auditports.AuditService
-	Realtime         realtimeports.RealtimeService `optional:"true"`
+	Realtime         realtimeports.RealtimeService
 	Logger           *zap.Logger
 }
 
@@ -603,9 +603,6 @@ func (s *SubmissionService) requestInvoices(
 	tenantInfo pagination.TenantInfo,
 	sub *factoringsubmission.Submission,
 ) {
-	if s.requester == nil {
-		return
-	}
 	s.requester.RequestEvaluation(ctx, tenantInfo, &factoringports.EvaluationTargets{
 		InvoiceIDs: sub.InvoiceIDs(),
 	})
@@ -616,11 +613,6 @@ func (s *SubmissionService) startSend(
 	tenantInfo pagination.TenantInfo,
 	sub *factoringsubmission.Submission,
 ) {
-	if s.starter == nil {
-		s.l.Warn("factoring schedule sending is not available in this process",
-			zap.String("submissionId", sub.ID.String()))
-		return
-	}
 	s.starter.StartSend(ctx, tenantInfo, sub)
 }
 

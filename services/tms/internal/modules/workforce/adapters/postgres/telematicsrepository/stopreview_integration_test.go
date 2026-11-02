@@ -66,7 +66,7 @@ func setupStopReview(t *testing.T) *stopReviewFixture {
 		ctx: dbscope.WithTenant(ctx, tenantInfo.DBTenant()),
 		db:  db,
 		repo: telematicsrepository.New(
-			telematicsrepository.Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()},
+			telematicsrepository.Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()},
 		),
 		tenantInfo: tenantInfo,
 		shipmentID: seeded.ShipmentID,

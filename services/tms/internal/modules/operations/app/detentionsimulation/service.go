@@ -96,11 +96,6 @@ func (s *Service) validateBacktest(req *BacktestRequest) error {
 		return multiErr
 	}
 
-	if s.analyticsRepo == nil {
-		return errortypes.NewValidationError(
-			"policy", errortypes.ErrSystemError, "Backtesting is not available")
-	}
-
 	return nil
 }
 
@@ -346,10 +341,6 @@ func (s *Service) FacilityProfiles(
 	ctx context.Context,
 	req *detentionports.DetentionStatsRequest,
 ) ([]*detentionports.FacilityDetentionStat, error) {
-	if s.analyticsRepo == nil {
-		return nil, errortypes.NewValidationError(
-			"analytics", errortypes.ErrSystemError, "Detention analytics are not available")
-	}
 	return s.analyticsRepo.FacilityStats(ctx, req)
 }
 
@@ -359,10 +350,6 @@ func (s *Service) CustomerProfiles(
 	ctx context.Context,
 	req *detentionports.DetentionStatsRequest,
 ) ([]*detentionports.CustomerDetentionStat, error) {
-	if s.analyticsRepo == nil {
-		return nil, errortypes.NewValidationError(
-			"analytics", errortypes.ErrSystemError, "Detention analytics are not available")
-	}
 	return s.analyticsRepo.CustomerStats(ctx, req)
 }
 
@@ -371,10 +358,6 @@ func (s *Service) WaiverLeakage(
 	ctx context.Context,
 	req *detentionports.DetentionStatsRequest,
 ) ([]*detentionports.WaiverLeakageStat, error) {
-	if s.analyticsRepo == nil {
-		return nil, errortypes.NewValidationError(
-			"analytics", errortypes.ErrSystemError, "Detention analytics are not available")
-	}
 	return s.analyticsRepo.WaiverStats(ctx, req)
 }
 
@@ -383,15 +366,12 @@ type Params struct {
 
 	AccessorialRepo accessorialchargeports.AccessorialChargeRepository
 	AnalyticsRepo   detentionports.DetentionAnalyticsRepository
-	Now             func() int64 `optional:"true"`
+	Now             timeutils.Clock
 	Effects         *detentioneffects.Effects
 }
 
 func New(p Params) *Service {
 	now := p.Now
-	if now == nil {
-		now = timeutils.NowUnix
-	}
 	return &Service{
 		accessorialRepo: p.AccessorialRepo,
 		analyticsRepo:   p.AnalyticsRepo,

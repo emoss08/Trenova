@@ -30,16 +30,14 @@ func (s *Service) planPost(
 	req *invoiceports.PostInvoiceRequest,
 	now int64,
 ) (bool, error) {
-	if s.billingRepo != nil {
-		control, controlErr := s.billingRepo.GetByOrgID(ctx, entity.OrganizationID)
-		if controlErr != nil {
-			if req.TriggeredBy == billingcontrolpolicyservice.AutoPostInvoiceTrigger {
-				return false, controlErr
-			}
-		} else if policyErr := s.billingPolicyService().
-			ValidateInvoicePosting(control, req.TriggeredBy); policyErr != nil {
-			return false, policyErr
+	control, controlErr := s.billingRepo.GetByOrgID(ctx, entity.OrganizationID)
+	if controlErr != nil {
+		if req.TriggeredBy == billingcontrolpolicyservice.AutoPostInvoiceTrigger {
+			return false, controlErr
 		}
+	} else if policyErr := s.billingPolicy.
+		ValidateInvoicePosting(control, req.TriggeredBy); policyErr != nil {
+		return false, policyErr
 	}
 
 	switch entity.Status { //nolint:exhaustive // a draft is what posts

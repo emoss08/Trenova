@@ -101,7 +101,7 @@ func (s *Exceptions) wake(ctx context.Context, item *watchtower.Item) bool {
 			zap.String("item", item.ID.String()), zap.Error(err))
 		return false
 	}
-	if saved.AssigneeID.IsNotNil() && s.notifications != nil {
+	if saved.AssigneeID.IsNotNil() {
 		sendExceptionNotice(ctx, s.notifications, s.l, &exceptionNotice{
 			item:      saved,
 			userID:    saved.AssigneeID,
@@ -152,9 +152,6 @@ func (s *Exceptions) notifyEscalation(
 	item *watchtower.Item,
 	contact pulid.ID,
 ) {
-	if s.notifications == nil {
-		return
-	}
 	title := "Overdue exception escalated: " + item.Title
 	recipients := make([]pulid.ID, 0, 2)
 	if item.AssigneeID.IsNotNil() {

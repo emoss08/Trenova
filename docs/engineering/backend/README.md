@@ -75,8 +75,6 @@ root.
 - **A new section** is a package with `Config`, `Defaults()` and `Validate()` when it has rules, a
   field on `config.Config`, its line in `setDefaults` and `validateConfig` (`loader.go`) and its
   provider in `sectionproviders.go`.
-- Edition sections (`config.Section`, registered through `config.SectionsOption`) are how the
-  Cloud overlay adds paths the public build does not own; they decode into `Config.Extension`.
 
 ## Local infrastructure
 

@@ -56,11 +56,11 @@ type Params struct {
 	Schedules agentdefinitionports.AgentDefinitionScheduler
 	// Extensions says which extensions the organization has on, so their
 	// tools are offered only while they are.
-	Extensions agentextensionports.AgentExtensionGate `optional:"true"`
+	Extensions agentextensionports.AgentExtensionGate
 	// Access sets who may use an agent in the transaction that saves it.
 	Access      agentdefinitionports.AgentAccessService
-	Permissions permissionports.PermissionEngine `optional:"true"`
-	Plans       platformplanports.PlanService    `optional:"true"`
+	Permissions permissionports.PermissionEngine
+	Plans       platformplanports.PlanService
 }
 
 type Service struct {
@@ -242,11 +242,6 @@ func (s *Service) save(
 	if req.Access == nil {
 		return s.inTransaction(ctx, write)
 	}
-	if s.access == nil {
-		return nil, errortypes.NewBusinessError(
-			"Who can use an agent cannot be set here: agent access is not available",
-		)
-	}
 
 	return s.access.SaveWithAccess(ctx, &agentdefinitionports.SaveAgentWithAccessRequest{
 		TenantInfo: req.TenantInfo,
@@ -372,10 +367,6 @@ func (s *Service) activeExtensions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (extensionState, error) {
-	if s.extensions == nil {
-		return extensionState{}, nil
-	}
-
 	active, err := s.extensions.ActiveCapabilities(ctx, tenantInfo)
 	if err != nil {
 		return nil, errortypes.NewBusinessError(
@@ -403,17 +394,15 @@ func (s *Service) PreviewPrompt(
 	runtimeContext := agentturn.RuntimeContext{
 		Trigger: definition.TriggerMode.RunTrigger(),
 	}
-	if s.contexts != nil {
-		built, err := s.contexts.Build(ctx, &agentruntimeports.RuntimeContextRequest{
-			Definition: definition,
-			Actor:      req.Actor,
-			Trigger:    definition.TriggerMode.RunTrigger(),
-		})
-		if err != nil {
-			return "", err
-		}
-		runtimeContext = built
+	built, err := s.contexts.Build(ctx, &agentruntimeports.RuntimeContextRequest{
+		Definition: definition,
+		Actor:      req.Actor,
+		Trigger:    definition.TriggerMode.RunTrigger(),
+	})
+	if err != nil {
+		return "", err
 	}
+	runtimeContext = built
 
 	return agentprompt.BuildSystemPrompt(definition, runtimeContext), nil
 }

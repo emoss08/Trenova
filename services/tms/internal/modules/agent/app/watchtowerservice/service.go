@@ -52,10 +52,10 @@ type Params struct {
 	Projector   *Projector
 	Permissions permissionports.PermissionEngine
 	Definitions agentdefinitionports.AgentDefinitionRepository
-	Runs        agentruntimeports.AgentRunService    `optional:"true"`
-	RunRepo     agentruntimeports.AgentRunRepository `optional:"true"`
-	Events      agenteventports.AgentEventPublisher  `optional:"true"`
-	Sources     []watchtowerports.WatchtowerSource   `                group:"watchtower_sources"`
+	Runs        agentruntimeports.AgentRunService
+	RunRepo     agentruntimeports.AgentRunRepository
+	Events      agenteventports.AgentEventPublisher
+	Sources     []watchtowerports.WatchtowerSource `                group:"watchtower_sources"`
 	Dismisser   *Dismisser
 	Exceptions  *Exceptions
 }
@@ -383,7 +383,7 @@ func (s *Service) HandOff(
 		if lErr != nil {
 			return nil, lErr
 		}
-		if len(subscribers) > 0 && s.events != nil {
+		if len(subscribers) > 0 {
 			agenteventports.PublishAgentEvent(ctx, s.events, agenteventports.AgentEvent{
 				Kind:       item.EventKind,
 				SubjectID:  item.SubjectID,

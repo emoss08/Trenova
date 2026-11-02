@@ -24,11 +24,11 @@ type Params struct {
 
 	Logger      *zap.Logger
 	Permissions permissionports.PermissionEngine
-	Converser   llmports.TaskConverser                `optional:"true"`
-	Nova        llmports.TaskRunner                   `optional:"true"`
-	QueryTools  agenttoolports.AgentQueryToolRegistry `optional:"true"`
-	Search      kernelports.GlobalSearchService       `optional:"true"`
-	Zones       agenttoolports.TenantTimezoneReader   `optional:"true"`
+	Converser   llmports.TaskConverser
+	Nova        llmports.TaskRunner
+	QueryTools  agenttoolports.AgentQueryToolRegistry
+	Search      kernelports.GlobalSearchService
+	Zones       agenttoolports.TenantTimezoneReader
 }
 
 // Service answers a question typed into the command palette: a short answer
@@ -58,14 +58,9 @@ func New(p Params) *Service {
 	}
 }
 
-// Available reports whether a provider answers palette questions for the
-// tenant.
+// Available reports whether Nova answers palette questions for the tenant.
 func (s *Service) Available(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error) {
-	if s.nova == nil || s.converser == nil {
-		return false, nil
-	}
-
-	return s.nova.Available(ctx, aitask.TaskPaletteAnswer, tenantInfo)
+	return s.nova.Available(ctx, tenantInfo)
 }
 
 // Answer reads what the question needs as the person asking and streams the
@@ -76,10 +71,6 @@ func (s *Service) Answer(
 	actor *permissionports.RequestActor,
 	events llmports.NovaEvents,
 ) (*llmports.NovaAnswer, error) {
-	if s.converser == nil {
-		return nil, llmports.ErrNoProviderConfigured
-	}
-
 	tenantInfo := actor.TenantInfo()
 	reads := &reader{
 		catalog:     s.catalog,
@@ -105,9 +96,6 @@ func (s *Service) Answer(
 }
 
 func (s *Service) timezone(ctx context.Context, tenantInfo pagination.TenantInfo) string {
-	if s.zones == nil {
-		return ""
-	}
 	zone, err := s.zones.TenantTimezone(ctx, tenantInfo)
 	if err != nil {
 		s.l.Warn("could not read the organization's timezone; using UTC", zap.Error(err))

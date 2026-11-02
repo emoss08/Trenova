@@ -141,12 +141,6 @@ func (s *Service) invoicePreviewForEntity(
 	deliveryProfile *invoicedocument.DeliveryProfile,
 	tenantInfo pagination.TenantInfo,
 ) (*invoiceports.InvoicePreviewResult, error) {
-	if s.templates == nil {
-		return nil, errortypes.NewBusinessError(
-			"Invoice rendering is not configured on this deployment",
-		)
-	}
-
 	data, err := s.contextBuilder.BuildFrom(ctx, entity, deliveryProfile)
 	if err != nil {
 		return nil, err

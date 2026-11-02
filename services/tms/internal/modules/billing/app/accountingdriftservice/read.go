@@ -115,11 +115,6 @@ func (s *Service) CheckNow(
 			accountingprovider.ProviderName(conn.IntegrationType),
 		)
 	}
-	if s.checker == nil {
-		return nil, errortypes.NewBusinessError(
-			"Background work is not available on this server, so the books cannot be checked now",
-		)
-	}
 	if err = s.checker.CheckNow(ctx, tenantInfo, conn.ID); err != nil {
 		return nil, err
 	}

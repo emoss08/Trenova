@@ -54,10 +54,7 @@ func (s *Service) ValidateBillingReadinessForStatusChange(
 	ctx context.Context,
 	entity *shipment.Shipment,
 ) *errortypes.MultiError {
-	if entity.Status != shipmentvocab.StatusReadyToInvoice ||
-		s.customerRepo == nil ||
-		s.documentRepo == nil ||
-		s.billingRepo == nil {
+	if entity.Status != shipmentvocab.StatusReadyToInvoice {
 		return nil
 	}
 
@@ -153,10 +150,6 @@ func (s *Service) EvaluateBillingReadinessCached(
 	cache *BillingReadinessCache,
 	detailsLoaded bool,
 ) (*shipmentbillingports.ShipmentBillingReadiness, error) {
-	if s.customerRepo == nil || s.documentRepo == nil || s.billingRepo == nil {
-		return nil, errortypes.NewConflictError("Shipment billing readiness service is unavailable")
-	}
-
 	tenantInfo := pagination.TenantInfo{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
@@ -287,7 +280,7 @@ func (s *Service) unresolvedServiceFailures(
 	ctx context.Context,
 	entity *shipment.Shipment,
 ) ([]*servicefailure.ServiceFailure, error) {
-	if s.serviceFailureRepo == nil || entity == nil {
+	if entity == nil {
 		return nil, nil
 	}
 
@@ -314,7 +307,7 @@ func (s *Service) resolvePayerShares(
 	source := entity
 	if !detailsLoaded &&
 		(entity.AdditionalCharges == nil || entity.ChargeAllocations == nil) &&
-		s.repo != nil && entity.ID.IsNotNil() {
+		entity.ID.IsNotNil() {
 		full, err := s.repo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 			ID:         entity.ID,
 			TenantInfo: tenantInfo,
@@ -420,10 +413,6 @@ func (s *Service) readServiceFailures(
 	shipmentIDs []pulid.ID,
 	sources *Sources,
 ) {
-	if s.serviceFailureRepo == nil {
-		return
-	}
-
 	failures, err := s.serviceFailureRepo.ListUnresolvedByShipmentIDs(
 		ctx,
 		&servicefailureports.ServiceFailuresByShipmentIDsRequest{
@@ -453,7 +442,7 @@ type Params struct {
 	CustomerRepo       customerports.CustomerRepository
 	DocumentRepo       documentports.DocumentRepository
 	BillingRepo        tenantports.BillingControlRepository
-	ServiceFailureRepo servicefailureports.ServiceFailureRepository `optional:"true"`
+	ServiceFailureRepo servicefailureports.ServiceFailureRepository
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.

@@ -49,7 +49,7 @@ func TestGetByIDsReturnsOnlyTheTenantsAccessorialCharges(t *testing.T) {
 	second := seedAccessorialCharge(t, ctx, db, tenantA, "DETENTION")
 	foreign := seedAccessorialCharge(t, ctx, db, tenantB, "STOPOFF")
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	entities, err := repo.GetByIDs(
 		tenantA.Ctx(ctx),

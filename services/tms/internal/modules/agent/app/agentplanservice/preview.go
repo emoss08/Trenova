@@ -75,11 +75,8 @@ func (s *Service) settlePreview(
 		return nil, nil //nolint:nilnil // no preview settles a rejection
 	}
 	gated := agentplan.PlanNeedsReview(steps)
-	if gated && (s.previews == nil || req.PreviewDigest == "") {
+	if gated && req.PreviewDigest == "" {
 		return nil, agent.ReviewRequiredError()
-	}
-	if s.previews == nil {
-		return nil, nil //nolint:nilnil // an ungated plan with nothing to preview it is decided unseen
 	}
 
 	preview, err := s.previews.ForPlan(ctx, &agentruntimeports.PlanPreviewRequest{

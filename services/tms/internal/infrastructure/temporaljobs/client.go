@@ -31,8 +31,8 @@ type TemporalClientParams struct {
 	Logger         *zap.Logger
 	LC             fx.Lifecycle
 	Payloads       converter.StorageDriver
-	Metrics        *metrics.Registry  `optional:"true"`
-	SDKLog         temporallog.Logger `optional:"true"`
+	Metrics        *metrics.Registry
+	SDKLog         temporallog.Logger
 }
 
 type TemporalClientResult struct {
@@ -76,9 +76,7 @@ func NewTemporalClient(p TemporalClientParams) (TemporalClientResult, error) {
 		}
 	}
 
-	if p.SDKLog != nil {
-		clientOptions.Logger = p.SDKLog
-	}
+	clientOptions.Logger = p.SDKLog
 
 	// Offloading runs after the data converter, so with encryption on a
 	// payload reaches object storage already encrypted.
@@ -99,13 +97,11 @@ func NewTemporalClient(p TemporalClientParams) (TemporalClientResult, error) {
 		clientOptions.Interceptors...,
 	)
 
-	if p.Metrics != nil {
-		handler, handlerErr := sdkMetricsHandler(p.Metrics, log)
-		if handlerErr != nil {
-			return TemporalClientResult{}, handlerErr
-		}
-		clientOptions.MetricsHandler = handler
+	handler, handlerErr := sdkMetricsHandler(p.Metrics, log)
+	if handlerErr != nil {
+		return TemporalClientResult{}, handlerErr
 	}
+	clientOptions.MetricsHandler = handler
 
 	c, err := client.NewLazyClient(clientOptions)
 	if err != nil {

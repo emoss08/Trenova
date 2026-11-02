@@ -55,11 +55,11 @@ type Params struct {
 	UsageRecorder     apikeyports.UsageRecorder
 	TurnStopper       assistantturnports.AssistantTurnStopper
 	AuthEvents        iamports.AuthEventRecorder
-	LoginThrottle     sessionports.LoginThrottleStore `optional:"true"`
-	Plans             platformplanports.PlanService   `optional:"true"`
-	MFA               sessionports.MFAService         `optional:"true"`
-	MFAChallenges     iamports.MFAChallengeRepository `optional:"true"`
-	RoleActivation    iamports.RoleActivationPolicy   `optional:"true"`
+	LoginThrottle     sessionports.LoginThrottleStore
+	Plans             platformplanports.PlanService
+	MFA               sessionports.MFAService
+	MFAChallenges     iamports.MFAChallengeRepository
+	RoleActivation    iamports.RoleActivationPolicy
 	Encryption        *encryptionservice.Service
 	Tokens            *sessiontoken.Issuer
 	Rotator           *sessionrotation.Rotator
@@ -320,12 +320,6 @@ func (s *Service) StartSSOLogin(
 	ctx context.Context,
 	req tenantports.StartSSOLoginRequest,
 ) (string, error) {
-	if s.or == nil || s.ssoRepo == nil || s.stateRepo == nil {
-		return "", errortypes.NewBusinessError(
-			"{0} SSO is not configured", providerDisplayName(req.Provider),
-		)
-	}
-
 	org, err := s.or.GetByLoginSlug(ctx, req.OrganizationSlug)
 	if err != nil {
 		return "", err
@@ -406,10 +400,6 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 	ctx context.Context,
 	req tenantports.SSOCallbackRequest,
 ) (resp *tenantports.SSOCallbackResponse, err error) {
-	if s.or == nil || s.ssoRepo == nil || s.stateRepo == nil {
-		return nil, errortypes.NewBusinessError("SSO is not configured")
-	}
-
 	attempt := newAuthAttempt(ssoAuthEventProvider(""))
 	attempt.fal = 2
 	defer func() { s.recordAuthAttempt(ctx, attempt, err) }()
@@ -598,9 +588,6 @@ func (s *Service) GetSSOLoginState(
 	ctx context.Context,
 	state string,
 ) (*tenantports.SSOLoginState, error) {
-	if s.stateRepo == nil {
-		return nil, errortypes.NewBusinessError("SSO is not configured")
-	}
 	return s.stateRepo.Get(ctx, state)
 }
 
@@ -608,10 +595,6 @@ func (s *Service) enabledTenantSSOConfiguration(
 	ctx context.Context,
 	organizationSlug string,
 ) (*tenantSSOConfiguration, error) {
-	if s.or == nil || s.ssoRepo == nil {
-		return nil, errortypes.NewBusinessError("Tenant login is not configured")
-	}
-
 	org, err := s.or.GetByLoginSlug(ctx, organizationSlug)
 	if err != nil {
 		return nil, err
@@ -929,7 +912,7 @@ func (s *Service) Logout(ctx context.Context, sessionID pulid.ID) error {
 // stopTurns stops the replies of the person signing out. It is best effort:
 // signing out succeeds whether or not they could all be stopped.
 func (s *Service) stopTurns(ctx context.Context, sess *session.Session) {
-	if s.turns == nil || sess == nil || sess.UserID.IsNil() {
+	if sess == nil || sess.UserID.IsNil() {
 		return
 	}
 
@@ -1234,10 +1217,6 @@ func (s *Service) enforcePasswordLoginPolicy(
 	}
 
 	if targetOrg == nil {
-		return nil
-	}
-
-	if s.ssoRepo == nil {
 		return nil
 	}
 

@@ -55,10 +55,10 @@ type Params struct {
 	WorkerRepo   workerports.WorkerRepository
 	Documents    documentports.InvoiceDocumentService
 	AuditService auditports.AuditService
-	Realtime     realtimeports.RealtimeService          `optional:"true"`
-	Feeds        fuelpurchaseports.FuelCardFeedResolver `optional:"true"`
+	Realtime     realtimeports.RealtimeService
+	Feeds        fuelpurchaseports.FuelCardFeedResolver
 	Validator    *Validator
-	SheetLimits  rateimport.Limits `optional:"true"`
+	SheetLimits  rateimport.Limits
 }
 
 type Service struct {
@@ -93,44 +93,6 @@ func New(p Params) *Service {
 	}
 }
 
-type Deps struct {
-	Logger        *zap.Logger
-	Repo          fuelpurchaseports.FuelPurchaseRepository
-	Jurisdictions JurisdictionReader
-	TractorRepo   tractorports.TractorRepository
-	WorkerRepo    workerports.WorkerRepository
-	Documents     documentports.InvoiceDocumentService
-	AuditService  auditports.AuditService
-	Realtime      realtimeports.RealtimeService
-	Feeds         fuelpurchaseports.FuelCardFeedResolver
-	Validator     *Validator
-	Now           func() int64
-}
-
-func NewWithDeps(d Deps) *Service {
-	logger := d.Logger
-	if logger == nil {
-		logger = zap.NewNop()
-	}
-	now := d.Now
-	if now == nil {
-		now = timeutils.NowUnix
-	}
-	return &Service{
-		l:             logger.Named("service.fuel-purchase"),
-		repo:          d.Repo,
-		jurisdictions: d.Jurisdictions,
-		tractorRepo:   d.TractorRepo,
-		workerRepo:    d.WorkerRepo,
-		documents:     d.Documents,
-		auditService:  d.AuditService,
-		realtime:      d.Realtime,
-		feeds:         d.Feeds,
-		validator:     d.Validator,
-		now:           now,
-	}
-}
-
 type auditParams struct {
 	resource   permission.Resource
 	resourceID string
@@ -143,7 +105,7 @@ type auditParams struct {
 }
 
 func (s *Service) audit(p *auditParams) {
-	if s.auditService == nil || p.userID.IsNil() {
+	if p.userID.IsNil() {
 		return
 	}
 	params := &auditports.LogActionParams{
@@ -173,9 +135,6 @@ func (s *Service) publish(
 	recordID pulid.ID,
 	userID pulid.ID,
 ) {
-	if s.realtime == nil {
-		return
-	}
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,

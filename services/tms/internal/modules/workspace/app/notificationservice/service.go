@@ -25,13 +25,13 @@ type Params struct {
 	Logger   *zap.Logger
 	Repo     notificationports.NotificationRepository
 	Realtime realtimeports.RealtimeService
-	WebPush  *webpushservice.Service `optional:"true"`
+	WebPush  *webpushservice.Service
 	// Roles answers who may read a resource, for NotifyPermitted.
-	Roles       permissionports.RoleRepository         `optional:"true"`
-	Users       tenantports.UserRepository             `optional:"true"`
-	Preferences notificationports.PreferenceRepository `optional:"true"`
-	Email       emailports.EmailService                `optional:"true"`
-	AppConfig   *appconfig.Config                      `optional:"true"`
+	Roles       permissionports.RoleRepository
+	Users       tenantports.UserRepository
+	Preferences notificationports.PreferenceRepository
+	Email       emailports.EmailService
+	AppConfig   *appconfig.Config
 }
 
 type Service struct {
@@ -59,9 +59,7 @@ func New(p Params) *Service {
 		email:       p.Email,
 		now:         time.Now,
 	}
-	if p.AppConfig != nil {
-		svc.webBaseURL = strings.TrimRight(p.AppConfig.GetWebBaseURL(), "/")
-	}
+	svc.webBaseURL = strings.TrimRight(p.AppConfig.GetWebBaseURL(), "/")
 
 	return svc
 }
@@ -128,7 +126,7 @@ func (s *Service) Create(
 // push subscriptions in the background so it reaches drivers with the app
 // closed. Global/role notifications are intentionally not pushed.
 func (s *Service) sendWebPush(ctx context.Context, created *notification.Notification) {
-	if s.webPush == nil || !s.webPush.Enabled() {
+	if !s.webPush.Enabled() {
 		return
 	}
 	if created.TargetUserID == nil || created.TargetUserID.IsNil() {

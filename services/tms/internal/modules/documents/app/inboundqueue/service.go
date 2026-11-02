@@ -16,31 +16,29 @@ type Params struct {
 	fx.In
 
 	ActivityRepo  inboundmessageports.TriageActivityRepository
-	Briefing      inboundmessageports.TriageBriefingInvalidator `optional:"true"`
+	Briefing      inboundmessageports.TriageBriefingInvalidator
 	DB            kernelports.Transactor
 	DocumentTypes inboundmessageports.InboundDocumentTypeFinder
 	Logger        *zap.Logger
 	MessageRepo   inboundmessageports.InboundMessageRepository
-	Now           func() int64 `optional:"true"`
+	Now           timeutils.Clock
 	Organizations tenantports.OrganizationRepository
-	Parties       PartyFinder `optional:"true"`
+	Parties       PartyFinder
 	QueueRepo     inboundmessageports.TriageQueueRepository
 	// Realtime keeps an open inbox current, and Notifications tells the people
-	// who read the inbox that a message is waiting on them. Both optional: the
-	// inbox is still right on the next load without either.
-	Realtime     realtimeports.RealtimeService `optional:"true"`
+	// who read the inbox that a message is waiting on them.
+	Realtime     realtimeports.RealtimeService
 	Roles        permissionports.RoleRepository
-	RuleTeacher  inboundmessageports.TriageRuleTeacher `optional:"true"`
+	RuleTeacher  inboundmessageports.TriageRuleTeacher
 	SettingsRepo inboundmessageports.TriageSettingsRepository
 	// Shipments and Parties resolve what a message is about. Both are optional:
 	// an unmatched message is still one a person can read and link by hand.
-	Shipments  ShipmentFinder `optional:"true"`
+	Shipments  ShipmentFinder
 	TargetRepo inboundmessageports.TriageTargetRepository
-	Wakes      inboundmessageports.TriageWakeScheduler `optional:"true"`
+	Wakes      inboundmessageports.TriageWakeScheduler
 	// Watchtower and Events are how a message that needs a person, or a desk,
-	// gets one. Both are optional: without them the inbox still holds every
-	// message and its reason, and nothing else is told about it.
-	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
+	// gets one.
+	Watchtower watchtowerports.WatchtowerProjector
 }
 
 type Service struct {
@@ -65,9 +63,6 @@ type Service struct {
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	now := p.Now
-	if now == nil {
-		now = timeutils.NowUnix
-	}
 	return &Service{
 		activityRepo:  p.ActivityRepo,
 		db:            p.DB,

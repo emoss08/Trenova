@@ -41,9 +41,6 @@ func (c *Connection) resultCache() (*keel.CacheConfig, error) {
 	}
 
 	if settings.SharedEnabled() {
-		if c.redis == nil {
-			return nil, ErrSharedResultCacheNeedsRedis
-		}
 		cache.Shared = rediscache.New(
 			trenovaredis.NewBytesClient(c.redis),
 			settings.Shared.GetPrefix(),

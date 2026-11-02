@@ -186,10 +186,6 @@ func (s *Service) TightenInstructions(
 }
 
 func (s *Service) timezone(ctx context.Context, tenantInfo pagination.TenantInfo) string {
-	if s.organizations == nil {
-		return agentdefinition.DefaultCronTimezone
-	}
-
 	org, err := s.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})

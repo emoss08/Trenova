@@ -147,7 +147,7 @@ func (a *SecurityAuditor) stateOf(value any, label string) map[string]any {
 }
 
 func (a *SecurityAuditor) recordMetric(success bool) {
-	if a.metrics == nil || a.metrics.Audit == nil {
+	if a.metrics.Audit == nil {
 		return
 	}
 	a.metrics.Audit.RecordSecurityEvent(securityChangeKind, success)

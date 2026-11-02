@@ -60,13 +60,6 @@ func (h *Handler) openAssistantThread(c *gin.Context) {
 		libraryID = parsed
 	}
 
-	if h.pageAssistant == nil {
-		h.eh.HandleError(c, errortypes.NewBusinessError(
-			"The formula assistant is not available on this server",
-		))
-		return
-	}
-
 	tenant := pagination.TenantInfo{
 		OrgID:  authCtx.OrganizationID,
 		BuID:   authCtx.BusinessUnitID,

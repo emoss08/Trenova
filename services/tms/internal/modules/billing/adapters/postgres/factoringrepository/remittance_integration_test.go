@@ -20,7 +20,7 @@ import (
 
 func TestRemittanceStagesMatchesAndKeepsItsLines(t *testing.T) {
 	e := setupFactoringEnv(t)
-	p := Params{DB: postgres.NewTestConnection(e.db), Logger: zap.NewNop()}
+	p := Params{DB: postgres.WrapDB(e.db), Logger: zap.NewNop()}
 	submissions := NewSubmissionRepository(p)
 	remittances := NewRemittanceRepository(p)
 	now := time.Now().Unix()
@@ -174,7 +174,7 @@ func TestRemittanceStagesMatchesAndKeepsItsLines(t *testing.T) {
 func TestRemittanceProfileIsOnePerFactor(t *testing.T) {
 	e := setupFactoringEnv(t)
 	remittances := NewRemittanceRepository(
-		Params{DB: postgres.NewTestConnection(e.db), Logger: zap.NewNop()},
+		Params{DB: postgres.WrapDB(e.db), Logger: zap.NewNop()},
 	)
 	factor := e.createFactor(t, "FRMP")
 

@@ -68,12 +68,6 @@ export function OrganizationWide({
         : t("A person approves every change"),
       on: moneyRunsOnItsOwn,
     },
-    {
-      icon: "database",
-      label: t("Share corrections"),
-      value: control.aiTrainingConsent ? t("On") : t("Off"),
-      on: control.aiTrainingConsent,
-    },
   ];
 
   return (

@@ -36,10 +36,10 @@ type Params struct {
 	OrgRepo             tenantports.OrganizationRepository
 	DispatchControlRepo dispatchcontrolports.DispatchControlRepository
 	TrackingEvents      trackingeventports.TrackingEventService
-	Templates           documenttemplateports.DocumentTemplateResolver `optional:"true"`
-	EmailService        emailports.EmailService                        `optional:"true"`
-	AuditService        auditports.AuditService                        `optional:"true"`
-	Observers           []checkcallports.CheckCallObserver             `                group:"check_call_observers"`
+	Templates           documenttemplateports.DocumentTemplateResolver
+	EmailService        emailports.EmailService
+	AuditService        auditports.AuditService
+	Observers           []checkcallports.CheckCallObserver `group:"check_call_observers"`
 }
 
 type Service struct {

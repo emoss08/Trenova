@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
-var resourceNames = permissioncatalog.NewRegistry()
+var resourceNames = permissioncatalog.Default()
 
 // LintInstructions reads instructions against the tools a draft holds and
 // returns each thing they ask for that none of those tools can do.

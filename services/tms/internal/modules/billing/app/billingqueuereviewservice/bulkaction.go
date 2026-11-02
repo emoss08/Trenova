@@ -140,9 +140,6 @@ func (s *Service) bulkResolve(
 	actor *permissionports.RequestActor,
 	pick issuePicker,
 ) error {
-	if s.reviewRepo == nil {
-		return notApplicable("issues are not available")
-	}
 	issues, err := s.reviewRepo.ListIssues(ctx, req.TenantInfo, req.ItemID)
 	if err != nil {
 		return err

@@ -35,7 +35,6 @@ describe("controlInput", () => {
     promotionThreshold: 10,
     personMonthlyMessages: 200,
     learningOff: true,
-    aiTrainingConsent: true,
   } as AgentControl;
 
   it("turns learning on or off without touching the other switches", () => {
@@ -59,13 +58,5 @@ describe("controlInput", () => {
     expect(
       controlInput({ ...current, learningOff: false }, { promotionThreshold: 25 }),
     ).toMatchObject({ promotionThreshold: 25, learningOff: false });
-  });
-
-  it("sends training consent only when it is the switch being changed", () => {
-    expect(controlInput(current, { learningOff: false })).not.toHaveProperty("aiTrainingConsent");
-    expect(controlInput(current, { aiTrainingConsent: false })).toMatchObject({
-      aiTrainingConsent: false,
-      learningOff: true,
-    });
   });
 });

@@ -2,12 +2,9 @@ package kernelports
 
 import (
 	"context"
-	"errors"
 
 	"go.temporal.io/sdk/client"
 )
-
-var ErrWorkflowStarterDisabled = errors.New("workflow starter is disabled")
 
 type WorkflowStarter interface {
 	StartWorkflow(
@@ -22,7 +19,6 @@ type WorkflowStarter interface {
 		workflowID, runID, signalName string,
 		arg any,
 	) error
-	Enabled() bool
 }
 
 // WorkflowResults reads what a finished workflow returned. It waits for a

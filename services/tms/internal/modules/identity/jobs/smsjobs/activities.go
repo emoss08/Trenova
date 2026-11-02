@@ -21,7 +21,7 @@ type ActivitiesParams struct {
 
 	SMSClient *sms.Client
 	Logger    *zap.Logger
-	Plans     platformplanports.PlanService `optional:"true"`
+	Plans     platformplanports.PlanService
 }
 
 type Activities struct {

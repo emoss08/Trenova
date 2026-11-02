@@ -28,7 +28,7 @@ func TestEDISummaryCounts(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 
 	scope := tenantWithoutPartners(t, ctx, db)
 	ctx = scope.Ctx

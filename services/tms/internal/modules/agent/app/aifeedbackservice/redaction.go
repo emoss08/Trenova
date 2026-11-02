@@ -61,7 +61,7 @@ type redactor struct {
 }
 
 func newRedactor(tools toolResourceLookup) *redactor {
-	return &redactor{tools: tools, registry: permissioncatalog.NewRegistry()}
+	return &redactor{tools: tools, registry: permissioncatalog.Default()}
 }
 
 func (r *redactor) restrictedValues(results []toolResult) []string {

@@ -78,7 +78,7 @@ func NewReadOnlyGuard(p ReadOnlyGuardParams) *ReadOnlyGuard {
 
 func (g *ReadOnlyGuard) Guard() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if g.plans == nil || !g.plans.EnforcesPlans() {
+		if !g.plans.EnforcesPlans() {
 			c.Next()
 			return
 		}

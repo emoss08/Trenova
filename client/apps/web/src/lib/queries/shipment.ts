@@ -48,7 +48,7 @@ export const shipment = createQueryKeys("shipment", {
   }),
   profitability: (shipmentId: Shipment["id"]) => ({
     queryKey: ["profitability", shipmentId],
-    queryFn: async () => getShipmentProfitabilityGraphQL(shipmentId),
+    queryFn: async ({ signal }) => getShipmentProfitabilityGraphQL(shipmentId, { signal }),
   }),
   listUnassigned: (req: { limit: number; after?: string | null }) => ({
     queryKey: ["list-unassigned", req],

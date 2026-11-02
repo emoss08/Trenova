@@ -622,11 +622,6 @@ func (s *Service) BackfillJurisdictionMiles(
 	if req.DryRun || page.TotalMoves == 0 {
 		return result, nil
 	}
-	if !s.workflowStarter.Enabled() {
-		return nil, errortypes.NewBusinessError(
-			"Background jobs are unavailable, so the jurisdiction backfill cannot be started",
-		)
-	}
 
 	maxMoves := req.MaxMoves
 	if maxMoves <= 0 {
@@ -1068,8 +1063,7 @@ func (s *Service) enqueueStoredMileageCandidate(
 	control *distancecontrol.DistanceControl,
 	hazmatTypes []string,
 ) {
-	if control == nil || !control.AutoCreateStoredMileage || s.storedMileageBuffer == nil ||
-		kernelports.IsReadOnly(ctx) {
+	if control == nil || !control.AutoCreateStoredMileage || kernelports.IsReadOnly(ctx) {
 		return
 	}
 	candidate, ok := buildStoredMileageCandidate(

@@ -59,9 +59,6 @@ func (k *Kit) ExchangeRate(
 			"Set up OANDA exchange rates in Trenova and retry this record, or skip it",
 		)
 	}
-	if k.rates == nil {
-		return decimal.Zero, missing()
-	}
 	result, err := k.rates.Convert(
 		ctx,
 		sess.Tenant,

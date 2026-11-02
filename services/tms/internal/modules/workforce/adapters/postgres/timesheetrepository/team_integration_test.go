@@ -24,7 +24,7 @@ func TestListsNarrowToTheTeamAManagerAnswersFor(t *testing.T) {
 	t.Cleanup(cleanup)
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	team := workerteamtest.Seed(t, ctx, db, data)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	ctx = data.Ctx(ctx)
 	tenant := pagination.TenantInfo{
 		OrgID:  data.Organization.ID,

@@ -42,7 +42,7 @@ type ModelPriceReferenceParams struct {
 
 	Logger   *zap.Logger
 	AIConfig *aiconfig.Config
-	Cache    llmports.ModelPriceCacheRepository `optional:"true"`
+	Cache    llmports.ModelPriceCacheRepository
 }
 
 // openRouterPrices estimates a model's price from OpenRouter's public catalog.
@@ -144,10 +144,8 @@ func (r *openRouterPrices) load(ctx context.Context) *priceIndex {
 		prices[model.ID] = price
 	}
 
-	if r.cache != nil {
-		if err = r.cache.Set(ctx, openRouterSource, prices, ttl); err != nil {
-			r.l.Debug("could not share the model price reference", zap.Error(err))
-		}
+	if err = r.cache.Set(ctx, openRouterSource, prices, ttl); err != nil {
+		r.l.Debug("could not share the model price reference", zap.Error(err))
 	}
 
 	index := newPriceIndex(prices)
@@ -156,10 +154,6 @@ func (r *openRouterPrices) load(ctx context.Context) *priceIndex {
 }
 
 func (r *openRouterPrices) readShared(ctx context.Context) map[string]llmports.CachedModelPrice {
-	if r.cache == nil {
-		return nil
-	}
-
 	prices, err := r.cache.Get(ctx, openRouterSource)
 	if err != nil {
 		r.l.Debug("could not read the shared model price reference", zap.Error(err))

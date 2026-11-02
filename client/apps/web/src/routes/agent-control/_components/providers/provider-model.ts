@@ -1,23 +1,27 @@
 import type { AIProviderRow } from "@/lib/graphql/ai-provider";
-import type { AIProviderKind, AITask, AITaskDescriptor } from "@/types/ai-provider";
+import type {
+  AIProviderKind,
+  AIProviderPlatform,
+  AITask,
+  AITaskDescriptor,
+} from "@/types/ai-provider";
 import { EMBEDDING_DIMENSIONS } from "@/types/ai-provider";
 import { kindSupportsEmbedding } from "./provider-form-schema";
 
 /** What decides where a task goes: the fields routing reads, of a saved provider or a draft. */
 export type RoutingProvider = Pick<
   AIProviderRow,
-  "id" | "name" | "kind" | "tasks" | "trusted" | "enabled" | "hasApiKey" | "embeddingDimensions"
+  "id" | "name" | "kind" | "tasks" | "enabled" | "hasApiKey" | "embeddingDimensions"
 >;
 
-/** A task as the routing grid shows it: its name, whether it needs trust, and what happens without a provider. */
+/** A task as the routing grid shows it. */
 export type TaskMeta = {
   task: AITask;
   label: string;
-  trust: boolean;
 };
 
 /** Why an assigned provider is passed over for a task. */
-export type SkipReason = "off" | "needsKey" | "untrusted" | "noEmbedding";
+export type SkipReason = "off" | "needsKey" | "noEmbedding";
 
 export type Route<P extends RoutingProvider = RoutingProvider> = {
   first: P | null;
@@ -26,26 +30,13 @@ export type Route<P extends RoutingProvider = RoutingProvider> = {
 };
 
 /**
- * The tasks in the order the routing grid lists them, from the catalog: what a person
- * reads in Trenova first, the background work after, and General last because it takes
- * whatever no other task names.
+ * The tasks in the order the routing grid lists them, of those the catalog offers: the
+ * Desk first, the work around it after, and General last because it takes whatever no
+ * other task names. Nova's tasks are not routed; Nova runs on the provider chosen for it.
  */
 const TASK_ORDER: readonly AITask[] = [
   "AssistantChat",
-  "BillingDiagnosis",
-  "DocumentExtraction",
-  "DocumentClassification",
   "ScopeClassification",
-  "OperationalInsights",
-  "DailyBriefing",
-  "FormulaAssistant",
-  "QueryCompose",
-  "ChapterTitling",
-  "InboundClassification",
-  "AccountingMapping",
-  "RemittanceExtraction",
-  "PaperworkReading",
-  "PaletteAnswer",
   "EvaluationJudge",
   "Embedding",
   "General",
@@ -55,8 +46,19 @@ export function taskMetas(descriptors: readonly AITaskDescriptor[]): TaskMeta[] 
   const byTask = new Map(descriptors.map((descriptor) => [descriptor.task, descriptor]));
   return TASK_ORDER.flatMap((task) => {
     const descriptor = byTask.get(task);
-    return descriptor ? [{ task, label: descriptor.label, trust: descriptor.requiresTrust }] : [];
+    return descriptor ? [{ task, label: descriptor.label }] : [];
   });
+}
+
+/**
+ * Whether a provider can be the one Nova runs on: an Anthropic provider reaching Claude
+ * through a platform the catalog names for Nova (the server's `Provider.CanServeNova`).
+ */
+export function canRunNova(
+  provider: { kind: AIProviderKind; platform: AIProviderPlatform },
+  novaPlatforms: readonly AIProviderPlatform[],
+): boolean {
+  return provider.kind === "AnthropicMessages" && novaPlatforms.includes(provider.platform);
 }
 
 /** Whether a provider's protocol can only be reached with a key, and it has none. */
@@ -79,9 +81,6 @@ export function skipReason(
 ): SkipReason | null {
   if (!provider.enabled) {
     return needsKey(provider, keyRequired) ? "needsKey" : "off";
-  }
-  if (meta.trust && !provider.trusted) {
-    return "untrusted";
   }
   if (meta.task === "Embedding") {
     const dimensions = provider.embeddingDimensions ?? 0;

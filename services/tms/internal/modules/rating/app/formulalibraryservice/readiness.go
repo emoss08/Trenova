@@ -310,12 +310,6 @@ func (s *Service) ListReviewers(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]Reviewer, error) {
-	if s.roles == nil {
-		return nil, errortypes.NewBusinessError(
-			"Reviewers for formula libraries cannot be listed on this server",
-		)
-	}
-
 	permitted, err := s.roles.ListUsersWithPermission(
 		ctx,
 		permissionports.ListUsersWithPermissionRequest{

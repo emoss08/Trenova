@@ -59,7 +59,7 @@ func TestRecordItemOutcomesWritesEveryOutcomeOfAFlush(t *testing.T) {
 
 	tenant := pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	run, err := repo.Create(ctx, &billingtransfer.BillingTransferRun{
 		OrganizationID: orgID,

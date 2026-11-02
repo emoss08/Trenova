@@ -24,7 +24,7 @@ in [backend/](backend/README.md). Frontend rules are in the `trenova-frontend` s
 | [security-audit](security-audit.md) | a mutation that changes who can do what, a new way to read a document, a cross-tenant refusal, deleting audit rows | `SecurityAuditor.RecordChange` after commit; `auth_events`/`audit_entries` are append-only |
 | [idempotency](idempotency.md) | the middleware, `pkg/idempotency`, a write that must be safe to retry | a 5xx or transient GraphQL error releases the key |
 | [realtime](realtime.md) | `realtimeservice`, `realtimebroker`, the stream endpoint, the browser client, presence | publish with `PublishResourceInvalidation`; `AudienceUserID` for one person |
-| [editions](editions.md) | anything the Cloud overlay replaces or extends | public code never imports `internal/cloud`; decide behaviour from an injected port, never `platform.mode` |
+| [editions](editions.md) | anything the client Cloud overlay replaces or extends | the server has no edition; decide behaviour from an injected port, never `platform.mode` |
 | [generated-artifacts](generated-artifacts.md) | a GraphQL schema, a removed column, user-facing text | `projection.yml` needs every field to resolve to a column, relation or declared virtual |
 | [graphql-executor](graphql-executor.md) | the gqlexec generator or runtime | `task gqlgen`, never `go tool gqlgen generate` |
 | [backend/data-access](backend/data-access.md) | any repository, list, migration, transaction or seed; `pkg/listquery`, `pkg/dberror`, `dbtx` | columns from the generated keel tables; the scope on the context is the tenant, never a tenant predicate; terminals take `r.db.Keel(ctx)` inside `dbtx`; map keel errors with `dberror.Mapping`; render SQL with `keeltest`; never `.Cache` a query on a table whose policy reads `trenova_rls.user_id()`; a new query path gets an integration test so the plan guard explains it |
@@ -73,8 +73,6 @@ in [backend/](backend/README.md). Frontend rules are in the `trenova-frontend` s
 | [ai-tracing](ai-tracing.md) | a span, a trace attribute or a link column (spans come from activities, never workflow code) |
 | [ai-audit-trail](ai-audit-trail.md) | `aiaudit*` app packages, `aiauditjobs`, `domain/aiaudit` (a field change is a `hash_version` change), any table the projector reads |
 | [ai-analytics](ai-analytics.md) | `aianalytics*`, or what the completion router or step ledger records |
-| [ai-training-export](ai-training-export.md) | `domain/aitraining`, the Cloud training packages, what a correction stores |
-| [extraction-fine-tuning](extraction-fine-tuning.md) | the extraction prompt, reply schema, `aicorrection.Score`, `tools/extraction-finetune` |
 
 ## Client
 

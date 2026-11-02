@@ -182,11 +182,6 @@ func (s *Service) planRetry(
 	ctx context.Context,
 	req *RunRequest,
 ) (source, run *billingtransfer.BillingTransferRun, err error) {
-	if !s.workflows.Enabled() {
-		return nil, nil, errortypes.NewBusinessError(
-			"Transferring to billing is temporarily unavailable — the background worker is not connected",
-		)
-	}
 
 	source, err = s.runRepo.GetByID(ctx, &billingtransferports.GetBillingTransferRunRequest{
 		TenantInfo: req.TenantInfo,

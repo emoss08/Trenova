@@ -26,7 +26,7 @@ type Params struct {
 	Logger             *zap.Logger
 	MappingProfileRepo edipartnerports.EDIMappingProfileRepository
 	PartnerRepo        edipartnerports.EDIPartnerRepository
-	Plans              platformplanports.PlanService `optional:"true"`
+	Plans              platformplanports.PlanService
 	ProfileRepo        edipartnerports.EDICommunicationProfileRepository
 	Secret             *ediprofilesecret.Service
 	TransactionSetRepo edipartnerports.EDITransactionSetRepository

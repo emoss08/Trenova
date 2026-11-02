@@ -57,7 +57,7 @@ func newHarness(t *testing.T) *harness {
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	params := customertrackingrepository.Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	}
 	return &harness{

@@ -255,26 +255,24 @@ func (s *Service) MarkPaid(
 	}
 	s.LogSettlementAudit(ctx, updated, &previous, actor.UserID, permission.OpUpdate,
 		"Settlement marked paid via "+paymentMethod)
-	if s.driverNotify != nil {
-		s.driverNotify.Notify(ctx, &drivernotificationservice.DriverNotification{
-			TenantInfo: tenantInfo,
-			WorkerID:   updated.WorkerID,
-			EventType:  "dash.settlement_paid",
-			Priority:   notification.PriorityHigh,
-			Context: notificationtemplate.SettlementNotificationContext{
-				SettlementNumber: updated.SettlementNumber,
-				PaymentMethod:    paymentMethod,
-				Amount: money.FormatMinor(
-					updated.NetPayMinor, updated.CurrencyCode,
-				),
-				Currency: updated.CurrencyCode,
-			},
-			Link: "/dash/pay/" + updated.ID.String(),
-			RelatedEntities: map[string]any{
-				"settlementId": updated.ID.String(),
-			},
-		})
-	}
+	s.driverNotify.Notify(ctx, &drivernotificationservice.DriverNotification{
+		TenantInfo: tenantInfo,
+		WorkerID:   updated.WorkerID,
+		EventType:  "dash.settlement_paid",
+		Priority:   notification.PriorityHigh,
+		Context: notificationtemplate.SettlementNotificationContext{
+			SettlementNumber: updated.SettlementNumber,
+			PaymentMethod:    paymentMethod,
+			Amount: money.FormatMinor(
+				updated.NetPayMinor, updated.CurrencyCode,
+			),
+			Currency: updated.CurrencyCode,
+		},
+		Link: "/dash/pay/" + updated.ID.String(),
+		RelatedEntities: map[string]any{
+			"settlementId": updated.ID.String(),
+		},
+	})
 	return updated, nil
 }
 

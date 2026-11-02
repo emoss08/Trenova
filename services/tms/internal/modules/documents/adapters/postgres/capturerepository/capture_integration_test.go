@@ -34,7 +34,7 @@ func TestCaptureRepositoriesAgainstPostgres(t *testing.T) {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	p := Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()}
+	p := Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()}
 	orgID, buID, userID := data.Organization.ID, data.BusinessUnit.ID, data.User.ID
 	ti := pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}
 
@@ -355,7 +355,12 @@ func TestCaptureRepositoriesAgainstPostgres(t *testing.T) {
 	_, err = ci.Where(ci.ID.Eq(its[0].ID)).
 		Update(ctx, db, ci.SuggestedID.To(routedTo.Shipment.ID))
 	require.NoError(t, err)
-	assert.Contains(t, search("pro-cap-77"), b.ID, "a shipment a page was routed to finds its stack")
+	assert.Contains(
+		t,
+		search("pro-cap-77"),
+		b.ID,
+		"a shipment a page was routed to finds its stack",
+	)
 	assert.Contains(t, search("BOL-CAP"), b.ID, "the shipment's BOL finds the stack")
 	assert.NotContains(t, search("PRO-CAP-78"), b.ID)
 	outside, err := batches.ListCursor(ctx, &captureports.ListCaptureBatchesRequest{

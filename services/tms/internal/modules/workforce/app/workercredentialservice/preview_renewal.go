@@ -30,9 +30,6 @@ func (s *Service) PreviewRenewal(
 	if err != nil {
 		return nil, err
 	}
-	if s.driverNotify == nil {
-		return nil, errRenewalUndeliverable
-	}
 
 	notice, _ := renewalNotification(req, named, timeutils.NowUnix())
 	rendered, err := s.driverNotify.Preview(ctx, notice)

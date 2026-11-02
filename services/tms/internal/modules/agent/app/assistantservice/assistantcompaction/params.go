@@ -23,12 +23,12 @@ type Params struct {
 	Definitions      agentdefinitionports.AgentDefinitionRepository
 	Proposals        agentproposalports.AgentProposalRepository
 	Permissions      permissionports.PermissionEngine
-	Budgets          agentbudgetports.AgentBudgetService        `optional:"true"`
-	Decisions        agentdecisionports.AgentDecisionRepository `optional:"true"`
-	AgentControls    tenantports.AgentControlRepository         `optional:"true"`
-	PaletteQuestions paletteports.QuestionRepository            `optional:"true"`
-	Quota            platformplanports.QuotaGuard               `optional:"true"`
-	Chapters         assistantchapterports.ChapterRepository    `optional:"true"`
+	Budgets          agentbudgetports.AgentBudgetService
+	Decisions        agentdecisionports.AgentDecisionRepository
+	AgentControls    tenantports.AgentControlRepository
+	PaletteQuestions paletteports.QuestionRepository
+	Quota            platformplanports.QuotaGuard
+	Chapters         assistantchapterports.ChapterRepository
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.

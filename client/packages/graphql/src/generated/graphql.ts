@@ -244,6 +244,8 @@ export type AiProviderPatchInput = {
   cacheWriteCostPerMillion?: string | null | undefined;
   enabled?: boolean | null | undefined;
   inputCostPerMillion?: string | null | undefined;
+  /** Run Nova on this provider, taking it from the one that had it. */
+  nova?: boolean | null | undefined;
   outputCostPerMillion?: string | null | undefined;
   tasks?: Array<AiTask> | null | undefined;
   trusted?: boolean | null | undefined;
@@ -1070,8 +1072,6 @@ export type AgentControlInput = {
   agentMoneyRunAmount?: string | null | undefined;
   /** Absent leaves the number of automatic money changes a run may make as it is. */
   agentMoneyRunCalls?: number | null | undefined;
-  /** Absent leaves training consent as it is. Only a signed-in person can change it. */
-  aiTrainingConsent?: boolean | null | undefined;
   /** Absent leaves whether a model splits Desk conversations into named chapters as it is. */
   autoChaptersOff?: boolean | null | undefined;
   /** Absent leaves the organization's earned autonomy switch as it is. */
@@ -4365,48 +4365,6 @@ export type ExportTableViewInput = {
   view: TableExportViewInput;
 };
 
-export type ExtractionEvalCaseStatus =
-  | 'Active'
-  | 'Candidate'
-  | 'Retired';
-
-export type ExtractionEvalRefreezeStatus =
-  | 'Completed'
-  /** Stopped before every case was read: failed, canceled, terminated or timed out. */
-  | 'Failed'
-  | 'Running';
-
-export type ExtractionEvalResultStatus =
-  | 'Completed'
-  | 'Failed'
-  | 'Pending'
-  | 'Skipped';
-
-export type ExtractionEvalRunStatus =
-  | 'BudgetStopped'
-  | 'Canceled'
-  | 'Completed'
-  | 'Failed'
-  | 'Queued'
-  | 'Running';
-
-export type ExtractionRolloutHaltReason =
-  /** The candidate read confirmed fields worse than production by more than the allowed points. */
-  | 'AccuracyDrop'
-  /** The candidate's answers were unusable more often than production's by more than the allowed points. */
-  | 'Rejections';
-
-export type ExtractionShadowResultStatus =
-  | 'Completed'
-  | 'Failed'
-  | 'Pending'
-  | 'Skipped';
-
-export type ExtractionShadowVerdict =
-  | 'Better'
-  | 'Same'
-  | 'Worse';
-
 export type FacilityType =
   | 'ColdStorage'
   | 'CrossDock'
@@ -6691,13 +6649,6 @@ export type ProfileChangeStatus =
   | 'Rejected'
   | 'Withdrawn';
 
-export type PromoteAiCorrectionInput = {
-  /** Start the case as Active rather than Candidate. */
-  activate?: boolean | null | undefined;
-  correctionId: string | number;
-  title?: string | null | undefined;
-};
-
 export type ProposeMyShiftSwapInput = {
   /** The day offered back, when the swap is a trade rather than a hand-off. */
   counterpartyShiftDate?: number | null | undefined;
@@ -7020,11 +6971,6 @@ export type RecurringShipmentStatus =
   | 'Active'
   | 'Expired'
   | 'Paused';
-
-export type RefreezeExtractionEvalCasesInput = {
-  /** The cases to freeze again; every active case when empty. */
-  caseIds?: Array<string | number> | null | undefined;
-};
 
 export type RejectInvoiceAdjustmentInput = {
   adjustmentId: string | number;
@@ -8342,12 +8288,6 @@ export type StartBillingTransferRunInput = {
   status?: ShipmentStatus | null | undefined;
 };
 
-export type StartExtractionEvalRunInput = {
-  /** How many active cases to run, newest first; 50 by default, at most 500. */
-  caseLimit?: number | null | undefined;
-  providerId: string | number;
-};
-
 export type StartWorkerChecklistInput = {
   startedAt?: number | null | undefined;
   templateId: string | number;
@@ -8931,30 +8871,6 @@ export type UpdateEscrowAccountInput = {
   targetAmountMinor: number;
   version: number;
   workerId: string | number;
-};
-
-export type UpdateExtractionEvalCaseInput = {
-  notes?: string | null | undefined;
-  status?: ExtractionEvalCaseStatus | null | undefined;
-  title?: string | null | undefined;
-  version: number;
-};
-
-export type UpdateExtractionRolloutInput = {
-  enabled: boolean;
-  maxAccuracyDropPoints: number;
-  maxRejectionIncreasePoints: number;
-  percent: number;
-  providerId?: string | number | null | undefined;
-  version: number;
-};
-
-export type UpdateExtractionShadowSettingsInput = {
-  dailyLimit: number;
-  enabled: boolean;
-  providerId?: string | number | null | undefined;
-  samplePercent: number;
-  version: number;
 };
 
 export type UpdateFactoringAgreementInput = {
@@ -10858,7 +10774,7 @@ export type UpdateAgentCapabilitiesMutationVariables = Exact<{
 
 export type UpdateAgentCapabilitiesMutation = { updateAgentCapabilities: { ' $fragmentRefs'?: { 'AgentCapabilitiesFieldsFragment': AgentCapabilitiesFieldsFragment } } };
 
-export type AgentControlFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shadowMode: boolean, earnedAutonomy: boolean, promotionThreshold: number, personMonthlyMessages: number, learningOff: boolean, autoChaptersOff: boolean, agentMoneyCallCeiling: string, agentMoneyRunCalls: number, agentMoneyRunAmount: string, agentMoneyDayCalls: number, agentMoneyDayAmount: string, agentMoneyCurrency: string, aiTrainingConsent: boolean, aiTrainingConsentChangedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentControlFieldsFragment' };
+export type AgentControlFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shadowMode: boolean, earnedAutonomy: boolean, promotionThreshold: number, personMonthlyMessages: number, learningOff: boolean, autoChaptersOff: boolean, agentMoneyCallCeiling: string, agentMoneyRunCalls: number, agentMoneyRunAmount: string, agentMoneyDayCalls: number, agentMoneyDayAmount: string, agentMoneyCurrency: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentControlFieldsFragment' };
 
 export type AgentControlSettingsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -10871,11 +10787,6 @@ export type UpdateAgentControlMutationVariables = Exact<{
 
 
 export type UpdateAgentControlMutation = { updateAgentControl: { ' $fragmentRefs'?: { 'AgentControlFieldsFragment': AgentControlFieldsFragment } } };
-
-export type AiTrainingExportHistoryQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type AiTrainingExportHistoryQuery = { aiTrainingExportHistory: Array<{ exportId: string, examples: number, trainExamples: number, validationExamples: number, consentGrantedAt: number, exportedAt: number }> };
 
 export type PendingProposalFieldsFragment = { id: string, reviewRequired: boolean, organizationId: string, businessUnitId: string, runId: string, toolName: string, toolParams: unknown, confidence: number, rationale: string, autonomyTier: AgentAutonomyTier, status: AgentProposalStatus, planId: string | null, planStep: number, simulatedAt: number | null, simulation: unknown, modifications: unknown, version: number, createdAt: number, updatedAt: number, parameterFields: Array<{ name: string, label: string, description: string, kind: AgentProposalFieldKind, required: boolean, options: Array<string>, minimum: number | null, maximum: number | null, maxLength: number | null, readOnly: boolean, resource: string | null, choices: Array<{ id: string, label: string }> | null }>, hold: { reason: PendingDecisionHoldReason, agentName: string } | null, evidence: Array<{ type: string, id: string, note: string }>, run: { id: string, agentDefinitionId: string, trigger: AgentRunTrigger, subjectType: AgentSubjectType, subjectId: string, definition: { id: string, name: string, template: AgentTemplate | null, icon: string, accent: string } | null } | null } & { ' $fragmentName'?: 'PendingProposalFieldsFragment' };
 
@@ -11658,7 +11569,7 @@ export type AgentFeedbackSummaryQueryVariables = Exact<{
 
 export type AgentFeedbackSummaryQuery = { agentFeedbackSummary: { agentDefinitionId: string, windowDays: number, since: number, positive: number, negative: number, satisfaction: number | null, days: Array<{ day: string, positive: number, negative: number, satisfaction: number | null }>, worstRated: Array<{ targetType: AiFeedbackTargetType, targetId: string, targetPart: string, positive: number, negative: number, lastRatedAt: number, sample: { ' $fragmentRefs'?: { 'AiFeedbackTableRowFieldsFragment': AiFeedbackTableRowFieldsFragment } } | null }> } };
 
-export type AiProviderCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, kind: AiProviderKind, baseUrl: string, model: string, hasApiKey: boolean, allowPrivateNetwork: boolean, structuredOutputMode: AiStructuredOutputMode, reasoningEffort: AiReasoningEffort, thinkingStyle: AiThinkingStyle, advisorEnabled: boolean, advisorModel: string, scripts: boolean, scriptWrites: boolean, platform: AiProviderPlatform, extraBody: unknown, inputCostPerMillion: string | null, outputCostPerMillion: string | null, cacheReadCostPerMillion: string | null, cacheWriteCostPerMillion: string | null, maxTokens: number, tasks: Array<AiTask>, priority: number, embeddingDimensions: number | null, embeddingInputStyle: AiEmbeddingInputStyle, trusted: boolean, enabled: boolean, version: number, createdAt: number, updatedAt: number, advisorRefusal: { advisor: string, model: string, message: string, refusedAt: number } | null, platformSettings: { auth: AiProviderPlatformAuth, region: string, projectId: string, workspaceId: string, accessKeyId: string, resource: string, tenantId: string, clientId: string } | null, lastTest: { success: boolean, message: string, modelIdentifier: string, schemaHonoured: boolean, latencyMs: number, detail: string, testedAt: number } | null } & { ' $fragmentName'?: 'AiProviderCardFieldsFragment' };
+export type AiProviderCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, kind: AiProviderKind, baseUrl: string, model: string, hasApiKey: boolean, allowPrivateNetwork: boolean, structuredOutputMode: AiStructuredOutputMode, reasoningEffort: AiReasoningEffort, thinkingStyle: AiThinkingStyle, advisorEnabled: boolean, advisorModel: string, scripts: boolean, scriptWrites: boolean, platform: AiProviderPlatform, extraBody: unknown, inputCostPerMillion: string | null, outputCostPerMillion: string | null, cacheReadCostPerMillion: string | null, cacheWriteCostPerMillion: string | null, maxTokens: number, tasks: Array<AiTask>, priority: number, embeddingDimensions: number | null, embeddingInputStyle: AiEmbeddingInputStyle, trusted: boolean, nova: boolean, enabled: boolean, version: number, createdAt: number, updatedAt: number, advisorRefusal: { advisor: string, model: string, message: string, refusedAt: number } | null, platformSettings: { auth: AiProviderPlatformAuth, region: string, projectId: string, workspaceId: string, accessKeyId: string, resource: string, tenantId: string, clientId: string } | null, lastTest: { success: boolean, message: string, modelIdentifier: string, schemaHonoured: boolean, latencyMs: number, detail: string, testedAt: number } | null } & { ' $fragmentName'?: 'AiProviderCardFieldsFragment' };
 
 export type AiProviderLimitFieldsFragment = { id: string, timeoutSeconds: number, maxConcurrent: number, monthlyCapUsd: string | null, onCap: AiProviderCapAction, monthSpendUsd: string, apiKey: { prefix: string, lastFour: string, addedAt: number, lastUsedAt: number | null, previousKeyExpiresAt: number | null, addedBy: { id: string, name: string } | null } | null } & { ' $fragmentName'?: 'AiProviderLimitFieldsFragment' };
 
@@ -14575,16 +14486,7 @@ export type BulkUpdateEquipmentTypeStatusMutation = { bulkUpdateEquipmentTypeSta
 
 export type ExtractionFieldAccuracyFieldsFragment = { key: string, scored: number, correct: number, corrected: number, missed: number, unconfirmed: number, unscored: number, accuracy: number } & { ' $fragmentName'?: 'ExtractionFieldAccuracyFieldsFragment' };
 
-export type ExtractionSnapshotFieldsFragment = { fields: Array<{ key: string, value: string }>, stops: Array<{ role: string, sequence: number, name: string, addressLine1: string, addressLine2: string, city: string, state: string, postalCode: string, date: string, timeWindow: string, appointmentRequired: boolean, scheduledWindowStart: number | null, timezone: string }> } & { ' $fragmentName'?: 'ExtractionSnapshotFieldsFragment' };
-
 export type AiCorrectionFieldResultFieldsFragment = { key: string, predicted: string, confirmed: string, outcome: AiCorrectionOutcome, source: string, confidence: number } & { ' $fragmentName'?: 'AiCorrectionFieldResultFieldsFragment' };
-
-export type ExtractionEvalRunFieldsFragment = { id: string, status: ExtractionEvalRunStatus, providerId: string, providerName: string, providerModel: string, servedModel: string, caseLimit: number, casesTotal: number, casesCompleted: number, casesFailed: number, casesSkipped: number, scoredCount: number, correctCount: number, correctedCount: number, missedCount: number, unconfirmedCount: number, unscoredCount: number, accuracy: number, costUsd: string, inputTokens: number, outputTokens: number, avgLatencyMs: number, stopReason: string, failureMessage: string, startedAt: number | null, finishedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ExtractionEvalRunFieldsFragment' };
-
-export type ExtractionEvalRunDetailFieldsFragment = (
-  { fieldAccuracy: Array<{ ' $fragmentRefs'?: { 'ExtractionFieldAccuracyFieldsFragment': ExtractionFieldAccuracyFieldsFragment } }> }
-  & { ' $fragmentRefs'?: { 'ExtractionEvalRunFieldsFragment': ExtractionEvalRunFieldsFragment } }
-) & { ' $fragmentName'?: 'ExtractionEvalRunDetailFieldsFragment' };
 
 export type AiCorrectionTableRowFieldsFragment = { id: string, documentId: string | null, subjectId: string, documentKind: string, documentFingerprint: string, extractionModel: string, predictedConfidence: number, scoredCount: number, correctCount: number, correctedCount: number, missedCount: number, unconfirmedCount: number, unscoredCount: number, accuracy: number, capturedAt: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AiCorrectionTableRowFieldsFragment' };
 
@@ -14593,16 +14495,12 @@ export type AiCorrectionDetailFieldsFragment = (
   & { ' $fragmentRefs'?: { 'AiCorrectionTableRowFieldsFragment': AiCorrectionTableRowFieldsFragment } }
 ) & { ' $fragmentName'?: 'AiCorrectionDetailFieldsFragment' };
 
-export type ExtractionEvalCaseTableRowFieldsFragment = { id: string, status: ExtractionEvalCaseStatus, title: string, documentKind: string, documentFingerprint: string, fileName: string, pageCount: number, expectedFieldCount: number, sourceCorrectionId: string | null, sourceDocumentId: string | null, notes: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ExtractionEvalCaseTableRowFieldsFragment' };
-
-export type ExtractionEvalResultTableRowFieldsFragment = { id: string, runId: string, caseId: string, caseTitle: string, ordinal: number, status: ExtractionEvalResultStatus, model: string, scoredCount: number, correctCount: number, correctedCount: number, missedCount: number, unconfirmedCount: number, unscoredCount: number, accuracy: number, latencyMs: number, costUsd: string, errorMessage: string, completedAt: number | null, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ExtractionEvalResultTableRowFieldsFragment' };
-
 export type ExtractionAccuracyQueryVariables = Exact<{
   windowDays?: number | null | undefined;
 }>;
 
 
-export type ExtractionAccuracyQuery = { extractionAccuracy: { windowDays: number, since: number, corrections: number, sampled: boolean, scored: number, correct: number, corrected: number, missed: number, unconfirmed: number, accuracy: number, byModel: Array<{ key: string, corrections: number, scored: number, correct: number, accuracy: number }>, byKind: Array<{ key: string, corrections: number, scored: number, correct: number, accuracy: number }>, fields: Array<{ ' $fragmentRefs'?: { 'ExtractionFieldAccuracyFieldsFragment': ExtractionFieldAccuracyFieldsFragment } }>, cases: { candidate: number, active: number, retired: number }, recentRuns: Array<{ ' $fragmentRefs'?: { 'ExtractionEvalRunFieldsFragment': ExtractionEvalRunFieldsFragment } }> } };
+export type ExtractionAccuracyQuery = { extractionAccuracy: { windowDays: number, since: number, corrections: number, sampled: boolean, scored: number, correct: number, corrected: number, missed: number, unconfirmed: number, accuracy: number, byModel: Array<{ key: string, corrections: number, scored: number, correct: number, accuracy: number }>, byKind: Array<{ key: string, corrections: number, scored: number, correct: number, accuracy: number }>, fields: Array<{ ' $fragmentRefs'?: { 'ExtractionFieldAccuracyFieldsFragment': ExtractionFieldAccuracyFieldsFragment } }> } };
 
 export type AiCorrectionTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -14619,181 +14517,12 @@ export type AiCorrectionDetailQueryVariables = Exact<{
 
 export type AiCorrectionDetailQuery = { aiCorrection: { ' $fragmentRefs'?: { 'AiCorrectionDetailFieldsFragment': AiCorrectionDetailFieldsFragment } } | null };
 
-export type ExtractionEvalCaseTableQueryVariables = Exact<{
-  input: DataTableConnectionInput;
-  includeTotalCount?: boolean | null | undefined;
-}>;
-
-
-export type ExtractionEvalCaseTableQuery = { extractionEvalCases: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ExtractionEvalCaseTableRowFieldsFragment': ExtractionEvalCaseTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
-
-export type ExtractionEvalCaseDetailQueryVariables = Exact<{
-  id: string | number;
-}>;
-
-
-export type ExtractionEvalCaseDetailQuery = { extractionEvalCase: (
-    { expected: { ' $fragmentRefs'?: { 'ExtractionSnapshotFieldsFragment': ExtractionSnapshotFieldsFragment } } }
-    & { ' $fragmentRefs'?: { 'ExtractionEvalCaseTableRowFieldsFragment': ExtractionEvalCaseTableRowFieldsFragment } }
-  ) | null };
-
-export type ExtractionEvalRunTableQueryVariables = Exact<{
-  input: DataTableConnectionInput;
-  includeTotalCount?: boolean | null | undefined;
-}>;
-
-
-export type ExtractionEvalRunTableQuery = { extractionEvalRuns: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ExtractionEvalRunFieldsFragment': ExtractionEvalRunFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
-
-export type ExtractionEvalRunDetailQueryVariables = Exact<{
-  id: string | number;
-}>;
-
-
-export type ExtractionEvalRunDetailQuery = { extractionEvalRun: { ' $fragmentRefs'?: { 'ExtractionEvalRunDetailFieldsFragment': ExtractionEvalRunDetailFieldsFragment } } | null };
-
-export type ExtractionEvalResultTableQueryVariables = Exact<{
-  runId: string | number;
-  input: DataTableConnectionInput;
-  includeTotalCount?: boolean | null | undefined;
-}>;
-
-
-export type ExtractionEvalResultTableQuery = { extractionEvalResults: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ExtractionEvalResultTableRowFieldsFragment': ExtractionEvalResultTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
-
-export type ExtractionEvalResultDetailQueryVariables = Exact<{
-  id: string | number;
-}>;
-
-
-export type ExtractionEvalResultDetailQuery = { extractionEvalResult: (
-    { fieldResults: Array<{ ' $fragmentRefs'?: { 'AiCorrectionFieldResultFieldsFragment': AiCorrectionFieldResultFieldsFragment } }> }
-    & { ' $fragmentRefs'?: { 'ExtractionEvalResultTableRowFieldsFragment': ExtractionEvalResultTableRowFieldsFragment } }
-  ) | null };
-
-export type PromoteAiCorrectionMutationVariables = Exact<{
-  input: PromoteAiCorrectionInput;
-}>;
-
-
-export type PromoteAiCorrectionMutation = { promoteAICorrection: { ' $fragmentRefs'?: { 'ExtractionEvalCaseTableRowFieldsFragment': ExtractionEvalCaseTableRowFieldsFragment } } };
-
-export type UpdateExtractionEvalCaseMutationVariables = Exact<{
-  id: string | number;
-  input: UpdateExtractionEvalCaseInput;
-}>;
-
-
-export type UpdateExtractionEvalCaseMutation = { updateExtractionEvalCase: { ' $fragmentRefs'?: { 'ExtractionEvalCaseTableRowFieldsFragment': ExtractionEvalCaseTableRowFieldsFragment } } };
-
-export type DeleteExtractionEvalCaseMutationVariables = Exact<{
-  id: string | number;
-}>;
-
-
-export type DeleteExtractionEvalCaseMutation = { deleteExtractionEvalCase: boolean };
-
-export type StartExtractionEvalRunMutationVariables = Exact<{
-  input: StartExtractionEvalRunInput;
-}>;
-
-
-export type StartExtractionEvalRunMutation = { startExtractionEvalRun: { ' $fragmentRefs'?: { 'ExtractionEvalRunFieldsFragment': ExtractionEvalRunFieldsFragment } } };
-
-export type CancelExtractionEvalRunMutationVariables = Exact<{
-  id: string | number;
-}>;
-
-
-export type CancelExtractionEvalRunMutation = { cancelExtractionEvalRun: { ' $fragmentRefs'?: { 'ExtractionEvalRunFieldsFragment': ExtractionEvalRunFieldsFragment } } };
-
-export type ExtractionEvalRefreezeProgressFieldsFragment = { workflowId: string, status: ExtractionEvalRefreezeStatus, total: number, frozen: number, skipped: number, failed: number } & { ' $fragmentName'?: 'ExtractionEvalRefreezeProgressFieldsFragment' };
-
-export type ExtractionEvalRefreezeQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type ExtractionEvalRefreezeQuery = { extractionEvalRefreeze: { ' $fragmentRefs'?: { 'ExtractionEvalRefreezeProgressFieldsFragment': ExtractionEvalRefreezeProgressFieldsFragment } } | null };
-
-export type RefreezeExtractionEvalCasesMutationVariables = Exact<{
-  input: RefreezeExtractionEvalCasesInput;
-}>;
-
-
-export type RefreezeExtractionEvalCasesMutation = { refreezeExtractionEvalCases: { queued: number, workflowId: string, alreadyRunning: boolean } };
-
 export type ExtractionWeekAccuracyFieldsFragment = { weekStart: number, corrections: number, scored: number, correct: number, accuracy: number } & { ' $fragmentName'?: 'ExtractionWeekAccuracyFieldsFragment' };
 
 export type ExtractionProviderTrendsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type ExtractionProviderTrendsQuery = { extractionProviderTrends: { weeks: Array<number>, checkedWeek: number, baselineStart: number, driftPoints: number, minWeekFields: number, minBaselineFields: number, providers: Array<{ providerId: string, providerName: string, model: string, providerRemoved: boolean, dropPoints: number, comparable: boolean, drifting: boolean, weeks: Array<{ ' $fragmentRefs'?: { 'ExtractionWeekAccuracyFieldsFragment': ExtractionWeekAccuracyFieldsFragment } }>, checked: { ' $fragmentRefs'?: { 'ExtractionWeekAccuracyFieldsFragment': ExtractionWeekAccuracyFieldsFragment } }, baseline: { ' $fragmentRefs'?: { 'ExtractionWeekAccuracyFieldsFragment': ExtractionWeekAccuracyFieldsFragment } } }> } };
-
-export type ExtractionRolloutFieldsFragment = { enabled: boolean, providerId: string | null, percent: number, maxAccuracyDropPoints: number, maxRejectionIncreasePoints: number, serving: boolean, startedAt: number | null, haltedAt: number | null, haltReason: ExtractionRolloutHaltReason | null, haltCandidateRate: number, haltBaselineRate: number, updatedById: string | null, version: number, updatedAt: number } & { ' $fragmentName'?: 'ExtractionRolloutFieldsFragment' };
-
-export type ExtractionRolloutArmFieldsFragment = { assigned: number, pending: number, accepted: number, rejected: number, failed: number, superseded: number, fellBack: number, rejectionRate: number } & { ' $fragmentName'?: 'ExtractionRolloutArmFieldsFragment' };
-
-export type ExtractionRolloutAccuracyFieldsFragment = { scored: number, correct: number, accuracy: number } & { ' $fragmentName'?: 'ExtractionRolloutAccuracyFieldsFragment' };
-
-export type ExtractionRolloutQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type ExtractionRolloutQuery = { extractionRollout: { ' $fragmentRefs'?: { 'ExtractionRolloutFieldsFragment': ExtractionRolloutFieldsFragment } } };
-
-export type ExtractionRolloutReportQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type ExtractionRolloutReportQuery = { extractionRolloutReport: { providerName: string, truncated: boolean, minGuardScoredFields: number, minGuardExtractions: number, rollout: { ' $fragmentRefs'?: { 'ExtractionRolloutFieldsFragment': ExtractionRolloutFieldsFragment } }, candidate: { ' $fragmentRefs'?: { 'ExtractionRolloutArmFieldsFragment': ExtractionRolloutArmFieldsFragment } }, control: { ' $fragmentRefs'?: { 'ExtractionRolloutArmFieldsFragment': ExtractionRolloutArmFieldsFragment } }, candidateAccuracy: { ' $fragmentRefs'?: { 'ExtractionRolloutAccuracyFieldsFragment': ExtractionRolloutAccuracyFieldsFragment } }, productionAccuracy: { ' $fragmentRefs'?: { 'ExtractionRolloutAccuracyFieldsFragment': ExtractionRolloutAccuracyFieldsFragment } }, fields: Array<{ key: string, candidateScored: number, candidateCorrect: number, candidateAccuracy: number, productionScored: number, productionCorrect: number, productionAccuracy: number }> } };
-
-export type UpdateExtractionRolloutMutationVariables = Exact<{
-  input: UpdateExtractionRolloutInput;
-}>;
-
-
-export type UpdateExtractionRolloutMutation = { updateExtractionRollout: { ' $fragmentRefs'?: { 'ExtractionRolloutFieldsFragment': ExtractionRolloutFieldsFragment } } };
-
-export type ExtractionShadowSettingsFieldsFragment = { enabled: boolean, providerId: string | null, samplePercent: number, dailyLimit: number, updatedById: string | null, version: number, updatedAt: number } & { ' $fragmentName'?: 'ExtractionShadowSettingsFieldsFragment' };
-
-export type ExtractionShadowResultTableRowFieldsFragment = { id: string, documentId: string, extractedAt: number, status: ExtractionShadowResultStatus, statusReason: string, providerId: string, providerName: string, servedModel: string, productionModel: string, accepted: boolean, rejectionReason: string, correctionId: string | null, scoredAt: number | null, verdict: ExtractionShadowVerdict | null, scoredCount: number, correctCount: number, correctedCount: number, missedCount: number, accuracy: number, baselineScoredCount: number, baselineCorrectCount: number, baselineCorrectedCount: number, baselineMissedCount: number, baselineAccuracy: number, latencyMs: number, costUsd: string, completedAt: number | null, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ExtractionShadowResultTableRowFieldsFragment' };
-
-export type ExtractionShadowResultDetailFieldsFragment = (
-  { predicted: { ' $fragmentRefs'?: { 'ExtractionSnapshotFieldsFragment': ExtractionSnapshotFieldsFragment } } | null, fieldResults: Array<{ ' $fragmentRefs'?: { 'AiCorrectionFieldResultFieldsFragment': AiCorrectionFieldResultFieldsFragment } }>, baselineFieldResults: Array<{ ' $fragmentRefs'?: { 'AiCorrectionFieldResultFieldsFragment': AiCorrectionFieldResultFieldsFragment } }> }
-  & { ' $fragmentRefs'?: { 'ExtractionShadowResultTableRowFieldsFragment': ExtractionShadowResultTableRowFieldsFragment } }
-) & { ' $fragmentName'?: 'ExtractionShadowResultDetailFieldsFragment' };
-
-export type ExtractionShadowSettingsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type ExtractionShadowSettingsQuery = { extractionShadowSettings: { ' $fragmentRefs'?: { 'ExtractionShadowSettingsFieldsFragment': ExtractionShadowSettingsFieldsFragment } } };
-
-export type ExtractionShadowReportQueryVariables = Exact<{
-  windowDays?: number | null | undefined;
-  providerId?: string | number | null | undefined;
-}>;
-
-
-export type ExtractionShadowReportQuery = { extractionShadowReport: { windowDays: number, since: number, providerId: string | null, providerName: string, sampled: number, pending: number, completed: number, failed: number, skipped: number, scored: number, truncated: boolean, better: number, worse: number, same: number, costUsd: string, avgLatencyMs: number, candidate: { scored: number, correct: number, corrected: number, missed: number, accuracy: number }, production: { scored: number, correct: number, corrected: number, missed: number, accuracy: number }, fields: Array<{ key: string, candidateScored: number, candidateCorrect: number, candidateAccuracy: number, productionScored: number, productionCorrect: number, productionAccuracy: number }> } };
-
-export type ExtractionShadowResultTableQueryVariables = Exact<{
-  input: DataTableConnectionInput;
-  includeTotalCount?: boolean | null | undefined;
-}>;
-
-
-export type ExtractionShadowResultTableQuery = { extractionShadowResults: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ExtractionShadowResultTableRowFieldsFragment': ExtractionShadowResultTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
-
-export type ExtractionShadowResultDetailQueryVariables = Exact<{
-  id: string | number;
-}>;
-
-
-export type ExtractionShadowResultDetailQuery = { extractionShadowResult: { ' $fragmentRefs'?: { 'ExtractionShadowResultDetailFieldsFragment': ExtractionShadowResultDetailFieldsFragment } } | null };
-
-export type UpdateExtractionShadowSettingsMutationVariables = Exact<{
-  input: UpdateExtractionShadowSettingsInput;
-}>;
-
-
-export type UpdateExtractionShadowSettingsMutation = { updateExtractionShadowSettings: { ' $fragmentRefs'?: { 'ExtractionShadowSettingsFieldsFragment': ExtractionShadowSettingsFieldsFragment } } };
 
 export type CreateFactoringCompanyMutationVariables = Exact<{
   input: FactoringCompanyInput;
@@ -20728,7 +20457,7 @@ export { AiAnalyticsSegmentFieldsFragmentDoc, AiAnalyticsProviderFieldsFragmentD
 export { AiAuditEventRowFieldsFragmentDoc, AiAuditEventDetailFieldsFragmentDoc, AiAuditChainStatusFieldsFragmentDoc, AiAuditExportFieldsFragmentDoc, AiAuditEventTableDocument, AiAuditEventDetailDocument, AiAuditChainStatusDocument, AiAuditExportTableDocument, AiAuditExportDetailDocument, RequestAiAuditExportDocument, AiAuditExportDownloadDocument, VerifyAiAuditChainDocument } from "./documents/agent/audit";
 export { AgentInstructionLintDocument, AgentShadowReportDocument, AgentDefinitionVersionsDocument, AgentDefinitionVersionDraftDocument, AgentDefinitionCardDocument, AgentDraftingAvailableDocument, DraftAgentFromDescriptionDocument, TightenAgentInstructionsDocument } from "./documents/agent/builder";
 export { AgentCapabilityToolFieldsFragmentDoc, AgentCapabilitiesFieldsFragmentDoc, AgentCapabilitiesDocument, UpdateAgentCapabilitiesDocument } from "./documents/agent/capabilities";
-export { AgentControlFieldsFragmentDoc, AgentControlSettingsDocument, UpdateAgentControlDocument, AiTrainingExportHistoryDocument } from "./documents/agent/control";
+export { AgentControlFieldsFragmentDoc, AgentControlSettingsDocument, UpdateAgentControlDocument } from "./documents/agent/control";
 export { PendingProposalFieldsFragmentDoc, PendingPlanFieldsFragmentDoc, PendingDecisionsDocument, PendingDecisionSummaryDocument, PlanStepsDocument, DecideAgentProposalsDocument, RecentDecisionsDocument } from "./documents/agent/decisions";
 export { AgentDefinitionCardFieldsFragmentDoc, AgentChoiceFieldsFragmentDoc, AgentDefinitionCardsDocument, AgentChoicesDocument, AgentDefinitionCountDocument, AgentRunCountDocument, AgentProposalCountDocument } from "./documents/agent/definitions";
 export { DeskBoardCardDocument } from "./documents/agent/desk-board";
@@ -20806,9 +20535,7 @@ export { EmailProfileTableRowFieldsFragmentDoc, EmailProfileTableDocument } from
 export { CreateEquipmentManufacturerDocument, UpdateEquipmentManufacturerDocument, PatchEquipmentManufacturerDocument, BulkUpdateEquipmentManufacturerStatusDocument } from "./documents/equipment-manufacturer/mutations";
 export { EquipmentManufacturerTableRowFieldsFragmentDoc, EquipmentManufacturerTableDocument } from "./documents/equipment-manufacturer/table";
 export { EquipmentTypeConfigurationRowFieldsFragmentDoc, DataTablePageInfoFieldsFragmentDoc, EquipmentTypeTableFieldsFragmentDoc, EquipmentManufacturerTableFieldsFragmentDoc, FleetCodeTableFieldsFragmentDoc, UsStateTableFieldsFragmentDoc, WorkerTableReferenceFieldsFragmentDoc, TractorTableRowFieldsFragmentDoc, TrailerTableRowFieldsFragmentDoc, TractorTableDocument, TrailerTableDocument, EquipmentTypeTableDocument, EquipmentTypeDocument, CreateEquipmentTypeDocument, UpdateEquipmentTypeDocument, PatchEquipmentTypeDocument, BulkUpdateEquipmentTypeStatusDocument } from "./documents/equipment/table";
-export { ExtractionEvalRunFieldsFragmentDoc, ExtractionFieldAccuracyFieldsFragmentDoc, ExtractionEvalRunDetailFieldsFragmentDoc, AiCorrectionTableRowFieldsFragmentDoc, AiCorrectionFieldResultFieldsFragmentDoc, AiCorrectionDetailFieldsFragmentDoc, ExtractionEvalCaseTableRowFieldsFragmentDoc, ExtractionEvalResultTableRowFieldsFragmentDoc, ExtractionEvalRefreezeProgressFieldsFragmentDoc, ExtractionWeekAccuracyFieldsFragmentDoc, ExtractionSnapshotFieldsFragmentDoc, ExtractionAccuracyDocument, AiCorrectionTableDocument, AiCorrectionDetailDocument, ExtractionEvalCaseTableDocument, ExtractionEvalCaseDetailDocument, ExtractionEvalRunTableDocument, ExtractionEvalRunDetailDocument, ExtractionEvalResultTableDocument, ExtractionEvalResultDetailDocument, PromoteAiCorrectionDocument, UpdateExtractionEvalCaseDocument, DeleteExtractionEvalCaseDocument, StartExtractionEvalRunDocument, CancelExtractionEvalRunDocument, ExtractionEvalRefreezeDocument, RefreezeExtractionEvalCasesDocument, ExtractionProviderTrendsDocument } from "./documents/extraction-eval/extraction-eval";
-export { ExtractionRolloutFieldsFragmentDoc, ExtractionRolloutArmFieldsFragmentDoc, ExtractionRolloutAccuracyFieldsFragmentDoc, ExtractionRolloutDocument, ExtractionRolloutReportDocument, UpdateExtractionRolloutDocument } from "./documents/extraction-rollout/extraction-rollout";
-export { ExtractionShadowSettingsFieldsFragmentDoc, ExtractionShadowResultTableRowFieldsFragmentDoc, ExtractionShadowResultDetailFieldsFragmentDoc, ExtractionShadowSettingsDocument, ExtractionShadowReportDocument, ExtractionShadowResultTableDocument, ExtractionShadowResultDetailDocument, UpdateExtractionShadowSettingsDocument } from "./documents/extraction-shadow/extraction-shadow";
+export { ExtractionFieldAccuracyFieldsFragmentDoc, AiCorrectionTableRowFieldsFragmentDoc, AiCorrectionFieldResultFieldsFragmentDoc, AiCorrectionDetailFieldsFragmentDoc, ExtractionWeekAccuracyFieldsFragmentDoc, ExtractionAccuracyDocument, AiCorrectionTableDocument, AiCorrectionDetailDocument, ExtractionProviderTrendsDocument } from "./documents/extraction-accuracy/extraction-accuracy";
 export { CreateFactoringCompanyDocument, UpdateFactoringCompanyDocument } from "./documents/factoring-company/mutations";
 export { FactoringCompanyTableRowFieldsFragmentDoc, FactoringCompanyTableDocument } from "./documents/factoring-company/table";
 export { FactoringAgreementFieldsFragmentDoc, FactoringAgreementsDocument, FactoringAgreementOwnerDocument, CreateFactoringAgreementDocument, UpdateFactoringAgreementDocument, ActivateFactoringAgreementDocument, EndFactoringAgreementDocument, FactoringCompanyRecordDocument } from "./documents/factoring/agreements";

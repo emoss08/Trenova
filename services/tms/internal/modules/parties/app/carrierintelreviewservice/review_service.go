@@ -22,7 +22,7 @@ type Params struct {
 	OverrideRepo carrierintelports.CarrierIntelOverrideRepository
 	CarrierRepo  carrierports.CarrierRepository
 	AuditService auditports.AuditService
-	Watchtower   watchtowerports.WatchtowerProjector `optional:"true"`
+	Watchtower   watchtowerports.WatchtowerProjector
 }
 
 type Service struct {

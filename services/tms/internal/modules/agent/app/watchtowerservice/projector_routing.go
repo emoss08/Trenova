@@ -72,8 +72,7 @@ func (p *Projector) route(
 	}
 	updated.Reopened = saved.Reopened
 
-	if updated.AssigneeID.IsNotNil() && updated.AssigneeID != saved.AssigneeID &&
-		p.notifications != nil {
+	if updated.AssigneeID.IsNotNil() && updated.AssigneeID != saved.AssigneeID {
 		sendExceptionNotice(ctx, p.notifications, p.l, &exceptionNotice{
 			item:      updated,
 			userID:    updated.AssigneeID,
@@ -109,9 +108,6 @@ func (p *Projector) mayWork(
 	tenant pagination.TenantInfo,
 	userID pulid.ID,
 ) bool {
-	if p.access.permissions == nil {
-		return false
-	}
 	ok, err := mayWorkException(ctx, p.access, item, pagination.TenantInfo{
 		OrgID:  tenant.OrgID,
 		BuID:   tenant.BuID,

@@ -48,7 +48,7 @@ func TestPendingCertificateRepository_ReplaceKeepsOnePerTenantAndSystem(t *testi
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
 	repo := NewPendingCertificateRepository(PendingCertificateParams{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
@@ -92,7 +92,7 @@ func TestPendingCertificateRepository_IsTenantScoped(t *testing.T) {
 	ctx = data.Ctx(ctx)
 	other := seedtest.SeedAdditionalTenant(t, ctx, db, "pc")
 	repo := NewPendingCertificateRepository(PendingCertificateParams{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
@@ -135,7 +135,7 @@ func TestConnectionRepository_CertificateKeyIsATokenColumn(t *testing.T) {
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
 	repo := NewConnectionRepository(
-		ConnectionParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()},
+		ConnectionParams{DB: postgres.WrapDB(db), Logger: zap.NewNop()},
 	)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
@@ -215,7 +215,7 @@ func TestConnectionRepository_CertificateConnectionMustNameItsCertificate(t *tes
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
 	repo := NewConnectionRepository(
-		ConnectionParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()},
+		ConnectionParams{DB: postgres.WrapDB(db), Logger: zap.NewNop()},
 	)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()

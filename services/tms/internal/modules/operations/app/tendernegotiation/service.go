@@ -264,7 +264,7 @@ func (s *Service) mayApproveCounters(
 	ctx context.Context,
 	actor *permissionports.RequestActor,
 ) (bool, error) {
-	if s.permissions == nil || actor == nil || actor.PrincipalID.IsNil() {
+	if actor == nil || actor.PrincipalID.IsNil() {
 		return false, nil
 	}
 	result, err := s.permissions.Check(ctx, &permissionports.PermissionCheckRequest{
@@ -483,7 +483,7 @@ type Params struct {
 	AssignmentRepo assignmentports.AssignmentRepository
 	ShipmentRepo   shipmentports.ShipmentRepository
 	Workflows      kernelports.WorkflowStarter
-	Permissions    permissionports.PermissionEngine `optional:"true"`
+	Permissions    permissionports.PermissionEngine
 	Effects        *tendereffects.Effects
 }
 

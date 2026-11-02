@@ -216,9 +216,6 @@ func (f *facts) attachSignInCodes(
 	tenant pagination.TenantInfo,
 	waits []*agentwait.Wait,
 ) {
-	if f.portalRuns == nil {
-		return
-	}
 	for _, wait := range waits {
 		if wait.Kind != agentwait.KindPortalRun || !wait.Status.Open() || wait.Condition == nil ||
 			wait.Condition.PortalRunID.IsNil() {

@@ -140,19 +140,101 @@ func TestValidate_SelfHostedProviderDoesNotRequireAPIKey(t *testing.T) {
 	assert.False(t, fieldErrors(t, p)["apiKey"])
 }
 
-func TestValidate_LedgerTaskRequiresTrustedProvider(t *testing.T) {
+func TestValidate_ANovaTaskIsNeverAssignedEvenToATrustedProvider(t *testing.T) {
 	t.Parallel()
 
 	p := validProvider()
-	p.Tasks = []aitask.Task{aitask.TaskBillingDiagnosis}
-	p.Trusted = false
-
-	assert.True(t, fieldErrors(t, p)["tasks[0]"])
-
+	p.Tasks = []aitask.Task{aitask.TaskGeneral, aitask.TaskBillingDiagnosis}
 	p.Trusted = true
+
+	errs := fieldErrors(t, p)
+	assert.False(t, errs["tasks[0]"])
+	assert.True(t, errs["tasks[1]"], "BillingDiagnosis is Nova's")
+}
+
+func TestValidate_TheNovaProviderMayServeNoAssignedTask(t *testing.T) {
+	t.Parallel()
+
+	p := validProvider()
+	p.Tasks = nil
+	p.Nova = true
+
 	multiErr := errortypes.NewMultiError()
 	p.Validate(multiErr)
 	require.False(t, multiErr.HasErrors(), "expected no errors, got %v", multiErr.Errors)
+}
+
+func TestValidate_NovaRunsOnlyOnAnAnthropicProviderThroughANovaPlatform(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		kind     aiprovider.Kind
+		platform aiplatform.Platform
+		refused  bool
+	}{
+		{
+			name:     "the Claude API",
+			kind:     aiprovider.KindAnthropicMessages,
+			platform: aiplatform.PlatformDirect,
+		},
+		{
+			name:     "Claude Platform on AWS",
+			kind:     aiprovider.KindAnthropicMessages,
+			platform: aiplatform.PlatformClaudeAWS,
+		},
+		{
+			name:     "Claude Platform on Google Cloud",
+			kind:     aiprovider.KindAnthropicMessages,
+			platform: aiplatform.PlatformClaudeGoogleCloud,
+		},
+		{
+			name:     "Vertex AI",
+			kind:     aiprovider.KindAnthropicMessages,
+			platform: aiplatform.PlatformVertexAI,
+		},
+		{
+			name:     "Bedrock",
+			kind:     aiprovider.KindAnthropicMessages,
+			platform: aiplatform.PlatformBedrock,
+			refused:  true,
+		},
+		{
+			name:     "Foundry",
+			kind:     aiprovider.KindAnthropicMessages,
+			platform: aiplatform.PlatformFoundry,
+			refused:  true,
+		},
+		{
+			name:     "an OpenAI-compatible server",
+			kind:     aiprovider.KindOpenAIChat,
+			platform: aiplatform.PlatformDirect,
+			refused:  true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			p := validProvider()
+			p.Kind = tt.kind
+			p.Platform = tt.platform
+			p.Nova = true
+
+			assert.Equal(t, tt.refused, fieldErrors(t, p)["nova"])
+			ok, _ := p.CanServeNova()
+			assert.Equal(t, !tt.refused, ok)
+		})
+	}
+}
+
+func TestValidate_NotRunningNovaNeedsNoNovaPlatform(t *testing.T) {
+	t.Parallel()
+
+	p := validProvider()
+	p.Platform = aiplatform.PlatformBedrock
+
+	assert.False(t, fieldErrors(t, p)["nova"])
 }
 
 func TestValidate_EnabledProviderMustServeATask(t *testing.T) {
@@ -189,29 +271,29 @@ func TestCanServeTask(t *testing.T) {
 
 	t.Run("rejects unassigned task", func(t *testing.T) {
 		t.Parallel()
-		ok, reason := validProvider().CanServeTask(aitask.TaskDocumentExtraction)
+		ok, reason := validProvider().CanServeTask(aitask.TaskAssistantChat)
 		assert.False(t, ok)
 		assert.Contains(t, reason, "not assigned")
 	})
 
-	t.Run("rejects untrusted provider for ledger task", func(t *testing.T) {
-		t.Parallel()
-		p := validProvider()
-		p.Tasks = []aitask.Task{aitask.TaskBillingDiagnosis}
-		p.Trusted = false
-
-		ok, reason := p.CanServeTask(aitask.TaskBillingDiagnosis)
-		assert.False(t, ok)
-		assert.Contains(t, reason, "trusted")
-	})
-
-	t.Run("accepts trusted provider for ledger task", func(t *testing.T) {
+	t.Run("refuses a Nova task even when it is assigned", func(t *testing.T) {
 		t.Parallel()
 		p := validProvider()
 		p.Tasks = []aitask.Task{aitask.TaskBillingDiagnosis}
 		p.Trusted = true
+		p.Nova = true
 
-		ok, _ := p.CanServeTask(aitask.TaskBillingDiagnosis)
+		ok, reason := p.CanServeTask(aitask.TaskBillingDiagnosis)
+		assert.False(t, ok)
+		assert.Contains(t, reason, "Nova provider")
+	})
+
+	t.Run("accepts an assigned Desk task", func(t *testing.T) {
+		t.Parallel()
+		p := validProvider()
+		p.Tasks = []aitask.Task{aitask.TaskAssistantChat}
+
+		ok, _ := p.CanServeTask(aitask.TaskAssistantChat)
 		assert.True(t, ok)
 	})
 }
@@ -259,12 +341,8 @@ func TestKindDefaults(t *testing.T) {
 	assert.False(t, aiprovider.KindOpenAIChat.RequiresAPIKey())
 }
 
-func TestTaskWritesToLedger(t *testing.T) {
+func TestEveryTaskIsValid(t *testing.T) {
 	t.Parallel()
-
-	assert.True(t, aitask.TaskBillingDiagnosis.WritesToLedger())
-	assert.False(t, aitask.TaskDocumentClassification.WritesToLedger())
-	assert.False(t, aitask.TaskGeneral.WritesToLedger())
 
 	for _, task := range aitask.AllTasks() {
 		assert.True(t, task.IsValid(), "task %q should be valid", task)
@@ -452,10 +530,9 @@ func TestCostForTask_PricesEmbeddingOnInputAlone(t *testing.T) {
 	)
 }
 
-func TestEmbeddingNeverWritesToTheLedger(t *testing.T) {
+func TestEmbeddingGeneratesNothing(t *testing.T) {
 	t.Parallel()
 
-	assert.False(t, aitask.TaskEmbedding.WritesToLedger())
 	assert.False(t, aitask.TaskEmbedding.Generates())
 }
 

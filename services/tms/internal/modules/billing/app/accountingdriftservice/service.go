@@ -65,11 +65,11 @@ type Params struct {
 	Payments      customerpaymentports.CustomerPaymentService
 	Permissions   permissionports.PermissionEngine
 	AuditService  auditports.AuditService
-	Dispatcher    accountingsyncports.AccountingSyncDispatcher `optional:"true"`
-	Checker       accountingdriftports.AccountingDriftChecker  `optional:"true"`
-	Publisher     agenteventports.AgentEventPublisher          `optional:"true"`
-	Watchtower    watchtowerports.WatchtowerProjector          `optional:"true"`
-	Realtime      realtimeports.RealtimeService                `optional:"true"`
+	Dispatcher    accountingsyncports.AccountingSyncDispatcher
+	Checker       accountingdriftports.AccountingDriftChecker
+	Publisher     agenteventports.AgentEventPublisher
+	Watchtower    watchtowerports.WatchtowerProjector
+	Realtime      realtimeports.RealtimeService
 }
 
 type Service struct {
@@ -252,9 +252,6 @@ func (s *Service) refreshAttention(
 	ctx context.Context,
 	conn *accountingconnection.AccountingConnection,
 ) {
-	if s.watchtower == nil {
-		return
-	}
 	tenant := tenantOf(conn)
 	groups, err := s.findings.ListAttention(
 		ctx,
@@ -331,9 +328,6 @@ func (s *Service) publishInvalidation(
 	actorID pulid.ID,
 	recordID pulid.ID,
 ) {
-	if s.realtime == nil {
-		return
-	}
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,

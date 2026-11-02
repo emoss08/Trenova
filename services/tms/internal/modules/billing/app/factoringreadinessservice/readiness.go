@@ -52,18 +52,18 @@ type ReadinessParams struct {
 	Agreements    factoringports.AgreementRepository
 	Noas          factoringports.NoaRepository
 	Submissions   factoringsubmissionports.SubmissionRepository
-	Attention     factoringwatchtowerports.WatchtowerReader `optional:"true"`
+	Attention     factoringwatchtowerports.WatchtowerReader
 	Invoices      invoiceports.InvoiceRepository
 	Documents     documentports.DocumentRepository
-	Shipments     shipmentserviceports.ShipmentBillingReadinessReader `optional:"true"`
+	Shipments     shipmentserviceports.ShipmentBillingReadinessReader
 	Customers     customerports.CustomerRepository
 	Organizations tenantports.OrganizationRepository
 	Templates     documenttemplateports.DocumentTemplateResolver
-	Inliner       documenttemplateports.AssetInliner `optional:"true"`
+	Inliner       documenttemplateports.AssetInliner
 	Email         emailports.EmailService
-	Events        agenteventports.AgentEventPublisher `optional:"true"`
+	Events        agenteventports.AgentEventPublisher
 	Audit         auditports.AuditService
-	Realtime      realtimeports.RealtimeService `optional:"true"`
+	Realtime      realtimeports.RealtimeService
 	Logger        *zap.Logger
 }
 
@@ -383,9 +383,6 @@ func (s *ReadinessService) fillBillingReadiness(
 	tenantInfo pagination.TenantInfo,
 	facts *factoringreadiness.ShipmentFacts,
 ) {
-	if s.shipments == nil {
-		return
-	}
 	readiness, err := s.shipments.GetBillingReadiness(ctx, facts.ShipmentID, tenantInfo)
 	if err != nil {
 		s.l.Warn("could not read a shipment's billing readiness for factoring",
@@ -730,9 +727,6 @@ func (s *ReadinessService) warnChargebacksDue(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (int, error) {
-	if s.attention == nil {
-		return 0, nil
-	}
 	now := s.now()
 	due, err := s.attention.ListChargebacksDue(
 		ctx,

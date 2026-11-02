@@ -36,7 +36,7 @@ func newSearchFixture(t *testing.T) (context.Context, searchFixture) {
 	ctx = data.Ctx(ctx)
 
 	return ctx, searchFixture{
-		repo:   New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()}),
+		repo:   New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()}),
 		tenant: pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID},
 		now:    timeutils.NowUnix(),
 	}

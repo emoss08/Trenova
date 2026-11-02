@@ -76,9 +76,6 @@ func (s *Service) exportSourceOf(
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
-	if s.artifacts == nil {
-		return nil, errortypes.NewNotFoundError("Artifact not found")
-	}
 	artifact, err := s.artifacts.GetByID(ctx, assistantartifactports.GetArtifactRequest{
 		ID:         artifactID,
 		TenantInfo: req.TenantInfo,
@@ -142,9 +139,6 @@ func (s *Service) exportReport(
 	source *exportSource,
 	sink io.Writer,
 ) error {
-	if s.reports == nil {
-		return errortypes.NewBusinessError("Reports cannot be downloaded here")
-	}
 	previewed, err := reportquerytools.ReportOfPreview(ctx, s.reports, actor, source.arguments)
 	if err != nil {
 		return errortypes.NewBusinessError("This preview can no longer be run: " + err.Error())
@@ -197,9 +191,6 @@ func (s *Service) mayRead(
 	if policy.Resource == "" {
 		return nil
 	}
-	if s.permissions == nil {
-		return errortypes.NewAuthorizationError("This table could not be authorized")
-	}
 	operation := policy.Operation
 	if operation == "" {
 		operation = permission.OpRead
@@ -231,9 +222,6 @@ func (s *Service) timezoneOf(
 	ctx context.Context,
 	req *conversationports.GetThreadRequest,
 ) string {
-	if s.users == nil {
-		return ""
-	}
 	user, err := s.users.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:   req.TenantInfo,
 		LookupUserID: req.UserID,
@@ -264,9 +252,6 @@ func (s *Service) threadDefinition(
 	ctx context.Context,
 	req *conversationports.GetThreadRequest,
 ) *agentdefinition.Definition {
-	if s.definitions == nil {
-		return nil
-	}
 	thread, err := s.conversations.GetThread(ctx, req)
 	if err != nil || thread.AgentDefinitionID.IsNil() {
 		return nil
@@ -301,16 +286,6 @@ func (s *Service) ListThreadArtifacts(
 			"kind", errortypes.ErrInvalid, "There is no artifact kind by that name",
 		)
 	}
-	empty := &assistantartifactports.AssistantArtifactPage{
-		Results: []assistantartifactports.AssistantArtifact{},
-		Counts: assistantartifactports.ArtifactCounts{
-			Families: map[assistantartifact.Family]int{},
-		},
-	}
-	if s.artifacts == nil {
-		return empty, nil
-	}
-
 	page, err := s.artifacts.ListPage(ctx, assistantartifactports.ListArtifactsRequest{
 		ThreadID:   req.ID,
 		TenantInfo: req.TenantInfo,
@@ -341,9 +316,6 @@ func (s *Service) ArtifactLineage(
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
-	if s.artifacts == nil {
-		return nil, errortypes.NewNotFoundError("Artifact not found")
-	}
 
 	versions, err := s.artifacts.ListLineage(ctx, assistantartifactports.LineageRequest{
 		ThreadID:   req.ID,
@@ -364,9 +336,6 @@ func (s *Service) ArtifactBySlug(
 ) ([]assistantartifactports.AssistantArtifact, error) {
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
-	}
-	if s.artifacts == nil {
-		return nil, errortypes.NewNotFoundError("Artifact not found")
 	}
 
 	slug = strings.ToLower(strings.TrimSpace(slug))
@@ -428,10 +397,7 @@ func (s *Service) RunArtifactReport(
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
-	if s.artifacts == nil {
-		return nil, errortypes.NewNotFoundError("Artifact not found")
-	}
-	if s.reports == nil || s.reportRuns == nil {
+	if s.reportRuns == nil {
 		return nil, errortypes.NewBusinessError("Reports cannot be run here")
 	}
 
@@ -578,13 +544,11 @@ func (s *Service) appendRunVersion(
 	if err != nil {
 		return nil, err
 	}
-	if s.activity != nil {
-		s.activity.ArtifactChanged(ctx, saved, kernelports.AuditActor{
-			PrincipalType: permissionports.PrincipalTypeUser,
-			PrincipalID:   req.UserID,
-			UserID:        req.UserID,
-		}, agentactivityports.ActivityUpdated)
-	}
+	s.activity.ArtifactChanged(ctx, saved, kernelports.AuditActor{
+		PrincipalType: permissionports.PrincipalTypeUser,
+		PrincipalID:   req.UserID,
+		UserID:        req.UserID,
+	}, agentactivityports.ActivityUpdated)
 	out := artifactpayload.ToAssistantArtifact(saved)
 
 	return &out, nil
@@ -597,7 +561,7 @@ func (s *Service) listOf(
 	source *exportSource,
 ) (*listReader, error) {
 	toolName := typeutils.StringOfTrimmed(source.artifact.Payload[artifactpayload.PayloadTool])
-	if s.queries == nil || toolName == "" {
+	if toolName == "" {
 		return nil, errNotExportable
 	}
 	tool, ok := s.queries.Get(toolName)
@@ -702,7 +666,7 @@ func (s *Service) followDecisions(
 			(artifact.Kind == assistantartifact.KindPlan && !artifact.PlanID.IsNil())
 	}
 
-	if wantProposals && s.proposals != nil {
+	if wantProposals {
 		proposals, err := s.proposals.ListByThread(
 			ctx,
 			agentproposalports.ListAgentProposalsByThreadRequest{
@@ -761,9 +725,6 @@ func (s *Service) PinArtifact(
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
-	if s.artifacts == nil {
-		return nil, errortypes.NewNotFoundError("Artifact not found")
-	}
 
 	artifact, err := s.artifacts.SetPinned(ctx, assistantartifactports.SetArtifactPinnedRequest{
 		ID:         artifactID,
@@ -785,9 +746,6 @@ func (s *Service) boardDocument(
 	req *conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 ) (*docrender.Document, bool, error) {
-	if s.boards == nil || s.artifacts == nil {
-		return nil, false, nil
-	}
 	artifact, err := s.artifacts.GetByID(ctx, assistantartifactports.GetArtifactRequest{
 		ID:         artifactID,
 		TenantInfo: req.TenantInfo,
@@ -865,9 +823,6 @@ func (s *Service) renderDocument(
 
 	switch format {
 	case DocumentExportPDF:
-		if s.pdfs == nil {
-			return nil, errortypes.NewBusinessError("PDF export is not available here")
-		}
 		body, renderErr := s.pdfs.Render(ctx, &documenttemplateports.PDFRenderRequest{
 			HTML:  docrender.HTML(doc),
 			Title: doc.Title,
@@ -907,9 +862,6 @@ func (s *Service) documentLineage(
 ) ([]*assistantartifact.Artifact, error) {
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
-	}
-	if s.artifacts == nil {
-		return nil, errortypes.NewNotFoundError("Artifact not found")
 	}
 	versions, err := s.artifacts.ListLineage(ctx, assistantartifactports.LineageRequest{
 		ThreadID:   req.ID,
@@ -982,13 +934,11 @@ func (s *Service) appendDocumentVersion(
 	if err != nil {
 		return nil, err
 	}
-	if s.activity != nil {
-		s.activity.ArtifactChanged(ctx, saved, kernelports.AuditActor{
-			PrincipalType: permissionports.PrincipalTypeUser,
-			PrincipalID:   req.UserID,
-			UserID:        req.UserID,
-		}, agentactivityports.ActivityUpdated)
-	}
+	s.activity.ArtifactChanged(ctx, saved, kernelports.AuditActor{
+		PrincipalType: permissionports.PrincipalTypeUser,
+		PrincipalID:   req.UserID,
+		UserID:        req.UserID,
+	}, agentactivityports.ActivityUpdated)
 	out := artifactpayload.ToAssistantArtifact(saved)
 
 	return &out, nil
@@ -1065,9 +1015,6 @@ func (s *Service) RewriteDocument(
 		return nil, errortypes.NewValidationError(
 			"text", errortypes.ErrInvalid, "That passage is not in the latest version",
 		)
-	}
-	if s.completion == nil {
-		return nil, errortypes.NewBusinessError("Rewriting is not available here")
 	}
 
 	thread, err := s.conversations.GetThread(ctx, req)

@@ -71,9 +71,6 @@ func (s *Service) Maintain(ctx context.Context) (*MaintenanceResult, error) {
 // RestartStaleProcessing starts processing again for batches whose run was
 // lost: sealed with no worker at the time, or a worker that died mid-read.
 func (s *Service) RestartStaleProcessing(ctx context.Context) (int, error) {
-	if s.workflows == nil || !s.workflows.Enabled() {
-		return 0, nil
-	}
 
 	stale, err := s.batches.ListStale(ctx, captureports.ListStaleCaptureBatchesRequest{
 		Statuses:      []capture.BatchStatus{capture.BatchSealed, capture.BatchProcessing},
@@ -211,10 +208,6 @@ const (
 // that its unfiled pages are deleted within the week. Each stack is claimed
 // before its owner is told, so two sweeps running at once tell them once.
 func (s *Service) RemindRetention(ctx context.Context) (int, error) {
-	if s.notifications == nil {
-		return 0, nil
-	}
-
 	now := timeutils.NowUnix()
 	due, err := s.batches.ListRetentionReminders(
 		ctx,

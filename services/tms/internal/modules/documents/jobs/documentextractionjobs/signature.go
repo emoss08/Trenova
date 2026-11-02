@@ -143,9 +143,6 @@ func (a *Activities) recordDetectedSignature(
 }
 
 func (a *Activities) publishSignatureInvalidation(ctx context.Context, doc *document.Document) {
-	if a.realtime == nil {
-		return
-	}
 	if err := realtimeinvalidation.Publish(ctx, a.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: doc.OrganizationID,
 		BusinessUnitID: doc.BusinessUnitID,

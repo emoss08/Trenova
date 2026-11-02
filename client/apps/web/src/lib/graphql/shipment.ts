@@ -243,11 +243,15 @@ export async function getShipmentBillingReadinessGraphQL(shipmentId: Shipment["i
   return data.shipmentBillingReadiness;
 }
 
-export async function getShipmentProfitabilityGraphQL(shipmentId: Shipment["id"]) {
+export async function getShipmentProfitabilityGraphQL(
+  shipmentId: Shipment["id"],
+  options?: { signal?: AbortSignal },
+) {
   const data = await requestShipmentGraphQL({
     document: ShipmentProfitabilityDocument,
     operationName: "ShipmentProfitability",
     variables: { shipmentId },
+    signal: options?.signal,
   });
   return data.shipmentProfitability;
 }

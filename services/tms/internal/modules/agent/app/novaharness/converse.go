@@ -22,10 +22,7 @@ func (h *Harness) Converse(
 	talk *llmports.NovaConversation,
 	events llmports.NovaEvents,
 ) (*llmports.NovaAnswer, error) {
-	if h == nil || h.router == nil {
-		return nil, llmports.ErrNoProviderConfigured
-	}
-	available, err := h.Available(ctx, talk.Name, talk.TenantInfo)
+	available, err := h.Available(ctx, talk.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +107,11 @@ func (c *conversation) request(last bool) *llmports.ChatCompletionRequest {
 		Tools:          c.box.specs,
 		ToolChoiceNone: last,
 		MaxTokens:      c.talk.MaxTokens,
-		Attribution:    aiusageports.AIUsageAttribution{UserID: c.talk.UserID, Feature: c.talk.Feature},
+		Attribution: aiusageports.AIUsageAttribution{
+			UserID:  c.talk.UserID,
+			Feature: c.talk.Feature,
+		},
+		Nova: true,
 	}
 }
 

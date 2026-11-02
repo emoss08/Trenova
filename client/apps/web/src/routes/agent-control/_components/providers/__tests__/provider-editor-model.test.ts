@@ -55,9 +55,12 @@ describe("editorValuesFromPreset", () => {
 
   it("joins the end of the chain, one step after the last provider", () => {
     expect(editorValuesFromPreset(ANTHROPIC, []).priority).toBe(10);
-    expect(editorValuesFromPreset(ANTHROPIC, [{ priority: 30 }, { priority: 10 }]).priority).toBe(
-      40,
-    );
+    expect(
+      editorValuesFromPreset(ANTHROPIC, [
+        { priority: 30, nova: false },
+        { priority: 10, nova: false },
+      ]).priority,
+    ).toBe(40);
   });
 
   it("names a self-hosted preset as local and lets it reach the private network", () => {
@@ -71,6 +74,52 @@ describe("editorValuesFromPreset", () => {
     const fresh = editorValuesFromPreset(ANTHROPIC, []);
     expect(fresh.scripts).toBe(true);
     expect(fresh.scriptWrites).toBe(false);
+  });
+});
+
+describe("Nova on a new provider", () => {
+  const NOVA_PLATFORMS = [
+    "Direct",
+    "ClaudePlatformAWS",
+    "ClaudePlatformGoogleCloud",
+    "VertexAI",
+  ] as const;
+
+  it("starts running Nova when no provider runs it and the preset can", () => {
+    expect(editorValuesFromPreset(ANTHROPIC, [], NO_PLATFORMS, NOVA_PLATFORMS).nova).toBe(true);
+  });
+
+  it("leaves Nova where it runs", () => {
+    const providers = [{ priority: 10, nova: true }];
+    expect(editorValuesFromPreset(ANTHROPIC, providers, NO_PLATFORMS, NOVA_PLATFORMS).nova).toBe(
+      false,
+    );
+  });
+
+  it("does not offer Nova to a provider that cannot run it", () => {
+    expect(editorValuesFromPreset(VLLM, [], NO_PLATFORMS, NOVA_PLATFORMS).nova).toBe(false);
+    const bedrock = { ...ANTHROPIC, key: "bedrock-claude", platform: "Bedrock" as const };
+    expect(editorValuesFromPreset(bedrock, [], NO_PLATFORMS, NOVA_PLATFORMS).nova).toBe(false);
+  });
+});
+
+describe("toSaveRequest and Nova", () => {
+  it("keeps Nova on the provider that runs it when it is saved", () => {
+    const request = toSaveRequest(values({ apiKey: "", nova: true }), {
+      editing: true,
+      enable: true,
+      catalog: NO_PLATFORMS,
+    });
+    expect(request.nova).toBe(true);
+  });
+
+  it("sends a provider that does not run Nova as not running it", () => {
+    const request = toSaveRequest(values({ apiKey: "k", nova: false }), {
+      editing: false,
+      enable: true,
+      catalog: NO_PLATFORMS,
+    });
+    expect(request.nova).toBe(false);
   });
 });
 

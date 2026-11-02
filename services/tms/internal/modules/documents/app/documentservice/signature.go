@@ -127,12 +127,6 @@ func (s *Service) SetSignature(
 }
 
 func (s *Service) authorizeSignature(ctx context.Context, req *SetSignatureRequest) error {
-	if s.permissions == nil {
-		return errortypes.NewAuthorizationError(
-			"You don't have permission to change this document",
-		)
-	}
-
 	documentID := req.DocumentID
 	result, err := s.permissions.Check(ctx, &permissionports.PermissionCheckRequest{
 		PrincipalType:  req.Actor.PrincipalType,

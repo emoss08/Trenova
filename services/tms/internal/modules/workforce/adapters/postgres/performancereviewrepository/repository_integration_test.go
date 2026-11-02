@@ -28,7 +28,10 @@ func seedReviewTemplate(
 	t.Helper()
 
 	entity := &workerreview.PerformanceReviewTemplate{Code: code, Name: code + " review"}
-	require.NoError(t, workerreviewdb.PerformanceReviewTemplates.Create(tenant.Ctx(ctx), db, entity))
+	require.NoError(
+		t,
+		workerreviewdb.PerformanceReviewTemplates.Create(tenant.Ctx(ctx), db, entity),
+	)
 
 	return entity
 }
@@ -43,12 +46,12 @@ func TestGetTemplatesByIDsReturnsOnlyTheTenantsTemplates(t *testing.T) {
 	second := seedReviewTemplate(t, ctx, db, tenantA, "PROBATION")
 	foreign := seedReviewTemplate(t, ctx, db, tenantB, "QUARTERLY")
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	entities, err := repo.GetTemplatesByIDs(
 		tenantA.Ctx(ctx),
 		&workerreviewports.GetReviewTemplatesByIDsRequest{
-			TenantInfo: tenantA.Info(),
+			TenantInfo:  tenantA.Info(),
 			TemplateIDs: []pulid.ID{second.ID, foreign.ID, first.ID, pulid.MustNew("prt_")},
 		},
 	)

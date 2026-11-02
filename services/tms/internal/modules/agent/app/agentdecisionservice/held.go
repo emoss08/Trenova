@@ -25,10 +25,6 @@ func (s *Service) heldVerdict(
 	tenant pagination.TenantInfo,
 	proposal *agent.AgentProposal,
 ) (agentshadow.Verdict, error) {
-	if s.shadow == nil {
-		return agentshadow.Verdict{}, nil
-	}
-
 	return s.shadow.ForRun(ctx, tenant, proposal.RunID)
 }
 
@@ -111,9 +107,6 @@ func (s *Service) logHeld(
 	s.l.Info("an approval was taken back before it ran, because a switch holds its proposal",
 		zap.String("proposal", proposal.ID.String()),
 		zap.String("cause", string(verdict.Cause)))
-	if s.audit == nil {
-		return
-	}
 
 	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAgentProposal,

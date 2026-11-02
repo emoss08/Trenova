@@ -97,7 +97,7 @@ func TestDetentionStats_NarrowToTheLocationAsked(t *testing.T) {
 	closeOccurrence(ctx, t, db, closedOccurrence{stops[2].StopID, elsewhere, 600, "900.0000"})
 
 	repo := detentionrepository.NewAnalyticsRepository(detentionrepository.AnalyticsParams{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 	tenant := pagination.TenantInfo{

@@ -55,10 +55,11 @@ type Params struct {
 	fx.In
 
 	Logger         *zap.Logger
+	Registry       *permissioncatalog.Registry
 	Permissions    permissionports.PermissionEngine
 	Organizations  tenantports.OrganizationRepository
-	Vectorizer     retrievalports.QueryVectorizer    `optional:"true"`
-	CatalogVectors retrievalports.CatalogVectorIndex `optional:"true"`
+	Vectorizer     retrievalports.QueryVectorizer
+	CatalogVectors retrievalports.CatalogVectorIndex
 }
 
 type Service struct {
@@ -101,7 +102,7 @@ func newService(p Params, catalog *productguide.Catalog) *Service {
 		permissions:   p.Permissions,
 		organizations: p.Organizations,
 		index:         buildIndex(catalog),
-		resources:     permissioncatalog.NewRegistry(),
+		resources:     p.Registry,
 		vectorizer:    p.Vectorizer,
 		vectors:       p.CatalogVectors,
 		items:         CatalogItems(catalog),

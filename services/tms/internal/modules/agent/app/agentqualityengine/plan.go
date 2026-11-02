@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreplay"
@@ -196,10 +195,6 @@ func (s *Engine) chatProvider(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) (resolvedProvider, error) {
-	if s.providers == nil {
-		return resolvedProvider{}, nil
-	}
-
 	candidates, err := s.providers.ListForTask(ctx, aiproviderports.ListAIProvidersForTaskRequest{
 		Task:       aitask.TaskAssistantChat,
 		TenantInfo: tenant,
@@ -232,9 +227,6 @@ func (s *Engine) fingerprint(
 	provider resolvedProvider,
 ) *agentfingerprint.Fingerprint {
 	providerID, model := provider.forAgent(definition.PreferredProviderID)
-	if s.runtime == nil {
-		return agentquality.FingerprintOf(definition, "").Served(model, providerID)
-	}
 
 	return s.runtime.Fingerprint(definition, providerID, model)
 }

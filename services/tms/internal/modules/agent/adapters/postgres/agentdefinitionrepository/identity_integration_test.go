@@ -28,7 +28,7 @@ func TestUpdate_SavesAnAgentWithNoAccentIconOrTemplate(t *testing.T) {
 
 	row := findDefinitions(t, ctx, db, "system_key IS NULL", 1)[0]
 	ctx, tenant := row.tenant(ctx)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	definition, err := repo.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         row.ID,
@@ -58,7 +58,7 @@ func TestUpdate_SavesBudgetsLimitsAndSimulation(t *testing.T) {
 
 	row := findDefinitions(t, ctx, db, "TRUE", 1)[0]
 	ctx, tenant := row.tenant(ctx)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	request := agentdefinitionports.GetAgentDefinitionByIDRequest{ID: row.ID, TenantInfo: tenant}
 
 	definition, err := repo.GetByID(ctx, request)
@@ -96,7 +96,7 @@ func TestUpdate_SavesTheDataAccessCeiling(t *testing.T) {
 
 	row := findDefinitions(t, ctx, db, "trigger_mode <> 'Chat'", 1)[0]
 	ctx, tenant := row.tenant(ctx)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	request := agentdefinitionports.GetAgentDefinitionByIDRequest{ID: row.ID, TenantInfo: tenant}
 
 	definition, err := repo.GetByID(ctx, request)

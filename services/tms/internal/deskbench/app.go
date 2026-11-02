@@ -84,7 +84,7 @@ type deps struct {
 	Recommender      agentrecommendationports.AgentRecommender
 	Runs             agentruntimeports.AgentRunService
 	RunRecords       agentruntimeports.AgentRunRepository
-	PriceReference   aiproviderports.ModelPriceReference `optional:"true"`
+	PriceReference   aiproviderports.ModelPriceReference
 	ActionTools      agenttoolports.AgentToolRegistry
 	Shipments        shipmentserviceports.ShipmentLifecycleService
 	Palette          paletteports.PaletteService
@@ -151,9 +151,9 @@ func open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 	sdkLogger := temporallog.NewStructuredLogger(slog.New(slog.NewJSONHandler(sdkLog, nil)))
 
 	app := fx.New(
-		fx.Provide(func() temporallog.Logger { return sdkLogger }),
 		bootstrap.Options(),
 		bootstrap.UnscheduledWorkerOptions(),
+		fx.Decorate(func(temporallog.Logger) temporallog.Logger { return sdkLogger }),
 		fx.Decorate(func(cfg *config.Config) *config.Config {
 			isolated := isolate(cfg, opts.Namespace, bench.logPath)
 			if opts.ToolDisclosureThreshold != nil {
@@ -194,7 +194,11 @@ func open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 			bench.watcher = benchwatch.New(inner)
 			return bench.watcher
 		}),
-		fx.Provide(func() agenttoolports.ToolDisclosureObserver { return bench.disclosures }),
+		fx.Decorate(
+			func(agenttoolports.ToolDisclosureObserver) agenttoolports.ToolDisclosureObserver {
+				return bench.disclosures
+			},
+		),
 		benchAgentScope(opts.WithoutBenchAgents),
 		fx.Invoke(func(d deps) {
 			bench.deps = d

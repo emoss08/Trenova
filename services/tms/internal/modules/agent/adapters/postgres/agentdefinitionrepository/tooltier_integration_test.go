@@ -54,12 +54,12 @@ func findDefinitions(
 
 func (r tierDefinitionRow) tenant(ctx context.Context) (context.Context, pagination.TenantInfo) {
 	return dbscope.WithTenant(ctx, dbscope.Tenant{
-			OrganizationID: r.OrganizationID,
-			BusinessUnitID: r.BusinessUnitID,
-		}), pagination.TenantInfo{
-			OrgID: r.OrganizationID,
-			BuID:  r.BusinessUnitID,
-		}
+		OrganizationID: r.OrganizationID,
+		BusinessUnitID: r.BusinessUnitID,
+	}), pagination.TenantInfo{
+		OrgID: r.OrganizationID,
+		BuID:  r.BusinessUnitID,
+	}
 }
 
 /*
@@ -75,7 +75,7 @@ func TestSetToolTier_PromotesACoreToolTheAgentDoesNotList(t *testing.T) {
 
 	row := findDefinitions(t, ctx, db, "NOT ('agent_create_memory' = ANY(tool_names))", 1)[0]
 	ctx, tenant := row.tenant(ctx)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	require.NoError(t, repo.SetToolTier(ctx, agentdefinitionports.SetAgentDefinitionToolTierRequest{
 		ID:         row.ID,
@@ -112,7 +112,7 @@ func TestSetToolTier_MergesIntoAnAgentSavedWithNoTiers(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx, tenant := row.tenant(ctx)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	require.NoError(t, repo.SetToolTier(ctx, agentdefinitionports.SetAgentDefinitionToolTierRequest{
 		ID:         row.ID,
 		TenantInfo: tenant,
@@ -125,6 +125,9 @@ func TestSetToolTier_MergesIntoAnAgentSavedWithNoTiers(t *testing.T) {
 		TenantInfo: tenant,
 	})
 	require.NoError(t, err)
-	require.Equal(t, map[string]agent.AutonomyTier{"agent_create_memory": agent.TierActWithApproval},
-		definition.ToolTiers)
+	require.Equal(
+		t,
+		map[string]agent.AutonomyTier{"agent_create_memory": agent.TierActWithApproval},
+		definition.ToolTiers,
+	)
 }

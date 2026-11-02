@@ -14,10 +14,6 @@ import (
 // fileSource reads a request's attached files within its tenant. Nil when no
 // reader is configured, and every file is then read as its text.
 func (s *Engine) FileSource(tenant pagination.TenantInfo) modeladapter.FileSource {
-	if s.Files == nil {
-		return nil
-	}
-
 	return func(ctx context.Context, documentID string) (*conversationports.MessageFileContent, error) {
 		id, err := pulid.Parse(documentID)
 		if err != nil {

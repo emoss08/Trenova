@@ -241,34 +241,6 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 			{
-				Name:     "aiTrainingConsent",
-				NonNull:  true,
-				ChildErr: errNoChild4,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentcontrol.AgentControl)
-					return obj.AITrainingConsent, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
-			},
-			{
-				Name:     "aiTrainingConsentChangedAt",
-				ChildErr: errNoChild0,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentcontrol.AgentControl)
-					return obj.AITrainingConsentChangedAt, nil
-				},
-				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
-			},
-			{
-				Name:     "aiTrainingConsentChangedById",
-				ChildErr: errNoChild3,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentcontrol.AgentControl)
-					return obj.AITrainingConsentChangedByID, nil
-				},
-				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
-			},
-			{
 				Name:     "personMonthlyMessages",
 				NonNull:  true,
 				ChildErr: errNoChild1,
@@ -4902,7 +4874,7 @@ func unmarshalInputAgentControlInput(ctx context.Context, ec *gqlexec.Exec, obj 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"shadowMode", "earnedAutonomy", "promotionThreshold", "aiTrainingConsent", "personMonthlyMessages", "learningOff", "autoChaptersOff", "agentMoneyCallCeiling", "agentMoneyRunCalls", "agentMoneyRunAmount", "agentMoneyDayCalls", "agentMoneyDayAmount", "version"}
+	fieldsInOrder := [...]string{"shadowMode", "earnedAutonomy", "promotionThreshold", "personMonthlyMessages", "learningOff", "autoChaptersOff", "agentMoneyCallCeiling", "agentMoneyRunCalls", "agentMoneyRunAmount", "agentMoneyDayCalls", "agentMoneyDayAmount", "version"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4930,13 +4902,6 @@ func unmarshalInputAgentControlInput(ctx context.Context, ec *gqlexec.Exec, obj 
 				return it, err
 			}
 			it.PromotionThreshold = data
-		case "aiTrainingConsent":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("aiTrainingConsent"))
-			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.AiTrainingConsent = data
 		case "personMonthlyMessages":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("personMonthlyMessages"))
 			data, err := unmarshalOInt2ᚖint(ctx, ec, v)

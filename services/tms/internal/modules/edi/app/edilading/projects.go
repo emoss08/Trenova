@@ -48,7 +48,7 @@ type ProjectsParams struct {
 	Replays   ladingports.LadingReplayRepository
 	Partners  edipartnerports.EDIPartnerRepository
 	Audit     auditports.AuditService
-	Workflows kernelports.WorkflowStarter `optional:"true"`
+	Workflows kernelports.WorkflowStarter
 }
 
 type Projects struct {
@@ -1416,11 +1416,6 @@ func (s *Projects) StartReplay(
 ) (*ladingproject.LadingReplay, error) {
 	if err := validateReplayPeriod(req); err != nil {
 		return nil, err
-	}
-	if s.workflows == nil || !s.workflows.Enabled() {
-		return nil, errortypes.NewBusinessError(
-			"Replays need the workflow service, which is not configured",
-		)
 	}
 	version, err := s.projects.GetVersion(ctx, ladingports.GetLadingVersionRequest{
 		TenantInfo: req.TenantInfo,

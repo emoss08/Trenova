@@ -28,16 +28,26 @@ type readAhead struct {
 }
 
 func (s *Service) newReadAhead(tenantInfo pagination.TenantInfo) *readAhead {
-	return &readAhead{s: s, tenant: tenantInfo, recent: map[pulid.ID][]*billingqueueports.RecentInvoice{}}
+	return &readAhead{
+		s:      s,
+		tenant: tenantInfo,
+		recent: map[pulid.ID][]*billingqueueports.RecentInvoice{},
+	}
 }
 
 // sections are what the review would have read, as untrusted context: past
 // invoices carry descriptions people typed, and documents carry their text.
-func (r *readAhead) sections(ctx context.Context, e *reviewprompt.Evidence) []llmports.ContextSection {
+func (r *readAhead) sections(
+	ctx context.Context,
+	e *reviewprompt.Evidence,
+) []llmports.ContextSection {
 	return append(r.history(ctx, e), r.documents(ctx, e)...)
 }
 
-func (r *readAhead) history(ctx context.Context, e *reviewprompt.Evidence) []llmports.ContextSection {
+func (r *readAhead) history(
+	ctx context.Context,
+	e *reviewprompt.Evidence,
+) []llmports.ContextSection {
 	codes := reviewprompt.ChargeCodes(e)
 	if len(codes) == 0 {
 		return nil
@@ -60,7 +70,10 @@ func (r *readAhead) history(ctx context.Context, e *reviewprompt.Evidence) []llm
 }
 
 // payerInvoices are the payer's last invoices, read once for the page.
-func (r *readAhead) payerInvoices(ctx context.Context, payerID pulid.ID) []*billingqueueports.RecentInvoice {
+func (r *readAhead) payerInvoices(
+	ctx context.Context,
+	payerID pulid.ID,
+) []*billingqueueports.RecentInvoice {
 	recent, read := r.recent[payerID]
 	if read {
 		return recent
@@ -75,11 +88,10 @@ func (r *readAhead) payerInvoices(ctx context.Context, payerID pulid.ID) []*bill
 	return recent
 }
 
-func (r *readAhead) documents(ctx context.Context, e *reviewprompt.Evidence) []llmports.ContextSection {
-	if r.s.content == nil {
-		return nil
-	}
-
+func (r *readAhead) documents(
+	ctx context.Context,
+	e *reviewprompt.Evidence,
+) []llmports.ContextSection {
 	var sections []llmports.ContextSection
 	for _, doc := range e.Documents {
 		if e.Excerpts[doc.ID].Parts < 2 {
@@ -112,9 +124,6 @@ func (r *readAhead) taken(ctx context.Context, e *reviewprompt.Evidence) reviewp
 				taken.Charges = append(taken.Charges, chargeLookup(recent, code))
 			}
 		}
-	}
-	if r.s.content == nil {
-		return taken
 	}
 	for _, doc := range e.Documents {
 		if parts := e.Excerpts[doc.ID].Parts; parts > 1 {

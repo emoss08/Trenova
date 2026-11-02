@@ -233,7 +233,7 @@ func (s *Service) hasDetentionHolds(
 	tenantInfo pagination.TenantInfo,
 	legs []*shipment.Shipment,
 ) (bool, error) {
-	if s.detentionBilling == nil || len(legs) == 0 {
+	if len(legs) == 0 {
 		return false, nil
 	}
 

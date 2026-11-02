@@ -47,9 +47,9 @@ type Params struct {
 	Proposals     agentproposalports.AgentProposalRepository
 	Decisions     agentdecisionports.AgentDecisionRepository
 	Memories      agentmemoryports.AgentMemoryService
-	Feedback      aifeedbackports.AIFeedbackRepository `optional:"true"`
-	Budgets       agentbudgetports.AgentBudgetService  `optional:"true"`
-	Realtime      realtimeports.RealtimeService        `optional:"true"`
+	Feedback      aifeedbackports.AIFeedbackRepository
+	Budgets       agentbudgetports.AgentBudgetService
+	Realtime      realtimeports.RealtimeService
 }
 
 type Service struct {
@@ -434,10 +434,6 @@ func (s *Service) usableAgent(
 }
 
 func (s *Service) overBudget(ctx context.Context, definition *agentdefinition.Definition) bool {
-	if s.budgets == nil {
-		return false
-	}
-
 	refusal, err := s.budgets.CheckRun(ctx, definition)
 	if err != nil {
 		s.l.Warn("agent reflection: the agent's budget could not be read; looking back anyway",

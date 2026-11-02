@@ -183,10 +183,6 @@ func (p *matchPool) delegateHolding(
 }
 
 func (s *Matcher) mayEmbedMatch(ctx context.Context, actor *permissionports.RequestActor) bool {
-	if s.rateLimits == nil {
-		return true
-	}
-
 	decisions, err := s.rateLimits.Check(ctx, []kernelports.RateLimitRequest{{
 		Key: "{" + actor.OrganizationID.String() + "}:" + agentrecommendationports.AgentMatchRateScope + ":" +
 			actor.UserID.String(),

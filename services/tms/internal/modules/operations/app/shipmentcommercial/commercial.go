@@ -157,7 +157,7 @@ func (c *Calculator) CalculateTotals(
 }
 
 func (c *Calculator) hydrate(ctx context.Context, entity *shipment.Shipment) error {
-	if c.hydrator == nil || entity == nil {
+	if entity == nil {
 		return nil
 	}
 
@@ -437,10 +437,6 @@ func (c *Calculator) billingControl(
 	ctx context.Context,
 	entity *shipment.Shipment,
 ) *billingcontrol.BillingControl {
-	if c.billingControlRepo == nil {
-		return nil
-	}
-
 	control, err := c.billingControlRepo.GetByOrgID(ctx, entity.OrganizationID)
 	if err != nil {
 		return nil
@@ -583,7 +579,7 @@ func (c *Calculator) syncFuelSurcharge(
 	agreement *rateagreement.RateAgreement,
 	pass *ratingPass,
 ) error {
-	if entity == nil || c.fuelSurcharge == nil {
+	if entity == nil {
 		return nil
 	}
 
@@ -782,10 +778,6 @@ func (c *Calculator) syncDetentionFromPolicyEngine(
 	entity *shipment.Shipment,
 	pass *ratingPass,
 ) error {
-	if c.detentionEngine == nil {
-		return nil
-	}
-
 	result, err := c.detentionEngine.SyncShipment(ctx, entity)
 	if err != nil {
 		return err

@@ -19,7 +19,7 @@ const subsetKeySeparator = "|"
 type SubsetLabelsLoaderFactoryParams struct {
 	fx.In
 
-	Labeler agentruntimeports.RecordLabeler `optional:"true"`
+	Labeler agentruntimeports.RecordLabeler
 }
 
 // SubsetLabelsLoaderFactory names the records the proposals on a page offer
@@ -76,9 +76,6 @@ func (f *SubsetLabelsLoaderFactory) batchFunc(
 	return func(ctx context.Context, keys []string) ([]agentruntimeports.RecordLabels, []error) {
 		values := make([]agentruntimeports.RecordLabels, len(keys))
 		errs := make([]error, len(keys))
-		if f.labeler == nil {
-			return values, errs
-		}
 
 		parsed := make([]subsetKey, len(keys))
 		refs := make(map[permission.Resource][]pulid.ID, 1)

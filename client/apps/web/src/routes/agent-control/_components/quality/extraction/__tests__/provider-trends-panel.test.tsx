@@ -2,7 +2,7 @@ import type {
   ExtractionProviderTrend,
   ExtractionProviderTrends,
   ExtractionWeekAccuracy,
-} from "@/lib/graphql/extraction-eval";
+} from "@/lib/graphql/extraction-accuracy";
 import { stubLayout } from "@/test/layout";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, within } from "@testing-library/react";
@@ -10,8 +10,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const fetchTrends = vi.fn<() => Promise<ExtractionProviderTrends>>();
 
-vi.mock("@/lib/graphql/extraction-eval", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/graphql/extraction-eval")>();
+vi.mock("@/lib/graphql/extraction-accuracy", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/graphql/extraction-accuracy")>();
   return { ...actual, fetchExtractionProviderTrends: () => fetchTrends() };
 });
 

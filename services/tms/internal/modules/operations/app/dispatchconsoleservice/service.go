@@ -66,7 +66,7 @@ func (s *Service) attachLiveTenders(
 	tenantInfo pagination.TenantInfo,
 	moves []*BoardMove,
 ) error {
-	if s.tenderRepo == nil || len(moves) == 0 {
+	if len(moves) == 0 {
 		return nil
 	}
 

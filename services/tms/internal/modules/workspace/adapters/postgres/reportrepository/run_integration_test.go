@@ -40,7 +40,7 @@ func TestCountActiveUnderConcurrentEnqueue(t *testing.T) {
 		Build(t, ctx, db)
 
 	repo := NewRunRepository(RunParams{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 
@@ -125,7 +125,7 @@ func TestCountActiveIgnoresTerminalRuns(t *testing.T) {
 	}
 
 	repo := NewRunRepository(RunParams{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 
@@ -173,7 +173,7 @@ func TestFinishedRunKeepsItsSampleOutOfLists(t *testing.T) {
 		UserID: data.User.ID,
 	}
 	repo := NewRunRepository(RunParams{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 
@@ -224,7 +224,7 @@ func TestLatestComparableFindsTheRequestersPreviousRunOfTheSameReportAndParamete
 	colleagueTenant.UserID = colleague.ID
 
 	repo := NewRunRepository(RunParams{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 	create := func(run *report.ReportRun) *report.ReportRun {
@@ -284,7 +284,7 @@ func TestLatestComparableTreatsMissingAndEmptyParametersAlike(t *testing.T) {
 		UserID: data.User.ID,
 	}
 	repo := NewRunRepository(RunParams{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 

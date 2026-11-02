@@ -61,7 +61,7 @@ func seedTransfers(t *testing.T) *transferFixture {
 		ctx:    ctx,
 		tenant: org,
 		repo: editransferrepository.New(editransferrepository.Params{
-			DB:     postgres.NewTestConnection(db),
+			DB:     postgres.WrapDB(db),
 			Logger: zap.NewNop(),
 		}),
 	}

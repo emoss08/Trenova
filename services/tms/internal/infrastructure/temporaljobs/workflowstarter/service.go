@@ -15,7 +15,7 @@ import (
 type Params struct {
 	fx.In
 
-	TemporalClient client.Client `optional:"true"`
+	TemporalClient client.Client
 }
 
 type Service struct {
@@ -28,15 +28,9 @@ var (
 	_ kernelports.WorkflowResults       = (*Service)(nil)
 )
 
-func New(p Params) kernelports.WorkflowStarter {
-	return &Service{client: p.TemporalClient}
-}
-
-func NewSignalStarter(p Params) kernelports.WorkflowSignalStarter {
-	return &Service{client: p.TemporalClient}
-}
-
-func NewResults(p Params) kernelports.WorkflowResults {
+// New is the process's one workflow starter, bound to every port it serves:
+// WorkflowStarter, WorkflowSignalStarter and WorkflowResults.
+func New(p Params) *Service {
 	return &Service{client: p.TemporalClient}
 }
 
@@ -46,19 +40,11 @@ func (s *Service) StartWorkflow(
 	workflow any,
 	args ...any,
 ) (client.WorkflowRun, error) {
-	if s.client == nil {
-		return nil, kernelports.ErrWorkflowStarterDisabled
-	}
-
 	run, err := s.client.ExecuteWorkflow(ctx, options, workflow, args...)
 	return run, unreachable(err)
 }
 
 func (s *Service) CancelWorkflow(ctx context.Context, workflowID, runID string) error {
-	if s.client == nil {
-		return kernelports.ErrWorkflowStarterDisabled
-	}
-
 	return unreachable(s.client.CancelWorkflow(ctx, workflowID, runID))
 }
 
@@ -67,10 +53,6 @@ func (s *Service) SignalWorkflow(
 	workflowID, runID, signalName string,
 	arg any,
 ) error {
-	if s.client == nil {
-		return kernelports.ErrWorkflowStarterDisabled
-	}
-
 	return unreachable(s.client.SignalWorkflow(ctx, workflowID, runID, signalName, arg))
 }
 
@@ -82,10 +64,6 @@ func (s *Service) SignalWithStartWorkflow(
 	workflow any,
 	args ...any,
 ) (client.WorkflowRun, error) {
-	if s.client == nil {
-		return nil, kernelports.ErrWorkflowStarterDisabled
-	}
-
 	run, err := s.client.SignalWithStartWorkflow(
 		ctx,
 		workflowID,
@@ -100,15 +78,7 @@ func (s *Service) SignalWithStartWorkflow(
 }
 
 func (s *Service) WorkflowResult(ctx context.Context, workflowID string, out any) error {
-	if s.client == nil {
-		return kernelports.ErrWorkflowStarterDisabled
-	}
-
 	return unreachable(s.client.GetWorkflow(ctx, workflowID, "").Get(ctx, out))
-}
-
-func (s *Service) Enabled() bool {
-	return s.client != nil
 }
 
 // unreachable turns "Temporal is down" into something a person can act on.

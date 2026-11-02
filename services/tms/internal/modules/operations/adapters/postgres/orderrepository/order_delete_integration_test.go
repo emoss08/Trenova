@@ -57,7 +57,7 @@ func TestDeleteIfEmpty_KeepsAnOrderBillingStillReferences(t *testing.T) {
 	require.NoError(t, err)
 
 	repo := orderrepository.New(orderrepository.Params{
-		DB:         postgres.NewTestConnection(db),
+		DB:         postgres.WrapDB(db),
 		Logger:     zap.NewNop(),
 		References: crossref.OrderReferences(),
 	})

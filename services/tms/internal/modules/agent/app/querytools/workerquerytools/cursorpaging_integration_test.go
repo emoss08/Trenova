@@ -38,7 +38,7 @@ func TestWorkerList_PagesARealCursorRepositoryWithoutRepeats(t *testing.T) {
 	ctx = data.Ctx(ctx)
 
 	repo := workerrepository.New(workerrepository.Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 	created := make(map[string]struct{}, pagedWorkers)

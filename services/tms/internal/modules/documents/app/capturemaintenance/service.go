@@ -25,15 +25,13 @@ type Params struct {
 	Intake  *captureintake.Service
 	Logger  *zap.Logger
 	// Notifications tells an owner their unfiled pages are about to go.
-	// Without it the pages are still kept and deleted on time; nobody is told.
-	Notifications Notifier `optional:"true"`
+	Notifications Notifier
 	Pages         captureports.CapturePageRepository
 	Requests      *capturerequests.Service
 	Support       *capturesupport.Service
-	// Workflows is optional so an installation without a worker still
-	// receives pages. A sealed batch then waits, and the reconcile sweep
-	// starts its processing once a worker appears.
-	Workflows kernelports.WorkflowStarter `optional:"true"`
+	// A sealed batch then waits, and the reconcile sweep starts its processing once a worker
+	// appears.
+	Workflows kernelports.WorkflowStarter
 }
 
 type Service struct {

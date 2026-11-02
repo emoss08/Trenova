@@ -43,7 +43,7 @@ type Params struct {
 	Turns                *assistantturnservice.Service
 	Workflows            kernelports.WorkflowStarter
 	Schedules            *conversationscheduleservice.Service
-	Handoffs             assistantports.AssistantHandoffService `optional:"true"`
+	Handoffs             assistantports.AssistantHandoffService
 	Queue                *assistantqueueservice.Service
 	Waits                *agentwaitservice.Service
 	Cases                deskcaseports.AssistantCaseService
@@ -93,9 +93,7 @@ func New(p Params) *Handler {
 	}
 	// A nil service put in the interface would no longer compare equal to
 	// nil, and the schedule routes would call through it.
-	if p.Schedules != nil {
-		h.schedules = p.Schedules
-	}
+	h.schedules = p.Schedules
 
 	return h
 }

@@ -27,7 +27,7 @@ type Params struct {
 	AuditService auditports.AuditService
 	// Watchtower puts an exception on the feed and takes it off when it is
 	// resolved.
-	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
+	Watchtower watchtowerports.WatchtowerProjector
 }
 
 type Service struct {
@@ -62,9 +62,7 @@ func (s *Service) Flag(
 	}
 
 	s.logAction(actor, permission.OpCreate, created, nil, "Agent exception raised")
-	if s.watchtower != nil {
-		s.watchtower.Upsert(ctx, watchtowersources.DescribeException(created))
-	}
+	s.watchtower.Upsert(ctx, watchtowersources.DescribeException(created))
 
 	return created, nil
 }
@@ -117,7 +115,7 @@ func (s *Service) Resolve(
 	}
 
 	s.logAction(actor, permission.OpUpdate, updated, nil, "Agent exception resolved")
-	if s.watchtower != nil && updated.ResolutionState != agentexception.ResolutionStateOpen {
+	if updated.ResolutionState != agentexception.ResolutionStateOpen {
 		s.watchtower.Resolve(
 			ctx,
 			req.TenantInfo,

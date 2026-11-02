@@ -38,9 +38,9 @@ type ConnectionParams struct {
 	DatabaseConfig  *databaseconfig.Config
 	ReportingConfig *reportingconfig.Config
 	Logger          *zap.Logger
-	Metrics         *metrics.Registry `optional:"true"`
-	Redis           *goredis.Client   `optional:"true"`
-	Observers       []keel.Observer   `optional:"true"`
+	Metrics         *metrics.Registry
+	Redis           *goredis.Client
+	Observers       []keel.Observer `group:"keel_observers"`
 }
 
 type Connection struct {
@@ -215,7 +215,7 @@ func (c *Connection) connect(ctx context.Context) error {
 	}
 	c.tenantKeel = tenant
 
-	if c.settings.registerStats && c.metrics != nil && c.metrics.Database != nil {
+	if c.settings.registerStats && c.metrics.Database != nil {
 		c.metrics.Database.RegisterPoolStats(
 			func() platformmetrics.PoolStats { return poolStats(tenant.Stat()) },
 		)
@@ -229,7 +229,7 @@ func (c *Connection) connect(ctx context.Context) error {
 		return err
 	}
 
-	if c.settings.registerStats && c.metrics != nil && c.metrics.Database != nil {
+	if c.settings.registerStats && c.metrics.Database != nil {
 		c.metrics.Database.RegisterRuntimeStats(c.runtimeStats)
 	}
 
@@ -333,10 +333,6 @@ func (c *Connection) closePools() {
 
 func WrapDB(db *keel.DB) *Connection {
 	return &Connection{tenantKeel: db}
-}
-
-func NewTestConnection(db *keel.DB) *Connection {
-	return WrapDB(db)
 }
 
 func (c *Connection) Keel(ctx context.Context) *keel.DB {

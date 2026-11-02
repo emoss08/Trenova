@@ -43,7 +43,7 @@ func TestGetByIDsReturnsOnlyTheTenantsPayProfiles(t *testing.T) {
 	second := seedPayProfile(t, ctx, db, tenantA, "Local")
 	foreign := seedPayProfile(t, ctx, db, tenantB, "Foreign")
 
-	repo := NewPayProfile(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := NewPayProfile(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	profiles, err := repo.GetByIDs(
 		tenantA.Ctx(ctx),

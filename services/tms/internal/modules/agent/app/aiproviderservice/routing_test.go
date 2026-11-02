@@ -43,7 +43,7 @@ func TestRoutePreviewEditsTheStoredProvider(t *testing.T) {
 			ID:      stored.ID,
 			Name:    stored.Name,
 			Kind:    stored.Kind,
-			Tasks:   []aitask.Task{aitask.TaskDailyBriefing},
+			Tasks:   []aitask.Task{aitask.TaskEvaluationJudge},
 			Enabled: true,
 		},
 	})
@@ -54,7 +54,7 @@ func TestRoutePreviewEditsTheStoredProvider(t *testing.T) {
 		case aitask.TaskAssistantChat:
 			require.NotNil(t, route.Before)
 			assert.Nil(t, route.After, "the edit takes chat away from the only provider")
-		case aitask.TaskDailyBriefing:
+		case aitask.TaskEvaluationJudge:
 			assert.Nil(t, route.Before)
 			require.NotNil(t, route.After)
 			assert.True(t, route.After.Draft)

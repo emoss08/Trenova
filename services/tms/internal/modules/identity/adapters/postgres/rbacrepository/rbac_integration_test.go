@@ -21,7 +21,7 @@ func TestCountRolePermissions_FollowsInheritedRolesAndCountsEachOperation(t *tes
 	t.Cleanup(cleanup)
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	create := func(role *rbac.Role) {
 		t.Helper()
 		require.NoError(t, rbacdb.Roles.Create(ctx, db, role))

@@ -66,7 +66,7 @@ func setupFixture(t *testing.T) (*fixture, func()) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	repo := New(Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	}).(*repository)
 

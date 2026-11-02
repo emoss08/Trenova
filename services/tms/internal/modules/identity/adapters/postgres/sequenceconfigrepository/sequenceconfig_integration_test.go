@@ -22,7 +22,7 @@ func TestGetByTenantSeedsEveryRequiredSequenceOnceThenReadsThem(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	repo := New(Params{DB: conn, Logger: zap.NewNop()})
 	tctx := data.Ctx(ctx)
 	req := tenantports.GetSequenceConfigRequest{TenantInfo: data.Info()}

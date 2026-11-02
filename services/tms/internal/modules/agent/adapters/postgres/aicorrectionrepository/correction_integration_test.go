@@ -49,7 +49,7 @@ func seededTenant(t *testing.T) (context.Context, *keel.DB, pagination.TenantInf
 
 func TestProviderTotals_BucketCorrectionsByProviderAndWeek(t *testing.T) {
 	ctx, db, tenant := seededTenant(t)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	var err error
 	candidate := pulid.MustNew("aip_")
 	production := pulid.MustNew("aip_")
@@ -133,7 +133,7 @@ func TestProviderTotals_BucketCorrectionsByProviderAndWeek(t *testing.T) {
 
 func TestTrainableCorrections_CountAndWeeklyTotalsFollowConsent(t *testing.T) {
 	ctx, db, tenantInfo := seededTenant(t)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	provider := pulid.MustNew("aip_")
 	from := time.Date(2026, time.September, 1, 0, 0, 0, 0, time.UTC).Unix()

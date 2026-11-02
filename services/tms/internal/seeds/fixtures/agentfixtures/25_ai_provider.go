@@ -57,7 +57,7 @@ func (s *AIProviderSeed) providers(orgID, buID pulid.ID) []*aiprovider.Provider 
 			BusinessUnitID: buID,
 			Name:           SeedAIProviderLocalName,
 			Description: "A small model on the developer's own machine. Cheap enough to run " +
-				"on every chat turn and every insight refresh.",
+				"the Desk's scope guard on every chat turn.",
 			Kind:                 aiprovider.KindOpenAIChat,
 			BaseURL:              "http://localhost:1234/v1",
 			Model:                "qwen2.5-14b-instruct",
@@ -67,9 +67,6 @@ func (s *AIProviderSeed) providers(orgID, buID pulid.ID) []*aiprovider.Provider 
 			MaxTokens:            8192,
 			Tasks: []aitask.Task{
 				aitask.TaskScopeClassification,
-				aitask.TaskDocumentClassification,
-				aitask.TaskOperationalInsights,
-				aitask.TaskDailyBriefing,
 				aitask.TaskGeneral,
 			},
 			Priority: 10,
@@ -92,7 +89,7 @@ func (s *AIProviderSeed) providers(orgID, buID pulid.ID) []*aiprovider.Provider 
 			BusinessUnitID: buID,
 			Name:           SeedAIProviderServerName,
 			Description: "An OpenAI-compatible server on the office network. Carries the " +
-				"assistant and anything that needs a larger model.",
+				"Desk when the hosted model is off.",
 			Kind:                 aiprovider.KindOpenAIChat,
 			BaseURL:              "http://localhost:8000/v1",
 			Model:                "meta-llama/Llama-3.3-70B-Instruct",
@@ -102,9 +99,6 @@ func (s *AIProviderSeed) providers(orgID, buID pulid.ID) []*aiprovider.Provider 
 			MaxTokens:            16384,
 			Tasks: []aitask.Task{
 				aitask.TaskAssistantChat,
-				aitask.TaskDocumentExtraction,
-				aitask.TaskFormulaAssistant,
-				aitask.TaskOperationalInsights,
 				aitask.TaskGeneral,
 			},
 			Priority: 20,
@@ -128,8 +122,7 @@ func (s *AIProviderSeed) providers(orgID, buID pulid.ID) []*aiprovider.Provider 
 			BusinessUnitID: buID,
 			Name:           SeedAIProviderHostedName,
 			Description: "Claude Haiku 5.5, the model the Desk is tuned for, serving every " +
-				"task but embeddings and trusted for billing diagnosis. Disabled until an " +
-				"API key is added.",
+				"Desk task and Nova. Disabled until an API key is added.",
 			Kind:                 aiprovider.KindAnthropicMessages,
 			Model:                "claude-haiku-5-5",
 			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
@@ -139,6 +132,7 @@ func (s *AIProviderSeed) providers(orgID, buID pulid.ID) []*aiprovider.Provider 
 			Priority:             5,
 			Trusted:              true,
 			Enabled:              false,
+			Nova:                 true,
 			Scripts:              true,
 
 			ThinkingStyle: aireasoning.ThinkingStyleAuto,
@@ -156,13 +150,14 @@ func (s *AIProviderSeed) providers(orgID, buID pulid.ID) []*aiprovider.Provider 
 	}
 }
 
-// hostedTasks is every task the hosted model serves: all but embeddings, which
-// the Messages API has no endpoint for. The Desk is tuned for this model, and a
-// task left to the local servers alone (the scope classifier, reading a
-// document) stops working on a machine that does not run them.
+// hostedTasks is every task the hosted model is assigned: the Desk's, but not
+// embeddings, which the Messages API has no endpoint for. It also runs Nova,
+// which is not assigned. A Desk task left to the local servers alone (the
+// scope classifier) stops working on a machine that does not run them.
 func hostedTasks() []aitask.Task {
-	tasks := make([]aitask.Task, 0, len(aitask.AllTasks()))
-	for _, task := range aitask.AllTasks() {
+	routed := aitask.RoutedTasks()
+	tasks := make([]aitask.Task, 0, len(routed))
+	for _, task := range routed {
 		if task != aitask.TaskEmbedding {
 			tasks = append(tasks, task)
 		}

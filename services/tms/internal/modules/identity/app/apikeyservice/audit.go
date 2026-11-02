@@ -21,10 +21,6 @@ type keyChange struct {
 }
 
 func (s *Service) recordChange(ctx context.Context, change *keyChange) {
-	if s.auditor == nil {
-		return
-	}
-
 	actor := change.tenantInfo
 	if change.actorID.IsNotNil() {
 		actor.UserID = change.actorID

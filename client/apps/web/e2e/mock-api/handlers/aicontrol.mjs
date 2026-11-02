@@ -10,7 +10,6 @@ import {
 const DAY = 86400;
 const WORKING_STATUSES = new Set(["Pending", "GatheringContext", "Diagnosing"]);
 const ALL_TASKS = PROVIDER_CATALOG.tasks.map((task) => task.task);
-const TRUSTED_TASKS = new Set(["BillingDiagnosis"]);
 
 function compare(left, right) {
   if (left === right) return 0;
@@ -38,7 +37,9 @@ function matches(value, { operator, value: expected }) {
     case "lte":
       return value <= expected;
     case "contains":
-      return String(value ?? "").toLowerCase().includes(String(expected).toLowerCase());
+      return String(value ?? "")
+        .toLowerCase()
+        .includes(String(expected).toLowerCase());
     case "isnull":
       return value == null;
     case "isnotnull":
@@ -59,13 +60,19 @@ export function connection(rows, input = {}, { searchOf, includeTotalCount = tru
     filtered = filtered.filter((row) => matches(row[filter.field], filter));
   }
   for (const group of input.filterGroups ?? []) {
-    filtered = filtered.filter((row) => (group.filters ?? []).some((filter) => matches(row[filter.field], filter)));
+    filtered = filtered.filter((row) =>
+      (group.filters ?? []).some((filter) => matches(row[filter.field], filter)),
+    );
   }
   const sorted = [...filtered];
   for (const sort of [...(input.sort ?? [])].reverse()) {
-    sorted.sort((a, b) => compare(a[sort.field], b[sort.field]) * (sort.direction === "desc" ? -1 : 1));
+    sorted.sort(
+      (a, b) => compare(a[sort.field], b[sort.field]) * (sort.direction === "desc" ? -1 : 1),
+    );
   }
-  const offset = input.after ? Number(Buffer.from(input.after, "base64").toString().split(":")[1]) + 1 : 0;
+  const offset = input.after
+    ? Number(Buffer.from(input.after, "base64").toString().split(":")[1]) + 1
+    : 0;
   const first = input.first ?? 20;
   const page = sorted.slice(offset, offset + first);
   const cursorAt = (index) => Buffer.from(`mock:${offset + index}`).toString("base64");
@@ -82,11 +89,13 @@ export function connection(rows, input = {}, { searchOf, includeTotalCount = tru
 }
 
 function enabledProviders(ai) {
-  return ai.providers.filter((provider) => provider.node.enabled).sort((a, b) => a.node.priority - b.node.priority);
+  return ai.providers
+    .filter((provider) => provider.node.enabled)
+    .sort((a, b) => a.node.priority - b.node.priority);
 }
 
 function canServe(provider, task) {
-  return provider.node.tasks.includes(task) && (!TRUSTED_TASKS.has(task) || provider.node.trusted);
+  return provider.node.tasks.includes(task);
 }
 
 export function uncoveredTasks(ai) {
@@ -109,7 +118,9 @@ function facts(state) {
   const ai = state.ai;
   const on = ai.agents.filter((agent) => agent.node.enabled);
   const shadow = on.filter((agent) => agent.node.shadowMode);
-  const keyless = ai.providers.find((provider) => !provider.node.hasApiKey && !provider.node.allowPrivateNetwork);
+  const keyless = ai.providers.find(
+    (provider) => !provider.node.hasApiKey && !provider.node.allowPrivateNetwork,
+  );
   return {
     providersOn: enabledProviders(ai).length,
     providersTotal: ai.providers.length,
@@ -129,9 +140,17 @@ function facts(state) {
   };
 }
 
-const seg = (text, extra = {}) => ({ text, strong: false, target: null, providerId: null, tone: null, ...extra });
+const seg = (text, extra = {}) => ({
+  text,
+  strong: false,
+  target: null,
+  providerId: null,
+  tone: null,
+  ...extra,
+});
 const strong = (text) => seg(text, { strong: true });
-const link = (text, target, tone = null, providerId = null) => seg(text, { target, tone, providerId });
+const link = (text, target, tone = null, providerId = null) =>
+  seg(text, { target, tone, providerId });
 const count = (n, one, many) => (n === 1 ? `1 ${one}` : `${n} ${many}`);
 const isAre = (n) => (n === 1 ? "is" : "are");
 
@@ -140,17 +159,26 @@ const plural = (n, one, many) => (n === 1 ? `1 ${one}` : `${grouped(n)} ${many}`
 
 function failingLink(f) {
   if (f.failing.length === 0) return [];
-  if (f.failing.length === 1) return [link(f.failing[0].name, "provider", "danger", f.failing[0].providerId)];
+  if (f.failing.length === 1)
+    return [link(f.failing[0].name, "provider", "danger", f.failing[0].providerId)];
   return [link(count(f.failing.length, "provider", "providers"), "providers", "danger")];
 }
 
 function uncoveredClause(f, tone) {
   if (!f.uncovered) return [];
-  return [link(`${count(f.uncovered, "task", "tasks")} ${f.uncovered === 1 ? "has" : "have"}`, "routing", tone), seg(" nowhere to go. ")];
+  return [
+    link(
+      `${count(f.uncovered, "task", "tasks")} ${f.uncovered === 1 ? "has" : "have"}`,
+      "routing",
+      tone,
+    ),
+    seg(" nowhere to go. "),
+  ];
 }
 
 function trimEnd(segments) {
-  if (segments.length) segments[segments.length - 1].text = segments[segments.length - 1].text.trimEnd();
+  if (segments.length)
+    segments[segments.length - 1].text = segments[segments.length - 1].text.trimEnd();
   return segments;
 }
 
@@ -158,40 +186,104 @@ function trimEnd(segments) {
 function sentence(tab, f) {
   const waits = (n) => (n === 1 ? "waits" : "wait");
   if (tab === "Agents") {
-    const out = [strong(`${f.agents.on} of ${f.agents.total}`), seg(` agents ${isAre(f.agents.on)} on`)];
-    if (f.agents.working) out.push(seg(", and "), strong(String(f.agents.working)), seg(` ${isAre(f.agents.working)} working right now`));
+    const out = [
+      strong(`${f.agents.on} of ${f.agents.total}`),
+      seg(` agents ${isAre(f.agents.on)} on`),
+    ];
+    if (f.agents.working)
+      out.push(
+        seg(", and "),
+        strong(String(f.agents.working)),
+        seg(` ${isAre(f.agents.working)} working right now`),
+      );
     out.push(seg(". "));
-    if (f.agents.waiting) out.push(link(count(f.agents.waiting, "proposal", "proposals"), "agents:waiting", "warn"), seg(` ${waits(f.agents.waiting)} on a person. `));
+    if (f.agents.waiting)
+      out.push(
+        link(count(f.agents.waiting, "proposal", "proposals"), "agents:waiting", "warn"),
+        seg(` ${waits(f.agents.waiting)} on a person. `),
+      );
     if (f.agents.shadow) {
       const one = f.agents.shadow === 1;
-      out.push(seg(`${count(f.agents.shadow, "agent", "agents")} ${one ? "runs" : "run"} in `), link("shadow", "agents:shadow"), seg(` and ${one ? "has" : "have"} recorded ${plural(f.agents.shadowRecorded, "proposal", "proposals")} nobody has seen — worth a look before you let ${one ? "it" : "them"} go live. `));
+      out.push(
+        seg(`${count(f.agents.shadow, "agent", "agents")} ${one ? "runs" : "run"} in `),
+        link("shadow", "agents:shadow"),
+        seg(
+          ` and ${one ? "has" : "have"} recorded ${plural(f.agents.shadowRecorded, "proposal", "proposals")} nobody has seen — worth a look before you let ${one ? "it" : "them"} go live. `,
+        ),
+      );
     }
     return trimEnd(out);
   }
   if (tab === "Providers") {
-    if (!f.providersOn) return [seg("No provider is on. "), seg("Connect one and every AI feature starts working.")];
-    const out = [strong(`${f.providersOn} of ${f.providersTotal}`), seg(` providers ${isAre(f.providersOn)} taking work — ${plural(f.weekCalls, "call", "calls")} this week. `)];
-    if (f.failing.length === 1) out.push(...failingLink(f), seg(" is failing to connect, so its tasks fall through to the next in line. "));
-    else if (f.failing.length > 1) out.push(...failingLink(f), seg(" are failing to connect, so their tasks fall through to the next in line. "));
-    if (f.awaitingKey) out.push(link(f.awaitingKey.name, "provider", "warn", f.awaitingKey.providerId), seg(" is waiting for a key. "));
+    if (!f.providersOn)
+      return [seg("No provider is on. "), seg("Connect one and every AI feature starts working.")];
+    const out = [
+      strong(`${f.providersOn} of ${f.providersTotal}`),
+      seg(
+        ` providers ${isAre(f.providersOn)} taking work — ${plural(f.weekCalls, "call", "calls")} this week. `,
+      ),
+    ];
+    if (f.failing.length === 1)
+      out.push(
+        ...failingLink(f),
+        seg(" is failing to connect, so its tasks fall through to the next in line. "),
+      );
+    else if (f.failing.length > 1)
+      out.push(
+        ...failingLink(f),
+        seg(" are failing to connect, so their tasks fall through to the next in line. "),
+      );
+    if (f.awaitingKey)
+      out.push(
+        link(f.awaitingKey.name, "provider", "warn", f.awaitingKey.providerId),
+        seg(" is waiting for a key. "),
+      );
     out.push(...uncoveredClause(f, null));
     return trimEnd(out);
   }
   if (!f.providersOn) {
-    return [seg("Nothing can answer yet. Your "), strong(count(f.agents.total, "agent", "agents")), seg(` ${isAre(f.agents.total)} set up and waiting for a model provider — connect one and they start on their own.`)];
+    return [
+      seg("Nothing can answer yet. Your "),
+      strong(count(f.agents.total, "agent", "agents")),
+      seg(
+        ` ${isAre(f.agents.total)} set up and waiting for a model provider — connect one and they start on their own.`,
+      ),
+    ];
   }
   if (f.paused) {
-    const out = [seg("Every agent is "), seg("paused", { strong: true, tone: "warn" }), seg(". They keep running and recording what they would do, but nothing is offered or executed")];
-    if (f.agents.waiting) out.push(seg(" — "), link(count(f.agents.waiting, "proposal", "proposals"), "watchtower"), seg(` ${isAre(f.agents.waiting)} held until you resume`));
+    const out = [
+      seg("Every agent is "),
+      seg("paused", { strong: true, tone: "warn" }),
+      seg(
+        ". They keep running and recording what they would do, but nothing is offered or executed",
+      ),
+    ];
+    if (f.agents.waiting)
+      out.push(
+        seg(" — "),
+        link(count(f.agents.waiting, "proposal", "proposals"), "watchtower"),
+        seg(` ${isAre(f.agents.waiting)} held until you resume`),
+      );
     out.push(seg("."));
     return out;
   }
   const out = [strong(count(f.agents.on, "agent", "agents")), seg(` ${isAre(f.agents.on)} on`)];
-  if (f.agents.working) out.push(seg(", "), strong(String(f.agents.working)), seg(" working right now"));
+  if (f.agents.working)
+    out.push(seg(", "), strong(String(f.agents.working)), seg(" working right now"));
   out.push(seg(". "));
   const failing = failingLink(f);
-  if (f.agents.waiting && failing.length) out.push(link(count(f.agents.waiting, "proposal", "proposals"), "watchtower"), seg(` ${waits(f.agents.waiting)} on a person in Watchtower, and `), ...failing, seg(" can't connect. "));
-  else if (f.agents.waiting) out.push(link(count(f.agents.waiting, "proposal", "proposals"), "watchtower"), seg(` ${waits(f.agents.waiting)} on a person in Watchtower. `));
+  if (f.agents.waiting && failing.length)
+    out.push(
+      link(count(f.agents.waiting, "proposal", "proposals"), "watchtower"),
+      seg(` ${waits(f.agents.waiting)} on a person in Watchtower, and `),
+      ...failing,
+      seg(" can't connect. "),
+    );
+  else if (f.agents.waiting)
+    out.push(
+      link(count(f.agents.waiting, "proposal", "proposals"), "watchtower"),
+      seg(` ${waits(f.agents.waiting)} on a person in Watchtower. `),
+    );
   else if (failing.length) out.push(...failing, seg(" can't connect. "));
   out.push(...uncoveredClause(f, "warn"));
   return trimEnd(out);
@@ -224,7 +316,14 @@ function promotionPreview(state, threshold) {
       .slice(0, agent.key === "dispatch" ? 2 : agent.key === "billing" ? 1 : 0)
       .forEach(([toolName], index) => {
         const streak = threshold + 2 - index;
-        out.push({ agentDefinitionId: agent.node.id, agentName: agent.node.name, toolName, streak, from: "Propose", to: "ActWithApproval" });
+        out.push({
+          agentDefinitionId: agent.node.id,
+          agentName: agent.node.name,
+          toolName,
+          streak,
+          from: "Propose",
+          to: "ActWithApproval",
+        });
       });
   }
   return out;
@@ -260,7 +359,9 @@ function usageSummary(state) {
         inputTokens: Math.round(provider.week.tokens * 0.75),
         outputTokens: Math.round(provider.week.tokens * 0.25),
         reasoningTokens: 0,
-        costUsd: provider.node.inputCostPerMillion ? String(Math.round(provider.week.calls * 0.004 * 100) / 100) : "0",
+        costUsd: provider.node.inputCostPerMillion
+          ? String(Math.round(provider.week.calls * 0.004 * 100) / 100)
+          : "0",
         pricedCalls: provider.node.inputCostPerMillion ? provider.week.calls : 0,
         latencyP50Ms: provider.week.ms,
         latencyP95Ms: provider.week.ms * 3,
@@ -269,7 +370,9 @@ function usageSummary(state) {
     recentFailures: failing(state.ai).map((failure) => ({
       providerId: failure.providerId,
       providerName: failure.name,
-      model: state.ai.providers.find((provider) => provider.node.id === failure.providerId)?.node.model ?? "",
+      model:
+        state.ai.providers.find((provider) => provider.node.id === failure.providerId)?.node
+          .model ?? "",
       task: "AssistantChat",
       errorClass: "Connection",
       message: "Could not connect",
@@ -282,7 +385,9 @@ const agentSearch = (node) => `${node.name} ${node.description}`;
 
 function tuneUpNode(state, tuneUp) {
   const ai = state.ai;
-  const agent = tuneUp.agentKey ? ai.agents.find((candidate) => candidate.key === tuneUp.agentKey) : null;
+  const agent = tuneUp.agentKey
+    ? ai.agents.find((candidate) => candidate.key === tuneUp.agentKey)
+    : null;
   const providerOf = (key) => {
     const found = key ? ai.providers.find((candidate) => candidate.key === key) : null;
     return found ? { id: found.node.id, name: found.node.name, kind: found.node.kind } : null;
@@ -290,7 +395,14 @@ function tuneUpNode(state, tuneUp) {
   const { agentKey: _agent, providerKey, otherProviderKey, ...rest } = tuneUp;
   return {
     ...rest,
-    agent: agent ? { id: agent.node.id, name: agent.node.name, icon: agent.node.icon, accent: agent.node.accent } : null,
+    agent: agent
+      ? {
+          id: agent.node.id,
+          name: agent.node.name,
+          icon: agent.node.icon,
+          accent: agent.node.accent,
+        }
+      : null,
     provider: providerOf(providerKey),
     otherProvider: providerOf(otherProviderKey),
   };
@@ -304,7 +416,8 @@ function visibleTuneUp(state, tuneUp) {
 function decideTuneUp(state, id, version, change) {
   const tuneUp = state.ai.tuneUps.find((candidate) => candidate.id === id);
   if (!tuneUp) throw new Error("AITuneUp not found");
-  if (tuneUp.version !== version) throw new Error("Someone else saved changes while you were editing");
+  if (tuneUp.version !== version)
+    throw new Error("Someone else saved changes while you were editing");
   change(tuneUp);
   tuneUp.version += 1;
   return tuneUpNode(state, tuneUp);
@@ -371,7 +484,9 @@ export const AI_HANDLERS = {
     state.ai.dismissedFailures.delete(v.providerId);
     return { restoreAIProviderFailure: true };
   },
-  AgentPromotionPreview: (state, v) => ({ agentPromotionPreview: promotionPreview(state, v.threshold) }),
+  AgentPromotionPreview: (state, v) => ({
+    agentPromotionPreview: promotionPreview(state, v.threshold),
+  }),
   AIUsageDaily: (state) => ({ aiUsageDaily: state.ai.usage.days }),
   AIUsageFeatures: (state, v) => ({
     aiUsageFeatures: connection(featureNodes(state), v.input, {
@@ -381,10 +496,12 @@ export const AI_HANDLERS = {
   }),
   AIUsageSummary: (state) => ({ aiUsageSummary: usageSummary(state) }),
   AgentControlSettings: (state) => ({ agentControl: state.ai.control }),
-  AITrainingExportHistory: () => ({ aiTrainingExportHistory: [] }),
   UpdateAgentControl: (state, v) => {
     const { version: _version, ...input } = v.input;
-    Object.assign(state.ai.control, input, { version: state.ai.control.version + 1, updatedAt: state.now() });
+    Object.assign(state.ai.control, input, {
+      version: state.ai.control.version + 1,
+      updatedAt: state.now(),
+    });
     for (const agent of state.ai.agents) {
       if (input.shadowMode === true) agent.node.shadowMode = true;
     }
@@ -407,7 +524,10 @@ export const AI_HANDLERS = {
       cronTimezone: "",
       eventKinds: EVENT_KINDS.events.slice(0, 1).map((event) => event.kind),
       intervalSeconds: 0,
-      toolNames: TOOL_CATALOG.tools.filter((tool) => !tool.core && tool.resource.startsWith("shipment")).slice(0, 6).map((tool) => tool.name),
+      toolNames: TOOL_CATALOG.tools
+        .filter((tool) => !tool.core && tool.resource.startsWith("shipment"))
+        .slice(0, 6)
+        .map((tool) => tool.name),
       toolTiers: {},
       autonomyCeiling: "ActWithApproval",
       dataAccessCeiling: "Internal",
@@ -418,7 +538,10 @@ export const AI_HANDLERS = {
       runTimeoutSeconds: 600,
       maxToolCalls: 12,
       maxConcurrentRuns: 1,
-      notes: v.description.length > 400 ? [{ field: "description", value: "", reason: "The description was shortened" }] : [],
+      notes:
+        v.description.length > 400
+          ? [{ field: "description", value: "", reason: "The description was shortened" }]
+          : [],
     },
   }),
   TightenAgentInstructions: (_state, v) => ({
@@ -460,7 +583,11 @@ export const AI_HANDLERS = {
     const agent = agentOf(state, v.agentId);
     return {
       agentDefinitionVersionDraft: agent
-        ? { ...agent.node, autonomyCeiling: "ActWithApproval", guardrails: agent.node.guardrails.slice(0, 1) }
+        ? {
+            ...agent.node,
+            autonomyCeiling: "ActWithApproval",
+            guardrails: agent.node.guardrails.slice(0, 1),
+          }
         : null,
     };
   },
@@ -478,10 +605,19 @@ export const AI_HANDLERS = {
     ),
   }),
   AgentChoices: (state, v) => ({
-    agentDefinitions: connection(state.ai.agents.map((agent) => agent.node), v.input, { searchOf: agentSearch }),
+    agentDefinitions: connection(
+      state.ai.agents.map((agent) => agent.node),
+      v.input,
+      { searchOf: agentSearch },
+    ),
   }),
   AgentDefinitionCount: (state, v) => ({
-    agentDefinitions: { totalCount: connection(state.ai.agents.map((agent) => agent.node), v.input).totalCount },
+    agentDefinitions: {
+      totalCount: connection(
+        state.ai.agents.map((agent) => agent.node),
+        v.input,
+      ).totalCount,
+    },
   }),
   AgentRunTable: (state, v) => ({
     agentRuns: connection(state.ai.runs, v.input, {
@@ -489,21 +625,33 @@ export const AI_HANDLERS = {
       includeTotalCount: v.includeTotalCount !== false,
     }),
   }),
-  AgentRunCount: (state, v) => ({ agentRuns: { totalCount: connection(state.ai.runs, v.input).totalCount } }),
+  AgentRunCount: (state, v) => ({
+    agentRuns: { totalCount: connection(state.ai.runs, v.input).totalCount },
+  }),
   AgentProposalCount: (state) => ({
-    agentProposals: { totalCount: state.ai.agents.reduce((sum, agent) => sum + agent.node.pendingProposals, 0) },
+    agentProposals: {
+      totalCount: state.ai.agents.reduce((sum, agent) => sum + agent.node.pendingProposals, 0),
+    },
   }),
   AgentMemoryCount: () => ({ agentMemories: { totalCount: 42 } }),
   AIProviderCards: (state, v) => ({
     aiProviders: connection(
       state.ai.providers.map((provider) => provider.node),
-      { ...v.input, sort: v.input?.sort?.length ? v.input.sort : [{ field: "priority", direction: "asc" }] },
+      {
+        ...v.input,
+        sort: v.input?.sort?.length ? v.input.sort : [{ field: "priority", direction: "asc" }],
+      },
       { searchOf: (node) => `${node.name} ${node.model}` },
     ),
   }),
   AIRetrievalStatus: (state) => ({
     aiRetrievalStatus: {
-      availability: { available: true, reason: "", extensionInstalled: true, extensionVersion: "0.8.0" },
+      availability: {
+        available: true,
+        reason: "",
+        extensionInstalled: true,
+        extensionVersion: "0.8.0",
+      },
       settings: {
         memoryEnabled: true,
         documentsEnabled: true,
@@ -520,9 +668,39 @@ export const AI_HANDLERS = {
         updatedAt: state.now() - 9 * DAY,
       },
       sources: [
-        { sourceType: "Memory", enabled: true, total: 42, indexed: 42, pending: 0, failed: 0, skipped: 0, lastIndexedAt: state.now() - 3600, lastAttemptAt: state.now() - 3600 },
-        { sourceType: "Document", enabled: true, total: 1840, indexed: 1822, pending: 12, failed: 6, skipped: 0, lastIndexedAt: state.now() - 900, lastAttemptAt: state.now() - 900 },
-        { sourceType: "InboundMessage", enabled: false, total: 0, indexed: 0, pending: 0, failed: 0, skipped: 0, lastIndexedAt: null, lastAttemptAt: null },
+        {
+          sourceType: "Memory",
+          enabled: true,
+          total: 42,
+          indexed: 42,
+          pending: 0,
+          failed: 0,
+          skipped: 0,
+          lastIndexedAt: state.now() - 3600,
+          lastAttemptAt: state.now() - 3600,
+        },
+        {
+          sourceType: "Document",
+          enabled: true,
+          total: 1840,
+          indexed: 1822,
+          pending: 12,
+          failed: 6,
+          skipped: 0,
+          lastIndexedAt: state.now() - 900,
+          lastAttemptAt: state.now() - 900,
+        },
+        {
+          sourceType: "InboundMessage",
+          enabled: false,
+          total: 0,
+          indexed: 0,
+          pending: 0,
+          failed: 0,
+          skipped: 0,
+          lastIndexedAt: null,
+          lastAttemptAt: null,
+        },
       ],
       monthStartedAt: state.now() - 6 * DAY,
       indexingCostMonthUsd: "1.84",
@@ -594,7 +772,8 @@ function egressOf(tool) {
   if (tool.kind === "query") return ["None"];
   const name = tool.name;
   if (/payment|settlement|write_off|refund|payout|charge_card/.test(name)) return ["Money"];
-  if (/customer_reply|send_customer|notify_customer|customer_update/.test(name)) return ["CustomerVisible"];
+  if (/customer_reply|send_customer|notify_customer|customer_update/.test(name))
+    return ["CustomerVisible"];
   if (/driver_message|send_driver|worker_send_message/.test(name)) return ["DriverVisible"];
   if (/email|tender_to_carrier|send_|edi_/.test(name)) return ["ExternalRecipient"];
   return ["Internal"];
@@ -603,7 +782,9 @@ function egressOf(tool) {
 function toolRule(tool) {
   const egress = egressOf(tool);
   const destructive = /delete|cancel|void|write_off|transfer|unassign/.test(tool.name);
-  const leaves = egress.some((entry) => ["CustomerVisible", "DriverVisible", "ExternalRecipient", "Money"].includes(entry));
+  const leaves = egress.some((entry) =>
+    ["CustomerVisible", "DriverVisible", "ExternalRecipient", "Money"].includes(entry),
+  );
   const maxTier = tool.kind === "query" ? "AutoExecute" : destructive ? "Propose" : "AutoExecute";
   return {
     id: tool.name,
@@ -690,9 +871,27 @@ function versionsOf(state, agent) {
   const node = agent.node;
   const author = (id, name) => ({ id, name });
   return [
-    { id: `agv_${agent.key}_3`, version: node.version, summary: "Raised a tool to Ask first", author: author("usr_sa", "Sarah Alvarez"), createdAt: state.now() - 1 * DAY },
-    { id: `agv_${agent.key}_2`, version: node.version - 1, summary: "Added a line to Never", author: author("usr_mr", "Marcus Reed"), createdAt: state.now() - 8 * DAY },
-    { id: `agv_${agent.key}_1`, version: node.version - 2, summary: "Created", author: null, createdAt: state.now() - 90 * DAY },
+    {
+      id: `agv_${agent.key}_3`,
+      version: node.version,
+      summary: "Raised a tool to Ask first",
+      author: author("usr_sa", "Sarah Alvarez"),
+      createdAt: state.now() - 1 * DAY,
+    },
+    {
+      id: `agv_${agent.key}_2`,
+      version: node.version - 1,
+      summary: "Added a line to Never",
+      author: author("usr_mr", "Marcus Reed"),
+      createdAt: state.now() - 8 * DAY,
+    },
+    {
+      id: `agv_${agent.key}_1`,
+      version: node.version - 2,
+      summary: "Created",
+      author: null,
+      createdAt: state.now() - 90 * DAY,
+    },
   ].filter((version) => version.version > 0);
 }
 
@@ -705,7 +904,9 @@ function accessPreview(state, input) {
           return rule && rule.kind === "Action" && rule.leavesOrganization;
         })
       : [];
-  const granted = new Set(agentOf(state, input.agentId)?.node.accessRoles.map((role) => role.id) ?? []);
+  const granted = new Set(
+    agentOf(state, input.agentId)?.node.accessRoles.map((role) => role.id) ?? [],
+  );
   return {
     accessMode: input.accessMode,
     sensitiveTools: sensitive,
@@ -744,7 +945,31 @@ function scorecardOf(state, agent) {
     estimatedMinutesSaved: rec.approved * 18,
     byTool: [],
     trend: [],
-    toolTrust: trustOf(state, agent).map(({ toolName, streak, approvals, modifications, rejections, executionFailures, earnedTier, lastDecisionAt, promotedAt, demotedAt }) => ({ toolName, streak, approvals, modifications, rejections, executionFailures, earnedTier, lastDecisionAt, promotedAt, demotedAt })),
+    toolTrust: trustOf(state, agent).map(
+      ({
+        toolName,
+        streak,
+        approvals,
+        modifications,
+        rejections,
+        executionFailures,
+        earnedTier,
+        lastDecisionAt,
+        promotedAt,
+        demotedAt,
+      }) => ({
+        toolName,
+        streak,
+        approvals,
+        modifications,
+        rejections,
+        executionFailures,
+        earnedTier,
+        lastDecisionAt,
+        promotedAt,
+        demotedAt,
+      }),
+    ),
   };
 }
 
@@ -754,8 +979,18 @@ function lintOf(input) {
   const findings = [];
   const email = /\bemail\b/i.exec(text);
   if (email && !TOOL_CATALOG.tools.some((tool) => held.has(tool.name) && /email/.test(tool.name))) {
-    const tools = TOOL_CATALOG.tools.filter((tool) => /email/.test(tool.name)).map((tool) => tool.name);
-    findings.push({ start: email.index, end: email.index + 5, excerpt: email[0], resource: "report_schedule", resourceLabel: "Emails", operation: "send", tools });
+    const tools = TOOL_CATALOG.tools
+      .filter((tool) => /email/.test(tool.name))
+      .map((tool) => tool.name);
+    findings.push({
+      start: email.index,
+      end: email.index + 5,
+      excerpt: email[0],
+      resource: "report_schedule",
+      resourceLabel: "Emails",
+      operation: "send",
+      tools,
+    });
   }
   return findings;
 }
@@ -777,7 +1012,17 @@ function savedNode(state, base, request, id) {
     preferredProviderId: request.preferredProviderId || null,
     systemKey: base?.systemKey ?? "",
     starters: base?.starters ?? [],
-    delegates: (request.delegateIds ?? []).map((delegate) => agentOf(state, delegate)?.node).filter(Boolean).map((node) => ({ id: node.id, name: node.name, icon: node.icon, accent: node.accent, enabled: node.enabled, triggerMode: node.triggerMode })),
+    delegates: (request.delegateIds ?? [])
+      .map((delegate) => agentOf(state, delegate)?.node)
+      .filter(Boolean)
+      .map((node) => ({
+        id: node.id,
+        name: node.name,
+        icon: node.icon,
+        accent: node.accent,
+        enabled: node.enabled,
+        triggerMode: node.triggerMode,
+      })),
     accessMode,
     accessRoles: roleIds.map((roleId) => ({ id: roleId, name: roleNames.get(roleId) ?? roleId })),
     lastRunAt: base?.lastRunAt ?? null,
@@ -801,21 +1046,37 @@ function dryRunFrames(state, body) {
     if (TOOL_BY_NAME.get(name)?.kind !== "action") return "Runs";
     if (draft.simulationMode) return "Simulated";
     if (draft.shadowMode) return "Recorded";
-    const effective = tier(name) === "AutoExecute" && draft.autonomyCeiling === "AutoExecute" ? "AutoExecute" : tier(name) === "Propose" || draft.autonomyCeiling === "Propose" ? "Propose" : "ActWithApproval";
+    const effective =
+      tier(name) === "AutoExecute" && draft.autonomyCeiling === "AutoExecute"
+        ? "AutoExecute"
+        : tier(name) === "Propose" || draft.autonomyCeiling === "Propose"
+          ? "Propose"
+          : "ActWithApproval";
     return effective === "AutoExecute" ? "Runs" : effective === "Propose" ? "Propose" : "AskFirst";
   };
   const reply = `Here is what I found for SHP-48302: it picks up tomorrow at 7:00 in Fort Worth and nobody is assigned yet. ${change ? `I would ${titleOf(change).toLowerCase()} next, and a person decides before it happens.` : "I can explain what to do next."}`;
   const frames = [{ event: "accepted", data: { turnId: "turn_mock" }, delay: 200 }];
   calls.forEach((name, index) => {
     frames.push({ event: "tool_started", data: { callId: `c${index}`, name }, delay: 450 });
-    frames.push({ event: "tool_finished", data: { callId: `c${index}`, name, failed: false }, delay: 500 });
+    frames.push({
+      event: "tool_finished",
+      data: { callId: `c${index}`, name, failed: false },
+      delay: 500,
+    });
   });
   for (const word of reply.split(" ")) {
     frames.push({ event: "delta", data: { text: `${word} ` }, delay: 35 });
   }
   frames.push({
     event: "dry_run_steps",
-    data: { steps: calls.map((name, index) => ({ callId: `c${index}`, tool: name, outcome: outcomeOf(name) })), reply },
+    data: {
+      steps: calls.map((name, index) => ({
+        callId: `c${index}`,
+        tool: name,
+        outcome: outcomeOf(name),
+      })),
+      reply,
+    },
     delay: 120,
   });
   frames.push({ event: "done", data: { reply }, delay: 40 });
@@ -873,7 +1134,10 @@ export const AI_ROUTES = [
       const agent = agentOf(state, path.split("/")[4]);
       if (!agent) return { __status: 404, body: { message: "Agent not found" } };
       if (body?.version !== undefined && body.version !== agent.node.version) {
-        return { __status: 409, body: { type: "version_mismatch", message: "Someone else saved this agent" } };
+        return {
+          __status: 409,
+          body: { type: "version_mismatch", message: "Someone else saved this agent" },
+        };
       }
       agent.node = savedNode(state, agent.node, body ?? {}, agent.node.id);
       return agent.node;

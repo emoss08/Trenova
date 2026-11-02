@@ -3,6 +3,8 @@ package agentqualityjobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentqualityjobs/agentqualitycontract"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityengine"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -59,14 +61,14 @@ type qualityEngine interface {
 }
 
 type scheduleReconciler interface {
-	Reconcile(ctx context.Context) (*ReconcileResult, error)
+	Reconcile(ctx context.Context) (*agentqualitycontract.ReconcileResult, error)
 }
 
 type ActivitiesParams struct {
 	fx.In
 
 	Quality   *agentqualityengine.Engine
-	Schedules *QualitySchedules
+	Schedules *agentqualitycontract.QualitySchedules
 }
 
 type Activities struct {
@@ -198,6 +200,6 @@ func (a *Activities) FailSuiteActivity(
 
 func (a *Activities) ReconcileQualitySchedulesActivity(
 	ctx context.Context,
-) (*ReconcileResult, error) {
+) (*agentqualitycontract.ReconcileResult, error) {
 	return a.schedules.Reconcile(ctx)
 }

@@ -38,9 +38,6 @@ type NotificationRequest struct {
 }
 
 func (s *Service) SendNotification(ctx context.Context, req *NotificationRequest) bool {
-	if s.notifications == nil {
-		return false
-	}
 	ctx = context.WithoutCancel(ctx)
 
 	if req.Correlation != "" {

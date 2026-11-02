@@ -46,9 +46,9 @@ type Params struct {
 	Tools       agenttoolports.AgentToolRegistry
 	QueryTools  agenttoolports.AgentQueryToolRegistry
 	Permissions permissionports.PermissionEngine
-	Budgets     agentbudgetports.AgentBudgetService  `optional:"true"`
-	Providers   aiproviderports.AIProviderRepository `optional:"true"`
-	Users       tenantports.UserRepository           `optional:"true"`
+	Budgets     agentbudgetports.AgentBudgetService
+	Providers   aiproviderports.AIProviderRepository
+	Users       tenantports.UserRepository
 }
 
 type Service struct {
@@ -155,7 +155,7 @@ func (s *Service) readable(
 	if err != nil {
 		return nil, err
 	}
-	if actor == nil || s.permissions == nil {
+	if actor == nil {
 		return nil, errWithheld(definition)
 	}
 	allowed, err := s.permissions.MayUseAgent(ctx, actor, definition)
@@ -179,7 +179,7 @@ func errWithheld(definition *agentdefinition.Definition) error {
 // mayEdit says whether the reader may change the agent: the same permission
 // the agent's own settings in AI Control need, so the page never widens it.
 func (s *Service) mayEdit(ctx context.Context, actor *permissionports.RequestActor) (bool, error) {
-	if actor == nil || s.permissions == nil {
+	if actor == nil {
 		return false, nil
 	}
 
@@ -533,9 +533,6 @@ func (s *Service) modelName(
 	definition *agentdefinition.Definition,
 	tenant pagination.TenantInfo,
 ) string {
-	if s.providers == nil {
-		return ""
-	}
 	providers, err := s.providers.ListForTask(ctx, aiproviderports.ListAIProvidersForTaskRequest{
 		Task:       aitask.TaskAssistantChat,
 		TenantInfo: tenant,
@@ -577,7 +574,7 @@ func (s *Service) personName(
 	id *pulid.ID,
 	tenant pagination.TenantInfo,
 ) string {
-	if id == nil || id.IsNil() || s.users == nil {
+	if id == nil || id.IsNil() {
 		return ""
 	}
 	user, err := s.users.GetByID(ctx, tenantports.GetUserByIDRequest{
@@ -661,10 +658,6 @@ func (s *Service) limits(
 	if definition.MonthlyBudgetUSD != nil {
 		budget := definition.MonthlyBudgetUSD.StringFixed(2)
 		limits.MonthlyBudgetUSD = &budget
-	}
-	if s.budgets == nil {
-		limits.BusinessHoursTimezone = definition.BusinessHoursZone("UTC")
-		return limits, nil
 	}
 
 	limits.BusinessHoursTimezone = definition.BusinessHoursZone(s.budgets.Timezone(ctx, definition))

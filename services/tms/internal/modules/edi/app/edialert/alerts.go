@@ -30,7 +30,7 @@ type EDIOperationalAlert struct {
 }
 
 func (s *Service) NotifyOperationalFailure(ctx context.Context, alert *EDIOperationalAlert) {
-	if s.notifications == nil || alert == nil {
+	if alert == nil {
 		return
 	}
 	correlationID := alert.EventType + ":" + alert.PartnerID.String()

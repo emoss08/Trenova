@@ -22,7 +22,7 @@ func TestAccessSettingsAreCachedPerTenantIncludingTheDefault(t *testing.T) {
 	tenantB := seedtest.SeedAdditionalTenant(t, ctx, db, "AS")
 	cached := cachetest.Open(t, ctx, dsn)
 	repo := NewAccessSettingsRepository(Params{
-		DB:     postgres.NewTestConnection(cached),
+		DB:     postgres.WrapDB(cached),
 		Logger: zap.NewNop(),
 	})
 

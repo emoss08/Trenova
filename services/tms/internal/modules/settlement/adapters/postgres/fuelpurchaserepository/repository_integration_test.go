@@ -88,7 +88,7 @@ func setup(t *testing.T) *fixture {
 		ctxB: dbscope.WithTenant(ctx, tenantB.DBTenant()),
 		db:   db,
 		repo: fuelpurchaserepository.New(fuelpurchaserepository.Params{
-			DB:     postgres.NewTestConnection(db),
+			DB:     postgres.WrapDB(db),
 			Logger: zap.NewNop(),
 		}),
 		tenantA:  tenantA,
@@ -288,11 +288,14 @@ func TestCardsAreTenantScopedAndLastFourReusableAfterCancel(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errortypes.IsNotFoundError(err))
 
-	found, err := f.repo.FindCardByLastFour(f.ctxB, &fuelpurchaseports.FindFuelCardByLastFourRequest{
-		TenantInfo: f.tenantB,
-		Provider:   fuelpurchase.CardProviderComdata,
-		LastFour:   "1234",
-	})
+	found, err := f.repo.FindCardByLastFour(
+		f.ctxB,
+		&fuelpurchaseports.FindFuelCardByLastFourRequest{
+			TenantInfo: f.tenantB,
+			Provider:   fuelpurchase.CardProviderComdata,
+			LastFour:   "1234",
+		},
+	)
 	require.NoError(t, err)
 	require.NotNil(t, found)
 	assert.Equal(t, otherTenantCard.ID, found.ID)
@@ -532,11 +535,14 @@ func TestCommitImportIsAtomicAndTenantScoped(t *testing.T) {
 	assert.Equal(t, 2, result.Committed)
 	assert.Equal(t, 1, result.AlreadyImported)
 
-	committed, err := f.repo.GetImportBatchByID(f.ctxA, &fuelpurchaseports.GetImportBatchByIDRequest{
-		ID:          batch.ID,
-		TenantInfo:  f.tenantA,
-		IncludeRows: true,
-	})
+	committed, err := f.repo.GetImportBatchByID(
+		f.ctxA,
+		&fuelpurchaseports.GetImportBatchByIDRequest{
+			ID:          batch.ID,
+			TenantInfo:  f.tenantA,
+			IncludeRows: true,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, fuelpurchase.ImportStatusCommitted, committed.Status)
 	assert.Equal(t, 2, committed.CommittedCount)

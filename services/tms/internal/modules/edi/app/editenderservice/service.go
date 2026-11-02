@@ -23,7 +23,7 @@ type Params struct {
 	fx.In
 
 	AuditService   auditports.AuditService
-	CarrierRepo    carrierports.CarrierRepository `optional:"true"`
+	CarrierRepo    carrierports.CarrierRepository
 	ConnectionRepo edipartnerports.EDIConnectionRepository
 	DB             kernelports.Transactor
 	Logger         *zap.Logger
@@ -33,7 +33,7 @@ type Params struct {
 	Recipient      *editenderrecipient.Service
 	ShipmentSvc    shipmentserviceports.ShipmentReader
 	Shipments      *editendershipment.Service
-	TenderRepo     tenderports.TenderRepository `optional:"true"`
+	TenderRepo     tenderports.TenderRepository
 	TenderMapping  *editendermapping.Service
 	TransferRepo   editenderports.EDILoadTenderTransferRepository
 }

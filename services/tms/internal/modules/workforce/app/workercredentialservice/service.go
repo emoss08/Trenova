@@ -46,11 +46,11 @@ type Params struct {
 	WorkerRepo   workerports.WorkerRepository
 	DocumentRepo documentports.DocumentRepository
 	AuditService auditports.AuditService
-	Realtime     realtimeports.RealtimeService `optional:"true"`
+	Realtime     realtimeports.RealtimeService
 	// DriverNotify carries a renewal ask to the driver, in the wording the
 	// organization's own template gives it.
-	DriverNotify *drivernotificationservice.Service `optional:"true"`
-	Fields       permissionports.FieldAccess        `optional:"true"`
+	DriverNotify *drivernotificationservice.Service
+	Fields       permissionports.FieldAccess
 }
 
 type Service struct {
@@ -161,9 +161,6 @@ func (s *Service) publish(
 	recordID pulid.ID,
 	userID pulid.ID,
 ) {
-	if s.realtime == nil {
-		return
-	}
 	actorType := permissionports.PrincipalTypeUser
 	if userID.IsNil() {
 		actorType = permissionports.PrincipalTypeSystem

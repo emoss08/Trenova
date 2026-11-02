@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/novamodel"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion/settingversiondb"
 	"github.com/emoss08/trenova/internal/seeds/fixtures/tenantfixtures"
@@ -121,9 +122,6 @@ func analyticsDeployments() []analyticsDeployment {
 			model:    "qwen2.5-14b-instruct",
 			routes: []analyticsRoute{
 				{aitask.TaskScopeClassification, 420, 0.93, ""},
-				{aitask.TaskDocumentClassification, 320, 0.89, ""},
-				{aitask.TaskOperationalInsights, 220, 0.74, ""},
-				{aitask.TaskDailyBriefing, 140, 0.81, ""},
 			},
 			medianMs: 5700, firstTokenMs: 410, toolCalls: 1.4, toolFail: 0.09, modelShare: 0.78,
 			errorRate: 0.012,
@@ -138,8 +136,6 @@ func analyticsDeployments() []analyticsDeployment {
 			model:    "meta-llama/Llama-3.3-70B-Instruct",
 			routes: []analyticsRoute{
 				{aitask.TaskAssistantChat, 620, 0.72, SeedAgentDispatchName},
-				{aitask.TaskDocumentExtraction, 420, 0.70, ""},
-				{aitask.TaskFormulaAssistant, 300, 0.81, ""},
 			},
 			medianMs: 12000, firstTokenMs: 1420, toolCalls: 4, toolFail: 0.06, modelShare: 0.35,
 			errorRate: 0.06,
@@ -155,7 +151,6 @@ func analyticsDeployments() []analyticsDeployment {
 			model:    "meta-llama/Llama-3.3-70B-Instruct",
 			routes: []analyticsRoute{
 				{aitask.TaskAssistantChat, 320, 0.88, SeedAgentDispatchName},
-				{aitask.TaskDocumentExtraction, 220, 0.86, ""},
 			},
 			medianMs: 6000, firstTokenMs: 380, toolCalls: 4, toolFail: 0.045, modelShare: 0.35,
 			errorRate:   0.005,
@@ -166,13 +161,30 @@ func analyticsDeployments() []analyticsDeployment {
 			provider: SeedAIProviderHostedName,
 			model:    "claude-sonnet-5",
 			routes: []analyticsRoute{
-				{aitask.TaskBillingDiagnosis, 180, 0.95, SeedAgentBillingName},
 				{aitask.TaskAssistantChat, 300, 0.96, SeedAgentDispatchName},
 			},
 			medianMs: 13000, firstTokenMs: 690, toolCalls: 5, toolFail: 0.018, modelShare: 0.14,
 			errorRate:  0.004,
 			errorKinds: []analyticsErrorShare{{aianalytics.ProviderErrorRateLimited, 1}},
 			costPerRun: 0.052, quietDays: 6, timeoutSecs: 120, approval: 0.84, helpful: 0.93,
+		},
+		{
+			// Nova runs on the hosted provider with its own model, whatever
+			// model the provider serves the Desk with.
+			provider: SeedAIProviderHostedName,
+			model:    novamodel.ID,
+			routes: []analyticsRoute{
+				{aitask.TaskBillingDiagnosis, 180, 0.95, SeedAgentBillingName},
+				{aitask.TaskDocumentClassification, 320, 0.91, ""},
+				{aitask.TaskDocumentExtraction, 420, 0.88, ""},
+				{aitask.TaskOperationalInsights, 220, 0.86, ""},
+				{aitask.TaskDailyBriefing, 140, 0.89, ""},
+				{aitask.TaskFormulaAssistant, 300, 0.84, ""},
+			},
+			medianMs: 3800, firstTokenMs: 320, toolCalls: 1.5, toolFail: 0.02, modelShare: 0.62,
+			errorRate:  0.004,
+			errorKinds: []analyticsErrorShare{{aianalytics.ProviderErrorRateLimited, 1}},
+			costPerRun: 0.004, quietDays: 6, timeoutSecs: 60, approval: 0.82, helpful: 0.9,
 		},
 	}
 }
@@ -551,7 +563,6 @@ func (s *AIAnalyticsSeed) ensureBackupProvider(
 		MaxTokens:            16384,
 		Tasks: []aitask.Task{
 			aitask.TaskAssistantChat,
-			aitask.TaskDocumentExtraction,
 			aitask.TaskGeneral,
 		},
 		Priority:            30,

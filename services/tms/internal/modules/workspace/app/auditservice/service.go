@@ -41,7 +41,7 @@ type Params struct {
 	AppConfig             *appconfig.Config
 	SecurityConfig        *securityconfig.Config
 	Metrics               *metrics.Registry
-	AgentDefinitions      agentdefinitionports.AgentDefinitionRepository `optional:"true"`
+	AgentDefinitions      agentdefinitionports.AgentDefinitionRepository
 }
 
 type service struct {
@@ -80,9 +80,7 @@ var clientBitToOperation = map[int64]permission.Operation{
 //nolint:gocritic // this is dependency injection
 func New(p Params) auditports.AuditService {
 	var definitions agentDefinitionReader
-	if p.AgentDefinitions != nil {
-		definitions = p.AgentDefinitions
-	}
+	definitions = p.AgentDefinitions
 
 	logger := p.Logger.Named("service.audit")
 	srv := &service{
@@ -379,7 +377,7 @@ func (s *service) pushNonCriticalEntries(nonCriticalEntries []*audit.Entry) {
 }
 
 func (s *service) publishRealtimeInvalidation(ctx context.Context, entries []*audit.Entry) {
-	if s.realtime == nil || len(entries) == 0 {
+	if len(entries) == 0 {
 		return
 	}
 
@@ -449,7 +447,7 @@ func (s *service) publishRealtimeInvalidation(ctx context.Context, entries []*au
 }
 
 func (s *service) publishRecordChanges(ctx context.Context, entries []*audit.Entry) {
-	if s.realtime == nil || len(entries) == 0 {
+	if len(entries) == 0 {
 		return
 	}
 

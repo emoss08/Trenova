@@ -93,15 +93,12 @@ type Params struct {
 	ProposalRepo agentproposalports.AgentProposalRepository
 	Permissions  permissionports.PermissionEngine
 	AuditService auditports.AuditService
-	// Versions is optional; without it a pinned proposal executes unchecked.
-	Versions agenttoolports.RecordVersionReader `optional:"true"`
-	// Budgets is optional; without it a tool's daily cap is not enforced on
-	// approval.
-	Budgets     agentbudgetports.AgentBudgetService `optional:"true"`
-	Runs        agentruntimeports.AgentRunRepository
-	Definitions agentdefinitionports.AgentDefinitionRepository
-	DB          kernelports.Transactor
-	Zones       agenttoolports.TenantTimezoneReader `optional:"true"`
+	Versions     agenttoolports.RecordVersionReader
+	Budgets      agentbudgetports.AgentBudgetService
+	Runs         agentruntimeports.AgentRunRepository
+	Definitions  agentdefinitionports.AgentDefinitionRepository
+	DB           kernelports.Transactor
+	Zones        agenttoolports.TenantTimezoneReader
 }
 
 type Service struct {
@@ -151,7 +148,7 @@ func (r runDefinitions) ForRun(
 	tenant pagination.TenantInfo,
 	runID pulid.ID,
 ) (*agentdefinition.Definition, error) {
-	if r.runs == nil || r.definitions == nil || runID.IsNil() {
+	if runID.IsNil() {
 		return nil, nil
 	}
 
@@ -521,7 +518,7 @@ func (s *Service) run(ctx context.Context, r *approvedRun) (*int64, error) {
 }
 
 func (s *Service) versionAfter(ctx context.Context, proposal *agent.AgentProposal) *int64 {
-	if proposal.TargetID.IsNil() || s.versions == nil {
+	if proposal.TargetID.IsNil() {
 		return nil
 	}
 
@@ -545,7 +542,7 @@ func (s *Service) CallEgress(
 	proposal *agent.AgentProposal,
 	modifications map[string]any,
 ) (agent.EgressClass, bool) {
-	if s.tools == nil || proposal == nil {
+	if proposal == nil {
 		return "", false
 	}
 	tool, ok := s.tools.Get(proposal.ToolName)
@@ -652,10 +649,6 @@ func (s *Service) definitionFor(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
 ) (*agentdefinition.Definition, error) {
-	if s.definitions == nil {
-		return nil, nil
-	}
-
 	return s.definitions.ForRun(ctx, pagination.TenantInfo{
 		OrgID: proposal.OrganizationID,
 		BuID:  proposal.BusinessUnitID,
@@ -671,7 +664,7 @@ func (s *Service) assertWithinBudget(
 	definition *agentdefinition.Definition,
 	toolName string,
 ) error {
-	if s.budgets == nil || definition == nil {
+	if definition == nil {
 		return nil
 	}
 
@@ -749,7 +742,7 @@ func (s *Service) assertTargetUnchanged(
 	proposal *agent.AgentProposal,
 	expected *int64,
 ) error {
-	if proposal.TargetID.IsNil() || s.versions == nil {
+	if proposal.TargetID.IsNil() {
 		return nil
 	}
 

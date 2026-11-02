@@ -122,7 +122,7 @@ func TestSettlementCardBatchReads_Integration(t *testing.T) {
 		disputes = append(disputes, dispute)
 	}
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	params := driverpayrepository.Params{DB: conn, Logger: zap.NewNop()}
 	stranger := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 

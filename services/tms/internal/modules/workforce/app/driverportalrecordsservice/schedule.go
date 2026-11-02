@@ -40,13 +40,6 @@ type PortalSchedule struct {
 }
 
 func (s *Service) requireScheduling() error {
-	if s.scheduling == nil {
-		return errortypes.NewValidationError(
-			"feature",
-			errortypes.ErrInvalidOperation,
-			"Scheduling is not available",
-		)
-	}
 	return nil
 }
 
@@ -314,10 +307,6 @@ func (s *Service) scheduleVisible(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) (bool, error) {
-	if s.scheduling == nil {
-		return false, nil
-	}
-
 	assignments, err := s.scheduling.ListAssignments(
 		ctx,
 		&workerscheduleports.ListShiftAssignmentsRequest{

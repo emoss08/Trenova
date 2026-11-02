@@ -32,8 +32,8 @@ type Params struct {
 
 	Logger     *zap.Logger
 	Repository retrievalports.AIRetrievalRepository
-	Embeddings aiusageports.EmbeddingService   `optional:"true"`
-	Shared     retrievalports.QueryVectorCache `optional:"true"`
+	Embeddings aiusageports.EmbeddingService
+	Shared     retrievalports.QueryVectorCache
 }
 
 type Service struct {
@@ -140,10 +140,6 @@ func (s *Service) sharedVector(
 	key queryKey,
 	dimensions int,
 ) (retrievalports.QueryVector, bool) {
-	if s.shared == nil {
-		return retrievalports.QueryVector{}, false
-	}
-
 	vector, ok, err := s.shared.Get(ctx, sharedKey(tenant, key))
 	if err != nil {
 		if !errors.Is(err, context.Canceled) {
@@ -168,10 +164,6 @@ func (s *Service) storeShared(
 	key queryKey,
 	vector retrievalports.QueryVector,
 ) {
-	if s.shared == nil {
-		return
-	}
-
 	if err := s.shared.Set(ctx, sharedKey(tenant, key), vector, queryCacheTTL); err != nil &&
 		!errors.Is(err, context.Canceled) {
 		s.l.Warn("could not share the query vector with the other processes",
@@ -246,9 +238,6 @@ func (s *Service) searchable(
 	if !storage.Available {
 		return nil, storage.Reason, nil
 	}
-	if s.embeddings == nil {
-		return nil, airetrieval.UnavailableReasonNoProvider, nil
-	}
 
 	settings, err := s.repo.GetSettings(ctx, tenant)
 	if err != nil {
@@ -273,10 +262,6 @@ func (s *Service) searchable(
 }
 
 func (s *Service) hasProvider(ctx context.Context, tenant pagination.TenantInfo) (bool, error) {
-	if s.embeddings == nil {
-		return false, nil
-	}
-
 	_, err := s.embeddings.ConfiguredModelKey(ctx, tenant)
 	switch {
 	case err == nil:

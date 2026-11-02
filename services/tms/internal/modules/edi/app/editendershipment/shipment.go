@@ -44,10 +44,6 @@ func (s *Service) CreateSystemComment(
 	comment string,
 	metadata map[string]any,
 ) error {
-	if s.shipmentCommentRepo == nil || s.userRepo == nil {
-		return nil
-	}
-
 	systemUser, err := s.userRepo.GetSystemUser(ctx, "id")
 	if err != nil {
 		return err

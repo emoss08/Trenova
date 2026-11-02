@@ -61,8 +61,8 @@ type Params struct {
 	TemplateVersions formulatemplateports.FormulaTemplateVersionRepository
 	Checker          *tariff.Checker
 	AuditService     auditports.AuditService
-	Notifications    *notificationservice.Service   `optional:"true"`
-	Roles            permissionports.RoleRepository `optional:"true"`
+	Notifications    *notificationservice.Service
+	Roles            permissionports.RoleRepository
 }
 
 type Service struct {

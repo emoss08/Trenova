@@ -256,11 +256,6 @@ func (s *Service) shipmentRecord(
 	if shipmentID == nil || shipmentID.IsNil() {
 		return nil, nil //nolint:nilnil // no shipment means the sample record
 	}
-	if s.records == nil {
-		return nil, errortypes.NewBusinessError(
-			"Previewing a formula on a shipment is not available on this server",
-		)
-	}
 	record, err := s.records.ShipmentRecord(ctx, &tariffports.ShipmentRecordRequest{
 		TenantInfo: tenantInfo,
 		ShipmentID: *shipmentID,

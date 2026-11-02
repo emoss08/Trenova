@@ -48,7 +48,7 @@ func TestEDIMessageIdempotencyKey_Integration(t *testing.T) {
 	require.NoError(t, create(ctx, db, partner))
 
 	repo := edimessagerepository.New(edimessagerepository.Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 	newMessage := func(key, control string) *edimessage.EDIMessage {

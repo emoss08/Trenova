@@ -37,16 +37,14 @@ type Validator struct {
 func NewValidator(p ValidatorParams) *Validator {
 	builder := newValidatorBuilderWithIntegrationRepo(p.IntegrationRepo)
 
-	if p.DB != nil {
-		checker := keelcheck.NewChecker(p.DB, accountingcontroldb.AccountingControlsSchema())
-		builder.
-			WithUniquenessChecker(checker).
-			WithReferenceChecker(checker)
-		addGLAccountReferenceChecks(
-			builder,
-			keelcheck.TableReferenceCheck(p.DB, "gl_accounts"),
-		)
-	}
+	checker := keelcheck.NewChecker(p.DB, accountingcontroldb.AccountingControlsSchema())
+	builder.
+		WithUniquenessChecker(checker).
+		WithReferenceChecker(checker)
+	addGLAccountReferenceChecks(
+		builder,
+		keelcheck.TableReferenceCheck(p.DB, "gl_accounts"),
+	)
 
 	return &Validator{
 		validator: builder.Build(),

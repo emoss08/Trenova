@@ -48,9 +48,6 @@ func DigestDue(pref *notification.Preference, now time.Time, loc *time.Location)
 
 func (s *Service) SendDueDigests(ctx context.Context, now time.Time) (*DigestRunResult, error) {
 	result := new(DigestRunResult)
-	if s.preferences == nil || s.users == nil || s.email == nil {
-		return result, nil
-	}
 
 	subscribers, err := s.preferences.ListDigestSubscribers(ctx)
 	if err != nil {
@@ -116,11 +113,14 @@ func (s *Service) sendDigest(
 		since = *pref.LastDigestAt
 	}
 
-	items, err := s.preferences.ListDigestNotifications(ctx, notificationports.ListDigestNotificationsRequest{
-		TenantInfo: tenantInfo,
-		Since:      since,
-		Until:      now.Unix(),
-	})
+	items, err := s.preferences.ListDigestNotifications(
+		ctx,
+		notificationports.ListDigestNotificationsRequest{
+			TenantInfo: tenantInfo,
+			Since:      since,
+			Until:      now.Unix(),
+		},
+	)
 	if err != nil {
 		return false, err
 	}

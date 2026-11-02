@@ -46,9 +46,6 @@ func (s *Service) loadCustomer(
 }
 
 func (s *Service) companyName(ctx context.Context, tenantInfo pagination.TenantInfo) string {
-	if s.orgRepo == nil {
-		return ""
-	}
 	org, err := s.orgRepo.GetByID(
 		ctx,
 		tenantports.GetOrganizationByIDRequest{TenantInfo: tenantInfo},

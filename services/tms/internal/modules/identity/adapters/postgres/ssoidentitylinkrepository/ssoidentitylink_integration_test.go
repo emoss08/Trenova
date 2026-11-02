@@ -44,7 +44,7 @@ func TestSSOIdentityLinks_BindOneSubjectToOneUserPerProvider(t *testing.T) {
 	}
 	require.NoError(t, ssodb.SSOConfigs.Create(ctx, db, cfg))
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	link := &sso.SSOIdentityLink{
 		OrganizationID: data.Organization.ID,
 		BusinessUnitID: data.BusinessUnit.ID,

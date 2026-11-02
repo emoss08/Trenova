@@ -63,7 +63,7 @@ func newTrackingHarness(t *testing.T, bol string) (context.Context, *trackingHar
 		},
 	)
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	tracking := trackingeventservice.New(trackingeventservice.Params{
 		DB:     conn,
 		Logger: zap.NewNop(),

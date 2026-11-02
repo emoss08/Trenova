@@ -23,7 +23,7 @@ func TestCreateRefusesASeatPastTheQuotaBeforeInsertingAnything(t *testing.T) {
 
 	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	repo := &repository{
-		db:    postgres.NewTestConnection(keeltest.RenderDB(t)),
+		db:    postgres.WrapDB(keeltest.RenderDB(t)),
 		l:     zap.NewNop(),
 		quota: guard,
 	}

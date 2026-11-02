@@ -29,10 +29,6 @@ type roleChange struct {
 }
 
 func (s *Service) recordChange(ctx context.Context, change *roleChange) {
-	if s.auditor == nil {
-		return
-	}
-
 	var actor kernelports.AuditActor
 	if change.actorID.IsNotNil() {
 		actor = permissionports.UserActor(pagination.TenantInfo{

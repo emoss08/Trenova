@@ -21,8 +21,8 @@ func Source() migrate.Source {
 	return migrate.Source{Name: SourceName, FS: files}
 }
 
-func Set(editions ...migrate.Source) migrate.Set {
-	return migrate.Sources(append([]migrate.Source{Source()}, editions...)...)
+func Set() migrate.Set {
+	return migrate.Sources(Source())
 }
 
 func Options() migrate.Options {

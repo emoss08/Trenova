@@ -77,7 +77,7 @@ func TestGetNeighborsWalksTheQueueInItsOwnOrder(t *testing.T) {
 		ids[i] = item.ID
 	}
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	filter := &pagination.QueryOptions{TenantInfo: tenant}
 
 	// With posted items: 3, 2, 1, 0 — item 2 sits second.

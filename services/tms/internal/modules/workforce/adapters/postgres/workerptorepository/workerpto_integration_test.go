@@ -59,7 +59,7 @@ func setupPTOFixture(t *testing.T) *ptoFixture {
 	require.NoError(t, workerdb.Workers.Create(data.Ctx(ctx), db, wrk))
 
 	repo := New(Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	}).(*repository)
 

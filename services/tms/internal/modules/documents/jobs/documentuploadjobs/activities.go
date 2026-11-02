@@ -55,12 +55,12 @@ type ActivitiesParams struct {
 	ThumbnailGenerator   *thumbnailservice.Generator
 	Encryption           *encryptionservice.Service
 	WorkflowStarter      kernelports.WorkflowStarter
-	UsageProvider        platformcatalogports.UsageProvider `optional:"true"`
-	Redis                *goredis.Client                    `optional:"true"`
+	UsageProvider        platformcatalogports.UsageProvider
+	Redis                *goredis.Client
 	DocumentIntelligence documentports.DocumentContentService
-	Paperwork            documentports.PaperworkReadRequester                `optional:"true"`
-	ShipmentService      shipmentserviceports.ShipmentBillingTransferService `optional:"true"`
-	Triage               inboundmessageports.TriageEventSink                 `optional:"true"`
+	Paperwork            documentports.PaperworkReadRequester
+	ShipmentService      shipmentserviceports.ShipmentBillingTransferService
+	Triage               inboundmessageports.TriageEventSink
 }
 
 type Activities struct {
@@ -83,19 +83,10 @@ type Activities struct {
 //nolint:gocritic // dependency injection param
 func NewActivities(p ActivitiesParams) *Activities {
 	documentIntelligence := p.DocumentIntelligence
-	if documentIntelligence == nil {
-		documentIntelligence = noopDocumentContentService{}
-	}
 
 	searchProjection := p.SearchProjection
-	if searchProjection == nil {
-		searchProjection = noopDocumentSearchProjectionService{}
-	}
 
 	workflowStarter := p.WorkflowStarter
-	if workflowStarter == nil {
-		workflowStarter = noopWorkflowStarter{}
-	}
 
 	return &Activities{
 		sessionRepo:          p.SessionRepository,
@@ -314,12 +305,10 @@ func (a *Activities) finalizeUploadPersistDocument(
 	}
 
 	previewPath := ""
-	if a.thumbnailGenerator != nil && a.thumbnailGenerator.SupportsThumbnail(doc.FileType) {
+	if a.thumbnailGenerator.SupportsThumbnail(doc.FileType) {
 		previewPath = a.startThumbnailWorkflow(ctx, doc)
 	}
-	if a.paperwork != nil {
-		a.paperwork.RequestRead(ctx, doc, payload.UserID)
-	}
+	a.paperwork.RequestRead(ctx, doc, payload.UserID)
 	if doc.ProcessingProfile.SupportsIntelligence() {
 		enqueueErr := a.documentIntelligence.EnqueueExtraction(ctx, doc, payload.UserID)
 		if enqueueErr != nil {
@@ -395,7 +384,7 @@ func (a *Activities) tryAutoMarkShipmentReadyToInvoice(
 	tenantInfo pagination.TenantInfo,
 	userID pulid.ID,
 ) {
-	if a.shipmentService == nil || resourceType != "shipment" || resourceID == "" {
+	if resourceType != "shipment" || resourceID == "" {
 		return
 	}
 
@@ -1056,9 +1045,6 @@ func (a *Activities) startFinalizeWorkflowForSession(
 	ctx context.Context,
 	session *documentupload.DocumentUploadSession,
 ) bool {
-	if !a.workflowStarter.Enabled() {
-		return false
-	}
 
 	_, err := a.workflowStarter.StartWorkflow(
 		ctx,
@@ -1093,9 +1079,6 @@ func (a *Activities) startFinalizeWorkflowForSession(
 }
 
 func (a *Activities) startThumbnailWorkflow(ctx context.Context, doc *document.Document) string {
-	if !a.workflowStarter.Enabled() {
-		return ""
-	}
 
 	if doc.PreviewStatus != document.PreviewStatusPending || doc.PreviewStoragePath != "" {
 		doc.PreviewStatus = document.PreviewStatusPending
@@ -1267,7 +1250,7 @@ func (a *Activities) ensureThumbnailForDocument(
 	ctx context.Context,
 	doc *document.Document,
 ) string {
-	if doc == nil || a.thumbnailGenerator == nil {
+	if doc == nil {
 		return ""
 	}
 
@@ -1287,9 +1270,6 @@ func previewStatusForFileType(contentType string) document.PreviewStatus {
 }
 
 func (a *Activities) releaseCompletionLease(ctx context.Context, sessionID string) {
-	if a.redis == nil {
-		return
-	}
 	_ = a.redis.Del(ctx, completionLeaseKey(sessionID)).Err()
 }
 

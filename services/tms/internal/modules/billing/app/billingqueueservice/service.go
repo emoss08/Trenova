@@ -69,22 +69,22 @@ type Params struct {
 	ChargeAllocationRepo chargeallocationports.ChargeAllocationRepository
 	Commercial           *shipmentcommercial.Calculator
 	Generator            seqgen.Generator
-	SequenceFormats      seqgen.FormatProvider `optional:"true"`
+	SequenceFormats      seqgen.FormatProvider
 	AuditService         auditports.AuditService
 	Realtime             realtimeports.RealtimeService
 	Validator            *Validator
 	OrderDerivation      orderports.OrderDerivationService
 	DetentionBilling     detentionports.DetentionBillingService
-	AgentEvents          agenteventports.AgentEventPublisher `optional:"true"`
+	AgentEvents          agenteventports.AgentEventPublisher
 	// Watchtower puts an item that cannot be invoiced on the feed.
-	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
+	Watchtower watchtowerports.WatchtowerProjector
 	// The review reads: issues and activity, the shipment's paperwork and
 	// detention evidence and the contract's accessorials.
-	ReviewRepo     billingqueueports.BillingQueueReviewRepository `optional:"true"`
-	DocumentRepo   documentports.DocumentRepository               `optional:"true"`
-	OccurrenceRepo detentionports.DetentionOccurrenceRepository   `optional:"true"`
-	AgreementRepo  rateagreementports.RateAgreementRepository     `optional:"true"`
-	Rechecks       billingqueueports.RecheckRequester             `optional:"true"`
+	ReviewRepo     billingqueueports.BillingQueueReviewRepository
+	DocumentRepo   documentports.DocumentRepository
+	OccurrenceRepo detentionports.DetentionOccurrenceRepository
+	AgreementRepo  rateagreementports.RateAgreementRepository
+	Rechecks       billingqueueports.RecheckRequester
 }
 
 type Service struct {
@@ -244,8 +244,7 @@ func (s *Service) detentionHolds(
 	item *billingqueue.BillingQueueItem,
 	tenantInfo pagination.TenantInfo,
 ) ([]*detention.DetentionOccurrence, error) {
-	if s.detentionBilling == nil || item == nil || item.ShipmentID.IsNil() ||
-		item.BillType == billingqueue.BillTypeCreditMemo ||
+	if item == nil || item.ShipmentID.IsNil() || item.BillType == billingqueue.BillTypeCreditMemo ||
 		billingqueue.IsTerminalStatus(item.Status) {
 		return nil, nil
 	}
@@ -887,7 +886,7 @@ func (s *Service) UpdateStatus(
 		}
 		updated = updatedEntity
 
-		if req.NewStatus == billingqueue.StatusApproved && s.invoiceCreation != nil {
+		if req.NewStatus == billingqueue.StatusApproved {
 			// Approving means the freight is verified, not that it bills today. A
 			// statement customer's item is approved onto their statement and waits
 			// for their cycle; everyone else is invoiced here as before.
@@ -997,8 +996,7 @@ func (s *Service) discardStaleDraft(
 	req *billingqueueports.UpdateBillingQueueStatusRequest,
 	actor *permissionports.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
-	if s.invoiceVoids == nil ||
-		entity.Status != billingqueue.StatusApproved ||
+	if entity.Status != billingqueue.StatusApproved ||
 		req.NewStatus != billingqueue.StatusInReview {
 		return entity, nil
 	}
@@ -1050,7 +1048,7 @@ func (s *Service) projectToWatchtower(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 ) {
-	if s.watchtower == nil || item == nil {
+	if item == nil {
 		return
 	}
 
@@ -1114,7 +1112,7 @@ func (s *Service) createOpsComment(
 // order (status + total) — billing-queue charge edits change total_charge_amount
 // outside the shipment service, so the derivation port must be invoked directly.
 func (s *Service) recomputeParentOrder(ctx context.Context, shp *shipment.Shipment) error {
-	if s.orderDerivation == nil || shp == nil || shp.OrderID.IsNil() {
+	if shp == nil || shp.OrderID.IsNil() {
 		return nil
 	}
 
@@ -1180,9 +1178,10 @@ func (s *Service) updateCharges(
 		s.syncReview(ctx, req.ItemID, req.TenantInfo)
 	}
 
-	return s.repo.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
-		ItemID:     req.ItemID,
-		TenantInfo: req.TenantInfo,
+	return s.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
+		ItemID:                req.ItemID,
+		TenantInfo:            req.TenantInfo,
+		ExpandShipmentDetails: req.ExpandShipmentDetails,
 	})
 }
 
@@ -1274,9 +1273,6 @@ func (s *Service) syncReview(
 	itemID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) {
-	if s.reviewRepo == nil {
-		return
-	}
 	if _, err := s.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:                itemID,
 		TenantInfo:            tenantInfo,
@@ -1288,7 +1284,5 @@ func (s *Service) syncReview(
 			zap.Error(err),
 		)
 	}
-	if s.rechecks != nil {
-		s.rechecks.RequestRecheck(ctx, tenantInfo, itemID)
-	}
+	s.rechecks.RequestRecheck(ctx, tenantInfo, itemID)
 }

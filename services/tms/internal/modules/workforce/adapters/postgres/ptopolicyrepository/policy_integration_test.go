@@ -47,13 +47,13 @@ func TestGetByIDsReturnsOnlyTheTenantsPoliciesWithTheirRules(t *testing.T) {
 	rule := &pto.PTOPolicyRule{PTOPolicyID: first.ID, PTOType: worker.PTOTypeVacation}
 	require.NoError(t, ptodb.PTOPolicyRules.Create(tenantA.Ctx(ctx), db, rule))
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	entities, err := repo.GetByIDs(
 		tenantA.Ctx(ctx),
 		&ptopolicyports.GetPTOPoliciesByIDsRequest{
-			TenantInfo: tenantA.Info(),
-			PolicyIDs: []pulid.ID{second.ID, foreign.ID, first.ID, pulid.MustNew("ptop_")},
+			TenantInfo:   tenantA.Info(),
+			PolicyIDs:    []pulid.ID{second.ID, foreign.ID, first.ID, pulid.MustNew("ptop_")},
 			IncludeRules: true,
 		},
 	)

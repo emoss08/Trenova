@@ -244,9 +244,6 @@ func (s *Service) recordTenderedShipmentStatusEvent(
 	shipmentID pulid.ID,
 ) {
 	offer := req.Offer
-	if s.shipmentEventRepo == nil {
-		return
-	}
 	severity := shipmentevent.SeverityInfo
 	if req.StatusCode == "A7" {
 		severity = shipmentevent.SeverityDanger

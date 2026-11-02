@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/novamodel"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
@@ -48,23 +49,25 @@ type Params struct {
 	AIConfig   *aiconfig.Config
 	Repo       aiproviderports.AIProviderRepository
 	Encryption *encryptionservice.Service
-	// Usage records every attempt. Optional so a router built without a
-	// database still answers; without it nothing is counted.
-	Usage    aiusageports.AIUsageRepository     `optional:"true"`
-	Metrics  *metrics.Registry                  `optional:"true"`
-	Breakers llmports.ProviderBreakerRepository `optional:"true"`
-	Quota    platformplanports.QuotaGuard       `optional:"true"`
+	// Adapters is the process's one adapter per protocol. The Anthropic
+	// adapter keeps the platform sign-in token sources, so sharing it keeps
+	// one token per credential however many callers sign in.
+	Adapters *adapterregistry.Registry
+	// Usage records every attempt, so each call's tokens and cost land on the
+	// tenant's ledger.
+	Usage    aiusageports.AIUsageRepository
+	Metrics  *metrics.Registry
+	Breakers llmports.ProviderBreakerRepository
+	Quota    platformplanports.QuotaGuard
 	// Spend, Slots and Keys enforce each provider's monthly cap and calls at
 	// once, and record when its key was last used.
-	Spend aiproviderports.AIProviderSpendService  `optional:"true"`
-	Slots llmports.ProviderSlotRepository         `optional:"true"`
-	Keys  aiproviderports.AIProviderKeyRepository `optional:"true"`
-	// Advisors records the API's refusal of a provider's advisor on the
-	// provider. Optional: without it the refusal is only logged.
-	Advisors aiproviderports.AIProviderAdvisorRecorder `optional:"true"`
-	// Files reads the files a person attached, for a model that reads files
-	// itself. Optional: without it every file is read as its text.
-	Files conversationports.MessageFileReader `optional:"true"`
+	Spend aiproviderports.AIProviderSpendService
+	Slots llmports.ProviderSlotRepository
+	Keys  aiproviderports.AIProviderKeyRepository
+	// Advisors records the API's refusal of a provider's advisor on the provider.
+	Advisors aiproviderports.AIProviderAdvisorRecorder
+	// Files reads the files a person attached, for a model that reads files itself.
+	Files conversationports.MessageFileReader
 }
 
 type Engine struct {
@@ -114,7 +117,7 @@ func NewEngine(p *Params) *Engine {
 		Usage:         p.Usage,
 		Quota:         quotaservice.OrUnlimited(p.Quota),
 		GenAI:         p.Metrics.GenAI(),
-		Adapters:      adapterregistry.NewRegistry(),
+		Adapters:      p.Adapters,
 		Health:        NewProviderHealth(nil).Share(p.Breakers, logger),
 		Limits:        NewProviderLimits(p),
 		Files:         p.Files,
@@ -158,6 +161,9 @@ type RunRequest struct {
 	// Reasoning overrides each provider's configured effort for this call.
 	Reasoning   aireasoning.ReasoningEffort
 	Attribution aiusageports.AIUsageAttribution
+	// Nova runs the call on the tenant's Nova provider with Nova's model,
+	// whatever providers Task is assigned to.
+	Nova bool
 }
 
 type RunOutcome struct {
@@ -200,19 +206,14 @@ func (o *RunOutcome) TokenUsage() aipricing.TokenUsage {
 }
 
 // candidatesFor resolves the providers allowed to serve a task, in the order
-// they should be tried.
+// they should be tried. A Nova call has one: the tenant's Nova provider.
 func (s *Engine) CandidatesFor(
 	ctx context.Context,
 	req *RunRequest,
 ) ([]*aiprovider.Provider, error) {
-	usable, err := s.UsableFor(ctx, req.Task, req.TenantInfo)
+	usable, err := s.routedFor(ctx, req)
 	if err != nil {
 		return nil, err
-	}
-	if req.RequireProvider {
-		if usable, err = requiredProvider(usable, req.PreferredProviderID, req.Task); err != nil {
-			return nil, err
-		}
 	}
 
 	ready, err := s.Awake(ctx, usable)
@@ -224,6 +225,53 @@ func (s *Engine) CandidatesFor(
 	}
 
 	return PreferFirst(ready, req.PreferredProviderID), nil
+}
+
+func (s *Engine) routedFor(ctx context.Context, req *RunRequest) ([]*aiprovider.Provider, error) {
+	if req.Nova {
+		nova, err := s.NovaProvider(ctx, req.TenantInfo)
+		if err != nil {
+			return nil, err
+		}
+
+		return []*aiprovider.Provider{nova}, nil
+	}
+
+	usable, err := s.UsableFor(ctx, req.Task, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	if req.RequireProvider {
+		return requiredProvider(usable, req.PreferredProviderID, req.Task)
+	}
+
+	return usable, nil
+}
+
+// NovaProvider is the provider the tenant chose for Nova, as Nova calls it:
+// its credential and limits with Nova's model and price. Without one, or
+// with it turned off, Nova does not run and the error says what to set up.
+func (s *Engine) NovaProvider(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+) (*aiprovider.Provider, error) {
+	provider, err := s.Repo.GetNova(ctx, tenant)
+	if err != nil {
+		return nil, err
+	}
+	switch {
+	case provider == nil:
+		return nil, errortypes.NewBusinessError(
+			"Nova runs on Claude: add an Anthropic provider and choose it for Nova",
+		).WithInternal(llmports.ErrNoProviderConfigured)
+	case !provider.Enabled:
+		return nil, errortypes.NewBusinessError(
+			"{0} runs Nova but is turned off; turn it on or choose another provider for Nova",
+			provider.Name,
+		).WithInternal(llmports.ErrNoProviderConfigured)
+	default:
+		return novamodel.Provider(provider), nil
+	}
 }
 
 func requiredProvider(

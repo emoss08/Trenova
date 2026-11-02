@@ -13,48 +13,77 @@ import (
 type Params struct {
 	fx.In
 
-	// Analyzer suggests what a document is and which shipment it belongs to.
-	// Without it every item waits for a person to say.
-	Analyzer      captureports.CaptureAnalyzer `optional:"true"`
-	Batches       captureports.CaptureBatchRepository
-	CoverSheets   captureports.CaptureCoverSheetRepository
-	DocumentTypes documenttypeports.DocumentTypeRepository
-	Imaging       kernelports.Imaging
-	Items         captureports.CaptureItemRepository
-	Logger        *zap.Logger
-	Pages         captureports.CapturePageRepository
-	ProfileRepo   captureports.CaptureProfileRepository
-	// Shipments resolves a reference number the analyzer found to a shipment.
-	Shipments inboundmessageports.InboundShipmentFinder `optional:"true"`
-	Support   *capturesupport.Service
+	CoverSheets captureports.CaptureCoverSheetRepository
+	Imaging     kernelports.Imaging
+	Logger      *zap.Logger
+	Pages       captureports.CapturePageRepository
+	Support     *capturesupport.Service
 }
 
+// Service reads captured pages and assembles an item's pages into one PDF. Every process
+// has it: intake reads pages as they arrive and filing assembles what a person files.
 type Service struct {
-	analyzer      captureports.CaptureAnalyzer
-	batches       captureports.CaptureBatchRepository
-	coverSheets   captureports.CaptureCoverSheetRepository
-	documentTypes documenttypeports.DocumentTypeRepository
-	imaging       kernelports.Imaging
-	items         captureports.CaptureItemRepository
-	l             *zap.Logger
-	pages         captureports.CapturePageRepository
-	profileRepo   captureports.CaptureProfileRepository
-	shipments     inboundmessageports.InboundShipmentFinder
-	support       *capturesupport.Service
+	coverSheets captureports.CaptureCoverSheetRepository
+	imaging     kernelports.Imaging
+	l           *zap.Logger
+	pages       captureports.CapturePageRepository
+	support     *capturesupport.Service
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	return &Service{
+		coverSheets: p.CoverSheets,
+		imaging:     p.Imaging,
+		l:           p.Logger.Named("service.capture"),
+		pages:       p.Pages,
+		support:     p.Support,
+	}
+}
+
+type BatchProcessorParams struct {
+	fx.In
+
+	// Analyzer suggests what a document is and which shipment it belongs to.
+	Analyzer      captureports.CaptureAnalyzer
+	Batches       captureports.CaptureBatchRepository
+	DocumentTypes documenttypeports.DocumentTypeRepository
+	Items         captureports.CaptureItemRepository
+	Logger        *zap.Logger
+	Pages         captureports.CapturePageRepository
+	ProfileRepo   captureports.CaptureProfileRepository
+	Service       *Service
+	// Shipments resolves a reference number the analyzer found to a shipment.
+	Shipments inboundmessageports.InboundShipmentFinder
+	Support   *capturesupport.Service
+}
+
+// BatchProcessor divides a sealed batch into items and suggests where each goes. It runs in
+// the worker, which is the process that can read a document's content.
+type BatchProcessor struct {
+	analyzer      captureports.CaptureAnalyzer
+	batches       captureports.CaptureBatchRepository
+	documentTypes documenttypeports.DocumentTypeRepository
+	items         captureports.CaptureItemRepository
+	l             *zap.Logger
+	pages         captureports.CapturePageRepository
+	profileRepo   captureports.CaptureProfileRepository
+	service       *Service
+	shipments     inboundmessageports.InboundShipmentFinder
+	support       *capturesupport.Service
+}
+
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
+func NewBatchProcessor(p BatchProcessorParams) *BatchProcessor {
+	return &BatchProcessor{
 		analyzer:      p.Analyzer,
 		batches:       p.Batches,
-		coverSheets:   p.CoverSheets,
 		documentTypes: p.DocumentTypes,
-		imaging:       p.Imaging,
 		items:         p.Items,
-		l:             p.Logger.Named("service.capture"),
+		l:             p.Logger.Named("service.capture-batch"),
 		pages:         p.Pages,
 		profileRepo:   p.ProfileRepo,
+		service:       p.Service,
 		shipments:     p.Shipments,
 		support:       p.Support,
 	}

@@ -32,7 +32,7 @@ func TestMemoryReaders_ScopeAMemoryKeptForOneAgentToThatAgent(t *testing.T) {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	rateDesk, dispatch := pulid.MustNew("agdef_"), pulid.MustNew("agdef_")
 	now := timeutils.NowUnix()
@@ -108,7 +108,7 @@ func TestResolveSuggestion_ApprovesForTheScopeAsked(t *testing.T) {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	agentID := pulid.MustNew("agdef_")
 
@@ -148,7 +148,7 @@ func TestResolveSuggestion_RecordsAReviewOnlyWhenAPersonApproves(t *testing.T) {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	agentID := pulid.MustNew("agdef_")
 	at := timeutils.NowUnix()

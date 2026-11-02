@@ -35,10 +35,10 @@ type Params struct {
 	Reader    assistantstreamports.TurnStreamReader
 	Canceller assistantturnports.AssistantTurnCanceller
 	Realtime  realtimeports.RealtimeService
-	Metrics   *metrics.Registry                      `optional:"true"`
-	Quota     platformplanports.QuotaGuard           `optional:"true"`
-	Plans     platformplanports.PlanService          `optional:"true"`
-	Chapters  assistantchapterports.ChapterScheduler `optional:"true"`
+	Metrics   *metrics.Registry
+	Quota     platformplanports.QuotaGuard
+	Plans     platformplanports.PlanService
+	Chapters  assistantchapterports.ChapterScheduler
 }
 
 type Service struct {
@@ -288,9 +288,6 @@ func (s *Service) StartTurn(
 }
 
 func (s *Service) cueChapter(ctx context.Context, turn *conversationturn.AssistantTurn) {
-	if s.chapters == nil {
-		return
-	}
 	s.chapters.Cue(ctx, &assistantchapterports.ChapterTurnRequest{
 		TenantInfo: tenantOf(turn),
 		ThreadID:   turn.ThreadID,

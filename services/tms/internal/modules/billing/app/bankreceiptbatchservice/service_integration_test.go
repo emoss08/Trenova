@@ -195,7 +195,7 @@ func setupBatchIntegrationEnv(t *testing.T) *batchIntegrationEnv {
 
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	logger := zap.NewNop()
 	receiptRepo := bankreceiptrepository.New(bankreceiptrepository.Params{DB: conn, Logger: logger})
 	batchRepo := bankreceiptbatchrepository.New(
@@ -266,7 +266,7 @@ func createPostedCustomerPayment(
 ) {
 	t.Helper()
 
-	conn := postgres.NewTestConnection(env.db)
+	conn := postgres.WrapDB(env.db)
 	logger := zap.NewNop()
 	paymentRepo := customerpaymentrepository.New(
 		customerpaymentrepository.Params{DB: conn, Logger: logger},

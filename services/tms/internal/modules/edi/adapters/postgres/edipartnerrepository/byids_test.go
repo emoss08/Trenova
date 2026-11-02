@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -49,7 +49,7 @@ func TestPartnersByIDsUnderASystemScopeStaysInsideTheRequestTenant(t *testing.T)
 func TestGetByIDsSkipsTheQueryForAnEmptyIDSet(t *testing.T) {
 	t.Parallel()
 
-	repo := &repository{db: postgres.NewTestConnection(keeltest.RenderDB(t)), l: zap.NewNop()}
+	repo := &repository{db: postgres.WrapDB(keeltest.RenderDB(t)), l: zap.NewNop()}
 
 	entities, err := repo.GetByIDs(
 		keeltest.TenantContext(t),

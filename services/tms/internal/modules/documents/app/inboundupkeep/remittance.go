@@ -29,9 +29,6 @@ func (s *Service) IngestRemittances(
 	tenantInfo pagination.TenantInfo,
 ) (*IngestRemittancesResult, error) {
 	result := &IngestRemittancesResult{RemittanceIDs: []pulid.ID{}}
-	if s.remittances == nil {
-		return result, nil
-	}
 	message, err := s.messageRepo.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:                 messageID,
 		TenantInfo:         tenantInfo,

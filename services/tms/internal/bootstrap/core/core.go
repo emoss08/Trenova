@@ -1,7 +1,6 @@
 package core
 
 import (
-	"github.com/emoss08/trenova/internal/bootstrap/edition"
 	"github.com/emoss08/trenova/internal/bootstrap/infrastructure"
 	"github.com/emoss08/trenova/internal/bootstrap/modules"
 	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
@@ -36,12 +35,7 @@ import (
 )
 
 func Options() fx.Option {
-	return OptionsFor(edition.Current())
-}
-
-func OptionsFor(e *edition.Edition) fx.Option {
 	return fx.Options(
-		config.SectionsOption(e.ConfigSections...),
 		config.Module,
 		config.Hooks(),
 		infrastructure.ObservabilityModule,
@@ -85,6 +79,5 @@ func OptionsFor(e *edition.Edition) fx.Option {
 		agent.SharedOptions(),
 		turnstream.Module,
 		completionrouter.Module,
-		e.Option(),
 	)
 }

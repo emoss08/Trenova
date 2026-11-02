@@ -16,13 +16,14 @@ import (
 
 // providersTable is the schema of aiprovider.Provider.
 var providersTable = schema.Table{
-	Name:   "ai_providers",
-	Quoted: `"ai_providers"`,
-	Alias:  "ap",
-	Model:  "aiprovider.Provider",
-	Label:  `Provider`,
-	Plural: `Providers`,
-	Doc:    `Provider is one configured model endpoint belonging to an organization. An organization may hold several — a local model for classification, a hosted one for anything that reaches the ledger — which is why this is a row per endpoint rather than a credential keyed by vendor.`,
+	Name:        "ai_providers",
+	Quoted:      `"ai_providers"`,
+	Alias:       "ap",
+	Model:       "aiprovider.Provider",
+	Label:       `Provider`,
+	Plural:      `Providers`,
+	Doc:         `Provider is one configured model endpoint belonging to an organization. An organization may hold several — a local model for classification, a hosted one for anything that reaches the ledger — which is why this is a row per endpoint rather than a credential keyed by vendor.`,
+	Constraints: (&aiprovider.Provider{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -55,8 +56,9 @@ var providersTable = schema.Table{
 		{Name: "priority", Quoted: `"priority"`, Field: "Priority", Kind: schema.KindInt64, Flags: 0, Label: `Priority`, JSON: `priority`},
 		{Name: "embedding_dimensions", Quoted: `"embedding_dimensions"`, Field: "EmbeddingDimensions", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Embedding Dimensions`, JSON: `embeddingDimensions`},
 		{Name: "embedding_input_style", Quoted: `"embedding_input_style"`, Field: "EmbeddingInputStyle", Kind: schema.KindString, Flags: 0, Label: `Embedding Input Style`, JSON: `embeddingInputStyle`, Enum: enumEmbeddingInputStyle[:]},
-		{Name: "trusted", Quoted: `"trusted"`, Field: "Trusted", Kind: schema.KindBool, Flags: 0, Label: `Trusted`, Doc: `Trusted marks a provider an administrator vouches for. A task that can drive a financial mutation will not route to an untrusted provider.`, JSON: `trusted`},
+		{Name: "trusted", Quoted: `"trusted"`, Field: "Trusted", Kind: schema.KindBool, Flags: 0, Label: `Trusted`, Doc: `Trusted marks a provider an administrator vouches for, shown beside it where a person picks a Desk model.`, JSON: `trusted`},
 		{Name: "enabled", Quoted: `"enabled"`, Field: "Enabled", Kind: schema.KindBool, Flags: 0, Label: `Enabled`, JSON: `enabled`},
+		{Name: "nova", Quoted: `"nova"`, Field: "Nova", Kind: schema.KindBool, Flags: 0, Label: `Nova`, Doc: `Nova marks the provider Nova runs on: its credential, platform, limits and cap serve every Nova task, with Nova's own model (novamodel.ID) whatever Model says. An organization has at most one.`, JSON: `nova`},
 		{Name: "last_test", Quoted: `"last_test"`, Field: "LastTest", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Last Test`, Doc: `LastTest is the outcome of the most recent live probe, kept so the configuration UI can show whether an endpoint was ever reachable without probing it again on every page load.`, JSON: `lastTest`},
 		{Name: "timeout_seconds", Quoted: `"timeout_seconds"`, Field: "TimeoutSeconds", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Timeout Seconds`, Doc: `TimeoutSeconds bounds one call to this provider. A call that runs past it is this provider's failure, and the task moves to the next one.`, JSON: `timeoutSeconds`},
 		{Name: "max_concurrent", Quoted: `"max_concurrent"`, Field: "MaxConcurrent", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Max Concurrent`, Doc: `MaxConcurrent is how many calls this provider takes at once across every server. Past it, work moves to the next provider.`, JSON: `maxConcurrent`},
@@ -75,14 +77,14 @@ var providersTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 47},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 48},
 	Returning:    nil,
-	Version:      45,
+	Version:      46,
 	AutoID:       0,
-	AutoCreate:   46,
-	AutoUpdate:   47,
+	AutoCreate:   47,
+	AutoUpdate:   48,
 	IDPrefix:     "aiprv_",
 	New:          newProvider,
 	NewN:         newNProvider,
@@ -130,6 +132,7 @@ type ProvidersTable struct {
 	EmbeddingInputStyle      EmbeddingInputStyleCol
 	Trusted                  keel.BoolCol
 	Enabled                  keel.BoolCol
+	Nova                     keel.BoolCol
 	LastTest                 keel.JSONBCol
 	TimeoutSeconds           keel.Int64Col
 	MaxConcurrent            keel.Int64Col
@@ -183,21 +186,22 @@ var Providers = &ProvidersTable{
 	EmbeddingInputStyle:      EmbeddingInputStyleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 30}}},
 	Trusted:                  keel.BoolCol{Col: keel.Col{Ref: &providersRef, Index: 31}},
 	Enabled:                  keel.BoolCol{Col: keel.Col{Ref: &providersRef, Index: 32}},
-	LastTest:                 keel.JSONBCol{Col: keel.Col{Ref: &providersRef, Index: 33}},
-	TimeoutSeconds:           keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 34}},
-	MaxConcurrent:            keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 35}},
-	MonthlyCapUSD:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &providersRef, Index: 36}}},
-	OnCap:                    CapActionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 37}}},
-	APIKeyPrefix:             keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 38}},
-	APIKeyLastFour:           keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 39}},
-	APIKeyAddedAt:            keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 40}},
-	APIKeyAddedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 41}}},
-	APIKeyLastUsedAt:         keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 42}},
-	PreviousAPIKey:           keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 43}},
-	RotationExpiresAt:        keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 44}},
-	Version:                  keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 45}},
-	CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 46}},
-	UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 47}},
+	Nova:                     keel.BoolCol{Col: keel.Col{Ref: &providersRef, Index: 33}},
+	LastTest:                 keel.JSONBCol{Col: keel.Col{Ref: &providersRef, Index: 34}},
+	TimeoutSeconds:           keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 35}},
+	MaxConcurrent:            keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 36}},
+	MonthlyCapUSD:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &providersRef, Index: 37}}},
+	OnCap:                    CapActionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 38}}},
+	APIKeyPrefix:             keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 39}},
+	APIKeyLastFour:           keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 40}},
+	APIKeyAddedAt:            keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 41}},
+	APIKeyAddedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 42}}},
+	APIKeyLastUsedAt:         keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 43}},
+	PreviousAPIKey:           keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 44}},
+	RotationExpiresAt:        keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 45}},
+	Version:                  keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 46}},
+	CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 47}},
+	UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 48}},
 }
 
 // BuildProviders builds the table of ai_providers for ref. Generated relation and alias methods call it.
@@ -237,21 +241,22 @@ func BuildProviders(r *keel.Ref) *ProvidersTable {
 		EmbeddingInputStyle:      EmbeddingInputStyleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 30}}},
 		Trusted:                  keel.BoolCol{Col: keel.Col{Ref: r, Index: 31}},
 		Enabled:                  keel.BoolCol{Col: keel.Col{Ref: r, Index: 32}},
-		LastTest:                 keel.JSONBCol{Col: keel.Col{Ref: r, Index: 33}},
-		TimeoutSeconds:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 34}},
-		MaxConcurrent:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
-		MonthlyCapUSD:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 36}}},
-		OnCap:                    CapActionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 37}}},
-		APIKeyPrefix:             keel.StringCol{Col: keel.Col{Ref: r, Index: 38}},
-		APIKeyLastFour:           keel.StringCol{Col: keel.Col{Ref: r, Index: 39}},
-		APIKeyAddedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 40}},
-		APIKeyAddedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 41}}},
-		APIKeyLastUsedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 42}},
-		PreviousAPIKey:           keel.StringCol{Col: keel.Col{Ref: r, Index: 43}},
-		RotationExpiresAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 44}},
-		Version:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 45}},
-		CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 46}},
-		UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 47}},
+		Nova:                     keel.BoolCol{Col: keel.Col{Ref: r, Index: 33}},
+		LastTest:                 keel.JSONBCol{Col: keel.Col{Ref: r, Index: 34}},
+		TimeoutSeconds:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
+		MaxConcurrent:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 36}},
+		MonthlyCapUSD:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 37}}},
+		OnCap:                    CapActionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 38}}},
+		APIKeyPrefix:             keel.StringCol{Col: keel.Col{Ref: r, Index: 39}},
+		APIKeyLastFour:           keel.StringCol{Col: keel.Col{Ref: r, Index: 40}},
+		APIKeyAddedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 41}},
+		APIKeyAddedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 42}}},
+		APIKeyLastUsedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 43}},
+		PreviousAPIKey:           keel.StringCol{Col: keel.Col{Ref: r, Index: 44}},
+		RotationExpiresAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 45}},
+		Version:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 46}},
+		CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 47}},
+		UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 48}},
 	}
 }
 
@@ -703,34 +708,36 @@ func ptrProvider(p unsafe.Pointer, c int32) any {
 	case 32:
 		return &r.Enabled
 	case 33:
-		return &r.LastTest
+		return &r.Nova
 	case 34:
-		return (*int64)(unsafe.Pointer(&r.TimeoutSeconds))
+		return &r.LastTest
 	case 35:
-		return (*int64)(unsafe.Pointer(&r.MaxConcurrent))
+		return (*int64)(unsafe.Pointer(&r.TimeoutSeconds))
 	case 36:
-		return &r.MonthlyCapUSD
+		return (*int64)(unsafe.Pointer(&r.MaxConcurrent))
 	case 37:
-		return (*string)(unsafe.Pointer(&r.OnCap))
+		return &r.MonthlyCapUSD
 	case 38:
-		return &r.APIKeyPrefix
+		return (*string)(unsafe.Pointer(&r.OnCap))
 	case 39:
-		return &r.APIKeyLastFour
+		return &r.APIKeyPrefix
 	case 40:
-		return &r.APIKeyAddedAt
+		return &r.APIKeyLastFour
 	case 41:
-		return (*string)(unsafe.Pointer(&r.APIKeyAddedByID))
+		return &r.APIKeyAddedAt
 	case 42:
-		return &r.APIKeyLastUsedAt
+		return (*string)(unsafe.Pointer(&r.APIKeyAddedByID))
 	case 43:
-		return &r.PreviousAPIKey
+		return &r.APIKeyLastUsedAt
 	case 44:
-		return &r.RotationExpiresAt
+		return &r.PreviousAPIKey
 	case 45:
-		return &r.Version
+		return &r.RotationExpiresAt
 	case 46:
-		return &r.CreatedAt
+		return &r.Version
 	case 47:
+		return &r.CreatedAt
+	case 48:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -857,70 +864,72 @@ func valueProvider(p unsafe.Pointer, c int32) any {
 	case 32:
 		return r.Enabled
 	case 33:
+		return r.Nova
+	case 34:
 		if r.LastTest == nil {
 			return nil
 		}
 		return *r.LastTest
-	case 34:
+	case 35:
 		if r.TimeoutSeconds == 0 {
 			return nil
 		}
 		return int64(r.TimeoutSeconds)
-	case 35:
+	case 36:
 		if r.MaxConcurrent == 0 {
 			return nil
 		}
 		return int64(r.MaxConcurrent)
-	case 36:
+	case 37:
 		if r.MonthlyCapUSD == nil {
 			return nil
 		}
 		return *r.MonthlyCapUSD
-	case 37:
+	case 38:
 		if r.OnCap == "" {
 			return nil
 		}
 		return string(r.OnCap)
-	case 38:
+	case 39:
 		if r.APIKeyPrefix == "" {
 			return nil
 		}
 		return r.APIKeyPrefix
-	case 39:
+	case 40:
 		if r.APIKeyLastFour == "" {
 			return nil
 		}
 		return r.APIKeyLastFour
-	case 40:
+	case 41:
 		if r.APIKeyAddedAt == nil {
 			return nil
 		}
 		return *r.APIKeyAddedAt
-	case 41:
+	case 42:
 		if r.APIKeyAddedByID == "" {
 			return nil
 		}
 		return string(r.APIKeyAddedByID)
-	case 42:
+	case 43:
 		if r.APIKeyLastUsedAt == nil {
 			return nil
 		}
 		return *r.APIKeyLastUsedAt
-	case 43:
+	case 44:
 		if r.PreviousAPIKey == "" {
 			return nil
 		}
 		return r.PreviousAPIKey
-	case 44:
+	case 45:
 		if r.RotationExpiresAt == nil {
 			return nil
 		}
 		return *r.RotationExpiresAt
-	case 45:
-		return r.Version
 	case 46:
-		return r.CreatedAt
+		return r.Version
 	case 47:
+		return r.CreatedAt
+	case 48:
 		return r.UpdatedAt
 	}
 	return nil

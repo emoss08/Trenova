@@ -21,12 +21,12 @@ type Params struct {
 	Logger              *zap.Logger
 	MappingProfileRepo  edipartnerports.EDIMappingProfileRepository
 	ShipmentEventRepo   shipmenteventports.ShipmentEventRepository
-	ShipmentMoveRepo    shipmentmoveports.ShipmentMoveRepository `optional:"true"`
+	ShipmentMoveRepo    shipmentmoveports.ShipmentMoveRepository
 	ShipmentSvc         shipmentserviceports.ShipmentLifecycleService
 	Shipments           *editendershipment.Service
 	TenderRecipientRepo editenderports.EDITenderRecipientRepository
 	TenderMapping       *editendermapping.Service
-	TrackingEvents      trackingeventports.TrackingEventService `optional:"true"`
+	TrackingEvents      trackingeventports.TrackingEventService
 	TransferRepo        editenderports.EDILoadTenderTransferRepository
 }
 

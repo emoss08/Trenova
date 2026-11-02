@@ -19,7 +19,7 @@ import (
 )
 
 func (e *factoringEnv) watchtowerReader() factoringwatchtowerports.WatchtowerReader {
-	return NewWatchtowerReader(Params{DB: postgres.NewTestConnection(e.db), Logger: zap.NewNop()})
+	return NewWatchtowerReader(Params{DB: postgres.WrapDB(e.db), Logger: zap.NewNop()})
 }
 
 func (e *factoringEnv) nameFactorOnProfile(t *testing.T, factorID *pulid.ID) {

@@ -1454,32 +1454,6 @@ writes:
     exempt: infrastructure
     reason: "Fetches a live rate from the rate provider and keeps a short-lived quote for the screen that asked; it books nothing, and nothing uses the quote unless a person settles a payment with it."
 
-  # extractioneval
-  "mutation cancelExtractionEvalRun":
-    exempt: agent-administration
-    reason: "Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set."
-  "mutation deleteExtractionEvalCase":
-    exempt: agent-administration
-    reason: "Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set."
-  "mutation promoteAICorrection":
-    exempt: agent-administration
-    reason: "Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set."
-  "mutation refreezeExtractionEvalCases":
-    exempt: agent-administration
-    reason: "Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set."
-  "mutation startExtractionEvalRun":
-    exempt: agent-administration
-    reason: "Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set."
-  "mutation updateExtractionEvalCase":
-    exempt: agent-administration
-    reason: "Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set."
-  "mutation updateExtractionRollout":
-    exempt: agent-administration
-    reason: "Choosing which AI provider serves real document extractions, how much of them, and when its guards stop it is oversight of the agents; an agent must not promote or protect the model it is measured against."
-  "mutation updateExtractionShadowSettings":
-    exempt: agent-administration
-    reason: "Choosing which AI provider shadows document extraction, and how much it is sent, is oversight of the agents; an agent must not pick or tune the model it is measured against."
-
   # fiscalperiod
   "PUT /api/v1/fiscal-periods/:fiscalPeriodID/activate/":
     tools: [ledger_open_fiscal_period]
@@ -2205,11 +2179,6 @@ writes:
   "mutation restoreNotifications":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
-
-  # onboarding
-  "POST /api/v1/onboarding/complete/":
-    exempt: configuration
-    reason: "The owner's one-time setup of a new organization's profile and operating mode; every later write depends on it and it runs before any agent is configured."
 
   # order
   "mutation addOrderCharge":

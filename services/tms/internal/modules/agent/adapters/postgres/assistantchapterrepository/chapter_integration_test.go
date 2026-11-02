@@ -43,7 +43,7 @@ func newHarness(t *testing.T) *harness {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	other := seedtest.SeedAdditionalTenant(t, ctx, db, "CH")
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 
 	return &harness{
 		ctx:         data.Ctx(ctx),

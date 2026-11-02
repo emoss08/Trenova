@@ -34,22 +34,22 @@ type Params struct {
 	Conversations    conversationports.ConversationRepository
 	Definitions      agentdefinitionports.AgentDefinitionRepository
 	Proposals        agentproposalports.AgentProposalRepository
-	Plans            agentplanports.AgentPlanRepository `optional:"true"`
+	Plans            agentplanports.AgentPlanRepository
 	AIProviders      aiproviderports.AIProviderRepository
 	Shadow           *agentshadow.Resolver
-	Budgets          agentbudgetports.AgentBudgetService `optional:"true"`
+	Budgets          agentbudgetports.AgentBudgetService
 	Permissions      permissionports.PermissionEngine
-	Cases            deskcaseports.AssistantCaseStates                     `optional:"true"`
-	Runs             agentruntimeports.AgentRunRepository                  `optional:"true"`
-	SystemAgents     agentdefinitionports.SystemAgentProvisioner           `optional:"true"`
-	PageThreads      conversationports.PageThreadRepository                `optional:"true"`
-	AgentControls    tenantports.AgentControlRepository                    `optional:"true"`
-	PaletteQuestions paletteports.QuestionRepository                       `optional:"true"`
-	Users            tenantports.UserRepository                            `optional:"true"`
-	Notifications    *notificationservice.Service                          `optional:"true"`
-	Memories         agentmemoryports.AgentMemoryService                   `optional:"true"`
-	Quota            platformplanports.QuotaGuard                          `optional:"true"`
-	Schedules        conversationscheduleports.ConversationThreadSchedules `optional:"true"`
+	Cases            deskcaseports.AssistantCaseStates
+	Runs             agentruntimeports.AgentRunRepository
+	SystemAgents     agentdefinitionports.SystemAgentProvisioner
+	PageThreads      conversationports.PageThreadRepository
+	AgentControls    tenantports.AgentControlRepository
+	PaletteQuestions paletteports.QuestionRepository
+	Users            tenantports.UserRepository
+	Notifications    *notificationservice.Service
+	Memories         agentmemoryports.AgentMemoryService
+	Quota            platformplanports.QuotaGuard
+	Schedules        conversationscheduleports.ConversationThreadSchedules
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.

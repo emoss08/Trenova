@@ -266,9 +266,6 @@ func (f *facts) attachWebWatches(
 	tenant pagination.TenantInfo,
 	waits []*agentwait.Wait,
 ) {
-	if f.webWatches == nil {
-		return
-	}
 	for _, wait := range waits {
 		if wait.Kind != agentwait.KindWebWatch || !wait.Status.Open() || wait.Condition == nil ||
 			wait.Condition.WebWatchID.IsNil() {

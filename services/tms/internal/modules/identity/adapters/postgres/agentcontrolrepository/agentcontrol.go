@@ -105,9 +105,6 @@ func (r *repository) Update(
 			ac.AgentMoneyRunAmountMinor,
 			ac.AgentMoneyDayCalls,
 			ac.AgentMoneyDayAmountMinor,
-			ac.AITrainingConsent,
-			ac.AITrainingConsentChangedAt,
-			ac.AITrainingConsentChangedByID,
 		); err != nil {
 			return nil, agentControlErrors.Map(err, entity.ID.String())
 		}

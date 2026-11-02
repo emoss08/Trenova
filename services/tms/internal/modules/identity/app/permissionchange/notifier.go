@@ -70,7 +70,7 @@ func (n *Notifier) announce(
 	tenant pagination.TenantInfo,
 	audience pulid.ID,
 ) {
-	if n.realtime == nil || tenant.OrgID.IsNil() || tenant.BuID.IsNil() {
+	if tenant.OrgID.IsNil() || tenant.BuID.IsNil() {
 		return
 	}
 

@@ -40,7 +40,7 @@ func SendWorkflowID(submissionID pulid.ID, group int) string {
 type SendStarterParams struct {
 	fx.In
 
-	Workflows kernelports.WorkflowStarter `optional:"true"`
+	Workflows kernelports.WorkflowStarter
 	Logger    *zap.Logger
 }
 
@@ -61,11 +61,6 @@ func (s *SendStarter) StartSend(
 	submission *factoringsubmission.Submission,
 ) {
 	if submission == nil {
-		return
-	}
-	if s.workflows == nil || !s.workflows.Enabled() {
-		s.l.Warn("factoring schedule sending is not available; the schedule waits in Sending",
-			zap.String("submissionId", submission.ID.String()))
 		return
 	}
 	id := SendWorkflowID(submission.ID, submission.SendAttemptGroup)

@@ -80,8 +80,8 @@ func (s *Access) Vectorize(
 	ctx context.Context,
 	req *retrievalports.QueryVectorRequest,
 ) retrievalports.QueryVector {
-	if s.vectorizer == nil || req == nil || strings.TrimSpace(req.Text) == "" ||
-		req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
+	if req == nil || strings.TrimSpace(req.Text) == "" || req.TenantInfo.OrgID.IsNil() ||
+		req.TenantInfo.BuID.IsNil() {
 		return retrievalports.QueryVector{}
 	}
 
@@ -106,8 +106,7 @@ func (s *Access) ToolSemantic(
 	tenant pagination.TenantInfo,
 	query retrievalports.QueryVector,
 ) *agenttoolcatalog.Semantic {
-	if s.vectors == nil || s.catalog == nil || !query.Usable() ||
-		tenant.OrgID.IsNil() || tenant.BuID.IsNil() {
+	if !query.Usable() || tenant.OrgID.IsNil() || tenant.BuID.IsNil() {
 		return nil
 	}
 

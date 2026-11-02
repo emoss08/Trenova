@@ -606,18 +606,16 @@ func (p *Provider) getOnTimePercent(
 		}
 
 		var target *float64
-		if p.dispatchRepo != nil {
-			control, controlErr := p.dispatchRepo.GetByOrgID(
-				ctx,
-				dispatchcontrolports.GetDispatchControlRequest{
-					TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
-				},
-			)
-			if controlErr != nil {
-				return nil, controlErr
-			}
-			target = control.ServiceFailureTarget
+		control, controlErr := p.dispatchRepo.GetByOrgID(
+			ctx,
+			dispatchcontrolports.GetDispatchControlRequest{
+				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+			},
+		)
+		if controlErr != nil {
+			return nil, controlErr
 		}
+		target = control.ServiceFailureTarget
 
 		return &OnTimeCard{
 			Percent:     percent(result.OnTime, result.Total),

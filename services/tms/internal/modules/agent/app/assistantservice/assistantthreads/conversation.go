@@ -237,10 +237,6 @@ func (s *Service) markCases(
 	tenant pagination.TenantInfo,
 	threads ...*conversation.Thread,
 ) error {
-	if s.cases == nil {
-		return nil
-	}
-
 	return s.cases.Attach(ctx, tenant, userID, threads)
 }
 
@@ -382,10 +378,6 @@ func (s *Service) threadSchedules(
 	ctx context.Context,
 	req *conversationports.GetThreadRequest,
 ) []*conversationschedule.Schedule {
-	if s.schedules == nil {
-		return nil
-	}
-
 	schedules, err := s.schedules.OfThread(ctx, conversationscheduleports.ThreadSchedulesRequest{
 		ThreadID:   req.ID,
 		UserID:     req.UserID,
@@ -408,16 +400,14 @@ func (s *Service) withdrawPending(
 	threadID pulid.ID,
 	tenant pagination.TenantInfo,
 ) {
-	if s.proposals != nil {
-		if _, err := s.proposals.ExpirePendingByThread(ctx,
-			agentproposalports.ExpireAgentProposalsByThreadRequest{
-				ThreadID:   threadID,
-				TenantInfo: tenant,
-			},
-		); err != nil {
-			s.logger.Warn("could not withdraw a deleted conversation's proposals",
-				zap.String("thread", threadID.String()), zap.Error(err))
-		}
+	if _, err := s.proposals.ExpirePendingByThread(ctx,
+		agentproposalports.ExpireAgentProposalsByThreadRequest{
+			ThreadID:   threadID,
+			TenantInfo: tenant,
+		},
+	); err != nil {
+		s.logger.Warn("could not withdraw a deleted conversation's proposals",
+			zap.String("thread", threadID.String()), zap.Error(err))
 	}
 	if s.plans != nil {
 		if _, err := s.plans.ExpirePendingByThread(ctx,

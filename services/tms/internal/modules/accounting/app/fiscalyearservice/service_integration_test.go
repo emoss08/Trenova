@@ -38,7 +38,7 @@ func TestActivateReturnsConflictWhenCurrentFiscalYearIsLocked(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	fyRepo := fiscalyearrepository.New(fiscalyearrepository.Params{
 		DB:     conn,
 		Logger: zap.NewNop(),
@@ -114,10 +114,13 @@ func TestActivateReturnsConflictWhenCurrentFiscalYearIsLocked(t *testing.T) {
 	lock.Release()
 	lock.Wait(t)
 
-	currentAfter, err := fyRepo.GetCurrentFiscalYear(ctx, fiscalyearports.GetCurrentFiscalYearRequest{
-		OrgID: data.Organization.ID,
-		BuID:  data.BusinessUnit.ID,
-	})
+	currentAfter, err := fyRepo.GetCurrentFiscalYear(
+		ctx,
+		fiscalyearports.GetCurrentFiscalYearRequest{
+			OrgID: data.Organization.ID,
+			BuID:  data.BusinessUnit.ID,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, current.ID, currentAfter.ID)
 
@@ -131,7 +134,7 @@ func TestGetCloseBlockersReturnsOpenPeriodBlocker(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	fyRepo := fiscalyearrepository.New(fiscalyearrepository.Params{DB: conn, Logger: zap.NewNop()})
 	fpRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()},

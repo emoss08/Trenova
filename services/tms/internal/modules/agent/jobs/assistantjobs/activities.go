@@ -81,20 +81,20 @@ type ActivitiesParams struct {
 	Logger        *zap.Logger
 	Assistant     *assistantservice.Service
 	Compaction    *assistantcompaction.Service
-	Threads       assistantports.AssistantService `optional:"true"`
+	Threads       assistantports.AssistantService
 	Turns         *assistantturnservice.Service
 	TurnRepo      assistantturnports.AssistantTurnRepository
 	Steps         agentruntimeports.RunStepLedger
 	Notifications *notificationservice.Service
-	Trajectory    agentruntimeports.AgentRunEventRecorder `optional:"true"`
-	FollowUps     assistantports.DecisionFollowUpResumer  `optional:"true"`
-	Metrics       *metrics.Registry                       `optional:"true"`
+	Trajectory    agentruntimeports.AgentRunEventRecorder
+	FollowUps     assistantports.DecisionFollowUpResumer
+	Metrics       *metrics.Registry
 	// Workflows starts the compaction a turn that filled its conversation
 	// sets off.
-	Workflows   kernelports.WorkflowStarter                   `optional:"true"`
-	Reflections agentreflectionports.AgentReflectionScheduler `optional:"true"`
-	Queue       assistantturnports.AssistantQueueSettler      `optional:"true"`
-	Chapters    assistantchapterports.ChapterScheduler        `optional:"true"`
+	Workflows   kernelports.WorkflowStarter
+	Reflections agentreflectionports.AgentReflectionScheduler
+	Queue       assistantturnports.AssistantQueueSettler
+	Chapters    assistantchapterports.ChapterScheduler
 }
 
 // Activities are a turn's first and last steps. Everything between them is
@@ -136,9 +136,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 	}
 	// Assigned only when present: a nil pointer held by an interface is not
 	// a nil interface, and the notice would dereference it.
-	if p.Notifications != nil {
-		a.notifications = p.Notifications
-	}
+	a.notifications = p.Notifications
 
 	return a
 }
@@ -423,16 +421,14 @@ func (a *Activities) continueConversation(
 	c *conversationContinuation,
 ) *assistantturnports.QueuedTurn {
 	var next *assistantturnports.QueuedTurn
-	if a.queue != nil {
-		next = a.queue.SettleQueue(ctx, &assistantturnports.SettleQueueRequest{
-			TenantInfo: c.tenant,
-			ThreadID:   c.threadID,
-			UserID:     c.userID,
-			Read:       c.read,
-			Dispatch:   sendsQueueOn(c.status),
-		})
-	}
-	if next != nil || !c.resume || a.followUps == nil {
+	next = a.queue.SettleQueue(ctx, &assistantturnports.SettleQueueRequest{
+		TenantInfo: c.tenant,
+		ThreadID:   c.threadID,
+		UserID:     c.userID,
+		Read:       c.read,
+		Dispatch:   sendsQueueOn(c.status),
+	})
+	if next != nil || !c.resume {
 		return next
 	}
 
@@ -450,7 +446,7 @@ func sendsQueueOn(status conversation.AssistantTurnStatus) bool {
 }
 
 func (a *Activities) cueReflection(ctx context.Context, in *FinishTurnInput) {
-	if a.reflections == nil || in.Plan == nil || in.Plan.Refused() {
+	if in.Plan == nil || in.Plan.Refused() {
 		return
 	}
 
@@ -464,10 +460,6 @@ func (a *Activities) cueReflection(ctx context.Context, in *FinishTurnInput) {
 }
 
 func (a *Activities) cueChapter(ctx context.Context, in *FinishTurnInput) {
-	if a.chapters == nil {
-		return
-	}
-
 	payload := in.Payload
 	a.chapters.Cue(ctx, &assistantchapterports.ChapterTurnRequest{
 		TenantInfo: payload.TenantInfo(),
@@ -567,7 +559,7 @@ func compactionCue(
 
 func (a *Activities) recordFingerprint(ctx context.Context, in *FinishTurnInput) {
 	fingerprint := assistantservice.TurnFingerprint(in.Plan, in.Run)
-	if fingerprint == nil || a.turnRepo == nil {
+	if fingerprint == nil {
 		return
 	}
 
@@ -861,10 +853,6 @@ func (a *Activities) recordTrajectory(
 	events []temporaltype.StreamItem,
 	ending temporaltype.StreamItem,
 ) {
-	if a.trajectory == nil {
-		return
-	}
-
 	writer := a.trajectory.Recorder(ctx, tenant, agentruntimeports.RunStepOwner{
 		Kind: agentruntimeports.RunStepOwnerAssistantTurn,
 		ID:   payload.TurnID,

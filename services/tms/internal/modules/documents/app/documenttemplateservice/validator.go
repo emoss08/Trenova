@@ -26,7 +26,7 @@ const fieldKind = "kind"
 type ValidatorParams struct {
 	fx.In
 
-	DB       *postgres.Connection `optional:"true"`
+	DB       *postgres.Connection
 	Registry *templatecatalog.Registry
 }
 
@@ -87,9 +87,7 @@ func buildTemplateValidator(
 		).
 		WithCustomRule(newKindRegisteredRule(p.Registry))
 
-	if p.DB != nil {
-		builder = builder.WithCustomRule(newSingleOrgDefaultRule(p.DB))
-	}
+	builder = builder.WithCustomRule(newSingleOrgDefaultRule(p.DB))
 
 	return withCheckers(builder, p.DB, documenttemplatedb.DocumentTemplatesSchema()).Build()
 }

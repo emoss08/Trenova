@@ -14,10 +14,7 @@ import (
 	"go.uber.org/fx"
 )
 
-const (
-	ContributorsGroup = "public_config_contributors"
-	cacheControl      = "public, max-age=60"
-)
+const cacheControl = "public, max-age=60"
 
 type Params struct {
 	fx.In
@@ -25,14 +22,12 @@ type Params struct {
 	PlatformConfig *platformconfig.Config
 	SecurityConfig *securityconfig.Config
 	ErrorHandler   *helpers.ErrorHandler
-	Contributors   []kernelports.PublicConfigContributor `group:"public_config_contributors"`
 }
 
 type Handler struct {
 	platformConfig *platformconfig.Config
 	securityConfig *securityconfig.Config
 	eh             *helpers.ErrorHandler
-	contributors   []kernelports.PublicConfigContributor
 }
 
 func New(p Params) *Handler {
@@ -40,16 +35,7 @@ func New(p Params) *Handler {
 		platformConfig: p.PlatformConfig,
 		securityConfig: p.SecurityConfig,
 		eh:             p.ErrorHandler,
-		contributors:   p.Contributors,
 	}
-}
-
-func AsContributor(constructor any) any {
-	return fx.Annotate(
-		constructor,
-		fx.As(new(kernelports.PublicConfigContributor)),
-		fx.ResultTags(`group:"`+ContributorsGroup+`"`),
-	)
 }
 
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
@@ -68,27 +54,11 @@ func (h *Handler) publicConfig(c *gin.Context) {
 	helpers.JSON(c, http.StatusOK, resp)
 }
 
-func (h *Handler) Build(ctx context.Context) (*kernelports.PublicConfig, error) {
-	resp := &kernelports.PublicConfig{
+func (h *Handler) Build(context.Context) (*kernelports.PublicConfig, error) {
+	return &kernelports.PublicConfig{
 		PlatformMode: string(h.platformConfig.GetMode()),
-		FreePlan:     kernelports.PublicFreePlanSummary{Limits: map[string]int64{}},
 		Session:      publicSessionPolicy(&h.securityConfig.Session),
-	}
-
-	for _, contributor := range h.contributors {
-		if contributor == nil {
-			continue
-		}
-		if err := contributor.ContributePublicConfig(ctx, resp); err != nil {
-			return nil, err
-		}
-	}
-
-	if resp.FreePlan.Limits == nil {
-		resp.FreePlan.Limits = map[string]int64{}
-	}
-
-	return resp, nil
+	}, nil
 }
 
 func publicSessionPolicy(cfg *securityconfig.SessionConfig) kernelports.PublicSessionPolicy {

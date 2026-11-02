@@ -74,9 +74,6 @@ func (s *Service) telematicsActive(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (bool, error) {
-	if s.integrationRepo == nil || s.telematicsRepo == nil {
-		return false, nil
-	}
 	records, err := s.integrationRepo.ListByTenant(ctx, tenantInfo)
 	if err != nil {
 		return false, err
@@ -304,7 +301,7 @@ func (s *Service) loadTelematics(
 	snapshot *FleetSnapshot,
 	workerIDs, tractorIDs []pulid.ID,
 ) error {
-	if s.telematicsRepo == nil || !snapshot.TelematicsActive {
+	if !snapshot.TelematicsActive {
 		return nil
 	}
 

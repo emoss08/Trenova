@@ -100,9 +100,6 @@ func (s *Service) MyPTOBalances(
 	if err != nil {
 		return nil, err
 	}
-	if s.ptoLedger == nil {
-		return []*ptoledgerservice.BalanceView{}, nil
-	}
 
 	views, err := s.ptoLedger.GetBalances(ctx, tenantInfo, wrk.ID)
 	if err != nil {
@@ -416,9 +413,6 @@ func (s *Service) NotifyDispatch(
 	eventType, title, message, link string,
 	related map[string]any,
 ) {
-	if s.notificationService == nil {
-		return
-	}
 	buID := tenantInfo.BuID
 	entity := &notification.Notification{
 		OrganizationID:  tenantInfo.OrgID,

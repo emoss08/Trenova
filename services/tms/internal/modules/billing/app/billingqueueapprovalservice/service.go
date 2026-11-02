@@ -96,11 +96,6 @@ func (s *Service) Start(
 			"itemIds", errortypes.ErrInvalid, "Act on at most 500 items at a time",
 		)
 	}
-	if !s.workflows.Enabled() {
-		return nil, errortypes.NewBusinessError(
-			"Approving in bulk is temporarily unavailable — the background worker is not connected",
-		)
-	}
 
 	run, err := s.repo.CreateApprovalRun(ctx, &billingqueueports.CreateApprovalRunRequest{
 		Run: &billingapprovalrun.ApprovalRun{

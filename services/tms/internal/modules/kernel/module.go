@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/app/versionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/rateimport"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 )
 
@@ -43,6 +44,7 @@ func SharedOptions() fx.Option {
 			),
 			usstateservice.New,
 			spreadsheetLimits,
+			timeutils.SystemClock,
 		),
 	)
 }

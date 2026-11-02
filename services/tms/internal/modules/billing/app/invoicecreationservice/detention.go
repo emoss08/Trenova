@@ -21,7 +21,7 @@ func (s *Service) guardDetentionHolds(
 	tenantInfo pagination.TenantInfo,
 	shipmentIDs []pulid.ID,
 ) error {
-	if s.detentionBilling == nil || len(shipmentIDs) == 0 {
+	if len(shipmentIDs) == 0 {
 		return nil
 	}
 
@@ -60,7 +60,7 @@ func (s *Service) syncDetentionBilling(
 	created *invoice.Invoice,
 	actor *permissionports.RequestActor,
 ) error {
-	if s.detentionBilling == nil || created == nil {
+	if created == nil {
 		return nil
 	}
 

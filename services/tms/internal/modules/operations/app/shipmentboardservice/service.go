@@ -3,7 +3,7 @@ package shipmentboardservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -27,7 +27,7 @@ type Params struct {
 
 	Repo            shipmentboardports.ShipmentBoardRepository
 	QuickFilters    shipmentports.ShipmentQuickFilterBasisResolver
-	AIProviders     aiproviderports.AIProviderRepository
+	Nova            llmports.TaskRunner
 	Organizations   tenantports.OrganizationRepository
 	Integrations    integrationports.IntegrationRepository
 	IntegrationsSvc *integrationservice.Service
@@ -36,7 +36,7 @@ type Params struct {
 type Service struct {
 	repo          shipmentboardports.ShipmentBoardRepository
 	quickFilters  shipmentports.ShipmentQuickFilterBasisResolver
-	aiProviders   aiproviderports.AIProviderRepository
+	nova          llmports.TaskRunner
 	organizations tenantports.OrganizationRepository
 	integrations  integrationports.IntegrationRepository
 	maps          MapsReadiness
@@ -48,34 +48,14 @@ var (
 	_ shipmentboardports.ShipmentQuickFilterCounter      = (*Service)(nil)
 )
 
-type Dependencies struct {
-	Repo          shipmentboardports.ShipmentBoardRepository
-	QuickFilters  shipmentports.ShipmentQuickFilterBasisResolver
-	AIProviders   aiproviderports.AIProviderRepository
-	Organizations tenantports.OrganizationRepository
-	Integrations  integrationports.IntegrationRepository
-	Maps          MapsReadiness
-}
-
 //nolint:gocritic // dependency injection
 func New(p Params) *Service {
-	return NewWithDependencies(&Dependencies{
-		Repo:          p.Repo,
-		QuickFilters:  p.QuickFilters,
-		AIProviders:   p.AIProviders,
-		Organizations: p.Organizations,
-		Integrations:  p.Integrations,
-		Maps:          p.IntegrationsSvc,
-	})
-}
-
-func NewWithDependencies(d *Dependencies) *Service {
 	return &Service{
-		repo:          d.Repo,
-		quickFilters:  d.QuickFilters,
-		aiProviders:   d.AIProviders,
-		organizations: d.Organizations,
-		integrations:  d.Integrations,
-		maps:          d.Maps,
+		repo:          p.Repo,
+		quickFilters:  p.QuickFilters,
+		nova:          p.Nova,
+		organizations: p.Organizations,
+		integrations:  p.Integrations,
+		maps:          p.IntegrationsSvc,
 	}
 }

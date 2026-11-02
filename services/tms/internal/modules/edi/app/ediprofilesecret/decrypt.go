@@ -1,7 +1,6 @@
 package ediprofilesecret
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -19,14 +18,6 @@ func (s *Service) decryptProfileSecret(
 	value := strings.TrimSpace(profile.EncryptedSecrets[key])
 	if value == "" {
 		return "", nil
-	}
-	if s.encryption == nil {
-		if encryptionservice.IsEnvelope(value) {
-			return "", errors.New(
-				"encrypted EDI communication profile secret cannot be decrypted without encryption service",
-			)
-		}
-		return value, nil
 	}
 	if !encryptionservice.IsEnvelope(value) {
 		return value, nil

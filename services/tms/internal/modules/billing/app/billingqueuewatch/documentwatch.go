@@ -19,8 +19,8 @@ type DocumentObserverParams struct {
 	fx.In
 
 	Repo     billingqueueports.BillingQueueRepository
-	Rechecks billingqueueports.RecheckRequester `optional:"true"`
-	Realtime realtimeports.RealtimeService      `optional:"true"`
+	Rechecks billingqueueports.RecheckRequester
+	Realtime realtimeports.RealtimeService
 	Logger   *zap.Logger
 }
 
@@ -80,12 +80,8 @@ func (o *DocumentObserver) DocumentsChanged(
 			if item == nil {
 				continue
 			}
-			if o.rechecks != nil {
-				o.rechecks.RequestRecheck(ctx, change.TenantInfo, item.ID)
-			}
-			if o.realtime == nil {
-				continue
-			}
+			o.rechecks.RequestRecheck(ctx, change.TenantInfo, item.ID)
+
 			if err = realtimeinvalidation.Publish(
 				ctx,
 				o.realtime,

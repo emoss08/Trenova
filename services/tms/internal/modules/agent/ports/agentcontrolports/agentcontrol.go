@@ -14,7 +14,6 @@ type UpdateAgentControlRequest struct {
 	// only knows the pause switch leaves them as they are.
 	EarnedAutonomy     *bool
 	PromotionThreshold *int
-	AITrainingConsent  *bool
 	// PersonMonthlyMessages is absent to leave the allowance as it is.
 	PersonMonthlyMessages *int
 	LearningOff           *bool

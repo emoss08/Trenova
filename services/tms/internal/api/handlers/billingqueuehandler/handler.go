@@ -32,7 +32,7 @@ type Params struct {
 	Review               billingqueueports.BillingQueueReviewService
 	Approval             billingqueueports.BillingQueueApprovalService
 	Assist               billingqueueports.BillingQueueAssistService
-	Packets              billingqueueports.PacketPreviewer `optional:"true"`
+	Packets              billingqueueports.PacketPreviewer
 	PresetRepo           billingqueuefilterpresetports.BillingQueueFilterPresetRepository
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
@@ -414,6 +414,9 @@ type updateChargesRequest struct {
 	// ConvertAmountSplitsToPercent retries an edit that was refused because it
 	// left an amount split that no longer adds up.
 	ConvertAmountSplitsToPercent bool `json:"convertAmountSplitsToPercent"`
+	// ExpandShipmentDetails answers with the saved item as the item's GET expands
+	// it, so a caller showing the item draws it from the save.
+	ExpandShipmentDetails bool `json:"expandShipmentDetails"`
 }
 
 // @Summary Update charges on a billing queue item
@@ -467,6 +470,7 @@ func (h *Handler) updateCharges(c *gin.Context) {
 			AdditionalCharges: req.AdditionalCharges,
 
 			ConvertAmountSplitsToPercent: req.ConvertAmountSplitsToPercent,
+			ExpandShipmentDetails:        req.ExpandShipmentDetails,
 			TenantInfo:                   pagination.FromAuth(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
@@ -896,14 +900,6 @@ func amountParam(c *gin.Context, key string) (decimal.NullDecimal, error) {
 // @Security BearerAuth
 // @Router /billing-queue/{itemID}/packet-preview/ [get]
 func (h *Handler) packetPreview(c *gin.Context) {
-	if h.packets == nil {
-		h.eh.HandleError(
-			c,
-			errortypes.NewBusinessError("Invoice packets are not configured on this deployment"),
-		)
-		return
-	}
-
 	authCtx := authctx.GetAuthContext(c)
 	itemID, err := pulid.MustParse(c.Param("itemID"))
 	if err != nil {

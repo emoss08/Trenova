@@ -40,10 +40,6 @@ func (s *Service) recordAccess(
 	access documentAccess,
 	channel documentChannel,
 ) {
-	if s.auditService == nil {
-		return
-	}
-
 	actor := permissionports.SystemAuditActor()
 	if tenantInfo.UserID.IsNotNil() {
 		actor = permissionports.UserActor(tenantInfo).AuditActor()

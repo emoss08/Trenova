@@ -484,7 +484,7 @@ func setupCloseFixture(
 	t.Helper()
 
 	logger := zap.NewNop()
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	fyRepo := fiscalyearrepository.New(fiscalyearrepository.Params{DB: conn, Logger: logger})
 	fpRepo := fiscalperiodrepository.New(fiscalperiodrepository.Params{DB: conn, Logger: logger})
 	balanceRepo := glbalancerepository.New(glbalancerepository.Params{DB: conn, Logger: logger})

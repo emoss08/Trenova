@@ -72,25 +72,19 @@ type Params struct {
 	Runs         agentruntimeports.AgentRunRepository
 	Labeler      agentmemorysubjects.SubjectLabeler
 	AuditService auditports.AuditService
-	// Subjects reads which records a shipment, a document or a message
-	// names. Without it a turn reads the memories of the records it is
-	// directly about and no others.
-	Subjects agentmemoryports.AgentMemorySubjectRepository `optional:"true"`
-	// Ranker orders the memories a prompt may carry. Without one they are
-	// ordered by how recently they were recorded and how often they are used.
-	Ranker  agentmemoryports.MemoryRanker       `optional:"true"`
-	Indexer retrievalports.RetrievalIndexer     `optional:"true"`
-	Vectors retrievalports.MemoryVectorSearcher `optional:"true"`
-	// Roles says which roles a person holds, so a memory kept for a role
-	// reaches its holders. Without it only the organization's and a person's
-	// own memories are read.
-	Roles permissionports.RoleRepository `optional:"true"`
+	// Subjects reads which records a shipment, a document or a message names.
+	Subjects agentmemoryports.AgentMemorySubjectRepository
+	// Ranker orders the memories a prompt may carry.
+	Ranker  agentmemoryports.MemoryRanker
+	Indexer retrievalports.RetrievalIndexer
+	Vectors retrievalports.MemoryVectorSearcher
+	// Roles says which roles a person holds, so a memory kept for a role reaches its holders.
+	Roles permissionports.RoleRepository
 	// Security records a review that clears a memory's taint as a critical
 	// change: it lets the turns that read the memory write on their own again.
-	Security permissionports.SecurityAuditor `optional:"true"`
-	// Permissions says who may manage shared memory. Without it nobody does:
-	// every memory for a team, the organization or every agent is offered.
-	Permissions permissionports.PermissionEngine `optional:"true"`
+	Security permissionports.SecurityAuditor
+	// Permissions says who may manage shared memory.
+	Permissions permissionports.PermissionEngine
 }
 
 type Service struct {
@@ -110,11 +104,6 @@ type Service struct {
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) agentmemoryports.AgentMemoryService {
-	ranker := p.Ranker
-	if ranker == nil {
-		ranker = agentmemoryrank.NewRecencyRanker()
-	}
-
 	return &Service{
 		l:           p.Logger.Named("service.agentmemory"),
 		repo:        p.Repo,
@@ -122,7 +111,7 @@ func New(p Params) agentmemoryports.AgentMemoryService {
 		labeler:     p.Labeler,
 		audit:       p.AuditService,
 		subjects:    agentmemorysubjects.NewSubjectResolver(p.Subjects),
-		ranker:      ranker,
+		ranker:      p.Ranker,
 		indexer:     p.Indexer,
 		vectors:     p.Vectors,
 		roles:       rolesOrNil(p.Roles),
@@ -136,7 +125,7 @@ func (s *Service) MayManageShared(
 	tenant pagination.TenantInfo,
 	userID pulid.ID,
 ) bool {
-	if s.permissions == nil || userID.IsNil() {
+	if userID.IsNil() {
 		return false
 	}
 
@@ -664,11 +653,6 @@ func (s *Service) recordReview(
 	actor *permissionports.RequestActor,
 ) {
 	const comment = "Agent memory reviewed: it no longer taints the turns that read it"
-	if s.security == nil {
-		s.logChange(after, jsonutils.MustToJSON(before), actor, permission.OpUpdate, comment)
-
-		return
-	}
 
 	s.security.RecordChange(ctx, &permissionports.SecurityChange{
 		Resource:       permission.ResourceAgentMemory,
@@ -927,10 +911,6 @@ func (s *Service) similar(
 	req *agentmemoryports.RecallAgentMemoriesRequest,
 	search *agentmemoryports.SearchAgentMemoriesRequest,
 ) (retrievalports.SimilarMemories, bool) {
-	if s.vectors == nil {
-		return retrievalports.SimilarMemories{}, false
-	}
-
 	similar, err := s.vectors.SimilarMemories(ctx, &retrievalports.SimilarMemoriesRequest{
 		TenantInfo:  search.TenantInfo,
 		Text:        search.Query,
@@ -1068,11 +1048,7 @@ func (s *Service) ForContext(
 		return nil, err
 	}
 
-	ranker := s.ranker
-	if ranker == nil {
-		ranker = agentmemoryrank.NewRecencyRanker()
-	}
-	ranked, err := ranker.RankMemories(ctx, &agentmemoryports.RankMemoriesRequest{
+	ranked, err := s.ranker.RankMemories(ctx, &agentmemoryports.RankMemoriesRequest{
 		TenantInfo: req.TenantInfo,
 		Now:        now,
 		Memories:   memories,
@@ -1198,7 +1174,7 @@ func (s *Service) label(
 	tenant pagination.TenantInfo,
 	entity *agentmemory.Memory,
 ) error {
-	if entity.SubjectType == "" || entity.SubjectID == nil || s.labeler == nil {
+	if entity.SubjectType == "" || entity.SubjectID == nil {
 		return nil
 	}
 
@@ -1237,10 +1213,6 @@ func (s *Service) logChange(
 	op permission.Operation,
 	comment string,
 ) {
-	if s.audit == nil {
-		return
-	}
-
 	auditActor := actor.AuditActorOrSystem()
 	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAgentMemory,

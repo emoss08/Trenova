@@ -12,10 +12,6 @@ func (h *Harness) SubmitTasks(
 	ctx context.Context,
 	batch *llmports.NovaBatch,
 ) (*llmports.BatchHandle, error) {
-	if h == nil || h.batches == nil {
-		return nil, llmports.ErrBatchUnsupported
-	}
-
 	items := make([]llmports.BatchCompletionItem, 0, len(batch.Items))
 	for _, item := range batch.Items {
 		items = append(items, llmports.BatchCompletionItem{
@@ -29,6 +25,7 @@ func (h *Harness) SubmitTasks(
 		Task:          batch.Task,
 		Items:         items,
 		SpendLimitUSD: batch.SpendLimitUSD,
+		Nova:          true,
 	})
 }
 
@@ -36,28 +33,25 @@ func (h *Harness) BatchStatus(
 	ctx context.Context,
 	req *llmports.BatchStatusRequest,
 ) (*llmports.BatchStatus, error) {
-	if h == nil || h.batches == nil {
-		return nil, llmports.ErrBatchUnsupported
-	}
+	nova := *req
+	nova.Nova = true
 
-	return h.batches.BatchStatus(ctx, req)
+	return h.batches.BatchStatus(ctx, &nova)
 }
 
 func (h *Harness) CancelBatch(ctx context.Context, req *llmports.BatchCancelRequest) error {
-	if h == nil || h.batches == nil {
-		return llmports.ErrBatchUnsupported
-	}
+	nova := *req
+	nova.Nova = true
 
-	return h.batches.CancelBatch(ctx, req)
+	return h.batches.CancelBatch(ctx, &nova)
 }
 
 func (h *Harness) BatchResults(
 	ctx context.Context,
 	req *llmports.BatchResultsRequest,
 ) (map[string]llmports.BatchItemResult, error) {
-	if h == nil || h.batches == nil {
-		return nil, llmports.ErrBatchUnsupported
-	}
+	nova := *req
+	nova.Nova = true
 
-	return h.batches.BatchResults(ctx, req)
+	return h.batches.BatchResults(ctx, &nova)
 }

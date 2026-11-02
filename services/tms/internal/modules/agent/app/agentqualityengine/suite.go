@@ -333,7 +333,7 @@ func (s *Engine) ScoreSuite(ctx context.Context, req *ScoreSuiteRequest) (*Score
 		DeterministicScore: scorePointer(outcome.deterministic),
 		JudgeCases:         []pulid.ID{},
 	}
-	if req.Settings.JudgeEnabled && s.completion != nil {
+	if req.Settings.JudgeEnabled {
 		scored.JudgeCases = agentqualitysuite.JudgeSample(
 			outcome.judgeable,
 			req.SampleSeed,
@@ -367,10 +367,6 @@ type JudgedCase struct {
 }
 
 func (s *Engine) JudgeCase(ctx context.Context, req *JudgeCaseRequest) (*JudgedCase, error) {
-	if s.completion == nil {
-		return &JudgedCase{Note: "No completion service is available to judge with."}, nil
-	}
-
 	evaluation, err := s.evaluations.GetByID(
 		ctx,
 		agentevaluationports.GetAgentEvaluationByIDRequest{
@@ -723,7 +719,7 @@ func (s *Engine) baselineResults(
 
 func (s *Engine) announce(ctx context.Context, run *agentqualitysuite.SuiteRun) {
 	tenant := pagination.TenantInfo{OrgID: run.OrganizationID, BuID: run.BusinessUnitID}
-	if s.watchtower != nil && run.BaselineRunID != nil && run.BaselineRunID.IsNotNil() {
+	if run.BaselineRunID != nil && run.BaselineRunID.IsNotNil() {
 		s.watchtower.Resolve(
 			ctx,
 			tenant,
@@ -737,9 +733,7 @@ func (s *Engine) announce(ctx context.Context, run *agentqualitysuite.SuiteRun) 
 
 	name := s.agentName(ctx, tenant, run.AgentDefinitionID)
 	item := watchtowersources.DescribeQualityRegression(run, name)
-	if s.watchtower != nil {
-		s.watchtower.Upsert(ctx, item)
-	}
+	s.watchtower.Upsert(ctx, item)
 	s.notifyRegression(ctx, run, item)
 }
 
@@ -769,10 +763,6 @@ func (s *Engine) notifyRegression(
 	run *agentqualitysuite.SuiteRun,
 	item watchtowerports.WatchtowerItemInput,
 ) {
-	if s.notifier == nil {
-		return
-	}
-
 	priority := notification.PriorityMedium
 	if item.Severity == watchtower.SeverityCritical {
 		priority = notification.PriorityHigh

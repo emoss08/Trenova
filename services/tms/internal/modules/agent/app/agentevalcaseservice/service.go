@@ -138,7 +138,7 @@ type Params struct {
 	Registry      *permissioncatalog.Registry
 	QueryTools    agenttoolports.AgentQueryToolRegistry
 	ActionTools   agenttoolports.AgentToolRegistry
-	Subjects      agentruntimeports.AgentSubjectDescriber `optional:"true"`
+	Subjects      agentruntimeports.AgentSubjectDescriber
 	AuditService  auditports.AuditService
 }
 
@@ -443,10 +443,6 @@ func (s *Service) log(
 	operation permission.Operation,
 	comment string,
 ) {
-	if s.audit == nil {
-		return
-	}
-
 	auditActor := actor.AuditActorOrSystem()
 	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceAgentEvalSuite,

@@ -19,9 +19,8 @@ type Params struct {
 
 	Logger *zap.Logger
 	Files  documentports.ConversationFileReader
-	// Imaging counts a PDF's pages from its bytes. Optional: without it a PDF's
-	// pages are whatever reading the file counted.
-	Imaging kernelports.Imaging `optional:"true"`
+	// Imaging counts a PDF's pages from its bytes.
+	Imaging kernelports.Imaging
 }
 
 const (
@@ -98,10 +97,6 @@ func (s *Service) pages(
 	ctx context.Context,
 	data []byte,
 ) (count int, unreadable, counted bool) {
-	if s.imaging == nil {
-		return 0, false, true
-	}
-
 	probe, err := s.imaging.Probe(ctx, &kernelports.ImagingProbeRequest{
 		Source:   kernelports.ImagingBytes("application/pdf", data),
 		Priority: kernelports.ImagingInteractive,

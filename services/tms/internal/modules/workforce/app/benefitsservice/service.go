@@ -52,27 +52,6 @@ func New(p Params) *Service {
 	}
 }
 
-// Deps is the constructor shape tests use to swap in fakes.
-type Deps struct {
-	Logger        *zap.Logger
-	Repo          driverpayports.BenefitRepository
-	DeductionRepo driverpayports.RecurringDeductionRepository
-	AuditService  auditports.AuditService
-}
-
-func NewWithDeps(d Deps) *Service {
-	logger := d.Logger
-	if logger == nil {
-		logger = zap.NewNop()
-	}
-	return &Service{
-		l:             logger.Named("service.benefits"),
-		repo:          d.Repo,
-		deductionRepo: d.DeductionRepo,
-		auditService:  d.AuditService,
-	}
-}
-
 func (s *Service) audit(
 	resourceID string,
 	operation permission.Operation,
@@ -81,7 +60,7 @@ func (s *Service) audit(
 	current, previous any,
 	comment string,
 ) {
-	if s.auditService == nil || userID.IsNil() {
+	if userID.IsNil() {
 		return
 	}
 	params := &auditports.LogActionParams{

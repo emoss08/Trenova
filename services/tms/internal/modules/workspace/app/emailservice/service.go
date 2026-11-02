@@ -57,8 +57,8 @@ type Params struct {
 	AuditService       auditports.AuditService
 	WorkflowStarter    kernelports.WorkflowStarter
 	Storage            kernelports.Client
-	Plans              platformplanports.PlanService `optional:"true"`
-	Realtime           realtimeports.RealtimeService `optional:"true"`
+	Plans              platformplanports.PlanService
+	Realtime           realtimeports.RealtimeService
 }
 
 // ObserverParams are the observers told when a message changes. They are
@@ -751,14 +751,6 @@ func (s *Service) unsealDocument(
 	attachment *email.Attachment,
 	download *kernelports.DownloadResult,
 ) ([]byte, error) {
-	if s.encryptionService == nil {
-		return nil, fmt.Errorf(
-			"%w: attachment %s is not a sealed document",
-			ErrNonRetryableSend,
-			attachment.ID,
-		)
-	}
-
 	sealedSize := download.Size
 	if sealedSize <= 0 {
 		sealedSize = -1
@@ -802,9 +794,6 @@ func (s *Service) startSendWorkflow(
 	msg *email.Message,
 	req *emailports.SendEmailRequest,
 ) error {
-	if !s.workflowStarter.Enabled() {
-		return kernelports.ErrWorkflowStarterDisabled
-	}
 
 	workflowID := fmt.Sprintf(
 		"email-send-%s-%s-%s",
@@ -1180,7 +1169,7 @@ func (s *Service) profileSenderOrigin(ctx context.Context, msg *email.Message) s
 }
 
 func (s *Service) syncInvoiceAttempts(ctx context.Context, msg *email.Message) {
-	if s.invoiceRepo == nil || msg == nil || msg.ID.IsNil() {
+	if msg == nil || msg.ID.IsNil() {
 		return
 	}
 	updated, err := s.invoiceRepo.SyncEmailAttemptsForMessage(ctx, msg.ID, pagination.TenantInfo{

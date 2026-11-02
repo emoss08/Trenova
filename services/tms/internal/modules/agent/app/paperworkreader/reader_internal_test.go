@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -82,7 +81,7 @@ type nova struct {
 	err  error
 }
 
-func (n nova) Available(context.Context, aitask.Task, pagination.TenantInfo) (bool, error) {
+func (n nova) Available(context.Context, pagination.TenantInfo) (bool, error) {
 	return n.err == nil, nil
 }
 
@@ -95,7 +94,13 @@ func (n nova) Run(
 		return nil, n.err
 	}
 
-	return &llmports.StructuredCompletionResult{Text: n.text}, llmports.DecodeAnswer(task.Name, n.text, out)
+	return &llmports.StructuredCompletionResult{
+		Text: n.text,
+	}, llmports.DecodeAnswer(
+		task.Name,
+		n.text,
+		out,
+	)
 }
 
 func pendingPaperwork() *document.Document {
@@ -110,7 +115,11 @@ func TestRead_WritesOnlyTheFactsAndNeverOverAPersons(t *testing.T) {
 	t.Parallel()
 
 	repo := &documents{doc: pendingPaperwork()}
-	reader := &Reader{harness: nova{text: `{"signedBy":"Dana Cole","documentKind":"ProofOfDelivery"}`}, documents: repo, l: zap.NewNop()}
+	reader := &Reader{
+		harness:   nova{text: `{"signedBy":"Dana Cole","documentKind":"ProofOfDelivery"}`},
+		documents: repo,
+		l:         zap.NewNop(),
+	}
 
 	require.NoError(t, reader.Read(t.Context(), repo.doc.ID, pagination.TenantInfo{}, pulid.Nil))
 
@@ -133,8 +142,11 @@ func TestRead_LeavesTheDocumentWithoutRetryingWhenNovaCannotRead(t *testing.T) {
 			repo := &documents{doc: pendingPaperwork()}
 			reader := &Reader{harness: harness, documents: repo, l: zap.NewNop()}
 
-			require.NoError(t, reader.Read(t.Context(), repo.doc.ID, pagination.TenantInfo{}, pulid.Nil),
-				"an error would retry a call that cannot do better")
+			require.NoError(
+				t,
+				reader.Read(t.Context(), repo.doc.ID, pagination.TenantInfo{}, pulid.Nil),
+				"an error would retry a call that cannot do better",
+			)
 			assert.Empty(t, repo.recorded)
 		})
 	}

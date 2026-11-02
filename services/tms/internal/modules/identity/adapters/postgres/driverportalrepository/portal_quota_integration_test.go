@@ -64,7 +64,7 @@ func TestActivatePortalAccessRefusesASeatPastTheQuota(t *testing.T) {
 
 	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	repo := &portalAccessRepository{
-		db:    postgres.NewTestConnection(db),
+		db:    postgres.WrapDB(db),
 		l:     zap.NewNop(),
 		quota: guard,
 	}

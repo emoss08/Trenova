@@ -48,7 +48,7 @@ type Params struct {
 	Repo                  tenderports.TenderRepository
 	CarrierAssignmentRepo carrierassignmentports.CarrierAssignmentRepository
 	Invalidator           shipmentinvalidationports.ShipmentInvalidator
-	RateConIssuer         rateconfirmationports.RateConfirmationIssuer `optional:"true"`
+	RateConIssuer         rateconfirmationports.RateConfirmationIssuer
 	Canceler              *tendercancel.Service
 	Effects               *tendereffects.Effects
 	Escalator             *tenderescalation.Service
@@ -713,12 +713,6 @@ func (s *Service) IssueRateConfirmation(
 	tenantInfo pagination.TenantInfo,
 	offerID pulid.ID,
 ) error {
-	if s.rateConIssuer == nil {
-		s.l.Warn("rate confirmation issuance is not wired; skipping auto-issue",
-			zap.String("offerId", offerID.String()))
-		return nil
-	}
-
 	offer, err := s.repo.GetOfferByID(ctx, tenderports.GetTenderOfferByIDRequest{
 		TenantInfo:    tenantInfo,
 		OfferID:       offerID,

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airouting"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/novamodel"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -86,13 +87,14 @@ func buildTasks(in *taskInput) []aianalyticsports.TaskRow {
 		if best := bestCell(row.Cells); best != nil {
 			row.BestSeriesKey = best.SeriesKey
 		}
-		current := airouting.RouteFor(enabled, task)
+		current := currentRoute(enabled, task)
 		if current != nil {
 			ref := providers.ref(current.ID.String())
 			row.Current = &ref
 			row.CurrentSeriesKey = seriesKeyOf(current, in.compareBy)
 		}
-		if in.agentScoped {
+		// Nova's tasks run where Nova runs, so there is no route to suggest.
+		if in.agentScoped || task.Nova() {
 			out = append(out, row)
 			continue
 		}
@@ -149,6 +151,22 @@ func bestCell(cells []aianalyticsports.TaskCell) *aianalyticsports.TaskCell {
 	}
 
 	return best
+}
+
+// currentRoute is where a task runs now: the provider chosen for Nova, with
+// Nova's model, for one of Nova's tasks, and the first assigned provider for
+// any other.
+func currentRoute(enabled []*aiprovider.Provider, task aitask.Task) *aiprovider.Provider {
+	if !task.Nova() {
+		return airouting.RouteFor(enabled, task)
+	}
+	for _, provider := range enabled {
+		if provider.Nova {
+			return novamodel.Provider(provider)
+		}
+	}
+
+	return nil
 }
 
 func seriesKeyOf(provider *aiprovider.Provider, compareBy aianalytics.CompareBy) string {

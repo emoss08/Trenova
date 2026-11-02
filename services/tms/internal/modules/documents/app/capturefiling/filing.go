@@ -524,37 +524,18 @@ func (s *Service) FileItem(ctx context.Context, in *FileItemInput) (*capture.Cap
 		return nil, err
 	}
 
-	if s.workflows != nil && s.workflows.Enabled() {
-		if err = s.startFiling(ctx, in.TenantInfo, item, sessionID); err != nil {
-			s.l.Error(
-				"could not start a capture filing",
-				zap.String("itemId", item.ID.String()),
-				zap.Error(err),
-			)
-
-			return s.RecordFilingFailed(ctx, in.TenantInfo, item.ID, filingFailedMessage)
-		}
-		s.support.PublishBatch(ctx, batch, capturesupport.BatchActionUpdated)
-
-		return item, nil
-	}
-
-	session, err := s.uploads.Complete(ctx, &documentuploadports.CompletionRequest{
-		TenantInfo: in.TenantInfo,
-		Actor:      *permissionports.UserActor(in.TenantInfo),
-		SessionID:  sessionID,
-	})
-	if err != nil || session.DocumentID == nil {
+	if err = s.startFiling(ctx, in.TenantInfo, item, sessionID); err != nil {
 		s.l.Error(
-			"could not finalize a capture filing",
+			"could not start a capture filing",
 			zap.String("itemId", item.ID.String()),
 			zap.Error(err),
 		)
 
 		return s.RecordFilingFailed(ctx, in.TenantInfo, item.ID, filingFailedMessage)
 	}
+	s.support.PublishBatch(ctx, batch, capturesupport.BatchActionUpdated)
 
-	return s.RecordFiled(ctx, in.TenantInfo, item.ID, *session.DocumentID)
+	return item, nil
 }
 
 // stageFiling assembles the item and uploads it into a document session

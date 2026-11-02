@@ -46,9 +46,6 @@ func (k *Kit) RequestReferenceRefresh(
 	ctx context.Context,
 	conn *accountingconnection.AccountingConnection,
 ) {
-	if k.refresher == nil {
-		return
-	}
 	if err := k.refresher.RequestReferenceRefresh(ctx, pagination.TenantInfo{
 		OrgID: conn.OrganizationID,
 		BuID:  conn.BusinessUnitID,

@@ -43,9 +43,6 @@ func (e *Effects) Kick(
 	tenantInfo pagination.TenantInfo,
 	connectionID pulid.ID,
 ) {
-	if e.dispatcher == nil {
-		return
-	}
 	kernelports.AfterCommit(ctx, func(committedCtx context.Context) {
 		if err := e.dispatcher.Kick(committedCtx, tenantInfo, connectionID); err != nil {
 			e.l.Warn("failed to wake the accounting dispatcher; the schedule will pick it up",

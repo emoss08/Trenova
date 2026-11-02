@@ -34,11 +34,6 @@ func (s *Service) RedetectPODSignatures(
 			"Only a person can re-read the signatures on queued PODs",
 		)
 	}
-	if s.documentRepo == nil || s.documentContent == nil {
-		return nil, errortypes.NewBusinessError(
-			"Signature detection is not available on this server",
-		)
-	}
 
 	shipmentIDs, err := s.repo.ListOpenShipmentIDs(
 		ctx,

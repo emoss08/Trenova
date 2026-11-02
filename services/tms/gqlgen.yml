@@ -2366,101 +2366,21 @@ models:
   ExtractionFieldAccuracy:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection.FieldAccuracy
-  ExtractionEvalCase:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval.ExtractionCase
-  ExtractionEvalCaseStatus:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval.CaseStatus
-  ExtractionEvalPage:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval.Page
-  ExtractionEvalRun:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval.ExtractionRun
-  ExtractionEvalRunStatus:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval.RunStatus
-  ExtractionEvalRefreeze:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports.RefreezeExtractionEvalCasesResult
-  ExtractionEvalRefreezeProgress:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports.ExtractionEvalRefreezeProgress
-  ExtractionEvalRefreezeStatus:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval.RefreezeStatus
-  ExtractionEvalResult:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval.ExtractionResult
-  ExtractionEvalResultStatus:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval.ResultStatus
   ExtractionAccuracy:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports.ExtractionAccuracy
+      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionaccuracyports.ExtractionAccuracy
   ExtractionWeekAccuracy:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection.WeekAccuracy
   ExtractionProviderTrend:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports.ExtractionProviderTrend
+      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionaccuracyports.ExtractionProviderTrend
   ExtractionProviderTrends:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports.ExtractionProviderTrends
+      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionaccuracyports.ExtractionProviderTrends
   ExtractionAccuracyGroup:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports.ExtractionAccuracyGroup
-  AITrainingExportHistoryEntry:
-    model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/aitraining.ExportHistoryEntry
-  ExtractionEvalCaseCounts:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports.ExtractionEvalCaseCounts
-  ExtractionRollout:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout.ExtractionRollout
-    fields:
-      serving:
-        resolver: true
-      haltReason:
-        resolver: true
-  ExtractionRolloutHaltReason:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout.HaltReason
-  ExtractionRolloutArm:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports.ExtractionRolloutArmReport
-  ExtractionRolloutAccuracy:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports.ExtractionRolloutAccuracy
-  ExtractionRolloutReport:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports.ExtractionRolloutReport
-  ExtractionShadowSettings:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow.ShadowSettings
-  ExtractionShadowResult:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow.ShadowResult
-    fields:
-      verdict:
-        resolver: true
-  ExtractionShadowResultStatus:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow.ResultStatus
-  ExtractionShadowVerdict:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow.Verdict
-  ExtractionShadowReport:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports.ExtractionShadowReport
-  ExtractionShadowSide:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports.ExtractionShadowSide
-  ExtractionShadowFieldComparison:
-    model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection.FieldComparison
+      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionaccuracyports.ExtractionAccuracyGroup
   AIFeedback:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback.Feedback

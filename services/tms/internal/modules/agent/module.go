@@ -88,6 +88,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruneventservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentrunservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentsafetyservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentscorecardservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
@@ -110,7 +111,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/aiproviderservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/aiproviderspendservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/airetrievalstatusservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/aitraininghistoryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/aituneupservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/aiusageservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/analysisrunservice"
@@ -158,6 +158,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentprofilejobs/agentprofilecontract"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentqualityjobs/agentqualitycontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/chapterjobs/chaptercontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/completionjobs/completioncontract"
@@ -166,6 +167,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -206,6 +208,8 @@ func SharedOptions() fx.Option {
 		)),
 		fx.Provide(
 			novaharness.New,
+			toolaccess.NewIgnoredDisclosures,
+			toolaccess.New,
 			func(h *novaharness.Harness) llmports.TaskRunner { return h },
 			func(h *novaharness.Harness) llmports.TaskDeferrer { return h },
 			func(h *novaharness.Harness) llmports.TaskBatcher { return h },
@@ -411,6 +415,12 @@ func SharedOptions() fx.Option {
 			agentqualitysettings.New,
 			agentqualityengine.New,
 			agentqualityservice.New,
+			fx.Annotate(
+				agentqualitycontract.NewQualitySchedules,
+				fx.As(new(agentqualityports.AgentQualityScheduler)),
+				fx.As(new(agentqualityports.AgentSuiteStarter)),
+				fx.As(fx.Self()),
+			),
 			agentqualityservice.AsService,
 			agentqualityengine.AsEvaluationBudget,
 			fx.Annotate(
@@ -429,8 +439,6 @@ func SharedOptions() fx.Option {
 			func(s *shipmentimportassistantservice.Service) shipmentimportassistantports.ShipmentImportAssistantService {
 				return s
 			},
-			aitraininghistoryservice.NewEmpty,
-			aidocumentservice.NewContract,
 		),
 		agentextensionservice.Module,
 		extensionportalservice.Module,

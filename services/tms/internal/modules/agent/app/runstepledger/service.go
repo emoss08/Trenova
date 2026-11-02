@@ -36,7 +36,7 @@ type Params struct {
 
 	Logger  *zap.Logger
 	Repo    agentruntimeports.AgentRunStepRepository
-	Metrics *metrics.Registry `optional:"true"`
+	Metrics *metrics.Registry
 }
 
 type Service struct {
@@ -52,9 +52,7 @@ func New(p Params) agentruntimeports.RunStepLedger {
 		l:    p.Logger.Named("service.runstepledger"),
 		repo: p.Repo,
 	}
-	if p.Metrics != nil {
-		service.metrics = p.Metrics.Assistant
-	}
+	service.metrics = p.Metrics.Assistant
 
 	return service
 }

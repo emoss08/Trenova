@@ -78,7 +78,7 @@ type Params struct {
 	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Runtime       agentruntimeports.AgentRuntime
 	Permissions   permissionports.PermissionEngine
-	Realtime      realtimeports.RealtimeService `optional:"true"`
+	Realtime      realtimeports.RealtimeService
 }
 
 // Service makes a conversation a case about a shipment, invoice or dispute
@@ -747,9 +747,6 @@ func (s *Service) served(
 }
 
 func (s *Service) announce(ctx context.Context, thread *conversation.Thread) {
-	if s.realtime == nil {
-		return
-	}
 	if err := s.realtime.PublishResourceInvalidation(
 		context.WithoutCancel(ctx),
 		&realtimeports.PublishResourceInvalidationRequest{

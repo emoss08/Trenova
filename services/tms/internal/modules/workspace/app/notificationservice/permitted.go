@@ -34,10 +34,6 @@ type NotifyPermittedRequest struct {
 // permission, and reports how many went. A failure to reach one person is
 // logged and does not stop the rest.
 func (s *Service) NotifyPermitted(ctx context.Context, req NotifyPermittedRequest) (int, error) {
-	if s.roles == nil {
-		return 0, errNoRoleDirectory
-	}
-
 	correlation := ""
 	if req.Notification.CorrelationID != nil {
 		correlation = *req.Notification.CorrelationID

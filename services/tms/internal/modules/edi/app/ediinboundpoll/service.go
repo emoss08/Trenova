@@ -19,7 +19,7 @@ type Params struct {
 	Secrets     *ediprofilesecret.Service
 	Inbound     *ediinboundservice.Service
 	Transport   editransportports.EDITransportDispatcher
-	Metrics     *metrics.Registry `optional:"true"`
+	Metrics     *metrics.Registry
 }
 
 type Service struct {
@@ -33,9 +33,7 @@ type Service struct {
 
 func New(p Params) *Service {
 	ediMetrics := documentmetrics.NewEDI(nil, p.Logger, false)
-	if p.Metrics != nil {
-		ediMetrics = p.Metrics.EDI
-	}
+	ediMetrics = p.Metrics.EDI
 	return &Service{
 		l:           p.Logger.Named("service.edi-inbound"),
 		profileRepo: p.ProfileRepo,

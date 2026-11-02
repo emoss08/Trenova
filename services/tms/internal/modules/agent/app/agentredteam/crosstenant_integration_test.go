@@ -77,7 +77,7 @@ func TestCrossTenantIDsAreRefusedByTheRepositories(t *testing.T) {
 	}
 
 	repo := agentmemoryrepository.New(agentmemoryrepository.Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 	secret, err := repo.Create(owner.Ctx(ctx), &agentmemory.Memory{

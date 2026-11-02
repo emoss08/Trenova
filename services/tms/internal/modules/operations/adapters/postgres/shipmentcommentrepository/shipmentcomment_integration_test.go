@@ -49,7 +49,7 @@ func newHarness(t *testing.T) *harness {
 	return &harness{
 		ctx: data.Ctx(ctx),
 		repo: shipmentcommentrepository.New(shipmentcommentrepository.Params{
-			DB:     postgres.NewTestConnection(db),
+			DB:     postgres.WrapDB(db),
 			Logger: zap.NewNop(),
 		}),
 		tenant:   tenant,

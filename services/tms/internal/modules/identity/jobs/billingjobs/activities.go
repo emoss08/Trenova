@@ -46,10 +46,10 @@ type ActivitiesParams struct {
 	InvoiceRunSweeper     invoicerunports.InvoiceRunSweeper
 	Logger                *zap.Logger
 
-	LateChargeService  latechargeports.LateChargeService    `optional:"true"`
-	LateChargeRepo     latechargeports.LateChargeRepository `optional:"true"`
+	LateChargeService  latechargeports.LateChargeService
+	LateChargeRepo     latechargeports.LateChargeRepository
 	BillingControlRepo tenantports.BillingControlRepository
-	EDIService         ediports.EDIDocumentService `optional:"true"`
+	EDIService         ediports.EDIDocumentService
 }
 
 type Activities struct {
@@ -418,7 +418,7 @@ func (a *Activities) recordGeneratedInvoicePDF(
 	ctx context.Context,
 	p *recordInvoicePDFParams,
 ) {
-	if a.templates == nil || p.Preview == nil || p.Preview.Rendered == nil {
+	if p.Preview == nil || p.Preview.Rendered == nil {
 		return
 	}
 

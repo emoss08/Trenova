@@ -47,8 +47,8 @@ type Params struct {
 	Connectors   []agentextensionports.ExtensionConnector `group:"agent_extension_connectors"`
 	Sites        agentextensionports.PortalSiteRepository
 	Runs         agentextensionports.PortalRunRepository
-	Workflows    kernelports.WorkflowStarter `                                   optional:"true"`
-	AppConfig    *appconfig.Config           `                                   optional:"true"`
+	Workflows    kernelports.WorkflowStarter
+	AppConfig    *appconfig.Config
 }
 
 type Service struct {

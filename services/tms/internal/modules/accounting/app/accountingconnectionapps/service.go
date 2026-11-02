@@ -36,7 +36,7 @@ type Params struct {
 	Connections accountingconnectionports.AccountingConnectionRepository
 	Encryption  *encryptionservice.Service
 	Audit       auditports.AuditService
-	Realtime    realtimeports.RealtimeService `optional:"true"`
+	Realtime    realtimeports.RealtimeService
 	Kit         *accountingconnectionkit.Kit
 	Status      *accountingconnectionstatus.Service
 }
@@ -349,9 +349,6 @@ func (s *Service) publishAppInvalidation(
 	ctx context.Context,
 	orgID, buID, recordID, userID pulid.ID,
 ) {
-	if s.realtime == nil {
-		return
-	}
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,

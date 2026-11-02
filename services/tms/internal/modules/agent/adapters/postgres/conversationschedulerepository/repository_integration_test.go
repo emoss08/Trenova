@@ -32,7 +32,7 @@ func TestList_ReadsAPersonsSchedulesByNextRunWithTheirConversationTitles(t *test
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{
 		OrgID:  data.Organization.ID,
 		BuID:   data.BusinessUnit.ID,
@@ -106,7 +106,12 @@ func TestList_ReadsAPersonsSchedulesByNextRunWithTheirConversationTitles(t *test
 		titles[item.ID] = item.ThreadTitle
 	}
 	assert.Equal(t, "AR follow-ups", titles[later.ID])
-	assert.Equal(t, "", titles[soonest.ID], "an untitled conversation reads as no title, not an error")
+	assert.Equal(
+		t,
+		"",
+		titles[soonest.ID],
+		"an untitled conversation reads as no title, not an error",
+	)
 	assert.NotContains(t, titles, theirs.ID)
 
 	page, err := repo.List(ctx, conversationscheduleports.ListConversationSchedulesRequest{
@@ -171,7 +176,7 @@ func TestCreate_NamesOnlyAnUnnamedConversation(t *testing.T) {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{
 		OrgID:  data.Organization.ID,
 		BuID:   data.BusinessUnit.ID,

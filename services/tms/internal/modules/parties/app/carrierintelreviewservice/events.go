@@ -170,14 +170,12 @@ func (s *Service) ResolveEvent(
 	}
 
 	s.intel.Publish(ctx, req.TenantInfo, "carrier_intel_events", "updated", updated.ID)
-	if s.watchtower != nil {
-		s.watchtower.Resolve(
-			ctx,
-			req.TenantInfo,
-			watchtower.SourceCarrierIntelEvent,
-			updated.ID.String(),
-		)
-	}
+	s.watchtower.Resolve(
+		ctx,
+		req.TenantInfo,
+		watchtower.SourceCarrierIntelEvent,
+		updated.ID.String(),
+	)
 
 	return updated, nil
 }

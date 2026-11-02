@@ -49,7 +49,7 @@ type Params struct {
 	AccountingConfig *accountingconfig.Config
 	AppConfig        *appconfig.Config
 	Logger           *zap.Logger
-	Limiter          restx.Limiter `name:"accountingLimiter" optional:"true"`
+	Limiter          restx.Limiter `name:"accountingLimiter"`
 }
 
 type Provider struct {
@@ -95,9 +95,7 @@ func New(p Params) (*Provider, error) {
 		l:           p.Logger.Named("accounting.xero"),
 		bound:       make(map[string]*Connector),
 	}
-	if p.Limiter != nil {
-		provider.apiOpts = append(provider.apiOpts, xero.WithLimiter(p.Limiter, limiterPrefix))
-	}
+	provider.apiOpts = append(provider.apiOpts, xero.WithLimiter(p.Limiter, limiterPrefix))
 	if cfg.IsConfigured(p.AppConfig) {
 		provider.instance = &accountingconnectorports.AccountingApp{
 			Source:               accountingconnection.AppSourceInstance,

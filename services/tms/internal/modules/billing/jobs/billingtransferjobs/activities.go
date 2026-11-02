@@ -43,7 +43,7 @@ type ActivitiesParams struct {
 	Transfers           *billingtransferservice.Service
 	ShipmentService     shipmentserviceports.ShipmentBillingTransferService
 	NotificationService *notificationservice.Service
-	RealtimeService     realtimeports.RealtimeService `optional:"true"`
+	RealtimeService     realtimeports.RealtimeService
 	Logger              *zap.Logger
 }
 
@@ -471,9 +471,6 @@ func (a *Activities) notifyFinished(
 	ctx context.Context,
 	run *billingtransfer.BillingTransferRun,
 ) {
-	if a.notification == nil {
-		return
-	}
 	if run.Scope == billingtransfer.RunScopeAutomatic {
 		a.notifyAutomaticFinished(ctx, run)
 		return
@@ -562,7 +559,7 @@ func (a *Activities) publishRunChanged(
 	ctx context.Context,
 	run *billingtransfer.BillingTransferRun,
 ) {
-	if a.realtime == nil || run == nil {
+	if run == nil {
 		return
 	}
 

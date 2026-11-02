@@ -13,7 +13,7 @@ func (s *Service) queueForRetrieval(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
 ) {
-	if s.indexer == nil || message == nil {
+	if message == nil {
 		return
 	}
 

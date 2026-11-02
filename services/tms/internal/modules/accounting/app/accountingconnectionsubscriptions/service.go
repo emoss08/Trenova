@@ -21,7 +21,7 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Subscriptions accountingconnectionports.AccountingWebhookSubscriptionRepository `optional:"true"`
+	Subscriptions accountingconnectionports.AccountingWebhookSubscriptionRepository
 	Encryption    *encryptionservice.Service
 	Kit           *accountingconnectionkit.Kit
 	Health        *accountingconnectionhealth.Service
@@ -52,9 +52,6 @@ func (s *Service) SyncWebhookSubscriptions(
 	req *accountingconnectionports.SyncAccountingWebhookSubscriptionsRequest,
 ) (*accountingconnectionports.AccountingSubscriptionSweep, error) {
 	sweep := &accountingconnectionports.AccountingSubscriptionSweep{}
-	if s.subscriptions == nil {
-		return sweep, nil
-	}
 	limit := req.Limit
 	if limit <= 0 {
 		limit = subscriptionSweepPageSize
@@ -205,8 +202,7 @@ func (s *Service) Release(
 	ctx context.Context,
 	conn *accountingconnection.AccountingConnection,
 ) {
-	if s.subscriptions == nil ||
-		!accountingprovider.MustProfile(conn.IntegrationType).WebhookSubscriptions {
+	if !accountingprovider.MustProfile(conn.IntegrationType).WebhookSubscriptions {
 		return
 	}
 	tenant := pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
@@ -236,8 +232,7 @@ func (s *Service) Summary(
 	conn *accountingconnection.AccountingConnection,
 	provider accountingconnectorports.AccountingProvider,
 ) (*accountingconnectionports.AccountingWebhookSubscriptionSummary, error) {
-	if s.subscriptions == nil ||
-		!accountingprovider.MustProfile(conn.IntegrationType).WebhookSubscriptions {
+	if !accountingprovider.MustProfile(conn.IntegrationType).WebhookSubscriptions {
 		return nil, nil //nolint:nilnil // the provider pushes its webhooks, so there is nothing to summarize
 	}
 	rows, err := s.subscriptions.ListByConnection(

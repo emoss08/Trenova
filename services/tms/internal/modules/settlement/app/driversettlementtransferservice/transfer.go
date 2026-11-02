@@ -52,21 +52,19 @@ func (s *Service) HoldPayEvent(
 		return nil, err
 	}
 	s.settlements.PublishPayEventInvalidation(ctx, updated, permission.OpUpdate, actor.UserID)
-	if s.driverNotify != nil {
-		s.driverNotify.Notify(ctx, &drivernotificationservice.DriverNotification{
-			TenantInfo: tenantInfo,
-			WorkerID:   updated.WorkerID,
-			EventType:  "dash.pay_held",
-			Priority:   notification.PriorityHigh,
-			Context: notificationtemplate.SettlementNotificationContext{
-				Reason: reason,
-			},
-			Link: "/dash",
-			RelatedEntities: map[string]any{
-				"payEventId": updated.ID.String(),
-			},
-		})
-	}
+	s.driverNotify.Notify(ctx, &drivernotificationservice.DriverNotification{
+		TenantInfo: tenantInfo,
+		WorkerID:   updated.WorkerID,
+		EventType:  "dash.pay_held",
+		Priority:   notification.PriorityHigh,
+		Context: notificationtemplate.SettlementNotificationContext{
+			Reason: reason,
+		},
+		Link: "/dash",
+		RelatedEntities: map[string]any{
+			"payEventId": updated.ID.String(),
+		},
+	})
 	return updated, nil
 }
 

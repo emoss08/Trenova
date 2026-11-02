@@ -215,7 +215,7 @@ func (s *Service) draftReplyFor(
 	}
 
 	mc := s.messageContext(ctx, message)
-	if message.MatchedShipmentID.IsNotNil() && s.stops != nil &&
+	if message.MatchedShipmentID.IsNotNil() &&
 		message.Classification == inboundmessage.ClassificationDetentionDispute {
 		stops, err := s.stops.StopTimes(ctx, tenantOf(message), message.MatchedShipmentID)
 		if err != nil {

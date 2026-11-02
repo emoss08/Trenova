@@ -20,9 +20,6 @@ func (s *Service) pinnedArtifacts(
 	origin *conversation.Thread,
 	tenant pagination.TenantInfo,
 ) ([]*assistantartifact.Artifact, error) {
-	if s.artifacts == nil {
-		return nil, nil
-	}
 	page, err := s.artifacts.ListPage(ctx, assistantartifactports.ListArtifactsRequest{
 		ThreadID:   origin.ID,
 		TenantInfo: tenant,

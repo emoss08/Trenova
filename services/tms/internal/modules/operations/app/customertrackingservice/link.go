@@ -84,11 +84,6 @@ func (s *Service) shareable(
 	if multiErr := validateIssueRequest(req); multiErr != nil {
 		return nil, nil, multiErr
 	}
-	if req.RecipientEmail != "" && !s.canEmail() {
-		return nil, nil, errortypes.NewBusinessError(
-			"Email delivery is not configured for this environment",
-		)
-	}
 	if s.tenderingConfig.PublicLinkBaseURL(s.appConfig) == "" {
 		return nil, nil, errortypes.NewBusinessError(
 			"Customer tracking links need a public base URL; set app.webBaseUrl",

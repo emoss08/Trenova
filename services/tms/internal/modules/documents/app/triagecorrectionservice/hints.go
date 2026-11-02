@@ -19,7 +19,7 @@ type HintProviderParams struct {
 
 	Logger *zap.Logger
 	Hints  triageports.SenderHintRepository
-	Cache  triageports.TriageCache `optional:"true"`
+	Cache  triageports.TriageCache
 }
 
 type HintProvider struct {
@@ -48,14 +48,12 @@ func (p *HintProvider) HintsFor(
 		return []*triage.SenderHint{}, nil
 	}
 
-	if p.cache != nil {
-		cached, hit, err := p.cache.SenderHints(ctx, tenantInfo, domain)
-		if err != nil {
-			p.l.Warn("sender hint cache unavailable", zap.Error(err))
-		}
-		if hit {
-			return cached, nil
-		}
+	cached, hit, err := p.cache.SenderHints(ctx, tenantInfo, domain)
+	if err != nil {
+		p.l.Warn("sender hint cache unavailable", zap.Error(err))
+	}
+	if hit {
+		return cached, nil
 	}
 
 	hints, err := p.hints.ListByDomain(ctx, triageports.ListSenderHintsRequest{
@@ -67,10 +65,8 @@ func (p *HintProvider) HintsFor(
 		return nil, err
 	}
 
-	if p.cache != nil {
-		if err = p.cache.SetSenderHints(ctx, tenantInfo, domain, hints); err != nil {
-			p.l.Warn("could not cache sender hints", zap.Error(err))
-		}
+	if err = p.cache.SetSenderHints(ctx, tenantInfo, domain, hints); err != nil {
+		p.l.Warn("could not cache sender hints", zap.Error(err))
 	}
 
 	return hints, nil

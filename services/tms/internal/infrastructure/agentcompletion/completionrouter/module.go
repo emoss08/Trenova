@@ -1,6 +1,7 @@
 package completionrouter
 
 import (
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/adapterregistry"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"go.uber.org/fx"
@@ -8,13 +9,13 @@ import (
 
 var Module = fx.Module("completion-router",
 	fx.Provide(
+		adapterregistry.NewRegistry,
 		newService,
 		asCompletionService,
 		asBatchCompletionService,
 		asEmbeddingService,
 		asProviderAvailability,
 		asScriptProviders,
-		NewPromptRenderer,
 	),
 )
 

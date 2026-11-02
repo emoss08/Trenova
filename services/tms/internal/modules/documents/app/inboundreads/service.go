@@ -11,7 +11,7 @@ type Params struct {
 
 	MailboxRepo inboundmessageports.InboundMailboxRepository
 	MessageRepo inboundmessageports.InboundMessageRepository
-	Now         func() int64 `optional:"true"`
+	Now         timeutils.Clock
 	QueueRepo   inboundmessageports.TriageQueueRepository
 }
 
@@ -24,9 +24,6 @@ type Service struct {
 
 func New(p Params) *Service {
 	now := p.Now
-	if now == nil {
-		now = timeutils.NowUnix
-	}
 	return &Service{
 		mailboxRepo: p.MailboxRepo,
 		messageRepo: p.MessageRepo,

@@ -79,6 +79,10 @@ type StructuredCompletionRequest struct {
 	Reasoning aireasoning.ReasoningEffort
 	// Attribution says who the call is for, so its cost lands somewhere.
 	Attribution aiusageports.AIUsageAttribution
+	// Nova marks a call Nova makes: it runs on the provider the organization
+	// chose for Nova, with Nova's own model, whatever providers Task is
+	// assigned to. Only the Nova harness sets it.
+	Nova bool
 }
 
 type StructuredCompletionResult struct {
@@ -123,6 +127,8 @@ type ChatCompletionRequest struct {
 	PreferredProviderID pulid.ID
 	// Attribution says who the call is for, so its cost lands somewhere.
 	Attribution aiusageports.AIUsageAttribution
+	// Nova marks a call Nova makes, as on StructuredCompletionRequest.
+	Nova bool `json:"nova,omitempty"`
 	// ReasoningSink receives the model's thinking as it streams, when the
 	// provider lets it through. Optional, and separate from the text sink
 	// because thinking is not the reply: it is shown differently and never
@@ -312,6 +318,9 @@ type BackgroundPollRequest struct {
 	Task        aitask.Task
 	SubmittedAt int64
 	Attribution aiusageports.AIUsageAttribution
+	// Nova marks a call Nova submitted, so its answer is priced as Nova's
+	// model rather than the provider's own.
+	Nova bool
 }
 
 type BackgroundOutcome struct {
@@ -334,8 +343,12 @@ type StructuredCompleter interface {
 	) (*StructuredCompletionResult, error)
 }
 
+// ProviderAvailability reports whether Nova can run for a tenant. The Nova
+// harness asks it; a feature asks the harness (TaskRunner.Available).
 type ProviderAvailability interface {
-	CanServe(ctx context.Context, task aitask.Task, tenant pagination.TenantInfo) (bool, error)
+	// NovaReady reports whether Nova can run for the tenant: AI is on and the
+	// organization has an enabled provider chosen for Nova.
+	NovaReady(ctx context.Context, tenant pagination.TenantInfo) (bool, error)
 }
 
 // ScriptProviders reads the code-mode settings of the chat providers, which

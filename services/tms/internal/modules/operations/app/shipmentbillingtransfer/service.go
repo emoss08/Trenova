@@ -305,10 +305,6 @@ func (s *Service) TransferToBilling(
 	req *shipmentbillingports.TransferShipmentToBillingRequest,
 	actor *permissionports.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
-	if s.billingQueueService == nil {
-		return nil, errortypes.NewConflictError("Billing queue service is unavailable")
-	}
-
 	attempt := s.attemptBillingTransfer(ctx, &billingTransferAttemptParams{
 		ShipmentID: req.ShipmentID,
 		BillType:   req.BillType,
@@ -327,10 +323,6 @@ func (s *Service) TransferToBillingItems(
 	req *shipmentbillingports.TransferShipmentToBillingRequest,
 	actor *permissionports.RequestActor,
 ) (*billingqueueports.TransferToBillingResult, error) {
-	if s.billingQueueService == nil {
-		return nil, errortypes.NewConflictError("Billing queue service is unavailable")
-	}
-
 	attempt := s.attemptBillingTransfer(ctx, &billingTransferAttemptParams{
 		ShipmentID: req.ShipmentID,
 		BillType:   req.BillType,
@@ -479,10 +471,6 @@ func (s *Service) planTransfers(
 	ids []pulid.ID,
 	markCompleted bool,
 ) (*shipmentbillingports.BillingTransferPlan, error) {
-	if s.customerRepo == nil || s.documentRepo == nil || s.billingRepo == nil {
-		return nil, errortypes.NewConflictError("Shipment billing readiness service is unavailable")
-	}
-
 	shipments, err := s.repo.GetByIDs(ctx, &shipmentports.GetShipmentsByIDsRequest{
 		TenantInfo:     tenantInfo,
 		ShipmentIDs:    ids,
@@ -600,9 +588,6 @@ func (s *Service) BulkTransferToBilling(
 ) (*shipmentbillingports.BulkTransferToBillingResponse, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
-	}
-	if s.billingQueueService == nil {
-		return nil, errortypes.NewConflictError("Billing queue service is unavailable")
 	}
 
 	shipmentIDs := sliceutils.Dedupe(req.ShipmentIDs)
@@ -788,7 +773,7 @@ type Params struct {
 	CustomerRepo        customerports.CustomerRepository
 	DocumentRepo        documentports.DocumentRepository
 	BillingRepo         tenantports.BillingControlRepository
-	BillingQueueService billingqueueports.BillingQueueService `optional:"true"`
+	BillingQueueService billingqueueports.BillingQueueService
 	Invalidator         shipmentinvalidationports.ShipmentInvalidator
 	Effects             *shipmenteffects.Effects
 	Readiness           *shipmentbillingreadiness.Service

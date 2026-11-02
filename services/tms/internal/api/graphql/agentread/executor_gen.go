@@ -355,7 +355,7 @@ type ResolverParams struct {
 	DetentionSimulation               *detentionsimulation.Service
 	DispatchAutoAssignService         dispatchconsoleports.DispatchAutoAssignService
 	DispatchConsoleService            dispatchconsoleports.DispatchConsoleService
-	DistanceCalculationService        shipmentdistanceports.DistanceCalculationService `optional:"true"`
+	DistanceCalculationService        shipmentdistanceports.DistanceCalculationService
 	DocumentTypeService               *documenttypeservice.Service
 	DriverPayService                  *driverpayservice.Service
 	DriverPortalInvitationService     *driverportalinvitationservice.Service
@@ -421,7 +421,7 @@ type ResolverParams struct {
 	LocationService                   *locationservice.Service
 	Logger                            *zap.Logger
 	ManualJournalService              *manualjournalservice.Service
-	MonitoringConfig                  *monitoringconfig.Config `optional:"true"`
+	MonitoringConfig                  *monitoringconfig.Config
 	NotificationService               *notificationservice.Service
 	OrderService                      *orderservice.Service
 	OrgStructureService               *orgstructureservice.Service
@@ -453,7 +453,7 @@ type ResolverParams struct {
 	ShipmentBillingTransfer           shipmentserviceports.ShipmentBillingTransferService
 	ShipmentCommentService            shipmentcommentports.ShipmentCommentService
 	ShipmentEventService              shipmenteventports.ShipmentEventService
-	ShipmentImportAssistant           shipmentimportassistantports.ShipmentImportAssistantService `optional:"true"`
+	ShipmentImportAssistant           shipmentimportassistantports.ShipmentImportAssistantService
 	ShipmentLifecycle                 shipmentserviceports.ShipmentLifecycleService
 	ShipmentLoadingPlanner            shipmentserviceports.ShipmentLoadingPlanner
 	ShipmentRatingReviewService       ratingreviewports.RatingReviewService

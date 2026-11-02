@@ -28,7 +28,7 @@ type Params struct {
 	DB           kernelports.Transactor
 	Repo         ratingreviewports.RatingReviewRepository
 	AuditService auditports.AuditService
-	Realtime     realtimeports.RealtimeService `optional:"true"`
+	Realtime     realtimeports.RealtimeService
 }
 
 type Service struct {
@@ -154,9 +154,6 @@ func (s *Service) publishBillingHoldChange(
 	saved *shipment.Shipment,
 	actor *permissionports.RequestActor,
 ) {
-	if s.realtime == nil {
-		return
-	}
 	auditActor := actor.AuditActor()
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: saved.OrganizationID,

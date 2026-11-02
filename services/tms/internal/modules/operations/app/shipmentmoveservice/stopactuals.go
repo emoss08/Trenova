@@ -116,9 +116,6 @@ func (s *service) detentionAlertThreshold(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (int64, bool) {
-	if s.dashControlRepo == nil {
-		return defaultDetentionAlertThresholdMinutes, true
-	}
 	control, err := s.dashControlRepo.GetOrCreate(ctx, tenantInfo)
 	if err != nil {
 		s.l.Warn("failed to load dash control for detention alert", zap.Error(err))
@@ -132,9 +129,6 @@ func (s *service) flagDetentionCandidate(
 	req *shipmentmoveports.RecordStopActualRequest,
 	move *shipment.ShipmentMove,
 ) {
-	if s.notifications == nil {
-		return
-	}
 	thresholdMinutes, enabled := s.detentionAlertThreshold(ctx, req.TenantInfo)
 	if !enabled {
 		return

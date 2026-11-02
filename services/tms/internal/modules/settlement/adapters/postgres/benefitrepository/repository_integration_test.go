@@ -57,13 +57,13 @@ func TestGetPlansByIDsReturnsOnlyTheTenantsPlans(t *testing.T) {
 	second := seedBenefitPlan(t, ctx, db, tenantA, "DENTAL")
 	foreign := seedBenefitPlan(t, ctx, db, tenantB, "VISION")
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	entities, err := repo.GetPlansByIDs(
 		tenantA.Ctx(ctx),
 		&driverpayports.GetBenefitPlansByIDsRequest{
 			TenantInfo: tenantA.Info(),
-			PlanIDs: []pulid.ID{second.ID, foreign.ID, first.ID, pulid.MustNew("bplan_")},
+			PlanIDs:    []pulid.ID{second.ID, foreign.ID, first.ID, pulid.MustNew("bplan_")},
 		},
 	)
 	require.NoError(t, err)

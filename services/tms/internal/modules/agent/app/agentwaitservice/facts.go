@@ -195,9 +195,6 @@ func (f *facts) assessWebWatch(
 	tenant pagination.TenantInfo,
 	c *agentwait.Condition,
 ) error {
-	if f.webWatches == nil {
-		return errortypes.NewBusinessError("Web watches cannot be waited on here")
-	}
 	watch, err := f.webWatches.Get(ctx, tenant, c.WebWatchID)
 	if err != nil {
 		return missing(err, "web watch")
@@ -214,9 +211,6 @@ func (f *facts) assessPortalRun(
 	tenant pagination.TenantInfo,
 	c *agentwait.Condition,
 ) error {
-	if f.portalRuns == nil {
-		return errortypes.NewBusinessError("Portal tasks cannot be waited on here")
-	}
 	run, err := f.portalRuns.Get(ctx, tenant, c.PortalRunID)
 	if err != nil {
 		return missing(err, "portal task")

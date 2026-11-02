@@ -154,6 +154,7 @@ func patchFromInput(
 	req := &aiproviderports.PatchAIProviderRequest{
 		Enabled:                  gqlscalar.NullableOmittable(input.Enabled),
 		Trusted:                  gqlscalar.NullableOmittable(input.Trusted),
+		Nova:                     gqlscalar.NullableOmittable(input.Nova),
 		AllowPrivateNetwork:      gqlscalar.NullableOmittable(input.AllowPrivateNetwork),
 		APIKey:                   gqlscalar.NullableOmittable(input.APIKey),
 		InputCostPerMillion:      inputCost,

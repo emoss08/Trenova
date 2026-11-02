@@ -44,13 +44,13 @@ type RemittanceParams struct {
 	Ledger      factoringledgerports.LedgerService
 	Factors     factoringcompanyports.FactoringCompanyRepository
 	Documents   documentports.InvoiceDocumentService
-	Content     documentports.DocumentContentService            `optional:"true"`
-	Nova        llmports.TaskRunner                             `optional:"true"`
-	Starter     factoringremittanceports.RemittanceStageStarter `optional:"true"`
-	Events      agenteventports.AgentEventPublisher             `optional:"true"`
+	Content     documentports.DocumentContentService
+	Nova        llmports.TaskRunner
+	Starter     factoringremittanceports.RemittanceStageStarter
+	Events      agenteventports.AgentEventPublisher
 	Audit       auditports.AuditService
-	Realtime    realtimeports.RealtimeService `optional:"true"`
-	SheetLimits rateimport.Limits             `optional:"true"`
+	Realtime    realtimeports.RealtimeService
+	SheetLimits rateimport.Limits
 	Logger      *zap.Logger
 }
 

@@ -119,10 +119,6 @@ func (s *Service) notifyGroupsFailed(
 }
 
 func (s *Service) notifyScheduledRunProblem(ctx context.Context, problem *scheduledRunProblem) {
-	if s.notifier == nil {
-		return
-	}
-
 	now := timeutils.NowUnix()
 	correlation := problem.correlation
 	data := map[string]any{

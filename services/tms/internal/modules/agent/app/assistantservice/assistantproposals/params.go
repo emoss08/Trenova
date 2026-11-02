@@ -23,14 +23,14 @@ type Params struct {
 	Conversations conversationports.ConversationRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Proposals     agentproposalports.AgentProposalRepository
-	Plans         agentplanports.AgentPlanRepository `optional:"true"`
+	Plans         agentplanports.AgentPlanRepository
 	Shadow        *agentshadow.Resolver
-	Tools         agenttoolports.AgentToolRegistry           `optional:"true"`
-	Decisions     agentdecisionports.AgentDecisionRepository `optional:"true"`
-	Labeler       agentruntimeports.RecordLabeler            `optional:"true"`
+	Tools         agenttoolports.AgentToolRegistry
+	Decisions     agentdecisionports.AgentDecisionRepository
+	Labeler       agentruntimeports.RecordLabeler
 	Permissions   permissionports.PermissionEngine
-	Runs          agentruntimeports.AgentRunRepository `optional:"true"`
-	Users         tenantports.UserRepository           `optional:"true"`
+	Runs          agentruntimeports.AgentRunRepository
+	Users         tenantports.UserRepository
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.

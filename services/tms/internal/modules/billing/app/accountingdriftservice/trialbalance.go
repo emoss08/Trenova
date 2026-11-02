@@ -113,7 +113,7 @@ func (s *Service) reconcileTrialBalance(
 	eventBudget int,
 ) (*accountingdriftports.AccountingDriftBalanceResult, error) {
 	result := new(accountingdriftports.AccountingDriftBalanceResult)
-	if sess.ledger == nil || sess.conn.SyncStartDate == nil {
+	if sess.conn.SyncStartDate == nil {
 		return result, nil
 	}
 	control, currency, skip, err := s.trialBalanceGate(ctx, sess)
@@ -402,7 +402,7 @@ func (s *Service) withoutRetainedEarnings(
 	sess *readSession,
 	groups []*providerAccount,
 ) ([]*providerAccount, error) {
-	if len(groups) == 0 || s.references == nil {
+	if len(groups) == 0 {
 		return groups, nil
 	}
 	ids := make([]string, 0, len(groups))

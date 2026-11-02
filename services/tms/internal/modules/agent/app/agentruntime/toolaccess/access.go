@@ -1,6 +1,7 @@
 package toolaccess
 
 import (
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
@@ -9,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -32,7 +34,49 @@ type AccessParams struct {
 	// Scripts is optional. With it the code-mode gate reads the chat
 	// providers' script settings; without it no model is offered scripts
 	// unless the bench forces them.
-	Scripts llmports.ScriptProviders
+	Scripts  llmports.ScriptProviders
+	Registry *permissioncatalog.Registry
+}
+
+// Params is what the process's tool access is built from.
+type Params struct {
+	fx.In
+
+	Logger         *zap.Logger
+	QueryTools     agenttoolports.AgentQueryToolRegistry
+	ActionTools    agenttoolports.AgentToolRegistry
+	Permissions    permissionports.PermissionEngine
+	Catalog        *agenttoolcatalog.Catalog
+	Extensions     agentextensionports.AgentExtensionGate
+	Vectorizer     retrievalports.QueryVectorizer
+	CatalogVectors retrievalports.CatalogVectorIndex
+	Definitions    agentdefinitionports.AgentDefinitionRepository
+	AIConfig       *aiconfig.Config
+	Disclosures    agenttoolports.ToolDisclosureObserver
+	Scripts        llmports.ScriptProviders
+	Registry       *permissioncatalog.Registry
+}
+
+// New is the process's one tool access, shared by the agent runtime and the
+// agent matcher.
+//
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
+func New(p Params) *Access {
+	return NewAccess(&AccessParams{
+		Logger:         p.Logger,
+		QueryTools:     p.QueryTools,
+		ActionTools:    p.ActionTools,
+		Permissions:    p.Permissions,
+		Catalog:        p.Catalog,
+		Extensions:     p.Extensions,
+		Vectorizer:     p.Vectorizer,
+		CatalogVectors: p.CatalogVectors,
+		Definitions:    p.Definitions,
+		Threshold:      ConfiguredThreshold(p.AIConfig),
+		Disclosures:    p.Disclosures,
+		Scripts:        p.Scripts,
+		Registry:       p.Registry,
+	})
 }
 
 // Access decides which tools an agent holds and may call, builds a turn's
@@ -66,7 +110,7 @@ func NewAccess(p *AccessParams) *Access {
 		vectors:     p.CatalogVectors,
 		disclosures: p.Disclosures,
 		threshold:   p.Threshold,
-		registry:    permissioncatalog.NewRegistry(),
+		registry:    p.Registry,
 		scripts:     p.Scripts,
 	}
 }

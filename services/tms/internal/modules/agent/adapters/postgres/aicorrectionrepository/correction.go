@@ -2,7 +2,6 @@ package aicorrectionrepository
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/emoss08/keel"
@@ -11,10 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection/aicorrectiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval/extractionevaldb"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol/agentcontroldb"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -26,8 +22,6 @@ const (
 	defaultPurgeLimit    = 1000
 	maxPurgeLimit        = 10000
 	defaultAccuracyLimit = 2000
-	defaultTrainingLimit = 100
-	maxTrainingLimit     = 500
 	maxAccuracyLimit     = 10000
 )
 
@@ -50,14 +44,6 @@ func New(p Params) aicorrectionports.AICorrectionRepository {
 		db: p.DB,
 		l:  p.Logger.Named("postgres.aicorrection-repository"),
 	}
-}
-
-func crossing[T any](q keel.Query[*T], allTenants bool) keel.Query[*T] {
-	if allTenants {
-		return q.AllTenants()
-	}
-
-	return q
 }
 
 func (r *repository) Upsert(
@@ -203,42 +189,6 @@ func (r *repository) ListConnection(
 	)
 }
 
-func (r *repository) TotalsByProvider(
-	ctx context.Context,
-	req *aicorrectionports.TotalAICorrectionsByProviderRequest,
-) ([]aicorrectionports.AICorrectionProviderTotal, error) {
-	return dbtx.Read(
-		ctx,
-		r.db,
-		func(ctx context.Context) ([]aicorrectionports.AICorrectionProviderTotal, error) {
-			c := aicorrectiondb.Corrections
-			isProvider := c.ExtractionProviderID.Eq(req.ProviderID)
-			totals, err := keel.Into[aicorrectionports.AICorrectionProviderTotal](
-				ctx,
-				r.db.Keel(ctx),
-				c.Where(
-					c.Task.Eq(req.Task),
-					c.CapturedAt.Gte(req.Since),
-					c.ExtractionProviderID.IsNotNull(),
-				).
-					Group(isProvider).
-					Pick(
-						isProvider,
-						keel.NumericOf(c.ScoredCount.Sum()).Coalesce(0),
-						keel.NumericOf(c.CorrectCount.Sum()).Coalesce(0),
-					),
-			)
-			if err != nil {
-				r.l.Error("failed to total ai corrections by provider", zap.Error(err))
-
-				return nil, fmt.Errorf("total ai corrections by provider: %w", err)
-			}
-
-			return totals, nil
-		},
-	)
-}
-
 const (
 	firstMondayEpoch = 4 * timeutils.SecondsPerDay
 	secondsPerWeek   = 7 * timeutils.SecondsPerDay
@@ -249,20 +199,6 @@ func (r *repository) WeeklyTotalsByProvider(
 	req *aicorrectionports.WeeklyAICorrectionTotalsRequest,
 ) ([]aicorrection.WeekTotal, error) {
 	return r.weeklyTotals(ctx, aicorrectiondb.Corrections.Query(), req.Task, req.Since)
-}
-
-func (r *repository) WeeklyTrainableTotalsByProvider(
-	ctx context.Context,
-	req *aicorrectionports.WeeklyTrainableAICorrectionTotalsRequest,
-) ([]aicorrection.WeekTotal, error) {
-	c := aicorrectiondb.Corrections
-
-	return r.weeklyTotals(
-		ctx,
-		c.AllTenants().Where(trainingConsent(true)),
-		req.Task,
-		req.Since,
-	)
 }
 
 func (r *repository) weeklyTotals(
@@ -297,76 +233,6 @@ func (r *repository) weeklyTotals(
 		}
 
 		return totals, nil
-	})
-}
-
-func trainingConsent(allTenants bool) keel.Pred {
-	c := aicorrectiondb.Corrections
-	consent := agentcontroldb.AgentControls.As("training_consent")
-
-	return keel.Exists(crossing(consent.Where(
-		consent.OrganizationID.EqCol(c.OrganizationID),
-		consent.BusinessUnitID.EqCol(c.BusinessUnitID),
-		consent.AITrainingConsent.IsTrue(),
-	), allTenants))
-}
-
-func trainable(
-	task aicorrection.Task,
-	capturedFrom, capturedTo int64,
-	allTenants bool,
-) []keel.Pred {
-	c := aicorrectiondb.Corrections
-	promoted := extractionevaldb.ExtractionCases.As("promoted_case")
-
-	return []keel.Pred{
-		c.Task.Eq(task),
-		c.CapturedAt.Gte(capturedFrom),
-		c.CapturedAt.Lt(capturedTo),
-		c.DocumentID.IsNotNull(),
-		c.ScoredCount.Gt(0),
-		keel.NotExists(crossing(promoted.Where(
-			promoted.SourceCorrectionID.EqCol(c.ID),
-			promoted.OrganizationID.EqCol(c.OrganizationID),
-			promoted.BusinessUnitID.EqCol(c.BusinessUnitID),
-		), allTenants)),
-	}
-}
-
-func (r *repository) CountTrainable(
-	ctx context.Context,
-	req *aicorrectionports.CountTrainableAICorrectionsRequest,
-) (int, error) {
-	capPerOrganization := req.PerOrganizationCap
-	if capPerOrganization <= 0 {
-		return 0, errortypes.NewValidationError(
-			"perOrganizationCap",
-			errortypes.ErrInvalid,
-			"The per-organization cap must be positive",
-		)
-	}
-
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		c := aicorrectiondb.Corrections
-		perOrganization := keel.CTE("per_organization", []string{"examples"}, c.AllTenants().
-			Where(trainable(req.Task, req.CapturedFrom, req.CapturedTo, true)...).
-			Where(trainingConsent(true)).
-			Group(c.OrganizationID, c.BusinessUnitID).
-			Pick(keel.Count()))
-
-		total, err := keel.IntoOne[int](ctx, r.db.Keel(ctx), perOrganization.Query().
-			With(perOrganization).
-			Pick(keel.CastInt64(keel.NumericOf(keel.Int64Of(perOrganization.Col("examples")).
-				Least(keel.Int64(int64(capPerOrganization))).
-				Sum()).
-				Coalesce(0))))
-		if err != nil && !errors.Is(err, keel.ErrNotFound) {
-			r.l.Error("failed to count trainable ai corrections", zap.Error(err))
-
-			return 0, fmt.Errorf("count trainable ai corrections: %w", err)
-		}
-
-		return total, nil
 	})
 }
 
@@ -405,40 +271,6 @@ func (r *repository) ListForAccuracy(
 			r.l.Error("failed to list ai corrections for accuracy", zap.Error(err))
 
 			return nil, fmt.Errorf("list ai corrections for accuracy: %w", err)
-		}
-
-		return entities, nil
-	})
-}
-
-func (r *repository) ListForTraining(
-	ctx context.Context,
-	req *aicorrectionports.ListAICorrectionsForTrainingRequest,
-) ([]*aicorrection.Correction, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*aicorrection.Correction, error) {
-		limit := req.Limit
-		if limit <= 0 {
-			limit = defaultTrainingLimit
-		}
-		limit = min(limit, maxTrainingLimit)
-
-		c := aicorrectiondb.Corrections
-		q := c.Where(trainable(req.Task, req.CapturedFrom, req.CapturedTo, false)...)
-		if req.BeforeID.IsNotNil() {
-			q.Where(keel.Or(
-				c.CapturedAt.Lt(req.BeforeCapturedAt),
-				keel.And(c.CapturedAt.Eq(req.BeforeCapturedAt), c.ID.Lt(req.BeforeID)),
-			))
-		}
-
-		entities, err := q.
-			Order(c.CapturedAt.Desc(), c.ID.Desc()).
-			Limit(limit).
-			List(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to list ai corrections for training", zap.Error(err))
-
-			return nil, fmt.Errorf("list ai corrections for training: %w", err)
 		}
 
 		return entities, nil

@@ -19,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -34,7 +33,7 @@ type Params struct {
 	AuditService auditports.AuditService
 	// Trust promotes the tools that had already earned it when earned
 	// autonomy is turned on or its threshold lowered.
-	Trust agenttrustports.AgentTrustService `optional:"true"`
+	Trust agenttrustports.AgentTrustService
 }
 
 type Service struct {
@@ -44,7 +43,6 @@ type Service struct {
 	versions settingversionports.SettingVersionRepository
 	audit    auditports.AuditService
 	trust    agenttrustports.AgentTrustService
-	now      func() int64
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
@@ -56,7 +54,6 @@ func New(p Params) agentcontrolports.AgentControlService {
 		versions: p.Versions,
 		audit:    p.AuditService,
 		trust:    p.Trust,
-		now:      timeutils.NowUnix,
 	}
 }
 
@@ -107,7 +104,6 @@ func (s *Service) Update(
 	applyAgentMoney(control, &req.AgentMoney)
 
 	me := errortypes.NewMultiError()
-	consentChanged := s.applyTrainingConsent(control, req.AITrainingConsent, actor, me)
 	control.Validate(me)
 	if me.HasErrors() {
 		return nil, me
@@ -131,7 +127,7 @@ func (s *Service) Update(
 		PreviousState:  jsonutils.MustToJSON(&previous),
 		OrganizationID: updated.OrganizationID,
 		BusinessUnitID: updated.BusinessUnitID,
-	}, agentControlAuditOptions(ctx, consentChanged, &previous, updated)...); err != nil {
+	}, agentControlAuditOptions(ctx, &previous, updated)...); err != nil {
 		s.l.Error("failed to log agent control audit", zap.Error(err))
 	}
 
@@ -149,7 +145,7 @@ func (s *Service) promoteEarned(
 	previous, updated *agentcontrol.AgentControl,
 	decidedBy pulid.ID,
 ) {
-	if s.trust == nil || !updated.EarnedAutonomy {
+	if !updated.EarnedAutonomy {
 		return
 	}
 	if previous.EarnedAutonomy && updated.PromotionThreshold >= previous.PromotionThreshold {
@@ -236,29 +232,6 @@ func (s *Service) explainConflict(
 	)
 }
 
-func (s *Service) applyTrainingConsent(
-	control *agentcontrol.AgentControl,
-	consent *bool,
-	actor *permissionports.RequestActor,
-	me *errortypes.MultiError,
-) bool {
-	if consent == nil || *consent == control.AITrainingConsent {
-		return false
-	}
-
-	userID := actor.PersonUserID()
-	if userID.IsNil() {
-		me.Add(
-			"aiTrainingConsent",
-			errortypes.ErrInvalid,
-			"Training consent can only be changed by a signed-in person",
-		)
-		return false
-	}
-
-	return control.SetAITrainingConsent(*consent, userID, s.now())
-}
-
 func applyAgentMoney(
 	control *agentcontrol.AgentControl,
 	update *agentcontrolports.AgentMoneyLimitsUpdate,
@@ -282,12 +255,11 @@ func applyAgentMoney(
 
 func agentControlAuditOptions(
 	ctx context.Context,
-	consentChanged bool,
 	previous, updated *agentcontrol.AgentControl,
 ) []auditports.LogOption {
 	moneyChanged := agentMoneyChanged(previous, updated)
 	options := []auditports.LogOption{
-		auditservice.WithComment(agentControlAuditComment(consentChanged, moneyChanged, updated)),
+		auditservice.WithComment(agentControlAuditComment(moneyChanged)),
 		auditservice.WithRequest(ctx),
 	}
 	if moneyChanged {
@@ -305,18 +277,10 @@ func agentMoneyChanged(previous, updated *agentcontrol.AgentControl) bool {
 		previous.AgentMoneyDayAmountMinor != updated.AgentMoneyDayAmountMinor
 }
 
-func agentControlAuditComment(
-	consentChanged, moneyChanged bool,
-	control *agentcontrol.AgentControl,
-) string {
-	switch {
-	case consentChanged && control.AITrainingConsent:
-		return "AI training consent granted"
-	case consentChanged:
-		return "AI training consent withdrawn"
-	case moneyChanged:
+func agentControlAuditComment(moneyChanged bool) string {
+	if moneyChanged {
 		return "Agent money limits changed"
-	default:
-		return "Agent control updated"
 	}
+
+	return "Agent control updated"
 }

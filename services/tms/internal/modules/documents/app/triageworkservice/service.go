@@ -66,12 +66,12 @@ type Params struct {
 	Replies       *inboundreplyservice.Service
 	ReplyReader   inboundmessageports.InboundReplyReader
 	Nova          *triagenova.Caller
-	Workflows     kernelports.WorkflowStarter            `optional:"true"`
-	Events        inboundmessageports.TriageEventSink    `optional:"true"`
-	Loads         triageworkports.TriageLoadCreator      `optional:"true"`
-	Exceptions    triageworkports.TriageExceptionLogger  `optional:"true"`
-	Detention     triageworkports.TriageDetentionSettler `optional:"true"`
-	CarrierPay    triageworkports.TriageCarrierPayQueuer `optional:"true"`
+	Workflows     kernelports.WorkflowStarter
+	Events        inboundmessageports.TriageEventSink
+	Loads         triageworkports.TriageLoadCreator
+	Exceptions    triageworkports.TriageExceptionLogger
+	Detention     triageworkports.TriageDetentionSettler
+	CarrierPay    triageworkports.TriageCarrierPayQueuer
 }
 
 type Service struct {

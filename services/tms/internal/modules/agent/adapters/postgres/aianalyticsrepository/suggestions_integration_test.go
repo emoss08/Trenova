@@ -81,7 +81,9 @@ func (f suggestionFixture) stored(t *testing.T) []pulid.ID {
 	return ids
 }
 
-func suggestionRowsByAgent(rows []aianalyticsports.SuggestionRow) map[pulid.ID]aianalyticsports.SuggestionRow {
+func suggestionRowsByAgent(
+	rows []aianalyticsports.SuggestionRow,
+) map[pulid.ID]aianalyticsports.SuggestionRow {
 	byAgent := make(map[pulid.ID]aianalyticsports.SuggestionRow, len(rows))
 	for _, row := range rows {
 		byAgent[row.AgentDefinitionID] = row
@@ -99,7 +101,7 @@ func TestSuggestionsCountEachOutcomeAndPassOverWhatWasLeftShown(t *testing.T) {
 	f.dispatch = f.agent(t, "Dispatch")
 	receivables := f.agent(t, "Receivables")
 	billing := f.agent(t, "Billing")
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	now := timeutils.NowUnix()
 	pendingSince := aianalytics.SuggestionPendingSince(now)
@@ -163,7 +165,7 @@ func TestPruneDeletesSuggestionsOlderThanTheHorizon(t *testing.T) {
 	f := suggestionFixture{ctx: ctx, db: db, tenant: tenant}
 	f.dispatch = f.agent(t, "Dispatch")
 	receivables := f.agent(t, "Receivables")
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	now := timeutils.NowUnix()
 	horizon := now - 90*24*3600

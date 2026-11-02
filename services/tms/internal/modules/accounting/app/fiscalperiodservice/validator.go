@@ -84,10 +84,6 @@ func (v *Validator) ValidateClose(
 		return multiErr
 	}
 
-	if v.accountingRepo == nil || v.invoiceRepo == nil {
-		return nil
-	}
-
 	control, err := v.accountingRepo.GetByOrgID(ctx, entity.OrganizationID)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
@@ -152,10 +148,6 @@ func (v *Validator) validateAccountingCloseBlockers(
 	entity *fiscalperiod.FiscalPeriod,
 	multiErr *errortypes.MultiError,
 ) {
-	if v.db == nil {
-		return
-	}
-
 	var pendingManualCount, pendingSourceCount int
 	err := dbtx.ReadErr(ctx, v.db, func(ctx context.Context) error {
 		db := v.db.Keel(ctx)

@@ -174,14 +174,12 @@ func (s *Service) scheduleRecomputeDue(
 	tenantInfo pagination.TenantInfo,
 	changed []inboundmessage.Classification,
 ) {
-	if s.wakes != nil && s.wakes.Enabled() {
-		err := s.wakes.RecomputeDue(ctx, tenantInfo, changed)
-		if err == nil {
-			return
-		}
-		s.l.Warn("could not start recomputing due times; recomputing them now",
-			zap.Error(err))
+	err := s.wakes.RecomputeDue(ctx, tenantInfo, changed)
+	if err == nil {
+		return
 	}
+	s.l.Warn("could not start recomputing due times; recomputing them now",
+		zap.Error(err))
 
 	if _, err := s.RecomputeDueFor(ctx, tenantInfo, changed); err != nil {
 		s.l.Error("could not recompute due times after a target changed", zap.Error(err))

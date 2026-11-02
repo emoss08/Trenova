@@ -35,7 +35,7 @@ func TestOpenAsOfFollowsEverySettlementSource(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	logger := zap.NewNop()
 	repo := NewAnalytics(Params{DB: conn, Logger: logger})
 	invoiceRepo := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})

@@ -31,7 +31,7 @@ type ReadInput struct {
 type RequesterParams struct {
 	fx.In
 
-	Workflows kernelports.WorkflowStarter `optional:"true"`
+	Workflows kernelports.WorkflowStarter
 	Logger    *zap.Logger
 }
 
@@ -49,8 +49,7 @@ func NewRequester(p RequesterParams) documentports.PaperworkReadRequester {
 // RequestRead starts Nova reading the document once its upload commits. A
 // document already being read is not read twice.
 func (r *Requester) RequestRead(ctx context.Context, doc *document.Document, userID pulid.ID) {
-	if r.workflows == nil || doc == nil ||
-		doc.ProcessingProfile != document.ProcessingProfileShipmentPaperwork {
+	if doc == nil || doc.ProcessingProfile != document.ProcessingProfileShipmentPaperwork {
 		return
 	}
 

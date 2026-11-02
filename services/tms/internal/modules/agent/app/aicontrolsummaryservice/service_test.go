@@ -159,7 +159,7 @@ type completion struct {
 	calls int
 }
 
-func (c *completion) Available(context.Context, aitask.Task, pagination.TenantInfo) (bool, error) {
+func (c *completion) Available(context.Context, pagination.TenantInfo) (bool, error) {
 	return true, nil
 }
 
@@ -198,7 +198,7 @@ func chatProvider() *aiprovider.Provider {
 		ID:                  pulid.MustNew("aiprv_"),
 		Name:                "Primary",
 		Enabled:             true,
-		Tasks:               aitask.AllTasks(),
+		Tasks:               aitask.RoutedTasks(),
 		Trusted:             true,
 		Kind:                aiprovider.KindOpenAIChat,
 	}

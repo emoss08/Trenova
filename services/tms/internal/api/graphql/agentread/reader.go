@@ -134,13 +134,11 @@ func (r *Reader) Read(
 	ctx = gqlctx.WithPermissionMemo(ctx, gqlctx.NewPermissionMemo())
 	ctx = gqlctx.WithResponseStatus(ctx, status)
 	ctx = gqlctx.WithFieldCeiling(ctx, ceiling)
-	if r.loaders != nil {
-		ctx = r.loaders.Attach(ctx, pagination.TenantInfo{
-			OrgID:  auth.OrganizationID,
-			BuID:   auth.BusinessUnitID,
-			UserID: auth.UserID,
-		})
-	}
+	ctx = r.loaders.Attach(ctx, pagination.TenantInfo{
+		OrgID:  auth.OrganizationID,
+		BuID:   auth.BusinessUnitID,
+		UserID: auth.UserID,
+	})
 
 	response, cost := r.dispatch(ctx, op, req.Variables)
 	result, err := decode(response, ceiling)

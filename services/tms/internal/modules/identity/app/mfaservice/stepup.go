@@ -48,10 +48,6 @@ func (s *Service) beginStepUp(
 	}
 	attempt.tenant.UserID = usr.ID
 
-	if s.throttle == nil {
-		return attempt, nil
-	}
-
 	decision, err := s.throttle.Begin(ctx, attempt.key)
 	if err != nil {
 		s.l.Warn("two-factor step-up throttle check failed; allowing the attempt", zap.Error(err))
@@ -71,11 +67,10 @@ func (s *Service) beginStepUp(
 
 func (s *Service) finishStepUp(ctx context.Context, attempt *stepUpAttempt, err error) {
 	if err == nil {
-		if s.throttle != nil {
-			if resetErr := s.throttle.Succeed(ctx, attempt.key); resetErr != nil {
-				s.l.Warn("failed to clear the two-factor step-up counter", zap.Error(resetErr))
-			}
+		if resetErr := s.throttle.Succeed(ctx, attempt.key); resetErr != nil {
+			s.l.Warn("failed to clear the two-factor step-up counter", zap.Error(resetErr))
 		}
+
 		s.recordStepUp(ctx, attempt, iam.AuthEventOutcomeSuccess, "")
 		return
 	}
@@ -92,10 +87,6 @@ func (s *Service) recordStepUp(
 	outcome iam.AuthEventOutcome,
 	errorCode string,
 ) {
-	if s.authEvents == nil {
-		return
-	}
-
 	rec := &iamports.AuthEventRecord{
 		Provider:         iamports.AuthEventProviderMFAStepUp,
 		Outcome:          outcome,

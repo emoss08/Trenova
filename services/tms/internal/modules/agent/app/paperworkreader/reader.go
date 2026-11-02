@@ -28,7 +28,7 @@ type Params struct {
 	Logger       *zap.Logger
 	Harness      llmports.TaskRunner
 	Documents    documentports.DocumentRepository
-	Accessorials accessorialchargeports.AccessorialChargeRepository `optional:"true"`
+	Accessorials accessorialchargeports.AccessorialChargeRepository
 }
 
 // Reader is Nova reading a shipment's billing paperwork the moment it is
@@ -144,9 +144,5 @@ func (r *Reader) catalog(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*accessorialcharge.AccessorialCharge, error) {
-	if r.accessorials == nil {
-		return nil, nil
-	}
-
 	return r.accessorials.ListCatalog(ctx, tenantInfo)
 }

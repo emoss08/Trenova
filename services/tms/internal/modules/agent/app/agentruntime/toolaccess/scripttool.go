@@ -16,7 +16,7 @@ import (
 // tool: some provider that may answer it has scripts on. Only a turn left to
 // the providers' settings asks; a failed read offers nothing.
 func (s *Access) ScriptsOffered(ctx context.Context, req *agentruntimeports.RunRequest) bool {
-	if req.CodeMode != codemode.OverrideDefault || s.scripts == nil || req.Actor == nil {
+	if req.CodeMode != codemode.OverrideDefault || req.Actor == nil {
 		return false
 	}
 	offered, err := s.scripts.ScriptsOffered(ctx, req.Actor.TenantInfo())

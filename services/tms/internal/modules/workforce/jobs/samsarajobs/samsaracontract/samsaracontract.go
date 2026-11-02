@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	workflowstarterservice "github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/samsarasyncservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
@@ -37,11 +36,6 @@ type Manager struct {
 
 func NewManager(p ManagerParams) *Manager {
 	workflowStarter := p.WorkflowStarter
-	if workflowStarter == nil {
-		workflowStarter = workflowstarterservice.New(workflowstarterservice.Params{
-			TemporalClient: p.TemporalClient,
-		})
-	}
 
 	return &Manager{
 		temporalClient:  p.TemporalClient,
@@ -76,10 +70,6 @@ func (m *Manager) StartWorkersSyncWorkflow(
 			},
 		},
 		RequestedBy: tenantInfo.UserID,
-	}
-
-	if !m.workflowStarter.Enabled() {
-		return nil, errortypes.NewBusinessError("Samsara worker sync is not configured")
 	}
 
 	run, err := m.workflowStarter.StartWorkflow(

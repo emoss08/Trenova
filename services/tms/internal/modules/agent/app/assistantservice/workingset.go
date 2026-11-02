@@ -44,9 +44,6 @@ func (s *Service) anchorRecords(
 	ctx context.Context,
 	scope *workingset.AnchorScope,
 ) []agentturn.RuntimeAnchor {
-	if s.anchors == nil {
-		return nil
-	}
 	refs := workingset.AnchorRefs(scope)
 	if len(refs) == 0 {
 		return nil

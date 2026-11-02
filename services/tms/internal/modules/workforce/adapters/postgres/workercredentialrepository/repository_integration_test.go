@@ -43,13 +43,13 @@ func TestGetTypesByIDsReturnsOnlyTheTenantsTypes(t *testing.T) {
 	second := seedCredentialType(t, ctx, db, tenantA, "TWIC")
 	foreign := seedCredentialType(t, ctx, db, tenantB, "PASSPORT")
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	entities, err := repo.GetTypesByIDs(
 		tenantA.Ctx(ctx),
 		&workercredentialports.GetCredentialTypesByIDsRequest{
 			TenantInfo: tenantA.Info(),
-			TypeIDs: []pulid.ID{second.ID, foreign.ID, first.ID, pulid.MustNew("wct_")},
+			TypeIDs:    []pulid.ID{second.ID, foreign.ID, first.ID, pulid.MustNew("wct_")},
 		},
 	)
 	require.NoError(t, err)

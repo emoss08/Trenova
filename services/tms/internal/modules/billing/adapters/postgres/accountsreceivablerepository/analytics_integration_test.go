@@ -27,7 +27,7 @@ func TestARAnalyticsRepositoryQueriesExecute(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	repo := NewAnalytics(Params{DB: conn, Logger: zap.NewNop()})
 
 	seeded := billingtest.SeededTenant(t, ctx, db)
@@ -138,7 +138,11 @@ func TestARAnalyticsRepositoryQueriesExecute(t *testing.T) {
 	assert.LessOrEqual(t, len(worklist), 25)
 
 	cus := customerdb.Customers
-	customerID, err := keel.IntoOne[pulid.ID](ctx, db, cus.Pick(cus.ID).Order(cus.ID.Asc()).Limit(1))
+	customerID, err := keel.IntoOne[pulid.ID](
+		ctx,
+		db,
+		cus.Pick(cus.ID).Order(cus.ID.Asc()).Limit(1),
+	)
 	require.NoError(t, err)
 
 	snapshot, err := repo.GetCustomerSnapshot(
@@ -158,7 +162,7 @@ func TestARBalanceOverviewWithoutPostedReceivables(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	repo := NewAnalytics(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := NewAnalytics(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	ctx = dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 

@@ -28,10 +28,6 @@ type iamChange struct {
 }
 
 func (s *service) recordChange(ctx context.Context, change *iamChange) {
-	if s.auditor == nil {
-		return
-	}
-
 	var actor kernelports.AuditActor
 	if change.tenantInfo.UserID.IsNotNil() {
 		actor = permissionports.UserActor(change.tenantInfo).AuditActor()

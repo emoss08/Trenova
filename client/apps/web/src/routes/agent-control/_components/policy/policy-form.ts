@@ -68,7 +68,6 @@ export const policyFormSchema = z.object({
         });
       }
     }),
-  aiTrainingConsent: z.boolean(),
   version: z.number(),
 });
 
@@ -88,21 +87,15 @@ export function toPolicyForm(control: AgentControl): PolicyFormValues {
       dayCalls: control.agentMoneyDayCalls,
       dayAmountCents: decimalToCents(control.agentMoneyDayAmount),
     },
-    aiTrainingConsent: control.aiTrainingConsent,
     version: control.version,
   };
 }
 
 /**
  * The update the editor sends. The pause switch is not the editor's and is
- * sent as it stands; training consent only when it changed, so saving anything
- * else never re-records who consented.
+ * sent as it stands.
  */
-export function toControlInput(
-  values: PolicyFormValues,
-  loaded: PolicyFormValues,
-  shadowMode: boolean,
-): AgentControlInput {
+export function toControlInput(values: PolicyFormValues, shadowMode: boolean): AgentControlInput {
   return {
     shadowMode,
     earnedAutonomy: values.earnedAutonomy,
@@ -116,9 +109,6 @@ export function toControlInput(
     agentMoneyDayCalls: values.agentMoney.dayCalls,
     agentMoneyDayAmount: centsToDecimal(values.agentMoney.dayAmountCents),
     version: values.version,
-    ...(values.aiTrainingConsent === loaded.aiTrainingConsent
-      ? {}
-      : { aiTrainingConsent: values.aiTrainingConsent }),
   };
 }
 

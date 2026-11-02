@@ -361,6 +361,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
+				Name:     "nova",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aiprovider.Provider)
+					return obj.Nova, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
 				Name:      "lastTest",
 				HasChild:  true,
 				ChildType: "AIProviderTestOutcome",
@@ -1478,7 +1488,7 @@ func unmarshalInputAIProviderPatchInput(ctx context.Context, ec *gqlexec.Exec, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"enabled", "trusted", "allowPrivateNetwork", "tasks", "apiKey", "inputCostPerMillion", "outputCostPerMillion", "cacheReadCostPerMillion", "cacheWriteCostPerMillion"}
+	fieldsInOrder := [...]string{"enabled", "trusted", "nova", "allowPrivateNetwork", "tasks", "apiKey", "inputCostPerMillion", "outputCostPerMillion", "cacheReadCostPerMillion", "cacheWriteCostPerMillion"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -1499,6 +1509,13 @@ func unmarshalInputAIProviderPatchInput(ctx context.Context, ec *gqlexec.Exec, o
 				return it, err
 			}
 			it.Trusted = graphql.OmittableOf(data)
+		case "nova":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nova"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Nova = graphql.OmittableOf(data)
 		case "allowPrivateNetwork":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allowPrivateNetwork"))
 			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)

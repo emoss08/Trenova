@@ -27,17 +27,17 @@ type Params struct {
 	Conversations conversationports.ConversationRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Proposals     agentproposalports.AgentProposalRepository
-	Plans         agentplanports.AgentPlanRepository                 `optional:"true"`
-	Artifacts     assistantartifactports.AssistantArtifactRepository `optional:"true"`
-	Activity      agentactivityports.AgentActivityPublisher          `optional:"true"`
+	Plans         agentplanports.AgentPlanRepository
+	Artifacts     assistantartifactports.AssistantArtifactRepository
+	Activity      agentactivityports.AgentActivityPublisher
 	Permissions   permissionports.PermissionEngine
-	Runs          agentruntimeports.AgentRunRepository  `optional:"true"`
-	Users         tenantports.UserRepository            `optional:"true"`
-	Completion    llmports.StructuredCompleter          `optional:"true"`
-	Reports       *reporting.Service                    `optional:"true"`
-	Queries       agenttoolports.AgentQueryToolRegistry `optional:"true"`
-	PDFs          documenttemplateports.PDFRenderer     `optional:"true"`
-	Boards        assistantports.BoardFiller            `optional:"true"`
+	Runs          agentruntimeports.AgentRunRepository
+	Users         tenantports.UserRepository
+	Completion    llmports.StructuredCompleter
+	Reports       *reporting.Service
+	Queries       agenttoolports.AgentQueryToolRegistry
+	PDFs          documenttemplateports.PDFRenderer
+	Boards        assistantports.BoardFiller
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.

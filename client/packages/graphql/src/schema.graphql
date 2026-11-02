@@ -1086,6 +1086,11 @@ type AIProvider {
   """
   monthlyCapUsd: Decimal
   name: String!
+  """
+  Nova runs on this provider, with Nova's own model whatever model it serves
+  the Desk with. An organization has at most one; choosing another moves it.
+  """
+  nova: Boolean!
   """What happens to a task once the monthly cap is reached."""
   onCap: AIProviderCapAction!
   organizationId: ID!
@@ -1272,6 +1277,8 @@ input AIProviderPatchInput {
   cacheWriteCostPerMillion: Decimal @goField(omittable: true)
   enabled: Boolean @goField(omittable: true)
   inputCostPerMillion: Decimal @goField(omittable: true)
+  """Run Nova on this provider, taking it from the one that had it."""
+  nova: Boolean @goField(omittable: true)
   outputCostPerMillion: Decimal @goField(omittable: true)
   tasks: [AITask!] @goField(omittable: true)
   trusted: Boolean @goField(omittable: true)
@@ -1683,20 +1690,6 @@ enum AIToolFailureCause {
   ToolNotHeld
   ToolTimedOut
   WrongArguments
-}
-
-"""
-A model-training export that included this organization's AI corrections, anonymized.
-"""
-type AITrainingExportHistoryEntry {
-  """When the AI training consent the export relied on was granted."""
-  consentGrantedAt: Timestamp!
-  """Corrections from this organization in the export."""
-  examples: Int!
-  exportId: ID!
-  exportedAt: Timestamp!
-  trainExamples: Int!
-  validationExamples: Int!
 }
 
 """A change to how AI is set up that the last 30 days of runs argue for."""
@@ -4010,14 +4003,6 @@ type AgentControl {
   """The most money changes one agent run or turn may make on its own."""
   agentMoneyRunCalls: Int!
   """
-  Whether the organization's AI corrections may be anonymized and used to train models outside it. Off until a person turns it on.
-  """
-  aiTrainingConsent: Boolean!
-  """When training consent was last turned on or off."""
-  aiTrainingConsentChangedAt: Timestamp
-  """Who last turned training consent on or off."""
-  aiTrainingConsentChangedById: ID
-  """
   Desk conversations are no longer split into chapters and named by a model. People can still start chapters by hand.
   """
   autoChaptersOff: Boolean!
@@ -4063,10 +4048,6 @@ input AgentControlInput {
   Absent leaves the number of automatic money changes a run may make as it is.
   """
   agentMoneyRunCalls: Int
-  """
-  Absent leaves training consent as it is. Only a signed-in person can change it.
-  """
-  aiTrainingConsent: Boolean
   """
   Absent leaves whether a model splits Desk conversations into named chapters as it is.
   """
@@ -15976,13 +15957,11 @@ type ExtractionAccuracy {
   accuracy: Float!
   byKind: [ExtractionAccuracyGroup!]!
   byModel: [ExtractionAccuracyGroup!]!
-  cases: ExtractionEvalCaseCounts!
   correct: Int!
   corrected: Int!
   corrections: Int!
   fields: [ExtractionFieldAccuracy!]!
   missed: Int!
-  recentRuns: [ExtractionEvalRun!]!
   """True when the window held more corrections than were read."""
   sampled: Boolean!
   scored: Int!
@@ -15998,225 +15977,6 @@ type ExtractionAccuracyGroup {
   """The model, or the document kind; empty for drafts read by rules alone."""
   key: String!
   scored: Int!
-}
-
-"""
-A frozen extraction test: the page text the extractor reads and the values a person confirmed.
-"""
-type ExtractionEvalCase {
-  businessUnitId: ID!
-  createdAt: Timestamp!
-  createdById: ID!
-  documentFingerprint: String!
-  documentKind: String!
-  expected: ExtractionSnapshot!
-  expectedFieldCount: Int!
-  fileName: String!
-  id: ID!
-  inputHash: String!
-  notes: String!
-  organizationId: ID!
-  pageCount: Int!
-  pages: [ExtractionEvalPage!]!
-  sourceCorrectionId: ID
-  sourceDocumentId: ID
-  status: ExtractionEvalCaseStatus!
-  task: String!
-  title: String!
-  updatedAt: Timestamp!
-  version: Int!
-}
-
-type ExtractionEvalCaseConnection {
-  edges: [ExtractionEvalCaseEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int
-  """
-  Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
-  """
-  totalCountExact: Boolean!
-}
-
-type ExtractionEvalCaseCounts {
-  active: Int!
-  candidate: Int!
-  retired: Int!
-}
-
-type ExtractionEvalCaseEdge {
-  cursor: String!
-  node: ExtractionEvalCase!
-}
-
-enum ExtractionEvalCaseStatus {
-  Active
-  Candidate
-  Retired
-}
-
-type ExtractionEvalPage {
-  number: Int!
-  text: String!
-}
-
-"""
-A re-freeze queued in the background: each case's original file is converted through Docling.
-"""
-type ExtractionEvalRefreeze {
-  """
-  True when the organization's re-freeze was already running; that run is returned and no new one is started.
-  """
-  alreadyRunning: Boolean!
-  queued: Int!
-  workflowId: String!
-}
-
-"""The organization's most recent re-freeze and how far it has got."""
-type ExtractionEvalRefreezeProgress {
-  """Cases the re-freeze could not finish."""
-  failed: Int!
-  """Cases frozen again from their original file."""
-  frozen: Int!
-  """
-  Cases left as they were: no original file, or one Docling could not read.
-  """
-  skipped: Int!
-  status: ExtractionEvalRefreezeStatus!
-  """Cases the re-freeze was asked to read."""
-  total: Int!
-  workflowId: String!
-}
-
-enum ExtractionEvalRefreezeStatus {
-  Completed
-  """
-  Stopped before every case was read: failed, canceled, terminated or timed out.
-  """
-  Failed
-  Running
-}
-
-"""One case evaluated within a run."""
-type ExtractionEvalResult {
-  accuracy: Float!
-  businessUnitId: ID!
-  caseId: ID!
-  caseTitle: String!
-  completedAt: Timestamp
-  correctCount: Int!
-  correctedCount: Int!
-  costUsd: Decimal!
-  createdAt: Timestamp!
-  errorMessage: String!
-  fieldResults: [AICorrectionFieldResult!]!
-  id: ID!
-  inputTokens: Int!
-  latencyMs: Int!
-  missedCount: Int!
-  model: String!
-  ordinal: Int!
-  organizationId: ID!
-  outputTokens: Int!
-  predicted: ExtractionSnapshot
-  providerId: ID
-  runId: ID!
-  scoredCount: Int!
-  startedAt: Timestamp
-  status: ExtractionEvalResultStatus!
-  unconfirmedCount: Int!
-  unscoredCount: Int!
-  updatedAt: Timestamp!
-  version: Int!
-}
-
-type ExtractionEvalResultConnection {
-  edges: [ExtractionEvalResultEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int
-  """
-  Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
-  """
-  totalCountExact: Boolean!
-}
-
-type ExtractionEvalResultEdge {
-  cursor: String!
-  node: ExtractionEvalResult!
-}
-
-enum ExtractionEvalResultStatus {
-  Completed
-  Failed
-  Pending
-  Skipped
-}
-
-"""
-One model, pinned to one AI provider, run over the active extraction cases.
-"""
-type ExtractionEvalRun {
-  accuracy: Float!
-  avgLatencyMs: Int!
-  businessUnitId: ID!
-  caseLimit: Int!
-  casesCompleted: Int!
-  casesFailed: Int!
-  casesSkipped: Int!
-  casesTotal: Int!
-  correctCount: Int!
-  correctedCount: Int!
-  costUsd: Decimal!
-  createdAt: Timestamp!
-  failureMessage: String!
-  fieldAccuracy: [ExtractionFieldAccuracy!]!
-  finishedAt: Timestamp
-  id: ID!
-  inputTokens: Int!
-  missedCount: Int!
-  organizationId: ID!
-  outputTokens: Int!
-  providerId: ID!
-  """The model the provider was configured with when the run was requested."""
-  providerModel: String!
-  providerName: String!
-  requestedById: ID!
-  scoredCount: Int!
-  """The model the provider reported serving."""
-  servedModel: String!
-  startedAt: Timestamp
-  status: ExtractionEvalRunStatus!
-  """Why the run ended before every case ran."""
-  stopReason: String!
-  task: String!
-  unconfirmedCount: Int!
-  unscoredCount: Int!
-  updatedAt: Timestamp!
-  version: Int!
-  workflowId: String!
-}
-
-type ExtractionEvalRunConnection {
-  edges: [ExtractionEvalRunEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int
-  """
-  Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
-  """
-  totalCountExact: Boolean!
-}
-
-type ExtractionEvalRunEdge {
-  cursor: String!
-  node: ExtractionEvalRun!
-}
-
-enum ExtractionEvalRunStatus {
-  BudgetStopped
-  Canceled
-  Completed
-  Failed
-  Queued
-  Running
 }
 
 type ExtractionFieldAccuracy {
@@ -16279,279 +16039,6 @@ type ExtractionProviderTrends {
   """
   providers: [ExtractionProviderTrend!]!
   weeks: [Timestamp!]!
-}
-
-"""
-How a candidate AI provider serves a share of an organization's real document extractions.
-"""
-type ExtractionRollout {
-  enabled: Boolean!
-  """
-  Production's accuracy or rejection rate when a guard stopped the rollout.
-  """
-  haltBaselineRate: Float!
-  """
-  The candidate's accuracy or rejection rate when a guard stopped the rollout.
-  """
-  haltCandidateRate: Float!
-  haltReason: ExtractionRolloutHaltReason
-  """When a guard stopped the rollout; empty while it has not."""
-  haltedAt: Timestamp
-  """
-  How many points below production's accuracy the candidate may fall before the rollout stops.
-  """
-  maxAccuracyDropPoints: Int!
-  """
-  How many points above production's rejection rate the candidate may rise before the rollout stops.
-  """
-  maxRejectionIncreasePoints: Int!
-  """
-  The share of documents whose extraction asks the candidate first, 1 to 100.
-  """
-  percent: Int!
-  """
-  The candidate AI provider; kept while the rollout is off, so turning it back on keeps the choice.
-  """
-  providerId: ID
-  """
-  Whether documents are being sent to the candidate right now: on, with a candidate, and not stopped by a guard.
-  """
-  serving: Boolean!
-  """
-  When the current comparison began; the guards and the report count only what happened since.
-  """
-  startedAt: Timestamp
-  """Zero until the rollout is first saved."""
-  updatedAt: Timestamp!
-  updatedById: ID
-  version: Int!
-}
-
-"""Confirmed fields read by one side since the rollout started."""
-type ExtractionRolloutAccuracy {
-  """Correct divided by scored; zero when nothing was scored."""
-  accuracy: Float!
-  correct: Int!
-  scored: Int!
-}
-
-"""The extractions assigned to one side of the rollout since it started."""
-type ExtractionRolloutArm {
-  accepted: Int!
-  assigned: Int!
-  failed: Int!
-  """
-  Assigned to the candidate but served by production because the candidate could not answer.
-  """
-  fellBack: Int!
-  pending: Int!
-  rejected: Int!
-  """
-  Rejected and failed answers divided by settled ones, leaving out fallbacks.
-  """
-  rejectionRate: Float!
-  """
-  Extracted again before the answer was applied; not counted for either side.
-  """
-  superseded: Int!
-}
-
-enum ExtractionRolloutHaltReason {
-  """
-  The candidate read confirmed fields worse than production by more than the allowed points.
-  """
-  AccuracyDrop
-  """
-  The candidate's answers were unusable more often than production's by more than the allowed points.
-  """
-  Rejections
-}
-
-"""
-How the candidate is doing on the documents it serves, beside production on the rest.
-"""
-type ExtractionRolloutReport {
-  candidate: ExtractionRolloutArm!
-  candidateAccuracy: ExtractionRolloutAccuracy!
-  control: ExtractionRolloutArm!
-  """Per field, the candidate's biggest shortfall against production first."""
-  fields: [ExtractionShadowFieldComparison!]!
-  """
-  Settled extractions each side needs before the rejection guard can stop the rollout.
-  """
-  minGuardExtractions: Int!
-  """
-  Confirmed fields each side needs before the accuracy guard can stop the rollout.
-  """
-  minGuardScoredFields: Int!
-  productionAccuracy: ExtractionRolloutAccuracy!
-  providerName: String!
-  rollout: ExtractionRollout!
-  """True when there were more corrections than the field comparison read."""
-  truncated: Boolean!
-}
-
-type ExtractionShadowFieldComparison {
-  candidateAccuracy: Float!
-  candidateCorrect: Int!
-  candidateScored: Int!
-  """
-  A field key, with stop fields grouped across stops (stops.pickup.city).
-  """
-  key: String!
-  productionAccuracy: Float!
-  productionCorrect: Int!
-  productionScored: Int!
-}
-
-"""
-How a candidate provider did against production on the same documents over a window.
-"""
-type ExtractionShadowReport {
-  avgLatencyMs: Int!
-  better: Int!
-  candidate: ExtractionShadowSide!
-  completed: Int!
-  costUsd: Decimal!
-  failed: Int!
-  """Per field, the candidate's biggest shortfall against production first."""
-  fields: [ExtractionShadowFieldComparison!]!
-  pending: Int!
-  production: ExtractionShadowSide!
-  """The candidate reported on; empty when none has been chosen."""
-  providerId: ID
-  providerName: String!
-  same: Int!
-  """Shadow extractions started in the window, in every state."""
-  sampled: Int!
-  """Shadows scored against a confirmed shipment."""
-  scored: Int!
-  since: Timestamp!
-  skipped: Int!
-  """True when the window held more scored shadows than were read."""
-  truncated: Boolean!
-  windowDays: Int!
-  worse: Int!
-}
-
-"""
-A production extraction run again on the candidate provider, never applied, and scored beside production against the confirmed shipment.
-"""
-type ExtractionShadowResult {
-  """
-  Whether the candidate's answer passed the checks production's must pass to replace the rule-based reading.
-  """
-  accepted: Boolean!
-  accuracy: Float!
-  baselineAccuracy: Float!
-  baselineCorrectCount: Int!
-  baselineCorrectedCount: Int!
-  """
-  How production's draft for the same document scored against the same confirmed shipment.
-  """
-  baselineFieldResults: [AICorrectionFieldResult!]!
-  baselineMissedCount: Int!
-  baselineScoredCount: Int!
-  businessUnitId: ID!
-  completedAt: Timestamp
-  correctCount: Int!
-  correctedCount: Int!
-  """
-  The correction the shadow was scored against; empty until a person confirms the document.
-  """
-  correctionId: ID
-  costUsd: Decimal!
-  createdAt: Timestamp!
-  documentId: ID!
-  """When the production extraction this shadows was made."""
-  extractedAt: Timestamp!
-  fieldResults: [AICorrectionFieldResult!]!
-  id: ID!
-  inputTokens: Int!
-  latencyMs: Int!
-  missedCount: Int!
-  organizationId: ID!
-  outputTokens: Int!
-  """The draft the candidate would have produced."""
-  predicted: ExtractionSnapshot
-  productionModel: String!
-  productionProviderId: ID
-  providerId: ID!
-  providerName: String!
-  rejectionReason: String!
-  scoredAt: Timestamp
-  scoredCount: Int!
-  """The model the candidate reported serving."""
-  servedModel: String!
-  startedAt: Timestamp
-  status: ExtractionShadowResultStatus!
-  """Why the shadow was skipped or failed."""
-  statusReason: String!
-  updatedAt: Timestamp!
-  verdict: ExtractionShadowVerdict
-  version: Int!
-  workflowId: String!
-}
-
-type ExtractionShadowResultConnection {
-  edges: [ExtractionShadowResultEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int
-  """
-  Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
-  """
-  totalCountExact: Boolean!
-}
-
-type ExtractionShadowResultEdge {
-  cursor: String!
-  node: ExtractionShadowResult!
-}
-
-enum ExtractionShadowResultStatus {
-  Completed
-  Failed
-  Pending
-  Skipped
-}
-
-"""
-How production document extraction is shadowed by a candidate AI provider.
-"""
-type ExtractionShadowSettings {
-  """The most shadow extractions started in any 24 hours."""
-  dailyLimit: Int!
-  enabled: Boolean!
-  """
-  The candidate AI provider; set even while the shadow is off, so turning it back on keeps the choice.
-  """
-  providerId: ID
-  """
-  The share of production extractions also sent to the candidate, 1 to 100.
-  """
-  samplePercent: Int!
-  """Zero until the settings are first saved."""
-  updatedAt: Timestamp!
-  updatedById: ID
-  version: Int!
-}
-
-"""
-One side of a shadow comparison, over the documents both sides were scored on.
-"""
-type ExtractionShadowSide {
-  """Correct divided by scored; zero when nothing was scored."""
-  accuracy: Float!
-  correct: Int!
-  corrected: Int!
-  missed: Int!
-  scored: Int!
-}
-
-enum ExtractionShadowVerdict {
-  Better
-  Same
-  Worse
 }
 
 """
@@ -22623,7 +22110,6 @@ type Mutation {
   cancelCaptureRequest(id: ID!): CaptureRequest!
   cancelDotRandomDraw(id: ID!, reason: String!): DOTRandomDraw!
   cancelDotTest(id: ID!, reason: String!): WorkerDOTTest!
-  cancelExtractionEvalRun(id: ID!): ExtractionEvalRun!
   """Cancels a failed schedule and releases its invoices for another."""
   cancelFactoringSubmission(input: CancelFactoringSubmissionInput!): FactoringSubmission!
   cancelFuelCard(input: CancelFuelCardInput!): FuelCard!
@@ -22865,7 +22351,6 @@ type Mutation {
   deleteDocumentTemplate(id: ID!): Boolean!
   deleteDocumentTemplateVersion(id: ID!): Boolean!
   deleteEmploymentVerification(id: ID!): Boolean!
-  deleteExtractionEvalCase(id: ID!): Boolean!
   deleteFuelIndex(id: ID!): Boolean!
   deleteFuelIndexPrice(id: ID!): Boolean!
   """
@@ -23129,10 +22614,6 @@ type Mutation {
   to a contract rate.
   """
   previewShipmentContractRate(input: ShipmentInput!): ShipmentContractRate!
-  """
-  Freezes a correction's document text and confirmed values into an evaluation case.
-  """
-  promoteAICorrection(input: PromoteAICorrectionInput!): ExtractionEvalCase!
   """The signed-in driver asking a colleague to take a day."""
   proposeMyShiftSwap(input: ProposeMyShiftSwapInput!): ShiftSwapRequest!
   proposeShiftSwap(input: ProposeShiftSwapInput!): ShiftSwapRequest!
@@ -23184,10 +22665,6 @@ type Mutation {
   Sends a document held by closed books dated on the first open day, when Trenova's closed-period policy posts to the next open period.
   """
   redateAccountingSync(id: ID!): AccountingSyncRecord!
-  """
-  Converts each case's original file through Docling and freezes the result beside the case for runs that choose the docling text source.
-  """
-  refreezeExtractionEvalCases(input: RefreezeExtractionEvalCasesInput!): ExtractionEvalRefreeze!
   """
   Reads the accounting system's records again and refreshes the proposals.
   """
@@ -23511,10 +22988,6 @@ type Mutation {
   """
   startBulkEdit(input: BulkEditInput!): BulkEditJob!
   """
-  Runs one provider's model over the active cases, within the evaluation budget.
-  """
-  startExtractionEvalRun(input: StartExtractionEvalRunInput!): ExtractionEvalRun!
-  """
   Marks one of the signed-in driver's courses in progress and returns the link.
   """
   startMyTraining(id: ID!): PortalTraining!
@@ -23622,15 +23095,6 @@ type Mutation {
   updateEquipmentManufacturer(id: ID!, input: EquipmentManufacturerInput!): EquipmentManufacturer!
   updateEquipmentType(id: ID!, input: EquipmentTypeInput!): EquipmentType!
   updateEscrowAccount(input: UpdateEscrowAccountInput!): EscrowAccount!
-  updateExtractionEvalCase(id: ID!, input: UpdateExtractionEvalCaseInput!): ExtractionEvalCase!
-  """
-  Chooses the candidate provider that serves a share of real document extractions, how much of it, and when to stop.
-  """
-  updateExtractionRollout(input: UpdateExtractionRolloutInput!): ExtractionRollout!
-  """
-  Chooses the candidate provider that shadows production document extraction, and how much of it.
-  """
-  updateExtractionShadowSettings(input: UpdateExtractionShadowSettingsInput!): ExtractionShadowSettings!
   updateFactoringAgreement(input: UpdateFactoringAgreementInput!): FactoringAgreement!
   updateFactoringCompany(input: UpdateFactoringCompanyInput!): FactoringCompany!
   """Matches, unmatches, ignores, restores or re-kinds one line."""
@@ -25636,13 +25100,6 @@ type ProfileFieldChange {
   to: String!
 }
 
-input PromoteAICorrectionInput {
-  """Start the case as Active rather than Candidate."""
-  activate: Boolean
-  correctionId: ID!
-  title: String
-}
-
 input ProposeMyShiftSwapInput {
   """The day offered back, when the swap is a trade rather than a hand-off."""
   counterpartyShiftDate: Timestamp
@@ -25978,10 +25435,6 @@ type Query {
   Where each task goes now and where it would go with the draft saved. Saves nothing.
   """
   aiRoutePreview(draft: AIProviderRoutingDraftInput!): [AITaskRoute!]!
-  """
-  Training exports that included this organization's AI corrections, newest first.
-  """
-  aiTrainingExportHistory: [AITrainingExportHistoryEntry!]!
   aiTuneUps: AITuneUps!
   """
   Model usage day by day for the last days (default 7, at most 90), ending
@@ -26293,23 +25746,7 @@ type Query {
   exportSettlementBatchCsv(batchId: ID!): String!
   externalIdentities(input: DataTableConnectionInput!): ExternalIdentityConnection!
   extractionAccuracy(windowDays: Int): ExtractionAccuracy!
-  extractionEvalCase(id: ID!): ExtractionEvalCase
-  extractionEvalCases(input: DataTableConnectionInput!): ExtractionEvalCaseConnection!
-  """
-  The organization's most recent re-freeze through Docling; empty when none has run.
-  """
-  extractionEvalRefreeze: ExtractionEvalRefreezeProgress
-  extractionEvalResult(id: ID!): ExtractionEvalResult
-  extractionEvalResults(input: DataTableConnectionInput!, runId: ID!): ExtractionEvalResultConnection!
-  extractionEvalRun(id: ID!): ExtractionEvalRun
-  extractionEvalRuns(input: DataTableConnectionInput!): ExtractionEvalRunConnection!
   extractionProviderTrends: ExtractionProviderTrends!
-  extractionRollout: ExtractionRollout!
-  extractionRolloutReport: ExtractionRolloutReport!
-  extractionShadowReport(providerId: ID, windowDays: Int): ExtractionShadowReport!
-  extractionShadowResult(id: ID!): ExtractionShadowResult
-  extractionShadowResults(input: DataTableConnectionInput!): ExtractionShadowResultConnection!
-  extractionShadowSettings: ExtractionShadowSettings!
   factoringAgreement(id: ID!): FactoringAgreement!
   factoringAgreements(factoringCompanyId: ID!): [FactoringAgreement!]!
   """What recording this chargeback would book, without booking it."""
@@ -28062,11 +27499,6 @@ enum RecurringShipmentStatus {
   Active
   Expired
   Paused
-}
-
-input RefreezeExtractionEvalCasesInput {
-  """The cases to freeze again; every active case when empty."""
-  caseIds: [ID!]
 }
 
 input RejectInvoiceAdjustmentInput {
@@ -32326,14 +31758,6 @@ input StartBillingTransferRunInput {
   status: ShipmentStatus
 }
 
-input StartExtractionEvalRunInput {
-  """
-  How many active cases to run, newest first; 50 by default, at most 500.
-  """
-  caseLimit: Int
-  providerId: ID!
-}
-
 input StartWorkerChecklistInput {
   startedAt: Timestamp
   templateId: ID!
@@ -34360,30 +33784,6 @@ input UpdateEscrowAccountInput {
   targetAmountMinor: Int!
   version: Int!
   workerId: ID!
-}
-
-input UpdateExtractionEvalCaseInput {
-  notes: String
-  status: ExtractionEvalCaseStatus
-  title: String
-  version: Int!
-}
-
-input UpdateExtractionRolloutInput {
-  enabled: Boolean!
-  maxAccuracyDropPoints: Int!
-  maxRejectionIncreasePoints: Int!
-  percent: Int!
-  providerId: ID
-  version: Int!
-}
-
-input UpdateExtractionShadowSettingsInput {
-  dailyLimit: Int!
-  enabled: Boolean!
-  providerId: ID
-  samplePercent: Int!
-  version: Int!
 }
 
 input UpdateFactoringAgreementInput {

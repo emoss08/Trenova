@@ -18,9 +18,9 @@ type Params struct {
 	Conversations conversationports.ConversationRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Proposals     agentproposalports.AgentProposalRepository
-	Runs          agentruntimeports.AgentRunRepository    `optional:"true"`
-	Users         tenantports.UserRepository              `optional:"true"`
-	Chapters      assistantchapterports.ChapterRepository `optional:"true"`
+	Runs          agentruntimeports.AgentRunRepository
+	Users         tenantports.UserRepository
+	Chapters      assistantchapterports.ChapterRepository
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.

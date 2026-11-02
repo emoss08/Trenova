@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/jobs/accountingsyncjobs/accountingsynccontract"
+
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -32,8 +34,8 @@ func (s *ChangesWorkflowSuite) AfterTest(_, _ string) {
 	s.env.AssertExpectations(s.T())
 }
 
-func changesPayload() *ChangesPayload {
-	return &ChangesPayload{
+func changesPayload() *accountingsynccontract.ChangesPayload {
+	return &accountingsynccontract.ChangesPayload{
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		ConnectionID:   pulid.MustNew("acctc_"),
@@ -89,7 +91,10 @@ func (s *ChangesWorkflowSuite) TestASignalWhileReadingReadsAgain() {
 	s.env.OnActivity(a.EvaluateAccountingInboundActivity, mock.Anything, mock.Anything).
 		Return(&ChangesEvaluationResult{}, nil).Twice()
 	s.env.RegisterDelayedCallback(func() {
-		s.env.SignalWorkflow(ChangesSignalName, ChangesSignal{})
+		s.env.SignalWorkflow(
+			accountingsynccontract.ChangesSignalName,
+			accountingsynccontract.ChangesSignal{},
+		)
 	}, changesIdleWait/2)
 
 	s.env.ExecuteWorkflow(PollAccountingChangesWorkflow, changesPayload())
@@ -103,7 +108,7 @@ func (s *ChangesWorkflowSuite) TestASignalWhileReadingReadsAgain() {
 func TestChangesWorkflowIDIsPerConnection(t *testing.T) {
 	t.Parallel()
 	id := pulid.MustNew("acctc_")
-	assert.Equal(t, "accounting-changes:"+id.String(), ChangesWorkflowID(id))
+	assert.Equal(t, "accounting-changes:"+id.String(), accountingsynccontract.ChangesWorkflowID(id))
 }
 
 func TestChangesWorkflowsAreRegistered(t *testing.T) {
@@ -112,6 +117,6 @@ func TestChangesWorkflowsAreRegistered(t *testing.T) {
 	for _, def := range RegisterWorkflows() {
 		names[def.Name] = true
 	}
-	require.True(t, names[PollAccountingChangesWorkflowName])
+	require.True(t, names[accountingsynccontract.PollAccountingChangesWorkflowName])
 	require.True(t, names[KickAccountingChangesWorkflowName])
 }

@@ -116,7 +116,7 @@ func (s *Service) journalAccounts(
 	journal *kernelports.JournalPreview,
 	tenantInfo pagination.TenantInfo,
 ) (map[pulid.ID]accountName, error) {
-	if s.glAccounts == nil || len(journal.Lines) == 0 {
+	if len(journal.Lines) == 0 {
 		return nil, nil //nolint:nilnil // no journal lines means no account names to look up
 	}
 

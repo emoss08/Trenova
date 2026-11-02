@@ -65,7 +65,8 @@ import {
   XCloseIcon,
   Users01Icon,
 } from "@trenova/shared/components/icons";
-import { useState, type ReactNode } from "react";
+import { AnimatePresence, m, useIsPresent, type Variants } from "motion/react";
+import { useRef, useState, type ReactNode } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { BillingQueueReassignChargeDialog } from "./billing-queue-reassign-charge-dialog";
 import { BillingQueueRerateDialog } from "./billing-queue-rerate-dialog";
@@ -133,6 +134,8 @@ type LineRow = {
   payer: string;
   amount: number;
   secondary?: string | null;
+  /** The shipment's additional charge this line bills, when it bills one. */
+  chargeId?: string;
   /** The accessorial this row edits in place, with its index on the shipment. */
   editable?: { index: number; charge: AdditionalCharge };
   reassign?: PayerShareLine;
@@ -158,6 +161,14 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
   const [adding, setAdding] = useState(false);
   const [rerateOpen, setRerateOpen] = useState(false);
   const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editingFrom, setEditingFrom] = useState(0);
+  // The line whose editor was just canceled, and the height the editor stood at: the
+  // line folds back down from there, the reverse of the editor opening.
+  const [foldingRow, setFoldingRow] = useState<{ key: string; from: number } | null>(null);
+  // The charges the sheet held when a new line was saved. A line outside them has
+  // just arrived: it opens onto the sheet in the same render its editor folds away,
+  // whichever lands first, the save's state or the cache write that carries the line.
+  const [addBaseline, setAddBaseline] = useState<string[] | null>(null);
   const [staleSplit, setStaleSplit] = useState<{
     payload: BillingQueueUpdateChargesInput;
     messages: string[];
@@ -175,10 +186,19 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
     isPending,
   } = useMutation({
     mutationFn: (payload: BillingQueueUpdateChargesInput) =>
-      apiService.billingQueueService.updateCharges(item.id, payload),
-    onSuccess: () => {
+      apiService.billingQueueService.updateCharges(item.id, {
+        ...payload,
+        expandShipmentDetails: true,
+      }),
+    // The save answers with the item as its read does, so the sheet shows a line
+    // added or removed in the same render the editor closes, not after a refetch.
+    onSuccess: (saved) => {
+      queryClient.setQueryData(billingQueue.get(item.id).queryKey, saved);
       setStaleSplit(null);
       setEditingKey(null);
+      // Only one line is open at a time, so a save while a new line is open is that
+      // line's, including its retry after converting a stale split.
+      setAdding(false);
       invalidate();
     },
     onError: (error, payload) => {
@@ -188,6 +208,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
         return;
       }
       setStaleSplit(null);
+      setAddBaseline(null);
       toast.error(t("Failed to update charges"), { description: describeApiError(error) });
     },
   });
@@ -287,7 +308,8 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
   // bill, it is added first and then moved to the payer chosen.
   const addLine = async (edit: LineEdit) => {
     if (!edit.line) return;
-    const known = new Set(additionalCharges.map((charge) => charge.id));
+    const known = additionalCharges.flatMap((charge) => (charge.id ? [charge.id] : []));
+    setAddBaseline(known);
     let saved: BillingQueueItem;
     try {
       saved = await saveChargesAsync({
@@ -296,9 +318,8 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
     } catch {
       return;
     }
-    setAdding(false);
     const added = saved.shipment?.additionalCharges?.find(
-      (charge) => charge.id && !known.has(charge.id),
+      (charge) => charge.id && !known.includes(charge.id),
     );
     if (edit.payerId && edit.payerId !== shipmentPayerId && added?.id) {
       reassign.mutate({
@@ -320,6 +341,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
     overrides: Partial<LineRow>,
   ) => ({
     key: `charge-${charge.id ?? index}`,
+    chargeId: charge.id ?? undefined,
     name: chargeName(charge, t("Charge")),
     source: charge.isTariff ? t("Tariff") : charge.isSystemGenerated ? t("Rule") : t("Added"),
     basis: chargeBasis(charge),
@@ -360,6 +382,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
       const charge = index >= 0 ? additionalCharges[index] : undefined;
       const base: Partial<LineRow> = {
         key: `payer-line-${line.additionalChargeId}`,
+        chargeId: line.additionalChargeId ?? undefined,
         testId: `payer-line-${line.additionalChargeId}`,
         amount: Number(line.amount ?? 0),
         secondary: line.partial ? t("of {0}", formatCurrency(Number(line.chargeTotal ?? 0))) : null,
@@ -410,6 +433,9 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
     additionalCharges.forEach((charge, index) => rows.push(accessorialRow(index, charge, {})));
   }
 
+  const isArriving = (row: LineRow) =>
+    addBaseline !== null && row.chargeId != null && !addBaseline.includes(row.chargeId);
+  const showAddEditor = adding && !rows.some(isArriving);
   const unbilled = (item.review?.issues ?? []).filter(
     (issue) => isSuggestion(issue) && !issue.resolvedAt,
   );
@@ -493,42 +519,58 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
           <span />
         </div>
 
-        {rows.map((row) =>
-          editingKey === row.key && row.editable ? (
-            <LineEditor
-              key={row.key}
-              charge={row.editable.charge}
-              payerId={item.billToCustomerId ?? ""}
-              payerName={row.payer}
-              canChangePayer={Boolean(row.reassign)}
-              busy={busy}
-              price={price}
-              onSplit={row.reassign ? () => setReassignLine(row.reassign!) : undefined}
-              onCancel={() => setEditingKey(null)}
-              onRemove={() => {
-                const next = [...additionalCharges];
-                next.splice(row.editable!.index, 1);
-                saveCharges({ additionalCharges: payload(next) });
-              }}
-              onSave={(edit) => void saveLine(row, edit)}
-            />
-          ) : (
-            <ViewRow
-              key={row.key}
-              row={row}
-              busy={isPending}
-              onEdit={
-                row.editable
-                  ? () => {
-                      setAdding(false);
-                      setEditingKey(row.key);
-                    }
-                  : undefined
-              }
-              onReassign={row.reassign ? () => setReassignLine(row.reassign!) : undefined}
-            />
-          ),
-        )}
+        <AnimatePresence initial={false}>
+          {rows.map((row) =>
+            editingKey === row.key && row.editable ? (
+              <LineEditor
+                key={row.key}
+                charge={row.editable.charge}
+                unfoldFrom={editingFrom}
+                payerId={item.billToCustomerId ?? ""}
+                payerName={row.payer}
+                canChangePayer={Boolean(row.reassign)}
+                busy={busy}
+                price={price}
+                onSplit={row.reassign ? () => setReassignLine(row.reassign!) : undefined}
+                onCancel={(height) => {
+                  setFoldingRow({ key: row.key, from: height });
+                  setEditingKey(null);
+                }}
+                onRemove={() => {
+                  const next = [...additionalCharges];
+                  next.splice(row.editable!.index, 1);
+                  saveCharges({ additionalCharges: payload(next) });
+                }}
+                onSave={(edit) => void saveLine(row, edit)}
+              />
+            ) : (
+              <ViewRow
+                key={row.key}
+                row={row}
+                busy={isPending}
+                entrance={
+                  isArriving(row)
+                    ? { kind: "arrive" }
+                    : foldingRow?.key === row.key
+                      ? { kind: "fold", from: foldingRow.from }
+                      : undefined
+                }
+                onEntered={() => (isArriving(row) ? setAddBaseline(null) : setFoldingRow(null))}
+                onEdit={
+                  row.editable
+                    ? (height) => {
+                        setAdding(false);
+                        setEditingFrom(height);
+                        setFoldingRow(null);
+                        setEditingKey(row.key);
+                      }
+                    : undefined
+                }
+                onReassign={row.reassign ? () => setReassignLine(row.reassign!) : undefined}
+              />
+            ),
+          )}
+        </AnimatePresence>
 
         {unbilled.map((issue) => (
           <UnbilledRow
@@ -540,17 +582,20 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
           />
         ))}
 
-        {adding ? (
-          <LineEditor
-            payerId={newLinePayerId}
-            payerName={payerName}
-            canChangePayer={canReassign && share !== null}
-            busy={busy}
-            price={price}
-            onCancel={() => setAdding(false)}
-            onSave={(edit) => void addLine(edit)}
-          />
-        ) : null}
+        <AnimatePresence initial={false}>
+          {showAddEditor ? (
+            <LineEditor
+              key="new-line"
+              payerId={newLinePayerId}
+              payerName={payerName}
+              canChangePayer={canReassign && share !== null}
+              busy={busy}
+              price={price}
+              onCancel={() => setAdding(false)}
+              onSave={(edit) => void addLine(edit)}
+            />
+          ) : null}
+        </AnimatePresence>
 
         <div className="flex flex-wrap items-start gap-4 p-2.5">
           <div className="flex flex-1 gap-1.5">
@@ -629,7 +674,9 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
       <AlertDialog
         open={staleSplit !== null}
         onOpenChange={(open) => {
-          if (!open) setStaleSplit(null);
+          if (open) return;
+          setStaleSplit(null);
+          setAddBaseline(null);
         }}
       >
         <AlertDialogContent>
@@ -644,7 +691,14 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <Button type="button" variant="outline" onClick={() => setStaleSplit(null)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setStaleSplit(null);
+                setAddBaseline(null);
+              }}
+            >
               {t("Cancel")}
             </Button>
             <Button
@@ -705,75 +759,133 @@ function Chip({
   );
 }
 
+/** How a line folds shut or opens on the sheet; arriving and leaving rows share it. */
+const LINE_FOLD = { duration: 0.22, ease: [0.4, 0, 0.2, 1] } as const;
+/** How an editor opens out of its line, and folds back into it on cancel. */
+const EDITOR_SPRING = { type: "spring", bounce: 0, visualDuration: 0.2 } as const;
+
+/**
+ * How a line comes onto the sheet: a line just added opens from nothing; a line whose
+ * editor was canceled folds down from the editor's height. Either way its content fades
+ * in once there is room for it.
+ */
+type RowEntrance = { kind: "arrive" } | { kind: "fold"; from: number };
+
+const rowMotion: Variants = {
+  hidden: { height: 0 },
+  folded: (entrance: RowEntrance) => ({ height: entrance.kind === "fold" ? entrance.from : 0 }),
+  shown: (entrance: RowEntrance | undefined) => ({
+    height: "auto",
+    transition: { height: entrance?.kind === "fold" ? EDITOR_SPRING : LINE_FOLD },
+  }),
+};
+const rowContentMotion: Variants = {
+  hidden: { opacity: 0 },
+  folded: { opacity: 0 },
+  shown: { opacity: 1, transition: { duration: 0.16, delay: 0.06, ease: "easeIn" } },
+};
+/** The editor's tint, left behind as it folds back into its line and fading out. */
+const rowTintMotion: Variants = {
+  hidden: { opacity: 0 },
+  folded: { opacity: 1 },
+  shown: { opacity: 0, transition: { duration: 0.2, ease: "easeOut" } },
+};
+
 function ViewRow({
   row,
   busy,
+  entrance,
+  onEntered,
   onEdit,
   onReassign,
 }: {
   row: LineRow;
   busy: boolean;
-  onEdit?: () => void;
+  /** How the line comes onto the sheet when it is not simply there already. */
+  entrance?: RowEntrance;
+  onEntered?: () => void;
+  /** Opens the line's editor, told the height the line stands at so it unfolds from there. */
+  onEdit?: (height: number) => void;
   onReassign?: () => void;
 }) {
   const t = useT();
+  const rowRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div
+    <m.div
+      ref={rowRef}
       role="row"
       data-testid={row.testId}
-      className={cn(
-        GRID,
-        "group border-border hover:bg-surface-hover min-h-10 border-b px-2.5 py-1",
-      )}
+      className={cn("relative", entrance && "overflow-hidden")}
+      custom={entrance}
+      variants={rowMotion}
+      initial={entrance === undefined ? false : entrance.kind === "arrive" ? "hidden" : "folded"}
+      animate="shown"
+      onAnimationComplete={(definition) => {
+        if (entrance && definition === "shown") onEntered?.();
+      }}
     >
-      <span className="flex min-w-0 flex-col gap-px">
-        <span className="flex items-center gap-1.5">
-          <span className={cn("font-medium", row.muted && "text-foreground-muted")}>
-            {row.name}
+      <m.span
+        aria-hidden
+        variants={rowTintMotion}
+        className="bg-muted pointer-events-none absolute inset-0"
+      />
+      {/* Padding and border sit inside the part that opens, so it changes one height. */}
+      <m.div
+        variants={rowContentMotion}
+        className={cn(
+          GRID,
+          "group border-border hover:bg-surface-hover relative min-h-10 border-b px-2.5 py-1",
+        )}
+      >
+        <span className="flex min-w-0 flex-col gap-px">
+          <span className="flex items-center gap-1.5">
+            <span className={cn("font-medium", row.muted && "text-foreground-muted")}>
+              {row.name}
+            </span>
+            <Chip>{row.source}</Chip>
           </span>
-          <Chip>{row.source}</Chip>
+          <span className="text-foreground-muted truncate text-xs">{row.basis}</span>
         </span>
-        <span className="text-foreground-muted truncate text-xs">{row.basis}</span>
-      </span>
-      <span className="text-right font-mono">{row.qty}</span>
-      <span className="text-right font-mono">{row.rate}</span>
-      <span className="text-foreground-muted truncate">{row.payer}</span>
-      <span className="flex min-w-0 flex-col items-end">
-        <span
-          className="max-w-full truncate font-mono font-medium"
-          title={formatCurrency(row.amount)}
-        >
-          {formatCurrency(row.amount)}
+        <span className="text-right font-mono">{row.qty}</span>
+        <span className="text-right font-mono">{row.rate}</span>
+        <span className="text-foreground-muted truncate">{row.payer}</span>
+        <span className="flex min-w-0 flex-col items-end">
+          <span
+            className="max-w-full truncate font-mono font-medium"
+            title={formatCurrency(row.amount)}
+          >
+            {formatCurrency(row.amount)}
+          </span>
+          {row.secondary ? (
+            <span className="text-foreground-muted text-xs">{row.secondary}</span>
+          ) : null}
         </span>
-        {row.secondary ? (
-          <span className="text-foreground-muted text-xs">{row.secondary}</span>
-        ) : null}
-      </span>
-      <span className="flex justify-end opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
-        {onEdit ? (
-          <Button
-            size="icon-xs"
-            variant="ghost"
-            aria-label={t("Edit {0}", row.name)}
-            disabled={busy}
-            onClick={onEdit}
-          >
-            <Edit02Icon className="size-3" />
-          </Button>
-        ) : onReassign ? (
-          <Button
-            size="icon-xs"
-            variant="ghost"
-            aria-label={t("Change payer for {0}", row.name)}
-            disabled={busy}
-            onClick={onReassign}
-          >
-            <Users01Icon className="size-3" />
-          </Button>
-        ) : null}
-      </span>
-    </div>
+        <span className="flex justify-end opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+          {onEdit ? (
+            <Button
+              size="icon-xs"
+              variant="ghost"
+              aria-label={t("Edit {0}", row.name)}
+              disabled={busy}
+              onClick={() => onEdit(rowRef.current?.offsetHeight ?? 0)}
+            >
+              <Edit02Icon className="size-3" />
+            </Button>
+          ) : onReassign ? (
+            <Button
+              size="icon-xs"
+              variant="ghost"
+              aria-label={t("Change payer for {0}", row.name)}
+              disabled={busy}
+              onClick={onReassign}
+            >
+              <Users01Icon className="size-3" />
+            </Button>
+          ) : null}
+        </span>
+      </m.div>
+    </m.div>
   );
 }
 
@@ -802,6 +914,34 @@ export type EditedLine = {
   amount: number;
 };
 
+/**
+ * An editor opening: the row unfolds from the height the line stood at, on a spring
+ * with no bounce so it eases out evenly, while the fields fade up into place left to
+ * right and the footer last, all on one stagger. A removed line folds shut and fades.
+ */
+const editorMotion: Variants = {
+  closed: (from: number) => ({ height: from }),
+  open: {
+    height: "auto",
+    transition: {
+      height: EDITOR_SPRING,
+      staggerChildren: 0.015,
+    },
+  },
+  removed: {
+    height: 0,
+    opacity: 0,
+    transition: {
+      height: LINE_FOLD,
+      opacity: { duration: 0.16, ease: "easeOut" },
+    },
+  },
+};
+const editorPartMotion: Variants = {
+  closed: { opacity: 0, y: 4 },
+  open: { opacity: 1, y: 0, transition: { duration: 0.16, ease: [0.33, 1, 0.68, 1] } },
+};
+
 /** What saving a line changes: the line itself, who pays it, or both. */
 type LineEdit = {
   line: EditedLine | null;
@@ -815,6 +955,7 @@ type LineEdit = {
  */
 function LineEditor({
   charge,
+  unfoldFrom = 0,
   payerId,
   payerName,
   canChangePayer,
@@ -827,6 +968,8 @@ function LineEditor({
 }: {
   /** The line being edited; absent when adding one. */
   charge?: AdditionalCharge;
+  /** The height, in pixels, the row unfolds from: the line it replaces, or nothing. */
+  unfoldFrom?: number;
   payerId: string;
   payerName: string;
   /** Whether the line can move to another payer from here. */
@@ -836,7 +979,8 @@ function LineEditor({
   price: (line: Omit<EditedLine, "accessorialChargeId">) => number;
   /** Opens the split between payers for a saved line. */
   onSplit?: () => void;
-  onCancel: () => void;
+  /** Closes the editor, told the height it stands at so its line folds down from there. */
+  onCancel: (height: number) => void;
   /** Removes a saved line. */
   onRemove?: () => void;
   onSave: (edit: LineEdit) => void;
@@ -844,6 +988,11 @@ function LineEditor({
   const t = useT();
   const adding = charge === undefined;
   const [pickedPayer, setPickedPayer] = useState(payerName);
+  // The row clips its fields while it unfolds, then lets focus rings and menus out.
+  const [unfolded, setUnfolded] = useState(false);
+  const isPresent = useIsPresent();
+  const formRef = useRef<HTMLFormElement>(null);
+  const cancel = () => onCancel(formRef.current?.offsetHeight ?? 0);
   const saved: EditLineValues = {
     accessorialChargeId: charge?.accessorialChargeId ?? "",
     billToCustomerId: payerId,
@@ -910,110 +1059,134 @@ function LineEditor({
               );
 
   return (
-    <form
+    <m.form
+      ref={formRef}
       role="row"
       aria-label={adding ? t("New charge line") : undefined}
-      className="border-border bg-muted flex flex-col gap-2 border-b px-2.5 pt-2 pb-2.5 not-dark:[--field:var(--background)]"
+      className={cn((!unfolded || !isPresent) && "overflow-hidden")}
+      custom={unfoldFrom}
+      variants={editorMotion}
+      initial="closed"
+      animate="open"
+      exit="removed"
+      onAnimationComplete={(definition) => {
+        if (definition === "open") setUnfolded(true);
+      }}
       onSubmit={(event) => void submit(event)}
     >
-      <div className={GRID}>
-        <AccessorialChargeAutocompleteField
-          control={form.control}
-          name="accessorialChargeId"
-          placeholder={t("Choose an accessorial…")}
-          triggerClassName="h-7 text-xs"
-          onOptionChange={(option) => {
-            if (!option) return;
-            const { method, amount } = accessorialOptionDefaults(option);
-            if (method) form.setValue("method", method, { shouldDirty: true });
-            if (amount != null) form.setValue("amount", String(amount), { shouldDirty: true });
-          }}
-        />
-        <NumberField
-          control={form.control}
-          name="unit"
-          valueType="string"
-          aria-label={t("Quantity")}
-          placeholder="1"
-          max={MAX_LINE_QUANTITY}
-          stepper={false}
-          disabled={percentage}
-          inputClassName="text-right font-mono"
-        />
-        <NumberField
-          control={form.control}
-          name="amount"
-          valueType="string"
-          aria-label={percentage ? t("Percent of line haul") : t("Rate")}
-          placeholder="0.00"
-          decimalScale={4}
-          max={percentage ? 100 : MAX_LINE_RATE}
-          stepper={false}
-          inputClassName="text-right font-mono"
-        />
-        <CustomerAutocompleteField
-          control={form.control}
-          name="billToCustomerId"
-          placeholder={t("Choose a payer")}
-          triggerClassName="h-7 text-xs"
-          disabled={!canChangePayer || busy}
-          onOptionChange={(option) => {
-            if (option) setPickedPayer(option.label);
-          }}
-        />
-        <span
-          className={cn(
-            "truncate text-right font-mono font-medium",
-            adding && after === 0 && "text-foreground-subtle font-normal",
+      {/* The row's padding and border sit inside the part that animates, so opening
+          and removing change one height and the fields hold still while it clips. */}
+      <div className="border-border bg-muted flex flex-col gap-1 border-b px-2.5 pt-2 pb-2.5 not-dark:[--field:var(--background)]">
+        <div className={GRID}>
+          <m.div variants={editorPartMotion} className="min-w-0">
+            <AccessorialChargeAutocompleteField
+              control={form.control}
+              name="accessorialChargeId"
+              placeholder={t("Choose an accessorial…")}
+              triggerClassName="h-7 text-xs"
+              onOptionChange={(option) => {
+                if (!option) return;
+                const { method, amount } = accessorialOptionDefaults(option);
+                if (method) form.setValue("method", method, { shouldDirty: true });
+                if (amount != null) form.setValue("amount", String(amount), { shouldDirty: true });
+              }}
+            />
+          </m.div>
+          <m.div variants={editorPartMotion} className="min-w-0">
+            <NumberField
+              control={form.control}
+              name="unit"
+              valueType="string"
+              aria-label={t("Quantity")}
+              placeholder="1"
+              max={MAX_LINE_QUANTITY}
+              stepper={false}
+              disabled={percentage}
+              inputClassName="text-right font-mono"
+            />
+          </m.div>
+          <m.div variants={editorPartMotion} className="min-w-0">
+            <NumberField
+              control={form.control}
+              name="amount"
+              valueType="string"
+              aria-label={percentage ? t("Percent of line haul") : t("Rate")}
+              placeholder="0.00"
+              decimalScale={4}
+              max={percentage ? 100 : MAX_LINE_RATE}
+              stepper={false}
+              inputClassName="text-right font-mono"
+            />
+          </m.div>
+          <m.div variants={editorPartMotion} className="min-w-0">
+            <CustomerAutocompleteField
+              control={form.control}
+              name="billToCustomerId"
+              placeholder={t("Choose a payer")}
+              triggerClassName="h-7 text-xs"
+              disabled={!canChangePayer || busy}
+              onOptionChange={(option) => {
+                if (option) setPickedPayer(option.label);
+              }}
+            />
+          </m.div>
+          <m.span
+            variants={editorPartMotion}
+            className={cn(
+              "truncate text-right font-mono font-medium",
+              adding && after === 0 && "text-foreground-subtle font-normal",
+            )}
+            title={formatCurrency(after)}
+          >
+            {formatCurrency(after)}
+          </m.span>
+          {adding ? (
+            <m.span variants={editorPartMotion} className="flex justify-end">
+              <Button
+                type="button"
+                size="icon-xs"
+                variant="ghost"
+                aria-label={t("Discard new line")}
+                disabled={busy}
+                onClick={cancel}
+              >
+                <XCloseIcon className="size-3" />
+              </Button>
+            </m.span>
+          ) : (
+            <span />
           )}
-          title={formatCurrency(after)}
-        >
-          {formatCurrency(after)}
-        </span>
-        {adding ? (
-          <Button
-            type="button"
-            size="icon-xs"
-            variant="ghost"
-            aria-label={t("Discard new line")}
-            disabled={busy}
-            onClick={onCancel}
-          >
-            <XCloseIcon className="size-3" />
+        </div>
+        <m.div variants={editorPartMotion} className="flex items-center gap-1.5">
+          <span className="text-foreground-muted min-w-0 flex-1 text-xs">{message}</span>
+          {onSplit ? (
+            <Button type="button" size="xs" variant="ghost" disabled={busy} onClick={onSplit}>
+              {t("Split between payers")}
+            </Button>
+          ) : null}
+          {onRemove ? (
+            <Button
+              type="button"
+              size="xs"
+              variant="ghost"
+              className="text-destructive"
+              disabled={busy}
+              onClick={onRemove}
+            >
+              {t("Remove line")}
+            </Button>
+          ) : null}
+          {adding ? null : (
+            <Button type="button" size="xs" variant="outline" disabled={busy} onClick={cancel}>
+              {t("Cancel")}
+            </Button>
+          )}
+          <Button type="submit" size="xs" disabled={busy || !changed} isLoading={busy}>
+            {adding ? t("Add line") : t("Save line")}
           </Button>
-        ) : (
-          <span />
-        )}
+        </m.div>
       </div>
-      <div className="flex items-center gap-1.5">
-        <span className="text-foreground-muted min-w-0 flex-1 text-xs">{message}</span>
-        {onSplit ? (
-          <Button type="button" size="xs" variant="ghost" disabled={busy} onClick={onSplit}>
-            {t("Split between payers")}
-          </Button>
-        ) : null}
-        {onRemove ? (
-          <Button
-            type="button"
-            size="xs"
-            variant="ghost"
-            className="text-destructive"
-            disabled={busy}
-            onClick={onRemove}
-          >
-            {t("Remove line")}
-          </Button>
-        ) : null}
-        {adding ? null : (
-          <Button type="button" size="xs" variant="outline" disabled={busy} onClick={onCancel}>
-            {t("Cancel")}
-          </Button>
-        )}
-        <Button type="submit" size="xs" disabled={busy || !changed} isLoading={busy}>
-          {adding ? t("Add line") : t("Save line")}
-        </Button>
-      </div>
-    </form>
+    </m.form>
   );
 }
 

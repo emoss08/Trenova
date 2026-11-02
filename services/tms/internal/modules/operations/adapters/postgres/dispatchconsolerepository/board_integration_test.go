@@ -44,7 +44,7 @@ func TestListBoardMoves_ReadsWhetherTheLoadArrivedAtItsDelivery(t *testing.T) {
 	require.NoError(t, err)
 
 	repo := dispatchconsolerepository.New(dispatchconsolerepository.Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 	moves, err := repo.ListBoardMoves(ctx, &dispatchboardports.DispatchBoardFilter{
@@ -103,7 +103,7 @@ func TestGetBoardSummary_CountsMovesByTheirNextStop(t *testing.T) {
 	require.NoError(t, err)
 
 	repo := dispatchconsolerepository.New(dispatchconsolerepository.Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 	summaryWithDelivery := func(opens, closes int64) *dispatchboardports.BoardSummary {

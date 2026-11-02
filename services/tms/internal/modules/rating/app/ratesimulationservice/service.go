@@ -179,10 +179,6 @@ func (s *Service) enqueue(
 	ctx context.Context,
 	entity *ratesimulation.RateSimulation,
 ) (*ratesimulation.RateSimulation, error) {
-	if s.workflows == nil {
-		return entity, nil
-	}
-
 	workflowID := "rate-simulation/" + entity.ID.String()
 
 	if _, err := s.workflows.StartWorkflow(ctx,

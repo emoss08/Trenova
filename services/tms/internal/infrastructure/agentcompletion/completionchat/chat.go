@@ -147,14 +147,9 @@ func (s *Chat) chatProviders(
 		return nil, err
 	}
 
-	usable, err := s.UsableFor(ctx, req.ChatTask(), req.TenantInfo)
+	usable, err := s.chatRouted(ctx, req)
 	if err != nil {
 		return nil, err
-	}
-
-	usable = completionengine.PreferFirst(usable, req.PreferredProviderID)
-	if req.PinPreferred {
-		usable = pinPreferred(usable, req.PreferredProviderID)
 	}
 	// A pinned provider that is resting is not tried anyway: the person
 	// chose it, but a choice of a provider that is down is a wait, not a
@@ -165,6 +160,34 @@ func (s *Chat) chatProviders(
 	}
 
 	return s.UnderCap(ctx, req.TenantInfo, usable)
+}
+
+// chatRouted is who may answer the chat: the tenant's Nova provider for a
+// Nova call, otherwise the providers assigned its task, the person's choice
+// first or alone.
+func (s *Chat) chatRouted(
+	ctx context.Context,
+	req *llmports.ChatCompletionRequest,
+) ([]*aiprovider.Provider, error) {
+	if req.Nova {
+		nova, err := s.NovaProvider(ctx, req.TenantInfo)
+		if err != nil {
+			return nil, err
+		}
+
+		return []*aiprovider.Provider{nova}, nil
+	}
+
+	usable, err := s.UsableFor(ctx, req.ChatTask(), req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	usable = completionengine.PreferFirst(usable, req.PreferredProviderID)
+	if req.PinPreferred {
+		usable = pinPreferred(usable, req.PreferredProviderID)
+	}
+
+	return usable, nil
 }
 
 type chatRun struct {

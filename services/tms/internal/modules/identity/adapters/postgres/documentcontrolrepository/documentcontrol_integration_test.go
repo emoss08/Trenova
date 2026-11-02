@@ -21,7 +21,7 @@ func TestGetOrCreateConcurrentCreatesSingleTenantControl(t *testing.T) {
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
 	repo := New(Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 

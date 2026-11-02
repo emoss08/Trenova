@@ -72,6 +72,9 @@ type AIProviderRepository interface {
 		ctx context.Context,
 		req ListAIProvidersForTaskRequest,
 	) ([]*aiprovider.Provider, error)
+	// GetNova returns the provider Nova runs on, credential included, or nil
+	// when the organization has not chosen one.
+	GetNova(ctx context.Context, tenantInfo pagination.TenantInfo) (*aiprovider.Provider, error)
 	// ListEnabled lists the enabled providers in the order the router tries
 	// them: by priority, then by age.
 	ListEnabled(

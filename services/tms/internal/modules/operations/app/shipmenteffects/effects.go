@@ -52,7 +52,7 @@ func (s *Effects) RefuseCreditHold(
 	entity *shipment.Shipment,
 	original *shipment.Shipment,
 ) error {
-	if s.customerRepo == nil || entity == nil {
+	if entity == nil {
 		return nil
 	}
 	payerID := entity.PayerID()
@@ -95,7 +95,7 @@ func (s *Effects) deckHeightFeetForShipment(
 	ctx context.Context,
 	entity *shipment.Shipment,
 ) float64 {
-	if entity.TrailerTypeID.IsNil() || s.equipmentTypeRepo == nil {
+	if entity.TrailerTypeID.IsNil() {
 		return 0
 	}
 
@@ -165,7 +165,7 @@ func (s *Effects) CreateNotification(
 	ctx context.Context,
 	entity *notification.Notification,
 ) {
-	if s.notificationService == nil || entity == nil {
+	if entity == nil {
 		return
 	}
 
@@ -179,10 +179,6 @@ func (s *Effects) RecomputeOrdersForShipments(
 	tenantInfo pagination.TenantInfo,
 	shipments []*shipment.Shipment,
 ) error {
-	if s.orderDerivation == nil {
-		return nil
-	}
-
 	orderIDs := make(map[pulid.ID]struct{}, len(shipments))
 	for _, entity := range shipments {
 		if entity == nil || entity.OrderID.IsNil() {
@@ -313,7 +309,7 @@ func (s *Effects) HydrateShipmentCommodityDetails(
 	}
 
 	commodityIDs := shipmentvalidator.UniqueShipmentCommodityIDs(entity.Commodities)
-	if len(commodityIDs) == 0 || s.commodityRepo == nil {
+	if len(commodityIDs) == 0 {
 		return nil
 	}
 

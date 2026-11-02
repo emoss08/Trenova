@@ -211,7 +211,7 @@ func (s *Service) sendInvite(
 	tenantInfo pagination.TenantInfo,
 	user *tenant.User,
 ) bool {
-	if s.invites == nil || !user.IsActive() {
+	if !user.IsActive() {
 		return false
 	}
 
@@ -238,26 +238,24 @@ type creationRecord struct {
 func (s *Service) recordCreation(ctx context.Context, record *creationRecord) {
 	roleIDs := sliceutils.Strings(record.roleIDs)
 
-	if s.auditor != nil {
-		s.auditor.RecordChange(ctx, &permissionports.SecurityChange{
-			Resource:       permission.ResourceUser,
-			ResourceID:     record.user.ID.String(),
-			Operation:      permission.OpCreate,
-			Actor:          permissionports.UserActor(record.tenantInfo).AuditActor(),
-			OrganizationID: record.tenantInfo.OrgID,
-			BusinessUnitID: record.tenantInfo.BuID,
-			After: map[string]any{
-				"user":             record.user,
-				"roleIds":          roleIDs,
-				organizationIDsKey: []string{record.tenantInfo.OrgID.String()},
-			},
-			Comment: "User created",
-			Metadata: map[string]any{
-				"inviteSent":   record.inviteSent,
-				"emailAddress": record.user.EmailAddress,
-			},
-		})
-	}
+	s.auditor.RecordChange(ctx, &permissionports.SecurityChange{
+		Resource:       permission.ResourceUser,
+		ResourceID:     record.user.ID.String(),
+		Operation:      permission.OpCreate,
+		Actor:          permissionports.UserActor(record.tenantInfo).AuditActor(),
+		OrganizationID: record.tenantInfo.OrgID,
+		BusinessUnitID: record.tenantInfo.BuID,
+		After: map[string]any{
+			"user":             record.user,
+			"roleIds":          roleIDs,
+			organizationIDsKey: []string{record.tenantInfo.OrgID.String()},
+		},
+		Comment: "User created",
+		Metadata: map[string]any{
+			"inviteSent":   record.inviteSent,
+			"emailAddress": record.user.EmailAddress,
+		},
+	})
 
 	if err := s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceUser,

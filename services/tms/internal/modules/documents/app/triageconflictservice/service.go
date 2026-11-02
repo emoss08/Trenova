@@ -65,8 +65,8 @@ type Params struct {
 	Organizations tenantports.OrganizationRepository
 	Activities    inboundmessageports.TriageActivityRecorder
 	Notifier      inboundmessageports.TriageMessageNotifier
-	Contents      documentports.DocumentContentService `optional:"true"`
-	Overlaps      triageports.TenderOverlapFinder      `optional:"true"`
+	Contents      documentports.DocumentContentService
+	Overlaps      triageports.TenderOverlapFinder
 }
 
 type Service struct {
@@ -273,10 +273,6 @@ func (s *Service) attachAmounts(
 	conflict *inboundmessage.Conflict,
 	newDocumentID pulid.ID,
 ) {
-	if s.contents == nil {
-		return
-	}
-
 	existing, okExisting := s.amountOf(ctx, tenantInfo, conflict.ExistingDocumentID)
 	incoming, okIncoming := s.amountOf(ctx, tenantInfo, newDocumentID)
 	if okExisting && okIncoming {
@@ -332,8 +328,8 @@ func (s *Service) overlapping(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
 ) ([]inboundmessage.Conflict, error) {
-	if s.overlaps == nil || message.Classification != inboundmessage.ClassificationTender ||
-		message.LoadDraft == nil || message.MatchedCustomerID.IsNil() ||
+	if message.Classification != inboundmessage.ClassificationTender || message.LoadDraft == nil ||
+		message.MatchedCustomerID.IsNil() ||
 		message.ActionState.CreatedShipmentID.IsNotNil() {
 		return nil, nil
 	}

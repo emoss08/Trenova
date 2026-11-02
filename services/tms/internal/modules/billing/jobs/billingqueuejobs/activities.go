@@ -25,10 +25,10 @@ type ActivitiesParams struct {
 	QueueRepo  billingqueueports.BillingQueueRepository
 	Review     billingqueueports.BillingQueueReviewService
 	Rechecks   billingqueueports.RecheckRequester
-	Assist     billingqueueports.BillingQueueAssistService `optional:"true"`
-	Briefs     billingqueueports.BriefRequester            `optional:"true"`
-	Generator  billingqueueports.NovaGenerator             `optional:"true"`
-	Realtime   realtimeports.RealtimeService               `optional:"true"`
+	Assist     billingqueueports.BillingQueueAssistService
+	Briefs     billingqueueports.BriefRequester
+	Generator  billingqueueports.NovaGenerator
+	Realtime   realtimeports.RealtimeService
 	Logger     *zap.Logger
 }
 
@@ -289,9 +289,6 @@ func (a *Activities) publishRunChanged(
 	runID pulid.ID,
 	userID pulid.ID,
 ) {
-	if a.realtime == nil {
-		return
-	}
 	if err := a.realtime.PublishResourceInvalidation(
 		ctx,
 		&realtimeports.PublishResourceInvalidationRequest{

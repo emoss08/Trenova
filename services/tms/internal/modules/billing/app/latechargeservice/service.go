@@ -41,7 +41,7 @@ type Params struct {
 	BillingControlRepo  tenantports.BillingControlRepository
 	InvoiceMemos        invoiceports.InvoiceMemoService
 	AuditService        auditports.AuditService
-	NotificationService *notificationservice.Service `optional:"true"`
+	NotificationService *notificationservice.Service
 }
 
 // Service assesses late charges. Each customer gets one debit memo per run
@@ -521,7 +521,7 @@ func (s *Service) logAudit(
 	inserted []*latecharge.LateChargeAssessment,
 	actor *permissionports.RequestActor,
 ) {
-	if s.auditService == nil || memo == nil {
+	if memo == nil {
 		return
 	}
 	auditActor := actor.AuditActorOrSystem()
@@ -554,7 +554,7 @@ func (s *Service) notify(
 	memo *invoice.Invoice,
 	result *latechargeports.LateChargeCustomerResult,
 ) {
-	if s.notificationService == nil || memo == nil {
+	if memo == nil {
 		return
 	}
 	if _, err := s.notificationService.Create(ctx, &notification.Notification{

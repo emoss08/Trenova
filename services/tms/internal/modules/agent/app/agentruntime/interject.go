@@ -21,7 +21,7 @@ func (s *Service) watchWorld(
 	req *agentruntimeports.RunRequest,
 	now int64,
 ) *worldwatch.State {
-	if s.changes == nil || req.Delegation != nil || req.Actor == nil {
+	if req.Delegation != nil || req.Actor == nil {
 		return nil
 	}
 	cursor, err := s.changes.Head(ctx, req.Actor.OrganizationID, req.Actor.BusinessUnitID)

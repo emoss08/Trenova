@@ -118,13 +118,11 @@ func (s *Service) GetCloseBlockers(
 		"accounting",
 		"period",
 	)
-	if s.validator != nil {
-		blockers = fiscalcloseblockers.AppendFromMultiError(
-			blockers,
-			s.validator.ValidateClose(ctx, entity),
-			"period",
-		)
-	}
+	blockers = fiscalcloseblockers.AppendFromMultiError(
+		blockers,
+		s.validator.ValidateClose(ctx, entity),
+		"period",
+	)
 
 	return &fiscalclose.Result{CanClose: len(blockers) == 0, Blockers: blockers}, nil
 }
@@ -296,10 +294,8 @@ func (s *Service) closeTransition() transition {
 			if err := s.validateCloseControl(ctx, state.period); err != nil {
 				return err
 			}
-			if s.validator != nil {
-				if multiErr := s.validator.ValidateClose(ctx, state.period); multiErr != nil {
-					return multiErr
-				}
+			if multiErr := s.validator.ValidateClose(ctx, state.period); multiErr != nil {
+				return multiErr
 			}
 
 			return nil
@@ -499,22 +495,18 @@ func (s *Service) runTransition(
 	}
 
 	var err error
-	if s.db == nil {
-		err = run(ctx, false)
-	} else {
-		err = s.db.Transact(
-			ctx,
-			kernelports.TxOptions{LockTimeout: fiscalPeriodLockTimeout},
-			func(txCtx context.Context) error {
-				return run(txCtx, true)
-			},
+	err = s.db.Transact(
+		ctx,
+		kernelports.TxOptions{LockTimeout: fiscalPeriodLockTimeout},
+		func(txCtx context.Context) error {
+			return run(txCtx, true)
+		},
+	)
+	if err != nil {
+		err = dberror.MapRetryableTransactionError(
+			err,
+			"The fiscal period is busy. Retry the request.",
 		)
-		if err != nil {
-			err = dberror.MapRetryableTransactionError(
-				err,
-				"The fiscal period is busy. Retry the request.",
-			)
-		}
 	}
 	if err != nil {
 		log.Error("failed to transition fiscal period", zap.Error(err))
@@ -661,10 +653,6 @@ func (s *Service) validateCloseControl(
 	ctx context.Context,
 	entity *fiscalperiod.FiscalPeriod,
 ) error {
-	if s.validator == nil || s.validator.accountingRepo == nil {
-		return nil
-	}
-
 	control, err := s.validator.accountingRepo.GetByOrgID(ctx, entity.OrganizationID)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
@@ -673,16 +661,7 @@ func (s *Service) validateCloseControl(
 		return err
 	}
 
-	return s.accountingPolicyService().ValidateManualPeriodClose(control)
-}
-
-func (s *Service) accountingPolicyService() *accountingcontrolpolicyservice.Service {
-	if s.policy != nil {
-		return s.policy
-	}
-	return accountingcontrolpolicyservice.New(
-		accountingcontrolpolicyservice.Params{Logger: zap.NewNop()},
-	)
+	return s.policy.ValidateManualPeriodClose(control)
 }
 
 func validateReopen(state transitionState, reason string) *errortypes.MultiError {

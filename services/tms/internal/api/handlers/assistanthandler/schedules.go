@@ -85,15 +85,6 @@ func (h *Handler) registerScheduleRoutes(api *gin.RouterGroup, resource string) 
 	)
 }
 
-func (h *Handler) schedulesReady(c *gin.Context) bool {
-	if h.schedules != nil {
-		return true
-	}
-	h.eh.HandleError(c, errortypes.NewBusinessError("Scheduled requests are not available"))
-
-	return false
-}
-
 type listSchedulesQuery struct {
 	Limit  int `form:"limit"`
 	Offset int `form:"offset"`
@@ -120,10 +111,6 @@ func (h *Handler) respondWithSchedules(
 	threadID pulid.ID,
 	order conversationscheduleports.ConversationScheduleOrder,
 ) {
-	if !h.schedulesReady(c) {
-		return
-	}
-
 	var query listSchedulesQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
 		h.eh.HandleError(c, err)
@@ -151,10 +138,6 @@ type createScheduleRequest struct {
 }
 
 func (h *Handler) createSchedule(c *gin.Context) {
-	if !h.schedulesReady(c) {
-		return
-	}
-
 	threadID, err := pulid.Parse(c.Param("threadID"))
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -230,10 +213,6 @@ func (r updateScheduleRequest) edit() (*conversationschedule.Edit, error) {
 }
 
 func (h *Handler) updateSchedule(c *gin.Context) {
-	if !h.schedulesReady(c) {
-		return
-	}
-
 	req, err := scheduleRequest(c)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -279,10 +258,6 @@ func (h *Handler) updateSchedule(c *gin.Context) {
 }
 
 func (h *Handler) deleteSchedule(c *gin.Context) {
-	if !h.schedulesReady(c) {
-		return
-	}
-
 	req, err := scheduleRequest(c)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -300,10 +275,6 @@ func (h *Handler) deleteSchedule(c *gin.Context) {
 // runSchedule asks a schedule's request now and returns the turn to watch,
 // the same answer as asking a question.
 func (h *Handler) runSchedule(c *gin.Context) {
-	if !h.schedulesReady(c) {
-		return
-	}
-
 	req, err := scheduleRequest(c)
 	if err != nil {
 		h.eh.HandleError(c, err)

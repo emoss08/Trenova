@@ -273,7 +273,7 @@ func (s *Service) zones(
 	if payload.ShipmentStatus != nil && payload.ShipmentStatus.LocationID.IsNotNil() {
 		ids = append(ids, payload.ShipmentStatus.LocationID)
 	}
-	if len(ids) == 0 || s.locationRepo == nil {
+	if len(ids) == 0 {
 		return zones
 	}
 	locations, err := s.locationRepo.GetByIDs(ctx, locationports.GetLocationsByIDsRequest{
@@ -371,7 +371,7 @@ func (s *Service) loadCustomFields(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) (map[string]any, error) {
-	if s.customFields == nil || shipmentID.IsNil() {
+	if shipmentID.IsNil() {
 		return map[string]any{}, nil
 	}
 	values, err := s.customFields.GetNamed(
@@ -834,7 +834,7 @@ func (s *Service) shadowOutbound(
 	o *outbound,
 	message *edimessage.EDIMessage,
 ) {
-	if s.replayer == nil || o.programs == nil || o.programs.Shadow == nil {
+	if o.programs == nil || o.programs.Shadow == nil {
 		return
 	}
 	s.replayer.Shadow(ctx, &edilading.ShadowRunRequest{

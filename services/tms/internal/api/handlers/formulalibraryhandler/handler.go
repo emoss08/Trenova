@@ -26,7 +26,7 @@ type Params struct {
 	fx.In
 
 	Service              *formulalibraryservice.Service
-	PageAssistant        assistantports.PageAssistant `optional:"true"`
+	PageAssistant        assistantports.PageAssistant
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	PermissionEngine     permissionports.PermissionEngine

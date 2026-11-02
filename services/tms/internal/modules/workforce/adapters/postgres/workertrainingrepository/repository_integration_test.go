@@ -43,13 +43,13 @@ func TestGetCoursesByIDsReturnsOnlyTheTenantsCourses(t *testing.T) {
 	second := seedTrainingCourse(t, ctx, db, tenantA, "HOS")
 	foreign := seedTrainingCourse(t, ctx, db, tenantB, "FORKLIFT")
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	entities, err := repo.GetCoursesByIDs(
 		tenantA.Ctx(ctx),
 		&workertrainingports.GetTrainingCoursesByIDsRequest{
 			TenantInfo: tenantA.Info(),
-			CourseIDs: []pulid.ID{second.ID, foreign.ID, first.ID, pulid.MustNew("trnc_")},
+			CourseIDs:  []pulid.ID{second.ID, foreign.ID, first.ID, pulid.MustNew("trnc_")},
 		},
 	)
 	require.NoError(t, err)

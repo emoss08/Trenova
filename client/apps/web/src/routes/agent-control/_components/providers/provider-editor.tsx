@@ -117,6 +117,7 @@ import {
 } from "./platform-model";
 import {
   baseUrlProblem,
+  canRunNova,
   formatContext,
   keyField,
   keyPlaceholder,
@@ -204,7 +205,7 @@ export function ProviderEditor({
   const [loaded] = useState(() =>
     target.kind === "edit"
       ? editorValuesFromProvider(target.provider)
-      : editorValuesFromPreset(target.preset, providers, platformCatalog),
+      : editorValuesFromPreset(target.preset, providers, platformCatalog, catalog.nova.platforms),
   );
   const resolver = useMemo<Resolver<ProviderEditorValues>>(() => {
     const schema = zodResolver(providerEditorSchema) as Resolver<ProviderEditorValues>;
@@ -266,7 +267,7 @@ export function ProviderEditor({
       if (!next || next.key === preset?.key) return;
       setPreset(next);
       setRan(null);
-      form.reset(editorValuesFromPreset(next, providers, platformCatalog));
+      form.reset(editorValuesFromPreset(next, providers, platformCatalog, catalog.nova.platforms));
       onPresetChange?.(next.key);
     },
     [catalog.presets, form, onPresetChange, platformCatalog, preset?.key, providers],
@@ -399,6 +400,7 @@ export function ProviderEditor({
     keepPreviousKey: { label: t("Keep old key 24h") },
     tasks: { label: t("Handles"), item: taskLabel },
     trusted: { label: t("Trusted") },
+    nova: { label: t("Runs Nova") },
     allowPrivateNetwork: { label: t("Private network") },
     timeoutSeconds: { label: t("Timeout"), format: (value) => t("{0}s", String(value)) },
     maxConcurrent: { label: t("Concurrent calls") },
@@ -446,19 +448,13 @@ export function ProviderEditor({
     })?.message ?? null;
 
   const urlProblem = baseUrlProblem(values.baseUrl, values.allowPrivateNetwork);
-  const trustNeeded = metas.some((meta) => meta.trust && values.tasks.includes(meta.task));
-  const trustLabels = metas
-    .filter((meta) => meta.trust && values.tasks.includes(meta.task))
-    .map((meta) => meta.label);
   const taskOptions = useMemo(
-    () =>
-      metas.map((meta) => ({
-        value: meta.task,
-        label: meta.label,
-        mark: meta.trust ? <Ic n="shield" s={10} /> : undefined,
-      })),
+    () => metas.map((meta) => ({ value: meta.task, label: meta.label })),
     [metas],
   );
+  const novaEligible = canRunNova(values, catalog.nova.platforms);
+  // The provider Nova runs on now, when it is another: choosing this one moves Nova here.
+  const novaElsewhere = providers.find((provider) => provider.nova && provider.id !== saved?.id);
 
   const sections: EditSection[] = [
     {
@@ -672,7 +668,7 @@ export function ProviderEditor({
       label: t("Access"),
       note: t("What this provider may read and reach."),
       help: t(
-        "Only a trusted provider takes tasks that read sensitive records, such as billing diagnosis. Private network lets Trenova call a server inside your own network, such as a self-hosted model.",
+        "A trusted provider is marked as vouched for where people pick a model at the Desk. Private network lets Trenova call a server inside your own network, such as a self-hosted model.",
       ),
       keys: ["trusted", "allowPrivateNetwork"],
       content: (
@@ -681,7 +677,7 @@ export function ProviderEditor({
             control={form.control}
             name="trusted"
             label={t("Trusted")}
-            description={t("May take tasks that read sensitive records, like billing diagnosis.")}
+            description={t("Marked as vouched for where people pick a Desk model.")}
           />
           <SwitchField<ProviderEditorValues>
             control={form.control}
@@ -689,29 +685,44 @@ export function ProviderEditor({
             label={t("Private network")}
             description={t("May reach a server on your own network.")}
           />
-          {trustNeeded && !values.trusted && (
-            <Callout
-              tone="w"
-              action={
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => form.setValue("trusted", true, { shouldDirty: true })}
-                >
-                  {t("Trust it")}
-                </Button>
-              }
-            >
-              {t(
-                "{0} needs a trusted provider. It's assigned here but will be skipped.",
-                trustLabels.join(", "),
-              )}
-            </Callout>
-          )}
         </div>
       ),
     },
+    ...(novaEligible || values.nova
+      ? [
+          {
+            id: "nova",
+            label: t("Nova"),
+            note: t("Nova runs on {0} with this provider's key.", catalog.nova.model),
+            help: t(
+              "Nova reads paperwork, reviews the billing queue, sorts mail and writes briefings. It always runs on {0}, whatever model this provider serves the Desk with, and its calls count toward this provider's limits and cap.",
+              catalog.nova.model,
+            ),
+            keys: ["nova"],
+            content: (
+              <div className={FIELD_STACK}>
+                <SwitchField<ProviderEditorValues>
+                  control={form.control}
+                  name="nova"
+                  label={t("Run Nova on this provider")}
+                  description={
+                    novaElsewhere
+                      ? t("Nova moves here from {0}.", novaElsewhere.name)
+                      : t("One provider runs Nova at a time.")
+                  }
+                />
+                {values.nova && !novaEligible && (
+                  <Callout tone="w">
+                    {t(
+                      "Nova runs only on an Anthropic provider through the Claude API, Claude Platform or Vertex AI.",
+                    )}
+                  </Callout>
+                )}
+              </div>
+            ),
+          } satisfies EditSection,
+        ]
+      : []),
     ...(values.kind === "AnthropicMessages"
       ? [
           {
@@ -1535,7 +1546,7 @@ function RouteImpact({
               choice(route.after, true)
             ) : (
               <span className="text-warning-foreground">
-                {t("Nowhere · {0}", TASK_FALLBACKS[route.task].toLowerCase())}
+                {t("Nowhere · {0}", (TASK_FALLBACKS[route.task] ?? "").toLowerCase())}
               </span>
             )}
           </span>

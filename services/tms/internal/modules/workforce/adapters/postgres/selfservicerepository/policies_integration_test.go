@@ -27,7 +27,11 @@ func seedWorkerPolicy(
 ) *workerpolicy.WorkerPolicy {
 	t.Helper()
 
-	entity := &workerpolicy.WorkerPolicy{Code: code, Title: code + " policy", Body: "Read and sign."}
+	entity := &workerpolicy.WorkerPolicy{
+		Code:  code,
+		Title: code + " policy",
+		Body:  "Read and sign.",
+	}
 	require.NoError(t, workerpolicydb.WorkerPolicies.Create(tenant.Ctx(ctx), db, entity))
 
 	return entity
@@ -43,13 +47,13 @@ func TestGetPoliciesByIDsReturnsOnlyTheTenantsPolicies(t *testing.T) {
 	second := seedWorkerPolicy(t, ctx, db, tenantA, "SAFETY")
 	foreign := seedWorkerPolicy(t, ctx, db, tenantB, "CONDUCT")
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	entities, err := repo.GetPoliciesByIDs(
 		tenantA.Ctx(ctx),
 		&selfserviceports.GetWorkerPoliciesByIDsRequest{
 			TenantInfo: tenantA.Info(),
-			PolicyIDs: []pulid.ID{second.ID, foreign.ID, first.ID, pulid.MustNew("wpol_")},
+			PolicyIDs:  []pulid.ID{second.ID, foreign.ID, first.ID, pulid.MustNew("wpol_")},
 		},
 	)
 	require.NoError(t, err)

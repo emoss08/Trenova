@@ -6,14 +6,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/billing/app/billingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceaction"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevalidation"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
@@ -189,7 +187,7 @@ func (s *Service) generatePDFAfterPost(
 	tenantInfo pagination.TenantInfo,
 	actor *permissionports.RequestActor,
 ) {
-	if entity == nil || s.workflowStarter == nil || !s.workflowStarter.Enabled() {
+	if entity == nil {
 		return
 	}
 	if _, err := s.pdf.GeneratePDF(ctx, &invoiceports.InvoicePreviewRequest{
@@ -209,7 +207,7 @@ func (s *Service) notifyReconciliationWarning(
 	entity *invoice.Invoice,
 	legs []*shipment.Shipment,
 ) {
-	if s.accountingRepo == nil || s.notificationService == nil || entity == nil || len(legs) == 0 {
+	if entity == nil || len(legs) == 0 {
 		return
 	}
 
@@ -263,10 +261,6 @@ func (s *Service) recomputeOrdersForLegs(
 	invoiceOrderID pulid.ID,
 	legs []*shipment.Shipment,
 ) error {
-	if s.orderDerivation == nil {
-		return nil
-	}
-
 	orderIDs := make(map[pulid.ID]struct{}, 1+len(legs))
 	if !invoiceOrderID.IsNil() {
 		orderIDs[invoiceOrderID] = struct{}{}
@@ -456,10 +450,6 @@ func (s *Service) EnqueueAutoPost(
 		)
 	}
 
-	if !s.workflowStarter.Enabled() {
-		return kernelports.ErrWorkflowStarterDisabled
-	}
-
 	auditActor := actor.AuditActor()
 	payload := &billingcontract.AutoPostInvoicePayload{
 		BasePayload: temporaltype.BasePayload{
@@ -492,22 +482,6 @@ func (s *Service) EnqueueAutoPost(
 		payload,
 	)
 	return err
-}
-
-func (s *Service) accountingPolicyService() *accountingcontrolpolicyservice.Service {
-	if s.accountingPolicy != nil {
-		return s.accountingPolicy
-	}
-	return accountingcontrolpolicyservice.New(
-		accountingcontrolpolicyservice.Params{Logger: zap.NewNop()},
-	)
-}
-
-func (s *Service) billingPolicyService() *billingcontrolpolicyservice.Service {
-	if s.billingPolicy != nil {
-		return s.billingPolicy
-	}
-	return billingcontrolpolicyservice.New(billingcontrolpolicyservice.Params{Logger: zap.NewNop()})
 }
 
 func (s *Service) logBillingQueuePosted(

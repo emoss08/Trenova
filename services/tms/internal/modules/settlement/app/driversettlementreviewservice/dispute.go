@@ -273,22 +273,20 @@ func (s *Service) ResolveDispute(
 	s.logDisputeAudit(
 		ctx,
 		updated, previous, actor.UserID, permission.OpApprove, comment)
-	if s.driverNotify != nil {
-		s.driverNotify.Notify(ctx, &drivernotificationservice.DriverNotification{
-			TenantInfo: req.TenantInfo,
-			WorkerID:   updated.WorkerID,
-			EventType:  "dash.dispute_resolved",
-			Priority:   notification.PriorityHigh,
-			Context: notificationtemplate.SettlementNotificationContext{
-				Approved: req.Approve,
-				Reason:   updated.ResolutionNote,
-			},
-			Link: "/dash/money",
-			RelatedEntities: map[string]any{
-				"disputeId": updated.ID.String(),
-			},
-		})
-	}
+	s.driverNotify.Notify(ctx, &drivernotificationservice.DriverNotification{
+		TenantInfo: req.TenantInfo,
+		WorkerID:   updated.WorkerID,
+		EventType:  "dash.dispute_resolved",
+		Priority:   notification.PriorityHigh,
+		Context: notificationtemplate.SettlementNotificationContext{
+			Approved: req.Approve,
+			Reason:   updated.ResolutionNote,
+		},
+		Link: "/dash/money",
+		RelatedEntities: map[string]any{
+			"disputeId": updated.ID.String(),
+		},
+	})
 	return updated, nil
 }
 

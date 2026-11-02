@@ -4,20 +4,14 @@ import type { AgentControlInput } from "@trenova/graphql/generated/graphql";
 export type ControlPatch = Partial<
   Pick<
     AgentControlInput,
-    | "shadowMode"
-    | "earnedAutonomy"
-    | "promotionThreshold"
-    | "aiTrainingConsent"
-    | "personMonthlyMessages"
-    | "learningOff"
+    "shadowMode" | "earnedAutonomy" | "promotionThreshold" | "personMonthlyMessages" | "learningOff"
   >
 >;
 
 /**
  * The input the mutation sends: the current switches with one of them changed.
- * Training consent is sent only when it is the switch being changed, so saving
- * any other switch never re-records who consented. The version loaded travels
- * with it, so a switch flipped over someone else's save is refused, not lost.
+ * The version loaded travels with it, so a switch flipped over someone else's
+ * save is refused, not lost.
  */
 export function controlInput(current: AgentControl, patch: ControlPatch): AgentControlInput {
   return {
@@ -27,9 +21,6 @@ export function controlInput(current: AgentControl, patch: ControlPatch): AgentC
     personMonthlyMessages: patch.personMonthlyMessages ?? current.personMonthlyMessages,
     learningOff: patch.learningOff ?? current.learningOff,
     version: current.version,
-    ...(patch.aiTrainingConsent === undefined
-      ? {}
-      : { aiTrainingConsent: patch.aiTrainingConsent }),
   };
 }
 

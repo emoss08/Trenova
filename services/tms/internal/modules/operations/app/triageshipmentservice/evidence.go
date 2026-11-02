@@ -15,7 +15,7 @@ func (s *Service) DetentionEvidence(
 	if err != nil {
 		return nil, err
 	}
-	if occurrence == nil || s.records == nil {
+	if occurrence == nil {
 		return nil, nil //nolint:nilnil // the shipment has no detention to show
 	}
 

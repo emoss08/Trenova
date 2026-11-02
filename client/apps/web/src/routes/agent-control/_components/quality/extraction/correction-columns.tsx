@@ -1,5 +1,5 @@
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import type { AICorrectionRow } from "@/lib/graphql/extraction-eval";
+import type { AICorrectionRow } from "@/lib/graphql/extraction-accuracy";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { formatShare } from "../quality-model";

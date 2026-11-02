@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (s *Service) EtasByShipmentIDs(
+func (r *Reader) EtasByShipmentIDs(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	shipmentIDs []pulid.ID,
@@ -21,7 +21,7 @@ func (s *Service) EtasByShipmentIDs(
 		return out, nil
 	}
 
-	byShipment, err := s.storedRows(ctx, tenantInfo, shipmentIDs)
+	byShipment, err := r.sources.storedRows(ctx, tenantInfo, shipmentIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func (s *Service) EtasByShipmentIDs(
 			attention = append(attention, id)
 		}
 	}
-	reasons, err := s.failureReasons(ctx, tenantInfo, attention)
+	reasons, err := r.sources.failureReasons(ctx, tenantInfo, attention)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (s *Service) EtasByShipmentIDs(
 	return out, nil
 }
 
-func (s *Service) TrackingSnapshots(
+func (r *Reader) TrackingSnapshots(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	shipmentIDs []pulid.ID,
@@ -60,7 +60,7 @@ func (s *Service) TrackingSnapshots(
 		return out, nil
 	}
 
-	entities, err := s.shipments.ListTrackingShipments(
+	entities, err := r.shipments.ListTrackingShipments(
 		ctx,
 		&shipmentports.ListTrackingShipmentsRequest{
 			TenantInfo:  tenantInfo,
@@ -71,16 +71,16 @@ func (s *Service) TrackingSnapshots(
 		return nil, err
 	}
 
-	sources, err := s.collect(ctx, tenantInfo, entities)
+	sources, err := r.sources.collect(ctx, tenantInfo, entities)
 	if err != nil {
 		return nil, err
 	}
-	byShipment, err := s.storedRows(ctx, tenantInfo, shipmentIDs)
+	byShipment, err := r.sources.storedRows(ctx, tenantInfo, shipmentIDs)
 	if err != nil {
 		return nil, err
 	}
 
-	now := s.now().Unix()
+	now := r.now().Unix()
 	for _, entity := range entities {
 		etas := stopeta.IndexByStop(byShipment[entity.ID])
 		out[entity.ID] = shipmenttracking.Build(shipmenttracking.Input{
@@ -97,7 +97,7 @@ func (s *Service) TrackingSnapshots(
 	return out, nil
 }
 
-func (s *Service) storedRows(
+func (s *Sources) storedRows(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	shipmentIDs []pulid.ID,

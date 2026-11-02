@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,11 +19,6 @@ func (s *Service) planPDFGeneration(
 	req *invoiceports.InvoicePreviewRequest,
 	actor *permissionports.RequestActor,
 ) (*invoice.Invoice, pulid.ID, error) {
-	if s.workflowStarter == nil || !s.workflowStarter.Enabled() {
-		return nil, pulid.Nil, errortypes.NewBusinessError(
-			"Invoice PDF generation requires workflow processing to be enabled",
-		).WithInternal(kernelports.ErrWorkflowStarterDisabled)
-	}
 	if req == nil {
 		return nil, pulid.Nil, errortypes.NewValidationError(
 			"request",

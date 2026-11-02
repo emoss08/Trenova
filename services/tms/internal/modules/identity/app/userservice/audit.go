@@ -23,10 +23,6 @@ type membershipChange struct {
 }
 
 func (s *Service) recordMembershipChange(ctx context.Context, change *membershipChange) {
-	if s.auditor == nil {
-		return
-	}
-
 	before := membershipOrganizationIDs(change.before)
 	after := membershipOrganizationIDs(change.after)
 

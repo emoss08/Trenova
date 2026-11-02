@@ -46,10 +46,6 @@ func (s *Service) announce(
 	action string,
 	status conversation.AssistantTurnStatus,
 ) {
-	if s.realtime == nil {
-		return
-	}
-
 	publishCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), announceTimeout)
 	defer cancel()
 

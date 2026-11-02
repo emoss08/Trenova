@@ -67,7 +67,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/notificationpreferencehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/onboardinghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/palettehandler"
@@ -121,7 +120,6 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	userhandler.New,
 	authhandler.New,
 	publicconfighandler.New,
-	onboardinghandler.New,
 	driverportalhandler.New,
 	pushhandler.New,
 	notificationpreferencehandler.New,

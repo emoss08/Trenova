@@ -22,7 +22,6 @@ const (
 	handlerReceiverTypeName = "Handler"
 	ginRouterGroupType      = "RouterGroup"
 	groupMethodName         = "Group"
-	editionRoutesField      = "editionRoutes"
 )
 
 var httpMethods = map[string]struct{}{
@@ -132,9 +131,6 @@ func protectedRegistrations(routerPath string) ([]registration, error) {
 		field, ok := outer.X.(*ast.SelectorExpr)
 		if !ok {
 			unresolved = append(unresolved, outer.Sel.Name)
-			return true
-		}
-		if field.Sel.Name == editionRoutesField {
 			return true
 		}
 		pkg, ok := handlerPackages[field.Sel.Name]

@@ -123,21 +123,20 @@ type Params struct {
 	Permissions permissionports.PermissionEngine
 	// Conversations says whose conversation raised a plan, for a person
 	// deciding their own.
-	Conversations conversationports.ConversationRepository `optional:"true"`
+	Conversations conversationports.ConversationRepository
 	Shadow        *agentshadow.Resolver
 	AuditService  auditports.AuditService
-	Activity      agentactivityports.AgentActivityPublisher `optional:"true"`
+	Activity      agentactivityports.AgentActivityPublisher
 	// Watchtower takes a decided plan off the feed.
-	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
+	Watchtower watchtowerports.WatchtowerProjector
 	// FollowUps has the conversation that raised the plan report its outcome.
-	FollowUps assistantports.DecisionFollowUps `optional:"true"`
+	FollowUps assistantports.DecisionFollowUps
 	// Previews says what the plan's steps would do, as the decider sees it,
 	// so an approval approves what was shown and nothing that moved on.
-	Previews agentruntimeports.ProposalPreviewService `optional:"true"`
-	Metrics  *metrics.Registry                        `optional:"true"`
-	// Workflows holds an approval from a person's own conversation for its
-	// undo window. Without it an approval goes through at once.
-	Workflows kernelports.WorkflowStarter `optional:"true"`
+	Previews agentruntimeports.ProposalPreviewService
+	Metrics  *metrics.Registry
+	// Workflows holds an approval from a person's own conversation for its undo window.
+	Workflows kernelports.WorkflowStarter
 }
 
 type Service struct {
@@ -176,21 +175,11 @@ func New(p Params) agentplanports.AgentPlanService {
 		previews:   p.Previews,
 		workflows:  p.Workflows,
 	}
-	if p.Metrics != nil {
-		svc.metrics = p.Metrics.ProposalPreview
-	}
-	if p.Runs != nil {
-		svc.runs = p.Runs
-	}
-	if p.Conversations != nil {
-		svc.threads = p.Conversations
-	}
-	if p.Definitions != nil {
-		svc.agents = p.Definitions
-	}
-	if p.Permissions != nil {
-		svc.access = p.Permissions
-	}
+	svc.metrics = p.Metrics.ProposalPreview
+	svc.runs = p.Runs
+	svc.threads = p.Conversations
+	svc.agents = p.Definitions
+	svc.access = p.Permissions
 
 	return svc
 }
@@ -398,7 +387,7 @@ func (s *Service) DecideOwn(
 
 	// An approval from the person's own conversation waits out the undo
 	// window; no step runs until the window closes.
-	if req.Decision == agentdecision.DecisionAccepted && s.defers() {
+	if req.Decision == agentdecision.DecisionAccepted {
 		return s.approveDeferred(ctx, req, actor)
 	}
 
@@ -419,7 +408,7 @@ func (s *Service) AssertOwnPlan(
 	notYours := errortypes.NewNotFoundError(
 		"That plan was not raised in one of your conversations",
 	)
-	if s.runs == nil || s.threads == nil || actor == nil || actor.UserID.IsNil() {
+	if actor == nil || actor.UserID.IsNil() {
 		return notYours
 	}
 
@@ -618,7 +607,7 @@ func (s *Service) assertMayUseAgent(
 	gone := errortypes.NewBusinessError(
 		"The agent that raised this plan no longer exists, so the plan cannot be decided",
 	)
-	if run.AgentDefinitionID.IsNil() || s.agents == nil || s.access == nil {
+	if run.AgentDefinitionID.IsNil() {
 		return gone
 	}
 
@@ -657,7 +646,7 @@ func (s *Service) followUp(
 	plan *agentplan.AgentPlan,
 	tenant pagination.TenantInfo,
 ) {
-	if s.followUps == nil || plan == nil {
+	if plan == nil {
 		return
 	}
 
@@ -675,7 +664,7 @@ func (s *Service) clearFromWatchtower(
 	plan *agentplan.AgentPlan,
 	tenant pagination.TenantInfo,
 ) {
-	if s.watchtower == nil || plan == nil {
+	if plan == nil {
 		return
 	}
 
@@ -690,7 +679,7 @@ func (s *Service) announce(
 	actor *permissionports.RequestActor,
 	action string,
 ) {
-	if s.activity == nil || plan == nil {
+	if plan == nil {
 		return
 	}
 
@@ -1046,10 +1035,6 @@ func (s *Service) logDecision(
 	actor *permissionports.RequestActor,
 	comment string,
 ) {
-	if s.audit == nil {
-		return
-	}
-
 	auditActor := actor.AuditActor()
 	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAgentProposal,

@@ -151,9 +151,6 @@ func (s *Service) planMatch(
 	receipt.UpdatedByID = actor.UserID
 
 	plan := &MatchPreview{ReceiptBefore: &before, ReceiptAfter: receipt, Payment: payment}
-	if s.workItemRepo == nil {
-		return plan, nil
-	}
 
 	item := s.activeWorkItem(ctx, tenantInfo, receipt.ID)
 	if item == nil {

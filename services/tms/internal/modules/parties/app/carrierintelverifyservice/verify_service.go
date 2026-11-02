@@ -28,7 +28,7 @@ type Params struct {
 	CarrierRepo    carrierports.CarrierRepository
 	AssignmentRepo carrierassignmentports.CarrierAssignmentRepository
 	AuditService   auditports.AuditService
-	Plans          platformplanports.PlanService `optional:"true"`
+	Plans          platformplanports.PlanService
 }
 
 type Service struct {

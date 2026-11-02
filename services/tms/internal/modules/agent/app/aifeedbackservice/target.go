@@ -564,7 +564,7 @@ func (s *Service) stampDefinitionVersion(
 	tenant pagination.TenantInfo,
 	resolved *resolvedTarget,
 ) {
-	if resolved.agentDefinitionID.IsNil() || s.definitions == nil || resolved.atTurn {
+	if resolved.agentDefinitionID.IsNil() || resolved.atTurn {
 		return
 	}
 
@@ -593,10 +593,6 @@ func (s *Service) requireRead(
 	actor *permissionports.RequestActor,
 	resource permission.Resource,
 ) error {
-	if s.permissions == nil {
-		return errortypes.NewAuthorizationError("Permissions could not be checked")
-	}
-
 	result, err := s.permissions.Check(ctx, &permissionports.PermissionCheckRequest{
 		PrincipalType:  actor.PrincipalType,
 		PrincipalID:    actor.PrincipalID,

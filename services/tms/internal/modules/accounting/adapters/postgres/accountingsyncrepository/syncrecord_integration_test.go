@@ -49,7 +49,7 @@ func setupSyncFixture(t *testing.T) *syncFixture {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
 	connections := accountingconnectionrepository.NewConnectionRepository(

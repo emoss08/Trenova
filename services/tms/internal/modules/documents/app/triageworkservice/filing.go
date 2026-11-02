@@ -437,9 +437,6 @@ func (s *Service) documentAttached(
 	shipmentID pulid.ID,
 	documentTypeID pulid.ID,
 ) {
-	if s.events == nil {
-		return
-	}
 	s.events.DocumentAttached(ctx, tenantInfo, shipmentID, documentTypeID)
 }
 

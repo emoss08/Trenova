@@ -66,9 +66,8 @@ type Params struct {
 	APIKeyRepository    apikeyports.APIKeyRepository
 	PermissionCacheRepo permissionports.PermissionCacheRepository
 	UserRepository      tenantports.UserRepository
-	AgentGrants         permissionports.RoleAgentGrantRepository  `optional:"true"`
-	AgentRoles          permissionports.AgentRoleSource           `optional:"true"`
-	Delegated           permissionports.DelegatedPermissionSource `optional:"true"`
+	AgentGrants         permissionports.RoleAgentGrantRepository
+	AgentRoles          permissionports.AgentRoleSource
 	Registry            *permissioncatalog.Registry
 	RouteRegistry       *routeaccess.RouteRegistry
 	Metrics             *metrics.Registry
@@ -84,7 +83,6 @@ type engine struct {
 	userRepo      tenantports.UserRepository
 	agentGrants   permissionports.RoleAgentGrantRepository
 	agentRoles    permissionports.AgentRoleSource
-	delegated     permissionports.DelegatedPermissionSource
 	registry      *permissioncatalog.Registry
 	routeRegistry *routeaccess.RouteRegistry
 	metrics       *metrics.Registry
@@ -102,7 +100,6 @@ func NewEngine(p Params) permissionports.PermissionEngine {
 		userRepo:      p.UserRepository,
 		agentGrants:   p.AgentGrants,
 		agentRoles:    p.AgentRoles,
-		delegated:     p.Delegated,
 		registry:      p.Registry,
 		routeRegistry: p.RouteRegistry,
 		metrics:       p.Metrics,
@@ -238,9 +235,6 @@ func (e *engine) applyAccessPolicies(
 }
 
 func (e *engine) newAccessPolicySource(orgID, buID pulid.ID) accessPolicySource {
-	if e.iamRepo == nil {
-		return nil
-	}
 	return &tenantAccessPolicySource{
 		repo: e.iamRepo,
 		req: iamports.IAMTenantPolicyLookupRequest{
@@ -1032,17 +1026,6 @@ func (e *engine) getOrComputePermissions(
 	userID, orgID pulid.ID,
 ) (permissionLoadResult, error) {
 	result := permissionLoadResult{}
-	if e.delegated != nil {
-		perms, delegated, err := e.delegated.DelegatedPermissions(ctx, userID, orgID)
-		if err != nil {
-			return result, err
-		}
-		if delegated {
-			result.perms = perms
-			return result, nil
-		}
-	}
-
 	key := permissionports.PermissionCacheKey{
 		UserID:  userID,
 		OrgID:   orgID,

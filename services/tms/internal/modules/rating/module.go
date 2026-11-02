@@ -93,6 +93,7 @@ func SharedOptions() fx.Option {
 			func(r *tariff.Rater) tariffports.Rater { return r },
 			tariff.NewRecordSource,
 			func(r *tariff.RecordSource) tariffports.RecordBuilder { return r },
+			fx.Annotate(tariff.NewRatedShipments, fx.As(new(tariffports.RatedShipments))),
 		),
 		tariff.AuthoringModule,
 		formulatemplateservice.Module,

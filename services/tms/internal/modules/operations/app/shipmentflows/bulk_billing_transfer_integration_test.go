@@ -153,7 +153,7 @@ func newBulkTransferHarness(t *testing.T) *bulkTransferHarness {
 	t.Cleanup(observed.Close)
 
 	logger := zap.NewNop()
-	conn := postgres.NewTestConnection(observed)
+	conn := postgres.WrapDB(observed)
 
 	orderRepo := orderrepository.New(orderrepository.Params{DB: conn, Logger: logger})
 	allocationRepo := chargeallocationrepository.New(

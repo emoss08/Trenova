@@ -555,10 +555,6 @@ func (s *Service) projectEventsToWatchtower(
 	ctx context.Context,
 	events []*carrierintelevent.CarrierIntelEvent,
 ) {
-	if s.watchtower == nil {
-		return
-	}
-
 	for _, event := range events {
 		if !watchtowersources.CarrierIntelEventOnTower(event) {
 			continue
@@ -575,10 +571,6 @@ func (s *Service) publishEventsToAgents(
 	tenant pagination.TenantInfo,
 	events []*carrierintelevent.CarrierIntelEvent,
 ) {
-	if s.publisher == nil {
-		return
-	}
-
 	for _, event := range events {
 		if !watchtowersources.CarrierIntelEventOnTower(event) {
 			continue
@@ -612,9 +604,6 @@ func (s *Service) Publish(
 	resource, action string,
 	recordID pulid.ID,
 ) {
-	if s.realtime == nil {
-		return
-	}
 	actorType := permissionports.PrincipalTypeSystem
 	actorID := permissionports.SystemPrincipalID
 	if tenantInfo.UserID.IsNotNil() {
@@ -692,7 +681,7 @@ func (s *Service) syncCarrierRecord(
 	snapshot *carrierintelsnapshot.CarrierIntelSnapshot,
 	raised []carrierintelrule.Finding,
 ) {
-	if snapshot.NotFound || s.carrierService == nil {
+	if snapshot.NotFound {
 		return
 	}
 

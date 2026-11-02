@@ -35,7 +35,7 @@ type Params struct {
 	Logger       *zap.Logger
 	DB           kernelports.Transactor
 	Repo         aiproviderports.AIProviderRepository
-	Keys         aiproviderports.AIProviderKeyRepository `optional:"true"`
+	Keys         aiproviderports.AIProviderKeyRepository
 	Versions     settingversionports.SettingVersionRepository
 	Encryption   *encryptionservice.Service
 	Prober       *Prober
@@ -43,7 +43,7 @@ type Params struct {
 	// Tester runs a test on a worker, which calls back into RunTest.
 	Tester    aiproviderports.AIProviderTester
 	AIConfig  *aiconfig.Config
-	Analytics aianalyticsports.AnalyticsCache `optional:"true"`
+	Analytics aianalyticsports.AnalyticsCache
 }
 
 // EndpointProber issues a live call against a configured endpoint.
@@ -96,9 +96,6 @@ func New(p Params) *Service {
 }
 
 func (s *Service) analyticsChanged(ctx context.Context, tenant pagination.TenantInfo) {
-	if s.analytics == nil {
-		return
-	}
 	if err := s.analytics.BumpEpoch(ctx, tenant); err != nil {
 		s.l.Warn("failed to invalidate ai analytics after a provider change", zap.Error(err))
 	}
@@ -379,9 +376,6 @@ func (s *Service) tidyKey(
 	apiKey string,
 	tenantInfo pagination.TenantInfo,
 ) {
-	if s.keys == nil {
-		return
-	}
 	if aiproviderkey.NeedsKeyFingerprint(provider) && apiKey != "" {
 		fingerprint := secretutils.FingerprintOf(provider.CredentialFingerprintSubject(apiKey))
 		if err := s.keys.RecordFingerprint(
@@ -441,6 +435,7 @@ func (s *Service) apply(
 	provider.Priority = req.Priority
 	provider.Trusted = req.Trusted
 	provider.Enabled = req.Enabled
+	provider.Nova = req.Nova
 
 	provider.StructuredOutputMode = req.StructuredOutputMode
 	if provider.StructuredOutputMode == "" {
@@ -640,7 +635,7 @@ func (s *Service) persistRebound(
 	previous bool,
 	expected, rebound string,
 ) {
-	if rebound == "" || s.keys == nil {
+	if rebound == "" {
 		return
 	}
 	if err := s.keys.RebindSealedKey(ctx, &aiproviderports.RebindAIProviderKeyRequest{

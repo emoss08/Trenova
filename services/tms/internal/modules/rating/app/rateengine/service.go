@@ -606,7 +606,7 @@ func (s *Service) hydrate(
 	entity *shipment.Shipment,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	if s.hydrator == nil || entity == nil {
+	if entity == nil {
 		return nil
 	}
 

@@ -26,7 +26,7 @@ func NewUserServiceForTest(deps UserServiceDeps) *userservice.Service {
 		Auditor:       &securityaudittest.Recorder{},
 		Realtime:      &mocks.NoopRealtimeService{},
 		StorageConfig: &storageconfig.Config{},
-		Validator:     userservice.NewTestValidatorWithRepository(deps.Users),
+		Validator:     userservice.NewValidator(userservice.ValidatorParams{Repo: deps.Users}),
 		DB:            dbtest.NopConnection{},
 		Roles:         deps.Roles,
 		Invites:       deps.Invites,

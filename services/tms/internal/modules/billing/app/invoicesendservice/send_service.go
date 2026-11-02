@@ -25,10 +25,10 @@ type Params struct {
 	Logger           *zap.Logger
 	BillingRepo      tenantports.BillingControlRepository
 	CustomerRepo     customerports.CustomerRepository
-	DocumentService  documentports.InvoiceDocumentService `optional:"true"`
+	DocumentService  documentports.InvoiceDocumentService
 	EDI              *invoiceediservice.Service
 	EmailRepo        emailports.EmailRepository
-	EmailSenders     emailports.EmailSenderResolver `optional:"true"`
+	EmailSenders     emailports.EmailSenderResolver
 	EmailService     emailports.EmailService
 	FactoringRepo    factoringcompanyports.FactoringCompanyRepository
 	OrganizationRepo tenantports.OrganizationRepository
@@ -38,7 +38,7 @@ type Params struct {
 	WorkflowStarter  kernelports.WorkflowStarter
 	AuditService     auditports.AuditService
 	Realtime         realtimeports.RealtimeService
-	AppConfig        *appconfig.Config `optional:"true"`
+	AppConfig        *appconfig.Config
 }
 
 // Service emails invoices and serves their shared documents.

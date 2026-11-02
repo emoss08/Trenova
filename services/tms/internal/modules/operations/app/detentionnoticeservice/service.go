@@ -88,10 +88,6 @@ func (s *Service) DisputeRecord(
 		return &DisputeRecord{DocumentID: existing, FileName: fileName}, nil
 	}
 
-	if s.documentStore == nil {
-		return nil, nil //nolint:nilnil // nothing can be stored on this deployment
-	}
-
 	return s.storeDisputeRecord(ctx, p, fileName)
 }
 
@@ -130,10 +126,6 @@ func (s *Service) storedDisputeRecord(
 	occ *detention.DetentionOccurrence,
 	fileName string,
 ) (pulid.ID, error) {
-	if s.documents == nil {
-		return pulid.Nil, nil
-	}
-
 	docs, err := s.documents.GetByResourceID(ctx, &documentports.GetDocumentsByResourceRequest{
 		TenantInfo:   tenantInfo,
 		ResourceID:   occ.ShipmentID.String(),
@@ -204,12 +196,6 @@ func (s *Service) renderDisputeRecord(
 	ctx context.Context,
 	p *DisputeRecordParams,
 ) (*detentionnoticerender.NoticePDF, error) {
-	if s.templates == nil || s.contextBuilder == nil {
-		return nil, errortypes.NewBusinessError(
-			"Detention records cannot be rendered on this deployment",
-		)
-	}
-
 	occ := p.Occurrence
 	location, err := s.effects.TenantLocation(ctx, p.TenantInfo)
 	if err != nil {
@@ -279,20 +265,17 @@ type Params struct {
 	WorkflowStarter  kernelports.WorkflowStarter
 	Templates        documenttemplateports.DocumentTemplateResolver
 	ContextBuilder   *detentionnoticerender.ContextBuilder
-	Publisher        agenteventports.AgentEventPublisher `optional:"true"`
-	Senders          emailports.EmailSenderResolver      `optional:"true"`
-	DocumentStore    documentports.DocumentStore         `optional:"true"`
-	Documents        documentports.DocumentRepository    `optional:"true"`
-	Now              func() int64                        `optional:"true"`
+	Publisher        agenteventports.AgentEventPublisher
+	Senders          emailports.EmailSenderResolver
+	DocumentStore    documentports.DocumentStore
+	Documents        documentports.DocumentRepository
+	Now              timeutils.Clock
 	Effects          *detentioneffects.Effects
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	now := p.Now
-	if now == nil {
-		now = timeutils.NowUnix
-	}
 	return &Service{
 		l:                p.Logger.Named("service.detention"),
 		policyRepo:       p.PolicyRepo,
@@ -329,12 +312,6 @@ func (s *Service) BuildNotice(
 	ctx context.Context,
 	p *detentionnoticerender.BuildNoticeParams,
 ) (detentionnoticerender.NoticeContent, error) {
-	if s.templates == nil || s.contextBuilder == nil {
-		return detentionnoticerender.NoticeContent{}, errortypes.NewBusinessError(
-			"Detention notice rendering is not configured on this deployment",
-		)
-	}
-
 	occ := p.Occurrence
 	if occ == nil {
 		return detentionnoticerender.NoticeContent{}, errortypes.NewValidationError(
@@ -488,11 +465,6 @@ func (s *Service) SendNotice(
 
 	now := s.now()
 
-	if s.emailService == nil {
-		notice.MarkFailed(now, "No email service is configured")
-		return s.persistNoticeOutcome(ctx, notice, occurrence, now)
-	}
-
 	_, err := s.emailService.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     tenantInfo,
 		Purpose:        email.PurposeNotifications,
@@ -608,12 +580,6 @@ func (s *Service) noticeRecipients(
 	occurrence *detention.DetentionOccurrence,
 	tenantInfo pagination.TenantInfo,
 ) ([]string, error) {
-	if s.customerRepo == nil {
-		return nil, errortypes.NewValidationError(
-			"occurrenceId", errortypes.ErrSystemError,
-			"Customer lookup is not available")
-	}
-
 	entity, err := s.customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 		ID:         occurrence.CustomerID,
 		TenantInfo: tenantInfo,
@@ -883,11 +849,6 @@ func (s *Service) fileNoticePDF(
 		zap.String("noticeId", notice.ID.String()),
 	)
 
-	if s.uploadService == nil {
-		log.Warn("document uploads are not configured; the notice PDF was not filed")
-		return
-	}
-
 	filing := &noticePDFFiling{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  notice.OrganizationID,
@@ -968,32 +929,6 @@ func (s *Service) startNoticePDFStorage(
 	f *noticePDFFiling,
 	sessionID pulid.ID,
 ) error {
-	if s.workflowStarter == nil || !s.workflowStarter.Enabled() {
-		session, err := s.uploadService.Complete(ctx, &documentuploadports.CompletionRequest{
-			TenantInfo: f.TenantInfo,
-			Actor:      f.actor(),
-			SessionID:  sessionID,
-		})
-		if err != nil {
-			return err
-		}
-		if session.DocumentID == nil || session.DocumentID.IsNil() {
-			return errortypes.NewBusinessError(
-				"The detention notice PDF upload did not produce a document",
-			)
-		}
-
-		return s.AttachNoticePDFDocument(ctx, &detentionports.AttachNoticePDFDocumentParams{
-			TenantInfo:   f.TenantInfo,
-			NoticeID:     f.Notice.ID,
-			OccurrenceID: f.Occurrence.ID,
-			DocumentID:   *session.DocumentID,
-			FileName:     f.PDF.FileName,
-			FileSize:     f.size(),
-			Provenance:   f.PDF.Provenance,
-			UserID:       f.TenantInfo.UserID,
-		})
-	}
 
 	_, err := s.workflowStarter.StartWorkflow(
 		ctx,
@@ -1055,7 +990,7 @@ func (s *Service) AttachNoticePDFDocument(
 		return err
 	}
 
-	if s.templates == nil || p.Provenance == nil {
+	if p.Provenance == nil {
 		return nil
 	}
 
@@ -1123,17 +1058,15 @@ func (s *Service) PreviewOccurrenceNotice(
 		preview.Attachment = noticePDFFileName(occurrence)
 	}
 
-	if s.senders != nil {
-		sender, sErr := s.senders.ResolveSender(ctx, &emailports.SendEmailRequest{
-			TenantInfo: p.TenantInfo,
-			Purpose:    email.PurposeNotifications,
-			To:         schedule.Recipients,
-		})
-		if sErr != nil {
-			return nil, sErr
-		}
-		preview.Sender = sender
+	sender, sErr := s.senders.ResolveSender(ctx, &emailports.SendEmailRequest{
+		TenantInfo: p.TenantInfo,
+		Purpose:    email.PurposeNotifications,
+		To:         schedule.Recipients,
+	})
+	if sErr != nil {
+		return nil, sErr
 	}
+	preview.Sender = sender
 
 	return preview, nil
 }

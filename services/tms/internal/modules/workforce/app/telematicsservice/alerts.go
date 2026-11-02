@@ -26,7 +26,7 @@ func (s *Service) notifyCriticalHOSTransitions(
 	tenantInfo pagination.TenantInfo,
 	next []*telematics.WorkerHOSState,
 ) error {
-	if s.notifications == nil || len(next) == 0 {
+	if len(next) == 0 {
 		return nil
 	}
 
@@ -190,7 +190,7 @@ func (s *Service) notifyDriverOfHOSAlert(
 	alert hosAlert,
 	correlation string,
 ) {
-	if s.driverNotify == nil || alert.DriverTitle == "" {
+	if alert.DriverTitle == "" {
 		return
 	}
 

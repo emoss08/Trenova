@@ -3,8 +3,6 @@ package shipmentboardservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
@@ -12,11 +10,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"golang.org/x/sync/errgroup"
 )
-
-var boardAITasks = [...]aitask.Task{
-	aitask.TaskDailyBriefing,
-	aitask.TaskOperationalInsights,
-}
 
 func (s *Service) Capabilities(
 	ctx context.Context,
@@ -26,7 +19,7 @@ func (s *Service) Capabilities(
 	g, gctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
-		available, err := s.anyAITask(gctx, tenantInfo, boardAITasks[:])
+		available, err := s.novaReady(gctx, tenantInfo)
 		out.AI = available
 		return err
 	})
@@ -68,33 +61,8 @@ func (s *Service) Capabilities(
 	return out, nil
 }
 
-func (s *Service) AIAvailable(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	task aitask.Task,
-) (bool, error) {
-	return s.anyAITask(ctx, tenantInfo, []aitask.Task{task})
-}
-
-func (s *Service) anyAITask(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	tasks []aitask.Task,
-) (bool, error) {
-	for _, task := range tasks {
-		providers, err := s.aiProviders.ListForTask(
-			ctx,
-			aiproviderports.ListAIProvidersForTaskRequest{
-				Task:       task,
-				TenantInfo: tenantInfo,
-			},
-		)
-		if err != nil {
-			return false, err
-		}
-		if len(providers) > 0 {
-			return true, nil
-		}
-	}
-	return false, nil
+// novaReady reports whether Nova, which writes the board's briefings and
+// insights, runs for the tenant.
+func (s *Service) novaReady(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error) {
+	return s.nova.Available(ctx, tenantInfo)
 }

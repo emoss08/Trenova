@@ -21,7 +21,7 @@ func CreateDocumentTemplateStarters(
 	db *keel.DB,
 	scope tenantscope.Scope,
 ) (int, error) {
-	registry := templateregistry.NewRegistry()
+	registry := templateregistry.Default()
 	existing, err := existingTemplateKinds(ctx, db, scope)
 	if err != nil {
 		return 0, err

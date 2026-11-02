@@ -49,7 +49,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aitrainingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
@@ -91,9 +90,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagepeekservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageruleservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionaccuracyports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edimessageview"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
@@ -269,7 +266,7 @@ type Params struct {
 	BoardStageSummaries               shipmentboardports.ShipmentStageSummaryReader
 	BoardGroups                       shipmentboardports.ShipmentBoardGroupSummarizer
 	BoardCapabilities                 shipmentboardports.ShipmentBoardCapabilitiesReader
-	ShipmentImportAssistant           shipmentimportassistantports.ShipmentImportAssistantService `optional:"true"`
+	ShipmentImportAssistant           shipmentimportassistantports.ShipmentImportAssistantService
 	EquipmentManufacturerService      *equipmentmanufacturerservice.Service
 	EDISetupService                   *edisetup.Service
 	EDITransferService                *editransferservice.Service
@@ -438,10 +435,7 @@ type Params struct {
 	AgentSuggestionService            agentsuggestionports.AgentSuggestionService
 	AgentEvaluationService            agentevaluationports.AgentEvaluationService
 	AgentEvalCaseService              agentqualityports.AgentEvalCaseService
-	ExtractionEvalService             extractionevalports.ExtractionEvalService
-	ExtractionShadowService           extractionshadowports.ExtractionShadowService
-	ExtractionRolloutService          extractionrolloutports.ExtractionRolloutService
-	AITrainingHistoryService          aitrainingports.AITrainingHistoryService
+	ExtractionAccuracyService         extractionaccuracyports.ExtractionAccuracyService
 	AgentQualityService               agentqualityports.AgentQualityService
 	AgentActivityService              agentactivityports.AgentActivityService
 	AgentExceptionService             agentexceptionports.AgentExceptionService
@@ -478,7 +472,7 @@ type Params struct {
 	AgentProfileService               agentprofileports.Service
 	AgentTools                        agenttoolports.AgentToolRegistry
 	AgentControlService               agentcontrolports.AgentControlService
-	ProposalPreviewService            agentruntimeports.ProposalPreviewService `optional:"true"`
+	ProposalPreviewService            agentruntimeports.ProposalPreviewService
 	IAMService                        iamports.IAMService
 	RoleService                       *roleservice.Service
 	PageAccessService                 *pageaccessservice.Service
@@ -526,8 +520,8 @@ type Params struct {
 	CarrierCostEventRepo              carriersettlementports.CarrierCostEventRepository
 	FuelPurchaseService               *fuelpurchaseservice.Service
 	IFTAService                       *iftaservice.Service
-	DistanceCalculationService        shipmentdistanceports.DistanceCalculationService `optional:"true"`
-	MonitoringConfig                  *monitoringconfig.Config                         `optional:"true"`
+	DistanceCalculationService        shipmentdistanceports.DistanceCalculationService
+	MonitoringConfig                  *monitoringconfig.Config
 }
 
 type Services struct {
@@ -727,10 +721,7 @@ type Services struct {
 	AgentSuggestionService            agentsuggestionports.AgentSuggestionService
 	AgentEvaluationService            agentevaluationports.AgentEvaluationService
 	AgentEvalCaseService              agentqualityports.AgentEvalCaseService
-	ExtractionEvalService             extractionevalports.ExtractionEvalService
-	ExtractionShadowService           extractionshadowports.ExtractionShadowService
-	ExtractionRolloutService          extractionrolloutports.ExtractionRolloutService
-	AiTrainingHistoryService          aitrainingports.AITrainingHistoryService
+	ExtractionAccuracyService         extractionaccuracyports.ExtractionAccuracyService
 	AgentQualityService               agentqualityports.AgentQualityService
 	AgentActivityService              agentactivityports.AgentActivityService
 	AgentExceptionService             agentexceptionports.AgentExceptionService
@@ -1022,10 +1013,7 @@ func newServices(p *Params) *Services {
 		AgentSuggestionService:            p.AgentSuggestionService,
 		AgentEvaluationService:            p.AgentEvaluationService,
 		AgentEvalCaseService:              p.AgentEvalCaseService,
-		ExtractionEvalService:             p.ExtractionEvalService,
-		ExtractionShadowService:           p.ExtractionShadowService,
-		ExtractionRolloutService:          p.ExtractionRolloutService,
-		AiTrainingHistoryService:          p.AITrainingHistoryService,
+		ExtractionAccuracyService:         p.ExtractionAccuracyService,
 		AgentQualityService:               p.AgentQualityService,
 		AgentActivityService:              p.AgentActivityService,
 		AgentExceptionService:             p.AgentExceptionService,

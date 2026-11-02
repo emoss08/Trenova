@@ -58,7 +58,7 @@ type decidedReader struct {
 }
 
 func (r decidedReader) ready() bool {
-	return r.proposals != nil && r.plans != nil && r.decisions != nil
+	return true
 }
 
 // unreported is a decision the conversation has not been told about.

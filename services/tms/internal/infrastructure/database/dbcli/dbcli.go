@@ -38,20 +38,18 @@ var extensions = []string{
 }
 
 type Options struct {
-	Name          string
-	Description   string
-	Editions      []migrate.Source
-	ConfigOptions []config.LoaderOption
-	Development   bool
-	Dump          []string
-	Fixtures      *seed.Registry
-	Commands      []keelcli.Command
+	Name        string
+	Description string
+	Development bool
+	Dump        []string
+	Fixtures    *seed.Registry
+	Commands    []keelcli.Command
 }
 
 func App(o Options) keelcli.App {
-	set := migrations.Set(o.Editions...)
+	set := migrations.Set()
 	opts := migrations.Options()
-	settings := NewSettings(o.Name, o.ConfigOptions)
+	settings := NewSettings(o.Name)
 	env := seedenv.Env{Config: settings.MustConfig}
 
 	dbConfig := DatabaseConfig(ConfigParams{
@@ -103,14 +101,11 @@ type Settings struct {
 	load func() (*config.Config, error)
 }
 
-func NewSettings(name string, options []config.LoaderOption) *Settings {
+func NewSettings(name string) *Settings {
 	return &Settings{
 		name: name,
 		load: sync.OnceValues(func() (*config.Config, error) {
-			return config.NewLoader(append(
-				[]config.LoaderOption{config.WithConfigPath(configPath)},
-				options...,
-			)...).Load()
+			return config.NewLoader(config.WithConfigPath(configPath)).Load()
 		}),
 	}
 }

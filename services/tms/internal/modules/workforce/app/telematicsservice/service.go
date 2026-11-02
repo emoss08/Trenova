@@ -37,7 +37,7 @@ type Params struct {
 	IntegrationService  *integrationservice.Service
 	RealtimeService     realtimeports.RealtimeService
 	Notifications       *notificationservice.Service
-	DriverNotify        *drivernotificationservice.Service `optional:"true"`
+	DriverNotify        *drivernotificationservice.Service
 	AssignmentRepo      assignmentports.AssignmentRepository
 	ShipmentRepo        shipmentports.ShipmentRepository
 	ShipmentMoveRepo    shipmentmoveports.ShipmentMoveRepository
@@ -45,9 +45,8 @@ type Params struct {
 	DispatchControlRepo dispatchcontrolports.DispatchControlRepository
 	CustomFieldValues   *customfieldservice.ValuesService
 	Logger              *zap.Logger
-	ProviderOverride    telematicsports.TelematicsProvider  `optional:"true"`
-	Watchtower          watchtowerports.WatchtowerProjector `optional:"true"`
-	Waits               agentwaitports.AgentWaitNotifier    `optional:"true"`
+	Watchtower          watchtowerports.WatchtowerProjector
+	Waits               agentwaitports.AgentWaitNotifier
 }
 
 type Service struct {
@@ -63,7 +62,6 @@ type Service struct {
 	stopVisits          telematicsports.StopVisitRecorder
 	dispatchControlRepo dispatchcontrolports.DispatchControlRepository
 	customFieldValues   *customfieldservice.ValuesService
-	providerOverride    telematicsports.TelematicsProvider
 	watchtower          watchtowerports.WatchtowerProjector
 	waits               agentwaitports.AgentWaitNotifier
 	l                   *zap.Logger
@@ -83,7 +81,6 @@ func New(p Params) *Service { //nolint:gocritic // dependency injection
 		stopVisits:          p.StopVisits,
 		dispatchControlRepo: p.DispatchControlRepo,
 		customFieldValues:   p.CustomFieldValues,
-		providerOverride:    p.ProviderOverride,
 		watchtower:          p.Watchtower,
 		waits:               p.Waits,
 		l:                   p.Logger.Named("telematics-service"),
@@ -94,9 +91,6 @@ func (s *Service) resolveProvider(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (telematicsports.TelematicsProvider, error) {
-	if s.providerOverride != nil {
-		return s.providerOverride, nil
-	}
 	return s.providerFactory.ProviderFor(ctx, tenantInfo)
 }
 
@@ -105,9 +99,6 @@ func (s *Service) publishInvalidation(
 	tenantInfo pagination.TenantInfo,
 	resource string,
 ) {
-	if s.realtimeService == nil {
-		return
-	}
 	err := s.realtimeService.PublishResourceInvalidation(
 		ctx,
 		&realtimeports.PublishResourceInvalidationRequest{

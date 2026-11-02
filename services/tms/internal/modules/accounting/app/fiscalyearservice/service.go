@@ -228,26 +228,6 @@ func (s *Service) bootstrapCurrentCalendarFiscalYear(
 		AllowAdjustingEntries: false,
 	}
 
-	if s.db == nil {
-		createdEntity, err := s.repo.Create(ctx, entity)
-		if err != nil {
-			if dberror.IsUniqueConstraintViolation(err) {
-				return s.repo.GetCurrentFiscalYear(ctx, fiscalyearports.GetCurrentFiscalYearRequest{
-					OrgID: orgID,
-					BuID:  buID,
-				})
-			}
-
-			return nil, err
-		}
-
-		if genErr := s.generatePeriods(ctx, createdEntity, s.l); genErr != nil {
-			return nil, genErr
-		}
-
-		return createdEntity, nil
-	}
-
 	var createdEntity *fiscalyear.FiscalYear
 	err := s.db.Transact(
 		ctx,
@@ -390,21 +370,6 @@ func (s *Service) createWithPeriods(
 	entity *fiscalyear.FiscalYear,
 	log *zap.Logger,
 ) (*fiscalyear.FiscalYear, error) {
-	if s.db == nil {
-		createdEntity, err := s.repo.Create(ctx, entity)
-		if err != nil {
-			log.Error("failed to create fiscal year", zap.Error(err))
-			return nil, err
-		}
-
-		if genErr := s.generatePeriods(ctx, createdEntity, log); genErr != nil {
-			log.Error("failed to generate fiscal periods", zap.Error(genErr))
-			return nil, genErr
-		}
-
-		return createdEntity, nil
-	}
-
 	var createdEntity *fiscalyear.FiscalYear
 	err := s.db.Transact(
 		ctx,
@@ -595,10 +560,6 @@ func (s *Service) closeWithAccounting(
 	req fiscalyearports.CloseFiscalYearRequest,
 	userID pulid.ID,
 ) (*fiscalyear.FiscalYear, *fiscalclose.PostResult, error) {
-	if s.db == nil {
-		return s.closeInTx(ctx, req, userID)
-	}
-
 	var (
 		closedEntity *fiscalyear.FiscalYear
 		postResult   *fiscalclose.PostResult
@@ -712,10 +673,6 @@ func (s *Service) reopenWithAccounting(
 	req fiscalyearports.ReopenFiscalYearRequest,
 	userID pulid.ID,
 ) (*fiscalyear.FiscalYear, error) {
-	if s.db == nil {
-		return s.reopenInTx(ctx, req, userID)
-	}
-
 	var reopenedEntity *fiscalyear.FiscalYear
 	err := s.db.Transact(
 		ctx,
@@ -783,42 +740,6 @@ func (s *Service) Activate(
 		zap.String("operation", "Activate"),
 		zap.String("id", req.ID.String()),
 	)
-
-	if s.db == nil {
-		existing, err := s.repo.GetByID(ctx, fiscalyearports.GetFiscalYearByIDRequest(req))
-		if err != nil {
-			log.Error("failed to get fiscal year", zap.Error(err))
-			return nil, err
-		}
-
-		if multiErr := s.validateActivate(existing); multiErr != nil {
-			return nil, multiErr
-		}
-
-		activatedEntity, err := s.repo.Activate(ctx, req)
-		if err != nil {
-			log.Error("failed to activate fiscal year", zap.Error(err))
-			return nil, err
-		}
-
-		if err = s.auditService.LogAction(&auditports.LogActionParams{
-			Resource:       permission.ResourceFiscalYear,
-			ResourceID:     activatedEntity.GetID().String(),
-			Operation:      permission.OpUpdate,
-			UserID:         userID,
-			CurrentState:   jsonutils.MustToJSON(activatedEntity),
-			PreviousState:  jsonutils.MustToJSON(existing),
-			OrganizationID: activatedEntity.OrganizationID,
-			BusinessUnitID: activatedEntity.BusinessUnitID,
-		},
-			auditservice.WithComment("Fiscal year activated"),
-			auditservice.WithDiff(existing, activatedEntity),
-		); err != nil {
-			log.Error("failed to log audit action", zap.Error(err))
-		}
-
-		return activatedEntity, nil
-	}
 
 	var existing *fiscalyear.FiscalYear
 	var activatedEntity *fiscalyear.FiscalYear

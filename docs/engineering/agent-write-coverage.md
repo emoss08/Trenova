@@ -1663,7 +1663,6 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/onboarding/complete/`<br>onboardinghandler.complete | Exempt, configuration: The owner's one-time setup of a new organization's profile and operating mode; every later write depends on it and it runs before any agent is configured. |
 
 ### order
 

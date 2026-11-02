@@ -163,7 +163,7 @@ func (s *Service) IssueAction(
 	s.publish(ctx, req.TenantInfo, realtimeDiscipline, permission.OpCreate, created.ID, req.UserID)
 	s.refreshRollupQuietly(ctx, req.TenantInfo, created.WorkerID)
 
-	if req.RecordEmploymentEvent && s.employment != nil {
+	if req.RecordEmploymentEvent {
 		kind := employment.EmploymentEventKind("")
 		switch req.Level {
 		case workerdiscipline.DisciplinaryLevelSuspension:

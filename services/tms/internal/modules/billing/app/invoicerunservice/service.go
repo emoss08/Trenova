@@ -39,7 +39,7 @@ type Params struct {
 	AuditService      auditports.AuditService
 	DetentionBilling  detentionports.DetentionBillingService
 	Validator         *Validator
-	Notifications     *notificationservice.Service `optional:"true"`
+	Notifications     *notificationservice.Service
 }
 
 type Service struct {
@@ -69,9 +69,7 @@ func New(p Params) *Service {
 		detentionBilling:  p.DetentionBilling,
 		validator:         p.Validator,
 	}
-	if p.Notifications != nil {
-		svc.notifier = p.Notifications
-	}
+	svc.notifier = p.Notifications
 
 	return svc
 }
@@ -296,7 +294,7 @@ func (s *Service) audit(
 	op permission.Operation,
 	comment string,
 ) {
-	if s.auditService == nil || actor == nil {
+	if actor == nil {
 		return
 	}
 

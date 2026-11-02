@@ -104,7 +104,7 @@ func setupHoldFixture(t *testing.T) *holdFixture {
 	}
 	require.NoError(t, edidb.EDIPartners.Create(tenantCtx, db, partner))
 
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.WrapDB(db)
 	return &holdFixture{
 		ctx:       tenantCtx,
 		db:        db,

@@ -63,8 +63,8 @@ type Params struct {
 	DocumentRepo documentports.DocumentRepository
 	Employment   *workeremploymentservice.Service
 	AuditService auditports.AuditService
-	Realtime     realtimeports.RealtimeService      `optional:"true"`
-	DriverNotify *drivernotificationservice.Service `optional:"true"`
+	Realtime     realtimeports.RealtimeService
+	DriverNotify *drivernotificationservice.Service
 }
 
 type Service struct {
@@ -88,35 +88,8 @@ func New(p Params) *Service {
 		realtime:     p.Realtime,
 		driverNotify: p.DriverNotify,
 	}
-	if p.Employment != nil {
-		svc.employment = p.Employment
-	}
+	svc.employment = p.Employment
 	return svc
-}
-
-// Deps is the constructor shape tests use to swap in fakes.
-type Deps struct {
-	Logger       *zap.Logger
-	Repo         workersafetyports.WorkerSafetyRepository
-	WorkerRepo   workerports.WorkerRepository
-	DocumentRepo documentports.DocumentRepository
-	Employment   EmploymentRecorder
-	AuditService auditports.AuditService
-}
-
-func NewWithDeps(d Deps) *Service {
-	logger := d.Logger
-	if logger == nil {
-		logger = zap.NewNop()
-	}
-	return &Service{
-		l:            logger.Named("service.worker-safety"),
-		repo:         d.Repo,
-		workerRepo:   d.WorkerRepo,
-		documentRepo: d.DocumentRepo,
-		employment:   d.Employment,
-		auditService: d.AuditService,
-	}
 }
 
 type auditParams struct {
@@ -132,7 +105,7 @@ type auditParams struct {
 }
 
 func (s *Service) audit(p *auditParams) {
-	if s.auditService == nil || p.userID.IsNil() {
+	if p.userID.IsNil() {
 		return
 	}
 	params := &auditports.LogActionParams{
@@ -162,9 +135,6 @@ func (s *Service) publish(
 	recordID pulid.ID,
 	userID pulid.ID,
 ) {
-	if s.realtime == nil {
-		return
-	}
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
@@ -190,9 +160,6 @@ func (s *Service) notifyDriver(
 	notice *notificationtemplate.DriverNotificationContext,
 	correlation string,
 ) {
-	if s.driverNotify == nil {
-		return
-	}
 	s.driverNotify.NotifyWithCorrelation(ctx, &drivernotificationservice.DriverNotification{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,

@@ -30,7 +30,7 @@ func (s *Engine) RecordAdvisorRefusal(
 		zap.String("advisor", advisor),
 		zap.String("message", message),
 	)
-	if s.Advisors == nil || tenant.OrgID.IsNil() {
+	if tenant.OrgID.IsNil() {
 		return
 	}
 	if runes := []rune(message); len(runes) > maxAdvisorRefusalChars {

@@ -24,7 +24,7 @@ import (
 func newSubmissionRepos(
 	e *factoringEnv,
 ) (factoringsubmissionports.SubmissionRepository, factoringsubmissionports.TransportRepository) {
-	p := Params{DB: postgres.NewTestConnection(e.db), Logger: zap.NewNop()}
+	p := Params{DB: postgres.WrapDB(e.db), Logger: zap.NewNop()}
 	return NewSubmissionRepository(p), NewTransportRepository(p)
 }
 
@@ -141,7 +141,7 @@ func TestSubmissionLifecycleAndLiveInvoices(t *testing.T) {
 	assert.Equal(t, failedVersion+1, loaded.Version)
 
 	failed, err := NewWatchtowerReader(
-		Params{DB: postgres.NewTestConnection(e.db), Logger: zap.NewNop()},
+		Params{DB: postgres.WrapDB(e.db), Logger: zap.NewNop()},
 	).
 		ListFailedSubmissions(e.ctx, &factoringwatchtowerports.ListFailedSubmissionsRequest{TenantInfo: e.tenantInfo})
 	require.NoError(t, err)

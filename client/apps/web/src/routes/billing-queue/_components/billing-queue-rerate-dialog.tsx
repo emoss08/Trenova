@@ -20,6 +20,7 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { TARIFF_INPUTS_REFINEMENT } from "@trenova/shared/lib/tariff-inputs";
 import { tariffFormInputValuesSchema } from "@trenova/shared/types/tariff-form";
+import { billingQueue } from "@/lib/queries/billing-queue";
 import { apiService } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -27,6 +28,7 @@ import { useCallback, useEffect } from "react";
 import { FormProvider, useForm, useFormContext, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { z } from "zod";
+import { useInvalidateBillingQueue } from "./use-billing-queue-invalidate";
 import { translate } from "@trenova/shared/i18n/runtime";
 
 const rerateSchema = z.object({
@@ -57,6 +59,7 @@ export function BillingQueueRerateDialog({
   const t = useT();
 
   const queryClient = useQueryClient();
+  const invalidate = useInvalidateBillingQueue();
 
   const form = useForm<RerateFormValues>({
     resolver: tariffInputsResolver<RerateFormValues>(
@@ -80,10 +83,11 @@ export function BillingQueueRerateDialog({
       apiService.billingQueueService.updateCharges(itemId, {
         formulaTemplateId: values.formulaTemplateId,
         tariffInputs: values.tariffInputs,
+        expandShipmentDetails: true,
       }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
-      void queryClient.invalidateQueries({ queryKey: ["billing-queue-list"] });
+    onSuccess: (saved) => {
+      queryClient.setQueryData(billingQueue.get(itemId).queryKey, saved);
+      invalidate();
     },
     onError: (error) => {
       toast.error(t("Failed to re-rate shipment"), { description: describeApiError(error) });

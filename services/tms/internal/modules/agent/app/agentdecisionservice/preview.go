@@ -92,7 +92,7 @@ func (s *Service) settlePreview(
 	// A step of a plan decided without a plan preview is not previewed on its
 	// own: after the steps before it have run, its record has moved by design,
 	// and the plan settled what was approved.
-	if s.previews == nil || req.WithinPlan {
+	if req.WithinPlan {
 		if needsReview {
 			return nil, agent.ReviewRequiredError()
 		}
@@ -144,10 +144,6 @@ func (s *Service) settlePreview(
 }
 
 func (s *Service) needsReview(proposal *agent.AgentProposal, modifications map[string]any) bool {
-	if s.executor == nil {
-		return proposal.ApprovalNeedsReview() || len(modifications) > 0
-	}
-
 	return s.executor.ReviewRequired(proposal, modifications)
 }
 

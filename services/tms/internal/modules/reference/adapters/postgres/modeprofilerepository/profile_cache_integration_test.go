@@ -50,7 +50,7 @@ func TestActiveProfilesAreServedFromTheResultCacheUntilAProfileChanges(t *testin
 	tenantB := seedtest.SeedAdditionalTenant(t, ctx, db, "MP")
 	cached := cachetest.Open(t, ctx, dsn)
 	repo := NewProfileRepository(ProfileParams{
-		DB:     postgres.NewTestConnection(cached),
+		DB:     postgres.WrapDB(cached),
 		Logger: zap.NewNop(),
 	})
 	actx := tenantA.Ctx(ctx)

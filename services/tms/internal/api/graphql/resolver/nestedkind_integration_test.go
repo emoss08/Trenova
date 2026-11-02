@@ -88,7 +88,7 @@ func TestScreenRead_ATractorsDriverShowsTheWorkerReferenceView(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	tenant := agentreadtest.SeedTenant(t, admin, "S")
-	owner := postgres.NewTestConnection(admin)
+	owner := postgres.WrapDB(admin)
 	tenantCtx := dbscope.WithTenant(t.Context(), tenant.Scope())
 	driverID := writeTractorWithDriver(t, readscope.With(tenantCtx, nil), owner, tenant)
 

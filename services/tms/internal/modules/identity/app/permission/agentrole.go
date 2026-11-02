@@ -72,8 +72,7 @@ func (e *engine) agentRolePermissions(
 	ctx context.Context,
 	req *permissionports.PermissionCheckRequest,
 ) (*permissionports.CachedPermissions, error) {
-	if e.agentRoles == nil || req.PrincipalID.IsNil() ||
-		req.PrincipalID == permissionports.AgentPrincipalID {
+	if req.PrincipalID.IsNil() || req.PrincipalID == permissionports.AgentPrincipalID {
 		return nil, nil //nolint:nilnil // an agent with no definition holds no role
 	}
 

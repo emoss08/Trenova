@@ -247,34 +247,28 @@ func (s *service) ensureParties(
 	}
 
 	var worker func(pulid.ID) error
-	if s.workerRepo != nil {
-		worker = func(id pulid.ID) error {
-			_, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
-				ID: id, TenantInfo: tenantInfo,
-			})
+	worker = func(id pulid.ID) error {
+		_, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
+			ID: id, TenantInfo: tenantInfo,
+		})
 
-			return err
-		}
+		return err
 	}
 	var tractor func(pulid.ID) error
-	if s.tractorRepo != nil {
-		tractor = func(id pulid.ID) error {
-			_, err := s.tractorRepo.GetByID(ctx, tractorports.GetTractorByIDRequest{
-				ID: id, TenantInfo: tenantInfo,
-			})
+	tractor = func(id pulid.ID) error {
+		_, err := s.tractorRepo.GetByID(ctx, tractorports.GetTractorByIDRequest{
+			ID: id, TenantInfo: tenantInfo,
+		})
 
-			return err
-		}
+		return err
 	}
 	var trailer func(pulid.ID) error
-	if s.trailerRepo != nil {
-		trailer = func(id pulid.ID) error {
-			_, err := s.trailerRepo.GetByID(ctx, trailerports.GetTrailerByIDRequest{
-				ID: id, TenantInfo: tenantInfo,
-			})
+	trailer = func(id pulid.ID) error {
+		_, err := s.trailerRepo.GetByID(ctx, trailerports.GetTrailerByIDRequest{
+			ID: id, TenantInfo: tenantInfo,
+		})
 
-			return err
-		}
+		return err
 	}
 
 	for _, party := range []struct {

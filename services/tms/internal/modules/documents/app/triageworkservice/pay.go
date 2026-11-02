@@ -24,7 +24,7 @@ func (s *Service) queueForPay(
 	f *matchedFiling,
 	attachment *inboundmessage.InboundAttachment,
 ) {
-	if s.carrierPay == nil || f.message.MatchedCarrierID.IsNil() {
+	if f.message.MatchedCarrierID.IsNil() {
 		s.l.Info("filed a carrier invoice without queueing it for pay",
 			zap.String("messageId", f.message.ID.String()),
 			zap.Bool("carrierMatched", f.message.MatchedCarrierID.IsNotNil()))

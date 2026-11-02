@@ -121,7 +121,7 @@ func (s *Service) UpdateMyContactInfo(
 	// When the carrier wants a say, the edit becomes a request rather than a
 	// write. The profile comes back unchanged, and the pending request is what
 	// the app shows beside it.
-	if control.RequireContactChangeApproval && s.selfService != nil {
+	if control.RequireContactChangeApproval {
 		if _, err = s.selfService.SubmitChange(ctx, &selfserviceservice.SubmitChangeRequest{
 			Worker: wrk,
 			Wanted: profilechange.ContactSnapshot{

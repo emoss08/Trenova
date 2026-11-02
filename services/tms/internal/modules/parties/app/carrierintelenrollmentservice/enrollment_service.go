@@ -56,9 +56,7 @@ func New(p Params) *Service {
 		now:            timeutils.NowUnix,
 	}
 
-	if p.CarrierService != nil {
-		p.CarrierService.SetLifecycleObserver(svc)
-	}
+	p.CarrierService.SetLifecycleObserver(svc)
 
 	return svc
 }

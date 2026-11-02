@@ -30,7 +30,7 @@ type Params struct {
 
 	CarrierIntelligenceConfig *carrierintelligenceconfig.Config
 	SecurityConfig            *securityconfig.Config
-	Client                    *redis.Client `optional:"true"`
+	Client                    *redis.Client
 	Logger                    *zap.Logger
 }
 
@@ -51,12 +51,9 @@ func New(p Params) (restx.Limiter, error) {
 	)
 
 	logger := p.Logger
-	if logger == nil {
-		logger = zap.NewNop()
-	}
 	log := logger.Named("carrierintel.outbound")
 
-	if p.Client == nil || rateCfg.GetStore() == securityconfig.RateLimitStoreMemory {
+	if rateCfg.GetStore() == securityconfig.RateLimitStoreMemory {
 		log.Warn(
 			"outbound carrier intelligence limits use the in-process store",
 			zap.Int("replicaHint", replicas),

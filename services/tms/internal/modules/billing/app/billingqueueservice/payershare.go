@@ -93,7 +93,7 @@ func (s *Service) payerNames(
 		}
 	}
 
-	if len(missing) == 0 || s.customerRepo == nil {
+	if len(missing) == 0 {
 		return names
 	}
 	found, err := s.customerRepo.GetByIDs(ctx, customerports.GetCustomersByIDsRequest{

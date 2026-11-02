@@ -104,7 +104,7 @@ func (m *shipmentStatusMarker) MarkDelayedForServiceFailure(
 		return nil, err
 	}
 
-	if m.orderDerivation != nil && !updated.OrderID.IsNil() {
+	if !updated.OrderID.IsNil() {
 		if derivErr := m.orderDerivation.RecomputeOrder(
 			ctx,
 			pagination.TenantInfo{

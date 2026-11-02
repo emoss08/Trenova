@@ -238,6 +238,8 @@ export const aiProviderSchema = z.object({
   embeddingInputStyle: embeddingInputStyleSchema.default("None"),
   trusted: z.boolean().default(false),
   enabled: z.boolean().default(false),
+  /** Nova runs on this provider, with Nova's own model; an organization has at most one. */
+  nova: z.boolean().default(false),
   lastTest: aiProviderTestOutcomeSchema.nullable().optional().default(null),
   timeoutSeconds: z.number().default(PROVIDER_TIMEOUT_SECONDS.initial),
   maxConcurrent: z.number().default(PROVIDER_MAX_CONCURRENT.initial),
@@ -287,6 +289,8 @@ export const saveAIProviderRequestSchema = z.object({
   embeddingInputStyle: embeddingInputStyleSchema.default("None"),
   trusted: z.boolean().default(false),
   enabled: z.boolean().default(false),
+  /** Run Nova on this provider, taking it from the one that had it. */
+  nova: z.boolean().default(false),
   timeoutSeconds: z
     .number()
     .int()
@@ -380,7 +384,6 @@ export const aiTaskDescriptorSchema = z.object({
   task: aiTaskSchema,
   label: z.string(),
   description: z.string(),
-  requiresTrust: z.boolean().default(false),
   volumeGuidance: z.string().optional().default(""),
 });
 
@@ -402,6 +405,14 @@ export const aiProviderCatalogSchema = z.object({
   platforms: z.preprocess((value) => value ?? [], z.array(aiProviderPlatformDescriptorSchema)),
   /** Whether a platform provider may sign in with the server's own cloud identity. */
   serverCloudCredentials: z.boolean().default(false),
+  /**
+   * The model Nova runs on, whichever provider is chosen for it, and the platforms an
+   * Anthropic provider must reach Claude through to be chosen.
+   */
+  nova: z.object({
+    model: z.string(),
+    platforms: z.preprocess((value) => value ?? [], z.array(aiProviderPlatformSchema)),
+  }),
 });
 
 export type AIProvider = z.infer<typeof aiProviderSchema>;

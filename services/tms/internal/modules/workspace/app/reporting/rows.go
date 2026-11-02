@@ -145,9 +145,6 @@ func (s *Service) downloadRunRows(
 }
 
 func (s *Service) auditRowsRead(run *report.ReportRun) {
-	if s.audit == nil {
-		return
-	}
 	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceReport,
 		ResourceID:     run.ID.String(),

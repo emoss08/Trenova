@@ -41,7 +41,7 @@ func TestSummary_BreaksUsageDownByFeature(t *testing.T) {
 		BusinessUnitID: tenant.BusinessUnitID,
 	})
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	since := timeutils.NowUnix() - 60
 	documentID := pulid.MustNew("doc_").String()
 

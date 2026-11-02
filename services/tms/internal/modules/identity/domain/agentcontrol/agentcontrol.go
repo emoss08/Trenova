@@ -39,10 +39,6 @@ type AgentControl struct {
 	BriefingEnabled   bool `json:"briefingEnabled"   keel:"briefing_enabled"`
 	BriefingHourLocal int  `json:"briefingHourLocal" keel:"briefing_hour_local"`
 
-	AITrainingConsent            bool      `json:"aiTrainingConsent"            keel:"ai_training_consent"`
-	AITrainingConsentChangedAt   *int64    `json:"aiTrainingConsentChangedAt"   keel:"ai_training_consent_changed_at"`
-	AITrainingConsentChangedByID *pulid.ID `json:"aiTrainingConsentChangedById" keel:"ai_training_consent_changed_by_id"`
-
 	// PersonMonthlyMessages is how many questions one person may ask the
 	// agents in a calendar month; nought leaves it unlimited.
 	PersonMonthlyMessages int `json:"personMonthlyMessages" keel:"person_monthly_messages"`
@@ -203,18 +199,6 @@ func (ac *AgentControl) validateAgentMoney(multiErr *errortypes.MultiError) {
 	}
 }
 
-func (ac *AgentControl) SetAITrainingConsent(consent bool, changedByID pulid.ID, at int64) bool {
-	if ac.AITrainingConsent == consent {
-		return false
-	}
-
-	ac.AITrainingConsent = consent
-	ac.AITrainingConsentChangedAt = &at
-	ac.AITrainingConsentChangedByID = &changedByID
-
-	return true
-}
-
 func (ac *AgentControl) GetID() pulid.ID {
 	return ac.ID
 }
@@ -264,9 +248,5 @@ var AgentControlChangeRules = []editchange.Rule[AgentControl]{
 				a.AgentMoneyDayCalls == b.AgentMoneyDayCalls &&
 				a.AgentMoneyDayAmountMinor == b.AgentMoneyDayAmountMinor
 		},
-	},
-	{
-		Field: "aiTrainingConsent", Label: "Share corrections",
-		Same: func(a, b *AgentControl) bool { return a.AITrainingConsent == b.AITrainingConsent },
 	},
 }

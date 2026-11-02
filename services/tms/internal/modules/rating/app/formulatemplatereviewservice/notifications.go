@@ -42,10 +42,6 @@ func (s *Service) notifySubmitted(
 	tenantInfo pagination.TenantInfo,
 	template *formulatemplate.FormulaTemplate,
 ) {
-	if s.notifications == nil {
-		return
-	}
-
 	buID := tenantInfo.BuID
 	entity := &notification.Notification{
 		OrganizationID: tenantInfo.OrgID,
@@ -74,7 +70,7 @@ func (s *Service) notifyRequestedReviewer(
 	template *formulatemplate.FormulaTemplate,
 	reviewerID pulid.ID,
 ) {
-	if s.notifications == nil || reviewerID.IsNil() || reviewerID == tenantInfo.UserID {
+	if reviewerID.IsNil() || reviewerID == tenantInfo.UserID {
 		return
 	}
 
@@ -119,7 +115,7 @@ func (s *Service) notifyReviewOutcome(
 	tenantInfo pagination.TenantInfo,
 	outcome *reviewOutcome,
 ) {
-	if s.notifications == nil || outcome.SubmitterID == nil || outcome.SubmitterID.IsNil() {
+	if outcome.SubmitterID == nil || outcome.SubmitterID.IsNil() {
 		return
 	}
 	if *outcome.SubmitterID == tenantInfo.UserID {

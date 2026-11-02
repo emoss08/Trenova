@@ -39,7 +39,7 @@ func BriefWorkflowID(tenantInfo pagination.TenantInfo) string {
 type BriefRequesterParams struct {
 	fx.In
 
-	Signals kernelports.WorkflowSignalStarter `optional:"true"`
+	Signals kernelports.WorkflowSignalStarter
 	Logger  *zap.Logger
 }
 
@@ -55,7 +55,7 @@ func NewBriefRequester(p BriefRequesterParams) billingqueueports.BriefRequester 
 }
 
 func (r *BriefRequester) RequestBrief(ctx context.Context, tenantInfo pagination.TenantInfo) {
-	if r.signals == nil || tenantInfo.OrgID.IsNil() || tenantInfo.BuID.IsNil() {
+	if tenantInfo.OrgID.IsNil() || tenantInfo.BuID.IsNil() {
 		return
 	}
 

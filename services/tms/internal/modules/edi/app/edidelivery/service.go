@@ -23,10 +23,10 @@ type Params struct {
 	InvoiceRepo     invoiceports.InvoiceRepository
 	Logger          *zap.Logger
 	MessageRepo     edimessageports.EDIMessageRepository
-	Metrics         *metrics.Registry `optional:"true"`
+	Metrics         *metrics.Registry
 	PartnerRepo     edipartnerports.EDIPartnerRepository
 	ProfileRepo     edipartnerports.EDICommunicationProfileRepository
-	Realtime        realtimeports.RealtimeService `optional:"true"`
+	Realtime        realtimeports.RealtimeService
 	Recipient       *editenderrecipient.Service
 	Secret          *ediprofilesecret.Service
 	Transport       editransportports.EDITransportDispatcher
@@ -51,9 +51,7 @@ type Service struct {
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	ediMetrics := documentmetrics.NewEDI(nil, p.Logger, false)
-	if p.Metrics != nil {
-		ediMetrics = p.Metrics.EDI
-	}
+	ediMetrics = p.Metrics.EDI
 	return &Service{
 		invoiceRepo:     p.InvoiceRepo,
 		l:               p.Logger.Named("service.edi"),

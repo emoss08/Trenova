@@ -154,7 +154,7 @@ func (s *Service) GetPartnerCard(
 	}
 	card.Activity.OverdueAckCount = card.Attention.OverdueAckCount
 
-	if req.IncludeCarriers && s.carrierRepo != nil {
+	if req.IncludeCarriers {
 		if card.Carriers, err = s.carrierRepo.ListEDIChannelsByPartner(
 			ctx,
 			carrierports.ListCarrierEDIChannelsByPartnerRequest{

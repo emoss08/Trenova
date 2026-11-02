@@ -26,9 +26,6 @@ func (e *Effects) RefreshAttention(
 	ctx context.Context,
 	conn *accountingconnection.AccountingConnection,
 ) {
-	if e.watchtower == nil {
-		return
-	}
 	tenant := TenantOf(conn)
 	groups, err := e.records.ListAttention(
 		ctx,
@@ -66,9 +63,6 @@ func (e *Effects) RefreshPaused(
 	ctx context.Context,
 	conn *accountingconnection.AccountingConnection,
 ) {
-	if e.watchtower == nil {
-		return
-	}
 	if item, open := watchtoweraccounting.DescribeAccountingSyncPaused(
 		conn,
 		timeutils.NowUnix(),
@@ -89,7 +83,7 @@ func (e *Effects) ReportSafetyNet(
 	conn *accountingconnection.AccountingConnection,
 	found int,
 ) {
-	if e.watchtower == nil || found == 0 {
+	if found == 0 {
 		return
 	}
 	if item, open := watchtoweraccounting.DescribeAccountingSafetyNet(
@@ -132,9 +126,6 @@ func (e *Effects) PublishInvalidation(
 	actorID pulid.ID,
 	recordID pulid.ID,
 ) {
-	if e.realtime == nil {
-		return
-	}
 	if err := realtimeinvalidation.Publish(ctx, e.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,

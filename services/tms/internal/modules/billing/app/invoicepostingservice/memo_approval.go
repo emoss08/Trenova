@@ -47,10 +47,6 @@ func (s *Service) adjustmentApprovalControl(
 	ctx context.Context,
 	orgID pulid.ID,
 ) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
-	if s.adjustmentCtrlRepo == nil {
-		return nil, nil //nolint:nilnil // adjustment controls are not wired in this process
-	}
-
 	control, err := s.adjustmentCtrlRepo.GetByOrgID(ctx, orgID)
 	if errortypes.IsNotFoundError(err) {
 		return nil, nil //nolint:nilnil // the organization has no adjustment control

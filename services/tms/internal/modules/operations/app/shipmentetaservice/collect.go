@@ -46,7 +46,7 @@ func openMoveIDs(entities []*shipment.Shipment) []pulid.ID {
 	return moveIDs
 }
 
-func (s *Service) collect(
+func (s *Sources) collect(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	entities []*shipment.Shipment,
@@ -67,12 +67,12 @@ func (s *Service) collect(
 	return sources, nil
 }
 
-func (s *Service) collectForRefresh(
+func (r *Refresher) collectForRefresh(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	entities []*shipment.Shipment,
 ) (*trackingSources, error) {
-	sources, err := s.collect(ctx, tenantInfo, entities)
+	sources, err := r.sources.collect(ctx, tenantInfo, entities)
 	if err != nil {
 		return nil, err
 	}
@@ -82,20 +82,20 @@ func (s *Service) collectForRefresh(
 		return sources, nil
 	}
 
-	calls, err := s.calls.LatestForMoves(ctx, tenantInfo, moveIDs)
+	calls, err := r.calls.LatestForMoves(ctx, tenantInfo, moveIDs)
 	if err != nil {
 		return nil, err
 	}
 	sources.checkCalls = calls
 
-	if err = s.collectExemptions(ctx, tenantInfo, sources); err != nil {
+	if err = r.sources.collectExemptions(ctx, tenantInfo, sources); err != nil {
 		return nil, err
 	}
 
 	return sources, nil
 }
 
-func (s *Service) collectAssignments(
+func (s *Sources) collectAssignments(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	moveIDs []pulid.ID,
@@ -120,7 +120,7 @@ func (s *Service) collectAssignments(
 	return nil
 }
 
-func (s *Service) collectTelematics(
+func (s *Sources) collectTelematics(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	sources *trackingSources,
@@ -171,7 +171,7 @@ func (s *Service) collectTelematics(
 	return nil
 }
 
-func (s *Service) collectExemptions(
+func (s *Sources) collectExemptions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	sources *trackingSources,
@@ -210,7 +210,7 @@ func assignedWorkerIDs(sources *trackingSources) []pulid.ID {
 	return workerIDs
 }
 
-func (s *Service) failureReasons(
+func (s *Sources) failureReasons(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	shipmentIDs []pulid.ID,

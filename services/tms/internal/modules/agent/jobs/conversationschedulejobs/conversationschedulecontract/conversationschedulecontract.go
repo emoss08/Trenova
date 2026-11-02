@@ -103,10 +103,6 @@ func (s *Schedules) Remove(ctx context.Context, scheduleID pulid.ID) {
 }
 
 func (s *Schedules) sync(ctx context.Context, sched *conversationschedule.Schedule) error {
-	if s.client == nil {
-		return errors.New("temporal client is not configured")
-	}
-
 	options := optionsFor(sched)
 	_, err := s.client.ScheduleClient().Create(ctx, *options)
 	if err == nil {
@@ -140,10 +136,6 @@ func (s *Schedules) sync(ctx context.Context, sched *conversationschedule.Schedu
 }
 
 func (s *Schedules) remove(ctx context.Context, id string) error {
-	if s.client == nil {
-		return errors.New("temporal client is not configured")
-	}
-
 	err := s.client.ScheduleClient().GetHandle(ctx, id).Delete(ctx)
 	var notFound *serviceerror.NotFound
 	if err != nil && !errors.As(err, &notFound) {
@@ -215,10 +207,6 @@ func scheduleExists(err error) bool {
 // save left behind and removes the schedules of conversations deleted with
 // their schedules.
 func (s *Schedules) Reconcile(ctx context.Context) (*ReconcileResult, error) {
-	if s.client == nil {
-		return nil, errors.New("temporal client is not configured")
-	}
-
 	result := &ReconcileResult{}
 	wanted := make(map[string]struct{})
 

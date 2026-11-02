@@ -4,6 +4,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/jobs/accountingsyncjobs/accountingsynccontract"
+
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
@@ -72,7 +74,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			Description: "Refresh accounting authorizations that are about to expire and check each connection answers",
 		},
 		{
-			Name:        RefreshAccountingReferenceWorkflowName,
+			Name:        accountingsynccontract.RefreshAccountingReferenceWorkflowName,
 			Fn:          RefreshAccountingReferenceWorkflow,
 			TaskQueue:   temporaltype.IntegrationTaskQueue,
 			Description: "Pull an accounting system's reference data and re-score the mappings that are still open",
@@ -114,7 +116,7 @@ func withFairness(base *workflow.ActivityOptions, orgID pulid.ID) workflow.Activ
 
 func RefreshAccountingReferenceWorkflow(
 	ctx workflow.Context,
-	payload *RefreshReferencePayload,
+	payload *accountingsynccontract.RefreshReferencePayload,
 ) (*RefreshReferenceResult, error) {
 	var a *Activities
 	logger := workflow.GetLogger(ctx)
@@ -149,7 +151,7 @@ func RefreshAccountingReferenceWorkflow(
 
 func refreshReference(
 	ctx workflow.Context,
-	payload *RefreshReferencePayload,
+	payload *accountingsynccontract.RefreshReferencePayload,
 	result *RefreshReferenceResult,
 ) error {
 	var a *Activities
@@ -233,7 +235,7 @@ func RefreshAllAccountingReferenceWorkflow(
 	for idx := range page.Connections {
 		conn := &page.Connections[idx]
 		childCtx := workflow.WithChildOptions(ctx, workflow.ChildWorkflowOptions{
-			WorkflowID:            ReferenceWorkflowID(conn.ConnectionID),
+			WorkflowID:            accountingsynccontract.ReferenceWorkflowID(conn.ConnectionID),
 			TaskQueue:             temporaltype.IntegrationTaskQueue,
 			WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
 			ParentClosePolicy:     enums.PARENT_CLOSE_POLICY_ABANDON,

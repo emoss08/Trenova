@@ -217,7 +217,7 @@ func (c *Calculator) recordQuote(
 	entity *shipment.Shipment,
 	quote *ratequote.RateQuote,
 ) error {
-	if c.quoteRepo == nil || quote == nil {
+	if quote == nil {
 		return nil
 	}
 
@@ -302,7 +302,7 @@ func (c *Calculator) appliedQuote(
 	ctx context.Context,
 	entity *shipment.Shipment,
 ) *ratequote.RateQuote {
-	if c.quoteRepo == nil || entity.RateQuoteID == nil || entity.RateQuoteID.IsNil() {
+	if entity.RateQuoteID == nil || entity.RateQuoteID.IsNil() {
 		return nil
 	}
 

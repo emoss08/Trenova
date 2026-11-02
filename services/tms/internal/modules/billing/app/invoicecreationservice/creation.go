@@ -265,8 +265,7 @@ func (s *Service) syncAdjustmentLineage(
 		}
 	}
 
-	if s.adjustmentRepo != nil && item.CorrectionGroupID != nil &&
-		item.CorrectionGroupID.IsNotNil() {
+	if item.CorrectionGroupID != nil && item.CorrectionGroupID.IsNotNil() {
 		group, err := s.adjustmentRepo.GetCorrectionGroup(
 			ctx,
 			invoiceadjustmentports.GetCorrectionGroupRequest{
@@ -892,7 +891,7 @@ func (s *Service) shouldAutoPost(
 ) bool {
 	control, err := s.billingRepo.GetByOrgID(ctx, orgID)
 	if err == nil && control != nil {
-		return s.billingPolicyService().CanAutoPostInvoice(control, cus)
+		return s.billingPolicy.CanAutoPostInvoice(control, cus)
 	}
 
 	return s.resolveAutoPost(cus)
@@ -915,7 +914,7 @@ func (s *Service) packetDocuments(
 	if len(item.PacketDocumentIDs) > 0 {
 		return item.PacketDocumentIDs
 	}
-	if s.readiness == nil || item.ShipmentID.IsNil() {
+	if item.ShipmentID.IsNil() {
 		return nil
 	}
 	readiness, err := s.readiness.GetBillingReadiness(ctx, item.ShipmentID, pagination.TenantInfo{

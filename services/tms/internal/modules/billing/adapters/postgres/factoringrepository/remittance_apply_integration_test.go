@@ -55,7 +55,7 @@ func TestRemittanceAppliesThroughTheLedgerInOneTransaction(t *testing.T) {
 	e := setupLedgerEnv(t)
 	actor := testutil.NewSessionActor(e.userID, e.tenantInfo.OrgID, e.tenantInfo.BuID)
 	now := time.Now().Unix()
-	conn := postgres.NewTestConnection(e.db)
+	conn := postgres.WrapDB(e.db)
 	remittances := NewRemittanceRepository(Params{DB: conn, Logger: zap.NewNop()})
 	files := &remittanceFiles{
 		docs:     map[pulid.ID]*document.Document{},

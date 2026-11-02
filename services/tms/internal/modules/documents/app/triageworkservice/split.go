@@ -107,23 +107,15 @@ func (s *Service) split(
 		Ranges:       staged,
 	}
 
-	if s.workflows != nil && s.workflows.Enabled() {
-		if _, err = s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
-			ID:            triageworkcontract.SplitFilingWorkflowID(req.attachment.ID, filedAt),
-			TaskQueue:     temporaltype.TaskQueueSystem.String(),
-			StaticSummary: "File " + req.attachment.FileName + " as separate documents",
-		}, triageworkcontract.SplitFilingWorkflowName, payload); err != nil {
-			s.l.Error("could not start a split filing",
-				zap.String("attachmentId", req.attachment.ID.String()), zap.Error(err))
+	if _, err = s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
+		ID:            triageworkcontract.SplitFilingWorkflowID(req.attachment.ID, filedAt),
+		TaskQueue:     temporaltype.TaskQueueSystem.String(),
+		StaticSummary: "File " + req.attachment.FileName + " as separate documents",
+	}, triageworkcontract.SplitFilingWorkflowName, payload); err != nil {
+		s.l.Error("could not start a split filing",
+			zap.String("attachmentId", req.attachment.ID.String()), zap.Error(err))
 
-			return nil, s.abandonSplit(ctx, req.attachment, err)
-		}
-
-		return s.refreshed(ctx, req.tenantInfo, req.message.ID)
-	}
-
-	if err = s.completeInline(ctx, payload); err != nil {
-		return nil, err
+		return nil, s.abandonSplit(ctx, req.attachment, err)
 	}
 
 	return s.refreshed(ctx, req.tenantInfo, req.message.ID)
@@ -369,42 +361,6 @@ func (s *Service) clearFiling(
 	_, err := s.messages.UpdateAttachment(ctx, attachment)
 
 	return err
-}
-
-func (s *Service) completeInline(
-	ctx context.Context,
-	payload *triageworkcontract.SplitFilingPayload,
-) error {
-	tenantInfo := pagination.TenantInfo{
-		OrgID:  payload.OrganizationID,
-		BuID:   payload.BusinessUnitID,
-		UserID: payload.UserID,
-	}
-	record := &triageworkcontract.RecordSplitPayload{
-		SplitFilingPayload: *payload,
-		Documents:          make([]triageworkcontract.SplitDocument, 0, len(payload.Ranges)),
-	}
-
-	for _, rng := range payload.Ranges {
-		session, err := s.uploads.Complete(ctx, &documentuploadports.CompletionRequest{
-			TenantInfo: tenantInfo,
-			Actor:      *permissionports.UserActor(tenantInfo),
-			SessionID:  rng.SessionID,
-		})
-		if err != nil || session.DocumentID == nil || session.DocumentID.IsNil() {
-			s.l.Error("could not finalize a split document",
-				zap.String("sessionId", rng.SessionID.String()), zap.Error(err))
-			record.Failed++
-
-			continue
-		}
-		record.Documents = append(record.Documents, triageworkcontract.SplitDocument{
-			SplitRange: rng,
-			DocumentID: *session.DocumentID,
-		})
-	}
-
-	return s.RecordSplit(ctx, record)
 }
 
 func (s *Service) RecordSplit(

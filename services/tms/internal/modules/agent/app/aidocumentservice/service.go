@@ -22,7 +22,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -31,34 +30,31 @@ import (
 type Params struct {
 	fx.In
 
-	Logger       *zap.Logger
-	AIConfig     *aiconfig.Config
-	Metrics      *metrics.Registry
-	Nova         llmports.TaskRunner
-	Deferrer     llmports.TaskDeferrer
-	Availability llmports.ProviderAvailability `optional:"true"`
-	Plans        platformplanports.PlanService `optional:"true"`
+	Logger   *zap.Logger
+	AIConfig *aiconfig.Config
+	Metrics  *metrics.Registry
+	Nova     llmports.TaskRunner
+	Deferrer llmports.TaskDeferrer
+	Plans    platformplanports.PlanService
 }
 
 type Service struct {
-	logger       *zap.Logger
-	cfg          *aiconfig.Config
-	metrics      *metrics.Registry
-	nova         llmports.TaskRunner
-	deferrer     llmports.TaskDeferrer
-	availability llmports.ProviderAvailability
-	plans        platformplanports.PlanService
+	logger   *zap.Logger
+	cfg      *aiconfig.Config
+	metrics  *metrics.Registry
+	nova     llmports.TaskRunner
+	deferrer llmports.TaskDeferrer
+	plans    platformplanports.PlanService
 }
 
 func New(p Params) documentaiextractionports.AIDocumentService {
 	return &Service{
-		logger:       p.Logger.Named("service.ai-document"),
-		cfg:          p.AIConfig,
-		metrics:      p.Metrics,
-		nova:         p.Nova,
-		deferrer:     p.Deferrer,
-		availability: p.Availability,
-		plans:        p.Plans,
+		logger:   p.Logger.Named("service.ai-document"),
+		cfg:      p.AIConfig,
+		metrics:  p.Metrics,
+		nova:     p.Nova,
+		deferrer: p.Deferrer,
+		plans:    p.Plans,
 	}
 }
 
@@ -83,15 +79,11 @@ func (s *Service) ExtractionAvailability(
 		return documentaiextractionports.ExtractionNotInPlan, nil
 	}
 
-	if s.availability == nil {
-		return documentaiextractionports.ExtractionNoProviderAssigned, nil
-	}
-
-	servable, err := s.availability.CanServe(ctx, aitask.TaskDocumentExtraction, tenantInfo)
+	ready, err := s.nova.Available(ctx, tenantInfo)
 	if err != nil {
 		return "", err
 	}
-	if !servable {
+	if !ready {
 		return documentaiextractionports.ExtractionNoProviderAssigned, nil
 	}
 
@@ -160,44 +152,39 @@ func (s *Service) ExtractRateConfirmationForEvaluation(
 	ctx context.Context,
 	req *documentaiextractionports.AIEvaluationExtractRequest,
 ) (*documentaiextractionports.AIEvaluationExtractResult, error) {
-	return s.pinnedExtract(ctx, &documentaiextractionports.AIExtractRequest{
+	return s.evaluationExtract(ctx, &documentaiextractionports.AIExtractRequest{
 		TenantInfo: req.TenantInfo,
 		FileName:   req.FileName,
 		Pages:      req.Pages,
-	}, req.ProviderID, "extract_evaluation")
+	}, "extract_evaluation")
 }
 
 func (s *Service) ExtractRateConfirmationForShadow(
 	ctx context.Context,
 	req *documentaiextractionports.AIShadowExtractRequest,
 ) (*documentaiextractionports.AIEvaluationExtractResult, error) {
-	return s.pinnedExtract(ctx, &documentaiextractionports.AIExtractRequest{
+	return s.evaluationExtract(ctx, &documentaiextractionports.AIExtractRequest{
 		TenantInfo: req.TenantInfo,
 		DocumentID: req.DocumentID,
 		FileName:   req.FileName,
 		Text:       req.Text,
 		Pages:      req.Pages,
-	}, req.ProviderID, "extract_shadow")
+	}, "extract_shadow")
 }
 
-func (s *Service) pinnedExtract(
+// evaluationExtract runs an extraction whose usage counts as evaluation, on
+// Nova like every other extraction.
+func (s *Service) evaluationExtract(
 	ctx context.Context,
 	req *documentaiextractionports.AIExtractRequest,
-	providerID pulid.ID,
 	metric string,
 ) (*documentaiextractionports.AIEvaluationExtractResult, error) {
 	if !s.cfg.DocumentExtractionEnabled() {
 		return nil, errDisabled
 	}
-	if providerID.IsNil() {
-		return nil, errortypes.NewValidationError(
-			"providerId", errortypes.ErrRequired, "Choose the AI provider to evaluate",
-		)
-	}
 
 	call := s.extractCall(req)
 	call.metric = metric
-	call.providerID = providerID
 	call.evaluation = true
 
 	parsed := new(extractResponse)
@@ -234,7 +221,6 @@ func newExtractCall(req *documentaiextractionports.AIExtractRequest) *structured
 		schemaName: schemaNameExtract,
 		context:    buildExtractContext(req),
 		schema:     buildExtractSchema(),
-		providerID: req.PreferredProviderID,
 	}
 }
 

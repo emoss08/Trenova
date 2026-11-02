@@ -97,7 +97,7 @@ func (s *Service) recomputeOrderForUpdatedShipment(
 	ctx context.Context,
 	updated *shipment.Shipment,
 ) error {
-	if updated == nil || s.orderDerivation == nil {
+	if updated == nil {
 		return nil
 	}
 

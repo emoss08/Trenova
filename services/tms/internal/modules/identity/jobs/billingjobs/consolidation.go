@@ -69,10 +69,6 @@ func ConsolidatedInvoiceRunWorkflow(
 func (a *Activities) SweepConsolidatedInvoiceRunsActivity(
 	ctx context.Context,
 ) (*ConsolidatedInvoiceRunResult, error) {
-	if a.invoiceRunSweeper == nil {
-		return &ConsolidatedInvoiceRunResult{CompletedAt: timeutils.NowUnix()}, nil
-	}
-
 	swept, err := a.invoiceRunSweeper.SweepDueSchedules(ctx, consolidationSystemActor())
 	if err != nil {
 		a.logger.Error("failed to sweep consolidated invoice runs", zap.Error(err))

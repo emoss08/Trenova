@@ -6,7 +6,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
@@ -28,7 +27,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/turnhistory"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/turnmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -37,15 +35,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -61,50 +56,33 @@ type Params struct {
 	fx.In
 
 	Logger      *zap.Logger
+	Access      *toolaccess.Access
 	Completion  llmports.CompletionService
 	QueryTools  agenttoolports.AgentQueryToolRegistry
 	ActionTools agenttoolports.AgentToolRegistry
 	Permissions permissionports.PermissionEngine
-	Catalog     *agenttoolcatalog.Catalog
-	// Versions is optional. Without it proposals are still made, just without
-	// the record pinned; with it the executor can refuse a change to a record
-	// that moved on since the proposal.
-	Versions agenttoolports.RecordVersionReader `optional:"true"`
-	// Budgets is optional. With it an automatic write past its tool's daily
-	// cap is refused before it runs.
-	Budgets agentbudgetports.AgentBudgetService     `optional:"true"`
-	Trust   agenttoolports.AgentToolTrustRepository `optional:"true"`
-	// Extensions is optional. Without it no extension's tools are offered.
-	Extensions agentextensionports.AgentExtensionGate `optional:"true"`
-	// Memories is optional. With it every memory a prompt carries is
-	// counted as used; without it the prompt still carries them.
-	Memories       agentmemoryports.AgentMemoryService `optional:"true"`
-	Vectorizer     retrievalports.QueryVectorizer      `optional:"true"`
-	CatalogVectors retrievalports.CatalogVectorIndex   `optional:"true"`
-	// Previews is optional. With it a held write's target is pinned, and
-	// what it would do kept as its baseline, in one read-only snapshot;
-	// without it the target is pinned alone.
-	Previews agentruntimeports.ProposalPreviewService `optional:"true"`
-	// Rules is optional. With it a tool an organization holds lower than its
-	// declared rule is decided and tainted by the organization's rule.
-	Rules agenttoolports.ToolRuleOverrides `optional:"true"`
-	// Changes is optional. With it a turn is told when a record it is
-	// working with changes elsewhere while it works.
-	Changes realtimeports.RecordChangeFeed `optional:"true"`
-	// Metrics is optional. With it every tool call is counted by tool and by
-	// what became of it; without it nothing is counted.
-	Metrics *metrics.Registry `optional:"true"`
-	// Definitions is optional. With it a search for a tool the agent does not
-	// hold names the person's other agents that hold it.
-	Definitions agentdefinitionports.AgentDefinitionRepository `optional:"true"`
-	AIConfig    *aiconfig.Config                               `optional:"true"`
-	AppConfig   *appconfig.Config                              `optional:"true"`
-	Disclosures agenttoolports.ToolDisclosureObserver          `optional:"true"`
-	Shadow      *agentshadow.Resolver                          `optional:"true"`
-	// Scripts is optional. With it the code-mode gate reads the chat
-	// providers' script settings; without it no model is offered scripts
-	// unless the bench forces them.
-	Scripts llmports.ScriptProviders `optional:"true"`
+	// Versions pins the record a proposal is about, so the executor can refuse
+	// a change to a record that moved on since the proposal.
+	Versions agenttoolports.RecordVersionReader
+	// An automatic write past its tool's daily cap is refused before it runs.
+	Budgets agentbudgetports.AgentBudgetService
+	Trust   agenttoolports.AgentToolTrustRepository
+	// Every memory a prompt carries is counted as used.
+	Memories agentmemoryports.AgentMemoryService
+	// A held write's target is pinned, and what it would do kept as its baseline, in one read-only
+	// snapshot.
+	Previews agentruntimeports.ProposalPreviewService
+	// A tool an organization holds lower than its declared rule is decided and tainted by the
+	// organization's rule.
+	Rules agenttoolports.ToolRuleOverrides
+	// A turn is told when a record it is working with changes elsewhere while it works.
+	Changes realtimeports.RecordChangeFeed
+	// Every tool call is counted by tool and by what became of it.
+	Metrics   *metrics.Registry
+	AppConfig *appconfig.Config
+	Shadow    *agentshadow.Resolver
+	// The code-mode gate reads the chat providers' script settings.
+	Scripts llmports.ScriptProviders
 }
 
 type Service struct {
@@ -120,9 +98,9 @@ type Service struct {
 }
 
 func New(p Params) *Service {
-	accessParts, dispatchParts := accessParams(&p), dispatcherParams(&p)
+	dispatchParts := dispatcherParams(&p)
 
-	return assemble(&p, &accessParts, &dispatchParts)
+	return assemble(&p, p.Access, &dispatchParts)
 }
 
 // assemble builds the runtime from its parts: the tool access every part
@@ -130,10 +108,9 @@ func New(p Params) *Service {
 // asks the model.
 func assemble(
 	p *Params,
-	accessParts *toolaccess.AccessParams,
+	access *toolaccess.Access,
 	dispatchParts *tooldispatch.DispatcherParams,
 ) *Service {
-	access := toolaccess.NewAccess(accessParts)
 	dispatchParts.Access = access
 
 	return &Service{
@@ -146,23 +123,6 @@ func assemble(
 		access:      access,
 		streamer:    modelstream.NewStreamer(p.Completion, access),
 		dispatcher:  tooldispatch.NewDispatcher(dispatchParts),
-	}
-}
-
-func accessParams(p *Params) toolaccess.AccessParams {
-	return toolaccess.AccessParams{
-		Logger:         p.Logger,
-		QueryTools:     p.QueryTools,
-		ActionTools:    p.ActionTools,
-		Permissions:    p.Permissions,
-		Catalog:        p.Catalog,
-		Extensions:     p.Extensions,
-		Vectorizer:     p.Vectorizer,
-		CatalogVectors: p.CatalogVectors,
-		Definitions:    p.Definitions,
-		Threshold:      toolaccess.ConfiguredThreshold(p.AIConfig),
-		Disclosures:    p.Disclosures,
-		Scripts:        p.Scripts,
 	}
 }
 

@@ -39,7 +39,7 @@ type RateLimiterParams struct {
 	Store          kernelports.RateLimitStore
 	ErrorHandler   *helpers.ErrorHandler
 	Logger         *zap.Logger
-	Metrics        *metrics.Registry `optional:"true"`
+	Metrics        *metrics.Registry
 }
 
 type RateLimiter struct {
@@ -59,19 +59,12 @@ type scopedRequest struct {
 
 func NewRateLimiter(p RateLimiterParams) *RateLimiter {
 	cfg := securityconfig.RateLimitConfig{}
-	if p.SecurityConfig != nil {
-		cfg = p.SecurityConfig.RateLimit
-	}
+	cfg = p.SecurityConfig.RateLimit
 
 	logger := p.Logger
-	if logger == nil {
-		logger = zap.NewNop()
-	}
 
 	var rateLimitMetrics *httpmetrics.RateLimit
-	if p.Metrics != nil {
-		rateLimitMetrics = p.Metrics.RateLimit
-	}
+	rateLimitMetrics = p.Metrics.RateLimit
 
 	scopes := []securityconfig.RateLimitScope{
 		securityconfig.RateLimitScopeAnonymous,
@@ -100,7 +93,7 @@ func NewRateLimiter(p RateLimiterParams) *RateLimiter {
 	}
 
 	return &RateLimiter{
-		enabled:      cfg.Enabled && p.Store != nil,
+		enabled:      cfg.Enabled,
 		store:        p.Store,
 		errorHandler: p.ErrorHandler,
 		logger:       logger.Named("ratelimit"),

@@ -66,10 +66,10 @@ type ActivitiesParams struct {
 	Notifications   *notificationservice.Service
 	DriverNotify    *drivernotificationservice.Service
 	// Watchtower puts a driver whose papers are running out on the feed.
-	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
+	Watchtower watchtowerports.WatchtowerProjector
 	// Publisher wakes whichever agent covers credentials, once for the
 	// driver rather than once for each paper.
-	Publisher agenteventports.AgentEventPublisher `optional:"true"`
+	Publisher agenteventports.AgentEventPublisher
 	Logger    *zap.Logger
 }
 
@@ -217,17 +217,16 @@ func (a *Activities) raiseDueDrivers(ctx context.Context, state *sweepState) {
 	for workerID, driver := range state.dueDrivers {
 		state.result.DriversRaised++
 		tenantCtx := dbscope.WithTenant(ctx, driver.tenantInfo.DBTenant())
-		if a.watchtower != nil {
-			a.watchtower.Upsert(tenantCtx, watchtowersources.DescribeExpiringCredentials(
-				watchtowersources.ExpiringCredentials{
-					TenantInfo: driver.tenantInfo,
-					WorkerID:   workerID,
-					WorkerName: driver.name,
-					Papers:     driver.papers,
-					OccurredAt: state.now,
-				},
-			))
-		}
+		a.watchtower.Upsert(tenantCtx, watchtowersources.DescribeExpiringCredentials(
+			watchtowersources.ExpiringCredentials{
+				TenantInfo: driver.tenantInfo,
+				WorkerID:   workerID,
+				WorkerName: driver.name,
+				Papers:     driver.papers,
+				OccurredAt: state.now,
+			},
+		))
+
 		agenteventports.PublishAgentEvent(tenantCtx, a.publisher, agenteventports.AgentEvent{
 			Kind:       agenttrigger.EventWorkerCredentialExpiring,
 			SubjectID:  workerID,

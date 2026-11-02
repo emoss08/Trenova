@@ -73,8 +73,8 @@ type Params struct {
 
 	Ledger        customerledgerports.CustomerLedgerProjectionRepository `name:"customerLedgerStore"`
 	Customers     customerports.CustomerRepository
-	Notifications *notificationservice.Service  `                           optional:"true"`
-	Realtime      realtimeports.RealtimeService `                           optional:"true"`
+	Notifications *notificationservice.Service
+	Realtime      realtimeports.RealtimeService
 	Logger        *zap.Logger
 }
 
@@ -93,9 +93,7 @@ func New(p Params) *Service {
 		realtime:  p.Realtime,
 		l:         p.Logger.Named("service.credit-review"),
 	}
-	if p.Notifications != nil {
-		s.notifier = p.Notifications
-	}
+	s.notifier = p.Notifications
 	return s
 }
 
@@ -214,21 +212,16 @@ func (s *Service) announce(
 		return
 	}
 
-	if s.realtime != nil {
-		if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
-			OrganizationID: tenant.OrgID,
-			BusinessUnitID: tenant.BuID,
-			Resource:       realtimeResource,
-			Action:         "updated",
-			RecordID:       customerID,
-		}); err != nil {
-			s.l.Warn("failed to publish customer credit change", zap.Error(err))
-		}
+	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
+		Resource:       realtimeResource,
+		Action:         "updated",
+		RecordID:       customerID,
+	}); err != nil {
+		s.l.Warn("failed to publish customer credit change", zap.Error(err))
 	}
 
-	if s.notifier == nil {
-		return
-	}
 	note, ok := creditNotice(result)
 	if !ok {
 		return

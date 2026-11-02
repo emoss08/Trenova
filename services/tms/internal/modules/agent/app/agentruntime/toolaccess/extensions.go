@@ -23,7 +23,7 @@ func (s *Access) ActiveExtensions(
 	ctx context.Context,
 	actor *permissionports.RequestActor,
 ) agentextension.Active {
-	if s.extensions == nil || actor == nil {
+	if actor == nil {
 		return agentextension.Active{}
 	}
 

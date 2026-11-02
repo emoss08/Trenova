@@ -94,7 +94,7 @@ func TestRotaAssignedDays_CountsLiveAssignmentsPerRosterDay(t *testing.T) {
 	}
 
 	repo := schedulingrepository.New(schedulingrepository.Params{
-		DB:          postgres.NewTestConnection(admin),
+		DB:          postgres.WrapDB(admin),
 		Logger:      zap.NewNop(),
 		Assignments: crossref.RotaAssignments(),
 	})

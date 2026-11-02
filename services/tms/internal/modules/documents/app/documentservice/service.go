@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
-	workflowstarterservice "github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/pagerender"
@@ -72,17 +71,17 @@ type Params struct {
 	AuditService         auditports.AuditService
 	ContentGate          contentscanports.Gate
 	DocumentIntelligence documentports.DocumentContentService
-	Paperwork            documentports.PaperworkReadRequester `optional:"true"`
+	Paperwork            documentports.PaperworkReadRequester
 	SearchProjection     documentsearchprojectionports.DocumentSearchProjectionService
 	WorkflowStarter      kernelports.WorkflowStarter
-	UsageProvider        platformcatalogports.UsageProvider `optional:"true"`
+	UsageProvider        platformcatalogports.UsageProvider
 	StorageConfig        *storageconfig.Config
 	ThumbnailGenerator   *thumbnailservice.Generator
 	PageRenders          *pagerender.Store
 	Encryption           *encryptionservice.Service
 	Realtime             realtimeports.RealtimeService
-	AICorrections        aicorrectionports.AICorrectionService `optional:"true"`
-	Triage               inboundmessageports.TriageEventSink   `optional:"true"`
+	AICorrections        aicorrectionports.AICorrectionService
+	Triage               inboundmessageports.TriageEventSink
 	Permissions          permissionports.PermissionEngine
 }
 
@@ -117,19 +116,10 @@ type Service struct {
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
 	workflowStarter := p.WorkflowStarter
-	if workflowStarter == nil {
-		workflowStarter = workflowstarterservice.New(workflowstarterservice.Params{})
-	}
 
 	documentIntelligence := p.DocumentIntelligence
-	if documentIntelligence == nil {
-		documentIntelligence = noopDocumentContentService{}
-	}
 
 	searchProjection := p.SearchProjection
-	if searchProjection == nil {
-		searchProjection = noopDocumentSearchProjectionService{}
-	}
 
 	return &Service{
 		l:                    p.Logger.Named("service.document"),
@@ -454,9 +444,7 @@ func (s *Service) storeUpload(
 	if s.thumbnailGenerator.SupportsThumbnail(contentType) {
 		s.startThumbnailWorkflow(ctx, log, createdDoc)
 	}
-	if s.paperwork != nil {
-		s.paperwork.RequestRead(ctx, createdDoc, req.TenantInfo.UserID)
-	}
+	s.paperwork.RequestRead(ctx, createdDoc, req.TenantInfo.UserID)
 	if createdDoc.ProcessingProfile.SupportsIntelligence() {
 		enqueueErr := s.documentIntelligence.EnqueueExtraction(
 			ctx,
@@ -482,7 +470,7 @@ func (s *Service) publishDocumentInvalidation(
 	actor *permissionports.RequestActor,
 	operation permission.Operation,
 ) {
-	if s.realtime == nil || doc == nil {
+	if doc == nil {
 		return
 	}
 	params := &realtimeinvalidation.PublishParams{
@@ -567,10 +555,6 @@ func (s *Service) startThumbnailWorkflow(
 	log *zap.Logger,
 	doc *document.Document,
 ) {
-	if !s.workflowStarter.Enabled() {
-		log.Debug("temporal client not configured, skipping thumbnail generation")
-		return
-	}
 
 	workflowID := fmt.Sprintf("thumbnail-%s", doc.ID.String())
 
@@ -1275,14 +1259,12 @@ func (s *Service) cleanupDocumentStorage(
 		failedPaths = append(failedPaths, convertedPath)
 	}
 
-	if s.pageRenders != nil {
-		if err := s.pageRenders.Delete(ctx, doc); err != nil {
-			log.Warn("failed to delete page renders from storage after document delete",
-				zap.String("documentId", doc.ID.String()),
-				zap.Error(err),
-			)
-			failedPaths = append(failedPaths, pagerender.Prefix(doc))
-		}
+	if err := s.pageRenders.Delete(ctx, doc); err != nil {
+		log.Warn("failed to delete page renders from storage after document delete",
+			zap.String("documentId", doc.ID.String()),
+			zap.Error(err),
+		)
+		failedPaths = append(failedPaths, pagerender.Prefix(doc))
 	}
 
 	if doc.PreviewStoragePath == "" {
@@ -1357,7 +1339,7 @@ func (s *Service) enqueueStorageCleanup(
 	documentID pulid.ID,
 	paths []string,
 ) {
-	if len(paths) == 0 || !s.workflowStarter.Enabled() {
+	if len(paths) == 0 {
 		return
 	}
 

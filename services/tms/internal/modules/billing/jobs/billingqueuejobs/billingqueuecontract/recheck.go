@@ -41,7 +41,7 @@ func RecheckWorkflowID(itemID pulid.ID) string {
 type RecheckRequesterParams struct {
 	fx.In
 
-	Signals kernelports.WorkflowSignalStarter `optional:"true"`
+	Signals kernelports.WorkflowSignalStarter
 	Logger  *zap.Logger
 }
 
@@ -64,7 +64,7 @@ func (r *RecheckRequester) RequestRecheck(
 	tenantInfo pagination.TenantInfo,
 	itemIDs ...pulid.ID,
 ) {
-	if r.signals == nil || tenantInfo.OrgID.IsNil() || len(itemIDs) == 0 {
+	if tenantInfo.OrgID.IsNil() || len(itemIDs) == 0 {
 		return
 	}
 

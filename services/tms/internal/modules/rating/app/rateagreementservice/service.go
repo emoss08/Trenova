@@ -23,7 +23,7 @@ type Params struct {
 	Repo         rateagreementports.RateAgreementRepository
 	Validator    *Validator
 	AuditService auditports.AuditService
-	Fields       permissionports.FieldAccess `optional:"true"`
+	Fields       permissionports.FieldAccess
 }
 
 type Service struct {

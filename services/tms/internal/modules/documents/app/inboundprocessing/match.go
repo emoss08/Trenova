@@ -77,7 +77,7 @@ func (s *Service) matchSender(
 	message *inboundmessage.InboundMessage,
 	tenantInfo pagination.TenantInfo,
 ) Match {
-	if s.parties == nil || message.FromAddress == "" {
+	if message.FromAddress == "" {
 		return Match{}
 	}
 
@@ -118,9 +118,6 @@ func (s *Service) matchShipment(
 	message *inboundmessage.InboundMessage,
 	tenantInfo pagination.TenantInfo,
 ) (pulid.ID, string, bool) {
-	if s.shipments == nil {
-		return pulid.Nil, "", false
-	}
 
 	for _, candidate := range referenceCandidates(message.Subject, message.TextBody) {
 		shipmentID, found, err := s.shipments.FindByReference(ctx, tenantInfo, candidate)

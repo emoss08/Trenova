@@ -54,9 +54,9 @@ type Params struct {
 	EventService      shipmenteventports.ShipmentEventService
 	AuditService      auditports.AuditService
 	Invalidator       shipmentinvalidationports.ShipmentInvalidator
-	CostAccrual       carrierports.CarrierCostAccrual `optional:"true"`
-	TenderGuard       tenderports.TenderGuard         `optional:"true"`
-	RateEngine        ratequoteports.RateEngine       `optional:"true"`
+	CostAccrual       carrierports.CarrierCostAccrual
+	TenderGuard       tenderports.TenderGuard
+	RateEngine        ratequoteports.RateEngine
 	AgreementRepo     rateagreementports.RateAgreementRepository
 	BillingCtrlRepo   tenantports.BillingControlRepository
 	AccessorialRepo   accessorialchargeports.AccessorialChargeRepository
@@ -358,9 +358,6 @@ func (s *Service) withdrawLiveTender(
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
 ) {
-	if s.tenderGuard == nil {
-		return
-	}
 	if err := s.tenderGuard.CancelLiveTenderForMove(
 		ctx, tenantInfo, moveID, "Move was covered outside the tender",
 	); err != nil {
@@ -582,9 +579,6 @@ func (s *Service) reaccrueMove(
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
 ) {
-	if s.costAccrual == nil {
-		return
-	}
 	if err := s.costAccrual.ReaccrueMove(ctx, tenantInfo, moveID); err != nil {
 		s.l.Error("failed to re-accrue carrier cost events for move",
 			zap.Error(err), zap.String("moveId", moveID.String()))

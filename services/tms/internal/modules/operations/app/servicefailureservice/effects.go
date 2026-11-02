@@ -76,7 +76,7 @@ func (s *service) projectToWatchtower(
 	ctx context.Context,
 	entity *servicefailure.ServiceFailure,
 ) {
-	if s.watchtower == nil || entity == nil {
+	if entity == nil {
 		return
 	}
 
@@ -208,9 +208,6 @@ func (s *service) publishInvalidation(
 }
 
 func (s *service) comment(ctx context.Context, params commentParams) {
-	if s.commentService == nil {
-		return
-	}
 	if params.metadata == nil {
 		params.metadata = map[string]any{}
 	}

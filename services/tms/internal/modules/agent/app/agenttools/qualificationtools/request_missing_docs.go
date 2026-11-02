@@ -33,7 +33,7 @@ type requestMissingDocsParams struct {
 	Templates documenttemplateports.DocumentTemplateResolver
 	OrgRepo   tenantports.OrganizationRepository
 	Inliner   documenttemplateports.AssetInliner
-	Senders   emailports.EmailSenderResolver `optional:"true"`
+	Senders   emailports.EmailSenderResolver
 }
 
 func NewRequestMissingDocsTool(

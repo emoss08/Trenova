@@ -99,7 +99,7 @@ func ResolveDeliveryProfile(
 	if err := resolveDeliveryCustomer(ctx, repos.CustomerRepo, result, params); err != nil {
 		return nil, err
 	}
-	if params.IncludeShipmentDetails && repos.ShipmentRepo != nil {
+	if params.IncludeShipmentDetails {
 		if err := resolveDeliveryShipments(ctx, repos.ShipmentRepo, result, params); err != nil {
 			return nil, err
 		}

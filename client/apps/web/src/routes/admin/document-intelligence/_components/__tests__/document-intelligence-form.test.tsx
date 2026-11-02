@@ -104,7 +104,7 @@ describe("DocumentIntelligenceForm availability", () => {
 
     renderForm();
 
-    expect(await screen.findByText("Extraction needs a model provider")).toBeInTheDocument();
+    expect(await screen.findByText("Extraction needs Nova")).toBeInTheDocument();
   });
 
   it("shows no alert while documents can be read", async () => {
@@ -119,6 +119,6 @@ describe("DocumentIntelligenceForm availability", () => {
 
     expect(await screen.findByText("Platform availability")).toBeInTheDocument();
     expect(screen.queryByText("Extraction is not set up on this server")).not.toBeInTheDocument();
-    expect(screen.queryByText("Extraction needs a model provider")).not.toBeInTheDocument();
+    expect(screen.queryByText("Extraction needs Nova")).not.toBeInTheDocument();
   });
 });

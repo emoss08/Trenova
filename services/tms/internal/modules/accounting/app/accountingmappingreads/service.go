@@ -25,7 +25,7 @@ type Params struct {
 	Connections        accountingconnectionports.AccountingConnectionRepository
 	References         accountingmappingports.AccountingReferenceObjectRepository
 	Mappings           accountingmappingports.AccountingMappingRepository
-	Ledger             journalentryports.AccountingLedgerSource `optional:"true"`
+	Ledger             journalentryports.AccountingLedgerSource
 	AccountingControls tenantports.AccountingControlRepository
 }
 
@@ -151,7 +151,7 @@ func (s *Service) Summary(
 	}
 	summary.Groups = groupCounts(counts)
 
-	if conn.SendsLedger() && s.ledger != nil {
+	if conn.SendsLedger() {
 		if err = s.ledgerRequirement(ctx, tenantInfo, conn, summary); err != nil {
 			return nil, err
 		}

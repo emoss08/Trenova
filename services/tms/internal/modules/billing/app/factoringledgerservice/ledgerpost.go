@@ -196,9 +196,6 @@ func (s *LedgerService) applyInvoiceEffect(
 	if _, err = s.invoices.Update(ctx, inv); err != nil {
 		return err
 	}
-	if s.ledger == nil {
-		return nil
-	}
 	return s.ledger.AppendEntries(ctx, []*customerledger.CustomerLedgerEntry{{
 		ID:               pulid.MustNew("cledg_"),
 		OrganizationID:   inv.OrganizationID,

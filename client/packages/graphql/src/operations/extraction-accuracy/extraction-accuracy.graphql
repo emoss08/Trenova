@@ -1,0 +1,136 @@
+fragment ExtractionFieldAccuracyFields on ExtractionFieldAccuracy {
+  key
+  scored
+  correct
+  corrected
+  missed
+  unconfirmed
+  unscored
+  accuracy
+}
+
+fragment AICorrectionFieldResultFields on AICorrectionFieldResult {
+  key
+  predicted
+  confirmed
+  outcome
+  source
+  confidence
+}
+
+fragment AICorrectionTableRowFields on AICorrection {
+  id
+  documentId
+  subjectId
+  documentKind
+  documentFingerprint
+  extractionModel
+  predictedConfidence
+  scoredCount
+  correctCount
+  correctedCount
+  missedCount
+  unconfirmedCount
+  unscoredCount
+  accuracy
+  capturedAt
+  createdAt
+  updatedAt
+}
+
+fragment AICorrectionDetailFields on AICorrection {
+  ...AICorrectionTableRowFields
+  fieldResults {
+    ...AICorrectionFieldResultFields
+  }
+}
+
+query ExtractionAccuracy($windowDays: Int) {
+  extractionAccuracy(windowDays: $windowDays) {
+    windowDays
+    since
+    corrections
+    sampled
+    scored
+    correct
+    corrected
+    missed
+    unconfirmed
+    accuracy
+    byModel {
+      key
+      corrections
+      scored
+      correct
+      accuracy
+    }
+    byKind {
+      key
+      corrections
+      scored
+      correct
+      accuracy
+    }
+    fields {
+      ...ExtractionFieldAccuracyFields
+    }
+  }
+}
+
+query AICorrectionTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
+  aiCorrections(input: $input) {
+    edges {
+      node {
+        ...AICorrectionTableRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query AICorrectionDetail($id: ID!) {
+  aiCorrection(id: $id) {
+    ...AICorrectionDetailFields
+  }
+}
+
+fragment ExtractionWeekAccuracyFields on ExtractionWeekAccuracy {
+  weekStart
+  corrections
+  scored
+  correct
+  accuracy
+}
+
+query ExtractionProviderTrends {
+  extractionProviderTrends {
+    weeks
+    checkedWeek
+    baselineStart
+    driftPoints
+    minWeekFields
+    minBaselineFields
+    providers {
+      providerId
+      providerName
+      model
+      providerRemoved
+      dropPoints
+      comparable
+      drifting
+      weeks {
+        ...ExtractionWeekAccuracyFields
+      }
+      checked {
+        ...ExtractionWeekAccuracyFields
+      }
+      baseline {
+        ...ExtractionWeekAccuracyFields
+      }
+    }
+  }
+}

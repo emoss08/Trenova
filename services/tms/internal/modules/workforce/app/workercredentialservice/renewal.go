@@ -119,10 +119,6 @@ func (s *Service) notifyRenewal(
 	req *RenewalRequest,
 	named []*workercredential.WorkerCredential,
 ) {
-	if s.driverNotify == nil {
-		return
-	}
-
 	notice, correlation := renewalNotification(req, named, timeutils.NowUnix())
 	s.driverNotify.NotifyWithCorrelation(ctx, notice, correlation)
 }
@@ -194,10 +190,6 @@ func renewalSubject(named []*workercredential.WorkerCredential) string {
 }
 
 func (s *Service) auditRenewal(req *RenewalRequest, named []*workercredential.WorkerCredential) {
-	if s.auditService == nil {
-		return
-	}
-
 	ids := make([]string, 0, len(named))
 	for _, credential := range named {
 		ids = append(ids, credential.ID.String())

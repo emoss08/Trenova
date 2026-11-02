@@ -49,11 +49,11 @@ type Params struct {
 	Commercial      *shipmentcommercial.Calculator
 	EventService    shipmenteventports.ShipmentEventService
 	OrderDerivation orderports.OrderDerivationService
-	ServiceFailures servicefailureports.ServiceFailureEvaluator `optional:"true"`
-	Notifications   *notificationservice.Service                `optional:"true"`
-	DashControlRepo tenantports.DashControlRepository           `optional:"true"`
-	MoveObservers   []shipmentserviceports.MoveStatusObserver   `                group:"move_status_observers"`
-	Publisher       agenteventports.AgentEventPublisher         `optional:"true"`
+	ServiceFailures servicefailureports.ServiceFailureEvaluator
+	Notifications   *notificationservice.Service
+	DashControlRepo tenantports.DashControlRepository
+	MoveObservers   []shipmentserviceports.MoveStatusObserver `group:"move_status_observers"`
+	Publisher       agenteventports.AgentEventPublisher
 }
 
 type service struct {

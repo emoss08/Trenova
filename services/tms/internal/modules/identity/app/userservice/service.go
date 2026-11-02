@@ -52,8 +52,8 @@ type Params struct {
 	Roles             RoleAssigner
 	Invites           AccountInviter
 	PermissionEngine  permissionports.PermissionEngine
-	AuthEventHistory  iamports.AuthEventHistoryRepository `optional:"true"`
-	AuthEvents        iamports.AuthEventRecorder          `optional:"true"`
+	AuthEventHistory  iamports.AuthEventHistoryRepository
+	AuthEvents        iamports.AuthEventRecorder
 	ContentGate       contentscanports.Gate
 }
 

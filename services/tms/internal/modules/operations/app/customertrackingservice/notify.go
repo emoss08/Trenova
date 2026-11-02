@@ -31,10 +31,7 @@ const (
 	linkPurgeBatchLimit = 500
 )
 
-var (
-	errEmailNotConfigured = errors.New("email delivery is not configured for this environment")
-	errShipmentGone       = errors.New("the shipment no longer exists")
-)
+var errShipmentGone = errors.New("the shipment no longer exists")
 
 // shipmentContext is what delivering a shipment's notifications needs, read
 // once per shipment rather than once per email.
@@ -292,9 +289,6 @@ func (s *Service) send(
 	row *customertracking.Notification,
 	to []string,
 ) (*email.Message, pulid.ID, error) {
-	if !s.canEmail() {
-		return nil, row.LinkID, errEmailNotConfigured
-	}
 	data := s.statusEmailContext(ctx, sc, row)
 	linkID := row.LinkID
 	if sc.profile.IncludeLink && sc.profile.LinkEnabled {

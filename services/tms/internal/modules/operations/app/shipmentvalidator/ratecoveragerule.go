@@ -68,10 +68,6 @@ type RateCoverage struct {
 }
 
 func (c RateCoverage) acceptsUnrated(ctx context.Context, orgID pulid.ID) bool {
-	if c.Billing == nil {
-		return false
-	}
-
 	control, err := c.Billing.GetByOrgID(ctx, orgID)
 	if err != nil || control == nil {
 		return false

@@ -34,9 +34,6 @@ func (s *Service) notify(
 	entity *notification.Notification,
 	matrixID pulid.ID,
 ) {
-	if s.notifications == nil {
-		return
-	}
 	if _, err := s.notifications.Create(ctx, entity); err != nil {
 		s.l.Warn("failed to create rate matrix notification",
 			zap.String("event", entity.EventType),

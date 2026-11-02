@@ -302,7 +302,7 @@ func (s *Service) refuseVoidWithStandingLateCharges(
 	entity *invoice.Invoice,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	if s.lateChargeRepo == nil || entity == nil {
+	if entity == nil {
 		return nil
 	}
 	grouped, err := s.lateChargeRepo.ListBySourceInvoiceIDs(

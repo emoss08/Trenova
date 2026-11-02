@@ -73,8 +73,8 @@ type Params struct {
 	Studio       *formulatemplatestudioservice.Service
 	Reviews      *formulatemplatereviewservice.Service
 	Permissions  permissionports.PermissionEngine
-	SystemAgents agentdefinitionports.SystemAgentProvisioner `optional:"true"`
-	Nova         llmports.TaskRunner                         `optional:"true"`
+	SystemAgents agentdefinitionports.SystemAgentProvisioner
+	Nova         llmports.TaskRunner
 }
 
 type Service struct {
@@ -112,11 +112,6 @@ func (s *Service) assistant(
 			"assistant", "create",
 		)
 	}
-	if s.systemAgents == nil {
-		return nil, errortypes.NewBusinessError(
-			"The formula assistant is not available on this server",
-		)
-	}
 
 	definition, err := s.systemAgents.EnsureSystem(
 		ctx,
@@ -135,9 +130,6 @@ func (s *Service) assistant(
 		)
 	}
 
-	if s.access == nil {
-		return nil, agentWithheld(definition)
-	}
 	allowed, err := s.access.MayUseAgent(ctx, actor, definition)
 	if err != nil {
 		return nil, fmt.Errorf("check access to agent %s: %w", definition.ID, err)
@@ -168,21 +160,16 @@ type completion struct {
 }
 
 func (s *Service) complete(ctx context.Context, call *completion, out any) error {
-	if s.nova == nil {
-		return errNoProvider
-	}
-
 	version := call.definition.Version
 	result, err := s.nova.Run(ctx, &llmports.NovaTask{
-		Name:                studioTask,
-		Feature:             call.feature,
-		Instructions:        call.system,
-		Context:             llmports.DelimitedContext{Sections: call.sections},
-		Schema:              call.schema,
-		SchemaName:          call.schemaName,
-		MaxTokens:           call.maxTokens,
-		TenantInfo:          call.tenant,
-		PreferredProviderID: call.definition.PreferredProviderID,
+		Name:         studioTask,
+		Feature:      call.feature,
+		Instructions: call.system,
+		Context:      llmports.DelimitedContext{Sections: call.sections},
+		Schema:       call.schema,
+		SchemaName:   call.schemaName,
+		MaxTokens:    call.maxTokens,
+		TenantInfo:   call.tenant,
 		Attribution: &aiusageports.AIUsageAttribution{
 			UserID:            call.tenant.UserID,
 			AgentDefinitionID: call.definition.ID,

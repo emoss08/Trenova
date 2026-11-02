@@ -36,14 +36,12 @@ type Params struct {
 
 	Logger             *zap.Logger
 	Repo               workerports.WorkerRepository
-	SamsaraClient      *sharedsamsara.Client `optional:"true"`
 	IntegrationService *integrationservice.Service
 }
 
 type Service struct {
 	l                  *zap.Logger
 	repo               workerports.WorkerRepository
-	samsaraClient      *sharedsamsara.Client
 	integrationService *integrationservice.Service
 }
 
@@ -51,7 +49,6 @@ func New(p Params) *Service {
 	return &Service{
 		l:                  p.Logger.Named("service.samsara-sync"),
 		repo:               p.Repo,
-		samsaraClient:      p.SamsaraClient,
 		integrationService: p.IntegrationService,
 	}
 }
@@ -729,14 +726,6 @@ func (s *Service) resolveSamsaraClient(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*sharedsamsara.Client, error) {
-	if s.samsaraClient != nil && s.samsaraClient.Drivers != nil {
-		return s.samsaraClient, nil
-	}
-
-	if s.integrationService == nil {
-		return nil, errortypes.NewBusinessError("Samsara integration is not configured")
-	}
-
 	return s.integrationService.SamsaraClient(ctx, tenantInfo)
 }
 

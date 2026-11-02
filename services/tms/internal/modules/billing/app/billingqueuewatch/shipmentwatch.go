@@ -16,7 +16,7 @@ type ShipmentObserverParams struct {
 	fx.In
 
 	Repo     billingqueueports.BillingQueueRepository
-	Rechecks billingqueueports.RecheckRequester `optional:"true"`
+	Rechecks billingqueueports.RecheckRequester
 	Logger   *zap.Logger
 }
 
@@ -80,7 +80,7 @@ func RechecksOn(eventType shipmentevent.Type) bool {
 }
 
 func (o *ShipmentObserver) OnShipmentEvent(ctx context.Context, event *shipmentevent.Event) error {
-	if o.rechecks == nil || event == nil || event.ShipmentID.IsNil() || !RechecksOn(event.Type) {
+	if event == nil || event.ShipmentID.IsNil() || !RechecksOn(event.Type) {
 		return nil
 	}
 

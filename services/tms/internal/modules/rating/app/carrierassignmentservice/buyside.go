@@ -132,11 +132,6 @@ func (s *Service) buySideCatalog(
 	if !coded && !scheduled {
 		return &buySideCatalog{}, nil
 	}
-	if s.accessorialRepo == nil {
-		return nil, errortypes.NewBusinessError(
-			"The accessorial catalog is not available, so the carrier's pay could not be priced",
-		)
-	}
 	charges, err := s.accessorialRepo.ListCatalog(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -213,9 +208,6 @@ func (s *Service) fuelCodes(
 	catalog *buySideCatalog,
 ) (map[string]struct{}, error) {
 	codes := map[string]struct{}{}
-	if s.fuelResolver == nil {
-		return codes, nil
-	}
 	ids, err := s.fuelResolver.FuelChargeIDs(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -290,7 +282,7 @@ func (s *Service) applyFuelProgram(
 	billed map[string]struct{},
 ) error {
 	override := carrierFuelOverride(parts.agreement)
-	if override == nil || override.Waived || s.fuelResolver == nil {
+	if override == nil || override.Waived {
 		return nil
 	}
 	accessorialTotal := decimal.Zero
@@ -442,7 +434,7 @@ func (s *Service) rateBuySide(
 	req *carrierassignmentports.AssignMoveToCarrierRequest,
 	entity *shipment.Shipment,
 ) error {
-	if !shouldAutoRate(req) || s.rateEngine == nil {
+	if !shouldAutoRate(req) {
 		return nil
 	}
 
@@ -518,7 +510,7 @@ func (s *Service) carrierAgreement(
 	tenantInfo pagination.TenantInfo,
 	rated *ratequoteports.RatedShipment,
 ) *rateagreement.RateAgreement {
-	if s.agreementRepo == nil || rated == nil || rated.AgreementID == nil {
+	if rated == nil || rated.AgreementID == nil {
 		return nil
 	}
 
@@ -557,10 +549,6 @@ func (s *Service) billingControl(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) *billingcontrol.BillingControl {
-	if s.billingCtrlRepo == nil {
-		return nil
-	}
-
 	control, err := s.billingCtrlRepo.GetByOrgID(ctx, tenantInfo.OrgID)
 	if err != nil {
 		s.l.Warn("failed to read billing control while pricing a carrier", zap.Error(err))

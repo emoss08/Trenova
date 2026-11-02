@@ -3,7 +3,6 @@ package billingqueueassist
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -28,14 +27,14 @@ type Params struct {
 	Queue        billingqueueports.BillingQueueService
 	Review       billingqueueports.BillingQueueReviewService
 	Controls     tenantports.BillingControlRepository
-	Customers    customerports.CustomerRepository                   `optional:"true"`
-	Nova         llmports.TaskRunner                                `optional:"true"`
-	Documents    documentports.DocumentRepository                   `optional:"true"`
-	Content      documentports.DocumentContentService               `optional:"true"`
-	Accessorials accessorialchargeports.AccessorialChargeRepository `optional:"true"`
-	Comments     shipmentcommentports.ShipmentCommentRepository     `optional:"true"`
-	Batches      llmports.TaskBatcher                               `optional:"true"`
-	Generator    billingqueueports.NovaGenerator                    `optional:"true"`
+	Customers    customerports.CustomerRepository
+	Nova         llmports.TaskRunner
+	Documents    documentports.DocumentRepository
+	Content      documentports.DocumentContentService
+	Accessorials accessorialchargeports.AccessorialChargeRepository
+	Comments     shipmentcommentports.ShipmentCommentRepository
+	Batches      llmports.TaskBatcher
+	Generator    billingqueueports.NovaGenerator
 }
 
 type Service struct {
@@ -85,36 +84,22 @@ func (s *Service) Availability(
 	}
 
 	reviewing := control.QueueAgentReviewEnabled
-	review, err := s.canServe(ctx, aitask.TaskBillingDiagnosis, tenantInfo)
-	if err != nil {
-		return nil, err
-	}
-	brief, err := s.canServe(ctx, aitask.TaskDailyBriefing, tenantInfo)
-	if err != nil {
-		return nil, err
-	}
-	search, err := s.canServe(ctx, aitask.TaskQueryCompose, tenantInfo)
+	nova, err := s.novaReady(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
 
 	return &billingqueueports.AssistAvailability{
-		Review: reviewing && review,
-		Brief:  reviewing && brief,
-		Search: search,
+		Review: reviewing && nova,
+		Brief:  reviewing && nova,
+		Search: nova,
 	}, nil
 }
 
-func (s *Service) canServe(
-	ctx context.Context,
-	task aitask.Task,
-	tenantInfo pagination.TenantInfo,
-) (bool, error) {
-	if s.nova == nil {
-		return false, nil
-	}
-
-	return s.nova.Available(ctx, task, tenantInfo)
+// novaReady reports whether Nova runs for the tenant, which the review, the
+// brief and the search all need.
+func (s *Service) novaReady(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error) {
+	return s.nova.Available(ctx, tenantInfo)
 }
 
 func (s *Service) AutoApprove(

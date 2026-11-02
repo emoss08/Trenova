@@ -21,7 +21,7 @@ type ValidatorParams struct {
 	fx.In
 
 	DB      *postgres.Connection
-	Factors factoringcompanyports.FactoringCompanyRepository `optional:"true"`
+	Factors factoringcompanyports.FactoringCompanyRepository
 }
 
 type Validator struct {

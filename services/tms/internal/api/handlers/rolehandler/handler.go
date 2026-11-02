@@ -76,16 +76,10 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 }
 
 func (h *Handler) requireRolePermission(operation permission.Operation) gin.HandlerFunc {
-	if h.perm == nil {
-		return func(c *gin.Context) { c.Next() }
-	}
 	return h.perm.RequirePermission(permission.ResourceRole.String(), operation)
 }
 
 func (h *Handler) requireUserPermission(operation permission.Operation) gin.HandlerFunc {
-	if h.perm == nil {
-		return func(c *gin.Context) { c.Next() }
-	}
 	return h.perm.RequirePermission(permission.ResourceUser.String(), operation)
 }
 

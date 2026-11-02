@@ -17,7 +17,7 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Processing  *captureprocessing.Service
+	Processing  *captureprocessing.BatchProcessor
 	Filing      *capturefiling.Service
 	Maintenance *capturemaintenance.Service
 	Items       captureports.CaptureItemRepository
@@ -25,7 +25,7 @@ type ActivitiesParams struct {
 }
 
 type Activities struct {
-	processing  *captureprocessing.Service
+	processing  *captureprocessing.BatchProcessor
 	filing      *capturefiling.Service
 	maintenance *capturemaintenance.Service
 	items       captureports.CaptureItemRepository

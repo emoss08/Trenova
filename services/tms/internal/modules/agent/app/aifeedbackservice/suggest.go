@@ -153,10 +153,6 @@ func (s *Service) suggestForAgent(ctx context.Context, p suggestForAgentParams) 
 }
 
 func (s *Service) agentName(ctx context.Context, tenant pagination.TenantInfo, id pulid.ID) string {
-	if s.definitions == nil {
-		return fallbackAgentName
-	}
-
 	definition, err := s.definitions.GetByID(
 		ctx,
 		agentdefinitionports.GetAgentDefinitionByIDRequest{

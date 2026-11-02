@@ -15,9 +15,9 @@ type Params struct {
 
 	Logger                      *zap.Logger
 	CustomerRepo                customerports.CustomerRepository
-	EDICommunicationProfileRepo edipartnerports.EDICommunicationProfileRepository `optional:"true"`
-	EDILadingProjects           ladingports.LadingProjectRepository               `optional:"true"`
-	EDIPartnerRepo              edipartnerports.EDIPartnerRepository              `optional:"true"`
+	EDICommunicationProfileRepo edipartnerports.EDICommunicationProfileRepository
+	EDILadingProjects           ladingports.LadingProjectRepository
+	EDIPartnerRepo              edipartnerports.EDIPartnerRepository
 	Repo                        invoiceports.InvoiceRepository
 	WorkflowStarter             kernelports.WorkflowStarter
 }

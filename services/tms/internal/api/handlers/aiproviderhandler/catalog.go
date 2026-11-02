@@ -410,44 +410,17 @@ func Presets() []Preset {
 	}
 }
 
-// TaskDescriptor describes a routable unit of work to the UI.
+// TaskDescriptor describes a task an organization assigns to its providers.
+// Nova's tasks are not among them: Nova runs on the provider chosen for it.
 type TaskDescriptor struct {
 	Task           aitask.Task `json:"task"`
 	Label          string      `json:"label"`
 	Description    string      `json:"description"`
-	RequiresTrust  bool        `json:"requiresTrust"`
 	VolumeGuidance string      `json:"volumeGuidance"`
 }
 
 func taskDescriptors() []TaskDescriptor {
 	return []TaskDescriptor{
-		{
-			Task:           aitask.TaskDocumentClassification,
-			Label:          "Document classification",
-			Description:    "Decide what an uploaded document is.",
-			VolumeGuidance: "High volume, low complexity — a small local model handles this well.",
-		},
-		{
-			Task:           aitask.TaskDocumentExtraction,
-			Label:          "Document extraction",
-			Description:    "Pull structured fields out of a document.",
-			VolumeGuidance: "High volume; needs reliable structured output.",
-		},
-		{
-			Task:          aitask.TaskBillingDiagnosis,
-			Label:         "Billing diagnosis",
-			Description:   "Diagnose a blocked billing item and propose resolutions.",
-			RequiresTrust: true,
-			VolumeGuidance: "Low volume, high stakes — this reaches the ledger, so it " +
-				"requires a provider marked trusted.",
-		},
-		{
-			Task:        aitask.TaskFormulaAssistant,
-			Label:       "Formula assistant",
-			Description: "Generate and explain rating formulas.",
-			VolumeGuidance: "Interactive; favours a capable model. Without one, the Desk's " +
-				"provider writes and explains formulas.",
-		},
 		{
 			Task:        aitask.TaskScopeClassification,
 			Label:       "Scope classification",
@@ -461,81 +434,6 @@ func taskDescriptors() []TaskDescriptor {
 			Description: "Answer questions and drive the tool loop in the assistant.",
 			VolumeGuidance: "Interactive and multi-step; needs reliable tool calling and " +
 				"favours a capable model.",
-		},
-		{
-			Task:        aitask.TaskOperationalInsights,
-			Label:       "Operational insights",
-			Description: "Write the explanation on a finding whose numbers were already computed.",
-			VolumeGuidance: "A batch every few hours. It never produces a number or a " +
-				"severity, so it is safe to route to whatever is cheapest.",
-		},
-		{
-			Task:        aitask.TaskDailyBriefing,
-			Label:       "Daily briefing",
-			Description: "Write the morning page from figures that were already gathered.",
-			VolumeGuidance: "A handful of calls once a day. Like insights it writes only " +
-				"wording, so the cheapest model that writes clean English will do.",
-		},
-		{
-			Task:        aitask.TaskQueryCompose,
-			Label:       "Table questions",
-			Description: "Turn a sentence into a table's filters and sort.",
-			VolumeGuidance: "One short call each time somebody asks a table a question. " +
-				"It names fields from a catalogue it is shown and writes no SQL, and " +
-				"everything it names is compiled against that catalogue afterwards, so a " +
-				"cheap model that guesses wrong produces an unresolved line rather than a " +
-				"wrong answer.",
-		},
-		{
-			Task:        aitask.TaskChapterTitling,
-			Label:       "Desk chapters",
-			Description: "Decide whether a Desk question starts a new chapter and name it in a few words.",
-			VolumeGuidance: "One short call per question asked at the Desk, with no reasoning. " +
-				"Its title is cleaned and checked against the conversation afterwards, so the " +
-				"cheapest fast model will do. Without one it uses the Desk's own model.",
-		},
-		{
-			Task:        aitask.TaskInboundClassification,
-			Label:       "Inbound mail",
-			Description: "Decide what an email that arrived on a monitored address is.",
-			VolumeGuidance: "One call per message, so it follows how much mail is " +
-				"forwarded. It answers with a label from a fixed set that is re-checked " +
-				"afterwards, so the cheapest model that reads English reliably will do.",
-		},
-		{
-			Task:        aitask.TaskAccountingMapping,
-			Label:       "Accounting mapping",
-			Description: "Choose which accounting-system record matches a Trenova record when the name rules are unsure.",
-			VolumeGuidance: "Runs only for records the deterministic matcher could not settle, at most " +
-				"a hundred per refresh and usually a handful. It picks from a supplied list, so a " +
-				"small, inexpensive model is enough.",
-		},
-		{
-			Task:        aitask.TaskPaperworkReading,
-			Label:       "Shipment paperwork",
-			Description: "Read a proof of delivery, bill of lading or receipt the moment it is uploaded.",
-			VolumeGuidance: "One call per shipment document uploaded, so it follows your load volume. " +
-				"The file goes to the model as itself and the answer is a handful of fields, " +
-				"so a fast, inexpensive model that reads PDFs and photos (such as Claude Haiku) is the right fit. " +
-				"Without one, the document classifier's provider reads it, or the facts wait for the document's conversion.",
-		},
-		{
-			Task:        aitask.TaskPaletteAnswer,
-			Label:       "Command palette answers",
-			Description: "Answer a quick question typed into the command palette from a few lookups.",
-			VolumeGuidance: "One short answer per question asked, with at most four model calls " +
-				"while it looks records up. A person is waiting on each, so a fast model that " +
-				"calls tools reliably (such as Claude Haiku) is the right fit. Without one, " +
-				"the Desk's provider answers.",
-		},
-		{
-			Task:        aitask.TaskRemittanceExtraction,
-			Label:       "Factor remittances",
-			Description: "Read the lines of a factor's PDF funding or reserve report.",
-			VolumeGuidance: "One call per PDF remittance, usually a few a week per factor. " +
-				"Every line it reads is matched to a schedule item and applied by a person, " +
-				"so a mid-sized model that reads tables reliably is enough. Without one, " +
-				"PDF remittances are refused and the factor's CSV or spreadsheet is used.",
 		},
 		{
 			Task:  aitask.TaskEvaluationJudge,

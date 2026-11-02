@@ -397,7 +397,7 @@ func (s *Service) AttachLineageToResource(
 		return nil, err
 	}
 
-	if resourceType == "shipment" && s.draftRepo != nil {
+	if resourceType == "shipment" {
 		draft, draftErr := s.draftRepo.GetByDocumentID(ctx, updated.ID, tenantInfo)
 		switch {
 		case draftErr == nil:
@@ -452,10 +452,6 @@ func (s *Service) captureDraftCorrection(
 	ctx context.Context,
 	req *aicorrectionports.CaptureShipmentDraftCorrectionRequest,
 ) {
-	if s.aiCorrections == nil {
-		return
-	}
-
 	if _, err := s.aiCorrections.CaptureShipmentDraft(ctx, req); err != nil &&
 		!errors.Is(err, aicorrection.ErrNothingPredicted) {
 		s.l.Warn("failed to capture ai correction for attached shipment draft",
@@ -475,10 +471,6 @@ func (s *Service) requireShipment(
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	if s.shipments == nil {
-		return errortypes.NewBusinessError("Shipments cannot be verified on this installation")
-	}
-
 	found, err := s.shipments.ListSummariesByIDs(ctx, &shipmentports.ListShipmentSummariesRequest{
 		TenantInfo:  tenantInfo,
 		ShipmentIDs: []pulid.ID{shipmentID},

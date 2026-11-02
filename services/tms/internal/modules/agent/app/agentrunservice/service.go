@@ -56,9 +56,9 @@ type Params struct {
 	Workflows    kernelports.WorkflowStarter
 	Validator    *Validator
 	AuditService auditports.AuditService
-	Budgets      agentbudgetports.AgentBudgetService       `optional:"true"`
-	Activity     agentactivityports.AgentActivityPublisher `optional:"true"`
-	Plans        platformplanports.PlanService             `optional:"true"`
+	Budgets      agentbudgetports.AgentBudgetService
+	Activity     agentactivityports.AgentActivityPublisher
+	Plans        platformplanports.PlanService
 }
 
 type Service struct {
@@ -92,9 +92,6 @@ func (s *Service) StartForDefinition(
 	req *agentruntimeports.StartAgentRunForDefinitionRequest,
 	actor *permissionports.RequestActor,
 ) (*agent.AgentRun, error) {
-	if !s.workflows.Enabled() {
-		return nil, errortypes.NewBusinessError("The workflow engine is not available")
-	}
 	if err := planservice.RequireCapability(
 		ctx,
 		s.plans,
@@ -217,14 +214,12 @@ func (s *Service) StartForDefinition(
 		actor,
 		fmt.Sprintf("Run of agent %s started (%s)", definition.Name, trigger),
 	)
-	if s.activity != nil {
-		s.activity.RunChanged(
-			ctx,
-			updated,
-			actor.AuditActorOrSystem(),
-			agentactivityports.ActivityCreated,
-		)
-	}
+	s.activity.RunChanged(
+		ctx,
+		updated,
+		actor.AuditActorOrSystem(),
+		agentactivityports.ActivityCreated,
+	)
 
 	return updated, nil
 }
@@ -236,10 +231,6 @@ func (s *Service) assertWithinBudget(
 	ctx context.Context,
 	definition *agentdefinition.Definition,
 ) error {
-	if s.budgets == nil {
-		return nil
-	}
-
 	refusal, err := s.budgets.CheckRun(ctx, definition)
 	if err != nil {
 		return err

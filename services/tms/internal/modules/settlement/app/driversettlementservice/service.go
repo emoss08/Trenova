@@ -54,7 +54,7 @@ type Params struct {
 	AuditService      auditports.AuditService
 	Realtime          realtimeports.RealtimeService
 	DriverNotify      *drivernotificationservice.Service
-	Sync              accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
+	Sync              accountingsyncports.AccountingSyncEnqueuer
 }
 
 type Service struct {
@@ -260,9 +260,6 @@ func (s *Service) PublishRealtimeInvalidation(
 	action permission.Operation,
 	recordID, orgID, buID, userID pulid.ID,
 ) {
-	if s.realtime == nil {
-		return
-	}
 	err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,

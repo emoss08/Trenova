@@ -22,7 +22,7 @@ func TestGetByID_IsServedFromTheResultCacheUntilTheDefinitionChanges(t *testing.
 	row := findDefinitions(t, ctx, db, "TRUE", 1)[0]
 	tctx, tenant := row.tenant(ctx)
 	cached := cachetest.Open(t, ctx, dsn)
-	repo := New(Params{DB: postgres.NewTestConnection(cached), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(cached), Logger: zap.NewNop()})
 	request := agentdefinitionports.GetAgentDefinitionByIDRequest{ID: row.ID, TenantInfo: tenant}
 
 	var definition *agentdefinition.Definition

@@ -92,7 +92,7 @@ func TestListConnection_NarrowsToFailuresAtTheLocationAsked(t *testing.T) {
 	there := recordFailureAt(ctx, t, db, stops[1])
 
 	repo := servicefailurerepository.New(servicefailurerepository.Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 	tenant := pagination.TenantInfo{OrgID: stops[0].OrganizationID, BuID: stops[0].BusinessUnitID}
@@ -153,7 +153,7 @@ func TestListConnection_FollowsAStopToItsNewLocation(t *testing.T) {
 	require.NoError(t, err)
 
 	repo := servicefailurerepository.New(servicefailurerepository.Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     postgres.WrapDB(db),
 		Logger: zap.NewNop(),
 	})
 	tenant := pagination.TenantInfo{OrgID: stops[0].OrganizationID, BuID: stops[0].BusinessUnitID}

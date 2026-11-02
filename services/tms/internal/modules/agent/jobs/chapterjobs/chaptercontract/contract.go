@@ -36,7 +36,7 @@ type ThreadChaptersInput struct {
 type SchedulerParams struct {
 	fx.In
 
-	Signals kernelports.WorkflowSignalStarter `optional:"true"`
+	Signals kernelports.WorkflowSignalStarter
 	Logger  *zap.Logger
 }
 
@@ -50,7 +50,7 @@ func NewScheduler(p SchedulerParams) assistantchapterports.ChapterScheduler {
 }
 
 func (s *Scheduler) Cue(ctx context.Context, req *assistantchapterports.ChapterTurnRequest) {
-	if s.signals == nil || req == nil || req.ThreadID.IsNil() || req.TurnID.IsNil() {
+	if req == nil || req.ThreadID.IsNil() || req.TurnID.IsNil() {
 		return
 	}
 

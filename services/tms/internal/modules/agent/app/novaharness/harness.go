@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -15,16 +14,24 @@ import (
 type Params struct {
 	fx.In
 
-	Dispatcher llmports.StructuredCompleter    `optional:"true"`
-	Router     llmports.CompletionService      `optional:"true"`
-	Batches    llmports.BatchCompletionService `optional:"true"`
-	Providers  llmports.ProviderAvailability   `optional:"true"`
+	Dispatcher llmports.StructuredCompleter
+	Router     llmports.CompletionService
+	Batches    llmports.BatchCompletionService
+	// Providers says whether the tenant has a provider chosen for Nova. The
+	// completion router provides it in every binary, so it is required: a
+	// missing one is a wiring mistake, not a Nova that is off.
+	Providers llmports.ProviderAvailability
 }
 
 // Harness runs Nova's background tasks: one structured call with Nova's
 // identity, the task's instructions and its files, and no conversation or chat
 // guards around it. Briefings, reviews and document reading run here; the Desk
 // keeps its own runtime.
+//
+// Every call the harness makes is marked Nova, so the router runs it on the
+// provider the organization chose for Nova with Nova's own model
+// (novamodel.ID), whatever providers its task names. The task names only what
+// the usage was for.
 //
 // A task asked for on a request path runs as a worker job through the
 // dispatcher. A task asked for inside an activity is already on a worker and
@@ -53,17 +60,10 @@ func New(p Params) *Harness {
 	}
 }
 
-// Available reports whether a provider serves the task for the tenant.
-func (h *Harness) Available(
-	ctx context.Context,
-	task aitask.Task,
-	tenantInfo pagination.TenantInfo,
-) (bool, error) {
-	if h == nil || (h.dispatcher == nil && h.router == nil) || h.providers == nil {
-		return false, nil
-	}
-
-	return h.providers.CanServe(ctx, task, tenantInfo)
+// Available reports whether Nova can run for the tenant: AI is on and the
+// organization has an enabled provider chosen for Nova.
+func (h *Harness) Available(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error) {
+	return h.providers.NovaReady(ctx, tenantInfo)
 }
 
 // Run does the task and decodes the answer into out.
@@ -72,7 +72,7 @@ func (h *Harness) Run(
 	task *llmports.NovaTask,
 	out any,
 ) (*llmports.StructuredCompletionResult, error) {
-	available, err := h.Available(ctx, task.Name, task.TenantInfo)
+	available, err := h.Available(ctx, task.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -99,25 +99,26 @@ func (h *Harness) completer(ctx context.Context) llmports.StructuredCompleter {
 	return h.dispatcher
 }
 
+// onWorker reports a call made inside a Temporal activity, which calls the
+// router itself; anywhere else the call goes to a worker through the
+// dispatcher.
 func (h *Harness) onWorker(ctx context.Context) bool {
-	return h.router != nil && (h.dispatcher == nil || activity.IsActivity(ctx))
+	return activity.IsActivity(ctx)
 }
 
 func request(task *llmports.NovaTask) *llmports.StructuredCompletionRequest {
 	return &llmports.StructuredCompletionRequest{
-		TenantInfo:          task.TenantInfo,
-		Task:                task.Name,
-		System:              identity + "\n\n" + task.Instructions,
-		Context:             task.Context,
-		Files:               task.Files,
-		OutputSchema:        task.Schema,
-		SchemaName:          task.SchemaName,
-		MaxTokens:           task.MaxTokens,
-		PreferredProviderID: task.PreferredProviderID,
-		RequireProvider:     task.RequireProvider,
-		HedgeAfter:          task.HedgeAfter,
-		Reasoning:           task.Reasoning,
-		Attribution:         attribution(task),
+		TenantInfo:   task.TenantInfo,
+		Task:         task.Name,
+		System:       identity + "\n\n" + task.Instructions,
+		Context:      task.Context,
+		Files:        task.Files,
+		OutputSchema: task.Schema,
+		SchemaName:   task.SchemaName,
+		MaxTokens:    task.MaxTokens,
+		Reasoning:    task.Reasoning,
+		Attribution:  attribution(task),
+		Nova:         true,
 	}
 }
 

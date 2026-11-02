@@ -26,7 +26,7 @@ func TestMappingProfilesByIDsIsOneBoundedStatementInsideTheTenant(t *testing.T) 
 func TestGetMappingProfilesByIDsSkipsTheQueryForAnEmptyIDSet(t *testing.T) {
 	t.Parallel()
 
-	repo := &repository{db: postgres.NewTestConnection(keeltest.RenderDB(t)), l: zap.NewNop()}
+	repo := &repository{db: postgres.WrapDB(keeltest.RenderDB(t)), l: zap.NewNop()}
 
 	entities, err := repo.GetMappingProfilesByIDs(
 		keeltest.TenantContext(t),

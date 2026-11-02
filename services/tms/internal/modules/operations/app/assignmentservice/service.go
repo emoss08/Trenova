@@ -61,7 +61,7 @@ type Params struct {
 	CommodityRepo       commodityports.CommodityRepository
 	ContinuityRepo      equipmentcontinuityports.EquipmentContinuityRepository
 	TrailerRepo         trailerports.TrailerRepository
-	TractorRepo         tractorports.TractorRepository `optional:"true"`
+	TractorRepo         tractorports.TractorRepository
 	LocationRepo        locationports.LocationRepository
 	ShipmentValidator   *shipmentvalidator.Validator
 	Coordinator         *shipmentstate.Coordinator
@@ -69,8 +69,8 @@ type Params struct {
 	EventService        shipmenteventports.ShipmentEventService
 	Invalidator         shipmentinvalidationports.ShipmentInvalidator
 	DriverNotify        *drivernotificationservice.Service
-	TenderGuard         tenderports.TenderGuard             `optional:"true"`
-	AgentEvents         agenteventports.AgentEventPublisher `optional:"true"`
+	TenderGuard         tenderports.TenderGuard
+	AgentEvents         agenteventports.AgentEventPublisher
 }
 
 type service struct {
@@ -135,7 +135,7 @@ func (s *service) notifyAssignedWorkers(
 	assignment *shipment.Assignment,
 	skip map[pulid.ID]struct{},
 ) {
-	if s.driverNotify == nil || assignment == nil {
+	if assignment == nil {
 		return
 	}
 	link := "/dash/loads/" + assignment.ID.String()
@@ -163,9 +163,6 @@ func (s *service) notifyUnassignedWorkers(
 	workerIDs []pulid.ID,
 	keep map[pulid.ID]struct{},
 ) {
-	if s.driverNotify == nil {
-		return
-	}
 	for _, workerID := range workerIDs {
 		if _, ok := keep[workerID]; ok {
 			continue
@@ -311,9 +308,6 @@ func (s *service) withdrawLiveTender(
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
 ) {
-	if s.tenderGuard == nil {
-		return
-	}
 	if err := s.tenderGuard.CancelLiveTenderForMove(
 		ctx, tenantInfo, moveID, "Move was covered outside the tender",
 	); err != nil {

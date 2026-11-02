@@ -176,10 +176,6 @@ func (b *ContextBuilder) applyBranding(
 	orgID, buID pulid.ID,
 	out *detentiontemplate.DetentionNoticeContext,
 ) error {
-	if b.orgRepo == nil {
-		return nil
-	}
-
 	org, err := b.orgRepo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 	})

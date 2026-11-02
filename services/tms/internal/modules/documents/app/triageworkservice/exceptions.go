@@ -89,9 +89,6 @@ func (s *Service) PlanLogException(
 	ctx context.Context,
 	req *LogExceptionRequest,
 ) (*ExceptionPlan, error) {
-	if s.exceptions == nil {
-		return nil, errortypes.NewBusinessError("Exceptions cannot be logged on this installation")
-	}
 	if err := validateException(req); err != nil {
 		return nil, err
 	}
@@ -475,24 +472,22 @@ func (s *Service) DecideStops(
 	}
 
 	settled := &triageworkports.SettledTriageDetention{}
-	if s.detention != nil {
-		settled, err = s.detention.SettleDetention(
-			ctx,
-			&triageworkports.SettleTriageDetentionRequest{
-				TenantInfo: req.TenantInfo,
-				Actor:      req.Actor,
-				ShipmentID: message.MatchedShipmentID,
-				Decision:   req.Decision,
-				Note: fmt.Sprintf(
-					"Decided in Triage after checking stop times (%s)",
-					message.Subject,
-				),
-				UserID: req.UserID,
-			},
-		)
-		if err != nil {
-			return nil, err
-		}
+	settled, err = s.detention.SettleDetention(
+		ctx,
+		&triageworkports.SettleTriageDetentionRequest{
+			TenantInfo: req.TenantInfo,
+			Actor:      req.Actor,
+			ShipmentID: message.MatchedShipmentID,
+			Decision:   req.Decision,
+			Note: fmt.Sprintf(
+				"Decided in Triage after checking stop times (%s)",
+				message.Subject,
+			),
+			UserID: req.UserID,
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	now := s.now()

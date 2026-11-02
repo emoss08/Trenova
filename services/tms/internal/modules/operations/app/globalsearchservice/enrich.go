@@ -116,7 +116,7 @@ func (e *hitEnricher) loadShipments(
 	ctx context.Context,
 	shipments, customers, workers *indexResult,
 ) ([]*shipmentports.ShipmentPartyLink, map[pulid.ID]*shipmentports.ShipmentSearchCard) {
-	if !e.access.canRead(permission.ResourceShipment) || e.service.shipmentRead == nil {
+	if !e.access.canRead(permission.ResourceShipment) {
 		return nil, nil
 	}
 
@@ -169,10 +169,6 @@ func (e *hitEnricher) loadStates(
 	ctx context.Context,
 	results ...*indexResult,
 ) map[pulid.ID]string {
-	if e.service.states == nil {
-		return nil
-	}
-
 	ids := make([]pulid.ID, 0)
 	for _, result := range results {
 		if result == nil {
@@ -205,7 +201,7 @@ func (e *hitEnricher) loadBalances(
 	ctx context.Context,
 	customers *indexResult,
 ) map[pulid.ID]*kernelports.CustomerOpenBalance {
-	if e.service.balances == nil || !e.access.canRead(permission.ResourceAccountsReceivable) {
+	if !e.access.canRead(permission.ResourceAccountsReceivable) {
 		return nil
 	}
 	ids := hitIDs(customers, maxSearchLimit)
@@ -236,7 +232,7 @@ func (e *hitEnricher) loadLabels(
 	ctx context.Context,
 	documents *indexResult,
 ) map[string]map[pulid.ID]*captureports.CaptureRecordLabel {
-	if e.service.recordLabels == nil || documents == nil {
+	if documents == nil {
 		return nil
 	}
 
@@ -518,9 +514,8 @@ func (e *hitEnricher) applyCustomers(found *enrichment, customers *indexResult) 
 		}
 		balance, ok := found.balances[parsed]
 		if !ok {
-			if found.balances != nil {
-				hit.Metadata["openBalance"] = "0"
-			}
+			hit.Metadata["openBalance"] = "0"
+
 			continue
 		}
 		hit.Metadata["openBalance"] = minorToDecimal(balance.OpenMinor)

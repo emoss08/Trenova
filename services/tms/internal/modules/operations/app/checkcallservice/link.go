@@ -59,11 +59,6 @@ func (s *Service) planIssue(
 			"Carrier tracking links need a public base URL; set app.webBaseUrl",
 		)
 	}
-	if req.RecipientEmail != "" && (s.templates == nil || s.emailService == nil) {
-		return nil, errortypes.NewBusinessError(
-			"Email delivery is not configured for this environment",
-		)
-	}
 
 	move, err := s.loadMove(ctx, req.TenantInfo, req.MoveID)
 	if err != nil {
@@ -402,7 +397,7 @@ func (s *Service) carrierName(
 	tenantInfo pagination.TenantInfo,
 	carrierID pulid.ID,
 ) string {
-	if s.carrierRepo == nil || carrierID.IsNil() {
+	if carrierID.IsNil() {
 		return ""
 	}
 	entity, err := s.carrierRepo.GetByID(ctx, carrierports.GetCarrierByIDRequest{
@@ -416,9 +411,6 @@ func (s *Service) carrierName(
 }
 
 func (s *Service) companyName(ctx context.Context, tenantInfo pagination.TenantInfo) string {
-	if s.orgRepo == nil {
-		return ""
-	}
 	org, err := s.orgRepo.GetByID(
 		ctx,
 		tenantports.GetOrganizationByIDRequest{TenantInfo: tenantInfo},
@@ -478,7 +470,7 @@ type linkAuditParams struct {
 }
 
 func (s *Service) logLinkAudit(p *linkAuditParams) {
-	if s.auditService == nil || p.link == nil {
+	if p.link == nil {
 		return
 	}
 	params := &auditports.LogActionParams{

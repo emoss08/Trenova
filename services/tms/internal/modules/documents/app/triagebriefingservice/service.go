@@ -48,9 +48,9 @@ type Params struct {
 	Settings      inboundmessageports.TriageSettingsRepository
 	Organizations tenantports.OrganizationRepository
 	Rules         *triageruleservice.Service
-	Cache         triageports.TriageCache                `optional:"true"`
-	Models        triageports.InboundModelAvailability   `optional:"true"`
-	Replies       inboundmessageports.InboundReplyReader `optional:"true"`
+	Cache         triageports.TriageCache
+	Models        triageports.InboundModelAvailability
+	Replies       inboundmessageports.InboundReplyReader
 }
 
 type Service struct {
@@ -201,10 +201,8 @@ func (s *Service) gatherWaiting(
 		message.Attachments = attachments[message.ID]
 	}
 
-	if s.replies != nil {
-		if inputs.Replies, err = s.replies.LatestByMessageIDs(ctx, tenantInfo, ids); err != nil {
-			return fmt.Errorf("read the waiting messages' replies: %w", err)
-		}
+	if inputs.Replies, err = s.replies.LatestByMessageIDs(ctx, tenantInfo, ids); err != nil {
+		return fmt.Errorf("read the waiting messages' replies: %w", err)
 	}
 
 	return nil
@@ -228,10 +226,6 @@ func (s *Service) listMailboxes(
 }
 
 func (s *Service) novaEnabled(ctx context.Context, tenantInfo pagination.TenantInfo) bool {
-	if s.models == nil {
-		return false
-	}
-
 	enabled, err := s.models.ReadsInboundMail(ctx, tenantInfo)
 	if err != nil {
 		s.l.Warn("could not tell whether Nova reads mail",

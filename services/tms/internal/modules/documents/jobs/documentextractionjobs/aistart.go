@@ -7,7 +7,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/api/enums/v1"
@@ -21,10 +20,6 @@ func (a *Activities) startAIExtractionWorkflow(
 	userID pulid.ID,
 	extractedAt int64,
 ) error {
-	if a.workflowStarter == nil || !a.workflowStarter.Enabled() {
-		return kernelports.ErrWorkflowStarterDisabled
-	}
-
 	_, err := a.workflowStarter.StartWorkflow(
 		ctx,
 		client.StartWorkflowOptions{

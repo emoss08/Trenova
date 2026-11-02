@@ -81,12 +81,14 @@ func (s *Service) ComposeSearch(
 			searchMaxRunes,
 		)
 	}
-	available, err := s.canServe(ctx, aitask.TaskQueryCompose, req.TenantInfo)
+	available, err := s.novaReady(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
 	if !available {
-		return nil, errortypes.NewBusinessError("Searching in a sentence needs an AI provider")
+		return nil, errortypes.NewBusinessError(
+			"Searching in a sentence needs Nova: choose an Anthropic provider for Nova",
+		)
 	}
 
 	today := searchToday(req.Today)
@@ -111,7 +113,10 @@ func searchToday(raw string) time.Time {
 // resolveDates is the window an answer names, or nil with the part it could not
 // read: a range needs its first day (an open start reads to today), and every
 // window stays within a year of today.
-func resolveDates(answer searchDatesAnswer, today time.Time) (*billingqueueports.SearchDates, string) {
+func resolveDates(
+	answer searchDatesAnswer,
+	today time.Time,
+) (*billingqueueports.SearchDates, string) {
 	if answer.LastDays != nil {
 		if days := *answer.LastDays; days > 0 && days <= searchMaxDays {
 			return &billingqueueports.SearchDates{LastDays: days}, ""
@@ -222,7 +227,7 @@ func (s *Service) findCustomer(
 	named string,
 ) (customerMatch, error) {
 	named = strings.TrimSpace(named)
-	if named == "" || s.customers == nil {
+	if named == "" {
 		return customerMatch{}, nil
 	}
 	matches, err := s.customers.SelectOptions(ctx, &customerports.CustomerSelectOptionsRequest{

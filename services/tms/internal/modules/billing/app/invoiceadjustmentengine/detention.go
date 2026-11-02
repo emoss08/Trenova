@@ -62,7 +62,7 @@ func (s *Engine) guardDetentionRebill(
 	tenantInfo pagination.TenantInfo,
 	source *invoice.Invoice,
 ) error {
-	if s.detentionBilling == nil || source == nil {
+	if source == nil {
 		return nil
 	}
 
@@ -87,7 +87,7 @@ func (s *Engine) guardDetentionRebill(
 }
 
 func (s *Engine) syncDetentionBilling(ctx context.Context, p *detentionSync) error {
-	if s.detentionBilling == nil || p.source == nil {
+	if p.source == nil {
 		return nil
 	}
 

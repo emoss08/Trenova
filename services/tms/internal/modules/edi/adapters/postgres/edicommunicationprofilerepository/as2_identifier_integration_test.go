@@ -58,7 +58,7 @@ func TestAS2IdentifierPairsAreUniqueAcrossTenants(t *testing.T) {
 	tenantB := seedtest.SeedAdditionalTenant(t, ctx, db, "AS")
 	ctxA, ctxB := tenantA.Ctx(ctx), tenantB.Ctx(ctx)
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	owned, err := repo.CreateProfile(ctxA, newAS2Profile(t, ctxA, db, "AS2-A"))
 	require.NoError(t, err)
@@ -101,7 +101,7 @@ func TestPollOutcomeKeepsTheProfileVersion(t *testing.T) {
 
 	tenant := seedtest.SeedFullTestData(t, ctx, db)
 	tctx := tenant.Ctx(ctx)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
 	profile := newAS2Profile(t, tctx, db, "AS2-P")
 	profile.Method = edi.ConnectionMethodSFTP

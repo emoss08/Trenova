@@ -33,7 +33,7 @@ func ReconcileAdminRole(
 	registry *permissioncatalog.Registry,
 ) (AdminReconcileResult, error) {
 	if registry == nil {
-		registry = permissioncatalog.NewRegistry()
+		registry = permissioncatalog.Default()
 	}
 
 	r := rbacdb.Roles

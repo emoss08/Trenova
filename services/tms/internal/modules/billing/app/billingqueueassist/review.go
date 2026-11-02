@@ -136,7 +136,8 @@ func (s *Service) gatherEvidence(
 	if err != nil {
 		return nil, err
 	}
-	if !billingqueuereview.IsReviewable(item.Status) || item.BillType != billingqueue.BillTypeInvoice ||
+	if !billingqueuereview.IsReviewable(item.Status) ||
+		item.BillType != billingqueue.BillTypeInvoice ||
 		item.Review == nil ||
 		item.ShipmentID.IsNil() {
 		return nil, nil
@@ -146,27 +147,23 @@ func (s *Service) gatherEvidence(
 	if evidence.Documents, err = s.reviewDocuments(ctx, tenantInfo, item.ShipmentID); err != nil {
 		return nil, err
 	}
-	if s.content != nil {
-		for _, doc := range evidence.Documents {
-			content, contentErr := s.content.GetContent(ctx, doc.ID, tenantInfo)
-			if contentErr != nil || content == nil {
-				continue
-			}
-			if parts := reviewprompt.Parts(strings.TrimSpace(content.ContentText)); len(parts) > 0 {
-				evidence.Excerpts[doc.ID] = reviewprompt.Excerpt{Text: parts[0], Parts: len(parts)}
-			}
+	for _, doc := range evidence.Documents {
+		content, contentErr := s.content.GetContent(ctx, doc.ID, tenantInfo)
+		if contentErr != nil || content == nil {
+			continue
+		}
+		if parts := reviewprompt.Parts(strings.TrimSpace(content.ContentText)); len(parts) > 0 {
+			evidence.Excerpts[doc.ID] = reviewprompt.Excerpt{Text: parts[0], Parts: len(parts)}
 		}
 	}
-	if s.accessorials != nil {
-		catalog, catalogErr := s.accessorials.ListCatalog(ctx, tenantInfo)
-		if catalogErr != nil {
-			return nil, catalogErr
-		}
-		if len(catalog) > reviewMaxCatalog {
-			catalog = catalog[:reviewMaxCatalog]
-		}
-		evidence.Catalog = catalog
+	catalog, catalogErr := s.accessorials.ListCatalog(ctx, tenantInfo)
+	if catalogErr != nil {
+		return nil, catalogErr
 	}
+	if len(catalog) > reviewMaxCatalog {
+		catalog = catalog[:reviewMaxCatalog]
+	}
+	evidence.Catalog = catalog
 	if evidence.Comments, err = s.reviewComments(ctx, tenantInfo, item.ShipmentID); err != nil {
 		return nil, err
 	}
@@ -188,9 +185,6 @@ func (s *Service) reviewDocuments(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) ([]*document.Document, error) {
-	if s.documents == nil {
-		return nil, nil
-	}
 	docs, err := s.documents.GetByResourceID(ctx, &documentports.GetDocumentsByResourceRequest{
 		TenantInfo:          tenantInfo,
 		ResourceID:          shipmentID.String(),
@@ -221,9 +215,6 @@ func (s *Service) reviewComments(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) ([]*shipment.ShipmentComment, error) {
-	if s.comments == nil {
-		return nil, nil
-	}
 	page, err := s.comments.ListByShipmentID(ctx, &shipmentcommentports.ListShipmentCommentsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantInfo,
@@ -247,7 +238,7 @@ func (s *Service) applyDocumentAnswers(
 	evidence *reviewprompt.Evidence,
 	answers []deliveryread.Answer,
 ) {
-	if s.documents == nil || len(answers) == 0 {
+	if len(answers) == 0 {
 		return
 	}
 
@@ -273,12 +264,15 @@ func (s *Service) applyDocumentAnswers(
 		if facts == nil || deliveryread.Same(doc.DeliveryFacts, facts) {
 			continue
 		}
-		written, err := s.documents.RecordDeliveryFacts(ctx, &documentports.RecordDeliveryFactsRequest{
-			ID:         doc.ID,
-			TenantInfo: tenantOf(doc),
-			Facts:      facts,
-			KeepPerson: true,
-		})
+		written, err := s.documents.RecordDeliveryFacts(
+			ctx,
+			&documentports.RecordDeliveryFactsRequest{
+				ID:         doc.ID,
+				TenantInfo: tenantOf(doc),
+				Facts:      facts,
+				KeepPerson: true,
+			},
+		)
 		if err != nil {
 			s.l.Warn("could not record what Nova read from a document",
 				zap.String("documentId", doc.ID.String()), zap.Error(err))

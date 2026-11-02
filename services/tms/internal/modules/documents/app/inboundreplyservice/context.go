@@ -50,7 +50,7 @@ func (s *Service) messageContext(
 	out := &messageContext{message: message, location: time.UTC}
 	s.loadOrganization(ctx, tenantInfo, out)
 
-	if message.MatchedShipmentID.IsNotNil() && s.peeks != nil {
+	if message.MatchedShipmentID.IsNotNil() {
 		peeks, err := s.peeks.ShipmentPeeks(ctx, tenantInfo, []pulid.ID{message.MatchedShipmentID})
 		if err != nil {
 			s.l.Warn("could not read the matched shipment for a reply",

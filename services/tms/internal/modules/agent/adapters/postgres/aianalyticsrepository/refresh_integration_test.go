@@ -68,7 +68,7 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 	t.Cleanup(cleanup)
 
 	ctx, tenant := seededTenant(ctx, t, db)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	now := floorHour(timeutils.NowUnix()) - 1800
 	vllm := pulid.MustNew("aiprv_")
 	groq := pulid.MustNew("aiprv_")
@@ -319,7 +319,7 @@ func TestRefreshCountsUncachedInputByTheCallsOwnProtocolWhenTheProviderIsGone(t 
 	t.Cleanup(cleanup)
 
 	ctx, tenant := seededTenant(ctx, t, db)
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	now := timeutils.NowUnix()
 
 	usage := []*aiusage.AIUsageRecord{

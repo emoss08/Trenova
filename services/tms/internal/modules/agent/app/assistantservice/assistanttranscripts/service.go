@@ -37,9 +37,6 @@ func (s *Service) RunTranscript(
 	ctx context.Context,
 	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*kernelports.TranscriptFile, error) {
-	if s.runs == nil {
-		return nil, errortypes.NewBusinessError("Agent run transcripts are not available")
-	}
 	if req.TenantInfo == nil {
 		return nil, errortypes.NewAuthorizationError("A tenant is required to read an agent run")
 	}

@@ -25,10 +25,6 @@ func (s *Service) Submit(
 	ctx context.Context,
 	req *NarrateRequest,
 ) (*llmports.BatchHandle, error) {
-	if s.batches == nil {
-		return nil, ErrBatchUnavailable
-	}
-
 	items := make([]llmports.NovaBatchItem, 0, len(req.Findings)/maxFindingsPerCall+1)
 	for batch := range chunk(req.Findings, maxFindingsPerCall) {
 		items = append(items, llmports.NovaBatchItem{
@@ -56,10 +52,6 @@ func (s *Service) Ended(
 	tenantInfo pagination.TenantInfo,
 	handle *llmports.BatchHandle,
 ) (bool, error) {
-	if s.batches == nil {
-		return false, ErrBatchUnavailable
-	}
-
 	status, err := s.batches.BatchStatus(ctx, &llmports.BatchStatusRequest{
 		TenantInfo: tenantInfo,
 		ProviderID: handle.ProviderID,
@@ -80,13 +72,11 @@ func (s *Service) Collect(
 	req *NarrateRequest,
 	handle *llmports.BatchHandle,
 ) (map[string]Narration, error) {
-	if s.batches == nil {
-		return nil, ErrBatchUnavailable
-	}
-
 	attributions := make(map[string]aiusageports.AIUsageAttribution, len(handle.CustomIDs))
 	for _, custom := range handle.CustomIDs {
-		attributions[custom] = aiusageports.AIUsageAttribution{Feature: aiusage.FeatureInsightNarration}
+		attributions[custom] = aiusageports.AIUsageAttribution{
+			Feature: aiusage.FeatureInsightNarration,
+		}
 	}
 	results, err := s.batches.BatchResults(ctx, &llmports.BatchResultsRequest{
 		TenantInfo:   req.TenantInfo,

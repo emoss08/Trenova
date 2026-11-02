@@ -55,7 +55,7 @@ type ActivitiesParams struct {
 
 	Controls      tenantports.BillingControlRepository
 	Reminders     *paymentreminderservice.Service
-	Notifications *notificationservice.Service `optional:"true"`
+	Notifications *notificationservice.Service
 	Logger        *zap.Logger
 }
 

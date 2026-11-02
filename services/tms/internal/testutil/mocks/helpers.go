@@ -128,7 +128,7 @@ func (a *AllowAllPermissionEngine) GetEffectivePermissions(
 	_ context.Context,
 	_, _ pulid.ID,
 ) (*permissionports.EffectivePermissions, error) {
-	registry := permissioncatalog.NewRegistry()
+	registry := permissioncatalog.Default()
 	resources := make(map[string]permissionports.EffectiveResourcePermission, len(registry.All()))
 	for _, def := range registry.All() {
 		operations := make([]permission.Operation, len(def.Operations))

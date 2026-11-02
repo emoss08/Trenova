@@ -318,9 +318,6 @@ func (s *Service) DownloadPodByToken(
 	if !resolved.profile.Shows(trackingprofile.FieldProofOfDelivery) {
 		return nil, invalidLinkError()
 	}
-	if s.documents == nil {
-		return nil, errortypes.NewBusinessError("Document downloads are not configured")
-	}
 	ctx = resolved.ctx
 	pods, err := s.facts.LatestPods(ctx, resolved.tenant, []pulid.ID{resolved.shipment.ID})
 	if err != nil {

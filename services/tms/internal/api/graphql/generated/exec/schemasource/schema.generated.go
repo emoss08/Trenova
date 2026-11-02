@@ -2357,12 +2357,6 @@ type AgentControl {
   earnedAutonomy: Boolean!
   "Consecutive approvals without a change needed before a tool moves up a tier."
   promotionThreshold: Int!
-  "Whether the organization's AI corrections may be anonymized and used to train models outside it. Off until a person turns it on."
-  aiTrainingConsent: Boolean!
-  "When training consent was last turned on or off."
-  aiTrainingConsentChangedAt: Timestamp
-  "Who last turned training consent on or off."
-  aiTrainingConsentChangedById: ID
   "Questions one person may ask the agents each calendar month (UTC); 0 is unlimited."
   personMonthlyMessages: Int!
   "Agents no longer look back over their work to keep what they learned as memory."
@@ -2826,8 +2820,6 @@ input AgentControlInput {
   earnedAutonomy: Boolean
   "Absent leaves the promotion threshold as it is; 1 to 1000 approvals."
   promotionThreshold: Int
-  "Absent leaves training consent as it is. Only a signed-in person can change it."
-  aiTrainingConsent: Boolean
   "Absent leaves the per-person monthly allowance as it is; 0 is unlimited."
   personMonthlyMessages: Int
   "Absent leaves whether agents learn from their work as it is."
@@ -6518,6 +6510,11 @@ type AIProvider {
   embeddingInputStyle: AIEmbeddingInputStyle!
   trusted: Boolean!
   enabled: Boolean!
+  """
+  Nova runs on this provider, with Nova's own model whatever model it serves
+  the Desk with. An organization has at most one; choosing another moves it.
+  """
+  nova: Boolean!
   lastTest: AIProviderTestOutcome
   "How long one call may take before it fails and the task moves to the next provider."
   timeoutSeconds: Int!
@@ -6679,6 +6676,8 @@ type AIProviderDraftTestResult {
 input AIProviderPatchInput {
   enabled: Boolean @goField(omittable: true)
   trusted: Boolean @goField(omittable: true)
+  "Run Nova on this provider, taking it from the one that had it."
+  nova: Boolean @goField(omittable: true)
   allowPrivateNetwork: Boolean @goField(omittable: true)
   tasks: [AITask!] @goField(omittable: true)
   "A new credential. It replaces the stored one and is never returned."
@@ -6921,23 +6920,6 @@ extend type Mutation {
   updateAIRetrievalSettings(input: AIRetrievalSettingsPatchInput!): AIRetrievalStatus!
   "Marks every source of one type stale; only chunks whose text changed are embedded again."
   reindexAIRetrievalSource(sourceType: AIRetrievalSourceType!): AIRetrievalStatus!
-}
-`, BuiltIn: false},
-	{Name: "../schema/aitraining.graphqls", Input: `"A model-training export that included this organization's AI corrections, anonymized."
-type AITrainingExportHistoryEntry {
-  exportId: ID!
-  "Corrections from this organization in the export."
-  examples: Int!
-  trainExamples: Int!
-  validationExamples: Int!
-  "When the AI training consent the export relied on was granted."
-  consentGrantedAt: Timestamp!
-  exportedAt: Timestamp!
-}
-
-extend type Query {
-  "Training exports that included this organization's AI corrections, newest first."
-  aiTrainingExportHistory: [AITrainingExportHistoryEntry!]!
 }
 `, BuiltIn: false},
 	{Name: "../schema/aiusage.graphqls", Input: `"""
@@ -17218,34 +17200,12 @@ extend type Mutation {
   bulkUpdateEquipmentTypeStatus(input: BulkUpdateEquipmentTypeStatusInput!): [EquipmentType!]!
 }
 `, BuiltIn: false},
-	{Name: "../schema/extractioneval.graphqls", Input: `enum AICorrectionOutcome {
+	{Name: "../schema/extractionaccuracy.graphqls", Input: `enum AICorrectionOutcome {
   Correct
   Corrected
   Missed
   Unconfirmed
   Unscored
-}
-
-enum ExtractionEvalCaseStatus {
-  Candidate
-  Active
-  Retired
-}
-
-enum ExtractionEvalRunStatus {
-  Queued
-  Running
-  Completed
-  BudgetStopped
-  Canceled
-  Failed
-}
-
-enum ExtractionEvalResultStatus {
-  Pending
-  Completed
-  Failed
-  Skipped
 }
 
 type ExtractionSnapshotField {
@@ -17348,150 +17308,6 @@ type AICorrectionConnection {
   totalCountExact: Boolean!
 }
 
-type ExtractionEvalPage {
-  number: Int!
-  text: String!
-}
-
-"A frozen extraction test: the page text the extractor reads and the values a person confirmed."
-type ExtractionEvalCase {
-  id: ID!
-  organizationId: ID!
-  businessUnitId: ID!
-  task: String!
-  status: ExtractionEvalCaseStatus!
-  title: String!
-  documentKind: String!
-  documentFingerprint: String!
-  fileName: String!
-  pages: [ExtractionEvalPage!]!
-  pageCount: Int!
-  inputHash: String!
-  expected: ExtractionSnapshot!
-  expectedFieldCount: Int!
-  sourceCorrectionId: ID
-  sourceDocumentId: ID
-  notes: String!
-  createdById: ID!
-  version: Int!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-}
-
-type ExtractionEvalCaseEdge {
-  node: ExtractionEvalCase!
-  cursor: String!
-}
-
-type ExtractionEvalCaseConnection {
-  edges: [ExtractionEvalCaseEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int
-  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
-  totalCountExact: Boolean!
-}
-
-"One model, pinned to one AI provider, run over the active extraction cases."
-type ExtractionEvalRun {
-  id: ID!
-  organizationId: ID!
-  businessUnitId: ID!
-  task: String!
-  status: ExtractionEvalRunStatus!
-  providerId: ID!
-  providerName: String!
-  "The model the provider was configured with when the run was requested."
-  providerModel: String!
-  "The model the provider reported serving."
-  servedModel: String!
-  caseLimit: Int!
-  casesTotal: Int!
-  casesCompleted: Int!
-  casesFailed: Int!
-  casesSkipped: Int!
-  scoredCount: Int!
-  correctCount: Int!
-  correctedCount: Int!
-  missedCount: Int!
-  unconfirmedCount: Int!
-  unscoredCount: Int!
-  accuracy: Float!
-  fieldAccuracy: [ExtractionFieldAccuracy!]!
-  costUsd: Decimal!
-  inputTokens: Int!
-  outputTokens: Int!
-  avgLatencyMs: Int!
-  "Why the run ended before every case ran."
-  stopReason: String!
-  failureMessage: String!
-  requestedById: ID!
-  workflowId: String!
-  startedAt: Timestamp
-  finishedAt: Timestamp
-  version: Int!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-}
-
-type ExtractionEvalRunEdge {
-  node: ExtractionEvalRun!
-  cursor: String!
-}
-
-type ExtractionEvalRunConnection {
-  edges: [ExtractionEvalRunEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int
-  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
-  totalCountExact: Boolean!
-}
-
-"One case evaluated within a run."
-type ExtractionEvalResult {
-  id: ID!
-  organizationId: ID!
-  businessUnitId: ID!
-  runId: ID!
-  caseId: ID!
-  caseTitle: String!
-  ordinal: Int!
-  status: ExtractionEvalResultStatus!
-  model: String!
-  providerId: ID
-  predicted: ExtractionSnapshot
-  fieldResults: [AICorrectionFieldResult!]!
-  scoredCount: Int!
-  correctCount: Int!
-  correctedCount: Int!
-  missedCount: Int!
-  unconfirmedCount: Int!
-  unscoredCount: Int!
-  accuracy: Float!
-  latencyMs: Int!
-  inputTokens: Int!
-  outputTokens: Int!
-  costUsd: Decimal!
-  errorMessage: String!
-  startedAt: Timestamp
-  completedAt: Timestamp
-  version: Int!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-}
-
-type ExtractionEvalResultEdge {
-  node: ExtractionEvalResult!
-  cursor: String!
-}
-
-type ExtractionEvalResultConnection {
-  edges: [ExtractionEvalResultEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int
-  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
-  totalCountExact: Boolean!
-}
-
 type ExtractionAccuracyGroup {
   "The model, or the document kind; empty for drafts read by rules alone."
   key: String!
@@ -17499,12 +17315,6 @@ type ExtractionAccuracyGroup {
   scored: Int!
   correct: Int!
   accuracy: Float!
-}
-
-type ExtractionEvalCaseCounts {
-  candidate: Int!
-  active: Int!
-  retired: Int!
 }
 
 "How well extraction did in production over a window, from the corrections people made."
@@ -17523,8 +17333,6 @@ type ExtractionAccuracy {
   byModel: [ExtractionAccuracyGroup!]!
   byKind: [ExtractionAccuracyGroup!]!
   fields: [ExtractionFieldAccuracy!]!
-  cases: ExtractionEvalCaseCounts!
-  recentRuns: [ExtractionEvalRun!]!
 }
 
 "One provider's corrections in one UTC week, Monday to Sunday."
@@ -17572,341 +17380,11 @@ type ExtractionProviderTrends {
   minBaselineFields: Int!
 }
 
-input PromoteAICorrectionInput {
-  correctionId: ID!
-  title: String
-  "Start the case as Active rather than Candidate."
-  activate: Boolean
-}
-
-input UpdateExtractionEvalCaseInput {
-  version: Int!
-  title: String
-  notes: String
-  status: ExtractionEvalCaseStatus
-}
-
-input StartExtractionEvalRunInput {
-  providerId: ID!
-  "How many active cases to run, newest first; 50 by default, at most 500."
-  caseLimit: Int
-}
-
-input RefreezeExtractionEvalCasesInput {
-  "The cases to freeze again; every active case when empty."
-  caseIds: [ID!]
-}
-
-"A re-freeze queued in the background: each case's original file is converted through Docling."
-type ExtractionEvalRefreeze {
-  queued: Int!
-  workflowId: String!
-  "True when the organization's re-freeze was already running; that run is returned and no new one is started."
-  alreadyRunning: Boolean!
-}
-
-enum ExtractionEvalRefreezeStatus {
-  Running
-  Completed
-  "Stopped before every case was read: failed, canceled, terminated or timed out."
-  Failed
-}
-
-"The organization's most recent re-freeze and how far it has got."
-type ExtractionEvalRefreezeProgress {
-  workflowId: String!
-  status: ExtractionEvalRefreezeStatus!
-  "Cases the re-freeze was asked to read."
-  total: Int!
-  "Cases frozen again from their original file."
-  frozen: Int!
-  "Cases left as they were: no original file, or one Docling could not read."
-  skipped: Int!
-  "Cases the re-freeze could not finish."
-  failed: Int!
-}
-
 extend type Query {
   extractionAccuracy(windowDays: Int): ExtractionAccuracy!
   extractionProviderTrends: ExtractionProviderTrends!
   aiCorrections(input: DataTableConnectionInput!): AICorrectionConnection!
   aiCorrection(id: ID!): AICorrection
-  extractionEvalCases(input: DataTableConnectionInput!): ExtractionEvalCaseConnection!
-  extractionEvalCase(id: ID!): ExtractionEvalCase
-  extractionEvalRuns(input: DataTableConnectionInput!): ExtractionEvalRunConnection!
-  extractionEvalRun(id: ID!): ExtractionEvalRun
-  extractionEvalResults(runId: ID!, input: DataTableConnectionInput!): ExtractionEvalResultConnection!
-  extractionEvalResult(id: ID!): ExtractionEvalResult
-  "The organization's most recent re-freeze through Docling; empty when none has run."
-  extractionEvalRefreeze: ExtractionEvalRefreezeProgress
-}
-
-extend type Mutation {
-  "Freezes a correction's document text and confirmed values into an evaluation case."
-  promoteAICorrection(input: PromoteAICorrectionInput!): ExtractionEvalCase!
-  updateExtractionEvalCase(id: ID!, input: UpdateExtractionEvalCaseInput!): ExtractionEvalCase!
-  deleteExtractionEvalCase(id: ID!): Boolean!
-  "Runs one provider's model over the active cases, within the evaluation budget."
-  startExtractionEvalRun(input: StartExtractionEvalRunInput!): ExtractionEvalRun!
-  cancelExtractionEvalRun(id: ID!): ExtractionEvalRun!
-  "Converts each case's original file through Docling and freezes the result beside the case for runs that choose the docling text source."
-  refreezeExtractionEvalCases(input: RefreezeExtractionEvalCasesInput!): ExtractionEvalRefreeze!
-}
-`, BuiltIn: false},
-	{Name: "../schema/extractionrollout.graphqls", Input: `enum ExtractionRolloutHaltReason {
-  "The candidate read confirmed fields worse than production by more than the allowed points."
-  AccuracyDrop
-  "The candidate's answers were unusable more often than production's by more than the allowed points."
-  Rejections
-}
-
-"How a candidate AI provider serves a share of an organization's real document extractions."
-type ExtractionRollout {
-  enabled: Boolean!
-  "The candidate AI provider; kept while the rollout is off, so turning it back on keeps the choice."
-  providerId: ID
-  "The share of documents whose extraction asks the candidate first, 1 to 100."
-  percent: Int!
-  "How many points below production's accuracy the candidate may fall before the rollout stops."
-  maxAccuracyDropPoints: Int!
-  "How many points above production's rejection rate the candidate may rise before the rollout stops."
-  maxRejectionIncreasePoints: Int!
-  "Whether documents are being sent to the candidate right now: on, with a candidate, and not stopped by a guard."
-  serving: Boolean!
-  "When the current comparison began; the guards and the report count only what happened since."
-  startedAt: Timestamp
-  "When a guard stopped the rollout; empty while it has not."
-  haltedAt: Timestamp
-  haltReason: ExtractionRolloutHaltReason
-  "The candidate's accuracy or rejection rate when a guard stopped the rollout."
-  haltCandidateRate: Float!
-  "Production's accuracy or rejection rate when a guard stopped the rollout."
-  haltBaselineRate: Float!
-  updatedById: ID
-  version: Int!
-  "Zero until the rollout is first saved."
-  updatedAt: Timestamp!
-}
-
-"The extractions assigned to one side of the rollout since it started."
-type ExtractionRolloutArm {
-  assigned: Int!
-  pending: Int!
-  accepted: Int!
-  rejected: Int!
-  failed: Int!
-  "Extracted again before the answer was applied; not counted for either side."
-  superseded: Int!
-  "Assigned to the candidate but served by production because the candidate could not answer."
-  fellBack: Int!
-  "Rejected and failed answers divided by settled ones, leaving out fallbacks."
-  rejectionRate: Float!
-}
-
-"Confirmed fields read by one side since the rollout started."
-type ExtractionRolloutAccuracy {
-  scored: Int!
-  correct: Int!
-  "Correct divided by scored; zero when nothing was scored."
-  accuracy: Float!
-}
-
-"How the candidate is doing on the documents it serves, beside production on the rest."
-type ExtractionRolloutReport {
-  rollout: ExtractionRollout!
-  providerName: String!
-  candidate: ExtractionRolloutArm!
-  control: ExtractionRolloutArm!
-  candidateAccuracy: ExtractionRolloutAccuracy!
-  productionAccuracy: ExtractionRolloutAccuracy!
-  "Per field, the candidate's biggest shortfall against production first."
-  fields: [ExtractionShadowFieldComparison!]!
-  "True when there were more corrections than the field comparison read."
-  truncated: Boolean!
-  "Confirmed fields each side needs before the accuracy guard can stop the rollout."
-  minGuardScoredFields: Int!
-  "Settled extractions each side needs before the rejection guard can stop the rollout."
-  minGuardExtractions: Int!
-}
-
-input UpdateExtractionRolloutInput {
-  enabled: Boolean!
-  providerId: ID
-  percent: Int!
-  maxAccuracyDropPoints: Int!
-  maxRejectionIncreasePoints: Int!
-  version: Int!
-}
-
-extend type Query {
-  extractionRollout: ExtractionRollout!
-  extractionRolloutReport: ExtractionRolloutReport!
-}
-
-extend type Mutation {
-  "Chooses the candidate provider that serves a share of real document extractions, how much of it, and when to stop."
-  updateExtractionRollout(input: UpdateExtractionRolloutInput!): ExtractionRollout!
-}
-`, BuiltIn: false},
-	{Name: "../schema/extractionshadow.graphqls", Input: `enum ExtractionShadowResultStatus {
-  Pending
-  Completed
-  Failed
-  Skipped
-}
-
-enum ExtractionShadowVerdict {
-  Better
-  Worse
-  Same
-}
-
-"How production document extraction is shadowed by a candidate AI provider."
-type ExtractionShadowSettings {
-  enabled: Boolean!
-  "The candidate AI provider; set even while the shadow is off, so turning it back on keeps the choice."
-  providerId: ID
-  "The share of production extractions also sent to the candidate, 1 to 100."
-  samplePercent: Int!
-  "The most shadow extractions started in any 24 hours."
-  dailyLimit: Int!
-  updatedById: ID
-  version: Int!
-  "Zero until the settings are first saved."
-  updatedAt: Timestamp!
-}
-
-"A production extraction run again on the candidate provider, never applied, and scored beside production against the confirmed shipment."
-type ExtractionShadowResult {
-  id: ID!
-  organizationId: ID!
-  businessUnitId: ID!
-  documentId: ID!
-  "When the production extraction this shadows was made."
-  extractedAt: Timestamp!
-  status: ExtractionShadowResultStatus!
-  "Why the shadow was skipped or failed."
-  statusReason: String!
-  providerId: ID!
-  providerName: String!
-  "The model the candidate reported serving."
-  servedModel: String!
-  productionProviderId: ID
-  productionModel: String!
-  "Whether the candidate's answer passed the checks production's must pass to replace the rule-based reading."
-  accepted: Boolean!
-  rejectionReason: String!
-  "The draft the candidate would have produced."
-  predicted: ExtractionSnapshot
-  "The correction the shadow was scored against; empty until a person confirms the document."
-  correctionId: ID
-  scoredAt: Timestamp
-  verdict: ExtractionShadowVerdict
-  fieldResults: [AICorrectionFieldResult!]!
-  scoredCount: Int!
-  correctCount: Int!
-  correctedCount: Int!
-  missedCount: Int!
-  accuracy: Float!
-  "How production's draft for the same document scored against the same confirmed shipment."
-  baselineFieldResults: [AICorrectionFieldResult!]!
-  baselineScoredCount: Int!
-  baselineCorrectCount: Int!
-  baselineCorrectedCount: Int!
-  baselineMissedCount: Int!
-  baselineAccuracy: Float!
-  latencyMs: Int!
-  inputTokens: Int!
-  outputTokens: Int!
-  costUsd: Decimal!
-  workflowId: String!
-  startedAt: Timestamp
-  completedAt: Timestamp
-  version: Int!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-}
-
-type ExtractionShadowResultEdge {
-  node: ExtractionShadowResult!
-  cursor: String!
-}
-
-type ExtractionShadowResultConnection {
-  edges: [ExtractionShadowResultEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int
-  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
-  totalCountExact: Boolean!
-}
-
-"One side of a shadow comparison, over the documents both sides were scored on."
-type ExtractionShadowSide {
-  scored: Int!
-  correct: Int!
-  corrected: Int!
-  missed: Int!
-  "Correct divided by scored; zero when nothing was scored."
-  accuracy: Float!
-}
-
-type ExtractionShadowFieldComparison {
-  "A field key, with stop fields grouped across stops (stops.pickup.city)."
-  key: String!
-  candidateScored: Int!
-  candidateCorrect: Int!
-  candidateAccuracy: Float!
-  productionScored: Int!
-  productionCorrect: Int!
-  productionAccuracy: Float!
-}
-
-"How a candidate provider did against production on the same documents over a window."
-type ExtractionShadowReport {
-  windowDays: Int!
-  since: Timestamp!
-  "The candidate reported on; empty when none has been chosen."
-  providerId: ID
-  providerName: String!
-  "Shadow extractions started in the window, in every state."
-  sampled: Int!
-  pending: Int!
-  completed: Int!
-  failed: Int!
-  skipped: Int!
-  "Shadows scored against a confirmed shipment."
-  scored: Int!
-  "True when the window held more scored shadows than were read."
-  truncated: Boolean!
-  better: Int!
-  worse: Int!
-  same: Int!
-  candidate: ExtractionShadowSide!
-  production: ExtractionShadowSide!
-  "Per field, the candidate's biggest shortfall against production first."
-  fields: [ExtractionShadowFieldComparison!]!
-  costUsd: Decimal!
-  avgLatencyMs: Int!
-}
-
-input UpdateExtractionShadowSettingsInput {
-  enabled: Boolean!
-  providerId: ID
-  samplePercent: Int!
-  dailyLimit: Int!
-  version: Int!
-}
-
-extend type Query {
-  extractionShadowSettings: ExtractionShadowSettings!
-  extractionShadowReport(windowDays: Int, providerId: ID): ExtractionShadowReport!
-  extractionShadowResults(input: DataTableConnectionInput!): ExtractionShadowResultConnection!
-  extractionShadowResult(id: ID!): ExtractionShadowResult
-}
-
-extend type Mutation {
-  "Chooses the candidate provider that shadows production document extraction, and how much of it."
-  updateExtractionShadowSettings(input: UpdateExtractionShadowSettingsInput!): ExtractionShadowSettings!
 }
 `, BuiltIn: false},
 	{Name: "../schema/factoring.graphqls", Input: `enum FactoringAgreementStatus {

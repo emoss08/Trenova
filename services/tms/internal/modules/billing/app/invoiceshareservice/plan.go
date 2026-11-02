@@ -104,7 +104,7 @@ func (s *Service) PreviewShare(
 		UserID: plan.sharer.ID,
 	}
 	baseURL := s.cfg.GetWebBaseURL()
-	canEmail := baseURL != "" && s.emailService != nil && s.templates != nil
+	canEmail := baseURL != ""
 	companyName := ""
 	if canEmail {
 		companyName = s.companyName(ctx, tenantInfo)

@@ -70,8 +70,8 @@ describe("ExtractionNeedsProviderAlert", () => {
 
     renderAlert();
 
-    expect(await screen.findByText("Extraction needs a model provider")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Add an AI provider" })).toHaveAttribute(
+    expect(await screen.findByText("Extraction needs Nova")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Choose a provider for Nova" })).toHaveAttribute(
       "href",
       "/admin/agent-control?tab=providers",
     );
@@ -84,9 +84,11 @@ describe("ExtractionNeedsProviderAlert", () => {
     renderAlert();
 
     expect(
-      await screen.findByText("Ask an administrator to add an AI provider."),
+      await screen.findByText("Ask an administrator to choose a provider for Nova."),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Add an AI provider" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Choose a provider for Nova" }),
+    ).not.toBeInTheDocument();
   });
 
   it("hides the link when the plan withholds agent automation", async () => {
@@ -97,9 +99,11 @@ describe("ExtractionNeedsProviderAlert", () => {
     renderAlert();
 
     expect(
-      await screen.findByText("Ask an administrator to add an AI provider."),
+      await screen.findByText("Ask an administrator to choose a provider for Nova."),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Add an AI provider" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Choose a provider for Nova" }),
+    ).not.toBeInTheDocument();
   });
 
   it("says the converter is not configured rather than asking for a provider", async () => {
@@ -116,8 +120,10 @@ describe("ExtractionNeedsProviderAlert", () => {
     expect(
       screen.getByText("Ask an administrator to configure the document converter."),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Extraction needs a model provider")).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Add an AI provider" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Extraction needs Nova")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Choose a provider for Nova" }),
+    ).not.toBeInTheDocument();
   });
 
   it("names the server switch rather than asking for a provider when extraction is off", async () => {
@@ -130,8 +136,10 @@ describe("ExtractionNeedsProviderAlert", () => {
     expect(
       screen.getByText("Ask an administrator to set ai.documentExtraction to true."),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Extraction needs a model provider")).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Add an AI provider" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Extraction needs Nova")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Choose a provider for Nova" }),
+    ).not.toBeInTheDocument();
   });
 
   it("says the plan leaves extraction out rather than asking for a provider", async () => {
@@ -141,7 +149,9 @@ describe("ExtractionNeedsProviderAlert", () => {
     renderAlert();
 
     expect(await screen.findByText("Extraction is not in your plan")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Add an AI provider" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Choose a provider for Nova" }),
+    ).not.toBeInTheDocument();
   });
 
   it("treats a status without a reason as a missing provider", async () => {
@@ -150,7 +160,7 @@ describe("ExtractionNeedsProviderAlert", () => {
 
     renderAlert();
 
-    expect(await screen.findByText("Extraction needs a model provider")).toBeInTheDocument();
+    expect(await screen.findByText("Extraction needs Nova")).toBeInTheDocument();
   });
 
   it("stays hidden while documents can be read", async () => {
@@ -164,6 +174,6 @@ describe("ExtractionNeedsProviderAlert", () => {
     const { container } = renderAlert();
 
     await vi.waitFor(() => expect(container).toBeEmptyDOMElement());
-    expect(screen.queryByText("Extraction needs a model provider")).not.toBeInTheDocument();
+    expect(screen.queryByText("Extraction needs Nova")).not.toBeInTheDocument();
   });
 });

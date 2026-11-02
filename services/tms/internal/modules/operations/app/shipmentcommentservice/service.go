@@ -566,7 +566,7 @@ func (s *service) notifyMentions(
 	authorID pulid.ID,
 	targetIDs []pulid.ID,
 ) {
-	if s.notificationService == nil || len(targetIDs) == 0 {
+	if len(targetIDs) == 0 {
 		return
 	}
 
@@ -643,7 +643,7 @@ func (s *service) notifyReply(
 	shp *shipment.Shipment,
 	authorID pulid.ID,
 ) {
-	if s.notificationService == nil || parent == nil {
+	if parent == nil {
 		return
 	}
 	if parent.UserID.IsNil() || parent.UserID == authorID {
@@ -964,12 +964,6 @@ func (s *service) renderCommentNotification(
 	referenceID pulid.ID,
 	data *notificationtemplate.CommentNotificationContext,
 ) (commentNotificationWording, bool) {
-	if s.templates == nil {
-		s.l.Warn("template rendering is not configured; skipping comment notification",
-			zap.String("kind", string(kind)))
-		return commentNotificationWording{}, false
-	}
-
 	rendered, err := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo:        tenantInfo,
 		Kind:              kind,

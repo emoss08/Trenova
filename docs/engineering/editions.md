@@ -86,16 +86,6 @@ string the public app also uses stays in the public catalog. `task i18n-check` c
 both. At runtime the edition's `messages` loaders are layered over the app catalog with
 `registerCatalogSource` (`packages/shared/src/i18n/runtime.ts`).
 
-The Go side works the same way. Go strings under `services/tms/internal/cloud/` never
-enter the public catalogs: `task i18n` splits them off by path into
-`services/tms/internal/cloud/i18n/messages.<locale>.json`, and emit writes the runtime
-catalogs the overlay embeds at `services/tms/internal/cloud/i18n/catalogs/<locale>.json`.
-The overlay's `cloudi18n` package registers them from `init` with
-`i18n.RegisterCatalogFS` (`shared/i18n/catalog.go`), which layers them over the public
-catalogs when they first load. Registering after a lookup has loaded the catalogs returns
-`i18n.ErrCatalogsLoaded`. Run `task i18n` with the overlay in the tree whenever Cloud
-strings change, and commit both the overlay catalogs (in the private repository) and the
-public catalogs.
 
 ## The overlay contract
 
@@ -148,49 +138,10 @@ files that used to live in the apps (wrangler configs, the edge worker, `_header
 Dash root-index fallback) are kept in `client/packages/cloud/cloudflare/` for the
 private build.
 
-## Server seams
+## The server has no edition
 
-Cloud Go code is overlaid into `services/tms/internal/cloud/` plus one registration file per
-binary: `cmd/cli/edition_cloud.go`, `cmd/api/edition_cloud.go`, `cmd/worker/edition_cloud.go`,
-`cmd/db/edition_cloud.go` and `cmd/devdb/edition_cloud.go`, each calling
-`edition.Register(cloud.Edition())`. Each main registers its edition separately, so
-a binary without its file runs the self-hosted edition. The build must pass with and without the
-overlay, so **public code never imports `internal/cloud`**.
-
-An edition registers through `internal/bootstrap/edition`: fx options for every process
-(`Options`), the API (`APIOptions`) or the worker (`WorkerOptions`), Cobra commands, keel
-migration sources (`Migrations []migrate.Source`, each named other than `core`, merged with the
-public migrations into one version line; a version both hold is refused) and configuration
-sections the loader decodes strictly on the edition's behalf. Only `trenova-db` and
-`trenova-devdb` read `Migrations`: register the sources from the db binaries' files and leave them
-out of the server binaries' registration, so the API and worker link no migration. The public graph always provides the self-hosted
-implementation of every platform port (`PlanService`, `QuotaGuard`, `EntitlementProvider`,
-`BillingProvider`, `UsageProvider`, `EditionInfo`, `AITrainingHistoryService`); an edition swaps
-them with root-level `fx.Decorate`. Routes and middleware join through the
-`internal/api/routegroup` value groups, GraphQL extensions through `edition_graphql_extensions`,
-and `GET /system/public-config` fields through `public_config_contributors`. Decide behaviour
-from an injected port (`PlanService.EnforcesPlans`, `EditionInfo.SharedTenancy`, an onboarding
-row existing), never from `platform.mode`.
-
-Every seam below has an inert self-hosted default, so a build without `internal/cloud` behaves
-exactly as before.
-
-| Seam | Where | Self-hosted default | Cloud uses it for |
-|---|---|---|---|
-| `permissionports.DelegatedPermissionSource` | `internal/modules/identity/ports/permissionports/permission.go`, read by `permission/engine.go` (`optional:"true"`) | not provided; the engine computes permissions from role assignments only | the Trenova support principal's permissions inside a support session (read on every resource when read-only; every operation except identity, role, API key, SSO/SCIM, access policy and two-factor resources when elevated) |
-| `routegroup.AsProtectedMiddleware` / `AsProtectedRoutes` | `internal/api/routegroup` | empty groups | the support session middleware (resolves the support cookie, refuses denied routes and every write in a read-only session, rebinds the request to the target organization's RLS scope as the principal) and the `/support-access/` and `/support/` routes |
-| GraphQL `AsExtension` (`OperationContextMutator`) | `internal/api/graphql` | none | refusing mutations and denied fields in a support session with `SUPPORT_SESSION_READ_ONLY` / `SUPPORT_SESSION_DENIED` |
-| Root `fx.Decorate` of `tenantports.AuthService` | edition `APIOptions` | undecorated | ending a staff member's support sessions when they sign out |
-
-Two-factor sign-in (TOTP authenticator apps and recovery codes, `mfaservice`,
-`POST /auth/mfa/verify`, `/users/me/mfa/…`) is a public feature, not a seam: support
-access requires that the staff member's session was signed in at assurance level 2,
-which only the public flow produces.
-
-A delegated permission source must answer only for the identities it owns and return
-`ok = false` for everything else; it never widens a customer user's permissions, and it
-never bypasses row-level security — the support middleware enters the target tenant
-through `authctx.SetSessionAuthContext`, so every query still runs under that
-organization's policies. Cloud-only tables (`platform_staff_members`,
-`support_access_grants`, `support_principals`, `support_sessions`) ship in the edition's
-own migration set under `internal/cloud/supportaccess/migrations`.
+The server builds one product. There is no edition registry, no config sections, route groups,
+GraphQL extension group or public-config contributors for an overlay to join. The platform ports
+(`PlanService`, `QuotaGuard`, `EntitlementProvider`, `BillingProvider`, `UsageProvider`,
+`EditionInfo`) keep their self-hosted implementations; decide behaviour from an injected port,
+never from `platform.mode`.

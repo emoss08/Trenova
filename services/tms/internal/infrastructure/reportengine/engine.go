@@ -36,7 +36,7 @@ type Params struct {
 	LC              fx.Lifecycle
 	DB              *postgres.ReportingConnection
 	Catalog         *analytics.Catalog
-	Redis           *redis.Client `optional:"true"`
+	Redis           *redis.Client
 	ReportingConfig *reportingconfig.Config
 	Logger          *zap.Logger
 }
@@ -95,7 +95,7 @@ func (e *Engine) resultStore() analytics.Cache {
 		return nil
 	}
 	local := cache.NewMemory(cache.MemoryOptions{MaxBytes: cfg.GetLocalBytes()})
-	if !cfg.SharedEnabled() || e.redis == nil {
+	if !cfg.SharedEnabled() {
 		return local
 	}
 	return &tieredStore{

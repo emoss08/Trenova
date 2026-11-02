@@ -23,7 +23,7 @@ func (s *Service) assignFactoring(
 	entity *invoice.Invoice,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	if s.customerRepo == nil || s.factoringRepo == nil || entity.CustomerID.IsNil() {
+	if entity.CustomerID.IsNil() {
 		return nil
 	}
 	if entity.FactoringOverride.Excludes() {
@@ -75,9 +75,6 @@ func (s *Service) assignAgreement(
 	factorID pulid.ID,
 ) error {
 	entity.FactoringAgreementID = nil
-	if s.agreementRepo == nil {
-		return nil
-	}
 	at := timeutils.NowUnix()
 	if entity.PostedAt != nil {
 		at = *entity.PostedAt

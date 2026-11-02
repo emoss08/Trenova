@@ -130,10 +130,6 @@ func (r *repository) linkDetentionOccurrences(
 	entity *shipment.Shipment,
 	deletedDetention bool,
 ) error {
-	if r.occurrenceRepo == nil {
-		return nil
-	}
-
 	links := make(map[pulid.ID][]pulid.ID, 1)
 	for _, charge := range entity.AdditionalCharges {
 		if charge == nil || charge.Owner() != shipmentvocab.SystemOwnerDetention ||

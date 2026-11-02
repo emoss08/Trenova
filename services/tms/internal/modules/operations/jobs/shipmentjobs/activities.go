@@ -34,7 +34,7 @@ type ActivitiesParams struct {
 	AuditService auditports.AuditService
 	EventService shipmenteventports.ShipmentEventService
 	Invalidator  shipmentinvalidationports.ShipmentInvalidator
-	AgentEvents  agenteventports.AgentEventPublisher `optional:"true"`
+	AgentEvents  agenteventports.AgentEventPublisher
 	Logger       *zap.Logger
 }
 
@@ -101,21 +101,19 @@ func (a *Activities) BulkDuplicateShipmentsActivity(
 			a.logger.Error("failed to log duplicated shipment audit action", zap.Error(auditErr))
 		}
 
-		if a.eventService != nil {
-			if eventErr := a.eventService.Record(ctx, shipmenteventservice.BuildShipmentCreated(
-				shipmenteventservice.TenantRef{
-					OrganizationID: entity.OrganizationID,
-					BusinessUnitID: entity.BusinessUnitID,
-				},
-				entity,
-				kernelports.AuditActor{
-					UserID:        payload.RequestedBy,
-					PrincipalType: permissionports.PrincipalTypeUser,
-					PrincipalID:   payload.RequestedBy,
-				},
-			)); eventErr != nil {
-				a.logger.Warn("failed to record duplicated shipment event", zap.Error(eventErr))
-			}
+		if eventErr := a.eventService.Record(ctx, shipmenteventservice.BuildShipmentCreated(
+			shipmenteventservice.TenantRef{
+				OrganizationID: entity.OrganizationID,
+				BusinessUnitID: entity.BusinessUnitID,
+			},
+			entity,
+			kernelports.AuditActor{
+				UserID:        payload.RequestedBy,
+				PrincipalType: permissionports.PrincipalTypeUser,
+				PrincipalID:   payload.RequestedBy,
+			},
+		)); eventErr != nil {
+			a.logger.Warn("failed to record duplicated shipment event", zap.Error(eventErr))
 		}
 
 		agenteventports.PublishAgentEvent(ctx, a.agentEvents, agenteventports.AgentEvent{

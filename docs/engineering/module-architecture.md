@@ -157,7 +157,7 @@ type CarrierCostAccrual interface {
 }
 
 // internal/modules/rating/app/carrierassignmentservice (level 6) takes it as a dependency
-CostAccrual carrierports.CarrierCostAccrual `optional:"true"`
+CostAccrual carrierports.CarrierCostAccrual
 
 // internal/modules/settlement/module.go (level 9) provides it
 func(s *carriersettlementservice.Service) carrierports.CarrierCostAccrual { return s },
@@ -191,26 +191,32 @@ Tests build repositories with the same `crossref` functions, so a test and the r
 process read the same columns. Add a column port when the need is a read of another module's
 table; use an interface port when the need is that module's behaviour.
 
-An `optional:"true"` dependency resolves to nil when nothing provides it, and the service then
-silently does nothing. If the port must be present in a process, add it to
-`TestWiring_BestEffortPortsAreActuallyProvided` in `internal/bootstrap/wiring_test.go`, which
-asks for it without the tag in every graph.
+A dependency is required; there is no `optional:"true"` on a service's port. When a port has
+no implementation in some process, fix the graph instead of tagging the field:
+
+- **The port only starts work elsewhere** (a workflow, a signal, a schedule): give it a
+  `<jobs>contract` implementation that every process provides from `SharedOptions`, as
+  `accountingsynccontract.NewReferenceRefresher` and `agentqualitycontract.NewQualitySchedules` do.
+- **The port needs something only the worker has** (Docling, a GPU, a long-running client):
+  split the caller so the part that needs it is its own type, provided only in the worker, as
+  `captureprocessing.BatchProcessor` is beside the shared `captureprocessing.Service`.
+
+A slice that collects contributions is a value group (`group:"…"`), empty when nothing
+contributes, never an optional slice.
 
 ## Binaries
 
 | Binary | Graph | Watch task |
 |---|---|---|
-| `cmd/api` | `core.OptionsFor(e)` + `apiapp.OptionsFor(e)` | `task run-watch` (`gocut watch`, or air with `.air.toml`; build command `WATCH_BUILD`) |
-| `cmd/worker` | `core.OptionsFor(e)` + `workerapp.Modules()` + `workerapp.OptionsFor(e)`; `--queues` limits task queues | `task run-worker-watch` |
+| `cmd/api` | `core.Options()` + `apiapp.Options()` | `task run-watch` (`gocut watch`, or air with `.air.toml`; build command `WATCH_BUILD`) |
+| `cmd/worker` | `core.Options()` + `workerapp.Modules()` + `workerapp.Options()`; `--queues` limits task queues | `task run-worker-watch` |
 | `cmd/cli` | `bootstrap.Options()` (core plus `workerapp.Modules()`), with `apiapp` for `api run` or `workerapp` for `worker run` | none; the production image runs it |
 
 `internal/bootstrap/core` holds what every process needs: configuration, infrastructure, the
-Temporal client, every module's `SharedOptions()` and the edition's `Options`. `apiapp` adds the
-HTTP server, GraphQL, handlers, middleware, every module's `APIOptions()` and the edition's
-`APIOptions`. `workerapp.Modules()` adds every module's `jobs.WorkerOptions()` and the schedule
-module; `workerapp.OptionsFor` adds the worker runtime (`temporaljobs.WorkerModule` from
-`internal/infrastructure/temporaljobs`), the agent runtime's worker modules and the edition's
-`WorkerOptions`.
+Temporal client and every module's `SharedOptions()`. `apiapp` adds the
+HTTP server, GraphQL, handlers, middleware and every module's `APIOptions()`. `workerapp.Modules()` adds every module's `jobs.WorkerOptions()` and the schedule
+module; `workerapp.Options` adds the worker runtime (`temporaljobs.WorkerModule` from
+`internal/infrastructure/temporaljobs`) and the agent runtime's worker modules.
 
 `run-watch`, `watch` and `run-worker-watch` build with one command, `WATCH_BUILD` in
 `services/tms/Taskfile.yml`, passed to `gocut watch --build` (or air's `--build.cmd`):
@@ -249,8 +255,6 @@ default 10% verify sample takes an exported function added to `domain/shipment` 
 (median of three), the same edit inserted mid-file from 82 s to 31 s, and a line added inside an
 unexported function in `shipment.go` from 80 s to 29 s. It reused all 1,041 recompiled packages,
 and every shadow comparison and verified reuse was byte-identical to the compiler's output.
-
-Each main registers its edition separately; see "Server seams" in [editions.md](editions.md).
 
 ### Why `WorkerOptions` live in the jobs package
 
@@ -294,8 +298,8 @@ as the Temporal runtime, `m2msync`, and the storage and search clients.
    and a `module.go` in `package <module>` exporting `SharedOptions()` and `APIOptions()`
    (return `fx.Options()` when there is nothing API-only).
 3. If it has workflows, create `jobs/jobs.go` (`package jobs`) exporting `WorkerOptions()`.
-4. Register it: `<module>.SharedOptions()` in `core.OptionsFor`
-   (`internal/bootstrap/core/core.go`), `<module>.APIOptions()` in `apiapp.OptionsFor`, and
+4. Register it: `<module>.SharedOptions()` in `core.Options`
+   (`internal/bootstrap/core/core.go`), `<module>.APIOptions()` in `apiapp.Options`, and
    `<module>worker.WorkerOptions()` in `workerapp.Modules()`. Keep each list in level order.
 5. In `.go-arch-lint.yml`, add the eight components (`<module>-domain`, `-ports`, `-app`,
    `-adapters`, `-jobs`, `-contracts`, `-module`, `-test`) with the same `in:` globs as the

@@ -113,12 +113,11 @@ type AISignatureReading struct {
 }
 
 type AIExtractRequest struct {
-	TenantInfo          pagination.TenantInfo
-	DocumentID          pulid.ID
-	FileName            string
-	Text                string
-	Pages               []AIDocumentPage
-	PreferredProviderID pulid.ID
+	TenantInfo pagination.TenantInfo
+	DocumentID pulid.ID
+	FileName   string
+	Text       string
+	Pages      []AIDocumentPage
 }
 
 type AIExtractResult struct {

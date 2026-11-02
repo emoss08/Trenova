@@ -346,12 +346,6 @@ func (s *Service) encryptProfileSecret(
 	key string,
 	value string,
 ) (string, error) {
-	if s.encryption == nil {
-		return "", errortypes.NewBusinessError(
-			"EDI communication profile secrets cannot be saved because the encryption service is not configured",
-		)
-	}
-
 	encrypted, err := s.encryption.EncryptStringWithAAD(
 		value,
 		ediprofilesecret.ProfileSecretAAD(req.TenantInfo, profileID, key),

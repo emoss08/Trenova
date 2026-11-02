@@ -752,9 +752,6 @@ func (s *Service) completeRequest(ctx context.Context, batch *capture.CaptureBat
 // start fails, the batch stays sealed and the reconcile sweep starts it later:
 // the pages are already safe, so there is nothing to fail back to the device.
 func (s *Service) StartProcessing(ctx context.Context, batch *capture.CaptureBatch) {
-	if s.workflows == nil || !s.workflows.Enabled() {
-		return
-	}
 
 	_, err := s.workflows.StartWorkflow(ctx,
 		client.StartWorkflowOptions{

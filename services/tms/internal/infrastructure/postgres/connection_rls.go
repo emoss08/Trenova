@@ -111,7 +111,7 @@ func newScopeLogReporter(
 }
 
 func (r *scopeLogReporter) Report(ctx context.Context, event *scopeEvent) {
-	if r.metrics != nil && r.metrics.Database != nil {
+	if r.metrics.Database != nil {
 		r.metrics.Database.RecordRLSScopeEvent(string(event.Pool), event.Event, event.Outcome)
 	}
 

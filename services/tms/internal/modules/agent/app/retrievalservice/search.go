@@ -42,7 +42,7 @@ type SearcherParams struct {
 	Repo       retrievalports.AIRetrievalRepository
 	Sources    retrievalports.RetrievalSourceRepository
 	Registry   *permissioncatalog.Registry
-	Vectorizer retrievalports.QueryVectorizer `optional:"true"`
+	Vectorizer retrievalports.QueryVectorizer
 }
 
 type Searcher struct {
@@ -56,9 +56,6 @@ type Searcher struct {
 
 func NewSearcher(p SearcherParams) *Searcher {
 	registry := p.Registry
-	if registry == nil {
-		registry = permissioncatalog.NewRegistry()
-	}
 
 	return &Searcher{
 		l:          p.Logger.Named("service.retrieval-search"),
@@ -166,12 +163,6 @@ func (s *Searcher) vectorLeg(
 	plan searchPlan,
 	sourceType airetrieval.SourceType,
 ) (hits []retrievalports.VectorSearchHit, semantics retrievalports.RetrievalSemantics, modelKey string) {
-	if s.vectorizer == nil {
-		return nil, retrievalports.RetrievalSemantics{
-			Reason: airetrieval.UnavailableReasonNoProvider,
-		}, ""
-	}
-
 	settings, err := s.repo.GetSettings(ctx, req.TenantInfo)
 	if err != nil {
 		s.l.Warn("retrieval settings could not be read; searching by keyword only",

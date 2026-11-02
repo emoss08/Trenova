@@ -72,7 +72,7 @@ func PreviewRoutes(enabled []*aiprovider.Provider, draft *aiprovider.Provider) [
 		return compareAge(a, b, draft)
 	})
 
-	tasks := aitask.AllTasks()
+	tasks := aitask.RoutedTasks()
 	routes := make([]TaskRoute, 0, len(tasks))
 	for _, task := range tasks {
 		routes = append(routes, TaskRoute{

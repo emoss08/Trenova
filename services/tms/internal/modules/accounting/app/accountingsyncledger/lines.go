@@ -111,7 +111,7 @@ func (p *Pusher) ledgerPartyNeeds(
 		ids = append(ids, externalID)
 	}
 	needs := make(map[string]accountingmapping.LedgerPartyNeed, len(ids))
-	if len(ids) == 0 || p.references == nil {
+	if len(ids) == 0 {
 		return needs, nil
 	}
 	refs, err := p.references.GetByExternalIDs(

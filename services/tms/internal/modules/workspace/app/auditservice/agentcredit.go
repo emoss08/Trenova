@@ -43,8 +43,7 @@ func (c *agentCredits) credit(entry *audit.Entry) {
 }
 
 func (c *agentCredits) nameOf(entry *audit.Entry) string {
-	if c == nil || c.definitions == nil ||
-		entry.PrincipalID.Prefix() != agentdefinition.IDPrefix {
+	if c == nil || entry.PrincipalID.Prefix() != agentdefinition.IDPrefix {
 		return ""
 	}
 

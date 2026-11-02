@@ -76,19 +76,19 @@ export function ExtractionNeedsProviderAlert({ className }: { className?: string
   return (
     <Alert variant="warning" size="sm" className={className}>
       <AlertCircleIcon />
-      <AlertTitle>{t("Extraction needs a model provider")}</AlertTitle>
+      <AlertTitle>{t("Extraction needs Nova")}</AlertTitle>
       <AlertDescription>
         <p>
           {t(
-            "No AI provider is assigned to document extraction for your organization, so uploaded files are stored but not read and no shipment draft is built. A provider that serves chat reads documents only once the Document extraction task is assigned to it.",
+            "Nova reads uploaded documents, and no provider is chosen for Nova, so uploaded files are stored but not read and no shipment draft is built. Nova runs on an Anthropic provider's key.",
           )}
         </p>
         {canAddProvider ? (
           <Link to={AI_SETUP_PATH} className="text-foreground underline underline-offset-2">
-            {t("Add an AI provider")}
+            {t("Choose a provider for Nova")}
           </Link>
         ) : (
-          <p>{t("Ask an administrator to add an AI provider.")}</p>
+          <p>{t("Ask an administrator to choose a provider for Nova.")}</p>
         )}
       </AlertDescription>
     </Alert>

@@ -32,7 +32,7 @@ type Params struct {
 	Mappings    accountingmappingports.AccountingMappingRepository
 	Orgs        tenantports.OrganizationRepository
 	Ledger      journalentryports.AccountingLedgerSource
-	Dispatcher  accountingsyncports.AccountingSyncDispatcher `optional:"true"`
+	Dispatcher  accountingsyncports.AccountingSyncDispatcher
 }
 
 type Enqueuer struct {
@@ -408,7 +408,7 @@ func (e *Enqueuer) kickAfterCommit(
 	tenantInfo pagination.TenantInfo,
 	inserted []*accountingsync.AccountingSyncRecord,
 ) {
-	if e.dispatcher == nil || len(inserted) == 0 {
+	if len(inserted) == 0 {
 		return
 	}
 	connectionIDs := make(map[pulid.ID]struct{}, 1)

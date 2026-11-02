@@ -30,9 +30,6 @@ func (s *Service) invoice(
 		ID:    invoiceID.String(),
 		Label: "Invoice",
 	}
-	if s.invoices == nil {
-		return subject, nil
-	}
 
 	found, err := s.invoices.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         invoiceID,
@@ -78,9 +75,6 @@ func (s *Service) invoiceDispute(
 		ID:    disputeID.String(),
 		Label: "Invoice dispute",
 	}
-	if s.disputes == nil {
-		return subject, nil
-	}
 
 	found, err := s.disputes.GetByID(ctx, invoiceports.GetInvoiceDisputeByIDRequest{
 		ID:         disputeID,
@@ -102,17 +96,15 @@ func (s *Service) invoiceDispute(
 		"invoiceId":       found.InvoiceID,
 		noteCustomerID:    found.CustomerID,
 	}
-	if s.invoices != nil {
-		billed, invErr := s.invoices.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
-			ID:         found.InvoiceID,
-			TenantInfo: tenant,
-		})
-		if invErr != nil {
-			return nil, fmt.Errorf("load the disputed invoice: %w", invErr)
-		}
-		subject.Label = "Dispute on invoice " + billed.Number
-		notes["invoice"] = invoiceNotes(billed)
+	billed, invErr := s.invoices.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
+		ID:         found.InvoiceID,
+		TenantInfo: tenant,
+	})
+	if invErr != nil {
+		return nil, fmt.Errorf("load the disputed invoice: %w", invErr)
 	}
+	subject.Label = "Dispute on invoice " + billed.Number
+	notes["invoice"] = invoiceNotes(billed)
 	subject.Notes = marshalNotes(notes)
 
 	return subject, nil

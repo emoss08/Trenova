@@ -132,10 +132,6 @@ func (s *Service) Publish(
 	audience pulid.ID,
 	entity any,
 ) {
-	if s.realtime == nil {
-		return
-	}
-
 	if err := s.realtime.PublishResourceInvalidation(
 		ctx,
 		&realtimeports.PublishResourceInvalidationRequest{
@@ -161,10 +157,6 @@ func (s *Service) Publish(
 // logAudit records an action in the audit trail. A failure to record is
 // logged, never returned: the action already happened.
 func (s *Service) LogAudit(params *auditports.LogActionParams, comment string) {
-	if s.audit == nil {
-		return
-	}
-
 	if err := s.audit.LogAction(params, auditservice.WithComment(comment)); err != nil {
 		s.l.Error("failed to record capture audit entry",
 			zap.String("resource", params.Resource.String()),

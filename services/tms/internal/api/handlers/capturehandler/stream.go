@@ -54,12 +54,6 @@ type streamedInvalidation struct {
 // @Security BearerAuth
 // @Router /capture/device/stream/ [get]
 func (h *Handler) stream(c *gin.Context) {
-	if h.gateway == nil {
-		h.eh.HandleError(c, errortypes.NewBusinessError("Live updates are not available"))
-
-		return
-	}
-
 	principal := devicePrincipal(c)
 	tenantInfo := principal.TenantInfo()
 	ctx := c.Request.Context()

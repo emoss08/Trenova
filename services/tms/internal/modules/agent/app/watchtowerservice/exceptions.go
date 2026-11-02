@@ -35,8 +35,8 @@ type ExceptionsParams struct {
 	Projector     *Projector
 	Router        *Router
 	Permissions   permissionports.PermissionEngine
-	Audit         auditports.AuditService      `optional:"true"`
-	Notifications *notificationservice.Service `optional:"true"`
+	Audit         auditports.AuditService
+	Notifications *notificationservice.Service
 }
 
 type Exceptions struct {
@@ -449,7 +449,7 @@ func (s *Exceptions) auditException(
 	actor *permissionports.RequestActor,
 	events []*watchtower.Event,
 ) {
-	if s.audit == nil || len(events) == 0 {
+	if len(events) == 0 {
 		return
 	}
 
@@ -536,7 +536,7 @@ func (s *Exceptions) notifyAssignee(
 	item *watchtower.Item,
 	notice assigneeNotice,
 ) {
-	if s.notifications == nil || item.AssigneeID.IsNil() {
+	if item.AssigneeID.IsNil() {
 		return
 	}
 

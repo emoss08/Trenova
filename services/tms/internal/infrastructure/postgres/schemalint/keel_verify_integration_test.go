@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/keeltables"
@@ -24,7 +26,7 @@ func TestEveryKeelModelMatchesTheMigratedSchema(t *testing.T) {
 	drifts, err := keel.Verify(ctx, db, keeltables.All())
 	require.NoError(t, err)
 
-	vector := postgres.NewTestCapabilityProbe(postgres.NewTestConnection(db)).VectorReady(ctx)
+	vector := dbtest.CapabilityProbe(postgres.WrapDB(db)).VectorReady(ctx)
 	lines := make([]string, 0, len(drifts))
 	for _, d := range drifts {
 		if !vector && d.Kind == keel.DriftMissingTable && slices.Contains(vectorTables, d.Table) {
