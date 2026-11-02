@@ -90,7 +90,7 @@ func ownerOperatorFilter(now int64) keel.Pred {
 	)
 }
 
-func selectOptionsQuery(ownerOperatorsOnly bool, now int64) *keel.Query[*worker.Worker] {
+func selectOptionsQuery(ownerOperatorsOnly bool, now int64) keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 
 	return w.Pick(w.ID, w.CreatedAt, w.FirstName, w.LastName, w.FleetCodeID, w.Status).
@@ -145,7 +145,7 @@ func (r *repository) List(
 				&listquery.Request[worker.Worker]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
-					Shape: func(q *keel.Query[*worker.Worker]) *keel.Query[*worker.Worker] {
+					Shape: func(q keel.Query[*worker.Worker]) keel.Query[*worker.Worker] {
 						return q.Load(w.FleetCode(), w.State(), w.Profile())
 					},
 				})
@@ -182,7 +182,7 @@ func (r *repository) credentialTypeID(ctx context.Context, code string) (pulid.I
 
 // validCredential is a worker's active credential of a type that has not
 // expired, through the index on the worker's active credential of each type.
-func validCredential(typeID pulid.ID, now int64) *keel.Query[*workercredential.WorkerCredential] {
+func validCredential(typeID pulid.ID, now int64) keel.Query[*workercredential.WorkerCredential] {
 	c := workercredentialdb.WorkerCredentials
 
 	return c.Where(
@@ -193,7 +193,7 @@ func validCredential(typeID pulid.ID, now int64) *keel.Query[*workercredential.W
 	)
 }
 
-func workerQuery(req *workerports.GetWorkerByIDRequest) *keel.Query[*worker.Worker] {
+func workerQuery(req *workerports.GetWorkerByIDRequest) keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	profile := w.Profile()
 
@@ -669,7 +669,7 @@ func (r *repository) CountRosterAttention(
 	})
 }
 
-func rosterAttentionQuery(expiryHorizon int64) *keel.Query[*worker.Worker] {
+func rosterAttentionQuery(expiryHorizon int64) keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	wp := workerdb.WorkerProfiles
 

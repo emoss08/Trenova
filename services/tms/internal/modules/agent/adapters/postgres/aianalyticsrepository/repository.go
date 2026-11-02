@@ -159,7 +159,7 @@ func (r *repository) RefreshUnits(
 		total := 0
 		for _, step := range []struct {
 			name            string
-			source          *keel.Query[*keel.Row]
+			source          keel.Query[*keel.Row]
 			withDecisionRun bool
 		}{
 			{"runs", ownedUnitsSource(&runSource, refresh), true},

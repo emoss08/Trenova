@@ -4,6 +4,7 @@ package invoicedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -75,7 +76,7 @@ var attachmentsRef = keel.Ref{Table: &attachmentsTable}
 
 // AttachmentsTable is the table of invoice.Attachment.
 type AttachmentsTable struct {
-	keel.Handle[*invoice.Attachment]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -89,7 +90,7 @@ type AttachmentsTable struct {
 
 // Attachments references the invoice_attachments table.
 var Attachments = &AttachmentsTable{
-	Handle:         keel.Handle[*invoice.Attachment]{Ref: &attachmentsRef},
+	TableBase:      keel.TableBase{Ref: &attachmentsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 2}}},
@@ -101,10 +102,10 @@ var Attachments = &AttachmentsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &attachmentsRef, Index: 8}},
 }
 
-// BuildAttachments builds the handle of invoice_attachments for ref. Generated relation and alias methods call it.
+// BuildAttachments builds the table of invoice_attachments for ref. Generated relation and alias methods call it.
 func BuildAttachments(r *keel.Ref) *AttachmentsTable {
 	return &AttachmentsTable{
-		Handle:         keel.Handle[*invoice.Attachment]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -136,6 +137,365 @@ func (t *AttachmentsTable) Document() *documentdb.DocumentsTable {
 // Get returns the invoice_attachments row with the given key, or keel.ErrNotFound.
 func (t *AttachmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*invoice.Attachment, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// AttachmentsQuery is a query over invoice.Attachment.
+type AttachmentsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*invoice.Attachment] = (*AttachmentsTable)(nil)
+
+var _ keel.Query[*invoice.Attachment] = (*AttachmentsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AttachmentsTable) Query() keel.Query[*invoice.Attachment] {
+	return &AttachmentsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AttachmentsQuery.Where.
+func (t *AttachmentsTable) Where(ps ...keel.Pred) keel.Query[*invoice.Attachment] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AttachmentsQuery.Pick.
+func (t *AttachmentsTable) Pick(es ...keel.Expr) keel.Query[*invoice.Attachment] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AttachmentsQuery.Load.
+func (t *AttachmentsTable) Load(ls ...keel.Loader) keel.Query[*invoice.Attachment] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AttachmentsQuery.Omit.
+func (t *AttachmentsTable) Omit(cols ...keel.Column) keel.Query[*invoice.Attachment] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AttachmentsQuery.Order.
+func (t *AttachmentsTable) Order(os ...keel.Order) keel.Query[*invoice.Attachment] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AttachmentsQuery.Limit.
+func (t *AttachmentsTable) Limit(n int) keel.Query[*invoice.Attachment] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AttachmentsQuery.Group.
+func (t *AttachmentsTable) Group(es ...keel.Expr) keel.Query[*invoice.Attachment] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AttachmentsQuery.GroupingSets.
+func (t *AttachmentsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*invoice.Attachment] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AttachmentsQuery.Rollup.
+func (t *AttachmentsTable) Rollup(es ...keel.Expr) keel.Query[*invoice.Attachment] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AttachmentsQuery.Cube.
+func (t *AttachmentsTable) Cube(es ...keel.Expr) keel.Query[*invoice.Attachment] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AttachmentsQuery.AllTenants.
+func (t *AttachmentsTable) AllTenants() keel.Query[*invoice.Attachment] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AttachmentsQuery.Join.
+func (t *AttachmentsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.Attachment] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AttachmentsQuery.LeftJoin.
+func (t *AttachmentsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.Attachment] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AttachmentsQuery.LeftJoinLateral.
+func (t *AttachmentsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*invoice.Attachment] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AttachmentsQuery.JoinLateral.
+func (t *AttachmentsTable) JoinLateral(sub keel.LateralSource) keel.Query[*invoice.Attachment] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AttachmentsQuery.Lock.
+func (t *AttachmentsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*invoice.Attachment] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AttachmentsQuery.DistinctOn.
+func (t *AttachmentsTable) DistinctOn(es ...keel.Expr) keel.Query[*invoice.Attachment] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AttachmentsQuery.Cache.
+func (t *AttachmentsTable) Cache(opts ...keel.CacheOption) keel.Query[*invoice.Attachment] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AttachmentsQuery.LoadStrategy.
+func (t *AttachmentsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*invoice.Attachment] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AttachmentsQuery.With.
+func (t *AttachmentsTable) With(ctes ...*keel.CTETable) keel.Query[*invoice.Attachment] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AttachmentsQuery.Compute.
+func (t *AttachmentsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*invoice.Attachment] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AttachmentsTable) Create(ctx context.Context, db *keel.DB, row *invoice.Attachment) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AttachmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoice.Attachment) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AttachmentsTable) Save(ctx context.Context, db *keel.DB, row *invoice.Attachment, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AttachmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoice.Attachment, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AttachmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoice.Attachment) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AttachmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoice.Attachment, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AttachmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoice.Attachment, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AttachmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*invoice.Attachment) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AttachmentsQuery) Where(ps ...keel.Pred) keel.Query[*invoice.Attachment] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AttachmentsQuery) Pick(es ...keel.Expr) keel.Query[*invoice.Attachment] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AttachmentsQuery) Omit(cols ...keel.Column) keel.Query[*invoice.Attachment] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AttachmentsQuery) Load(ls ...keel.Loader) keel.Query[*invoice.Attachment] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AttachmentsQuery) Order(os ...keel.Order) keel.Query[*invoice.Attachment] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AttachmentsQuery) Distinct() keel.Query[*invoice.Attachment] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AttachmentsQuery) Group(es ...keel.Expr) keel.Query[*invoice.Attachment] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AttachmentsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*invoice.Attachment] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AttachmentsQuery) Rollup(es ...keel.Expr) keel.Query[*invoice.Attachment] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AttachmentsQuery) Cube(es ...keel.Expr) keel.Query[*invoice.Attachment] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AttachmentsQuery) Window(name string, w keel.Window) keel.Query[*invoice.Attachment] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AttachmentsQuery) Having(ps ...keel.Pred) keel.Query[*invoice.Attachment] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AttachmentsQuery) Limit(n int) keel.Query[*invoice.Attachment] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AttachmentsQuery) Offset(n int) keel.Query[*invoice.Attachment] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AttachmentsQuery) DistinctOn(es ...keel.Expr) keel.Query[*invoice.Attachment] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AttachmentsQuery) AllTenants() keel.Query[*invoice.Attachment] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AttachmentsQuery) CustomPlan() keel.Query[*invoice.Attachment] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AttachmentsQuery) Timeout(d time.Duration) keel.Query[*invoice.Attachment] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AttachmentsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*invoice.Attachment] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AttachmentsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.Attachment] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AttachmentsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.Attachment] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AttachmentsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*invoice.Attachment] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AttachmentsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*invoice.Attachment] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AttachmentsQuery) Cache(opts ...keel.CacheOption) keel.Query[*invoice.Attachment] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AttachmentsQuery) With(ctes ...*keel.CTETable) keel.Query[*invoice.Attachment] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AttachmentsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*invoice.Attachment] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AttachmentsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*invoice.Attachment] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AttachmentsQuery) Clone() keel.Query[*invoice.Attachment] {
+	return &AttachmentsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AttachmentsQuery) One(ctx context.Context, db *keel.DB) (*invoice.Attachment, error) {
+	return keel.One[*invoice.Attachment](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AttachmentsQuery) First(ctx context.Context, db *keel.DB) (*invoice.Attachment, error) {
+	return keel.First[*invoice.Attachment](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AttachmentsQuery) List(ctx context.Context, db *keel.DB) ([]*invoice.Attachment, error) {
+	return keel.List[*invoice.Attachment](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AttachmentsQuery) All(ctx context.Context, db *keel.DB) ([]*invoice.Attachment, error) {
+	return keel.All[*invoice.Attachment](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AttachmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoice.Attachment, error) {
+	return keel.UpdateReturning[*invoice.Attachment](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AttachmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoice.Attachment], error) {
+	return keel.PageOf[*invoice.Attachment](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AttachmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoice.Attachment) error) error {
+	return keel.Each[*invoice.Attachment](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAttachment() unsafe.Pointer { return unsafe.Pointer(new(invoice.Attachment)) }
@@ -254,7 +614,7 @@ var documentShareTokensRef = keel.Ref{Table: &documentShareTokensTable}
 
 // DocumentShareTokensTable is the table of invoice.DocumentShareToken.
 type DocumentShareTokensTable struct {
-	keel.Handle[*invoice.DocumentShareToken]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -271,7 +631,7 @@ type DocumentShareTokensTable struct {
 
 // DocumentShareTokens references the invoice_document_share_tokens table.
 var DocumentShareTokens = &DocumentShareTokensTable{
-	Handle:         keel.Handle[*invoice.DocumentShareToken]{Ref: &documentShareTokensRef},
+	TableBase:      keel.TableBase{Ref: &documentShareTokensRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentShareTokensRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentShareTokensRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentShareTokensRef, Index: 2}}},
@@ -286,10 +646,10 @@ var DocumentShareTokens = &DocumentShareTokensTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &documentShareTokensRef, Index: 11}},
 }
 
-// BuildDocumentShareTokens builds the handle of invoice_document_share_tokens for ref. Generated relation and alias methods call it.
+// BuildDocumentShareTokens builds the table of invoice_document_share_tokens for ref. Generated relation and alias methods call it.
 func BuildDocumentShareTokens(r *keel.Ref) *DocumentShareTokensTable {
 	return &DocumentShareTokensTable{
-		Handle:         keel.Handle[*invoice.DocumentShareToken]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -326,6 +686,365 @@ func (t *DocumentShareTokensTable) Document() *documentdb.DocumentsTable {
 // Get returns the invoice_document_share_tokens row with the given key, or keel.ErrNotFound.
 func (t *DocumentShareTokensTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*invoice.DocumentShareToken, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// DocumentShareTokensQuery is a query over invoice.DocumentShareToken.
+type DocumentShareTokensQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*invoice.DocumentShareToken] = (*DocumentShareTokensTable)(nil)
+
+var _ keel.Query[*invoice.DocumentShareToken] = (*DocumentShareTokensQuery)(nil)
+
+// Query starts a query over the table.
+func (t *DocumentShareTokensTable) Query() keel.Query[*invoice.DocumentShareToken] {
+	return &DocumentShareTokensQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see DocumentShareTokensQuery.Where.
+func (t *DocumentShareTokensTable) Where(ps ...keel.Pred) keel.Query[*invoice.DocumentShareToken] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see DocumentShareTokensQuery.Pick.
+func (t *DocumentShareTokensTable) Pick(es ...keel.Expr) keel.Query[*invoice.DocumentShareToken] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see DocumentShareTokensQuery.Load.
+func (t *DocumentShareTokensTable) Load(ls ...keel.Loader) keel.Query[*invoice.DocumentShareToken] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see DocumentShareTokensQuery.Omit.
+func (t *DocumentShareTokensTable) Omit(cols ...keel.Column) keel.Query[*invoice.DocumentShareToken] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see DocumentShareTokensQuery.Order.
+func (t *DocumentShareTokensTable) Order(os ...keel.Order) keel.Query[*invoice.DocumentShareToken] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see DocumentShareTokensQuery.Limit.
+func (t *DocumentShareTokensTable) Limit(n int) keel.Query[*invoice.DocumentShareToken] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see DocumentShareTokensQuery.Group.
+func (t *DocumentShareTokensTable) Group(es ...keel.Expr) keel.Query[*invoice.DocumentShareToken] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see DocumentShareTokensQuery.GroupingSets.
+func (t *DocumentShareTokensTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*invoice.DocumentShareToken] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see DocumentShareTokensQuery.Rollup.
+func (t *DocumentShareTokensTable) Rollup(es ...keel.Expr) keel.Query[*invoice.DocumentShareToken] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see DocumentShareTokensQuery.Cube.
+func (t *DocumentShareTokensTable) Cube(es ...keel.Expr) keel.Query[*invoice.DocumentShareToken] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see DocumentShareTokensQuery.AllTenants.
+func (t *DocumentShareTokensTable) AllTenants() keel.Query[*invoice.DocumentShareToken] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see DocumentShareTokensQuery.Join.
+func (t *DocumentShareTokensTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.DocumentShareToken] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see DocumentShareTokensQuery.LeftJoin.
+func (t *DocumentShareTokensTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.DocumentShareToken] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see DocumentShareTokensQuery.LeftJoinLateral.
+func (t *DocumentShareTokensTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*invoice.DocumentShareToken] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see DocumentShareTokensQuery.JoinLateral.
+func (t *DocumentShareTokensTable) JoinLateral(sub keel.LateralSource) keel.Query[*invoice.DocumentShareToken] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see DocumentShareTokensQuery.Lock.
+func (t *DocumentShareTokensTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*invoice.DocumentShareToken] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see DocumentShareTokensQuery.DistinctOn.
+func (t *DocumentShareTokensTable) DistinctOn(es ...keel.Expr) keel.Query[*invoice.DocumentShareToken] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see DocumentShareTokensQuery.Cache.
+func (t *DocumentShareTokensTable) Cache(opts ...keel.CacheOption) keel.Query[*invoice.DocumentShareToken] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see DocumentShareTokensQuery.LoadStrategy.
+func (t *DocumentShareTokensTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*invoice.DocumentShareToken] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see DocumentShareTokensQuery.With.
+func (t *DocumentShareTokensTable) With(ctes ...*keel.CTETable) keel.Query[*invoice.DocumentShareToken] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see DocumentShareTokensQuery.Compute.
+func (t *DocumentShareTokensTable) Compute(col keel.Column, e keel.Expr) keel.Query[*invoice.DocumentShareToken] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *DocumentShareTokensTable) Create(ctx context.Context, db *keel.DB, row *invoice.DocumentShareToken) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *DocumentShareTokensTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoice.DocumentShareToken) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *DocumentShareTokensTable) Save(ctx context.Context, db *keel.DB, row *invoice.DocumentShareToken, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *DocumentShareTokensTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoice.DocumentShareToken, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *DocumentShareTokensTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoice.DocumentShareToken) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *DocumentShareTokensTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoice.DocumentShareToken, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *DocumentShareTokensTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoice.DocumentShareToken, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *DocumentShareTokensTable) Copy(ctx context.Context, db *keel.DB, rows []*invoice.DocumentShareToken) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *DocumentShareTokensQuery) Where(ps ...keel.Pred) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *DocumentShareTokensQuery) Pick(es ...keel.Expr) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *DocumentShareTokensQuery) Omit(cols ...keel.Column) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *DocumentShareTokensQuery) Load(ls ...keel.Loader) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *DocumentShareTokensQuery) Order(os ...keel.Order) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *DocumentShareTokensQuery) Distinct() keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *DocumentShareTokensQuery) Group(es ...keel.Expr) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *DocumentShareTokensQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *DocumentShareTokensQuery) Rollup(es ...keel.Expr) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *DocumentShareTokensQuery) Cube(es ...keel.Expr) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *DocumentShareTokensQuery) Window(name string, w keel.Window) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *DocumentShareTokensQuery) Having(ps ...keel.Pred) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *DocumentShareTokensQuery) Limit(n int) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *DocumentShareTokensQuery) Offset(n int) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *DocumentShareTokensQuery) DistinctOn(es ...keel.Expr) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *DocumentShareTokensQuery) AllTenants() keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *DocumentShareTokensQuery) CustomPlan() keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *DocumentShareTokensQuery) Timeout(d time.Duration) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *DocumentShareTokensQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *DocumentShareTokensQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *DocumentShareTokensQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *DocumentShareTokensQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *DocumentShareTokensQuery) JoinLateral(sub keel.LateralSource) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *DocumentShareTokensQuery) Cache(opts ...keel.CacheOption) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *DocumentShareTokensQuery) With(ctes ...*keel.CTETable) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *DocumentShareTokensQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *DocumentShareTokensQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*invoice.DocumentShareToken] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *DocumentShareTokensQuery) Clone() keel.Query[*invoice.DocumentShareToken] {
+	return &DocumentShareTokensQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *DocumentShareTokensQuery) One(ctx context.Context, db *keel.DB) (*invoice.DocumentShareToken, error) {
+	return keel.One[*invoice.DocumentShareToken](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *DocumentShareTokensQuery) First(ctx context.Context, db *keel.DB) (*invoice.DocumentShareToken, error) {
+	return keel.First[*invoice.DocumentShareToken](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *DocumentShareTokensQuery) List(ctx context.Context, db *keel.DB) ([]*invoice.DocumentShareToken, error) {
+	return keel.List[*invoice.DocumentShareToken](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *DocumentShareTokensQuery) All(ctx context.Context, db *keel.DB) ([]*invoice.DocumentShareToken, error) {
+	return keel.All[*invoice.DocumentShareToken](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *DocumentShareTokensQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoice.DocumentShareToken, error) {
+	return keel.UpdateReturning[*invoice.DocumentShareToken](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *DocumentShareTokensQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoice.DocumentShareToken], error) {
+	return keel.PageOf[*invoice.DocumentShareToken](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *DocumentShareTokensQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoice.DocumentShareToken) error) error {
+	return keel.Each[*invoice.DocumentShareToken](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newDocumentShareToken() unsafe.Pointer { return unsafe.Pointer(new(invoice.DocumentShareToken)) }
@@ -477,7 +1196,7 @@ var emailAttemptsRef = keel.Ref{Table: &emailAttemptsTable}
 
 // EmailAttemptsTable is the table of invoice.EmailAttempt.
 type EmailAttemptsTable struct {
-	keel.Handle[*invoice.EmailAttempt]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
@@ -505,7 +1224,7 @@ type EmailAttemptsTable struct {
 
 // EmailAttempts references the invoice_email_attempts table.
 var EmailAttempts = &EmailAttemptsTable{
-	Handle:            keel.Handle[*invoice.EmailAttempt]{Ref: &emailAttemptsRef},
+	TableBase:         keel.TableBase{Ref: &emailAttemptsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &emailAttemptsRef, Index: 0}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &emailAttemptsRef, Index: 1}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &emailAttemptsRef, Index: 2}}},
@@ -531,10 +1250,10 @@ var EmailAttempts = &EmailAttemptsTable{
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &emailAttemptsRef, Index: 22}},
 }
 
-// BuildEmailAttempts builds the handle of invoice_email_attempts for ref. Generated relation and alias methods call it.
+// BuildEmailAttempts builds the table of invoice_email_attempts for ref. Generated relation and alias methods call it.
 func BuildEmailAttempts(r *keel.Ref) *EmailAttemptsTable {
 	return &EmailAttemptsTable{
-		Handle:            keel.Handle[*invoice.EmailAttempt]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -585,6 +1304,365 @@ func (t *EmailAttemptsTable) Attachments() *EmailAttemptAttachmentsTable {
 // Get returns the invoice_email_attempts row with the given key, or keel.ErrNotFound.
 func (t *EmailAttemptsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*invoice.EmailAttempt, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EmailAttemptsQuery is a query over invoice.EmailAttempt.
+type EmailAttemptsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*invoice.EmailAttempt] = (*EmailAttemptsTable)(nil)
+
+var _ keel.Query[*invoice.EmailAttempt] = (*EmailAttemptsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EmailAttemptsTable) Query() keel.Query[*invoice.EmailAttempt] {
+	return &EmailAttemptsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EmailAttemptsQuery.Where.
+func (t *EmailAttemptsTable) Where(ps ...keel.Pred) keel.Query[*invoice.EmailAttempt] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EmailAttemptsQuery.Pick.
+func (t *EmailAttemptsTable) Pick(es ...keel.Expr) keel.Query[*invoice.EmailAttempt] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EmailAttemptsQuery.Load.
+func (t *EmailAttemptsTable) Load(ls ...keel.Loader) keel.Query[*invoice.EmailAttempt] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EmailAttemptsQuery.Omit.
+func (t *EmailAttemptsTable) Omit(cols ...keel.Column) keel.Query[*invoice.EmailAttempt] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EmailAttemptsQuery.Order.
+func (t *EmailAttemptsTable) Order(os ...keel.Order) keel.Query[*invoice.EmailAttempt] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EmailAttemptsQuery.Limit.
+func (t *EmailAttemptsTable) Limit(n int) keel.Query[*invoice.EmailAttempt] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EmailAttemptsQuery.Group.
+func (t *EmailAttemptsTable) Group(es ...keel.Expr) keel.Query[*invoice.EmailAttempt] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EmailAttemptsQuery.GroupingSets.
+func (t *EmailAttemptsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*invoice.EmailAttempt] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EmailAttemptsQuery.Rollup.
+func (t *EmailAttemptsTable) Rollup(es ...keel.Expr) keel.Query[*invoice.EmailAttempt] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EmailAttemptsQuery.Cube.
+func (t *EmailAttemptsTable) Cube(es ...keel.Expr) keel.Query[*invoice.EmailAttempt] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EmailAttemptsQuery.AllTenants.
+func (t *EmailAttemptsTable) AllTenants() keel.Query[*invoice.EmailAttempt] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EmailAttemptsQuery.Join.
+func (t *EmailAttemptsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.EmailAttempt] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EmailAttemptsQuery.LeftJoin.
+func (t *EmailAttemptsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.EmailAttempt] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EmailAttemptsQuery.LeftJoinLateral.
+func (t *EmailAttemptsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*invoice.EmailAttempt] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EmailAttemptsQuery.JoinLateral.
+func (t *EmailAttemptsTable) JoinLateral(sub keel.LateralSource) keel.Query[*invoice.EmailAttempt] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EmailAttemptsQuery.Lock.
+func (t *EmailAttemptsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*invoice.EmailAttempt] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EmailAttemptsQuery.DistinctOn.
+func (t *EmailAttemptsTable) DistinctOn(es ...keel.Expr) keel.Query[*invoice.EmailAttempt] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EmailAttemptsQuery.Cache.
+func (t *EmailAttemptsTable) Cache(opts ...keel.CacheOption) keel.Query[*invoice.EmailAttempt] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EmailAttemptsQuery.LoadStrategy.
+func (t *EmailAttemptsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*invoice.EmailAttempt] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EmailAttemptsQuery.With.
+func (t *EmailAttemptsTable) With(ctes ...*keel.CTETable) keel.Query[*invoice.EmailAttempt] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EmailAttemptsQuery.Compute.
+func (t *EmailAttemptsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*invoice.EmailAttempt] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EmailAttemptsTable) Create(ctx context.Context, db *keel.DB, row *invoice.EmailAttempt) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EmailAttemptsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoice.EmailAttempt) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EmailAttemptsTable) Save(ctx context.Context, db *keel.DB, row *invoice.EmailAttempt, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EmailAttemptsTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoice.EmailAttempt, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EmailAttemptsTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoice.EmailAttempt) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EmailAttemptsTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoice.EmailAttempt, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EmailAttemptsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoice.EmailAttempt, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EmailAttemptsTable) Copy(ctx context.Context, db *keel.DB, rows []*invoice.EmailAttempt) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EmailAttemptsQuery) Where(ps ...keel.Pred) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EmailAttemptsQuery) Pick(es ...keel.Expr) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EmailAttemptsQuery) Omit(cols ...keel.Column) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EmailAttemptsQuery) Load(ls ...keel.Loader) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EmailAttemptsQuery) Order(os ...keel.Order) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EmailAttemptsQuery) Distinct() keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EmailAttemptsQuery) Group(es ...keel.Expr) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EmailAttemptsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EmailAttemptsQuery) Rollup(es ...keel.Expr) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EmailAttemptsQuery) Cube(es ...keel.Expr) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EmailAttemptsQuery) Window(name string, w keel.Window) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EmailAttemptsQuery) Having(ps ...keel.Pred) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EmailAttemptsQuery) Limit(n int) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EmailAttemptsQuery) Offset(n int) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EmailAttemptsQuery) DistinctOn(es ...keel.Expr) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EmailAttemptsQuery) AllTenants() keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EmailAttemptsQuery) CustomPlan() keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EmailAttemptsQuery) Timeout(d time.Duration) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EmailAttemptsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EmailAttemptsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EmailAttemptsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EmailAttemptsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EmailAttemptsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EmailAttemptsQuery) Cache(opts ...keel.CacheOption) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EmailAttemptsQuery) With(ctes ...*keel.CTETable) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EmailAttemptsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EmailAttemptsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*invoice.EmailAttempt] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EmailAttemptsQuery) Clone() keel.Query[*invoice.EmailAttempt] {
+	return &EmailAttemptsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EmailAttemptsQuery) One(ctx context.Context, db *keel.DB) (*invoice.EmailAttempt, error) {
+	return keel.One[*invoice.EmailAttempt](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EmailAttemptsQuery) First(ctx context.Context, db *keel.DB) (*invoice.EmailAttempt, error) {
+	return keel.First[*invoice.EmailAttempt](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EmailAttemptsQuery) List(ctx context.Context, db *keel.DB) ([]*invoice.EmailAttempt, error) {
+	return keel.List[*invoice.EmailAttempt](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EmailAttemptsQuery) All(ctx context.Context, db *keel.DB) ([]*invoice.EmailAttempt, error) {
+	return keel.All[*invoice.EmailAttempt](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EmailAttemptsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoice.EmailAttempt, error) {
+	return keel.UpdateReturning[*invoice.EmailAttempt](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EmailAttemptsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoice.EmailAttempt], error) {
+	return keel.PageOf[*invoice.EmailAttempt](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EmailAttemptsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoice.EmailAttempt) error) error {
+	return keel.Each[*invoice.EmailAttempt](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEmailAttempt() unsafe.Pointer { return unsafe.Pointer(new(invoice.EmailAttempt)) }
@@ -799,7 +1877,7 @@ var emailAttemptAttachmentsRef = keel.Ref{Table: &emailAttemptAttachmentsTable}
 
 // EmailAttemptAttachmentsTable is the table of invoice.EmailAttemptAttachment.
 type EmailAttemptAttachmentsTable struct {
-	keel.Handle[*invoice.EmailAttemptAttachment]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -817,7 +1895,7 @@ type EmailAttemptAttachmentsTable struct {
 
 // EmailAttemptAttachments references the invoice_email_attempt_attachments table.
 var EmailAttemptAttachments = &EmailAttemptAttachmentsTable{
-	Handle:         keel.Handle[*invoice.EmailAttemptAttachment]{Ref: &emailAttemptAttachmentsRef},
+	TableBase:      keel.TableBase{Ref: &emailAttemptAttachmentsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &emailAttemptAttachmentsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &emailAttemptAttachmentsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &emailAttemptAttachmentsRef, Index: 2}}},
@@ -833,10 +1911,10 @@ var EmailAttemptAttachments = &EmailAttemptAttachmentsTable{
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &emailAttemptAttachmentsRef, Index: 12}},
 }
 
-// BuildEmailAttemptAttachments builds the handle of invoice_email_attempt_attachments for ref. Generated relation and alias methods call it.
+// BuildEmailAttemptAttachments builds the table of invoice_email_attempt_attachments for ref. Generated relation and alias methods call it.
 func BuildEmailAttemptAttachments(r *keel.Ref) *EmailAttemptAttachmentsTable {
 	return &EmailAttemptAttachmentsTable{
-		Handle:         keel.Handle[*invoice.EmailAttemptAttachment]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -879,6 +1957,365 @@ func (t *EmailAttemptAttachmentsTable) ShareToken() *DocumentShareTokensTable {
 // Get returns the invoice_email_attempt_attachments row with the given key, or keel.ErrNotFound.
 func (t *EmailAttemptAttachmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*invoice.EmailAttemptAttachment, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EmailAttemptAttachmentsQuery is a query over invoice.EmailAttemptAttachment.
+type EmailAttemptAttachmentsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*invoice.EmailAttemptAttachment] = (*EmailAttemptAttachmentsTable)(nil)
+
+var _ keel.Query[*invoice.EmailAttemptAttachment] = (*EmailAttemptAttachmentsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EmailAttemptAttachmentsTable) Query() keel.Query[*invoice.EmailAttemptAttachment] {
+	return &EmailAttemptAttachmentsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EmailAttemptAttachmentsQuery.Where.
+func (t *EmailAttemptAttachmentsTable) Where(ps ...keel.Pred) keel.Query[*invoice.EmailAttemptAttachment] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EmailAttemptAttachmentsQuery.Pick.
+func (t *EmailAttemptAttachmentsTable) Pick(es ...keel.Expr) keel.Query[*invoice.EmailAttemptAttachment] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EmailAttemptAttachmentsQuery.Load.
+func (t *EmailAttemptAttachmentsTable) Load(ls ...keel.Loader) keel.Query[*invoice.EmailAttemptAttachment] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EmailAttemptAttachmentsQuery.Omit.
+func (t *EmailAttemptAttachmentsTable) Omit(cols ...keel.Column) keel.Query[*invoice.EmailAttemptAttachment] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EmailAttemptAttachmentsQuery.Order.
+func (t *EmailAttemptAttachmentsTable) Order(os ...keel.Order) keel.Query[*invoice.EmailAttemptAttachment] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EmailAttemptAttachmentsQuery.Limit.
+func (t *EmailAttemptAttachmentsTable) Limit(n int) keel.Query[*invoice.EmailAttemptAttachment] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EmailAttemptAttachmentsQuery.Group.
+func (t *EmailAttemptAttachmentsTable) Group(es ...keel.Expr) keel.Query[*invoice.EmailAttemptAttachment] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EmailAttemptAttachmentsQuery.GroupingSets.
+func (t *EmailAttemptAttachmentsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*invoice.EmailAttemptAttachment] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EmailAttemptAttachmentsQuery.Rollup.
+func (t *EmailAttemptAttachmentsTable) Rollup(es ...keel.Expr) keel.Query[*invoice.EmailAttemptAttachment] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EmailAttemptAttachmentsQuery.Cube.
+func (t *EmailAttemptAttachmentsTable) Cube(es ...keel.Expr) keel.Query[*invoice.EmailAttemptAttachment] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EmailAttemptAttachmentsQuery.AllTenants.
+func (t *EmailAttemptAttachmentsTable) AllTenants() keel.Query[*invoice.EmailAttemptAttachment] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EmailAttemptAttachmentsQuery.Join.
+func (t *EmailAttemptAttachmentsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.EmailAttemptAttachment] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EmailAttemptAttachmentsQuery.LeftJoin.
+func (t *EmailAttemptAttachmentsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.EmailAttemptAttachment] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EmailAttemptAttachmentsQuery.LeftJoinLateral.
+func (t *EmailAttemptAttachmentsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*invoice.EmailAttemptAttachment] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EmailAttemptAttachmentsQuery.JoinLateral.
+func (t *EmailAttemptAttachmentsTable) JoinLateral(sub keel.LateralSource) keel.Query[*invoice.EmailAttemptAttachment] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EmailAttemptAttachmentsQuery.Lock.
+func (t *EmailAttemptAttachmentsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*invoice.EmailAttemptAttachment] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EmailAttemptAttachmentsQuery.DistinctOn.
+func (t *EmailAttemptAttachmentsTable) DistinctOn(es ...keel.Expr) keel.Query[*invoice.EmailAttemptAttachment] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EmailAttemptAttachmentsQuery.Cache.
+func (t *EmailAttemptAttachmentsTable) Cache(opts ...keel.CacheOption) keel.Query[*invoice.EmailAttemptAttachment] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EmailAttemptAttachmentsQuery.LoadStrategy.
+func (t *EmailAttemptAttachmentsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*invoice.EmailAttemptAttachment] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EmailAttemptAttachmentsQuery.With.
+func (t *EmailAttemptAttachmentsTable) With(ctes ...*keel.CTETable) keel.Query[*invoice.EmailAttemptAttachment] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EmailAttemptAttachmentsQuery.Compute.
+func (t *EmailAttemptAttachmentsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*invoice.EmailAttemptAttachment] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EmailAttemptAttachmentsTable) Create(ctx context.Context, db *keel.DB, row *invoice.EmailAttemptAttachment) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EmailAttemptAttachmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoice.EmailAttemptAttachment) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EmailAttemptAttachmentsTable) Save(ctx context.Context, db *keel.DB, row *invoice.EmailAttemptAttachment, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EmailAttemptAttachmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoice.EmailAttemptAttachment, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EmailAttemptAttachmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoice.EmailAttemptAttachment) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EmailAttemptAttachmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoice.EmailAttemptAttachment, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EmailAttemptAttachmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoice.EmailAttemptAttachment, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EmailAttemptAttachmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*invoice.EmailAttemptAttachment) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EmailAttemptAttachmentsQuery) Where(ps ...keel.Pred) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EmailAttemptAttachmentsQuery) Pick(es ...keel.Expr) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EmailAttemptAttachmentsQuery) Omit(cols ...keel.Column) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EmailAttemptAttachmentsQuery) Load(ls ...keel.Loader) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EmailAttemptAttachmentsQuery) Order(os ...keel.Order) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EmailAttemptAttachmentsQuery) Distinct() keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EmailAttemptAttachmentsQuery) Group(es ...keel.Expr) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EmailAttemptAttachmentsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EmailAttemptAttachmentsQuery) Rollup(es ...keel.Expr) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EmailAttemptAttachmentsQuery) Cube(es ...keel.Expr) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EmailAttemptAttachmentsQuery) Window(name string, w keel.Window) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EmailAttemptAttachmentsQuery) Having(ps ...keel.Pred) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EmailAttemptAttachmentsQuery) Limit(n int) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EmailAttemptAttachmentsQuery) Offset(n int) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EmailAttemptAttachmentsQuery) DistinctOn(es ...keel.Expr) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EmailAttemptAttachmentsQuery) AllTenants() keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EmailAttemptAttachmentsQuery) CustomPlan() keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EmailAttemptAttachmentsQuery) Timeout(d time.Duration) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EmailAttemptAttachmentsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EmailAttemptAttachmentsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EmailAttemptAttachmentsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EmailAttemptAttachmentsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EmailAttemptAttachmentsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EmailAttemptAttachmentsQuery) Cache(opts ...keel.CacheOption) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EmailAttemptAttachmentsQuery) With(ctes ...*keel.CTETable) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EmailAttemptAttachmentsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EmailAttemptAttachmentsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*invoice.EmailAttemptAttachment] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EmailAttemptAttachmentsQuery) Clone() keel.Query[*invoice.EmailAttemptAttachment] {
+	return &EmailAttemptAttachmentsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EmailAttemptAttachmentsQuery) One(ctx context.Context, db *keel.DB) (*invoice.EmailAttemptAttachment, error) {
+	return keel.One[*invoice.EmailAttemptAttachment](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EmailAttemptAttachmentsQuery) First(ctx context.Context, db *keel.DB) (*invoice.EmailAttemptAttachment, error) {
+	return keel.First[*invoice.EmailAttemptAttachment](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EmailAttemptAttachmentsQuery) List(ctx context.Context, db *keel.DB) ([]*invoice.EmailAttemptAttachment, error) {
+	return keel.List[*invoice.EmailAttemptAttachment](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EmailAttemptAttachmentsQuery) All(ctx context.Context, db *keel.DB) ([]*invoice.EmailAttemptAttachment, error) {
+	return keel.All[*invoice.EmailAttemptAttachment](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EmailAttemptAttachmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoice.EmailAttemptAttachment, error) {
+	return keel.UpdateReturning[*invoice.EmailAttemptAttachment](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EmailAttemptAttachmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoice.EmailAttemptAttachment], error) {
+	return keel.PageOf[*invoice.EmailAttemptAttachment](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EmailAttemptAttachmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoice.EmailAttemptAttachment) error) error {
+	return keel.Each[*invoice.EmailAttemptAttachment](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEmailAttemptAttachment() unsafe.Pointer {
@@ -1113,7 +2550,7 @@ var invoicesRef = keel.Ref{Table: &invoicesTable}
 
 // InvoicesTable is the table of invoice.Invoice.
 type InvoicesTable struct {
-	keel.Handle[*invoice.Invoice]
+	keel.TableBase
 	ID                        keelkinds.PulidIDCol
 	OrganizationID            keelkinds.PulidIDCol
 	BusinessUnitID            keelkinds.PulidIDCol
@@ -1207,7 +2644,7 @@ type InvoicesTable struct {
 
 // Invoices references the invoices table.
 var Invoices = &InvoicesTable{
-	Handle:                    keel.Handle[*invoice.Invoice]{Ref: &invoicesRef},
+	TableBase:                 keel.TableBase{Ref: &invoicesRef},
 	ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 0}}},
 	OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 1}}},
 	BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 2}}},
@@ -1299,10 +2736,10 @@ var Invoices = &InvoicesTable{
 	UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 88}},
 }
 
-// BuildInvoices builds the handle of invoices for ref. Generated relation and alias methods call it.
+// BuildInvoices builds the table of invoices for ref. Generated relation and alias methods call it.
 func BuildInvoices(r *keel.Ref) *InvoicesTable {
 	return &InvoicesTable{
-		Handle:                    keel.Handle[*invoice.Invoice]{Ref: r},
+		TableBase:                 keel.TableBase{Ref: r},
 		ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1413,8 +2850,10 @@ func (t *InvoicesTable) Shipment() *shipmentdb.ShipmentsTable {
 	return keel.Path(t.Ref, 1, shipmentdb.BuildShipments)
 }
 
-// Order is the belongs relation.
-func (t *InvoicesTable) Order() *orderdb.OrdersTable { return keel.Path(t.Ref, 2, orderdb.BuildOrders) }
+// OrderRel is the belongs relation.
+func (t *InvoicesTable) OrderRel() *orderdb.OrdersTable {
+	return keel.Path(t.Ref, 2, orderdb.BuildOrders)
+}
 
 // Customer is the belongs relation.
 func (t *InvoicesTable) Customer() *customerdb.CustomersTable {
@@ -1453,6 +2892,365 @@ func (t *InvoicesTable) EmailAttempts() *EmailAttemptsTable {
 // Get returns the invoices row with the given key, or keel.ErrNotFound.
 func (t *InvoicesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*invoice.Invoice, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// InvoicesQuery is a query over invoice.Invoice.
+type InvoicesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*invoice.Invoice] = (*InvoicesTable)(nil)
+
+var _ keel.Query[*invoice.Invoice] = (*InvoicesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *InvoicesTable) Query() keel.Query[*invoice.Invoice] {
+	return &InvoicesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see InvoicesQuery.Where.
+func (t *InvoicesTable) Where(ps ...keel.Pred) keel.Query[*invoice.Invoice] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see InvoicesQuery.Pick.
+func (t *InvoicesTable) Pick(es ...keel.Expr) keel.Query[*invoice.Invoice] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see InvoicesQuery.Load.
+func (t *InvoicesTable) Load(ls ...keel.Loader) keel.Query[*invoice.Invoice] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see InvoicesQuery.Omit.
+func (t *InvoicesTable) Omit(cols ...keel.Column) keel.Query[*invoice.Invoice] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see InvoicesQuery.Order.
+func (t *InvoicesTable) Order(os ...keel.Order) keel.Query[*invoice.Invoice] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see InvoicesQuery.Limit.
+func (t *InvoicesTable) Limit(n int) keel.Query[*invoice.Invoice] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see InvoicesQuery.Group.
+func (t *InvoicesTable) Group(es ...keel.Expr) keel.Query[*invoice.Invoice] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see InvoicesQuery.GroupingSets.
+func (t *InvoicesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*invoice.Invoice] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see InvoicesQuery.Rollup.
+func (t *InvoicesTable) Rollup(es ...keel.Expr) keel.Query[*invoice.Invoice] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see InvoicesQuery.Cube.
+func (t *InvoicesTable) Cube(es ...keel.Expr) keel.Query[*invoice.Invoice] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see InvoicesQuery.AllTenants.
+func (t *InvoicesTable) AllTenants() keel.Query[*invoice.Invoice] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see InvoicesQuery.Join.
+func (t *InvoicesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.Invoice] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see InvoicesQuery.LeftJoin.
+func (t *InvoicesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.Invoice] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see InvoicesQuery.LeftJoinLateral.
+func (t *InvoicesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*invoice.Invoice] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see InvoicesQuery.JoinLateral.
+func (t *InvoicesTable) JoinLateral(sub keel.LateralSource) keel.Query[*invoice.Invoice] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see InvoicesQuery.Lock.
+func (t *InvoicesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*invoice.Invoice] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see InvoicesQuery.DistinctOn.
+func (t *InvoicesTable) DistinctOn(es ...keel.Expr) keel.Query[*invoice.Invoice] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see InvoicesQuery.Cache.
+func (t *InvoicesTable) Cache(opts ...keel.CacheOption) keel.Query[*invoice.Invoice] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see InvoicesQuery.LoadStrategy.
+func (t *InvoicesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*invoice.Invoice] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see InvoicesQuery.With.
+func (t *InvoicesTable) With(ctes ...*keel.CTETable) keel.Query[*invoice.Invoice] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see InvoicesQuery.Compute.
+func (t *InvoicesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*invoice.Invoice] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *InvoicesTable) Create(ctx context.Context, db *keel.DB, row *invoice.Invoice) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *InvoicesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoice.Invoice) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *InvoicesTable) Save(ctx context.Context, db *keel.DB, row *invoice.Invoice, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *InvoicesTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoice.Invoice, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *InvoicesTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoice.Invoice) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *InvoicesTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoice.Invoice, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *InvoicesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoice.Invoice, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *InvoicesTable) Copy(ctx context.Context, db *keel.DB, rows []*invoice.Invoice) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *InvoicesQuery) Where(ps ...keel.Pred) keel.Query[*invoice.Invoice] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *InvoicesQuery) Pick(es ...keel.Expr) keel.Query[*invoice.Invoice] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *InvoicesQuery) Omit(cols ...keel.Column) keel.Query[*invoice.Invoice] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *InvoicesQuery) Load(ls ...keel.Loader) keel.Query[*invoice.Invoice] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *InvoicesQuery) Order(os ...keel.Order) keel.Query[*invoice.Invoice] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *InvoicesQuery) Distinct() keel.Query[*invoice.Invoice] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *InvoicesQuery) Group(es ...keel.Expr) keel.Query[*invoice.Invoice] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *InvoicesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*invoice.Invoice] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *InvoicesQuery) Rollup(es ...keel.Expr) keel.Query[*invoice.Invoice] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *InvoicesQuery) Cube(es ...keel.Expr) keel.Query[*invoice.Invoice] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *InvoicesQuery) Window(name string, w keel.Window) keel.Query[*invoice.Invoice] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *InvoicesQuery) Having(ps ...keel.Pred) keel.Query[*invoice.Invoice] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *InvoicesQuery) Limit(n int) keel.Query[*invoice.Invoice] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *InvoicesQuery) Offset(n int) keel.Query[*invoice.Invoice] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *InvoicesQuery) DistinctOn(es ...keel.Expr) keel.Query[*invoice.Invoice] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *InvoicesQuery) AllTenants() keel.Query[*invoice.Invoice] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *InvoicesQuery) CustomPlan() keel.Query[*invoice.Invoice] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *InvoicesQuery) Timeout(d time.Duration) keel.Query[*invoice.Invoice] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *InvoicesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*invoice.Invoice] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *InvoicesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.Invoice] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *InvoicesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.Invoice] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *InvoicesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*invoice.Invoice] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *InvoicesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*invoice.Invoice] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *InvoicesQuery) Cache(opts ...keel.CacheOption) keel.Query[*invoice.Invoice] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *InvoicesQuery) With(ctes ...*keel.CTETable) keel.Query[*invoice.Invoice] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *InvoicesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*invoice.Invoice] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *InvoicesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*invoice.Invoice] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *InvoicesQuery) Clone() keel.Query[*invoice.Invoice] {
+	return &InvoicesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *InvoicesQuery) One(ctx context.Context, db *keel.DB) (*invoice.Invoice, error) {
+	return keel.One[*invoice.Invoice](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *InvoicesQuery) First(ctx context.Context, db *keel.DB) (*invoice.Invoice, error) {
+	return keel.First[*invoice.Invoice](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *InvoicesQuery) List(ctx context.Context, db *keel.DB) ([]*invoice.Invoice, error) {
+	return keel.List[*invoice.Invoice](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *InvoicesQuery) All(ctx context.Context, db *keel.DB) ([]*invoice.Invoice, error) {
+	return keel.All[*invoice.Invoice](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *InvoicesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoice.Invoice, error) {
+	return keel.UpdateReturning[*invoice.Invoice](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *InvoicesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoice.Invoice], error) {
+	return keel.PageOf[*invoice.Invoice](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *InvoicesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoice.Invoice) error) error {
+	return keel.Each[*invoice.Invoice](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newInvoice() unsafe.Pointer { return unsafe.Pointer(new(invoice.Invoice)) }
@@ -2093,7 +3891,7 @@ var invoiceLinesRef = keel.Ref{Table: &invoiceLinesTable}
 
 // InvoiceLinesTable is the table of invoice.InvoiceLine.
 type InvoiceLinesTable struct {
-	keel.Handle[*invoice.InvoiceLine]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
@@ -2126,7 +3924,7 @@ type InvoiceLinesTable struct {
 
 // InvoiceLines references the invoice_lines table.
 var InvoiceLines = &InvoiceLinesTable{
-	Handle:              keel.Handle[*invoice.InvoiceLine]{Ref: &invoiceLinesRef},
+	TableBase:           keel.TableBase{Ref: &invoiceLinesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 0}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 1}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 2}}},
@@ -2157,10 +3955,10 @@ var InvoiceLines = &InvoiceLinesTable{
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &invoiceLinesRef, Index: 27}},
 }
 
-// BuildInvoiceLines builds the handle of invoice_lines for ref. Generated relation and alias methods call it.
+// BuildInvoiceLines builds the table of invoice_lines for ref. Generated relation and alias methods call it.
 func BuildInvoiceLines(r *keel.Ref) *InvoiceLinesTable {
 	return &InvoiceLinesTable{
-		Handle:              keel.Handle[*invoice.InvoiceLine]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2206,6 +4004,365 @@ func (t *InvoiceLinesTable) Invoice() *InvoicesTable { return keel.Path(t.Ref, 0
 // Get returns the invoice_lines row with the given key, or keel.ErrNotFound.
 func (t *InvoiceLinesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*invoice.InvoiceLine, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// InvoiceLinesQuery is a query over invoice.InvoiceLine.
+type InvoiceLinesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*invoice.InvoiceLine] = (*InvoiceLinesTable)(nil)
+
+var _ keel.Query[*invoice.InvoiceLine] = (*InvoiceLinesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *InvoiceLinesTable) Query() keel.Query[*invoice.InvoiceLine] {
+	return &InvoiceLinesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see InvoiceLinesQuery.Where.
+func (t *InvoiceLinesTable) Where(ps ...keel.Pred) keel.Query[*invoice.InvoiceLine] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see InvoiceLinesQuery.Pick.
+func (t *InvoiceLinesTable) Pick(es ...keel.Expr) keel.Query[*invoice.InvoiceLine] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see InvoiceLinesQuery.Load.
+func (t *InvoiceLinesTable) Load(ls ...keel.Loader) keel.Query[*invoice.InvoiceLine] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see InvoiceLinesQuery.Omit.
+func (t *InvoiceLinesTable) Omit(cols ...keel.Column) keel.Query[*invoice.InvoiceLine] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see InvoiceLinesQuery.Order.
+func (t *InvoiceLinesTable) Order(os ...keel.Order) keel.Query[*invoice.InvoiceLine] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see InvoiceLinesQuery.Limit.
+func (t *InvoiceLinesTable) Limit(n int) keel.Query[*invoice.InvoiceLine] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see InvoiceLinesQuery.Group.
+func (t *InvoiceLinesTable) Group(es ...keel.Expr) keel.Query[*invoice.InvoiceLine] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see InvoiceLinesQuery.GroupingSets.
+func (t *InvoiceLinesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*invoice.InvoiceLine] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see InvoiceLinesQuery.Rollup.
+func (t *InvoiceLinesTable) Rollup(es ...keel.Expr) keel.Query[*invoice.InvoiceLine] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see InvoiceLinesQuery.Cube.
+func (t *InvoiceLinesTable) Cube(es ...keel.Expr) keel.Query[*invoice.InvoiceLine] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see InvoiceLinesQuery.AllTenants.
+func (t *InvoiceLinesTable) AllTenants() keel.Query[*invoice.InvoiceLine] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see InvoiceLinesQuery.Join.
+func (t *InvoiceLinesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.InvoiceLine] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see InvoiceLinesQuery.LeftJoin.
+func (t *InvoiceLinesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.InvoiceLine] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see InvoiceLinesQuery.LeftJoinLateral.
+func (t *InvoiceLinesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*invoice.InvoiceLine] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see InvoiceLinesQuery.JoinLateral.
+func (t *InvoiceLinesTable) JoinLateral(sub keel.LateralSource) keel.Query[*invoice.InvoiceLine] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see InvoiceLinesQuery.Lock.
+func (t *InvoiceLinesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*invoice.InvoiceLine] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see InvoiceLinesQuery.DistinctOn.
+func (t *InvoiceLinesTable) DistinctOn(es ...keel.Expr) keel.Query[*invoice.InvoiceLine] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see InvoiceLinesQuery.Cache.
+func (t *InvoiceLinesTable) Cache(opts ...keel.CacheOption) keel.Query[*invoice.InvoiceLine] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see InvoiceLinesQuery.LoadStrategy.
+func (t *InvoiceLinesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*invoice.InvoiceLine] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see InvoiceLinesQuery.With.
+func (t *InvoiceLinesTable) With(ctes ...*keel.CTETable) keel.Query[*invoice.InvoiceLine] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see InvoiceLinesQuery.Compute.
+func (t *InvoiceLinesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*invoice.InvoiceLine] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *InvoiceLinesTable) Create(ctx context.Context, db *keel.DB, row *invoice.InvoiceLine) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *InvoiceLinesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoice.InvoiceLine) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *InvoiceLinesTable) Save(ctx context.Context, db *keel.DB, row *invoice.InvoiceLine, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *InvoiceLinesTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoice.InvoiceLine, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *InvoiceLinesTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoice.InvoiceLine) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *InvoiceLinesTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoice.InvoiceLine, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *InvoiceLinesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoice.InvoiceLine, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *InvoiceLinesTable) Copy(ctx context.Context, db *keel.DB, rows []*invoice.InvoiceLine) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *InvoiceLinesQuery) Where(ps ...keel.Pred) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *InvoiceLinesQuery) Pick(es ...keel.Expr) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *InvoiceLinesQuery) Omit(cols ...keel.Column) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *InvoiceLinesQuery) Load(ls ...keel.Loader) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *InvoiceLinesQuery) Order(os ...keel.Order) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *InvoiceLinesQuery) Distinct() keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *InvoiceLinesQuery) Group(es ...keel.Expr) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *InvoiceLinesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *InvoiceLinesQuery) Rollup(es ...keel.Expr) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *InvoiceLinesQuery) Cube(es ...keel.Expr) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *InvoiceLinesQuery) Window(name string, w keel.Window) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *InvoiceLinesQuery) Having(ps ...keel.Pred) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *InvoiceLinesQuery) Limit(n int) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *InvoiceLinesQuery) Offset(n int) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *InvoiceLinesQuery) DistinctOn(es ...keel.Expr) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *InvoiceLinesQuery) AllTenants() keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *InvoiceLinesQuery) CustomPlan() keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *InvoiceLinesQuery) Timeout(d time.Duration) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *InvoiceLinesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *InvoiceLinesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *InvoiceLinesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *InvoiceLinesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *InvoiceLinesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *InvoiceLinesQuery) Cache(opts ...keel.CacheOption) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *InvoiceLinesQuery) With(ctes ...*keel.CTETable) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *InvoiceLinesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *InvoiceLinesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*invoice.InvoiceLine] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *InvoiceLinesQuery) Clone() keel.Query[*invoice.InvoiceLine] {
+	return &InvoiceLinesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *InvoiceLinesQuery) One(ctx context.Context, db *keel.DB) (*invoice.InvoiceLine, error) {
+	return keel.One[*invoice.InvoiceLine](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *InvoiceLinesQuery) First(ctx context.Context, db *keel.DB) (*invoice.InvoiceLine, error) {
+	return keel.First[*invoice.InvoiceLine](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *InvoiceLinesQuery) List(ctx context.Context, db *keel.DB) ([]*invoice.InvoiceLine, error) {
+	return keel.List[*invoice.InvoiceLine](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *InvoiceLinesQuery) All(ctx context.Context, db *keel.DB) ([]*invoice.InvoiceLine, error) {
+	return keel.All[*invoice.InvoiceLine](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *InvoiceLinesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoice.InvoiceLine, error) {
+	return keel.UpdateReturning[*invoice.InvoiceLine](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *InvoiceLinesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoice.InvoiceLine], error) {
+	return keel.PageOf[*invoice.InvoiceLine](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *InvoiceLinesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoice.InvoiceLine) error) error {
+	return keel.Each[*invoice.InvoiceLine](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newInvoiceLine() unsafe.Pointer { return unsafe.Pointer(new(invoice.InvoiceLine)) }

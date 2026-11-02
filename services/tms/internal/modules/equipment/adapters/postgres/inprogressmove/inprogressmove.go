@@ -18,10 +18,10 @@ func MoveID(
 	equipmentID keel.Expr,
 ) keel.Expr {
 	return keel.Scalar(
-		keel.Handle[*keel.Row]{Ref: moves.AssignmentMoveID.Ref}.
+		keel.RowsOf(moves.AssignmentMoveID.Ref).
 			Pick(moves.AssignmentMoveID.Min()).
 			Join(
-				keel.Handle[*keel.Row]{Ref: moves.MoveID.Ref},
+				keel.TableBase{Ref: moves.MoveID.Ref},
 				moves.MoveID.EqCol(moves.AssignmentMoveID),
 			).
 			Where(
@@ -42,17 +42,17 @@ func Of(
 	return Fields{
 		MoveID: moveID,
 		ProNumber: keel.Scalar(
-			keel.Handle[*keel.Row]{Ref: moves.ShipmentID.Ref}.
+			keel.RowsOf(moves.ShipmentID.Ref).
 				Pick(moves.ShipmentProNumber).
 				Join(
-					keel.Handle[*keel.Row]{Ref: moves.MoveID.Ref},
+					keel.TableBase{Ref: moves.MoveID.Ref},
 					moves.MoveShipmentID.EqCol(moves.ShipmentID),
 				).
 				Where(moves.MoveID.EqCol(moveID)).
 				Limit(1),
 		),
 		DueAt: keel.Scalar(
-			keel.Handle[*keel.Row]{Ref: moves.StopMoveID.Ref}.
+			keel.RowsOf(moves.StopMoveID.Ref).
 				Pick(moves.StopWindowEnd.Coalesce(moves.StopWindowStart)).
 				Where(moves.StopMoveID.EqCol(moveID)).
 				Order(moves.StopSequence.Desc()).

@@ -4,6 +4,7 @@ package captureprofiledb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -68,7 +69,7 @@ var captureProfilesRef = keel.Ref{Table: &captureProfilesTable}
 
 // CaptureProfilesTable is the table of captureprofile.CaptureProfile.
 type CaptureProfilesTable struct {
-	keel.Handle[*captureprofile.CaptureProfile]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -92,7 +93,7 @@ type CaptureProfilesTable struct {
 
 // CaptureProfiles references the capture_profiles table.
 var CaptureProfiles = &CaptureProfilesTable{
-	Handle:              keel.Handle[*captureprofile.CaptureProfile]{Ref: &captureProfilesRef},
+	TableBase:           keel.TableBase{Ref: &captureProfilesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureProfilesRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureProfilesRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureProfilesRef, Index: 2}}},
@@ -114,10 +115,10 @@ var CaptureProfiles = &CaptureProfilesTable{
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &captureProfilesRef, Index: 18}},
 }
 
-// BuildCaptureProfiles builds the handle of capture_profiles for ref. Generated relation and alias methods call it.
+// BuildCaptureProfiles builds the table of capture_profiles for ref. Generated relation and alias methods call it.
 func BuildCaptureProfiles(r *keel.Ref) *CaptureProfilesTable {
 	return &CaptureProfilesTable{
-		Handle:              keel.Handle[*captureprofile.CaptureProfile]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -151,6 +152,365 @@ func (t *CaptureProfilesTable) As(alias string) *CaptureProfilesTable {
 // Get returns the capture_profiles row with the given key, or keel.ErrNotFound.
 func (t *CaptureProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*captureprofile.CaptureProfile, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CaptureProfilesQuery is a query over captureprofile.CaptureProfile.
+type CaptureProfilesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*captureprofile.CaptureProfile] = (*CaptureProfilesTable)(nil)
+
+var _ keel.Query[*captureprofile.CaptureProfile] = (*CaptureProfilesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CaptureProfilesTable) Query() keel.Query[*captureprofile.CaptureProfile] {
+	return &CaptureProfilesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CaptureProfilesQuery.Where.
+func (t *CaptureProfilesTable) Where(ps ...keel.Pred) keel.Query[*captureprofile.CaptureProfile] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CaptureProfilesQuery.Pick.
+func (t *CaptureProfilesTable) Pick(es ...keel.Expr) keel.Query[*captureprofile.CaptureProfile] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CaptureProfilesQuery.Load.
+func (t *CaptureProfilesTable) Load(ls ...keel.Loader) keel.Query[*captureprofile.CaptureProfile] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CaptureProfilesQuery.Omit.
+func (t *CaptureProfilesTable) Omit(cols ...keel.Column) keel.Query[*captureprofile.CaptureProfile] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CaptureProfilesQuery.Order.
+func (t *CaptureProfilesTable) Order(os ...keel.Order) keel.Query[*captureprofile.CaptureProfile] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CaptureProfilesQuery.Limit.
+func (t *CaptureProfilesTable) Limit(n int) keel.Query[*captureprofile.CaptureProfile] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CaptureProfilesQuery.Group.
+func (t *CaptureProfilesTable) Group(es ...keel.Expr) keel.Query[*captureprofile.CaptureProfile] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CaptureProfilesQuery.GroupingSets.
+func (t *CaptureProfilesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*captureprofile.CaptureProfile] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CaptureProfilesQuery.Rollup.
+func (t *CaptureProfilesTable) Rollup(es ...keel.Expr) keel.Query[*captureprofile.CaptureProfile] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CaptureProfilesQuery.Cube.
+func (t *CaptureProfilesTable) Cube(es ...keel.Expr) keel.Query[*captureprofile.CaptureProfile] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CaptureProfilesQuery.AllTenants.
+func (t *CaptureProfilesTable) AllTenants() keel.Query[*captureprofile.CaptureProfile] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CaptureProfilesQuery.Join.
+func (t *CaptureProfilesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*captureprofile.CaptureProfile] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CaptureProfilesQuery.LeftJoin.
+func (t *CaptureProfilesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*captureprofile.CaptureProfile] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CaptureProfilesQuery.LeftJoinLateral.
+func (t *CaptureProfilesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*captureprofile.CaptureProfile] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CaptureProfilesQuery.JoinLateral.
+func (t *CaptureProfilesTable) JoinLateral(sub keel.LateralSource) keel.Query[*captureprofile.CaptureProfile] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CaptureProfilesQuery.Lock.
+func (t *CaptureProfilesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*captureprofile.CaptureProfile] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CaptureProfilesQuery.DistinctOn.
+func (t *CaptureProfilesTable) DistinctOn(es ...keel.Expr) keel.Query[*captureprofile.CaptureProfile] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CaptureProfilesQuery.Cache.
+func (t *CaptureProfilesTable) Cache(opts ...keel.CacheOption) keel.Query[*captureprofile.CaptureProfile] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CaptureProfilesQuery.LoadStrategy.
+func (t *CaptureProfilesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*captureprofile.CaptureProfile] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CaptureProfilesQuery.With.
+func (t *CaptureProfilesTable) With(ctes ...*keel.CTETable) keel.Query[*captureprofile.CaptureProfile] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CaptureProfilesQuery.Compute.
+func (t *CaptureProfilesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*captureprofile.CaptureProfile] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CaptureProfilesTable) Create(ctx context.Context, db *keel.DB, row *captureprofile.CaptureProfile) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CaptureProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*captureprofile.CaptureProfile) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CaptureProfilesTable) Save(ctx context.Context, db *keel.DB, row *captureprofile.CaptureProfile, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CaptureProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *captureprofile.CaptureProfile, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CaptureProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *captureprofile.CaptureProfile) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CaptureProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*captureprofile.CaptureProfile, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CaptureProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*captureprofile.CaptureProfile, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CaptureProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*captureprofile.CaptureProfile) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CaptureProfilesQuery) Where(ps ...keel.Pred) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CaptureProfilesQuery) Pick(es ...keel.Expr) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CaptureProfilesQuery) Omit(cols ...keel.Column) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CaptureProfilesQuery) Load(ls ...keel.Loader) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CaptureProfilesQuery) Order(os ...keel.Order) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CaptureProfilesQuery) Distinct() keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CaptureProfilesQuery) Group(es ...keel.Expr) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CaptureProfilesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CaptureProfilesQuery) Rollup(es ...keel.Expr) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CaptureProfilesQuery) Cube(es ...keel.Expr) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CaptureProfilesQuery) Window(name string, w keel.Window) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CaptureProfilesQuery) Having(ps ...keel.Pred) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CaptureProfilesQuery) Limit(n int) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CaptureProfilesQuery) Offset(n int) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CaptureProfilesQuery) DistinctOn(es ...keel.Expr) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CaptureProfilesQuery) AllTenants() keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CaptureProfilesQuery) CustomPlan() keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CaptureProfilesQuery) Timeout(d time.Duration) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CaptureProfilesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CaptureProfilesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CaptureProfilesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CaptureProfilesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CaptureProfilesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CaptureProfilesQuery) Cache(opts ...keel.CacheOption) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CaptureProfilesQuery) With(ctes ...*keel.CTETable) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CaptureProfilesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CaptureProfilesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*captureprofile.CaptureProfile] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CaptureProfilesQuery) Clone() keel.Query[*captureprofile.CaptureProfile] {
+	return &CaptureProfilesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CaptureProfilesQuery) One(ctx context.Context, db *keel.DB) (*captureprofile.CaptureProfile, error) {
+	return keel.One[*captureprofile.CaptureProfile](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CaptureProfilesQuery) First(ctx context.Context, db *keel.DB) (*captureprofile.CaptureProfile, error) {
+	return keel.First[*captureprofile.CaptureProfile](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CaptureProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*captureprofile.CaptureProfile, error) {
+	return keel.List[*captureprofile.CaptureProfile](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CaptureProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*captureprofile.CaptureProfile, error) {
+	return keel.All[*captureprofile.CaptureProfile](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CaptureProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*captureprofile.CaptureProfile, error) {
+	return keel.UpdateReturning[*captureprofile.CaptureProfile](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CaptureProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*captureprofile.CaptureProfile], error) {
+	return keel.PageOf[*captureprofile.CaptureProfile](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CaptureProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*captureprofile.CaptureProfile) error) error {
+	return keel.Each[*captureprofile.CaptureProfile](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCaptureProfile() unsafe.Pointer { return unsafe.Pointer(new(captureprofile.CaptureProfile)) }

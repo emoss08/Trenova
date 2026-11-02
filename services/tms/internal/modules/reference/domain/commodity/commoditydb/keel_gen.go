@@ -4,6 +4,7 @@ package commoditydb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -79,7 +80,7 @@ var commoditiesRef = keel.Ref{Table: &commoditiesTable}
 
 // CommoditiesTable is the table of commodity.Commodity.
 type CommoditiesTable struct {
-	keel.Handle[*commodity.Commodity]
+	keel.TableBase
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -108,7 +109,7 @@ type CommoditiesTable struct {
 
 // Commodities references the commodities table.
 var Commodities = &CommoditiesTable{
-	Handle:                 keel.Handle[*commodity.Commodity]{Ref: &commoditiesRef},
+	TableBase:              keel.TableBase{Ref: &commoditiesRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &commoditiesRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &commoditiesRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &commoditiesRef, Index: 2}}},
@@ -135,10 +136,10 @@ var Commodities = &CommoditiesTable{
 	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &commoditiesRef, Index: 23}},
 }
 
-// BuildCommodities builds the handle of commodities for ref. Generated relation and alias methods call it.
+// BuildCommodities builds the table of commodities for ref. Generated relation and alias methods call it.
 func BuildCommodities(r *keel.Ref) *CommoditiesTable {
 	return &CommoditiesTable{
-		Handle:                 keel.Handle[*commodity.Commodity]{Ref: r},
+		TableBase:              keel.TableBase{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -182,6 +183,365 @@ func (t *CommoditiesTable) HazardousMaterial() *hazardousmaterialdb.HazardousMat
 // Get returns the commodities row with the given key, or keel.ErrNotFound.
 func (t *CommoditiesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*commodity.Commodity, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CommoditiesQuery is a query over commodity.Commodity.
+type CommoditiesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*commodity.Commodity] = (*CommoditiesTable)(nil)
+
+var _ keel.Query[*commodity.Commodity] = (*CommoditiesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CommoditiesTable) Query() keel.Query[*commodity.Commodity] {
+	return &CommoditiesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CommoditiesQuery.Where.
+func (t *CommoditiesTable) Where(ps ...keel.Pred) keel.Query[*commodity.Commodity] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CommoditiesQuery.Pick.
+func (t *CommoditiesTable) Pick(es ...keel.Expr) keel.Query[*commodity.Commodity] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CommoditiesQuery.Load.
+func (t *CommoditiesTable) Load(ls ...keel.Loader) keel.Query[*commodity.Commodity] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CommoditiesQuery.Omit.
+func (t *CommoditiesTable) Omit(cols ...keel.Column) keel.Query[*commodity.Commodity] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CommoditiesQuery.Order.
+func (t *CommoditiesTable) Order(os ...keel.Order) keel.Query[*commodity.Commodity] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CommoditiesQuery.Limit.
+func (t *CommoditiesTable) Limit(n int) keel.Query[*commodity.Commodity] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CommoditiesQuery.Group.
+func (t *CommoditiesTable) Group(es ...keel.Expr) keel.Query[*commodity.Commodity] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CommoditiesQuery.GroupingSets.
+func (t *CommoditiesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*commodity.Commodity] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CommoditiesQuery.Rollup.
+func (t *CommoditiesTable) Rollup(es ...keel.Expr) keel.Query[*commodity.Commodity] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CommoditiesQuery.Cube.
+func (t *CommoditiesTable) Cube(es ...keel.Expr) keel.Query[*commodity.Commodity] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CommoditiesQuery.AllTenants.
+func (t *CommoditiesTable) AllTenants() keel.Query[*commodity.Commodity] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CommoditiesQuery.Join.
+func (t *CommoditiesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*commodity.Commodity] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CommoditiesQuery.LeftJoin.
+func (t *CommoditiesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*commodity.Commodity] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CommoditiesQuery.LeftJoinLateral.
+func (t *CommoditiesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*commodity.Commodity] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CommoditiesQuery.JoinLateral.
+func (t *CommoditiesTable) JoinLateral(sub keel.LateralSource) keel.Query[*commodity.Commodity] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CommoditiesQuery.Lock.
+func (t *CommoditiesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*commodity.Commodity] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CommoditiesQuery.DistinctOn.
+func (t *CommoditiesTable) DistinctOn(es ...keel.Expr) keel.Query[*commodity.Commodity] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CommoditiesQuery.Cache.
+func (t *CommoditiesTable) Cache(opts ...keel.CacheOption) keel.Query[*commodity.Commodity] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CommoditiesQuery.LoadStrategy.
+func (t *CommoditiesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*commodity.Commodity] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CommoditiesQuery.With.
+func (t *CommoditiesTable) With(ctes ...*keel.CTETable) keel.Query[*commodity.Commodity] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CommoditiesQuery.Compute.
+func (t *CommoditiesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*commodity.Commodity] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CommoditiesTable) Create(ctx context.Context, db *keel.DB, row *commodity.Commodity) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CommoditiesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*commodity.Commodity) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CommoditiesTable) Save(ctx context.Context, db *keel.DB, row *commodity.Commodity, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CommoditiesTable) SaveExcept(ctx context.Context, db *keel.DB, row *commodity.Commodity, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CommoditiesTable) DeleteRow(ctx context.Context, db *keel.DB, row *commodity.Commodity) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CommoditiesTable) Upsert(ctx context.Context, db *keel.DB, rows []*commodity.Commodity, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CommoditiesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*commodity.Commodity, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CommoditiesTable) Copy(ctx context.Context, db *keel.DB, rows []*commodity.Commodity) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CommoditiesQuery) Where(ps ...keel.Pred) keel.Query[*commodity.Commodity] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CommoditiesQuery) Pick(es ...keel.Expr) keel.Query[*commodity.Commodity] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CommoditiesQuery) Omit(cols ...keel.Column) keel.Query[*commodity.Commodity] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CommoditiesQuery) Load(ls ...keel.Loader) keel.Query[*commodity.Commodity] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CommoditiesQuery) Order(os ...keel.Order) keel.Query[*commodity.Commodity] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CommoditiesQuery) Distinct() keel.Query[*commodity.Commodity] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CommoditiesQuery) Group(es ...keel.Expr) keel.Query[*commodity.Commodity] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CommoditiesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*commodity.Commodity] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CommoditiesQuery) Rollup(es ...keel.Expr) keel.Query[*commodity.Commodity] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CommoditiesQuery) Cube(es ...keel.Expr) keel.Query[*commodity.Commodity] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CommoditiesQuery) Window(name string, w keel.Window) keel.Query[*commodity.Commodity] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CommoditiesQuery) Having(ps ...keel.Pred) keel.Query[*commodity.Commodity] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CommoditiesQuery) Limit(n int) keel.Query[*commodity.Commodity] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CommoditiesQuery) Offset(n int) keel.Query[*commodity.Commodity] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CommoditiesQuery) DistinctOn(es ...keel.Expr) keel.Query[*commodity.Commodity] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CommoditiesQuery) AllTenants() keel.Query[*commodity.Commodity] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CommoditiesQuery) CustomPlan() keel.Query[*commodity.Commodity] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CommoditiesQuery) Timeout(d time.Duration) keel.Query[*commodity.Commodity] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CommoditiesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*commodity.Commodity] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CommoditiesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*commodity.Commodity] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CommoditiesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*commodity.Commodity] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CommoditiesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*commodity.Commodity] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CommoditiesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*commodity.Commodity] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CommoditiesQuery) Cache(opts ...keel.CacheOption) keel.Query[*commodity.Commodity] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CommoditiesQuery) With(ctes ...*keel.CTETable) keel.Query[*commodity.Commodity] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CommoditiesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*commodity.Commodity] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CommoditiesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*commodity.Commodity] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CommoditiesQuery) Clone() keel.Query[*commodity.Commodity] {
+	return &CommoditiesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CommoditiesQuery) One(ctx context.Context, db *keel.DB) (*commodity.Commodity, error) {
+	return keel.One[*commodity.Commodity](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CommoditiesQuery) First(ctx context.Context, db *keel.DB) (*commodity.Commodity, error) {
+	return keel.First[*commodity.Commodity](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CommoditiesQuery) List(ctx context.Context, db *keel.DB) ([]*commodity.Commodity, error) {
+	return keel.List[*commodity.Commodity](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CommoditiesQuery) All(ctx context.Context, db *keel.DB) ([]*commodity.Commodity, error) {
+	return keel.All[*commodity.Commodity](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CommoditiesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*commodity.Commodity, error) {
+	return keel.UpdateReturning[*commodity.Commodity](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CommoditiesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*commodity.Commodity], error) {
+	return keel.PageOf[*commodity.Commodity](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CommoditiesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*commodity.Commodity) error) error {
+	return keel.Each[*commodity.Commodity](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCommodity() unsafe.Pointer { return unsafe.Pointer(new(commodity.Commodity)) }

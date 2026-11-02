@@ -59,7 +59,7 @@ func (r *repository) SelectTransactionSetOptions(
 
 func transactionSetOptionsQuery(
 	req *edipartnerports.EDITransactionSetSelectOptionsRequest,
-) *keel.Query[*edidocument.EDITransactionSet] {
+) keel.Query[*edidocument.EDITransactionSet] {
 	ts := edidocumentdb.EDITransactionSets
 	return ts.Pick(
 		ts.ID,

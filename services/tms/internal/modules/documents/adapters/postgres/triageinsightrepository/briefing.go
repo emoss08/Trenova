@@ -50,7 +50,7 @@ func (r *repository) BriefingCounts(
 
 func briefingCountsQuery(
 	req triageports.BriefingWindow,
-) *keel.Query[*inboundmessage.InboundMessage] {
+) keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	anyMessage := inboundmessagedb.InboundMessages.As("any_message")
 
@@ -99,7 +99,7 @@ func (r *repository) HandledByNova(
 	})
 }
 
-func handledQuery(req triageports.BriefingWindow) *keel.Query[*keel.Row] {
+func handledQuery(req triageports.BriefingWindow) keel.Query[*keel.Row] {
 	m := inboundmessagedb.InboundMessages
 	partition := []keel.Expr{m.HandledAction, m.Classification}
 
@@ -155,7 +155,7 @@ func (r *repository) Arrivals(
 	})
 }
 
-func arrivalsQuery(req triageports.BriefingWindow) *keel.Query[*inboundmessage.InboundMessage] {
+func arrivalsQuery(req triageports.BriefingWindow) keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	hour := m.ReceivedAt.Sub(keel.Int64(req.DayStart)).Div(keel.Int64(3600))
 	nova := settledByRule()
@@ -189,7 +189,7 @@ func (r *repository) River(
 	})
 }
 
-func riverQuery(req triageports.BriefingWindow) *keel.Query[*keel.Row] {
+func riverQuery(req triageports.BriefingWindow) keel.Query[*keel.Row] {
 	m := inboundmessagedb.InboundMessages
 	nova := settledByRule()
 
@@ -233,7 +233,7 @@ func (r *repository) Waiting(
 	)
 }
 
-func waitingQuery(req triageports.WaitingRequest) *keel.Query[*inboundmessage.InboundMessage] {
+func waitingQuery(req triageports.WaitingRequest) keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 
 	return m.Omit(m.TextBody, m.HTMLKey).
@@ -272,7 +272,7 @@ func (r *repository) CorrectionTotals(
 
 func correctionTotalsQuery(
 	req triageports.CorrectionTotalsRequest,
-) *keel.Query[*inboundmessage.InboundMessage] {
+) keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	act := triagedb.Activities
 

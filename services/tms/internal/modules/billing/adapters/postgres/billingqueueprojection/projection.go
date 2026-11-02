@@ -83,7 +83,7 @@ func HasActionableIssue(bq *billingqueuedb.BillingQueueItemsTable) keel.Pred {
 	return keel.Exists(actionableIssues(bq))
 }
 
-func openIssues(bq *billingqueuedb.BillingQueueItemsTable) *keel.Query[*billingqueue.Issue] {
+func openIssues(bq *billingqueuedb.BillingQueueItemsTable) keel.Query[*billingqueue.Issue] {
 	iss := billingqueuedb.Issues.As(openIssueAlias)
 
 	return iss.Pick(iss.ID).Where(
@@ -95,7 +95,7 @@ func openIssues(bq *billingqueuedb.BillingQueueItemsTable) *keel.Query[*billingq
 	)
 }
 
-func actionableIssues(bq *billingqueuedb.BillingQueueItemsTable) *keel.Query[*billingqueue.Issue] {
+func actionableIssues(bq *billingqueuedb.BillingQueueItemsTable) keel.Query[*billingqueue.Issue] {
 	iss := billingqueuedb.Issues.As(actionableIssueAlias)
 
 	return iss.Pick(iss.ID).Where(

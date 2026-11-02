@@ -72,8 +72,8 @@ func (r *recurringEarningRepository) ListConnection(
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 					Shape: func(
-						q *keel.Query[*recurringpay.RecurringEarning],
-					) *keel.Query[*recurringpay.RecurringEarning] {
+						q keel.Query[*recurringpay.RecurringEarning],
+					) keel.Query[*recurringpay.RecurringEarning] {
 						return q.Load(re.Worker(), re.PayCode())
 					},
 				},

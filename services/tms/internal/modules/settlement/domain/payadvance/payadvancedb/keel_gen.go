@@ -4,6 +4,7 @@ package payadvancedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -74,7 +75,7 @@ var payAdvancesRef = keel.Ref{Table: &payAdvancesTable}
 
 // PayAdvancesTable is the table of payadvance.PayAdvance.
 type PayAdvancesTable struct {
-	keel.Handle[*payadvance.PayAdvance]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -99,7 +100,7 @@ type PayAdvancesTable struct {
 
 // PayAdvances references the pay_advances table.
 var PayAdvances = &PayAdvancesTable{
-	Handle:          keel.Handle[*payadvance.PayAdvance]{Ref: &payAdvancesRef},
+	TableBase:       keel.TableBase{Ref: &payAdvancesRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 2}}},
@@ -122,10 +123,10 @@ var PayAdvances = &PayAdvancesTable{
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &payAdvancesRef, Index: 19}},
 }
 
-// BuildPayAdvances builds the handle of pay_advances for ref. Generated relation and alias methods call it.
+// BuildPayAdvances builds the table of pay_advances for ref. Generated relation and alias methods call it.
 func BuildPayAdvances(r *keel.Ref) *PayAdvancesTable {
 	return &PayAdvancesTable{
-		Handle:          keel.Handle[*payadvance.PayAdvance]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -165,6 +166,365 @@ func (t *PayAdvancesTable) Worker() *workerdb.WorkersTable {
 // Get returns the pay_advances row with the given key, or keel.ErrNotFound.
 func (t *PayAdvancesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*payadvance.PayAdvance, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// PayAdvancesQuery is a query over payadvance.PayAdvance.
+type PayAdvancesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*payadvance.PayAdvance] = (*PayAdvancesTable)(nil)
+
+var _ keel.Query[*payadvance.PayAdvance] = (*PayAdvancesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *PayAdvancesTable) Query() keel.Query[*payadvance.PayAdvance] {
+	return &PayAdvancesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see PayAdvancesQuery.Where.
+func (t *PayAdvancesTable) Where(ps ...keel.Pred) keel.Query[*payadvance.PayAdvance] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see PayAdvancesQuery.Pick.
+func (t *PayAdvancesTable) Pick(es ...keel.Expr) keel.Query[*payadvance.PayAdvance] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see PayAdvancesQuery.Load.
+func (t *PayAdvancesTable) Load(ls ...keel.Loader) keel.Query[*payadvance.PayAdvance] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see PayAdvancesQuery.Omit.
+func (t *PayAdvancesTable) Omit(cols ...keel.Column) keel.Query[*payadvance.PayAdvance] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see PayAdvancesQuery.Order.
+func (t *PayAdvancesTable) Order(os ...keel.Order) keel.Query[*payadvance.PayAdvance] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see PayAdvancesQuery.Limit.
+func (t *PayAdvancesTable) Limit(n int) keel.Query[*payadvance.PayAdvance] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see PayAdvancesQuery.Group.
+func (t *PayAdvancesTable) Group(es ...keel.Expr) keel.Query[*payadvance.PayAdvance] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see PayAdvancesQuery.GroupingSets.
+func (t *PayAdvancesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*payadvance.PayAdvance] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see PayAdvancesQuery.Rollup.
+func (t *PayAdvancesTable) Rollup(es ...keel.Expr) keel.Query[*payadvance.PayAdvance] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see PayAdvancesQuery.Cube.
+func (t *PayAdvancesTable) Cube(es ...keel.Expr) keel.Query[*payadvance.PayAdvance] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see PayAdvancesQuery.AllTenants.
+func (t *PayAdvancesTable) AllTenants() keel.Query[*payadvance.PayAdvance] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see PayAdvancesQuery.Join.
+func (t *PayAdvancesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*payadvance.PayAdvance] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see PayAdvancesQuery.LeftJoin.
+func (t *PayAdvancesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*payadvance.PayAdvance] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see PayAdvancesQuery.LeftJoinLateral.
+func (t *PayAdvancesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*payadvance.PayAdvance] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see PayAdvancesQuery.JoinLateral.
+func (t *PayAdvancesTable) JoinLateral(sub keel.LateralSource) keel.Query[*payadvance.PayAdvance] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see PayAdvancesQuery.Lock.
+func (t *PayAdvancesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*payadvance.PayAdvance] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see PayAdvancesQuery.DistinctOn.
+func (t *PayAdvancesTable) DistinctOn(es ...keel.Expr) keel.Query[*payadvance.PayAdvance] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see PayAdvancesQuery.Cache.
+func (t *PayAdvancesTable) Cache(opts ...keel.CacheOption) keel.Query[*payadvance.PayAdvance] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see PayAdvancesQuery.LoadStrategy.
+func (t *PayAdvancesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*payadvance.PayAdvance] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see PayAdvancesQuery.With.
+func (t *PayAdvancesTable) With(ctes ...*keel.CTETable) keel.Query[*payadvance.PayAdvance] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see PayAdvancesQuery.Compute.
+func (t *PayAdvancesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*payadvance.PayAdvance] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *PayAdvancesTable) Create(ctx context.Context, db *keel.DB, row *payadvance.PayAdvance) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *PayAdvancesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*payadvance.PayAdvance) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *PayAdvancesTable) Save(ctx context.Context, db *keel.DB, row *payadvance.PayAdvance, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *PayAdvancesTable) SaveExcept(ctx context.Context, db *keel.DB, row *payadvance.PayAdvance, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *PayAdvancesTable) DeleteRow(ctx context.Context, db *keel.DB, row *payadvance.PayAdvance) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *PayAdvancesTable) Upsert(ctx context.Context, db *keel.DB, rows []*payadvance.PayAdvance, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *PayAdvancesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*payadvance.PayAdvance, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *PayAdvancesTable) Copy(ctx context.Context, db *keel.DB, rows []*payadvance.PayAdvance) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *PayAdvancesQuery) Where(ps ...keel.Pred) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *PayAdvancesQuery) Pick(es ...keel.Expr) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *PayAdvancesQuery) Omit(cols ...keel.Column) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *PayAdvancesQuery) Load(ls ...keel.Loader) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *PayAdvancesQuery) Order(os ...keel.Order) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *PayAdvancesQuery) Distinct() keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *PayAdvancesQuery) Group(es ...keel.Expr) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *PayAdvancesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *PayAdvancesQuery) Rollup(es ...keel.Expr) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *PayAdvancesQuery) Cube(es ...keel.Expr) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *PayAdvancesQuery) Window(name string, w keel.Window) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *PayAdvancesQuery) Having(ps ...keel.Pred) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *PayAdvancesQuery) Limit(n int) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *PayAdvancesQuery) Offset(n int) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *PayAdvancesQuery) DistinctOn(es ...keel.Expr) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *PayAdvancesQuery) AllTenants() keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *PayAdvancesQuery) CustomPlan() keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *PayAdvancesQuery) Timeout(d time.Duration) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *PayAdvancesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *PayAdvancesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *PayAdvancesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *PayAdvancesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *PayAdvancesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *PayAdvancesQuery) Cache(opts ...keel.CacheOption) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *PayAdvancesQuery) With(ctes ...*keel.CTETable) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *PayAdvancesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *PayAdvancesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*payadvance.PayAdvance] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *PayAdvancesQuery) Clone() keel.Query[*payadvance.PayAdvance] {
+	return &PayAdvancesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *PayAdvancesQuery) One(ctx context.Context, db *keel.DB) (*payadvance.PayAdvance, error) {
+	return keel.One[*payadvance.PayAdvance](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *PayAdvancesQuery) First(ctx context.Context, db *keel.DB) (*payadvance.PayAdvance, error) {
+	return keel.First[*payadvance.PayAdvance](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *PayAdvancesQuery) List(ctx context.Context, db *keel.DB) ([]*payadvance.PayAdvance, error) {
+	return keel.List[*payadvance.PayAdvance](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *PayAdvancesQuery) All(ctx context.Context, db *keel.DB) ([]*payadvance.PayAdvance, error) {
+	return keel.All[*payadvance.PayAdvance](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *PayAdvancesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*payadvance.PayAdvance, error) {
+	return keel.UpdateReturning[*payadvance.PayAdvance](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *PayAdvancesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*payadvance.PayAdvance], error) {
+	return keel.PageOf[*payadvance.PayAdvance](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *PayAdvancesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*payadvance.PayAdvance) error) error {
+	return keel.Each[*payadvance.PayAdvance](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newPayAdvance() unsafe.Pointer { return unsafe.Pointer(new(payadvance.PayAdvance)) }

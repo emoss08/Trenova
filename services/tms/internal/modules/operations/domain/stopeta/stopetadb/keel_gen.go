@@ -4,6 +4,7 @@ package stopetadb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -69,7 +70,7 @@ var stopETAsRef = keel.Ref{Table: &stopETAsTable}
 
 // StopETAsTable is the table of stopeta.StopETA.
 type StopETAsTable struct {
-	keel.Handle[*stopeta.StopETA]
+	keel.TableBase
 	ID                 keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
@@ -98,7 +99,7 @@ type StopETAsTable struct {
 
 // StopETAs references the stop_etas table.
 var StopETAs = &StopETAsTable{
-	Handle:             keel.Handle[*stopeta.StopETA]{Ref: &stopETAsRef},
+	TableBase:          keel.TableBase{Ref: &stopETAsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 0}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 1}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 2}}},
@@ -125,10 +126,10 @@ var StopETAs = &StopETAsTable{
 	ComputedAt:         keel.Int64Col{Col: keel.Col{Ref: &stopETAsRef, Index: 23}},
 }
 
-// BuildStopETAs builds the handle of stop_etas for ref. Generated relation and alias methods call it.
+// BuildStopETAs builds the table of stop_etas for ref. Generated relation and alias methods call it.
 func BuildStopETAs(r *keel.Ref) *StopETAsTable {
 	return &StopETAsTable{
-		Handle:             keel.Handle[*stopeta.StopETA]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -167,6 +168,365 @@ func (t *StopETAsTable) As(alias string) *StopETAsTable {
 // Get returns the stop_etas row with the given key, or keel.ErrNotFound.
 func (t *StopETAsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*stopeta.StopETA, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// StopETAsQuery is a query over stopeta.StopETA.
+type StopETAsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*stopeta.StopETA] = (*StopETAsTable)(nil)
+
+var _ keel.Query[*stopeta.StopETA] = (*StopETAsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *StopETAsTable) Query() keel.Query[*stopeta.StopETA] {
+	return &StopETAsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see StopETAsQuery.Where.
+func (t *StopETAsTable) Where(ps ...keel.Pred) keel.Query[*stopeta.StopETA] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see StopETAsQuery.Pick.
+func (t *StopETAsTable) Pick(es ...keel.Expr) keel.Query[*stopeta.StopETA] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see StopETAsQuery.Load.
+func (t *StopETAsTable) Load(ls ...keel.Loader) keel.Query[*stopeta.StopETA] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see StopETAsQuery.Omit.
+func (t *StopETAsTable) Omit(cols ...keel.Column) keel.Query[*stopeta.StopETA] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see StopETAsQuery.Order.
+func (t *StopETAsTable) Order(os ...keel.Order) keel.Query[*stopeta.StopETA] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see StopETAsQuery.Limit.
+func (t *StopETAsTable) Limit(n int) keel.Query[*stopeta.StopETA] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see StopETAsQuery.Group.
+func (t *StopETAsTable) Group(es ...keel.Expr) keel.Query[*stopeta.StopETA] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see StopETAsQuery.GroupingSets.
+func (t *StopETAsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*stopeta.StopETA] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see StopETAsQuery.Rollup.
+func (t *StopETAsTable) Rollup(es ...keel.Expr) keel.Query[*stopeta.StopETA] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see StopETAsQuery.Cube.
+func (t *StopETAsTable) Cube(es ...keel.Expr) keel.Query[*stopeta.StopETA] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see StopETAsQuery.AllTenants.
+func (t *StopETAsTable) AllTenants() keel.Query[*stopeta.StopETA] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see StopETAsQuery.Join.
+func (t *StopETAsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*stopeta.StopETA] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see StopETAsQuery.LeftJoin.
+func (t *StopETAsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*stopeta.StopETA] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see StopETAsQuery.LeftJoinLateral.
+func (t *StopETAsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*stopeta.StopETA] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see StopETAsQuery.JoinLateral.
+func (t *StopETAsTable) JoinLateral(sub keel.LateralSource) keel.Query[*stopeta.StopETA] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see StopETAsQuery.Lock.
+func (t *StopETAsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*stopeta.StopETA] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see StopETAsQuery.DistinctOn.
+func (t *StopETAsTable) DistinctOn(es ...keel.Expr) keel.Query[*stopeta.StopETA] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see StopETAsQuery.Cache.
+func (t *StopETAsTable) Cache(opts ...keel.CacheOption) keel.Query[*stopeta.StopETA] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see StopETAsQuery.LoadStrategy.
+func (t *StopETAsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*stopeta.StopETA] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see StopETAsQuery.With.
+func (t *StopETAsTable) With(ctes ...*keel.CTETable) keel.Query[*stopeta.StopETA] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see StopETAsQuery.Compute.
+func (t *StopETAsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*stopeta.StopETA] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *StopETAsTable) Create(ctx context.Context, db *keel.DB, row *stopeta.StopETA) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *StopETAsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*stopeta.StopETA) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *StopETAsTable) Save(ctx context.Context, db *keel.DB, row *stopeta.StopETA, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *StopETAsTable) SaveExcept(ctx context.Context, db *keel.DB, row *stopeta.StopETA, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *StopETAsTable) DeleteRow(ctx context.Context, db *keel.DB, row *stopeta.StopETA) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *StopETAsTable) Upsert(ctx context.Context, db *keel.DB, rows []*stopeta.StopETA, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *StopETAsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*stopeta.StopETA, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *StopETAsTable) Copy(ctx context.Context, db *keel.DB, rows []*stopeta.StopETA) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *StopETAsQuery) Where(ps ...keel.Pred) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *StopETAsQuery) Pick(es ...keel.Expr) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *StopETAsQuery) Omit(cols ...keel.Column) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *StopETAsQuery) Load(ls ...keel.Loader) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *StopETAsQuery) Order(os ...keel.Order) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *StopETAsQuery) Distinct() keel.Query[*stopeta.StopETA] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *StopETAsQuery) Group(es ...keel.Expr) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *StopETAsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *StopETAsQuery) Rollup(es ...keel.Expr) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *StopETAsQuery) Cube(es ...keel.Expr) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *StopETAsQuery) Window(name string, w keel.Window) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *StopETAsQuery) Having(ps ...keel.Pred) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *StopETAsQuery) Limit(n int) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *StopETAsQuery) Offset(n int) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *StopETAsQuery) DistinctOn(es ...keel.Expr) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *StopETAsQuery) AllTenants() keel.Query[*stopeta.StopETA] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *StopETAsQuery) CustomPlan() keel.Query[*stopeta.StopETA] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *StopETAsQuery) Timeout(d time.Duration) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *StopETAsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *StopETAsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *StopETAsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *StopETAsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *StopETAsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *StopETAsQuery) Cache(opts ...keel.CacheOption) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *StopETAsQuery) With(ctes ...*keel.CTETable) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *StopETAsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *StopETAsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*stopeta.StopETA] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *StopETAsQuery) Clone() keel.Query[*stopeta.StopETA] {
+	return &StopETAsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *StopETAsQuery) One(ctx context.Context, db *keel.DB) (*stopeta.StopETA, error) {
+	return keel.One[*stopeta.StopETA](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *StopETAsQuery) First(ctx context.Context, db *keel.DB) (*stopeta.StopETA, error) {
+	return keel.First[*stopeta.StopETA](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *StopETAsQuery) List(ctx context.Context, db *keel.DB) ([]*stopeta.StopETA, error) {
+	return keel.List[*stopeta.StopETA](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *StopETAsQuery) All(ctx context.Context, db *keel.DB) ([]*stopeta.StopETA, error) {
+	return keel.All[*stopeta.StopETA](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *StopETAsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*stopeta.StopETA, error) {
+	return keel.UpdateReturning[*stopeta.StopETA](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *StopETAsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*stopeta.StopETA], error) {
+	return keel.PageOf[*stopeta.StopETA](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *StopETAsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*stopeta.StopETA) error) error {
+	return keel.Each[*stopeta.StopETA](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newStopETA() unsafe.Pointer { return unsafe.Pointer(new(stopeta.StopETA)) }

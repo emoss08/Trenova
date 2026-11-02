@@ -4,6 +4,7 @@ package generateddocumentdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -85,7 +86,7 @@ var generatedDocumentsRef = keel.Ref{Table: &generatedDocumentsTable}
 
 // GeneratedDocumentsTable is the table of generateddocument.GeneratedDocument.
 type GeneratedDocumentsTable struct {
-	keel.Handle[*generateddocument.GeneratedDocument]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -118,7 +119,7 @@ type GeneratedDocumentsTable struct {
 
 // GeneratedDocuments references the generated_documents table.
 var GeneratedDocuments = &GeneratedDocumentsTable{
-	Handle:            keel.Handle[*generateddocument.GeneratedDocument]{Ref: &generatedDocumentsRef},
+	TableBase:         keel.TableBase{Ref: &generatedDocumentsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 2}}},
@@ -149,10 +150,10 @@ var GeneratedDocuments = &GeneratedDocumentsTable{
 	Rank:              keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 27}},
 }
 
-// BuildGeneratedDocuments builds the handle of generated_documents for ref. Generated relation and alias methods call it.
+// BuildGeneratedDocuments builds the table of generated_documents for ref. Generated relation and alias methods call it.
 func BuildGeneratedDocuments(r *keel.Ref) *GeneratedDocumentsTable {
 	return &GeneratedDocumentsTable{
-		Handle:            keel.Handle[*generateddocument.GeneratedDocument]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -205,6 +206,365 @@ func (t *GeneratedDocumentsTable) TemplateVersion() *documenttemplatedb.Document
 // Get returns the generated_documents row with the given key, or keel.ErrNotFound.
 func (t *GeneratedDocumentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*generateddocument.GeneratedDocument, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// GeneratedDocumentsQuery is a query over generateddocument.GeneratedDocument.
+type GeneratedDocumentsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*generateddocument.GeneratedDocument] = (*GeneratedDocumentsTable)(nil)
+
+var _ keel.Query[*generateddocument.GeneratedDocument] = (*GeneratedDocumentsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *GeneratedDocumentsTable) Query() keel.Query[*generateddocument.GeneratedDocument] {
+	return &GeneratedDocumentsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see GeneratedDocumentsQuery.Where.
+func (t *GeneratedDocumentsTable) Where(ps ...keel.Pred) keel.Query[*generateddocument.GeneratedDocument] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see GeneratedDocumentsQuery.Pick.
+func (t *GeneratedDocumentsTable) Pick(es ...keel.Expr) keel.Query[*generateddocument.GeneratedDocument] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see GeneratedDocumentsQuery.Load.
+func (t *GeneratedDocumentsTable) Load(ls ...keel.Loader) keel.Query[*generateddocument.GeneratedDocument] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see GeneratedDocumentsQuery.Omit.
+func (t *GeneratedDocumentsTable) Omit(cols ...keel.Column) keel.Query[*generateddocument.GeneratedDocument] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see GeneratedDocumentsQuery.Order.
+func (t *GeneratedDocumentsTable) Order(os ...keel.Order) keel.Query[*generateddocument.GeneratedDocument] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see GeneratedDocumentsQuery.Limit.
+func (t *GeneratedDocumentsTable) Limit(n int) keel.Query[*generateddocument.GeneratedDocument] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see GeneratedDocumentsQuery.Group.
+func (t *GeneratedDocumentsTable) Group(es ...keel.Expr) keel.Query[*generateddocument.GeneratedDocument] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see GeneratedDocumentsQuery.GroupingSets.
+func (t *GeneratedDocumentsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*generateddocument.GeneratedDocument] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see GeneratedDocumentsQuery.Rollup.
+func (t *GeneratedDocumentsTable) Rollup(es ...keel.Expr) keel.Query[*generateddocument.GeneratedDocument] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see GeneratedDocumentsQuery.Cube.
+func (t *GeneratedDocumentsTable) Cube(es ...keel.Expr) keel.Query[*generateddocument.GeneratedDocument] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see GeneratedDocumentsQuery.AllTenants.
+func (t *GeneratedDocumentsTable) AllTenants() keel.Query[*generateddocument.GeneratedDocument] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see GeneratedDocumentsQuery.Join.
+func (t *GeneratedDocumentsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*generateddocument.GeneratedDocument] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see GeneratedDocumentsQuery.LeftJoin.
+func (t *GeneratedDocumentsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*generateddocument.GeneratedDocument] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see GeneratedDocumentsQuery.LeftJoinLateral.
+func (t *GeneratedDocumentsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*generateddocument.GeneratedDocument] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see GeneratedDocumentsQuery.JoinLateral.
+func (t *GeneratedDocumentsTable) JoinLateral(sub keel.LateralSource) keel.Query[*generateddocument.GeneratedDocument] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see GeneratedDocumentsQuery.Lock.
+func (t *GeneratedDocumentsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*generateddocument.GeneratedDocument] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see GeneratedDocumentsQuery.DistinctOn.
+func (t *GeneratedDocumentsTable) DistinctOn(es ...keel.Expr) keel.Query[*generateddocument.GeneratedDocument] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see GeneratedDocumentsQuery.Cache.
+func (t *GeneratedDocumentsTable) Cache(opts ...keel.CacheOption) keel.Query[*generateddocument.GeneratedDocument] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see GeneratedDocumentsQuery.LoadStrategy.
+func (t *GeneratedDocumentsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*generateddocument.GeneratedDocument] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see GeneratedDocumentsQuery.With.
+func (t *GeneratedDocumentsTable) With(ctes ...*keel.CTETable) keel.Query[*generateddocument.GeneratedDocument] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see GeneratedDocumentsQuery.Compute.
+func (t *GeneratedDocumentsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*generateddocument.GeneratedDocument] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *GeneratedDocumentsTable) Create(ctx context.Context, db *keel.DB, row *generateddocument.GeneratedDocument) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *GeneratedDocumentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*generateddocument.GeneratedDocument) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *GeneratedDocumentsTable) Save(ctx context.Context, db *keel.DB, row *generateddocument.GeneratedDocument, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *GeneratedDocumentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *generateddocument.GeneratedDocument, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *GeneratedDocumentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *generateddocument.GeneratedDocument) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *GeneratedDocumentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*generateddocument.GeneratedDocument, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *GeneratedDocumentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*generateddocument.GeneratedDocument, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *GeneratedDocumentsTable) Copy(ctx context.Context, db *keel.DB, rows []*generateddocument.GeneratedDocument) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *GeneratedDocumentsQuery) Where(ps ...keel.Pred) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *GeneratedDocumentsQuery) Pick(es ...keel.Expr) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *GeneratedDocumentsQuery) Omit(cols ...keel.Column) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *GeneratedDocumentsQuery) Load(ls ...keel.Loader) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *GeneratedDocumentsQuery) Order(os ...keel.Order) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *GeneratedDocumentsQuery) Distinct() keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *GeneratedDocumentsQuery) Group(es ...keel.Expr) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *GeneratedDocumentsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *GeneratedDocumentsQuery) Rollup(es ...keel.Expr) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *GeneratedDocumentsQuery) Cube(es ...keel.Expr) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *GeneratedDocumentsQuery) Window(name string, w keel.Window) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *GeneratedDocumentsQuery) Having(ps ...keel.Pred) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *GeneratedDocumentsQuery) Limit(n int) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *GeneratedDocumentsQuery) Offset(n int) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *GeneratedDocumentsQuery) DistinctOn(es ...keel.Expr) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *GeneratedDocumentsQuery) AllTenants() keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *GeneratedDocumentsQuery) CustomPlan() keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *GeneratedDocumentsQuery) Timeout(d time.Duration) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *GeneratedDocumentsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *GeneratedDocumentsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *GeneratedDocumentsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *GeneratedDocumentsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *GeneratedDocumentsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *GeneratedDocumentsQuery) Cache(opts ...keel.CacheOption) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *GeneratedDocumentsQuery) With(ctes ...*keel.CTETable) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *GeneratedDocumentsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *GeneratedDocumentsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*generateddocument.GeneratedDocument] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *GeneratedDocumentsQuery) Clone() keel.Query[*generateddocument.GeneratedDocument] {
+	return &GeneratedDocumentsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *GeneratedDocumentsQuery) One(ctx context.Context, db *keel.DB) (*generateddocument.GeneratedDocument, error) {
+	return keel.One[*generateddocument.GeneratedDocument](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *GeneratedDocumentsQuery) First(ctx context.Context, db *keel.DB) (*generateddocument.GeneratedDocument, error) {
+	return keel.First[*generateddocument.GeneratedDocument](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *GeneratedDocumentsQuery) List(ctx context.Context, db *keel.DB) ([]*generateddocument.GeneratedDocument, error) {
+	return keel.List[*generateddocument.GeneratedDocument](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *GeneratedDocumentsQuery) All(ctx context.Context, db *keel.DB) ([]*generateddocument.GeneratedDocument, error) {
+	return keel.All[*generateddocument.GeneratedDocument](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *GeneratedDocumentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*generateddocument.GeneratedDocument, error) {
+	return keel.UpdateReturning[*generateddocument.GeneratedDocument](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *GeneratedDocumentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*generateddocument.GeneratedDocument], error) {
+	return keel.PageOf[*generateddocument.GeneratedDocument](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *GeneratedDocumentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*generateddocument.GeneratedDocument) error) error {
+	return keel.Each[*generateddocument.GeneratedDocument](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newGeneratedDocument() unsafe.Pointer {

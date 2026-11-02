@@ -4,6 +4,7 @@ package agentversiondb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -61,7 +62,7 @@ var definitionVersionsRef = keel.Ref{Table: &definitionVersionsTable}
 
 // DefinitionVersionsTable is the table of agentversion.DefinitionVersion.
 type DefinitionVersionsTable struct {
-	keel.Handle[*agentversion.DefinitionVersion]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -75,7 +76,7 @@ type DefinitionVersionsTable struct {
 
 // DefinitionVersions references the agent_definition_versions table.
 var DefinitionVersions = &DefinitionVersionsTable{
-	Handle:            keel.Handle[*agentversion.DefinitionVersion]{Ref: &definitionVersionsRef},
+	TableBase:         keel.TableBase{Ref: &definitionVersionsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionVersionsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionVersionsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionVersionsRef, Index: 2}}},
@@ -87,10 +88,10 @@ var DefinitionVersions = &DefinitionVersionsTable{
 	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &definitionVersionsRef, Index: 8}},
 }
 
-// BuildDefinitionVersions builds the handle of agent_definition_versions for ref. Generated relation and alias methods call it.
+// BuildDefinitionVersions builds the table of agent_definition_versions for ref. Generated relation and alias methods call it.
 func BuildDefinitionVersions(r *keel.Ref) *DefinitionVersionsTable {
 	return &DefinitionVersionsTable{
-		Handle:            keel.Handle[*agentversion.DefinitionVersion]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -119,6 +120,365 @@ func (t *DefinitionVersionsTable) Author() *tenantdb.UsersTable {
 // Get returns the agent_definition_versions row with the given key, or keel.ErrNotFound.
 func (t *DefinitionVersionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentversion.DefinitionVersion, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// DefinitionVersionsQuery is a query over agentversion.DefinitionVersion.
+type DefinitionVersionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*agentversion.DefinitionVersion] = (*DefinitionVersionsTable)(nil)
+
+var _ keel.Query[*agentversion.DefinitionVersion] = (*DefinitionVersionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *DefinitionVersionsTable) Query() keel.Query[*agentversion.DefinitionVersion] {
+	return &DefinitionVersionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see DefinitionVersionsQuery.Where.
+func (t *DefinitionVersionsTable) Where(ps ...keel.Pred) keel.Query[*agentversion.DefinitionVersion] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see DefinitionVersionsQuery.Pick.
+func (t *DefinitionVersionsTable) Pick(es ...keel.Expr) keel.Query[*agentversion.DefinitionVersion] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see DefinitionVersionsQuery.Load.
+func (t *DefinitionVersionsTable) Load(ls ...keel.Loader) keel.Query[*agentversion.DefinitionVersion] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see DefinitionVersionsQuery.Omit.
+func (t *DefinitionVersionsTable) Omit(cols ...keel.Column) keel.Query[*agentversion.DefinitionVersion] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see DefinitionVersionsQuery.Order.
+func (t *DefinitionVersionsTable) Order(os ...keel.Order) keel.Query[*agentversion.DefinitionVersion] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see DefinitionVersionsQuery.Limit.
+func (t *DefinitionVersionsTable) Limit(n int) keel.Query[*agentversion.DefinitionVersion] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see DefinitionVersionsQuery.Group.
+func (t *DefinitionVersionsTable) Group(es ...keel.Expr) keel.Query[*agentversion.DefinitionVersion] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see DefinitionVersionsQuery.GroupingSets.
+func (t *DefinitionVersionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentversion.DefinitionVersion] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see DefinitionVersionsQuery.Rollup.
+func (t *DefinitionVersionsTable) Rollup(es ...keel.Expr) keel.Query[*agentversion.DefinitionVersion] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see DefinitionVersionsQuery.Cube.
+func (t *DefinitionVersionsTable) Cube(es ...keel.Expr) keel.Query[*agentversion.DefinitionVersion] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see DefinitionVersionsQuery.AllTenants.
+func (t *DefinitionVersionsTable) AllTenants() keel.Query[*agentversion.DefinitionVersion] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see DefinitionVersionsQuery.Join.
+func (t *DefinitionVersionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentversion.DefinitionVersion] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see DefinitionVersionsQuery.LeftJoin.
+func (t *DefinitionVersionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentversion.DefinitionVersion] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see DefinitionVersionsQuery.LeftJoinLateral.
+func (t *DefinitionVersionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentversion.DefinitionVersion] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see DefinitionVersionsQuery.JoinLateral.
+func (t *DefinitionVersionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*agentversion.DefinitionVersion] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see DefinitionVersionsQuery.Lock.
+func (t *DefinitionVersionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentversion.DefinitionVersion] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see DefinitionVersionsQuery.DistinctOn.
+func (t *DefinitionVersionsTable) DistinctOn(es ...keel.Expr) keel.Query[*agentversion.DefinitionVersion] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see DefinitionVersionsQuery.Cache.
+func (t *DefinitionVersionsTable) Cache(opts ...keel.CacheOption) keel.Query[*agentversion.DefinitionVersion] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see DefinitionVersionsQuery.LoadStrategy.
+func (t *DefinitionVersionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentversion.DefinitionVersion] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see DefinitionVersionsQuery.With.
+func (t *DefinitionVersionsTable) With(ctes ...*keel.CTETable) keel.Query[*agentversion.DefinitionVersion] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see DefinitionVersionsQuery.Compute.
+func (t *DefinitionVersionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agentversion.DefinitionVersion] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *DefinitionVersionsTable) Create(ctx context.Context, db *keel.DB, row *agentversion.DefinitionVersion) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *DefinitionVersionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentversion.DefinitionVersion) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *DefinitionVersionsTable) Save(ctx context.Context, db *keel.DB, row *agentversion.DefinitionVersion, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *DefinitionVersionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentversion.DefinitionVersion, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *DefinitionVersionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentversion.DefinitionVersion) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *DefinitionVersionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentversion.DefinitionVersion, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *DefinitionVersionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentversion.DefinitionVersion, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *DefinitionVersionsTable) Copy(ctx context.Context, db *keel.DB, rows []*agentversion.DefinitionVersion) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *DefinitionVersionsQuery) Where(ps ...keel.Pred) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *DefinitionVersionsQuery) Pick(es ...keel.Expr) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *DefinitionVersionsQuery) Omit(cols ...keel.Column) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *DefinitionVersionsQuery) Load(ls ...keel.Loader) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *DefinitionVersionsQuery) Order(os ...keel.Order) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *DefinitionVersionsQuery) Distinct() keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *DefinitionVersionsQuery) Group(es ...keel.Expr) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *DefinitionVersionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *DefinitionVersionsQuery) Rollup(es ...keel.Expr) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *DefinitionVersionsQuery) Cube(es ...keel.Expr) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *DefinitionVersionsQuery) Window(name string, w keel.Window) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *DefinitionVersionsQuery) Having(ps ...keel.Pred) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *DefinitionVersionsQuery) Limit(n int) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *DefinitionVersionsQuery) Offset(n int) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *DefinitionVersionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *DefinitionVersionsQuery) AllTenants() keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *DefinitionVersionsQuery) CustomPlan() keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *DefinitionVersionsQuery) Timeout(d time.Duration) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *DefinitionVersionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *DefinitionVersionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *DefinitionVersionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *DefinitionVersionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *DefinitionVersionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *DefinitionVersionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *DefinitionVersionsQuery) With(ctes ...*keel.CTETable) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *DefinitionVersionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *DefinitionVersionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentversion.DefinitionVersion] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *DefinitionVersionsQuery) Clone() keel.Query[*agentversion.DefinitionVersion] {
+	return &DefinitionVersionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *DefinitionVersionsQuery) One(ctx context.Context, db *keel.DB) (*agentversion.DefinitionVersion, error) {
+	return keel.One[*agentversion.DefinitionVersion](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *DefinitionVersionsQuery) First(ctx context.Context, db *keel.DB) (*agentversion.DefinitionVersion, error) {
+	return keel.First[*agentversion.DefinitionVersion](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *DefinitionVersionsQuery) List(ctx context.Context, db *keel.DB) ([]*agentversion.DefinitionVersion, error) {
+	return keel.List[*agentversion.DefinitionVersion](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *DefinitionVersionsQuery) All(ctx context.Context, db *keel.DB) ([]*agentversion.DefinitionVersion, error) {
+	return keel.All[*agentversion.DefinitionVersion](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *DefinitionVersionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentversion.DefinitionVersion, error) {
+	return keel.UpdateReturning[*agentversion.DefinitionVersion](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *DefinitionVersionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentversion.DefinitionVersion], error) {
+	return keel.PageOf[*agentversion.DefinitionVersion](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *DefinitionVersionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentversion.DefinitionVersion) error) error {
+	return keel.Each[*agentversion.DefinitionVersion](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newDefinitionVersion() unsafe.Pointer {

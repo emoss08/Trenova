@@ -4,6 +4,7 @@ package conversationqueuedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -66,7 +67,7 @@ var queuedMessagesRef = keel.Ref{Table: &queuedMessagesTable}
 
 // QueuedMessagesTable is the table of conversationqueue.QueuedMessage.
 type QueuedMessagesTable struct {
-	keel.Handle[*conversationqueue.QueuedMessage]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -83,7 +84,7 @@ type QueuedMessagesTable struct {
 
 // QueuedMessages references the assistant_queued_messages table.
 var QueuedMessages = &QueuedMessagesTable{
-	Handle:         keel.Handle[*conversationqueue.QueuedMessage]{Ref: &queuedMessagesRef},
+	TableBase:      keel.TableBase{Ref: &queuedMessagesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &queuedMessagesRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &queuedMessagesRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &queuedMessagesRef, Index: 2}}},
@@ -98,10 +99,10 @@ var QueuedMessages = &QueuedMessagesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &queuedMessagesRef, Index: 11}},
 }
 
-// BuildQueuedMessages builds the handle of assistant_queued_messages for ref. Generated relation and alias methods call it.
+// BuildQueuedMessages builds the table of assistant_queued_messages for ref. Generated relation and alias methods call it.
 func BuildQueuedMessages(r *keel.Ref) *QueuedMessagesTable {
 	return &QueuedMessagesTable{
-		Handle:         keel.Handle[*conversationqueue.QueuedMessage]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -138,6 +139,365 @@ func (t *QueuedMessagesTable) Thread() *conversationdb.ThreadsTable {
 // Get returns the assistant_queued_messages row with the given key, or keel.ErrNotFound.
 func (t *QueuedMessagesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*conversationqueue.QueuedMessage, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// QueuedMessagesQuery is a query over conversationqueue.QueuedMessage.
+type QueuedMessagesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*conversationqueue.QueuedMessage] = (*QueuedMessagesTable)(nil)
+
+var _ keel.Query[*conversationqueue.QueuedMessage] = (*QueuedMessagesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *QueuedMessagesTable) Query() keel.Query[*conversationqueue.QueuedMessage] {
+	return &QueuedMessagesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see QueuedMessagesQuery.Where.
+func (t *QueuedMessagesTable) Where(ps ...keel.Pred) keel.Query[*conversationqueue.QueuedMessage] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see QueuedMessagesQuery.Pick.
+func (t *QueuedMessagesTable) Pick(es ...keel.Expr) keel.Query[*conversationqueue.QueuedMessage] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see QueuedMessagesQuery.Load.
+func (t *QueuedMessagesTable) Load(ls ...keel.Loader) keel.Query[*conversationqueue.QueuedMessage] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see QueuedMessagesQuery.Omit.
+func (t *QueuedMessagesTable) Omit(cols ...keel.Column) keel.Query[*conversationqueue.QueuedMessage] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see QueuedMessagesQuery.Order.
+func (t *QueuedMessagesTable) Order(os ...keel.Order) keel.Query[*conversationqueue.QueuedMessage] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see QueuedMessagesQuery.Limit.
+func (t *QueuedMessagesTable) Limit(n int) keel.Query[*conversationqueue.QueuedMessage] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see QueuedMessagesQuery.Group.
+func (t *QueuedMessagesTable) Group(es ...keel.Expr) keel.Query[*conversationqueue.QueuedMessage] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see QueuedMessagesQuery.GroupingSets.
+func (t *QueuedMessagesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*conversationqueue.QueuedMessage] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see QueuedMessagesQuery.Rollup.
+func (t *QueuedMessagesTable) Rollup(es ...keel.Expr) keel.Query[*conversationqueue.QueuedMessage] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see QueuedMessagesQuery.Cube.
+func (t *QueuedMessagesTable) Cube(es ...keel.Expr) keel.Query[*conversationqueue.QueuedMessage] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see QueuedMessagesQuery.AllTenants.
+func (t *QueuedMessagesTable) AllTenants() keel.Query[*conversationqueue.QueuedMessage] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see QueuedMessagesQuery.Join.
+func (t *QueuedMessagesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversationqueue.QueuedMessage] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see QueuedMessagesQuery.LeftJoin.
+func (t *QueuedMessagesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversationqueue.QueuedMessage] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see QueuedMessagesQuery.LeftJoinLateral.
+func (t *QueuedMessagesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*conversationqueue.QueuedMessage] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see QueuedMessagesQuery.JoinLateral.
+func (t *QueuedMessagesTable) JoinLateral(sub keel.LateralSource) keel.Query[*conversationqueue.QueuedMessage] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see QueuedMessagesQuery.Lock.
+func (t *QueuedMessagesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*conversationqueue.QueuedMessage] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see QueuedMessagesQuery.DistinctOn.
+func (t *QueuedMessagesTable) DistinctOn(es ...keel.Expr) keel.Query[*conversationqueue.QueuedMessage] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see QueuedMessagesQuery.Cache.
+func (t *QueuedMessagesTable) Cache(opts ...keel.CacheOption) keel.Query[*conversationqueue.QueuedMessage] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see QueuedMessagesQuery.LoadStrategy.
+func (t *QueuedMessagesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*conversationqueue.QueuedMessage] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see QueuedMessagesQuery.With.
+func (t *QueuedMessagesTable) With(ctes ...*keel.CTETable) keel.Query[*conversationqueue.QueuedMessage] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see QueuedMessagesQuery.Compute.
+func (t *QueuedMessagesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*conversationqueue.QueuedMessage] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *QueuedMessagesTable) Create(ctx context.Context, db *keel.DB, row *conversationqueue.QueuedMessage) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *QueuedMessagesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*conversationqueue.QueuedMessage) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *QueuedMessagesTable) Save(ctx context.Context, db *keel.DB, row *conversationqueue.QueuedMessage, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *QueuedMessagesTable) SaveExcept(ctx context.Context, db *keel.DB, row *conversationqueue.QueuedMessage, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *QueuedMessagesTable) DeleteRow(ctx context.Context, db *keel.DB, row *conversationqueue.QueuedMessage) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *QueuedMessagesTable) Upsert(ctx context.Context, db *keel.DB, rows []*conversationqueue.QueuedMessage, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *QueuedMessagesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*conversationqueue.QueuedMessage, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *QueuedMessagesTable) Copy(ctx context.Context, db *keel.DB, rows []*conversationqueue.QueuedMessage) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *QueuedMessagesQuery) Where(ps ...keel.Pred) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *QueuedMessagesQuery) Pick(es ...keel.Expr) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *QueuedMessagesQuery) Omit(cols ...keel.Column) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *QueuedMessagesQuery) Load(ls ...keel.Loader) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *QueuedMessagesQuery) Order(os ...keel.Order) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *QueuedMessagesQuery) Distinct() keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *QueuedMessagesQuery) Group(es ...keel.Expr) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *QueuedMessagesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *QueuedMessagesQuery) Rollup(es ...keel.Expr) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *QueuedMessagesQuery) Cube(es ...keel.Expr) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *QueuedMessagesQuery) Window(name string, w keel.Window) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *QueuedMessagesQuery) Having(ps ...keel.Pred) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *QueuedMessagesQuery) Limit(n int) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *QueuedMessagesQuery) Offset(n int) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *QueuedMessagesQuery) DistinctOn(es ...keel.Expr) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *QueuedMessagesQuery) AllTenants() keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *QueuedMessagesQuery) CustomPlan() keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *QueuedMessagesQuery) Timeout(d time.Duration) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *QueuedMessagesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *QueuedMessagesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *QueuedMessagesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *QueuedMessagesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *QueuedMessagesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *QueuedMessagesQuery) Cache(opts ...keel.CacheOption) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *QueuedMessagesQuery) With(ctes ...*keel.CTETable) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *QueuedMessagesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *QueuedMessagesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*conversationqueue.QueuedMessage] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *QueuedMessagesQuery) Clone() keel.Query[*conversationqueue.QueuedMessage] {
+	return &QueuedMessagesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *QueuedMessagesQuery) One(ctx context.Context, db *keel.DB) (*conversationqueue.QueuedMessage, error) {
+	return keel.One[*conversationqueue.QueuedMessage](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *QueuedMessagesQuery) First(ctx context.Context, db *keel.DB) (*conversationqueue.QueuedMessage, error) {
+	return keel.First[*conversationqueue.QueuedMessage](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *QueuedMessagesQuery) List(ctx context.Context, db *keel.DB) ([]*conversationqueue.QueuedMessage, error) {
+	return keel.List[*conversationqueue.QueuedMessage](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *QueuedMessagesQuery) All(ctx context.Context, db *keel.DB) ([]*conversationqueue.QueuedMessage, error) {
+	return keel.All[*conversationqueue.QueuedMessage](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *QueuedMessagesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*conversationqueue.QueuedMessage, error) {
+	return keel.UpdateReturning[*conversationqueue.QueuedMessage](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *QueuedMessagesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*conversationqueue.QueuedMessage], error) {
+	return keel.PageOf[*conversationqueue.QueuedMessage](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *QueuedMessagesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*conversationqueue.QueuedMessage) error) error {
+	return keel.Each[*conversationqueue.QueuedMessage](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newQueuedMessage() unsafe.Pointer { return unsafe.Pointer(new(conversationqueue.QueuedMessage)) }

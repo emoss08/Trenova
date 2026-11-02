@@ -75,7 +75,7 @@ func (r *repository) List(
 				&listquery.Request[pto.PTOPolicy]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
-					Shape: func(q *keel.Query[*pto.PTOPolicy]) *keel.Query[*pto.PTOPolicy] {
+					Shape: func(q keel.Query[*pto.PTOPolicy]) keel.Query[*pto.PTOPolicy] {
 						return q.Load(listquery.When(req.IncludeRules, orderedRules())...)
 					},
 				},

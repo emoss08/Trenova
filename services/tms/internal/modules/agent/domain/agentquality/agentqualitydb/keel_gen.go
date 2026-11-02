@@ -4,6 +4,7 @@ package agentqualitydb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -79,7 +80,7 @@ var evalCasesRef = keel.Ref{Table: &evalCasesTable}
 
 // EvalCasesTable is the table of agentquality.EvalCase.
 type EvalCasesTable struct {
-	keel.Handle[*agentquality.EvalCase]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -116,7 +117,7 @@ type EvalCasesTable struct {
 
 // EvalCases references the agent_eval_cases table.
 var EvalCases = &EvalCasesTable{
-	Handle:              keel.Handle[*agentquality.EvalCase]{Ref: &evalCasesRef},
+	TableBase:           keel.TableBase{Ref: &evalCasesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 2}}},
@@ -151,10 +152,10 @@ var EvalCases = &EvalCasesTable{
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &evalCasesRef, Index: 31}},
 }
 
-// BuildEvalCases builds the handle of agent_eval_cases for ref. Generated relation and alias methods call it.
+// BuildEvalCases builds the table of agent_eval_cases for ref. Generated relation and alias methods call it.
 func BuildEvalCases(r *keel.Ref) *EvalCasesTable {
 	return &EvalCasesTable{
-		Handle:              keel.Handle[*agentquality.EvalCase]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -201,6 +202,365 @@ func (t *EvalCasesTable) As(alias string) *EvalCasesTable {
 // Get returns the agent_eval_cases row with the given key, or keel.ErrNotFound.
 func (t *EvalCasesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentquality.EvalCase, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EvalCasesQuery is a query over agentquality.EvalCase.
+type EvalCasesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*agentquality.EvalCase] = (*EvalCasesTable)(nil)
+
+var _ keel.Query[*agentquality.EvalCase] = (*EvalCasesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EvalCasesTable) Query() keel.Query[*agentquality.EvalCase] {
+	return &EvalCasesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EvalCasesQuery.Where.
+func (t *EvalCasesTable) Where(ps ...keel.Pred) keel.Query[*agentquality.EvalCase] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EvalCasesQuery.Pick.
+func (t *EvalCasesTable) Pick(es ...keel.Expr) keel.Query[*agentquality.EvalCase] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EvalCasesQuery.Load.
+func (t *EvalCasesTable) Load(ls ...keel.Loader) keel.Query[*agentquality.EvalCase] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EvalCasesQuery.Omit.
+func (t *EvalCasesTable) Omit(cols ...keel.Column) keel.Query[*agentquality.EvalCase] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EvalCasesQuery.Order.
+func (t *EvalCasesTable) Order(os ...keel.Order) keel.Query[*agentquality.EvalCase] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EvalCasesQuery.Limit.
+func (t *EvalCasesTable) Limit(n int) keel.Query[*agentquality.EvalCase] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EvalCasesQuery.Group.
+func (t *EvalCasesTable) Group(es ...keel.Expr) keel.Query[*agentquality.EvalCase] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EvalCasesQuery.GroupingSets.
+func (t *EvalCasesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentquality.EvalCase] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EvalCasesQuery.Rollup.
+func (t *EvalCasesTable) Rollup(es ...keel.Expr) keel.Query[*agentquality.EvalCase] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EvalCasesQuery.Cube.
+func (t *EvalCasesTable) Cube(es ...keel.Expr) keel.Query[*agentquality.EvalCase] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EvalCasesQuery.AllTenants.
+func (t *EvalCasesTable) AllTenants() keel.Query[*agentquality.EvalCase] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EvalCasesQuery.Join.
+func (t *EvalCasesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentquality.EvalCase] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EvalCasesQuery.LeftJoin.
+func (t *EvalCasesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentquality.EvalCase] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EvalCasesQuery.LeftJoinLateral.
+func (t *EvalCasesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentquality.EvalCase] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EvalCasesQuery.JoinLateral.
+func (t *EvalCasesTable) JoinLateral(sub keel.LateralSource) keel.Query[*agentquality.EvalCase] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EvalCasesQuery.Lock.
+func (t *EvalCasesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentquality.EvalCase] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EvalCasesQuery.DistinctOn.
+func (t *EvalCasesTable) DistinctOn(es ...keel.Expr) keel.Query[*agentquality.EvalCase] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EvalCasesQuery.Cache.
+func (t *EvalCasesTable) Cache(opts ...keel.CacheOption) keel.Query[*agentquality.EvalCase] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EvalCasesQuery.LoadStrategy.
+func (t *EvalCasesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentquality.EvalCase] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EvalCasesQuery.With.
+func (t *EvalCasesTable) With(ctes ...*keel.CTETable) keel.Query[*agentquality.EvalCase] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EvalCasesQuery.Compute.
+func (t *EvalCasesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agentquality.EvalCase] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EvalCasesTable) Create(ctx context.Context, db *keel.DB, row *agentquality.EvalCase) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EvalCasesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentquality.EvalCase) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EvalCasesTable) Save(ctx context.Context, db *keel.DB, row *agentquality.EvalCase, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EvalCasesTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentquality.EvalCase, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EvalCasesTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentquality.EvalCase) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EvalCasesTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentquality.EvalCase, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EvalCasesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentquality.EvalCase, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EvalCasesTable) Copy(ctx context.Context, db *keel.DB, rows []*agentquality.EvalCase) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EvalCasesQuery) Where(ps ...keel.Pred) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EvalCasesQuery) Pick(es ...keel.Expr) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EvalCasesQuery) Omit(cols ...keel.Column) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EvalCasesQuery) Load(ls ...keel.Loader) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EvalCasesQuery) Order(os ...keel.Order) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EvalCasesQuery) Distinct() keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EvalCasesQuery) Group(es ...keel.Expr) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EvalCasesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EvalCasesQuery) Rollup(es ...keel.Expr) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EvalCasesQuery) Cube(es ...keel.Expr) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EvalCasesQuery) Window(name string, w keel.Window) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EvalCasesQuery) Having(ps ...keel.Pred) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EvalCasesQuery) Limit(n int) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EvalCasesQuery) Offset(n int) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EvalCasesQuery) DistinctOn(es ...keel.Expr) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EvalCasesQuery) AllTenants() keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EvalCasesQuery) CustomPlan() keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EvalCasesQuery) Timeout(d time.Duration) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EvalCasesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EvalCasesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EvalCasesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EvalCasesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EvalCasesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EvalCasesQuery) Cache(opts ...keel.CacheOption) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EvalCasesQuery) With(ctes ...*keel.CTETable) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EvalCasesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EvalCasesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentquality.EvalCase] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EvalCasesQuery) Clone() keel.Query[*agentquality.EvalCase] {
+	return &EvalCasesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EvalCasesQuery) One(ctx context.Context, db *keel.DB) (*agentquality.EvalCase, error) {
+	return keel.One[*agentquality.EvalCase](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EvalCasesQuery) First(ctx context.Context, db *keel.DB) (*agentquality.EvalCase, error) {
+	return keel.First[*agentquality.EvalCase](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EvalCasesQuery) List(ctx context.Context, db *keel.DB) ([]*agentquality.EvalCase, error) {
+	return keel.List[*agentquality.EvalCase](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EvalCasesQuery) All(ctx context.Context, db *keel.DB) ([]*agentquality.EvalCase, error) {
+	return keel.All[*agentquality.EvalCase](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EvalCasesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentquality.EvalCase, error) {
+	return keel.UpdateReturning[*agentquality.EvalCase](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EvalCasesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentquality.EvalCase], error) {
+	return keel.PageOf[*agentquality.EvalCase](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EvalCasesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentquality.EvalCase) error) error {
+	return keel.Each[*agentquality.EvalCase](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEvalCase() unsafe.Pointer { return unsafe.Pointer(new(agentquality.EvalCase)) }

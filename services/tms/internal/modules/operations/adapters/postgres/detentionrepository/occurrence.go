@@ -45,7 +45,7 @@ func NewOccurrenceRepository(
 
 type occurrenceQuery = keel.Query[*detention.DetentionOccurrence]
 
-func withOccurrenceNames(q *occurrenceQuery) *occurrenceQuery {
+func withOccurrenceNames(q occurrenceQuery) occurrenceQuery {
 	o := detentiondb.DetentionOccurrences
 	loc := locationdb.Locations
 	cus := customerdb.Customers
@@ -60,7 +60,7 @@ func withOccurrenceNames(q *occurrenceQuery) *occurrenceQuery {
 		Compute(o.ShipmentProNumber, sp.ProNumber.Coalesce(""))
 }
 
-func namedOccurrences() *occurrenceQuery {
+func namedOccurrences() occurrenceQuery {
 	return withOccurrenceNames(detentiondb.DetentionOccurrences.Query())
 }
 

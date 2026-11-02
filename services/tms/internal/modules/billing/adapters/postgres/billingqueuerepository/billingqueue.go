@@ -49,7 +49,7 @@ var laneCursorSort = []pagination.CursorSortField{
 
 func listQuery(
 	req *billingqueueports.ListBillingQueueItemsRequest,
-) *keel.Query[*billingqueue.BillingQueueItem] {
+) keel.Query[*billingqueue.BillingQueueItem] {
 	bq := billingqueuedb.BillingQueueItems
 
 	return bq.Where(
@@ -74,8 +74,8 @@ func shipmentNamed(query string) keel.Pred {
 }
 
 func listShape(
-	q *keel.Query[*billingqueue.BillingQueueItem],
-) *keel.Query[*billingqueue.BillingQueueItem] {
+	q keel.Query[*billingqueue.BillingQueueItem],
+) keel.Query[*billingqueue.BillingQueueItem] {
 	bq := billingqueuedb.BillingQueueItems
 
 	return q.Load(
@@ -156,7 +156,7 @@ func (r *repository) ListConnection(
 	)
 }
 
-func itemDetail() *keel.Query[*billingqueue.BillingQueueItem] {
+func itemDetail() keel.Query[*billingqueue.BillingQueueItem] {
 	bq := billingqueuedb.BillingQueueItems
 	sh := bq.Shipment()
 
@@ -375,7 +375,7 @@ func syncTransferState(ctx context.Context, db *keel.DB, shipmentIDs []pulid.ID)
 
 func shipmentTransferSync(
 	shipmentIDs []pulid.ID,
-) (*keel.Query[*shipment.Shipment], []keel.Assignment) {
+) (keel.Query[*shipment.Shipment], []keel.Assignment) {
 	bq := billingqueuedb.BillingQueueItems
 	sh := shipmentdb.Shipments
 

@@ -206,7 +206,7 @@ func threadPositionPred(
 func threadPageQuery(
 	req *conversationports.ListThreadsRequest,
 	window threadWindow,
-) *keel.Query[*conversation.Thread] {
+) keel.Query[*conversation.Thread] {
 	th := conversationdb.Threads
 	touchedAt := threadTouchedAt()
 
@@ -245,7 +245,7 @@ func threadShelfBandExpr(edges []int64) keel.Expr {
 
 func threadShelfCountQuery(
 	req *conversationports.CountThreadShelvesRequest,
-) *keel.Query[*conversation.Thread] {
+) keel.Query[*conversation.Thread] {
 	th := conversationdb.Threads
 	band := threadShelfBandExpr(req.Edges)
 
@@ -441,7 +441,7 @@ func (r *repository) DeleteThread(
 	})
 }
 
-func messagesQuery(req *conversationports.ListMessagesRequest) *keel.Query[*conversation.Message] {
+func messagesQuery(req *conversationports.ListMessagesRequest) keel.Query[*conversation.Message] {
 	m := conversationdb.Messages
 
 	var before, after, sinceCompaction keel.Pred
@@ -540,7 +540,7 @@ func (r *repository) CarriesAttachment(
 
 func carriesAttachmentQuery(
 	req *conversationports.CarriesAttachmentRequest,
-) *keel.Query[*conversation.Message] {
+) keel.Query[*conversation.Message] {
 	m := conversationdb.Messages
 
 	return m.Where(
@@ -624,7 +624,7 @@ func (r *repository) AppendTurn(
 func staleThreadsQuery(
 	req *conversationports.DeleteStaleThreadsRequest,
 	limit int,
-) *keel.Query[*conversation.Thread] {
+) keel.Query[*conversation.Thread] {
 	th := conversationdb.Threads
 
 	return th.AllTenants().

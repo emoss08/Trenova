@@ -57,7 +57,7 @@ func New(p Params) recurringshipmentports.RecurringShipmentRepository {
 
 type seriesQuery = keel.Query[*recurringshipment.RecurringShipment]
 
-func withLane(q *seriesQuery) *seriesQuery {
+func withLane(q seriesQuery) seriesQuery {
 	rsh := recurringshipmentdb.RecurringShipments
 	return q.Load(rsh.Customer(), rsh.OriginLocation(), rsh.DestinationLocation())
 }

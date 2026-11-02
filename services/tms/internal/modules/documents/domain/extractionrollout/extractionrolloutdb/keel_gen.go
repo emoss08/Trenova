@@ -4,6 +4,7 @@ package extractionrolloutdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -63,7 +64,7 @@ var extractionRolloutsRef = keel.Ref{Table: &extractionRolloutsTable}
 
 // ExtractionRolloutsTable is the table of extractionrollout.ExtractionRollout.
 type ExtractionRolloutsTable struct {
-	keel.Handle[*extractionrollout.ExtractionRollout]
+	keel.TableBase
 	ID                         keelkinds.PulidIDCol
 	BusinessUnitID             keelkinds.PulidIDCol
 	OrganizationID             keelkinds.PulidIDCol
@@ -85,7 +86,7 @@ type ExtractionRolloutsTable struct {
 
 // ExtractionRollouts references the extraction_rollouts table.
 var ExtractionRollouts = &ExtractionRolloutsTable{
-	Handle:                     keel.Handle[*extractionrollout.ExtractionRollout]{Ref: &extractionRolloutsRef},
+	TableBase:                  keel.TableBase{Ref: &extractionRolloutsRef},
 	ID:                         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionRolloutsRef, Index: 0}}},
 	BusinessUnitID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionRolloutsRef, Index: 1}}},
 	OrganizationID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionRolloutsRef, Index: 2}}},
@@ -105,10 +106,10 @@ var ExtractionRollouts = &ExtractionRolloutsTable{
 	UpdatedAt:                  keel.Int64Col{Col: keel.Col{Ref: &extractionRolloutsRef, Index: 16}},
 }
 
-// BuildExtractionRollouts builds the handle of extraction_rollouts for ref. Generated relation and alias methods call it.
+// BuildExtractionRollouts builds the table of extraction_rollouts for ref. Generated relation and alias methods call it.
 func BuildExtractionRollouts(r *keel.Ref) *ExtractionRolloutsTable {
 	return &ExtractionRolloutsTable{
-		Handle:                     keel.Handle[*extractionrollout.ExtractionRollout]{Ref: r},
+		TableBase:                  keel.TableBase{Ref: r},
 		ID:                         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -140,6 +141,365 @@ func (t *ExtractionRolloutsTable) As(alias string) *ExtractionRolloutsTable {
 // Get returns the extraction_rollouts row with the given key, or keel.ErrNotFound.
 func (t *ExtractionRolloutsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*extractionrollout.ExtractionRollout, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ExtractionRolloutsQuery is a query over extractionrollout.ExtractionRollout.
+type ExtractionRolloutsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*extractionrollout.ExtractionRollout] = (*ExtractionRolloutsTable)(nil)
+
+var _ keel.Query[*extractionrollout.ExtractionRollout] = (*ExtractionRolloutsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ExtractionRolloutsTable) Query() keel.Query[*extractionrollout.ExtractionRollout] {
+	return &ExtractionRolloutsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ExtractionRolloutsQuery.Where.
+func (t *ExtractionRolloutsTable) Where(ps ...keel.Pred) keel.Query[*extractionrollout.ExtractionRollout] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ExtractionRolloutsQuery.Pick.
+func (t *ExtractionRolloutsTable) Pick(es ...keel.Expr) keel.Query[*extractionrollout.ExtractionRollout] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ExtractionRolloutsQuery.Load.
+func (t *ExtractionRolloutsTable) Load(ls ...keel.Loader) keel.Query[*extractionrollout.ExtractionRollout] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ExtractionRolloutsQuery.Omit.
+func (t *ExtractionRolloutsTable) Omit(cols ...keel.Column) keel.Query[*extractionrollout.ExtractionRollout] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ExtractionRolloutsQuery.Order.
+func (t *ExtractionRolloutsTable) Order(os ...keel.Order) keel.Query[*extractionrollout.ExtractionRollout] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ExtractionRolloutsQuery.Limit.
+func (t *ExtractionRolloutsTable) Limit(n int) keel.Query[*extractionrollout.ExtractionRollout] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ExtractionRolloutsQuery.Group.
+func (t *ExtractionRolloutsTable) Group(es ...keel.Expr) keel.Query[*extractionrollout.ExtractionRollout] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ExtractionRolloutsQuery.GroupingSets.
+func (t *ExtractionRolloutsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*extractionrollout.ExtractionRollout] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ExtractionRolloutsQuery.Rollup.
+func (t *ExtractionRolloutsTable) Rollup(es ...keel.Expr) keel.Query[*extractionrollout.ExtractionRollout] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ExtractionRolloutsQuery.Cube.
+func (t *ExtractionRolloutsTable) Cube(es ...keel.Expr) keel.Query[*extractionrollout.ExtractionRollout] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ExtractionRolloutsQuery.AllTenants.
+func (t *ExtractionRolloutsTable) AllTenants() keel.Query[*extractionrollout.ExtractionRollout] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ExtractionRolloutsQuery.Join.
+func (t *ExtractionRolloutsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractionrollout.ExtractionRollout] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ExtractionRolloutsQuery.LeftJoin.
+func (t *ExtractionRolloutsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractionrollout.ExtractionRollout] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ExtractionRolloutsQuery.LeftJoinLateral.
+func (t *ExtractionRolloutsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extractionrollout.ExtractionRollout] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ExtractionRolloutsQuery.JoinLateral.
+func (t *ExtractionRolloutsTable) JoinLateral(sub keel.LateralSource) keel.Query[*extractionrollout.ExtractionRollout] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ExtractionRolloutsQuery.Lock.
+func (t *ExtractionRolloutsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extractionrollout.ExtractionRollout] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ExtractionRolloutsQuery.DistinctOn.
+func (t *ExtractionRolloutsTable) DistinctOn(es ...keel.Expr) keel.Query[*extractionrollout.ExtractionRollout] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ExtractionRolloutsQuery.Cache.
+func (t *ExtractionRolloutsTable) Cache(opts ...keel.CacheOption) keel.Query[*extractionrollout.ExtractionRollout] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ExtractionRolloutsQuery.LoadStrategy.
+func (t *ExtractionRolloutsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*extractionrollout.ExtractionRollout] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ExtractionRolloutsQuery.With.
+func (t *ExtractionRolloutsTable) With(ctes ...*keel.CTETable) keel.Query[*extractionrollout.ExtractionRollout] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ExtractionRolloutsQuery.Compute.
+func (t *ExtractionRolloutsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*extractionrollout.ExtractionRollout] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ExtractionRolloutsTable) Create(ctx context.Context, db *keel.DB, row *extractionrollout.ExtractionRollout) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ExtractionRolloutsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*extractionrollout.ExtractionRollout) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ExtractionRolloutsTable) Save(ctx context.Context, db *keel.DB, row *extractionrollout.ExtractionRollout, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ExtractionRolloutsTable) SaveExcept(ctx context.Context, db *keel.DB, row *extractionrollout.ExtractionRollout, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ExtractionRolloutsTable) DeleteRow(ctx context.Context, db *keel.DB, row *extractionrollout.ExtractionRollout) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ExtractionRolloutsTable) Upsert(ctx context.Context, db *keel.DB, rows []*extractionrollout.ExtractionRollout, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ExtractionRolloutsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*extractionrollout.ExtractionRollout, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ExtractionRolloutsTable) Copy(ctx context.Context, db *keel.DB, rows []*extractionrollout.ExtractionRollout) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ExtractionRolloutsQuery) Where(ps ...keel.Pred) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ExtractionRolloutsQuery) Pick(es ...keel.Expr) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ExtractionRolloutsQuery) Omit(cols ...keel.Column) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ExtractionRolloutsQuery) Load(ls ...keel.Loader) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ExtractionRolloutsQuery) Order(os ...keel.Order) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ExtractionRolloutsQuery) Distinct() keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ExtractionRolloutsQuery) Group(es ...keel.Expr) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ExtractionRolloutsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ExtractionRolloutsQuery) Rollup(es ...keel.Expr) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ExtractionRolloutsQuery) Cube(es ...keel.Expr) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ExtractionRolloutsQuery) Window(name string, w keel.Window) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ExtractionRolloutsQuery) Having(ps ...keel.Pred) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ExtractionRolloutsQuery) Limit(n int) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ExtractionRolloutsQuery) Offset(n int) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ExtractionRolloutsQuery) DistinctOn(es ...keel.Expr) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ExtractionRolloutsQuery) AllTenants() keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ExtractionRolloutsQuery) CustomPlan() keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ExtractionRolloutsQuery) Timeout(d time.Duration) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ExtractionRolloutsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ExtractionRolloutsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ExtractionRolloutsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ExtractionRolloutsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ExtractionRolloutsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ExtractionRolloutsQuery) Cache(opts ...keel.CacheOption) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ExtractionRolloutsQuery) With(ctes ...*keel.CTETable) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ExtractionRolloutsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ExtractionRolloutsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*extractionrollout.ExtractionRollout] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ExtractionRolloutsQuery) Clone() keel.Query[*extractionrollout.ExtractionRollout] {
+	return &ExtractionRolloutsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ExtractionRolloutsQuery) One(ctx context.Context, db *keel.DB) (*extractionrollout.ExtractionRollout, error) {
+	return keel.One[*extractionrollout.ExtractionRollout](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ExtractionRolloutsQuery) First(ctx context.Context, db *keel.DB) (*extractionrollout.ExtractionRollout, error) {
+	return keel.First[*extractionrollout.ExtractionRollout](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ExtractionRolloutsQuery) List(ctx context.Context, db *keel.DB) ([]*extractionrollout.ExtractionRollout, error) {
+	return keel.List[*extractionrollout.ExtractionRollout](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ExtractionRolloutsQuery) All(ctx context.Context, db *keel.DB) ([]*extractionrollout.ExtractionRollout, error) {
+	return keel.All[*extractionrollout.ExtractionRollout](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ExtractionRolloutsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*extractionrollout.ExtractionRollout, error) {
+	return keel.UpdateReturning[*extractionrollout.ExtractionRollout](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ExtractionRolloutsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*extractionrollout.ExtractionRollout], error) {
+	return keel.PageOf[*extractionrollout.ExtractionRollout](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ExtractionRolloutsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*extractionrollout.ExtractionRollout) error) error {
+	return keel.Each[*extractionrollout.ExtractionRollout](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newExtractionRollout() unsafe.Pointer {
@@ -298,7 +658,7 @@ var rolloutAssignmentsRef = keel.Ref{Table: &rolloutAssignmentsTable}
 
 // RolloutAssignmentsTable is the table of extractionrollout.RolloutAssignment.
 type RolloutAssignmentsTable struct {
-	keel.Handle[*extractionrollout.RolloutAssignment]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -317,7 +677,7 @@ type RolloutAssignmentsTable struct {
 
 // RolloutAssignments references the extraction_rollout_assignments table.
 var RolloutAssignments = &RolloutAssignmentsTable{
-	Handle:              keel.Handle[*extractionrollout.RolloutAssignment]{Ref: &rolloutAssignmentsRef},
+	TableBase:           keel.TableBase{Ref: &rolloutAssignmentsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rolloutAssignmentsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rolloutAssignmentsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rolloutAssignmentsRef, Index: 2}}},
@@ -334,10 +694,10 @@ var RolloutAssignments = &RolloutAssignmentsTable{
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &rolloutAssignmentsRef, Index: 13}},
 }
 
-// BuildRolloutAssignments builds the handle of extraction_rollout_assignments for ref. Generated relation and alias methods call it.
+// BuildRolloutAssignments builds the table of extraction_rollout_assignments for ref. Generated relation and alias methods call it.
 func BuildRolloutAssignments(r *keel.Ref) *RolloutAssignmentsTable {
 	return &RolloutAssignmentsTable{
-		Handle:              keel.Handle[*extractionrollout.RolloutAssignment]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -366,6 +726,365 @@ func (t *RolloutAssignmentsTable) As(alias string) *RolloutAssignmentsTable {
 // Get returns the extraction_rollout_assignments row with the given key, or keel.ErrNotFound.
 func (t *RolloutAssignmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*extractionrollout.RolloutAssignment, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RolloutAssignmentsQuery is a query over extractionrollout.RolloutAssignment.
+type RolloutAssignmentsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*extractionrollout.RolloutAssignment] = (*RolloutAssignmentsTable)(nil)
+
+var _ keel.Query[*extractionrollout.RolloutAssignment] = (*RolloutAssignmentsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RolloutAssignmentsTable) Query() keel.Query[*extractionrollout.RolloutAssignment] {
+	return &RolloutAssignmentsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RolloutAssignmentsQuery.Where.
+func (t *RolloutAssignmentsTable) Where(ps ...keel.Pred) keel.Query[*extractionrollout.RolloutAssignment] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RolloutAssignmentsQuery.Pick.
+func (t *RolloutAssignmentsTable) Pick(es ...keel.Expr) keel.Query[*extractionrollout.RolloutAssignment] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RolloutAssignmentsQuery.Load.
+func (t *RolloutAssignmentsTable) Load(ls ...keel.Loader) keel.Query[*extractionrollout.RolloutAssignment] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RolloutAssignmentsQuery.Omit.
+func (t *RolloutAssignmentsTable) Omit(cols ...keel.Column) keel.Query[*extractionrollout.RolloutAssignment] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RolloutAssignmentsQuery.Order.
+func (t *RolloutAssignmentsTable) Order(os ...keel.Order) keel.Query[*extractionrollout.RolloutAssignment] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RolloutAssignmentsQuery.Limit.
+func (t *RolloutAssignmentsTable) Limit(n int) keel.Query[*extractionrollout.RolloutAssignment] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RolloutAssignmentsQuery.Group.
+func (t *RolloutAssignmentsTable) Group(es ...keel.Expr) keel.Query[*extractionrollout.RolloutAssignment] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RolloutAssignmentsQuery.GroupingSets.
+func (t *RolloutAssignmentsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*extractionrollout.RolloutAssignment] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RolloutAssignmentsQuery.Rollup.
+func (t *RolloutAssignmentsTable) Rollup(es ...keel.Expr) keel.Query[*extractionrollout.RolloutAssignment] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RolloutAssignmentsQuery.Cube.
+func (t *RolloutAssignmentsTable) Cube(es ...keel.Expr) keel.Query[*extractionrollout.RolloutAssignment] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RolloutAssignmentsQuery.AllTenants.
+func (t *RolloutAssignmentsTable) AllTenants() keel.Query[*extractionrollout.RolloutAssignment] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RolloutAssignmentsQuery.Join.
+func (t *RolloutAssignmentsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractionrollout.RolloutAssignment] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RolloutAssignmentsQuery.LeftJoin.
+func (t *RolloutAssignmentsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractionrollout.RolloutAssignment] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RolloutAssignmentsQuery.LeftJoinLateral.
+func (t *RolloutAssignmentsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extractionrollout.RolloutAssignment] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RolloutAssignmentsQuery.JoinLateral.
+func (t *RolloutAssignmentsTable) JoinLateral(sub keel.LateralSource) keel.Query[*extractionrollout.RolloutAssignment] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RolloutAssignmentsQuery.Lock.
+func (t *RolloutAssignmentsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extractionrollout.RolloutAssignment] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RolloutAssignmentsQuery.DistinctOn.
+func (t *RolloutAssignmentsTable) DistinctOn(es ...keel.Expr) keel.Query[*extractionrollout.RolloutAssignment] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RolloutAssignmentsQuery.Cache.
+func (t *RolloutAssignmentsTable) Cache(opts ...keel.CacheOption) keel.Query[*extractionrollout.RolloutAssignment] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RolloutAssignmentsQuery.LoadStrategy.
+func (t *RolloutAssignmentsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*extractionrollout.RolloutAssignment] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RolloutAssignmentsQuery.With.
+func (t *RolloutAssignmentsTable) With(ctes ...*keel.CTETable) keel.Query[*extractionrollout.RolloutAssignment] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RolloutAssignmentsQuery.Compute.
+func (t *RolloutAssignmentsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*extractionrollout.RolloutAssignment] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RolloutAssignmentsTable) Create(ctx context.Context, db *keel.DB, row *extractionrollout.RolloutAssignment) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RolloutAssignmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*extractionrollout.RolloutAssignment) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RolloutAssignmentsTable) Save(ctx context.Context, db *keel.DB, row *extractionrollout.RolloutAssignment, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RolloutAssignmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *extractionrollout.RolloutAssignment, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RolloutAssignmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *extractionrollout.RolloutAssignment) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RolloutAssignmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*extractionrollout.RolloutAssignment, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RolloutAssignmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*extractionrollout.RolloutAssignment, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RolloutAssignmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*extractionrollout.RolloutAssignment) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RolloutAssignmentsQuery) Where(ps ...keel.Pred) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RolloutAssignmentsQuery) Pick(es ...keel.Expr) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RolloutAssignmentsQuery) Omit(cols ...keel.Column) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RolloutAssignmentsQuery) Load(ls ...keel.Loader) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RolloutAssignmentsQuery) Order(os ...keel.Order) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RolloutAssignmentsQuery) Distinct() keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RolloutAssignmentsQuery) Group(es ...keel.Expr) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RolloutAssignmentsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RolloutAssignmentsQuery) Rollup(es ...keel.Expr) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RolloutAssignmentsQuery) Cube(es ...keel.Expr) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RolloutAssignmentsQuery) Window(name string, w keel.Window) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RolloutAssignmentsQuery) Having(ps ...keel.Pred) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RolloutAssignmentsQuery) Limit(n int) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RolloutAssignmentsQuery) Offset(n int) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RolloutAssignmentsQuery) DistinctOn(es ...keel.Expr) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RolloutAssignmentsQuery) AllTenants() keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RolloutAssignmentsQuery) CustomPlan() keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RolloutAssignmentsQuery) Timeout(d time.Duration) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RolloutAssignmentsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RolloutAssignmentsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RolloutAssignmentsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RolloutAssignmentsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RolloutAssignmentsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RolloutAssignmentsQuery) Cache(opts ...keel.CacheOption) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RolloutAssignmentsQuery) With(ctes ...*keel.CTETable) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RolloutAssignmentsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RolloutAssignmentsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*extractionrollout.RolloutAssignment] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RolloutAssignmentsQuery) Clone() keel.Query[*extractionrollout.RolloutAssignment] {
+	return &RolloutAssignmentsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RolloutAssignmentsQuery) One(ctx context.Context, db *keel.DB) (*extractionrollout.RolloutAssignment, error) {
+	return keel.One[*extractionrollout.RolloutAssignment](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RolloutAssignmentsQuery) First(ctx context.Context, db *keel.DB) (*extractionrollout.RolloutAssignment, error) {
+	return keel.First[*extractionrollout.RolloutAssignment](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RolloutAssignmentsQuery) List(ctx context.Context, db *keel.DB) ([]*extractionrollout.RolloutAssignment, error) {
+	return keel.List[*extractionrollout.RolloutAssignment](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RolloutAssignmentsQuery) All(ctx context.Context, db *keel.DB) ([]*extractionrollout.RolloutAssignment, error) {
+	return keel.All[*extractionrollout.RolloutAssignment](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RolloutAssignmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*extractionrollout.RolloutAssignment, error) {
+	return keel.UpdateReturning[*extractionrollout.RolloutAssignment](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RolloutAssignmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*extractionrollout.RolloutAssignment], error) {
+	return keel.PageOf[*extractionrollout.RolloutAssignment](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RolloutAssignmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*extractionrollout.RolloutAssignment) error) error {
+	return keel.Each[*extractionrollout.RolloutAssignment](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRolloutAssignment() unsafe.Pointer {

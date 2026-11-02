@@ -4,6 +4,7 @@ package agentevaluationdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -82,7 +83,7 @@ var evaluationsRef = keel.Ref{Table: &evaluationsTable}
 
 // EvaluationsTable is the table of agentevaluation.Evaluation.
 type EvaluationsTable struct {
-	keel.Handle[*agentevaluation.Evaluation]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -121,7 +122,7 @@ type EvaluationsTable struct {
 
 // Evaluations references the agent_evaluations table.
 var Evaluations = &EvaluationsTable{
-	Handle:            keel.Handle[*agentevaluation.Evaluation]{Ref: &evaluationsRef},
+	TableBase:         keel.TableBase{Ref: &evaluationsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 2}}},
@@ -158,10 +159,10 @@ var Evaluations = &EvaluationsTable{
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &evaluationsRef, Index: 33}},
 }
 
-// BuildEvaluations builds the handle of agent_evaluations for ref. Generated relation and alias methods call it.
+// BuildEvaluations builds the table of agent_evaluations for ref. Generated relation and alias methods call it.
 func BuildEvaluations(r *keel.Ref) *EvaluationsTable {
 	return &EvaluationsTable{
-		Handle:            keel.Handle[*agentevaluation.Evaluation]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -210,6 +211,365 @@ func (t *EvaluationsTable) As(alias string) *EvaluationsTable {
 // Get returns the agent_evaluations row with the given key, or keel.ErrNotFound.
 func (t *EvaluationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentevaluation.Evaluation, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EvaluationsQuery is a query over agentevaluation.Evaluation.
+type EvaluationsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*agentevaluation.Evaluation] = (*EvaluationsTable)(nil)
+
+var _ keel.Query[*agentevaluation.Evaluation] = (*EvaluationsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EvaluationsTable) Query() keel.Query[*agentevaluation.Evaluation] {
+	return &EvaluationsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EvaluationsQuery.Where.
+func (t *EvaluationsTable) Where(ps ...keel.Pred) keel.Query[*agentevaluation.Evaluation] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EvaluationsQuery.Pick.
+func (t *EvaluationsTable) Pick(es ...keel.Expr) keel.Query[*agentevaluation.Evaluation] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EvaluationsQuery.Load.
+func (t *EvaluationsTable) Load(ls ...keel.Loader) keel.Query[*agentevaluation.Evaluation] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EvaluationsQuery.Omit.
+func (t *EvaluationsTable) Omit(cols ...keel.Column) keel.Query[*agentevaluation.Evaluation] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EvaluationsQuery.Order.
+func (t *EvaluationsTable) Order(os ...keel.Order) keel.Query[*agentevaluation.Evaluation] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EvaluationsQuery.Limit.
+func (t *EvaluationsTable) Limit(n int) keel.Query[*agentevaluation.Evaluation] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EvaluationsQuery.Group.
+func (t *EvaluationsTable) Group(es ...keel.Expr) keel.Query[*agentevaluation.Evaluation] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EvaluationsQuery.GroupingSets.
+func (t *EvaluationsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentevaluation.Evaluation] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EvaluationsQuery.Rollup.
+func (t *EvaluationsTable) Rollup(es ...keel.Expr) keel.Query[*agentevaluation.Evaluation] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EvaluationsQuery.Cube.
+func (t *EvaluationsTable) Cube(es ...keel.Expr) keel.Query[*agentevaluation.Evaluation] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EvaluationsQuery.AllTenants.
+func (t *EvaluationsTable) AllTenants() keel.Query[*agentevaluation.Evaluation] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EvaluationsQuery.Join.
+func (t *EvaluationsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentevaluation.Evaluation] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EvaluationsQuery.LeftJoin.
+func (t *EvaluationsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentevaluation.Evaluation] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EvaluationsQuery.LeftJoinLateral.
+func (t *EvaluationsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentevaluation.Evaluation] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EvaluationsQuery.JoinLateral.
+func (t *EvaluationsTable) JoinLateral(sub keel.LateralSource) keel.Query[*agentevaluation.Evaluation] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EvaluationsQuery.Lock.
+func (t *EvaluationsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentevaluation.Evaluation] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EvaluationsQuery.DistinctOn.
+func (t *EvaluationsTable) DistinctOn(es ...keel.Expr) keel.Query[*agentevaluation.Evaluation] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EvaluationsQuery.Cache.
+func (t *EvaluationsTable) Cache(opts ...keel.CacheOption) keel.Query[*agentevaluation.Evaluation] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EvaluationsQuery.LoadStrategy.
+func (t *EvaluationsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentevaluation.Evaluation] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EvaluationsQuery.With.
+func (t *EvaluationsTable) With(ctes ...*keel.CTETable) keel.Query[*agentevaluation.Evaluation] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EvaluationsQuery.Compute.
+func (t *EvaluationsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agentevaluation.Evaluation] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EvaluationsTable) Create(ctx context.Context, db *keel.DB, row *agentevaluation.Evaluation) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EvaluationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentevaluation.Evaluation) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EvaluationsTable) Save(ctx context.Context, db *keel.DB, row *agentevaluation.Evaluation, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EvaluationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentevaluation.Evaluation, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EvaluationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentevaluation.Evaluation) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EvaluationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentevaluation.Evaluation, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EvaluationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentevaluation.Evaluation, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EvaluationsTable) Copy(ctx context.Context, db *keel.DB, rows []*agentevaluation.Evaluation) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EvaluationsQuery) Where(ps ...keel.Pred) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EvaluationsQuery) Pick(es ...keel.Expr) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EvaluationsQuery) Omit(cols ...keel.Column) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EvaluationsQuery) Load(ls ...keel.Loader) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EvaluationsQuery) Order(os ...keel.Order) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EvaluationsQuery) Distinct() keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EvaluationsQuery) Group(es ...keel.Expr) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EvaluationsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EvaluationsQuery) Rollup(es ...keel.Expr) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EvaluationsQuery) Cube(es ...keel.Expr) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EvaluationsQuery) Window(name string, w keel.Window) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EvaluationsQuery) Having(ps ...keel.Pred) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EvaluationsQuery) Limit(n int) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EvaluationsQuery) Offset(n int) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EvaluationsQuery) DistinctOn(es ...keel.Expr) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EvaluationsQuery) AllTenants() keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EvaluationsQuery) CustomPlan() keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EvaluationsQuery) Timeout(d time.Duration) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EvaluationsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EvaluationsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EvaluationsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EvaluationsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EvaluationsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EvaluationsQuery) Cache(opts ...keel.CacheOption) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EvaluationsQuery) With(ctes ...*keel.CTETable) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EvaluationsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EvaluationsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentevaluation.Evaluation] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EvaluationsQuery) Clone() keel.Query[*agentevaluation.Evaluation] {
+	return &EvaluationsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EvaluationsQuery) One(ctx context.Context, db *keel.DB) (*agentevaluation.Evaluation, error) {
+	return keel.One[*agentevaluation.Evaluation](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EvaluationsQuery) First(ctx context.Context, db *keel.DB) (*agentevaluation.Evaluation, error) {
+	return keel.First[*agentevaluation.Evaluation](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EvaluationsQuery) List(ctx context.Context, db *keel.DB) ([]*agentevaluation.Evaluation, error) {
+	return keel.List[*agentevaluation.Evaluation](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EvaluationsQuery) All(ctx context.Context, db *keel.DB) ([]*agentevaluation.Evaluation, error) {
+	return keel.All[*agentevaluation.Evaluation](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EvaluationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentevaluation.Evaluation, error) {
+	return keel.UpdateReturning[*agentevaluation.Evaluation](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EvaluationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentevaluation.Evaluation], error) {
+	return keel.PageOf[*agentevaluation.Evaluation](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EvaluationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentevaluation.Evaluation) error) error {
+	return keel.Each[*agentevaluation.Evaluation](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEvaluation() unsafe.Pointer { return unsafe.Pointer(new(agentevaluation.Evaluation)) }

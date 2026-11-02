@@ -4,6 +4,7 @@ package notificationdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -72,7 +73,7 @@ var notificationsRef = keel.Ref{Table: &notificationsTable}
 
 // NotificationsTable is the table of notification.Notification.
 type NotificationsTable struct {
-	keel.Handle[*notification.Notification]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
@@ -103,7 +104,7 @@ type NotificationsTable struct {
 
 // Notifications references the notifications table.
 var Notifications = &NotificationsTable{
-	Handle:          keel.Handle[*notification.Notification]{Ref: &notificationsRef},
+	TableBase:       keel.TableBase{Ref: &notificationsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 0}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 1}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 2}}},
@@ -132,10 +133,10 @@ var Notifications = &NotificationsTable{
 	Version:         keel.Int64Col{Col: keel.Col{Ref: &notificationsRef, Index: 25}},
 }
 
-// BuildNotifications builds the handle of notifications for ref. Generated relation and alias methods call it.
+// BuildNotifications builds the table of notifications for ref. Generated relation and alias methods call it.
 func BuildNotifications(r *keel.Ref) *NotificationsTable {
 	return &NotificationsTable{
-		Handle:          keel.Handle[*notification.Notification]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -176,6 +177,365 @@ func (t *NotificationsTable) As(alias string) *NotificationsTable {
 // Get returns the notifications row with the given key, or keel.ErrNotFound.
 func (t *NotificationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*notification.Notification, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// NotificationsQuery is a query over notification.Notification.
+type NotificationsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*notification.Notification] = (*NotificationsTable)(nil)
+
+var _ keel.Query[*notification.Notification] = (*NotificationsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *NotificationsTable) Query() keel.Query[*notification.Notification] {
+	return &NotificationsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see NotificationsQuery.Where.
+func (t *NotificationsTable) Where(ps ...keel.Pred) keel.Query[*notification.Notification] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see NotificationsQuery.Pick.
+func (t *NotificationsTable) Pick(es ...keel.Expr) keel.Query[*notification.Notification] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see NotificationsQuery.Load.
+func (t *NotificationsTable) Load(ls ...keel.Loader) keel.Query[*notification.Notification] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see NotificationsQuery.Omit.
+func (t *NotificationsTable) Omit(cols ...keel.Column) keel.Query[*notification.Notification] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see NotificationsQuery.Order.
+func (t *NotificationsTable) Order(os ...keel.Order) keel.Query[*notification.Notification] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see NotificationsQuery.Limit.
+func (t *NotificationsTable) Limit(n int) keel.Query[*notification.Notification] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see NotificationsQuery.Group.
+func (t *NotificationsTable) Group(es ...keel.Expr) keel.Query[*notification.Notification] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see NotificationsQuery.GroupingSets.
+func (t *NotificationsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*notification.Notification] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see NotificationsQuery.Rollup.
+func (t *NotificationsTable) Rollup(es ...keel.Expr) keel.Query[*notification.Notification] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see NotificationsQuery.Cube.
+func (t *NotificationsTable) Cube(es ...keel.Expr) keel.Query[*notification.Notification] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see NotificationsQuery.AllTenants.
+func (t *NotificationsTable) AllTenants() keel.Query[*notification.Notification] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see NotificationsQuery.Join.
+func (t *NotificationsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*notification.Notification] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see NotificationsQuery.LeftJoin.
+func (t *NotificationsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*notification.Notification] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see NotificationsQuery.LeftJoinLateral.
+func (t *NotificationsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*notification.Notification] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see NotificationsQuery.JoinLateral.
+func (t *NotificationsTable) JoinLateral(sub keel.LateralSource) keel.Query[*notification.Notification] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see NotificationsQuery.Lock.
+func (t *NotificationsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*notification.Notification] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see NotificationsQuery.DistinctOn.
+func (t *NotificationsTable) DistinctOn(es ...keel.Expr) keel.Query[*notification.Notification] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see NotificationsQuery.Cache.
+func (t *NotificationsTable) Cache(opts ...keel.CacheOption) keel.Query[*notification.Notification] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see NotificationsQuery.LoadStrategy.
+func (t *NotificationsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*notification.Notification] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see NotificationsQuery.With.
+func (t *NotificationsTable) With(ctes ...*keel.CTETable) keel.Query[*notification.Notification] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see NotificationsQuery.Compute.
+func (t *NotificationsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*notification.Notification] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *NotificationsTable) Create(ctx context.Context, db *keel.DB, row *notification.Notification) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *NotificationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*notification.Notification) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *NotificationsTable) Save(ctx context.Context, db *keel.DB, row *notification.Notification, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *NotificationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *notification.Notification, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *NotificationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *notification.Notification) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *NotificationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*notification.Notification, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *NotificationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*notification.Notification, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *NotificationsTable) Copy(ctx context.Context, db *keel.DB, rows []*notification.Notification) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *NotificationsQuery) Where(ps ...keel.Pred) keel.Query[*notification.Notification] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *NotificationsQuery) Pick(es ...keel.Expr) keel.Query[*notification.Notification] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *NotificationsQuery) Omit(cols ...keel.Column) keel.Query[*notification.Notification] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *NotificationsQuery) Load(ls ...keel.Loader) keel.Query[*notification.Notification] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *NotificationsQuery) Order(os ...keel.Order) keel.Query[*notification.Notification] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *NotificationsQuery) Distinct() keel.Query[*notification.Notification] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *NotificationsQuery) Group(es ...keel.Expr) keel.Query[*notification.Notification] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *NotificationsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*notification.Notification] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *NotificationsQuery) Rollup(es ...keel.Expr) keel.Query[*notification.Notification] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *NotificationsQuery) Cube(es ...keel.Expr) keel.Query[*notification.Notification] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *NotificationsQuery) Window(name string, w keel.Window) keel.Query[*notification.Notification] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *NotificationsQuery) Having(ps ...keel.Pred) keel.Query[*notification.Notification] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *NotificationsQuery) Limit(n int) keel.Query[*notification.Notification] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *NotificationsQuery) Offset(n int) keel.Query[*notification.Notification] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *NotificationsQuery) DistinctOn(es ...keel.Expr) keel.Query[*notification.Notification] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *NotificationsQuery) AllTenants() keel.Query[*notification.Notification] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *NotificationsQuery) CustomPlan() keel.Query[*notification.Notification] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *NotificationsQuery) Timeout(d time.Duration) keel.Query[*notification.Notification] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *NotificationsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*notification.Notification] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *NotificationsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*notification.Notification] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *NotificationsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*notification.Notification] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *NotificationsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*notification.Notification] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *NotificationsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*notification.Notification] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *NotificationsQuery) Cache(opts ...keel.CacheOption) keel.Query[*notification.Notification] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *NotificationsQuery) With(ctes ...*keel.CTETable) keel.Query[*notification.Notification] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *NotificationsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*notification.Notification] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *NotificationsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*notification.Notification] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *NotificationsQuery) Clone() keel.Query[*notification.Notification] {
+	return &NotificationsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *NotificationsQuery) One(ctx context.Context, db *keel.DB) (*notification.Notification, error) {
+	return keel.One[*notification.Notification](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *NotificationsQuery) First(ctx context.Context, db *keel.DB) (*notification.Notification, error) {
+	return keel.First[*notification.Notification](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *NotificationsQuery) List(ctx context.Context, db *keel.DB) ([]*notification.Notification, error) {
+	return keel.List[*notification.Notification](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *NotificationsQuery) All(ctx context.Context, db *keel.DB) ([]*notification.Notification, error) {
+	return keel.All[*notification.Notification](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *NotificationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*notification.Notification, error) {
+	return keel.UpdateReturning[*notification.Notification](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *NotificationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*notification.Notification], error) {
+	return keel.PageOf[*notification.Notification](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *NotificationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*notification.Notification) error) error {
+	return keel.Each[*notification.Notification](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newNotification() unsafe.Pointer { return unsafe.Pointer(new(notification.Notification)) }
@@ -393,7 +753,7 @@ var preferencesRef = keel.Ref{Table: &preferencesTable}
 
 // PreferencesTable is the table of notification.Preference.
 type PreferencesTable struct {
-	keel.Handle[*notification.Preference]
+	keel.TableBase
 	ID                    keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
@@ -417,7 +777,7 @@ type PreferencesTable struct {
 
 // Preferences references the user_notification_preferences table.
 var Preferences = &PreferencesTable{
-	Handle:                keel.Handle[*notification.Preference]{Ref: &preferencesRef},
+	TableBase:             keel.TableBase{Ref: &preferencesRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &preferencesRef, Index: 0}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &preferencesRef, Index: 1}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &preferencesRef, Index: 2}}},
@@ -439,10 +799,10 @@ var Preferences = &PreferencesTable{
 	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &preferencesRef, Index: 18}},
 }
 
-// BuildPreferences builds the handle of user_notification_preferences for ref. Generated relation and alias methods call it.
+// BuildPreferences builds the table of user_notification_preferences for ref. Generated relation and alias methods call it.
 func BuildPreferences(r *keel.Ref) *PreferencesTable {
 	return &PreferencesTable{
-		Handle:                keel.Handle[*notification.Preference]{Ref: r},
+		TableBase:             keel.TableBase{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -476,6 +836,365 @@ func (t *PreferencesTable) As(alias string) *PreferencesTable {
 // Get returns the user_notification_preferences row with the given key, or keel.ErrNotFound.
 func (t *PreferencesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*notification.Preference, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// PreferencesQuery is a query over notification.Preference.
+type PreferencesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*notification.Preference] = (*PreferencesTable)(nil)
+
+var _ keel.Query[*notification.Preference] = (*PreferencesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *PreferencesTable) Query() keel.Query[*notification.Preference] {
+	return &PreferencesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see PreferencesQuery.Where.
+func (t *PreferencesTable) Where(ps ...keel.Pred) keel.Query[*notification.Preference] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see PreferencesQuery.Pick.
+func (t *PreferencesTable) Pick(es ...keel.Expr) keel.Query[*notification.Preference] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see PreferencesQuery.Load.
+func (t *PreferencesTable) Load(ls ...keel.Loader) keel.Query[*notification.Preference] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see PreferencesQuery.Omit.
+func (t *PreferencesTable) Omit(cols ...keel.Column) keel.Query[*notification.Preference] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see PreferencesQuery.Order.
+func (t *PreferencesTable) Order(os ...keel.Order) keel.Query[*notification.Preference] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see PreferencesQuery.Limit.
+func (t *PreferencesTable) Limit(n int) keel.Query[*notification.Preference] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see PreferencesQuery.Group.
+func (t *PreferencesTable) Group(es ...keel.Expr) keel.Query[*notification.Preference] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see PreferencesQuery.GroupingSets.
+func (t *PreferencesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*notification.Preference] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see PreferencesQuery.Rollup.
+func (t *PreferencesTable) Rollup(es ...keel.Expr) keel.Query[*notification.Preference] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see PreferencesQuery.Cube.
+func (t *PreferencesTable) Cube(es ...keel.Expr) keel.Query[*notification.Preference] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see PreferencesQuery.AllTenants.
+func (t *PreferencesTable) AllTenants() keel.Query[*notification.Preference] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see PreferencesQuery.Join.
+func (t *PreferencesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*notification.Preference] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see PreferencesQuery.LeftJoin.
+func (t *PreferencesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*notification.Preference] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see PreferencesQuery.LeftJoinLateral.
+func (t *PreferencesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*notification.Preference] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see PreferencesQuery.JoinLateral.
+func (t *PreferencesTable) JoinLateral(sub keel.LateralSource) keel.Query[*notification.Preference] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see PreferencesQuery.Lock.
+func (t *PreferencesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*notification.Preference] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see PreferencesQuery.DistinctOn.
+func (t *PreferencesTable) DistinctOn(es ...keel.Expr) keel.Query[*notification.Preference] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see PreferencesQuery.Cache.
+func (t *PreferencesTable) Cache(opts ...keel.CacheOption) keel.Query[*notification.Preference] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see PreferencesQuery.LoadStrategy.
+func (t *PreferencesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*notification.Preference] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see PreferencesQuery.With.
+func (t *PreferencesTable) With(ctes ...*keel.CTETable) keel.Query[*notification.Preference] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see PreferencesQuery.Compute.
+func (t *PreferencesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*notification.Preference] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *PreferencesTable) Create(ctx context.Context, db *keel.DB, row *notification.Preference) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *PreferencesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*notification.Preference) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *PreferencesTable) Save(ctx context.Context, db *keel.DB, row *notification.Preference, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *PreferencesTable) SaveExcept(ctx context.Context, db *keel.DB, row *notification.Preference, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *PreferencesTable) DeleteRow(ctx context.Context, db *keel.DB, row *notification.Preference) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *PreferencesTable) Upsert(ctx context.Context, db *keel.DB, rows []*notification.Preference, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *PreferencesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*notification.Preference, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *PreferencesTable) Copy(ctx context.Context, db *keel.DB, rows []*notification.Preference) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *PreferencesQuery) Where(ps ...keel.Pred) keel.Query[*notification.Preference] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *PreferencesQuery) Pick(es ...keel.Expr) keel.Query[*notification.Preference] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *PreferencesQuery) Omit(cols ...keel.Column) keel.Query[*notification.Preference] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *PreferencesQuery) Load(ls ...keel.Loader) keel.Query[*notification.Preference] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *PreferencesQuery) Order(os ...keel.Order) keel.Query[*notification.Preference] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *PreferencesQuery) Distinct() keel.Query[*notification.Preference] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *PreferencesQuery) Group(es ...keel.Expr) keel.Query[*notification.Preference] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *PreferencesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*notification.Preference] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *PreferencesQuery) Rollup(es ...keel.Expr) keel.Query[*notification.Preference] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *PreferencesQuery) Cube(es ...keel.Expr) keel.Query[*notification.Preference] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *PreferencesQuery) Window(name string, w keel.Window) keel.Query[*notification.Preference] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *PreferencesQuery) Having(ps ...keel.Pred) keel.Query[*notification.Preference] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *PreferencesQuery) Limit(n int) keel.Query[*notification.Preference] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *PreferencesQuery) Offset(n int) keel.Query[*notification.Preference] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *PreferencesQuery) DistinctOn(es ...keel.Expr) keel.Query[*notification.Preference] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *PreferencesQuery) AllTenants() keel.Query[*notification.Preference] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *PreferencesQuery) CustomPlan() keel.Query[*notification.Preference] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *PreferencesQuery) Timeout(d time.Duration) keel.Query[*notification.Preference] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *PreferencesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*notification.Preference] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *PreferencesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*notification.Preference] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *PreferencesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*notification.Preference] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *PreferencesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*notification.Preference] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *PreferencesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*notification.Preference] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *PreferencesQuery) Cache(opts ...keel.CacheOption) keel.Query[*notification.Preference] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *PreferencesQuery) With(ctes ...*keel.CTETable) keel.Query[*notification.Preference] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *PreferencesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*notification.Preference] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *PreferencesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*notification.Preference] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *PreferencesQuery) Clone() keel.Query[*notification.Preference] {
+	return &PreferencesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *PreferencesQuery) One(ctx context.Context, db *keel.DB) (*notification.Preference, error) {
+	return keel.One[*notification.Preference](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *PreferencesQuery) First(ctx context.Context, db *keel.DB) (*notification.Preference, error) {
+	return keel.First[*notification.Preference](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *PreferencesQuery) List(ctx context.Context, db *keel.DB) ([]*notification.Preference, error) {
+	return keel.List[*notification.Preference](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *PreferencesQuery) All(ctx context.Context, db *keel.DB) ([]*notification.Preference, error) {
+	return keel.All[*notification.Preference](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *PreferencesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*notification.Preference, error) {
+	return keel.UpdateReturning[*notification.Preference](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *PreferencesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*notification.Preference], error) {
+	return keel.PageOf[*notification.Preference](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *PreferencesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*notification.Preference) error) error {
+	return keel.Each[*notification.Preference](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newPreference() unsafe.Pointer { return unsafe.Pointer(new(notification.Preference)) }
@@ -628,7 +1347,7 @@ var pushSubscriptionsRef = keel.Ref{Table: &pushSubscriptionsTable}
 
 // PushSubscriptionsTable is the table of notification.PushSubscription.
 type PushSubscriptionsTable struct {
-	keel.Handle[*notification.PushSubscription]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -643,7 +1362,7 @@ type PushSubscriptionsTable struct {
 
 // PushSubscriptions references the user_push_subscriptions table.
 var PushSubscriptions = &PushSubscriptionsTable{
-	Handle:         keel.Handle[*notification.PushSubscription]{Ref: &pushSubscriptionsRef},
+	TableBase:      keel.TableBase{Ref: &pushSubscriptionsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pushSubscriptionsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pushSubscriptionsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pushSubscriptionsRef, Index: 2}}},
@@ -656,10 +1375,10 @@ var PushSubscriptions = &PushSubscriptionsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &pushSubscriptionsRef, Index: 9}},
 }
 
-// BuildPushSubscriptions builds the handle of user_push_subscriptions for ref. Generated relation and alias methods call it.
+// BuildPushSubscriptions builds the table of user_push_subscriptions for ref. Generated relation and alias methods call it.
 func BuildPushSubscriptions(r *keel.Ref) *PushSubscriptionsTable {
 	return &PushSubscriptionsTable{
-		Handle:         keel.Handle[*notification.PushSubscription]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -684,6 +1403,365 @@ func (t *PushSubscriptionsTable) As(alias string) *PushSubscriptionsTable {
 // Get returns the user_push_subscriptions row with the given key, or keel.ErrNotFound.
 func (t *PushSubscriptionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*notification.PushSubscription, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// PushSubscriptionsQuery is a query over notification.PushSubscription.
+type PushSubscriptionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*notification.PushSubscription] = (*PushSubscriptionsTable)(nil)
+
+var _ keel.Query[*notification.PushSubscription] = (*PushSubscriptionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *PushSubscriptionsTable) Query() keel.Query[*notification.PushSubscription] {
+	return &PushSubscriptionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see PushSubscriptionsQuery.Where.
+func (t *PushSubscriptionsTable) Where(ps ...keel.Pred) keel.Query[*notification.PushSubscription] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see PushSubscriptionsQuery.Pick.
+func (t *PushSubscriptionsTable) Pick(es ...keel.Expr) keel.Query[*notification.PushSubscription] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see PushSubscriptionsQuery.Load.
+func (t *PushSubscriptionsTable) Load(ls ...keel.Loader) keel.Query[*notification.PushSubscription] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see PushSubscriptionsQuery.Omit.
+func (t *PushSubscriptionsTable) Omit(cols ...keel.Column) keel.Query[*notification.PushSubscription] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see PushSubscriptionsQuery.Order.
+func (t *PushSubscriptionsTable) Order(os ...keel.Order) keel.Query[*notification.PushSubscription] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see PushSubscriptionsQuery.Limit.
+func (t *PushSubscriptionsTable) Limit(n int) keel.Query[*notification.PushSubscription] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see PushSubscriptionsQuery.Group.
+func (t *PushSubscriptionsTable) Group(es ...keel.Expr) keel.Query[*notification.PushSubscription] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see PushSubscriptionsQuery.GroupingSets.
+func (t *PushSubscriptionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*notification.PushSubscription] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see PushSubscriptionsQuery.Rollup.
+func (t *PushSubscriptionsTable) Rollup(es ...keel.Expr) keel.Query[*notification.PushSubscription] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see PushSubscriptionsQuery.Cube.
+func (t *PushSubscriptionsTable) Cube(es ...keel.Expr) keel.Query[*notification.PushSubscription] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see PushSubscriptionsQuery.AllTenants.
+func (t *PushSubscriptionsTable) AllTenants() keel.Query[*notification.PushSubscription] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see PushSubscriptionsQuery.Join.
+func (t *PushSubscriptionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*notification.PushSubscription] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see PushSubscriptionsQuery.LeftJoin.
+func (t *PushSubscriptionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*notification.PushSubscription] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see PushSubscriptionsQuery.LeftJoinLateral.
+func (t *PushSubscriptionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*notification.PushSubscription] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see PushSubscriptionsQuery.JoinLateral.
+func (t *PushSubscriptionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*notification.PushSubscription] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see PushSubscriptionsQuery.Lock.
+func (t *PushSubscriptionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*notification.PushSubscription] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see PushSubscriptionsQuery.DistinctOn.
+func (t *PushSubscriptionsTable) DistinctOn(es ...keel.Expr) keel.Query[*notification.PushSubscription] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see PushSubscriptionsQuery.Cache.
+func (t *PushSubscriptionsTable) Cache(opts ...keel.CacheOption) keel.Query[*notification.PushSubscription] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see PushSubscriptionsQuery.LoadStrategy.
+func (t *PushSubscriptionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*notification.PushSubscription] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see PushSubscriptionsQuery.With.
+func (t *PushSubscriptionsTable) With(ctes ...*keel.CTETable) keel.Query[*notification.PushSubscription] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see PushSubscriptionsQuery.Compute.
+func (t *PushSubscriptionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*notification.PushSubscription] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *PushSubscriptionsTable) Create(ctx context.Context, db *keel.DB, row *notification.PushSubscription) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *PushSubscriptionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*notification.PushSubscription) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *PushSubscriptionsTable) Save(ctx context.Context, db *keel.DB, row *notification.PushSubscription, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *PushSubscriptionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *notification.PushSubscription, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *PushSubscriptionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *notification.PushSubscription) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *PushSubscriptionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*notification.PushSubscription, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *PushSubscriptionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*notification.PushSubscription, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *PushSubscriptionsTable) Copy(ctx context.Context, db *keel.DB, rows []*notification.PushSubscription) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *PushSubscriptionsQuery) Where(ps ...keel.Pred) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *PushSubscriptionsQuery) Pick(es ...keel.Expr) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *PushSubscriptionsQuery) Omit(cols ...keel.Column) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *PushSubscriptionsQuery) Load(ls ...keel.Loader) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *PushSubscriptionsQuery) Order(os ...keel.Order) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *PushSubscriptionsQuery) Distinct() keel.Query[*notification.PushSubscription] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *PushSubscriptionsQuery) Group(es ...keel.Expr) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *PushSubscriptionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *PushSubscriptionsQuery) Rollup(es ...keel.Expr) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *PushSubscriptionsQuery) Cube(es ...keel.Expr) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *PushSubscriptionsQuery) Window(name string, w keel.Window) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *PushSubscriptionsQuery) Having(ps ...keel.Pred) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *PushSubscriptionsQuery) Limit(n int) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *PushSubscriptionsQuery) Offset(n int) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *PushSubscriptionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *PushSubscriptionsQuery) AllTenants() keel.Query[*notification.PushSubscription] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *PushSubscriptionsQuery) CustomPlan() keel.Query[*notification.PushSubscription] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *PushSubscriptionsQuery) Timeout(d time.Duration) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *PushSubscriptionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *PushSubscriptionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *PushSubscriptionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *PushSubscriptionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *PushSubscriptionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *PushSubscriptionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *PushSubscriptionsQuery) With(ctes ...*keel.CTETable) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *PushSubscriptionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *PushSubscriptionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*notification.PushSubscription] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *PushSubscriptionsQuery) Clone() keel.Query[*notification.PushSubscription] {
+	return &PushSubscriptionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *PushSubscriptionsQuery) One(ctx context.Context, db *keel.DB) (*notification.PushSubscription, error) {
+	return keel.One[*notification.PushSubscription](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *PushSubscriptionsQuery) First(ctx context.Context, db *keel.DB) (*notification.PushSubscription, error) {
+	return keel.First[*notification.PushSubscription](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *PushSubscriptionsQuery) List(ctx context.Context, db *keel.DB) ([]*notification.PushSubscription, error) {
+	return keel.List[*notification.PushSubscription](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *PushSubscriptionsQuery) All(ctx context.Context, db *keel.DB) ([]*notification.PushSubscription, error) {
+	return keel.All[*notification.PushSubscription](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *PushSubscriptionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*notification.PushSubscription, error) {
+	return keel.UpdateReturning[*notification.PushSubscription](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *PushSubscriptionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*notification.PushSubscription], error) {
+	return keel.PageOf[*notification.PushSubscription](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *PushSubscriptionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*notification.PushSubscription) error) error {
+	return keel.Each[*notification.PushSubscription](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newPushSubscription() unsafe.Pointer { return unsafe.Pointer(new(notification.PushSubscription)) }

@@ -4,6 +4,7 @@ package carrierintelusagedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -54,7 +55,7 @@ var carrierIntelUsageDailiesRef = keel.Ref{Table: &carrierIntelUsageDailiesTable
 
 // CarrierIntelUsageDailiesTable is the table of carrierintelusage.CarrierIntelUsageDaily.
 type CarrierIntelUsageDailiesTable struct {
-	keel.Handle[*carrierintelusage.CarrierIntelUsageDaily]
+	keel.TableBase
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	Provider       integrationdb.TypeCol
@@ -67,7 +68,7 @@ type CarrierIntelUsageDailiesTable struct {
 
 // CarrierIntelUsageDailies references the carrier_intel_usage_daily table.
 var CarrierIntelUsageDailies = &CarrierIntelUsageDailiesTable{
-	Handle:         keel.Handle[*carrierintelusage.CarrierIntelUsageDaily]{Ref: &carrierIntelUsageDailiesRef},
+	TableBase:      keel.TableBase{Ref: &carrierIntelUsageDailiesRef},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelUsageDailiesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelUsageDailiesRef, Index: 1}}},
 	Provider:       integrationdb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelUsageDailiesRef, Index: 2}}},
@@ -78,10 +79,10 @@ var CarrierIntelUsageDailies = &CarrierIntelUsageDailiesTable{
 	EstimatedCost:  keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &carrierIntelUsageDailiesRef, Index: 7}}},
 }
 
-// BuildCarrierIntelUsageDailies builds the handle of carrier_intel_usage_daily for ref. Generated relation and alias methods call it.
+// BuildCarrierIntelUsageDailies builds the table of carrier_intel_usage_daily for ref. Generated relation and alias methods call it.
 func BuildCarrierIntelUsageDailies(r *keel.Ref) *CarrierIntelUsageDailiesTable {
 	return &CarrierIntelUsageDailiesTable{
-		Handle:         keel.Handle[*carrierintelusage.CarrierIntelUsageDaily]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Provider:       integrationdb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -99,6 +100,365 @@ func CarrierIntelUsageDailiesSchema() *schema.Table { return &carrierIntelUsageD
 // As returns a handle that references carrier_intel_usage_daily under its own alias.
 func (t *CarrierIntelUsageDailiesTable) As(alias string) *CarrierIntelUsageDailiesTable {
 	return keel.Alias(t.Ref, alias, BuildCarrierIntelUsageDailies)
+}
+
+// CarrierIntelUsageDailiesQuery is a query over carrierintelusage.CarrierIntelUsageDaily.
+type CarrierIntelUsageDailiesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*carrierintelusage.CarrierIntelUsageDaily] = (*CarrierIntelUsageDailiesTable)(nil)
+
+var _ keel.Query[*carrierintelusage.CarrierIntelUsageDaily] = (*CarrierIntelUsageDailiesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CarrierIntelUsageDailiesTable) Query() keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return &CarrierIntelUsageDailiesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CarrierIntelUsageDailiesQuery.Where.
+func (t *CarrierIntelUsageDailiesTable) Where(ps ...keel.Pred) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CarrierIntelUsageDailiesQuery.Pick.
+func (t *CarrierIntelUsageDailiesTable) Pick(es ...keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CarrierIntelUsageDailiesQuery.Load.
+func (t *CarrierIntelUsageDailiesTable) Load(ls ...keel.Loader) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CarrierIntelUsageDailiesQuery.Omit.
+func (t *CarrierIntelUsageDailiesTable) Omit(cols ...keel.Column) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CarrierIntelUsageDailiesQuery.Order.
+func (t *CarrierIntelUsageDailiesTable) Order(os ...keel.Order) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CarrierIntelUsageDailiesQuery.Limit.
+func (t *CarrierIntelUsageDailiesTable) Limit(n int) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CarrierIntelUsageDailiesQuery.Group.
+func (t *CarrierIntelUsageDailiesTable) Group(es ...keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CarrierIntelUsageDailiesQuery.GroupingSets.
+func (t *CarrierIntelUsageDailiesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CarrierIntelUsageDailiesQuery.Rollup.
+func (t *CarrierIntelUsageDailiesTable) Rollup(es ...keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CarrierIntelUsageDailiesQuery.Cube.
+func (t *CarrierIntelUsageDailiesTable) Cube(es ...keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CarrierIntelUsageDailiesQuery.AllTenants.
+func (t *CarrierIntelUsageDailiesTable) AllTenants() keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CarrierIntelUsageDailiesQuery.Join.
+func (t *CarrierIntelUsageDailiesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CarrierIntelUsageDailiesQuery.LeftJoin.
+func (t *CarrierIntelUsageDailiesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CarrierIntelUsageDailiesQuery.LeftJoinLateral.
+func (t *CarrierIntelUsageDailiesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CarrierIntelUsageDailiesQuery.JoinLateral.
+func (t *CarrierIntelUsageDailiesTable) JoinLateral(sub keel.LateralSource) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CarrierIntelUsageDailiesQuery.Lock.
+func (t *CarrierIntelUsageDailiesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CarrierIntelUsageDailiesQuery.DistinctOn.
+func (t *CarrierIntelUsageDailiesTable) DistinctOn(es ...keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CarrierIntelUsageDailiesQuery.Cache.
+func (t *CarrierIntelUsageDailiesTable) Cache(opts ...keel.CacheOption) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CarrierIntelUsageDailiesQuery.LoadStrategy.
+func (t *CarrierIntelUsageDailiesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CarrierIntelUsageDailiesQuery.With.
+func (t *CarrierIntelUsageDailiesTable) With(ctes ...*keel.CTETable) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CarrierIntelUsageDailiesQuery.Compute.
+func (t *CarrierIntelUsageDailiesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CarrierIntelUsageDailiesTable) Create(ctx context.Context, db *keel.DB, row *carrierintelusage.CarrierIntelUsageDaily) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CarrierIntelUsageDailiesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carrierintelusage.CarrierIntelUsageDaily) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CarrierIntelUsageDailiesTable) Save(ctx context.Context, db *keel.DB, row *carrierintelusage.CarrierIntelUsageDaily, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CarrierIntelUsageDailiesTable) SaveExcept(ctx context.Context, db *keel.DB, row *carrierintelusage.CarrierIntelUsageDaily, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CarrierIntelUsageDailiesTable) DeleteRow(ctx context.Context, db *keel.DB, row *carrierintelusage.CarrierIntelUsageDaily) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CarrierIntelUsageDailiesTable) Upsert(ctx context.Context, db *keel.DB, rows []*carrierintelusage.CarrierIntelUsageDaily, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CarrierIntelUsageDailiesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carrierintelusage.CarrierIntelUsageDaily, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CarrierIntelUsageDailiesTable) Copy(ctx context.Context, db *keel.DB, rows []*carrierintelusage.CarrierIntelUsageDaily) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CarrierIntelUsageDailiesQuery) Where(ps ...keel.Pred) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CarrierIntelUsageDailiesQuery) Pick(es ...keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CarrierIntelUsageDailiesQuery) Omit(cols ...keel.Column) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CarrierIntelUsageDailiesQuery) Load(ls ...keel.Loader) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CarrierIntelUsageDailiesQuery) Order(os ...keel.Order) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CarrierIntelUsageDailiesQuery) Distinct() keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CarrierIntelUsageDailiesQuery) Group(es ...keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CarrierIntelUsageDailiesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CarrierIntelUsageDailiesQuery) Rollup(es ...keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CarrierIntelUsageDailiesQuery) Cube(es ...keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CarrierIntelUsageDailiesQuery) Window(name string, w keel.Window) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CarrierIntelUsageDailiesQuery) Having(ps ...keel.Pred) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CarrierIntelUsageDailiesQuery) Limit(n int) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CarrierIntelUsageDailiesQuery) Offset(n int) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CarrierIntelUsageDailiesQuery) DistinctOn(es ...keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CarrierIntelUsageDailiesQuery) AllTenants() keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CarrierIntelUsageDailiesQuery) CustomPlan() keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CarrierIntelUsageDailiesQuery) Timeout(d time.Duration) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CarrierIntelUsageDailiesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CarrierIntelUsageDailiesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CarrierIntelUsageDailiesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CarrierIntelUsageDailiesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CarrierIntelUsageDailiesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CarrierIntelUsageDailiesQuery) Cache(opts ...keel.CacheOption) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CarrierIntelUsageDailiesQuery) With(ctes ...*keel.CTETable) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CarrierIntelUsageDailiesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CarrierIntelUsageDailiesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CarrierIntelUsageDailiesQuery) Clone() keel.Query[*carrierintelusage.CarrierIntelUsageDaily] {
+	return &CarrierIntelUsageDailiesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CarrierIntelUsageDailiesQuery) One(ctx context.Context, db *keel.DB) (*carrierintelusage.CarrierIntelUsageDaily, error) {
+	return keel.One[*carrierintelusage.CarrierIntelUsageDaily](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CarrierIntelUsageDailiesQuery) First(ctx context.Context, db *keel.DB) (*carrierintelusage.CarrierIntelUsageDaily, error) {
+	return keel.First[*carrierintelusage.CarrierIntelUsageDaily](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CarrierIntelUsageDailiesQuery) List(ctx context.Context, db *keel.DB) ([]*carrierintelusage.CarrierIntelUsageDaily, error) {
+	return keel.List[*carrierintelusage.CarrierIntelUsageDaily](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CarrierIntelUsageDailiesQuery) All(ctx context.Context, db *keel.DB) ([]*carrierintelusage.CarrierIntelUsageDaily, error) {
+	return keel.All[*carrierintelusage.CarrierIntelUsageDaily](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CarrierIntelUsageDailiesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carrierintelusage.CarrierIntelUsageDaily, error) {
+	return keel.UpdateReturning[*carrierintelusage.CarrierIntelUsageDaily](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CarrierIntelUsageDailiesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carrierintelusage.CarrierIntelUsageDaily], error) {
+	return keel.PageOf[*carrierintelusage.CarrierIntelUsageDaily](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CarrierIntelUsageDailiesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carrierintelusage.CarrierIntelUsageDaily) error) error {
+	return keel.Each[*carrierintelusage.CarrierIntelUsageDaily](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCarrierIntelUsageDaily() unsafe.Pointer {
@@ -208,7 +568,7 @@ var carrierIntelUsageRecordsRef = keel.Ref{Table: &carrierIntelUsageRecordsTable
 
 // CarrierIntelUsageRecordsTable is the table of carrierintelusage.CarrierIntelUsageRecord.
 type CarrierIntelUsageRecordsTable struct {
-	keel.Handle[*carrierintelusage.CarrierIntelUsageRecord]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -233,7 +593,7 @@ type CarrierIntelUsageRecordsTable struct {
 
 // CarrierIntelUsageRecords references the carrier_intel_usage_ledger table.
 var CarrierIntelUsageRecords = &CarrierIntelUsageRecordsTable{
-	Handle:          keel.Handle[*carrierintelusage.CarrierIntelUsageRecord]{Ref: &carrierIntelUsageRecordsRef},
+	TableBase:       keel.TableBase{Ref: &carrierIntelUsageRecordsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelUsageRecordsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelUsageRecordsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelUsageRecordsRef, Index: 2}}},
@@ -256,10 +616,10 @@ var CarrierIntelUsageRecords = &CarrierIntelUsageRecordsTable{
 	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &carrierIntelUsageRecordsRef, Index: 19}},
 }
 
-// BuildCarrierIntelUsageRecords builds the handle of carrier_intel_usage_ledger for ref. Generated relation and alias methods call it.
+// BuildCarrierIntelUsageRecords builds the table of carrier_intel_usage_ledger for ref. Generated relation and alias methods call it.
 func BuildCarrierIntelUsageRecords(r *keel.Ref) *CarrierIntelUsageRecordsTable {
 	return &CarrierIntelUsageRecordsTable{
-		Handle:          keel.Handle[*carrierintelusage.CarrierIntelUsageRecord]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -294,6 +654,365 @@ func (t *CarrierIntelUsageRecordsTable) As(alias string) *CarrierIntelUsageRecor
 // Get returns the carrier_intel_usage_ledger row with the given key, or keel.ErrNotFound.
 func (t *CarrierIntelUsageRecordsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*carrierintelusage.CarrierIntelUsageRecord, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CarrierIntelUsageRecordsQuery is a query over carrierintelusage.CarrierIntelUsageRecord.
+type CarrierIntelUsageRecordsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*carrierintelusage.CarrierIntelUsageRecord] = (*CarrierIntelUsageRecordsTable)(nil)
+
+var _ keel.Query[*carrierintelusage.CarrierIntelUsageRecord] = (*CarrierIntelUsageRecordsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CarrierIntelUsageRecordsTable) Query() keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return &CarrierIntelUsageRecordsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CarrierIntelUsageRecordsQuery.Where.
+func (t *CarrierIntelUsageRecordsTable) Where(ps ...keel.Pred) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CarrierIntelUsageRecordsQuery.Pick.
+func (t *CarrierIntelUsageRecordsTable) Pick(es ...keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CarrierIntelUsageRecordsQuery.Load.
+func (t *CarrierIntelUsageRecordsTable) Load(ls ...keel.Loader) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CarrierIntelUsageRecordsQuery.Omit.
+func (t *CarrierIntelUsageRecordsTable) Omit(cols ...keel.Column) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CarrierIntelUsageRecordsQuery.Order.
+func (t *CarrierIntelUsageRecordsTable) Order(os ...keel.Order) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CarrierIntelUsageRecordsQuery.Limit.
+func (t *CarrierIntelUsageRecordsTable) Limit(n int) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CarrierIntelUsageRecordsQuery.Group.
+func (t *CarrierIntelUsageRecordsTable) Group(es ...keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CarrierIntelUsageRecordsQuery.GroupingSets.
+func (t *CarrierIntelUsageRecordsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CarrierIntelUsageRecordsQuery.Rollup.
+func (t *CarrierIntelUsageRecordsTable) Rollup(es ...keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CarrierIntelUsageRecordsQuery.Cube.
+func (t *CarrierIntelUsageRecordsTable) Cube(es ...keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CarrierIntelUsageRecordsQuery.AllTenants.
+func (t *CarrierIntelUsageRecordsTable) AllTenants() keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CarrierIntelUsageRecordsQuery.Join.
+func (t *CarrierIntelUsageRecordsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CarrierIntelUsageRecordsQuery.LeftJoin.
+func (t *CarrierIntelUsageRecordsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CarrierIntelUsageRecordsQuery.LeftJoinLateral.
+func (t *CarrierIntelUsageRecordsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CarrierIntelUsageRecordsQuery.JoinLateral.
+func (t *CarrierIntelUsageRecordsTable) JoinLateral(sub keel.LateralSource) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CarrierIntelUsageRecordsQuery.Lock.
+func (t *CarrierIntelUsageRecordsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CarrierIntelUsageRecordsQuery.DistinctOn.
+func (t *CarrierIntelUsageRecordsTable) DistinctOn(es ...keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CarrierIntelUsageRecordsQuery.Cache.
+func (t *CarrierIntelUsageRecordsTable) Cache(opts ...keel.CacheOption) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CarrierIntelUsageRecordsQuery.LoadStrategy.
+func (t *CarrierIntelUsageRecordsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CarrierIntelUsageRecordsQuery.With.
+func (t *CarrierIntelUsageRecordsTable) With(ctes ...*keel.CTETable) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CarrierIntelUsageRecordsQuery.Compute.
+func (t *CarrierIntelUsageRecordsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CarrierIntelUsageRecordsTable) Create(ctx context.Context, db *keel.DB, row *carrierintelusage.CarrierIntelUsageRecord) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CarrierIntelUsageRecordsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carrierintelusage.CarrierIntelUsageRecord) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CarrierIntelUsageRecordsTable) Save(ctx context.Context, db *keel.DB, row *carrierintelusage.CarrierIntelUsageRecord, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CarrierIntelUsageRecordsTable) SaveExcept(ctx context.Context, db *keel.DB, row *carrierintelusage.CarrierIntelUsageRecord, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CarrierIntelUsageRecordsTable) DeleteRow(ctx context.Context, db *keel.DB, row *carrierintelusage.CarrierIntelUsageRecord) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CarrierIntelUsageRecordsTable) Upsert(ctx context.Context, db *keel.DB, rows []*carrierintelusage.CarrierIntelUsageRecord, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CarrierIntelUsageRecordsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carrierintelusage.CarrierIntelUsageRecord, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CarrierIntelUsageRecordsTable) Copy(ctx context.Context, db *keel.DB, rows []*carrierintelusage.CarrierIntelUsageRecord) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CarrierIntelUsageRecordsQuery) Where(ps ...keel.Pred) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CarrierIntelUsageRecordsQuery) Pick(es ...keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CarrierIntelUsageRecordsQuery) Omit(cols ...keel.Column) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CarrierIntelUsageRecordsQuery) Load(ls ...keel.Loader) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CarrierIntelUsageRecordsQuery) Order(os ...keel.Order) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CarrierIntelUsageRecordsQuery) Distinct() keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CarrierIntelUsageRecordsQuery) Group(es ...keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CarrierIntelUsageRecordsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CarrierIntelUsageRecordsQuery) Rollup(es ...keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CarrierIntelUsageRecordsQuery) Cube(es ...keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CarrierIntelUsageRecordsQuery) Window(name string, w keel.Window) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CarrierIntelUsageRecordsQuery) Having(ps ...keel.Pred) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CarrierIntelUsageRecordsQuery) Limit(n int) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CarrierIntelUsageRecordsQuery) Offset(n int) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CarrierIntelUsageRecordsQuery) DistinctOn(es ...keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CarrierIntelUsageRecordsQuery) AllTenants() keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CarrierIntelUsageRecordsQuery) CustomPlan() keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CarrierIntelUsageRecordsQuery) Timeout(d time.Duration) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CarrierIntelUsageRecordsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CarrierIntelUsageRecordsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CarrierIntelUsageRecordsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CarrierIntelUsageRecordsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CarrierIntelUsageRecordsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CarrierIntelUsageRecordsQuery) Cache(opts ...keel.CacheOption) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CarrierIntelUsageRecordsQuery) With(ctes ...*keel.CTETable) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CarrierIntelUsageRecordsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CarrierIntelUsageRecordsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CarrierIntelUsageRecordsQuery) Clone() keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	return &CarrierIntelUsageRecordsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CarrierIntelUsageRecordsQuery) One(ctx context.Context, db *keel.DB) (*carrierintelusage.CarrierIntelUsageRecord, error) {
+	return keel.One[*carrierintelusage.CarrierIntelUsageRecord](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CarrierIntelUsageRecordsQuery) First(ctx context.Context, db *keel.DB) (*carrierintelusage.CarrierIntelUsageRecord, error) {
+	return keel.First[*carrierintelusage.CarrierIntelUsageRecord](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CarrierIntelUsageRecordsQuery) List(ctx context.Context, db *keel.DB) ([]*carrierintelusage.CarrierIntelUsageRecord, error) {
+	return keel.List[*carrierintelusage.CarrierIntelUsageRecord](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CarrierIntelUsageRecordsQuery) All(ctx context.Context, db *keel.DB) ([]*carrierintelusage.CarrierIntelUsageRecord, error) {
+	return keel.All[*carrierintelusage.CarrierIntelUsageRecord](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CarrierIntelUsageRecordsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carrierintelusage.CarrierIntelUsageRecord, error) {
+	return keel.UpdateReturning[*carrierintelusage.CarrierIntelUsageRecord](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CarrierIntelUsageRecordsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carrierintelusage.CarrierIntelUsageRecord], error) {
+	return keel.PageOf[*carrierintelusage.CarrierIntelUsageRecord](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CarrierIntelUsageRecordsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carrierintelusage.CarrierIntelUsageRecord) error) error {
+	return keel.Each[*carrierintelusage.CarrierIntelUsageRecord](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCarrierIntelUsageRecord() unsafe.Pointer {

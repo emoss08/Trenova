@@ -4,6 +4,7 @@ package trackingeventdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -67,7 +68,7 @@ var trackingEventsRef = keel.Ref{Table: &trackingEventsTable}
 
 // TrackingEventsTable is the table of trackingevent.TrackingEvent.
 type TrackingEventsTable struct {
-	keel.Handle[*trackingevent.TrackingEvent]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -93,7 +94,7 @@ type TrackingEventsTable struct {
 
 // TrackingEvents references the tracking_events table.
 var TrackingEvents = &TrackingEventsTable{
-	Handle:         keel.Handle[*trackingevent.TrackingEvent]{Ref: &trackingEventsRef},
+	TableBase:      keel.TableBase{Ref: &trackingEventsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 2}}},
@@ -117,10 +118,10 @@ var TrackingEvents = &TrackingEventsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &trackingEventsRef, Index: 20}},
 }
 
-// BuildTrackingEvents builds the handle of tracking_events for ref. Generated relation and alias methods call it.
+// BuildTrackingEvents builds the table of tracking_events for ref. Generated relation and alias methods call it.
 func BuildTrackingEvents(r *keel.Ref) *TrackingEventsTable {
 	return &TrackingEventsTable{
-		Handle:         keel.Handle[*trackingevent.TrackingEvent]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -156,6 +157,365 @@ func (t *TrackingEventsTable) As(alias string) *TrackingEventsTable {
 // Get returns the tracking_events row with the given key, or keel.ErrNotFound.
 func (t *TrackingEventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*trackingevent.TrackingEvent, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// TrackingEventsQuery is a query over trackingevent.TrackingEvent.
+type TrackingEventsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*trackingevent.TrackingEvent] = (*TrackingEventsTable)(nil)
+
+var _ keel.Query[*trackingevent.TrackingEvent] = (*TrackingEventsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *TrackingEventsTable) Query() keel.Query[*trackingevent.TrackingEvent] {
+	return &TrackingEventsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see TrackingEventsQuery.Where.
+func (t *TrackingEventsTable) Where(ps ...keel.Pred) keel.Query[*trackingevent.TrackingEvent] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see TrackingEventsQuery.Pick.
+func (t *TrackingEventsTable) Pick(es ...keel.Expr) keel.Query[*trackingevent.TrackingEvent] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see TrackingEventsQuery.Load.
+func (t *TrackingEventsTable) Load(ls ...keel.Loader) keel.Query[*trackingevent.TrackingEvent] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see TrackingEventsQuery.Omit.
+func (t *TrackingEventsTable) Omit(cols ...keel.Column) keel.Query[*trackingevent.TrackingEvent] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see TrackingEventsQuery.Order.
+func (t *TrackingEventsTable) Order(os ...keel.Order) keel.Query[*trackingevent.TrackingEvent] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see TrackingEventsQuery.Limit.
+func (t *TrackingEventsTable) Limit(n int) keel.Query[*trackingevent.TrackingEvent] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see TrackingEventsQuery.Group.
+func (t *TrackingEventsTable) Group(es ...keel.Expr) keel.Query[*trackingevent.TrackingEvent] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see TrackingEventsQuery.GroupingSets.
+func (t *TrackingEventsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*trackingevent.TrackingEvent] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see TrackingEventsQuery.Rollup.
+func (t *TrackingEventsTable) Rollup(es ...keel.Expr) keel.Query[*trackingevent.TrackingEvent] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see TrackingEventsQuery.Cube.
+func (t *TrackingEventsTable) Cube(es ...keel.Expr) keel.Query[*trackingevent.TrackingEvent] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see TrackingEventsQuery.AllTenants.
+func (t *TrackingEventsTable) AllTenants() keel.Query[*trackingevent.TrackingEvent] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see TrackingEventsQuery.Join.
+func (t *TrackingEventsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*trackingevent.TrackingEvent] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see TrackingEventsQuery.LeftJoin.
+func (t *TrackingEventsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*trackingevent.TrackingEvent] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see TrackingEventsQuery.LeftJoinLateral.
+func (t *TrackingEventsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*trackingevent.TrackingEvent] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see TrackingEventsQuery.JoinLateral.
+func (t *TrackingEventsTable) JoinLateral(sub keel.LateralSource) keel.Query[*trackingevent.TrackingEvent] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see TrackingEventsQuery.Lock.
+func (t *TrackingEventsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*trackingevent.TrackingEvent] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see TrackingEventsQuery.DistinctOn.
+func (t *TrackingEventsTable) DistinctOn(es ...keel.Expr) keel.Query[*trackingevent.TrackingEvent] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see TrackingEventsQuery.Cache.
+func (t *TrackingEventsTable) Cache(opts ...keel.CacheOption) keel.Query[*trackingevent.TrackingEvent] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see TrackingEventsQuery.LoadStrategy.
+func (t *TrackingEventsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*trackingevent.TrackingEvent] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see TrackingEventsQuery.With.
+func (t *TrackingEventsTable) With(ctes ...*keel.CTETable) keel.Query[*trackingevent.TrackingEvent] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see TrackingEventsQuery.Compute.
+func (t *TrackingEventsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*trackingevent.TrackingEvent] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *TrackingEventsTable) Create(ctx context.Context, db *keel.DB, row *trackingevent.TrackingEvent) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *TrackingEventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*trackingevent.TrackingEvent) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *TrackingEventsTable) Save(ctx context.Context, db *keel.DB, row *trackingevent.TrackingEvent, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *TrackingEventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *trackingevent.TrackingEvent, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *TrackingEventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *trackingevent.TrackingEvent) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *TrackingEventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*trackingevent.TrackingEvent, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *TrackingEventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*trackingevent.TrackingEvent, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *TrackingEventsTable) Copy(ctx context.Context, db *keel.DB, rows []*trackingevent.TrackingEvent) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *TrackingEventsQuery) Where(ps ...keel.Pred) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *TrackingEventsQuery) Pick(es ...keel.Expr) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *TrackingEventsQuery) Omit(cols ...keel.Column) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *TrackingEventsQuery) Load(ls ...keel.Loader) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *TrackingEventsQuery) Order(os ...keel.Order) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *TrackingEventsQuery) Distinct() keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *TrackingEventsQuery) Group(es ...keel.Expr) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *TrackingEventsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *TrackingEventsQuery) Rollup(es ...keel.Expr) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *TrackingEventsQuery) Cube(es ...keel.Expr) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *TrackingEventsQuery) Window(name string, w keel.Window) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *TrackingEventsQuery) Having(ps ...keel.Pred) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *TrackingEventsQuery) Limit(n int) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *TrackingEventsQuery) Offset(n int) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *TrackingEventsQuery) DistinctOn(es ...keel.Expr) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *TrackingEventsQuery) AllTenants() keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *TrackingEventsQuery) CustomPlan() keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *TrackingEventsQuery) Timeout(d time.Duration) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *TrackingEventsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *TrackingEventsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *TrackingEventsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *TrackingEventsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *TrackingEventsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *TrackingEventsQuery) Cache(opts ...keel.CacheOption) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *TrackingEventsQuery) With(ctes ...*keel.CTETable) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *TrackingEventsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *TrackingEventsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*trackingevent.TrackingEvent] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *TrackingEventsQuery) Clone() keel.Query[*trackingevent.TrackingEvent] {
+	return &TrackingEventsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *TrackingEventsQuery) One(ctx context.Context, db *keel.DB) (*trackingevent.TrackingEvent, error) {
+	return keel.One[*trackingevent.TrackingEvent](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *TrackingEventsQuery) First(ctx context.Context, db *keel.DB) (*trackingevent.TrackingEvent, error) {
+	return keel.First[*trackingevent.TrackingEvent](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *TrackingEventsQuery) List(ctx context.Context, db *keel.DB) ([]*trackingevent.TrackingEvent, error) {
+	return keel.List[*trackingevent.TrackingEvent](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *TrackingEventsQuery) All(ctx context.Context, db *keel.DB) ([]*trackingevent.TrackingEvent, error) {
+	return keel.All[*trackingevent.TrackingEvent](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *TrackingEventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*trackingevent.TrackingEvent, error) {
+	return keel.UpdateReturning[*trackingevent.TrackingEvent](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *TrackingEventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*trackingevent.TrackingEvent], error) {
+	return keel.PageOf[*trackingevent.TrackingEvent](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *TrackingEventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*trackingevent.TrackingEvent) error) error {
+	return keel.Each[*trackingevent.TrackingEvent](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newTrackingEvent() unsafe.Pointer { return unsafe.Pointer(new(trackingevent.TrackingEvent)) }

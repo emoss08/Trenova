@@ -4,6 +4,7 @@ package documentdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -104,7 +105,7 @@ var documentsRef = keel.Ref{Table: &documentsTable}
 
 // DocumentsTable is the table of document.Document.
 type DocumentsTable struct {
-	keel.Handle[*document.Document]
+	keel.TableBase
 	ID                    keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
@@ -160,7 +161,7 @@ type DocumentsTable struct {
 
 // Documents references the documents table.
 var Documents = &DocumentsTable{
-	Handle:                keel.Handle[*document.Document]{Ref: &documentsRef},
+	TableBase:             keel.TableBase{Ref: &documentsRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 0}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 1}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 2}}},
@@ -214,10 +215,10 @@ var Documents = &DocumentsTable{
 	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &documentsRef, Index: 50}},
 }
 
-// BuildDocuments builds the handle of documents for ref. Generated relation and alias methods call it.
+// BuildDocuments builds the table of documents for ref. Generated relation and alias methods call it.
 func BuildDocuments(r *keel.Ref) *DocumentsTable {
 	return &DocumentsTable{
-		Handle:                keel.Handle[*document.Document]{Ref: r},
+		TableBase:             keel.TableBase{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -288,6 +289,365 @@ func (t *DocumentsTable) DocumentType() *documenttypedb.DocumentTypesTable {
 // Get returns the documents row with the given key, or keel.ErrNotFound.
 func (t *DocumentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*document.Document, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// DocumentsQuery is a query over document.Document.
+type DocumentsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*document.Document] = (*DocumentsTable)(nil)
+
+var _ keel.Query[*document.Document] = (*DocumentsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *DocumentsTable) Query() keel.Query[*document.Document] {
+	return &DocumentsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see DocumentsQuery.Where.
+func (t *DocumentsTable) Where(ps ...keel.Pred) keel.Query[*document.Document] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see DocumentsQuery.Pick.
+func (t *DocumentsTable) Pick(es ...keel.Expr) keel.Query[*document.Document] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see DocumentsQuery.Load.
+func (t *DocumentsTable) Load(ls ...keel.Loader) keel.Query[*document.Document] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see DocumentsQuery.Omit.
+func (t *DocumentsTable) Omit(cols ...keel.Column) keel.Query[*document.Document] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see DocumentsQuery.Order.
+func (t *DocumentsTable) Order(os ...keel.Order) keel.Query[*document.Document] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see DocumentsQuery.Limit.
+func (t *DocumentsTable) Limit(n int) keel.Query[*document.Document] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see DocumentsQuery.Group.
+func (t *DocumentsTable) Group(es ...keel.Expr) keel.Query[*document.Document] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see DocumentsQuery.GroupingSets.
+func (t *DocumentsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*document.Document] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see DocumentsQuery.Rollup.
+func (t *DocumentsTable) Rollup(es ...keel.Expr) keel.Query[*document.Document] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see DocumentsQuery.Cube.
+func (t *DocumentsTable) Cube(es ...keel.Expr) keel.Query[*document.Document] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see DocumentsQuery.AllTenants.
+func (t *DocumentsTable) AllTenants() keel.Query[*document.Document] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see DocumentsQuery.Join.
+func (t *DocumentsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*document.Document] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see DocumentsQuery.LeftJoin.
+func (t *DocumentsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*document.Document] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see DocumentsQuery.LeftJoinLateral.
+func (t *DocumentsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*document.Document] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see DocumentsQuery.JoinLateral.
+func (t *DocumentsTable) JoinLateral(sub keel.LateralSource) keel.Query[*document.Document] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see DocumentsQuery.Lock.
+func (t *DocumentsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*document.Document] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see DocumentsQuery.DistinctOn.
+func (t *DocumentsTable) DistinctOn(es ...keel.Expr) keel.Query[*document.Document] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see DocumentsQuery.Cache.
+func (t *DocumentsTable) Cache(opts ...keel.CacheOption) keel.Query[*document.Document] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see DocumentsQuery.LoadStrategy.
+func (t *DocumentsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*document.Document] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see DocumentsQuery.With.
+func (t *DocumentsTable) With(ctes ...*keel.CTETable) keel.Query[*document.Document] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see DocumentsQuery.Compute.
+func (t *DocumentsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*document.Document] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *DocumentsTable) Create(ctx context.Context, db *keel.DB, row *document.Document) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *DocumentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*document.Document) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *DocumentsTable) Save(ctx context.Context, db *keel.DB, row *document.Document, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *DocumentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *document.Document, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *DocumentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *document.Document) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *DocumentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*document.Document, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *DocumentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*document.Document, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *DocumentsTable) Copy(ctx context.Context, db *keel.DB, rows []*document.Document) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *DocumentsQuery) Where(ps ...keel.Pred) keel.Query[*document.Document] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *DocumentsQuery) Pick(es ...keel.Expr) keel.Query[*document.Document] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *DocumentsQuery) Omit(cols ...keel.Column) keel.Query[*document.Document] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *DocumentsQuery) Load(ls ...keel.Loader) keel.Query[*document.Document] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *DocumentsQuery) Order(os ...keel.Order) keel.Query[*document.Document] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *DocumentsQuery) Distinct() keel.Query[*document.Document] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *DocumentsQuery) Group(es ...keel.Expr) keel.Query[*document.Document] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *DocumentsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*document.Document] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *DocumentsQuery) Rollup(es ...keel.Expr) keel.Query[*document.Document] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *DocumentsQuery) Cube(es ...keel.Expr) keel.Query[*document.Document] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *DocumentsQuery) Window(name string, w keel.Window) keel.Query[*document.Document] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *DocumentsQuery) Having(ps ...keel.Pred) keel.Query[*document.Document] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *DocumentsQuery) Limit(n int) keel.Query[*document.Document] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *DocumentsQuery) Offset(n int) keel.Query[*document.Document] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *DocumentsQuery) DistinctOn(es ...keel.Expr) keel.Query[*document.Document] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *DocumentsQuery) AllTenants() keel.Query[*document.Document] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *DocumentsQuery) CustomPlan() keel.Query[*document.Document] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *DocumentsQuery) Timeout(d time.Duration) keel.Query[*document.Document] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *DocumentsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*document.Document] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *DocumentsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*document.Document] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *DocumentsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*document.Document] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *DocumentsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*document.Document] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *DocumentsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*document.Document] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *DocumentsQuery) Cache(opts ...keel.CacheOption) keel.Query[*document.Document] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *DocumentsQuery) With(ctes ...*keel.CTETable) keel.Query[*document.Document] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *DocumentsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*document.Document] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *DocumentsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*document.Document] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *DocumentsQuery) Clone() keel.Query[*document.Document] {
+	return &DocumentsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *DocumentsQuery) One(ctx context.Context, db *keel.DB) (*document.Document, error) {
+	return keel.One[*document.Document](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *DocumentsQuery) First(ctx context.Context, db *keel.DB) (*document.Document, error) {
+	return keel.First[*document.Document](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *DocumentsQuery) List(ctx context.Context, db *keel.DB) ([]*document.Document, error) {
+	return keel.List[*document.Document](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *DocumentsQuery) All(ctx context.Context, db *keel.DB) ([]*document.Document, error) {
+	return keel.All[*document.Document](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *DocumentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*document.Document, error) {
+	return keel.UpdateReturning[*document.Document](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *DocumentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*document.Document], error) {
+	return keel.PageOf[*document.Document](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *DocumentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*document.Document) error) error {
+	return keel.Each[*document.Document](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newDocument() unsafe.Pointer { return unsafe.Pointer(new(document.Document)) }

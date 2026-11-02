@@ -56,7 +56,7 @@ func (b *tmBuilder) writeEvents(ctx context.Context) error {
 		end := min(begin+tmChunk, len(rows))
 		chunk := rows[begin:end]
 		if err := b.g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
-			return volumegen.InsertRows(ctx, tx, telematicsdb.TelematicsEvents.Handle, chunk)
+			return volumegen.InsertRows(ctx, tx, telematicsdb.TelematicsEvents, chunk)
 		}); err != nil {
 			return err
 		}

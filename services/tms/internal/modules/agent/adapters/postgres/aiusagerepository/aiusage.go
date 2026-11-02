@@ -314,7 +314,7 @@ type costRow struct {
 	UnpricedCalls int
 }
 
-func costSums(q *keel.Query[*aiusage.AIUsageRecord]) *keel.Query[*aiusage.AIUsageRecord] {
+func costSums(q keel.Query[*aiusage.AIUsageRecord]) keel.Query[*aiusage.AIUsageRecord] {
 	u := aiusagedb.AIUsageRecords
 
 	return q.Pick(
@@ -326,7 +326,7 @@ func costSums(q *keel.Query[*aiusage.AIUsageRecord]) *keel.Query[*aiusage.AIUsag
 
 func (r *repository) scanCost(
 	ctx context.Context,
-	q *keel.Query[*aiusage.AIUsageRecord],
+	q keel.Query[*aiusage.AIUsageRecord],
 	what string,
 ) (*aiusageports.AIUsageCost, error) {
 	row, err := keel.IntoOne[costRow](ctx, r.db.Keel(ctx), costSums(q))

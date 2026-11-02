@@ -297,7 +297,7 @@ func openInvoicesByCustomer(asOf int64, customerID pulid.ID) *keel.CTETable {
 	)
 }
 
-func worklistStatement(q *worklistQuery) *keel.Query[*customer.Customer] {
+func worklistStatement(q *worklistQuery) keel.Query[*customer.Customer] {
 	cus := customerdb.Customers
 	oi := openInvoicesByCustomer(q.asOf, q.customerID)
 	cbp := customerdb.CustomerBillingProfiles

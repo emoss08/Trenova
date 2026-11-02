@@ -384,13 +384,13 @@ func (b *tvBuilder) rateFor(miles float64) (shipmentvocab.CarrierRateMethod, dec
 
 func (b *tvBuilder) write(ctx context.Context, tx *keel.DB) error {
 	batch := b.batch
-	if err := volumegen.InsertRows(ctx, tx, tenderdb.Tenders.Handle, batch.tenders); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, tenderdb.Tenders, batch.tenders); err != nil {
 		return err
 	}
 	if err := volumegen.InsertRows(
 		ctx,
 		tx,
-		tenderdb.TenderOffers.Handle,
+		tenderdb.TenderOffers,
 		batch.offers,
 	); err != nil {
 		return err
@@ -398,7 +398,7 @@ func (b *tvBuilder) write(ctx context.Context, tx *keel.DB) error {
 	if err := volumegen.InsertRows(
 		ctx,
 		tx,
-		tenderdb.TenderOfferTokens.Handle,
+		tenderdb.TenderOfferTokens,
 		batch.tokens,
 	); err != nil {
 		return err
@@ -406,7 +406,7 @@ func (b *tvBuilder) write(ctx context.Context, tx *keel.DB) error {
 	if err := volumegen.Backdate(
 		ctx,
 		tx,
-		tenderdb.Tenders.Handle,
+		tenderdb.Tenders,
 		batch.stamps[tvTableTenders],
 	); err != nil {
 		return err
@@ -414,7 +414,7 @@ func (b *tvBuilder) write(ctx context.Context, tx *keel.DB) error {
 	if err := volumegen.Backdate(
 		ctx,
 		tx,
-		tenderdb.TenderOffers.Handle,
+		tenderdb.TenderOffers,
 		batch.stamps[tvTableOffers],
 	); err != nil {
 		return err
@@ -422,7 +422,7 @@ func (b *tvBuilder) write(ctx context.Context, tx *keel.DB) error {
 	if err := volumegen.Backdate(
 		ctx,
 		tx,
-		tenderdb.TenderOfferTokens.Handle,
+		tenderdb.TenderOfferTokens,
 		batch.stamps[tvTableTokens],
 	); err != nil {
 		return err

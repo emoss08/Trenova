@@ -4,6 +4,7 @@ package equipmentmanufacturerdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -66,7 +67,7 @@ var equipmentManufacturersRef = keel.Ref{Table: &equipmentManufacturersTable}
 
 // EquipmentManufacturersTable is the table of equipmentmanufacturer.EquipmentManufacturer.
 type EquipmentManufacturersTable struct {
-	keel.Handle[*equipmentmanufacturer.EquipmentManufacturer]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -81,7 +82,7 @@ type EquipmentManufacturersTable struct {
 
 // EquipmentManufacturers references the equipment_manufacturers table.
 var EquipmentManufacturers = &EquipmentManufacturersTable{
-	Handle:         keel.Handle[*equipmentmanufacturer.EquipmentManufacturer]{Ref: &equipmentManufacturersRef},
+	TableBase:      keel.TableBase{Ref: &equipmentManufacturersRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentManufacturersRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentManufacturersRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentManufacturersRef, Index: 2}}},
@@ -94,10 +95,10 @@ var EquipmentManufacturers = &EquipmentManufacturersTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &equipmentManufacturersRef, Index: 9}},
 }
 
-// BuildEquipmentManufacturers builds the handle of equipment_manufacturers for ref. Generated relation and alias methods call it.
+// BuildEquipmentManufacturers builds the table of equipment_manufacturers for ref. Generated relation and alias methods call it.
 func BuildEquipmentManufacturers(r *keel.Ref) *EquipmentManufacturersTable {
 	return &EquipmentManufacturersTable{
-		Handle:         keel.Handle[*equipmentmanufacturer.EquipmentManufacturer]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -132,6 +133,365 @@ func (t *EquipmentManufacturersTable) Organization() *tenantdb.OrganizationsTabl
 // Get returns the equipment_manufacturers row with the given key, or keel.ErrNotFound.
 func (t *EquipmentManufacturersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*equipmentmanufacturer.EquipmentManufacturer, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EquipmentManufacturersQuery is a query over equipmentmanufacturer.EquipmentManufacturer.
+type EquipmentManufacturersQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*equipmentmanufacturer.EquipmentManufacturer] = (*EquipmentManufacturersTable)(nil)
+
+var _ keel.Query[*equipmentmanufacturer.EquipmentManufacturer] = (*EquipmentManufacturersQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EquipmentManufacturersTable) Query() keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return &EquipmentManufacturersQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EquipmentManufacturersQuery.Where.
+func (t *EquipmentManufacturersTable) Where(ps ...keel.Pred) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EquipmentManufacturersQuery.Pick.
+func (t *EquipmentManufacturersTable) Pick(es ...keel.Expr) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EquipmentManufacturersQuery.Load.
+func (t *EquipmentManufacturersTable) Load(ls ...keel.Loader) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EquipmentManufacturersQuery.Omit.
+func (t *EquipmentManufacturersTable) Omit(cols ...keel.Column) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EquipmentManufacturersQuery.Order.
+func (t *EquipmentManufacturersTable) Order(os ...keel.Order) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EquipmentManufacturersQuery.Limit.
+func (t *EquipmentManufacturersTable) Limit(n int) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EquipmentManufacturersQuery.Group.
+func (t *EquipmentManufacturersTable) Group(es ...keel.Expr) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EquipmentManufacturersQuery.GroupingSets.
+func (t *EquipmentManufacturersTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EquipmentManufacturersQuery.Rollup.
+func (t *EquipmentManufacturersTable) Rollup(es ...keel.Expr) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EquipmentManufacturersQuery.Cube.
+func (t *EquipmentManufacturersTable) Cube(es ...keel.Expr) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EquipmentManufacturersQuery.AllTenants.
+func (t *EquipmentManufacturersTable) AllTenants() keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EquipmentManufacturersQuery.Join.
+func (t *EquipmentManufacturersTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EquipmentManufacturersQuery.LeftJoin.
+func (t *EquipmentManufacturersTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EquipmentManufacturersQuery.LeftJoinLateral.
+func (t *EquipmentManufacturersTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EquipmentManufacturersQuery.JoinLateral.
+func (t *EquipmentManufacturersTable) JoinLateral(sub keel.LateralSource) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EquipmentManufacturersQuery.Lock.
+func (t *EquipmentManufacturersTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EquipmentManufacturersQuery.DistinctOn.
+func (t *EquipmentManufacturersTable) DistinctOn(es ...keel.Expr) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EquipmentManufacturersQuery.Cache.
+func (t *EquipmentManufacturersTable) Cache(opts ...keel.CacheOption) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EquipmentManufacturersQuery.LoadStrategy.
+func (t *EquipmentManufacturersTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EquipmentManufacturersQuery.With.
+func (t *EquipmentManufacturersTable) With(ctes ...*keel.CTETable) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EquipmentManufacturersQuery.Compute.
+func (t *EquipmentManufacturersTable) Compute(col keel.Column, e keel.Expr) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EquipmentManufacturersTable) Create(ctx context.Context, db *keel.DB, row *equipmentmanufacturer.EquipmentManufacturer) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EquipmentManufacturersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*equipmentmanufacturer.EquipmentManufacturer) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EquipmentManufacturersTable) Save(ctx context.Context, db *keel.DB, row *equipmentmanufacturer.EquipmentManufacturer, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EquipmentManufacturersTable) SaveExcept(ctx context.Context, db *keel.DB, row *equipmentmanufacturer.EquipmentManufacturer, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EquipmentManufacturersTable) DeleteRow(ctx context.Context, db *keel.DB, row *equipmentmanufacturer.EquipmentManufacturer) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EquipmentManufacturersTable) Upsert(ctx context.Context, db *keel.DB, rows []*equipmentmanufacturer.EquipmentManufacturer, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EquipmentManufacturersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*equipmentmanufacturer.EquipmentManufacturer, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EquipmentManufacturersTable) Copy(ctx context.Context, db *keel.DB, rows []*equipmentmanufacturer.EquipmentManufacturer) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EquipmentManufacturersQuery) Where(ps ...keel.Pred) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EquipmentManufacturersQuery) Pick(es ...keel.Expr) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EquipmentManufacturersQuery) Omit(cols ...keel.Column) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EquipmentManufacturersQuery) Load(ls ...keel.Loader) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EquipmentManufacturersQuery) Order(os ...keel.Order) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EquipmentManufacturersQuery) Distinct() keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EquipmentManufacturersQuery) Group(es ...keel.Expr) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EquipmentManufacturersQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EquipmentManufacturersQuery) Rollup(es ...keel.Expr) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EquipmentManufacturersQuery) Cube(es ...keel.Expr) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EquipmentManufacturersQuery) Window(name string, w keel.Window) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EquipmentManufacturersQuery) Having(ps ...keel.Pred) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EquipmentManufacturersQuery) Limit(n int) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EquipmentManufacturersQuery) Offset(n int) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EquipmentManufacturersQuery) DistinctOn(es ...keel.Expr) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EquipmentManufacturersQuery) AllTenants() keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EquipmentManufacturersQuery) CustomPlan() keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EquipmentManufacturersQuery) Timeout(d time.Duration) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EquipmentManufacturersQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EquipmentManufacturersQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EquipmentManufacturersQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EquipmentManufacturersQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EquipmentManufacturersQuery) JoinLateral(sub keel.LateralSource) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EquipmentManufacturersQuery) Cache(opts ...keel.CacheOption) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EquipmentManufacturersQuery) With(ctes ...*keel.CTETable) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EquipmentManufacturersQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EquipmentManufacturersQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EquipmentManufacturersQuery) Clone() keel.Query[*equipmentmanufacturer.EquipmentManufacturer] {
+	return &EquipmentManufacturersQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EquipmentManufacturersQuery) One(ctx context.Context, db *keel.DB) (*equipmentmanufacturer.EquipmentManufacturer, error) {
+	return keel.One[*equipmentmanufacturer.EquipmentManufacturer](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EquipmentManufacturersQuery) First(ctx context.Context, db *keel.DB) (*equipmentmanufacturer.EquipmentManufacturer, error) {
+	return keel.First[*equipmentmanufacturer.EquipmentManufacturer](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EquipmentManufacturersQuery) List(ctx context.Context, db *keel.DB) ([]*equipmentmanufacturer.EquipmentManufacturer, error) {
+	return keel.List[*equipmentmanufacturer.EquipmentManufacturer](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EquipmentManufacturersQuery) All(ctx context.Context, db *keel.DB) ([]*equipmentmanufacturer.EquipmentManufacturer, error) {
+	return keel.All[*equipmentmanufacturer.EquipmentManufacturer](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EquipmentManufacturersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*equipmentmanufacturer.EquipmentManufacturer, error) {
+	return keel.UpdateReturning[*equipmentmanufacturer.EquipmentManufacturer](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EquipmentManufacturersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*equipmentmanufacturer.EquipmentManufacturer], error) {
+	return keel.PageOf[*equipmentmanufacturer.EquipmentManufacturer](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EquipmentManufacturersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*equipmentmanufacturer.EquipmentManufacturer) error) error {
+	return keel.Each[*equipmentmanufacturer.EquipmentManufacturer](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEquipmentManufacturer() unsafe.Pointer {

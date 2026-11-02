@@ -358,7 +358,7 @@ func (g *payrollPhase) payEnsureCodes(ctx context.Context, tx *keel.DB, setup *p
 	for i, r := range rows {
 		stamps[i] = volumegen.Stamp{Id: r.ID, Created: at, Updated: at}
 	}
-	return volumegen.Backdate(ctx, tx, paycodedb.PayCodes.Handle, stamps)
+	return volumegen.Backdate(ctx, tx, paycodedb.PayCodes, stamps)
 }
 
 func payComponent(
@@ -560,16 +560,16 @@ func (g *payrollPhase) payEnsureProfiles(ctx context.Context, tx *keel.DB, setup
 		clone.Components = nil
 		inserting[i] = &clone
 	}
-	if err := volumegen.InsertRows(ctx, tx, driverpaydb.PayProfiles.Handle, inserting); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, driverpaydb.PayProfiles, inserting); err != nil {
 		return fmt.Errorf("insert pay profiles: %w", err)
 	}
-	if err := volumegen.InsertRows(ctx, tx, driverpaydb.PayProfileComponents.Handle, components); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, driverpaydb.PayProfileComponents, components); err != nil {
 		return fmt.Errorf("insert pay profile components: %w", err)
 	}
-	if err := volumegen.Backdate(ctx, tx, driverpaydb.PayProfiles.Handle, stamps); err != nil {
+	if err := volumegen.Backdate(ctx, tx, driverpaydb.PayProfiles, stamps); err != nil {
 		return err
 	}
-	if err := volumegen.Backdate(ctx, tx, driverpaydb.PayProfileComponents.Handle, compStamps); err != nil {
+	if err := volumegen.Backdate(ctx, tx, driverpaydb.PayProfileComponents, compStamps); err != nil {
 		return err
 	}
 	g.Report.Add("Pay profiles", len(profiles))
@@ -2452,14 +2452,14 @@ func (g *payrollPhase) payWrite(
 				return volumegen.InsertRows(
 					ctx,
 					tx,
-					payassignmentdb.WorkerPayAssignments.Handle,
+					payassignmentdb.WorkerPayAssignments,
 					rows.assignments,
 				)
 			},
 		},
 		{
 			"escrow_accounts",
-			func() error { return volumegen.InsertRows(ctx, tx, payescrowdb.EscrowAccounts.Handle, rows.escrows) },
+			func() error { return volumegen.InsertRows(ctx, tx, payescrowdb.EscrowAccounts, rows.escrows) },
 		},
 		{
 			"recurring_deductions",
@@ -2467,7 +2467,7 @@ func (g *payrollPhase) payWrite(
 				return volumegen.InsertRows(
 					ctx,
 					tx,
-					recurringpaydb.RecurringDeductions.Handle,
+					recurringpaydb.RecurringDeductions,
 					rows.deductions,
 				)
 			},
@@ -2478,14 +2478,14 @@ func (g *payrollPhase) payWrite(
 				return volumegen.InsertRows(
 					ctx,
 					tx,
-					recurringpaydb.RecurringEarnings.Handle,
+					recurringpaydb.RecurringEarnings,
 					rows.earnings,
 				)
 			},
 		},
 		{
 			"pay_advances",
-			func() error { return volumegen.InsertRows(ctx, tx, payadvancedb.PayAdvances.Handle, rows.advances) },
+			func() error { return volumegen.InsertRows(ctx, tx, payadvancedb.PayAdvances, rows.advances) },
 		},
 		{
 			"driver_settlement_batches",
@@ -2493,7 +2493,7 @@ func (g *payrollPhase) payWrite(
 				return volumegen.InsertRows(
 					ctx,
 					tx,
-					driversettlementdb.SettlementBatches.Handle,
+					driversettlementdb.SettlementBatches,
 					rows.batches,
 				)
 			},
@@ -2504,7 +2504,7 @@ func (g *payrollPhase) payWrite(
 				return volumegen.InsertRows(
 					ctx,
 					tx,
-					driversettlementdb.Settlements.Handle,
+					driversettlementdb.Settlements,
 					rows.settlements,
 				)
 			},
@@ -2515,14 +2515,14 @@ func (g *payrollPhase) payWrite(
 				return volumegen.InsertRows(
 					ctx,
 					tx,
-					driversettlementdb.SettlementLines.Handle,
+					driversettlementdb.SettlementLines,
 					rows.lines,
 				)
 			},
 		},
 		{
 			"driver_pay_events",
-			func() error { return volumegen.InsertRows(ctx, tx, driversettlementdb.PayEvents.Handle, rows.events) },
+			func() error { return volumegen.InsertRows(ctx, tx, driversettlementdb.PayEvents, rows.events) },
 		},
 		{
 			"escrow_transactions",
@@ -2530,18 +2530,18 @@ func (g *payrollPhase) payWrite(
 				return volumegen.InsertRows(
 					ctx,
 					tx,
-					payescrowdb.EscrowTransactions.Handle,
+					payescrowdb.EscrowTransactions,
 					rows.escrowTxs,
 				)
 			},
 		},
 		{
 			"driver_expenses",
-			func() error { return volumegen.InsertRows(ctx, tx, payexpensedb.Expenses.Handle, rows.expenses) },
+			func() error { return volumegen.InsertRows(ctx, tx, payexpensedb.Expenses, rows.expenses) },
 		},
 		{
 			"settlement_disputes",
-			func() error { return volumegen.InsertRows(ctx, tx, driversettlementdb.Disputes.Handle, rows.disputes) },
+			func() error { return volumegen.InsertRows(ctx, tx, driversettlementdb.Disputes, rows.disputes) },
 		},
 	}
 	for _, step := range steps {

@@ -211,7 +211,7 @@ func (r *suiteRunRepository) ListConnection(
 func historyQuery(
 	req *agentqualityports.AgentSuiteRunHistoryRequest,
 	perAgent int,
-) *keel.Query[*agentqualitysuite.SuiteRun] {
+) keel.Query[*agentqualitysuite.SuiteRun] {
 	s := agentqualitysuitedb.SuiteRuns
 	ranked := agentqualitysuitedb.SuiteRuns.As("ranked")
 	history := keel.CTE(historyCTE, []string{"id", "history_rank"}, ranked.

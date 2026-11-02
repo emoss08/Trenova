@@ -4,6 +4,7 @@ package customfielddb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -66,7 +67,7 @@ var customFieldDefinitionsRef = keel.Ref{Table: &customFieldDefinitionsTable}
 
 // CustomFieldDefinitionsTable is the table of customfield.CustomFieldDefinition.
 type CustomFieldDefinitionsTable struct {
-	keel.Handle[*customfield.CustomFieldDefinition]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -91,7 +92,7 @@ type CustomFieldDefinitionsTable struct {
 
 // CustomFieldDefinitions references the custom_field_definitions table.
 var CustomFieldDefinitions = &CustomFieldDefinitionsTable{
-	Handle:          keel.Handle[*customfield.CustomFieldDefinition]{Ref: &customFieldDefinitionsRef},
+	TableBase:       keel.TableBase{Ref: &customFieldDefinitionsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customFieldDefinitionsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customFieldDefinitionsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customFieldDefinitionsRef, Index: 2}}},
@@ -114,10 +115,10 @@ var CustomFieldDefinitions = &CustomFieldDefinitionsTable{
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &customFieldDefinitionsRef, Index: 19}},
 }
 
-// BuildCustomFieldDefinitions builds the handle of custom_field_definitions for ref. Generated relation and alias methods call it.
+// BuildCustomFieldDefinitions builds the table of custom_field_definitions for ref. Generated relation and alias methods call it.
 func BuildCustomFieldDefinitions(r *keel.Ref) *CustomFieldDefinitionsTable {
 	return &CustomFieldDefinitionsTable{
-		Handle:          keel.Handle[*customfield.CustomFieldDefinition]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -152,6 +153,365 @@ func (t *CustomFieldDefinitionsTable) As(alias string) *CustomFieldDefinitionsTa
 // Get returns the custom_field_definitions row with the given key, or keel.ErrNotFound.
 func (t *CustomFieldDefinitionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*customfield.CustomFieldDefinition, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CustomFieldDefinitionsQuery is a query over customfield.CustomFieldDefinition.
+type CustomFieldDefinitionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*customfield.CustomFieldDefinition] = (*CustomFieldDefinitionsTable)(nil)
+
+var _ keel.Query[*customfield.CustomFieldDefinition] = (*CustomFieldDefinitionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CustomFieldDefinitionsTable) Query() keel.Query[*customfield.CustomFieldDefinition] {
+	return &CustomFieldDefinitionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CustomFieldDefinitionsQuery.Where.
+func (t *CustomFieldDefinitionsTable) Where(ps ...keel.Pred) keel.Query[*customfield.CustomFieldDefinition] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CustomFieldDefinitionsQuery.Pick.
+func (t *CustomFieldDefinitionsTable) Pick(es ...keel.Expr) keel.Query[*customfield.CustomFieldDefinition] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CustomFieldDefinitionsQuery.Load.
+func (t *CustomFieldDefinitionsTable) Load(ls ...keel.Loader) keel.Query[*customfield.CustomFieldDefinition] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CustomFieldDefinitionsQuery.Omit.
+func (t *CustomFieldDefinitionsTable) Omit(cols ...keel.Column) keel.Query[*customfield.CustomFieldDefinition] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CustomFieldDefinitionsQuery.Order.
+func (t *CustomFieldDefinitionsTable) Order(os ...keel.Order) keel.Query[*customfield.CustomFieldDefinition] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CustomFieldDefinitionsQuery.Limit.
+func (t *CustomFieldDefinitionsTable) Limit(n int) keel.Query[*customfield.CustomFieldDefinition] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CustomFieldDefinitionsQuery.Group.
+func (t *CustomFieldDefinitionsTable) Group(es ...keel.Expr) keel.Query[*customfield.CustomFieldDefinition] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CustomFieldDefinitionsQuery.GroupingSets.
+func (t *CustomFieldDefinitionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*customfield.CustomFieldDefinition] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CustomFieldDefinitionsQuery.Rollup.
+func (t *CustomFieldDefinitionsTable) Rollup(es ...keel.Expr) keel.Query[*customfield.CustomFieldDefinition] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CustomFieldDefinitionsQuery.Cube.
+func (t *CustomFieldDefinitionsTable) Cube(es ...keel.Expr) keel.Query[*customfield.CustomFieldDefinition] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CustomFieldDefinitionsQuery.AllTenants.
+func (t *CustomFieldDefinitionsTable) AllTenants() keel.Query[*customfield.CustomFieldDefinition] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CustomFieldDefinitionsQuery.Join.
+func (t *CustomFieldDefinitionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customfield.CustomFieldDefinition] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CustomFieldDefinitionsQuery.LeftJoin.
+func (t *CustomFieldDefinitionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customfield.CustomFieldDefinition] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CustomFieldDefinitionsQuery.LeftJoinLateral.
+func (t *CustomFieldDefinitionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customfield.CustomFieldDefinition] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CustomFieldDefinitionsQuery.JoinLateral.
+func (t *CustomFieldDefinitionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*customfield.CustomFieldDefinition] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CustomFieldDefinitionsQuery.Lock.
+func (t *CustomFieldDefinitionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customfield.CustomFieldDefinition] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CustomFieldDefinitionsQuery.DistinctOn.
+func (t *CustomFieldDefinitionsTable) DistinctOn(es ...keel.Expr) keel.Query[*customfield.CustomFieldDefinition] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CustomFieldDefinitionsQuery.Cache.
+func (t *CustomFieldDefinitionsTable) Cache(opts ...keel.CacheOption) keel.Query[*customfield.CustomFieldDefinition] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CustomFieldDefinitionsQuery.LoadStrategy.
+func (t *CustomFieldDefinitionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*customfield.CustomFieldDefinition] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CustomFieldDefinitionsQuery.With.
+func (t *CustomFieldDefinitionsTable) With(ctes ...*keel.CTETable) keel.Query[*customfield.CustomFieldDefinition] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CustomFieldDefinitionsQuery.Compute.
+func (t *CustomFieldDefinitionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*customfield.CustomFieldDefinition] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CustomFieldDefinitionsTable) Create(ctx context.Context, db *keel.DB, row *customfield.CustomFieldDefinition) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CustomFieldDefinitionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customfield.CustomFieldDefinition) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CustomFieldDefinitionsTable) Save(ctx context.Context, db *keel.DB, row *customfield.CustomFieldDefinition, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CustomFieldDefinitionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *customfield.CustomFieldDefinition, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CustomFieldDefinitionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *customfield.CustomFieldDefinition) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CustomFieldDefinitionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*customfield.CustomFieldDefinition, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CustomFieldDefinitionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customfield.CustomFieldDefinition, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CustomFieldDefinitionsTable) Copy(ctx context.Context, db *keel.DB, rows []*customfield.CustomFieldDefinition) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CustomFieldDefinitionsQuery) Where(ps ...keel.Pred) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CustomFieldDefinitionsQuery) Pick(es ...keel.Expr) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CustomFieldDefinitionsQuery) Omit(cols ...keel.Column) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CustomFieldDefinitionsQuery) Load(ls ...keel.Loader) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CustomFieldDefinitionsQuery) Order(os ...keel.Order) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CustomFieldDefinitionsQuery) Distinct() keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CustomFieldDefinitionsQuery) Group(es ...keel.Expr) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CustomFieldDefinitionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CustomFieldDefinitionsQuery) Rollup(es ...keel.Expr) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CustomFieldDefinitionsQuery) Cube(es ...keel.Expr) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CustomFieldDefinitionsQuery) Window(name string, w keel.Window) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CustomFieldDefinitionsQuery) Having(ps ...keel.Pred) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CustomFieldDefinitionsQuery) Limit(n int) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CustomFieldDefinitionsQuery) Offset(n int) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CustomFieldDefinitionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CustomFieldDefinitionsQuery) AllTenants() keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CustomFieldDefinitionsQuery) CustomPlan() keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CustomFieldDefinitionsQuery) Timeout(d time.Duration) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CustomFieldDefinitionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CustomFieldDefinitionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CustomFieldDefinitionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CustomFieldDefinitionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CustomFieldDefinitionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CustomFieldDefinitionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CustomFieldDefinitionsQuery) With(ctes ...*keel.CTETable) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CustomFieldDefinitionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CustomFieldDefinitionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*customfield.CustomFieldDefinition] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CustomFieldDefinitionsQuery) Clone() keel.Query[*customfield.CustomFieldDefinition] {
+	return &CustomFieldDefinitionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CustomFieldDefinitionsQuery) One(ctx context.Context, db *keel.DB) (*customfield.CustomFieldDefinition, error) {
+	return keel.One[*customfield.CustomFieldDefinition](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CustomFieldDefinitionsQuery) First(ctx context.Context, db *keel.DB) (*customfield.CustomFieldDefinition, error) {
+	return keel.First[*customfield.CustomFieldDefinition](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CustomFieldDefinitionsQuery) List(ctx context.Context, db *keel.DB) ([]*customfield.CustomFieldDefinition, error) {
+	return keel.List[*customfield.CustomFieldDefinition](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CustomFieldDefinitionsQuery) All(ctx context.Context, db *keel.DB) ([]*customfield.CustomFieldDefinition, error) {
+	return keel.All[*customfield.CustomFieldDefinition](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CustomFieldDefinitionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customfield.CustomFieldDefinition, error) {
+	return keel.UpdateReturning[*customfield.CustomFieldDefinition](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CustomFieldDefinitionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customfield.CustomFieldDefinition], error) {
+	return keel.PageOf[*customfield.CustomFieldDefinition](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CustomFieldDefinitionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customfield.CustomFieldDefinition) error) error {
+	return keel.Each[*customfield.CustomFieldDefinition](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCustomFieldDefinition() unsafe.Pointer {
@@ -321,7 +681,7 @@ var customFieldValuesRef = keel.Ref{Table: &customFieldValuesTable}
 
 // CustomFieldValuesTable is the table of customfield.CustomFieldValue.
 type CustomFieldValuesTable struct {
-	keel.Handle[*customfield.CustomFieldValue]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -336,7 +696,7 @@ type CustomFieldValuesTable struct {
 
 // CustomFieldValues references the custom_field_values table.
 var CustomFieldValues = &CustomFieldValuesTable{
-	Handle:         keel.Handle[*customfield.CustomFieldValue]{Ref: &customFieldValuesRef},
+	TableBase:      keel.TableBase{Ref: &customFieldValuesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customFieldValuesRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customFieldValuesRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customFieldValuesRef, Index: 2}}},
@@ -349,10 +709,10 @@ var CustomFieldValues = &CustomFieldValuesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &customFieldValuesRef, Index: 9}},
 }
 
-// BuildCustomFieldValues builds the handle of custom_field_values for ref. Generated relation and alias methods call it.
+// BuildCustomFieldValues builds the table of custom_field_values for ref. Generated relation and alias methods call it.
 func BuildCustomFieldValues(r *keel.Ref) *CustomFieldValuesTable {
 	return &CustomFieldValuesTable{
-		Handle:         keel.Handle[*customfield.CustomFieldValue]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -382,6 +742,365 @@ func (t *CustomFieldValuesTable) Definition() *CustomFieldDefinitionsTable {
 // Get returns the custom_field_values row with the given key, or keel.ErrNotFound.
 func (t *CustomFieldValuesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*customfield.CustomFieldValue, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CustomFieldValuesQuery is a query over customfield.CustomFieldValue.
+type CustomFieldValuesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*customfield.CustomFieldValue] = (*CustomFieldValuesTable)(nil)
+
+var _ keel.Query[*customfield.CustomFieldValue] = (*CustomFieldValuesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CustomFieldValuesTable) Query() keel.Query[*customfield.CustomFieldValue] {
+	return &CustomFieldValuesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CustomFieldValuesQuery.Where.
+func (t *CustomFieldValuesTable) Where(ps ...keel.Pred) keel.Query[*customfield.CustomFieldValue] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CustomFieldValuesQuery.Pick.
+func (t *CustomFieldValuesTable) Pick(es ...keel.Expr) keel.Query[*customfield.CustomFieldValue] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CustomFieldValuesQuery.Load.
+func (t *CustomFieldValuesTable) Load(ls ...keel.Loader) keel.Query[*customfield.CustomFieldValue] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CustomFieldValuesQuery.Omit.
+func (t *CustomFieldValuesTable) Omit(cols ...keel.Column) keel.Query[*customfield.CustomFieldValue] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CustomFieldValuesQuery.Order.
+func (t *CustomFieldValuesTable) Order(os ...keel.Order) keel.Query[*customfield.CustomFieldValue] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CustomFieldValuesQuery.Limit.
+func (t *CustomFieldValuesTable) Limit(n int) keel.Query[*customfield.CustomFieldValue] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CustomFieldValuesQuery.Group.
+func (t *CustomFieldValuesTable) Group(es ...keel.Expr) keel.Query[*customfield.CustomFieldValue] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CustomFieldValuesQuery.GroupingSets.
+func (t *CustomFieldValuesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*customfield.CustomFieldValue] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CustomFieldValuesQuery.Rollup.
+func (t *CustomFieldValuesTable) Rollup(es ...keel.Expr) keel.Query[*customfield.CustomFieldValue] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CustomFieldValuesQuery.Cube.
+func (t *CustomFieldValuesTable) Cube(es ...keel.Expr) keel.Query[*customfield.CustomFieldValue] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CustomFieldValuesQuery.AllTenants.
+func (t *CustomFieldValuesTable) AllTenants() keel.Query[*customfield.CustomFieldValue] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CustomFieldValuesQuery.Join.
+func (t *CustomFieldValuesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customfield.CustomFieldValue] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CustomFieldValuesQuery.LeftJoin.
+func (t *CustomFieldValuesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customfield.CustomFieldValue] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CustomFieldValuesQuery.LeftJoinLateral.
+func (t *CustomFieldValuesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customfield.CustomFieldValue] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CustomFieldValuesQuery.JoinLateral.
+func (t *CustomFieldValuesTable) JoinLateral(sub keel.LateralSource) keel.Query[*customfield.CustomFieldValue] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CustomFieldValuesQuery.Lock.
+func (t *CustomFieldValuesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customfield.CustomFieldValue] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CustomFieldValuesQuery.DistinctOn.
+func (t *CustomFieldValuesTable) DistinctOn(es ...keel.Expr) keel.Query[*customfield.CustomFieldValue] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CustomFieldValuesQuery.Cache.
+func (t *CustomFieldValuesTable) Cache(opts ...keel.CacheOption) keel.Query[*customfield.CustomFieldValue] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CustomFieldValuesQuery.LoadStrategy.
+func (t *CustomFieldValuesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*customfield.CustomFieldValue] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CustomFieldValuesQuery.With.
+func (t *CustomFieldValuesTable) With(ctes ...*keel.CTETable) keel.Query[*customfield.CustomFieldValue] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CustomFieldValuesQuery.Compute.
+func (t *CustomFieldValuesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*customfield.CustomFieldValue] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CustomFieldValuesTable) Create(ctx context.Context, db *keel.DB, row *customfield.CustomFieldValue) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CustomFieldValuesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customfield.CustomFieldValue) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CustomFieldValuesTable) Save(ctx context.Context, db *keel.DB, row *customfield.CustomFieldValue, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CustomFieldValuesTable) SaveExcept(ctx context.Context, db *keel.DB, row *customfield.CustomFieldValue, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CustomFieldValuesTable) DeleteRow(ctx context.Context, db *keel.DB, row *customfield.CustomFieldValue) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CustomFieldValuesTable) Upsert(ctx context.Context, db *keel.DB, rows []*customfield.CustomFieldValue, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CustomFieldValuesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customfield.CustomFieldValue, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CustomFieldValuesTable) Copy(ctx context.Context, db *keel.DB, rows []*customfield.CustomFieldValue) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CustomFieldValuesQuery) Where(ps ...keel.Pred) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CustomFieldValuesQuery) Pick(es ...keel.Expr) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CustomFieldValuesQuery) Omit(cols ...keel.Column) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CustomFieldValuesQuery) Load(ls ...keel.Loader) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CustomFieldValuesQuery) Order(os ...keel.Order) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CustomFieldValuesQuery) Distinct() keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CustomFieldValuesQuery) Group(es ...keel.Expr) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CustomFieldValuesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CustomFieldValuesQuery) Rollup(es ...keel.Expr) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CustomFieldValuesQuery) Cube(es ...keel.Expr) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CustomFieldValuesQuery) Window(name string, w keel.Window) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CustomFieldValuesQuery) Having(ps ...keel.Pred) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CustomFieldValuesQuery) Limit(n int) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CustomFieldValuesQuery) Offset(n int) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CustomFieldValuesQuery) DistinctOn(es ...keel.Expr) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CustomFieldValuesQuery) AllTenants() keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CustomFieldValuesQuery) CustomPlan() keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CustomFieldValuesQuery) Timeout(d time.Duration) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CustomFieldValuesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CustomFieldValuesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CustomFieldValuesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CustomFieldValuesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CustomFieldValuesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CustomFieldValuesQuery) Cache(opts ...keel.CacheOption) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CustomFieldValuesQuery) With(ctes ...*keel.CTETable) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CustomFieldValuesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CustomFieldValuesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*customfield.CustomFieldValue] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CustomFieldValuesQuery) Clone() keel.Query[*customfield.CustomFieldValue] {
+	return &CustomFieldValuesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CustomFieldValuesQuery) One(ctx context.Context, db *keel.DB) (*customfield.CustomFieldValue, error) {
+	return keel.One[*customfield.CustomFieldValue](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CustomFieldValuesQuery) First(ctx context.Context, db *keel.DB) (*customfield.CustomFieldValue, error) {
+	return keel.First[*customfield.CustomFieldValue](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CustomFieldValuesQuery) List(ctx context.Context, db *keel.DB) ([]*customfield.CustomFieldValue, error) {
+	return keel.List[*customfield.CustomFieldValue](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CustomFieldValuesQuery) All(ctx context.Context, db *keel.DB) ([]*customfield.CustomFieldValue, error) {
+	return keel.All[*customfield.CustomFieldValue](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CustomFieldValuesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customfield.CustomFieldValue, error) {
+	return keel.UpdateReturning[*customfield.CustomFieldValue](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CustomFieldValuesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customfield.CustomFieldValue], error) {
+	return keel.PageOf[*customfield.CustomFieldValue](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CustomFieldValuesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customfield.CustomFieldValue) error) error {
+	return keel.Each[*customfield.CustomFieldValue](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCustomFieldValue() unsafe.Pointer { return unsafe.Pointer(new(customfield.CustomFieldValue)) }

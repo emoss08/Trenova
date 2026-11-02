@@ -57,7 +57,7 @@ func TestRefreshStatementsRender(t *testing.T) {
 
 	refresh := &unitRefresh{from: 1_790_000_000, to: 1_790_003_600, stamp: 7}
 	for name, step := range map[string]struct {
-		source          *keel.Query[*keel.Row]
+		source          keel.Query[*keel.Row]
 		withDecisionRun bool
 	}{
 		"runs":  {ownedUnitsSource(&runSource, refresh), true},

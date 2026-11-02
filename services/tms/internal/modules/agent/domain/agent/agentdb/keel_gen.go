@@ -4,6 +4,7 @@ package agentdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -90,7 +91,7 @@ var agentProposalsRef = keel.Ref{Table: &agentProposalsTable}
 
 // AgentProposalsTable is the table of agent.AgentProposal.
 type AgentProposalsTable struct {
-	keel.Handle[*agent.AgentProposal]
+	keel.TableBase
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -135,7 +136,7 @@ type AgentProposalsTable struct {
 
 // AgentProposals references the agent_proposals table.
 var AgentProposals = &AgentProposalsTable{
-	Handle:                keel.Handle[*agent.AgentProposal]{Ref: &agentProposalsRef},
+	TableBase:             keel.TableBase{Ref: &agentProposalsRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 2}}},
@@ -178,10 +179,10 @@ var AgentProposals = &AgentProposalsTable{
 	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &agentProposalsRef, Index: 39}},
 }
 
-// BuildAgentProposals builds the handle of agent_proposals for ref. Generated relation and alias methods call it.
+// BuildAgentProposals builds the table of agent_proposals for ref. Generated relation and alias methods call it.
 func BuildAgentProposals(r *keel.Ref) *AgentProposalsTable {
 	return &AgentProposalsTable{
-		Handle:                keel.Handle[*agent.AgentProposal]{Ref: r},
+		TableBase:             keel.TableBase{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -239,6 +240,365 @@ func (t *AgentProposalsTable) Run() *AgentRunsTable { return keel.Path(t.Ref, 0,
 // Get returns the agent_proposals row with the given key, or keel.ErrNotFound.
 func (t *AgentProposalsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agent.AgentProposal, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// AgentProposalsQuery is a query over agent.AgentProposal.
+type AgentProposalsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*agent.AgentProposal] = (*AgentProposalsTable)(nil)
+
+var _ keel.Query[*agent.AgentProposal] = (*AgentProposalsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AgentProposalsTable) Query() keel.Query[*agent.AgentProposal] {
+	return &AgentProposalsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AgentProposalsQuery.Where.
+func (t *AgentProposalsTable) Where(ps ...keel.Pred) keel.Query[*agent.AgentProposal] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AgentProposalsQuery.Pick.
+func (t *AgentProposalsTable) Pick(es ...keel.Expr) keel.Query[*agent.AgentProposal] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AgentProposalsQuery.Load.
+func (t *AgentProposalsTable) Load(ls ...keel.Loader) keel.Query[*agent.AgentProposal] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AgentProposalsQuery.Omit.
+func (t *AgentProposalsTable) Omit(cols ...keel.Column) keel.Query[*agent.AgentProposal] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AgentProposalsQuery.Order.
+func (t *AgentProposalsTable) Order(os ...keel.Order) keel.Query[*agent.AgentProposal] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AgentProposalsQuery.Limit.
+func (t *AgentProposalsTable) Limit(n int) keel.Query[*agent.AgentProposal] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AgentProposalsQuery.Group.
+func (t *AgentProposalsTable) Group(es ...keel.Expr) keel.Query[*agent.AgentProposal] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AgentProposalsQuery.GroupingSets.
+func (t *AgentProposalsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*agent.AgentProposal] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AgentProposalsQuery.Rollup.
+func (t *AgentProposalsTable) Rollup(es ...keel.Expr) keel.Query[*agent.AgentProposal] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AgentProposalsQuery.Cube.
+func (t *AgentProposalsTable) Cube(es ...keel.Expr) keel.Query[*agent.AgentProposal] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AgentProposalsQuery.AllTenants.
+func (t *AgentProposalsTable) AllTenants() keel.Query[*agent.AgentProposal] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AgentProposalsQuery.Join.
+func (t *AgentProposalsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agent.AgentProposal] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AgentProposalsQuery.LeftJoin.
+func (t *AgentProposalsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agent.AgentProposal] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AgentProposalsQuery.LeftJoinLateral.
+func (t *AgentProposalsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agent.AgentProposal] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AgentProposalsQuery.JoinLateral.
+func (t *AgentProposalsTable) JoinLateral(sub keel.LateralSource) keel.Query[*agent.AgentProposal] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AgentProposalsQuery.Lock.
+func (t *AgentProposalsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agent.AgentProposal] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AgentProposalsQuery.DistinctOn.
+func (t *AgentProposalsTable) DistinctOn(es ...keel.Expr) keel.Query[*agent.AgentProposal] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AgentProposalsQuery.Cache.
+func (t *AgentProposalsTable) Cache(opts ...keel.CacheOption) keel.Query[*agent.AgentProposal] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AgentProposalsQuery.LoadStrategy.
+func (t *AgentProposalsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*agent.AgentProposal] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AgentProposalsQuery.With.
+func (t *AgentProposalsTable) With(ctes ...*keel.CTETable) keel.Query[*agent.AgentProposal] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AgentProposalsQuery.Compute.
+func (t *AgentProposalsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agent.AgentProposal] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AgentProposalsTable) Create(ctx context.Context, db *keel.DB, row *agent.AgentProposal) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AgentProposalsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agent.AgentProposal) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AgentProposalsTable) Save(ctx context.Context, db *keel.DB, row *agent.AgentProposal, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AgentProposalsTable) SaveExcept(ctx context.Context, db *keel.DB, row *agent.AgentProposal, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AgentProposalsTable) DeleteRow(ctx context.Context, db *keel.DB, row *agent.AgentProposal) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AgentProposalsTable) Upsert(ctx context.Context, db *keel.DB, rows []*agent.AgentProposal, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AgentProposalsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agent.AgentProposal, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AgentProposalsTable) Copy(ctx context.Context, db *keel.DB, rows []*agent.AgentProposal) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AgentProposalsQuery) Where(ps ...keel.Pred) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AgentProposalsQuery) Pick(es ...keel.Expr) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AgentProposalsQuery) Omit(cols ...keel.Column) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AgentProposalsQuery) Load(ls ...keel.Loader) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AgentProposalsQuery) Order(os ...keel.Order) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AgentProposalsQuery) Distinct() keel.Query[*agent.AgentProposal] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AgentProposalsQuery) Group(es ...keel.Expr) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AgentProposalsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AgentProposalsQuery) Rollup(es ...keel.Expr) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AgentProposalsQuery) Cube(es ...keel.Expr) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AgentProposalsQuery) Window(name string, w keel.Window) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AgentProposalsQuery) Having(ps ...keel.Pred) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AgentProposalsQuery) Limit(n int) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AgentProposalsQuery) Offset(n int) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AgentProposalsQuery) DistinctOn(es ...keel.Expr) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AgentProposalsQuery) AllTenants() keel.Query[*agent.AgentProposal] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AgentProposalsQuery) CustomPlan() keel.Query[*agent.AgentProposal] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AgentProposalsQuery) Timeout(d time.Duration) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AgentProposalsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AgentProposalsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AgentProposalsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AgentProposalsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AgentProposalsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AgentProposalsQuery) Cache(opts ...keel.CacheOption) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AgentProposalsQuery) With(ctes ...*keel.CTETable) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AgentProposalsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AgentProposalsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*agent.AgentProposal] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AgentProposalsQuery) Clone() keel.Query[*agent.AgentProposal] {
+	return &AgentProposalsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AgentProposalsQuery) One(ctx context.Context, db *keel.DB) (*agent.AgentProposal, error) {
+	return keel.One[*agent.AgentProposal](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AgentProposalsQuery) First(ctx context.Context, db *keel.DB) (*agent.AgentProposal, error) {
+	return keel.First[*agent.AgentProposal](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AgentProposalsQuery) List(ctx context.Context, db *keel.DB) ([]*agent.AgentProposal, error) {
+	return keel.List[*agent.AgentProposal](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AgentProposalsQuery) All(ctx context.Context, db *keel.DB) ([]*agent.AgentProposal, error) {
+	return keel.All[*agent.AgentProposal](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AgentProposalsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agent.AgentProposal, error) {
+	return keel.UpdateReturning[*agent.AgentProposal](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AgentProposalsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agent.AgentProposal], error) {
+	return keel.PageOf[*agent.AgentProposal](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AgentProposalsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agent.AgentProposal) error) error {
+	return keel.Each[*agent.AgentProposal](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAgentProposal() unsafe.Pointer { return unsafe.Pointer(new(agent.AgentProposal)) }
@@ -574,7 +934,7 @@ var agentRunsRef = keel.Ref{Table: &agentRunsTable}
 
 // AgentRunsTable is the table of agent.AgentRun.
 type AgentRunsTable struct {
-	keel.Handle[*agent.AgentRun]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -609,7 +969,7 @@ type AgentRunsTable struct {
 
 // AgentRuns references the agent_runs table.
 var AgentRuns = &AgentRunsTable{
-	Handle:            keel.Handle[*agent.AgentRun]{Ref: &agentRunsRef},
+	TableBase:         keel.TableBase{Ref: &agentRunsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 2}}},
@@ -642,10 +1002,10 @@ var AgentRuns = &AgentRunsTable{
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &agentRunsRef, Index: 29}},
 }
 
-// BuildAgentRuns builds the handle of agent_runs for ref. Generated relation and alias methods call it.
+// BuildAgentRuns builds the table of agent_runs for ref. Generated relation and alias methods call it.
 func BuildAgentRuns(r *keel.Ref) *AgentRunsTable {
 	return &AgentRunsTable{
-		Handle:            keel.Handle[*agent.AgentRun]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -690,6 +1050,365 @@ func (t *AgentRunsTable) As(alias string) *AgentRunsTable {
 // Get returns the agent_runs row with the given key, or keel.ErrNotFound.
 func (t *AgentRunsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agent.AgentRun, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// AgentRunsQuery is a query over agent.AgentRun.
+type AgentRunsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*agent.AgentRun] = (*AgentRunsTable)(nil)
+
+var _ keel.Query[*agent.AgentRun] = (*AgentRunsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AgentRunsTable) Query() keel.Query[*agent.AgentRun] {
+	return &AgentRunsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AgentRunsQuery.Where.
+func (t *AgentRunsTable) Where(ps ...keel.Pred) keel.Query[*agent.AgentRun] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AgentRunsQuery.Pick.
+func (t *AgentRunsTable) Pick(es ...keel.Expr) keel.Query[*agent.AgentRun] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AgentRunsQuery.Load.
+func (t *AgentRunsTable) Load(ls ...keel.Loader) keel.Query[*agent.AgentRun] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AgentRunsQuery.Omit.
+func (t *AgentRunsTable) Omit(cols ...keel.Column) keel.Query[*agent.AgentRun] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AgentRunsQuery.Order.
+func (t *AgentRunsTable) Order(os ...keel.Order) keel.Query[*agent.AgentRun] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AgentRunsQuery.Limit.
+func (t *AgentRunsTable) Limit(n int) keel.Query[*agent.AgentRun] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AgentRunsQuery.Group.
+func (t *AgentRunsTable) Group(es ...keel.Expr) keel.Query[*agent.AgentRun] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AgentRunsQuery.GroupingSets.
+func (t *AgentRunsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*agent.AgentRun] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AgentRunsQuery.Rollup.
+func (t *AgentRunsTable) Rollup(es ...keel.Expr) keel.Query[*agent.AgentRun] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AgentRunsQuery.Cube.
+func (t *AgentRunsTable) Cube(es ...keel.Expr) keel.Query[*agent.AgentRun] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AgentRunsQuery.AllTenants.
+func (t *AgentRunsTable) AllTenants() keel.Query[*agent.AgentRun] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AgentRunsQuery.Join.
+func (t *AgentRunsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agent.AgentRun] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AgentRunsQuery.LeftJoin.
+func (t *AgentRunsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agent.AgentRun] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AgentRunsQuery.LeftJoinLateral.
+func (t *AgentRunsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agent.AgentRun] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AgentRunsQuery.JoinLateral.
+func (t *AgentRunsTable) JoinLateral(sub keel.LateralSource) keel.Query[*agent.AgentRun] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AgentRunsQuery.Lock.
+func (t *AgentRunsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agent.AgentRun] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AgentRunsQuery.DistinctOn.
+func (t *AgentRunsTable) DistinctOn(es ...keel.Expr) keel.Query[*agent.AgentRun] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AgentRunsQuery.Cache.
+func (t *AgentRunsTable) Cache(opts ...keel.CacheOption) keel.Query[*agent.AgentRun] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AgentRunsQuery.LoadStrategy.
+func (t *AgentRunsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*agent.AgentRun] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AgentRunsQuery.With.
+func (t *AgentRunsTable) With(ctes ...*keel.CTETable) keel.Query[*agent.AgentRun] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AgentRunsQuery.Compute.
+func (t *AgentRunsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agent.AgentRun] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AgentRunsTable) Create(ctx context.Context, db *keel.DB, row *agent.AgentRun) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AgentRunsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agent.AgentRun) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AgentRunsTable) Save(ctx context.Context, db *keel.DB, row *agent.AgentRun, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AgentRunsTable) SaveExcept(ctx context.Context, db *keel.DB, row *agent.AgentRun, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AgentRunsTable) DeleteRow(ctx context.Context, db *keel.DB, row *agent.AgentRun) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AgentRunsTable) Upsert(ctx context.Context, db *keel.DB, rows []*agent.AgentRun, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AgentRunsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agent.AgentRun, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AgentRunsTable) Copy(ctx context.Context, db *keel.DB, rows []*agent.AgentRun) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AgentRunsQuery) Where(ps ...keel.Pred) keel.Query[*agent.AgentRun] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AgentRunsQuery) Pick(es ...keel.Expr) keel.Query[*agent.AgentRun] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AgentRunsQuery) Omit(cols ...keel.Column) keel.Query[*agent.AgentRun] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AgentRunsQuery) Load(ls ...keel.Loader) keel.Query[*agent.AgentRun] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AgentRunsQuery) Order(os ...keel.Order) keel.Query[*agent.AgentRun] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AgentRunsQuery) Distinct() keel.Query[*agent.AgentRun] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AgentRunsQuery) Group(es ...keel.Expr) keel.Query[*agent.AgentRun] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AgentRunsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*agent.AgentRun] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AgentRunsQuery) Rollup(es ...keel.Expr) keel.Query[*agent.AgentRun] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AgentRunsQuery) Cube(es ...keel.Expr) keel.Query[*agent.AgentRun] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AgentRunsQuery) Window(name string, w keel.Window) keel.Query[*agent.AgentRun] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AgentRunsQuery) Having(ps ...keel.Pred) keel.Query[*agent.AgentRun] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AgentRunsQuery) Limit(n int) keel.Query[*agent.AgentRun] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AgentRunsQuery) Offset(n int) keel.Query[*agent.AgentRun] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AgentRunsQuery) DistinctOn(es ...keel.Expr) keel.Query[*agent.AgentRun] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AgentRunsQuery) AllTenants() keel.Query[*agent.AgentRun] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AgentRunsQuery) CustomPlan() keel.Query[*agent.AgentRun] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AgentRunsQuery) Timeout(d time.Duration) keel.Query[*agent.AgentRun] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AgentRunsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agent.AgentRun] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AgentRunsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agent.AgentRun] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AgentRunsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agent.AgentRun] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AgentRunsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agent.AgentRun] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AgentRunsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*agent.AgentRun] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AgentRunsQuery) Cache(opts ...keel.CacheOption) keel.Query[*agent.AgentRun] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AgentRunsQuery) With(ctes ...*keel.CTETable) keel.Query[*agent.AgentRun] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AgentRunsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*agent.AgentRun] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AgentRunsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*agent.AgentRun] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AgentRunsQuery) Clone() keel.Query[*agent.AgentRun] {
+	return &AgentRunsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AgentRunsQuery) One(ctx context.Context, db *keel.DB) (*agent.AgentRun, error) {
+	return keel.One[*agent.AgentRun](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AgentRunsQuery) First(ctx context.Context, db *keel.DB) (*agent.AgentRun, error) {
+	return keel.First[*agent.AgentRun](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AgentRunsQuery) List(ctx context.Context, db *keel.DB) ([]*agent.AgentRun, error) {
+	return keel.List[*agent.AgentRun](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AgentRunsQuery) All(ctx context.Context, db *keel.DB) ([]*agent.AgentRun, error) {
+	return keel.All[*agent.AgentRun](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AgentRunsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agent.AgentRun, error) {
+	return keel.UpdateReturning[*agent.AgentRun](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AgentRunsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agent.AgentRun], error) {
+	return keel.PageOf[*agent.AgentRun](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AgentRunsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agent.AgentRun) error) error {
+	return keel.Each[*agent.AgentRun](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAgentRun() unsafe.Pointer { return unsafe.Pointer(new(agent.AgentRun)) }

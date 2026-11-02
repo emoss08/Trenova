@@ -40,7 +40,7 @@ func (r *repository) ListRecheckCandidates(
 
 func recheckCandidates(
 	req *billingqueueports.ListRecheckCandidatesRequest,
-) *keel.Query[*billingqueue.BillingQueueItem] {
+) keel.Query[*billingqueue.BillingQueueItem] {
 	bq := billingqueuedb.BillingQueueItems
 
 	return bq.Pick(bq.ID, bq.OrganizationID, bq.BusinessUnitID).

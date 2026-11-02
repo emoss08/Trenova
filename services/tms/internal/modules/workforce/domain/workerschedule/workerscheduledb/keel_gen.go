@@ -4,6 +4,7 @@ package workerscheduledb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -71,7 +72,7 @@ var shiftSwapRequestsRef = keel.Ref{Table: &shiftSwapRequestsTable}
 
 // ShiftSwapRequestsTable is the table of workerschedule.ShiftSwapRequest.
 type ShiftSwapRequestsTable struct {
-	keel.Handle[*workerschedule.ShiftSwapRequest]
+	keel.TableBase
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -92,7 +93,7 @@ type ShiftSwapRequestsTable struct {
 
 // ShiftSwapRequests references the shift_swap_requests table.
 var ShiftSwapRequests = &ShiftSwapRequestsTable{
-	Handle:                keel.Handle[*workerschedule.ShiftSwapRequest]{Ref: &shiftSwapRequestsRef},
+	TableBase:             keel.TableBase{Ref: &shiftSwapRequestsRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 2}}},
@@ -111,10 +112,10 @@ var ShiftSwapRequests = &ShiftSwapRequestsTable{
 	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 15}},
 }
 
-// BuildShiftSwapRequests builds the handle of shift_swap_requests for ref. Generated relation and alias methods call it.
+// BuildShiftSwapRequests builds the table of shift_swap_requests for ref. Generated relation and alias methods call it.
 func BuildShiftSwapRequests(r *keel.Ref) *ShiftSwapRequestsTable {
 	return &ShiftSwapRequestsTable{
-		Handle:                keel.Handle[*workerschedule.ShiftSwapRequest]{Ref: r},
+		TableBase:             keel.TableBase{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -155,6 +156,365 @@ func (t *ShiftSwapRequestsTable) CounterpartyWorker() *workerdb.WorkersTable {
 // Get returns the shift_swap_requests row with the given key, or keel.ErrNotFound.
 func (t *ShiftSwapRequestsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerschedule.ShiftSwapRequest, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ShiftSwapRequestsQuery is a query over workerschedule.ShiftSwapRequest.
+type ShiftSwapRequestsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workerschedule.ShiftSwapRequest] = (*ShiftSwapRequestsTable)(nil)
+
+var _ keel.Query[*workerschedule.ShiftSwapRequest] = (*ShiftSwapRequestsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ShiftSwapRequestsTable) Query() keel.Query[*workerschedule.ShiftSwapRequest] {
+	return &ShiftSwapRequestsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ShiftSwapRequestsQuery.Where.
+func (t *ShiftSwapRequestsTable) Where(ps ...keel.Pred) keel.Query[*workerschedule.ShiftSwapRequest] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ShiftSwapRequestsQuery.Pick.
+func (t *ShiftSwapRequestsTable) Pick(es ...keel.Expr) keel.Query[*workerschedule.ShiftSwapRequest] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ShiftSwapRequestsQuery.Load.
+func (t *ShiftSwapRequestsTable) Load(ls ...keel.Loader) keel.Query[*workerschedule.ShiftSwapRequest] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ShiftSwapRequestsQuery.Omit.
+func (t *ShiftSwapRequestsTable) Omit(cols ...keel.Column) keel.Query[*workerschedule.ShiftSwapRequest] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ShiftSwapRequestsQuery.Order.
+func (t *ShiftSwapRequestsTable) Order(os ...keel.Order) keel.Query[*workerschedule.ShiftSwapRequest] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ShiftSwapRequestsQuery.Limit.
+func (t *ShiftSwapRequestsTable) Limit(n int) keel.Query[*workerschedule.ShiftSwapRequest] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ShiftSwapRequestsQuery.Group.
+func (t *ShiftSwapRequestsTable) Group(es ...keel.Expr) keel.Query[*workerschedule.ShiftSwapRequest] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ShiftSwapRequestsQuery.GroupingSets.
+func (t *ShiftSwapRequestsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerschedule.ShiftSwapRequest] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ShiftSwapRequestsQuery.Rollup.
+func (t *ShiftSwapRequestsTable) Rollup(es ...keel.Expr) keel.Query[*workerschedule.ShiftSwapRequest] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ShiftSwapRequestsQuery.Cube.
+func (t *ShiftSwapRequestsTable) Cube(es ...keel.Expr) keel.Query[*workerschedule.ShiftSwapRequest] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ShiftSwapRequestsQuery.AllTenants.
+func (t *ShiftSwapRequestsTable) AllTenants() keel.Query[*workerschedule.ShiftSwapRequest] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ShiftSwapRequestsQuery.Join.
+func (t *ShiftSwapRequestsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerschedule.ShiftSwapRequest] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ShiftSwapRequestsQuery.LeftJoin.
+func (t *ShiftSwapRequestsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerschedule.ShiftSwapRequest] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ShiftSwapRequestsQuery.LeftJoinLateral.
+func (t *ShiftSwapRequestsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerschedule.ShiftSwapRequest] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ShiftSwapRequestsQuery.JoinLateral.
+func (t *ShiftSwapRequestsTable) JoinLateral(sub keel.LateralSource) keel.Query[*workerschedule.ShiftSwapRequest] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ShiftSwapRequestsQuery.Lock.
+func (t *ShiftSwapRequestsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerschedule.ShiftSwapRequest] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ShiftSwapRequestsQuery.DistinctOn.
+func (t *ShiftSwapRequestsTable) DistinctOn(es ...keel.Expr) keel.Query[*workerschedule.ShiftSwapRequest] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ShiftSwapRequestsQuery.Cache.
+func (t *ShiftSwapRequestsTable) Cache(opts ...keel.CacheOption) keel.Query[*workerschedule.ShiftSwapRequest] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ShiftSwapRequestsQuery.LoadStrategy.
+func (t *ShiftSwapRequestsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerschedule.ShiftSwapRequest] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ShiftSwapRequestsQuery.With.
+func (t *ShiftSwapRequestsTable) With(ctes ...*keel.CTETable) keel.Query[*workerschedule.ShiftSwapRequest] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ShiftSwapRequestsQuery.Compute.
+func (t *ShiftSwapRequestsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workerschedule.ShiftSwapRequest] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ShiftSwapRequestsTable) Create(ctx context.Context, db *keel.DB, row *workerschedule.ShiftSwapRequest) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ShiftSwapRequestsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerschedule.ShiftSwapRequest) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ShiftSwapRequestsTable) Save(ctx context.Context, db *keel.DB, row *workerschedule.ShiftSwapRequest, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ShiftSwapRequestsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerschedule.ShiftSwapRequest, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ShiftSwapRequestsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerschedule.ShiftSwapRequest) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ShiftSwapRequestsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerschedule.ShiftSwapRequest, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ShiftSwapRequestsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerschedule.ShiftSwapRequest, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ShiftSwapRequestsTable) Copy(ctx context.Context, db *keel.DB, rows []*workerschedule.ShiftSwapRequest) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ShiftSwapRequestsQuery) Where(ps ...keel.Pred) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ShiftSwapRequestsQuery) Pick(es ...keel.Expr) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ShiftSwapRequestsQuery) Omit(cols ...keel.Column) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ShiftSwapRequestsQuery) Load(ls ...keel.Loader) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ShiftSwapRequestsQuery) Order(os ...keel.Order) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ShiftSwapRequestsQuery) Distinct() keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ShiftSwapRequestsQuery) Group(es ...keel.Expr) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ShiftSwapRequestsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ShiftSwapRequestsQuery) Rollup(es ...keel.Expr) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ShiftSwapRequestsQuery) Cube(es ...keel.Expr) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ShiftSwapRequestsQuery) Window(name string, w keel.Window) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ShiftSwapRequestsQuery) Having(ps ...keel.Pred) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ShiftSwapRequestsQuery) Limit(n int) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ShiftSwapRequestsQuery) Offset(n int) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ShiftSwapRequestsQuery) DistinctOn(es ...keel.Expr) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ShiftSwapRequestsQuery) AllTenants() keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ShiftSwapRequestsQuery) CustomPlan() keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ShiftSwapRequestsQuery) Timeout(d time.Duration) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ShiftSwapRequestsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ShiftSwapRequestsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ShiftSwapRequestsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ShiftSwapRequestsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ShiftSwapRequestsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ShiftSwapRequestsQuery) Cache(opts ...keel.CacheOption) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ShiftSwapRequestsQuery) With(ctes ...*keel.CTETable) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ShiftSwapRequestsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ShiftSwapRequestsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerschedule.ShiftSwapRequest] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ShiftSwapRequestsQuery) Clone() keel.Query[*workerschedule.ShiftSwapRequest] {
+	return &ShiftSwapRequestsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ShiftSwapRequestsQuery) One(ctx context.Context, db *keel.DB) (*workerschedule.ShiftSwapRequest, error) {
+	return keel.One[*workerschedule.ShiftSwapRequest](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ShiftSwapRequestsQuery) First(ctx context.Context, db *keel.DB) (*workerschedule.ShiftSwapRequest, error) {
+	return keel.First[*workerschedule.ShiftSwapRequest](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ShiftSwapRequestsQuery) List(ctx context.Context, db *keel.DB) ([]*workerschedule.ShiftSwapRequest, error) {
+	return keel.List[*workerschedule.ShiftSwapRequest](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ShiftSwapRequestsQuery) All(ctx context.Context, db *keel.DB) ([]*workerschedule.ShiftSwapRequest, error) {
+	return keel.All[*workerschedule.ShiftSwapRequest](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ShiftSwapRequestsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerschedule.ShiftSwapRequest, error) {
+	return keel.UpdateReturning[*workerschedule.ShiftSwapRequest](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ShiftSwapRequestsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerschedule.ShiftSwapRequest], error) {
+	return keel.PageOf[*workerschedule.ShiftSwapRequest](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ShiftSwapRequestsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerschedule.ShiftSwapRequest) error) error {
+	return keel.Each[*workerschedule.ShiftSwapRequest](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newShiftSwapRequest() unsafe.Pointer {
@@ -328,7 +688,7 @@ var shiftTemplatesRef = keel.Ref{Table: &shiftTemplatesTable}
 
 // ShiftTemplatesTable is the table of workerschedule.ShiftTemplate.
 type ShiftTemplatesTable struct {
-	keel.Handle[*workerschedule.ShiftTemplate]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -348,7 +708,7 @@ type ShiftTemplatesTable struct {
 
 // ShiftTemplates references the shift_templates table.
 var ShiftTemplates = &ShiftTemplatesTable{
-	Handle:          keel.Handle[*workerschedule.ShiftTemplate]{Ref: &shiftTemplatesRef},
+	TableBase:       keel.TableBase{Ref: &shiftTemplatesRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftTemplatesRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftTemplatesRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftTemplatesRef, Index: 2}}},
@@ -366,10 +726,10 @@ var ShiftTemplates = &ShiftTemplatesTable{
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &shiftTemplatesRef, Index: 14}},
 }
 
-// BuildShiftTemplates builds the handle of shift_templates for ref. Generated relation and alias methods call it.
+// BuildShiftTemplates builds the table of shift_templates for ref. Generated relation and alias methods call it.
 func BuildShiftTemplates(r *keel.Ref) *ShiftTemplatesTable {
 	return &ShiftTemplatesTable{
-		Handle:          keel.Handle[*workerschedule.ShiftTemplate]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -399,6 +759,365 @@ func (t *ShiftTemplatesTable) As(alias string) *ShiftTemplatesTable {
 // Get returns the shift_templates row with the given key, or keel.ErrNotFound.
 func (t *ShiftTemplatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerschedule.ShiftTemplate, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ShiftTemplatesQuery is a query over workerschedule.ShiftTemplate.
+type ShiftTemplatesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workerschedule.ShiftTemplate] = (*ShiftTemplatesTable)(nil)
+
+var _ keel.Query[*workerschedule.ShiftTemplate] = (*ShiftTemplatesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ShiftTemplatesTable) Query() keel.Query[*workerschedule.ShiftTemplate] {
+	return &ShiftTemplatesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ShiftTemplatesQuery.Where.
+func (t *ShiftTemplatesTable) Where(ps ...keel.Pred) keel.Query[*workerschedule.ShiftTemplate] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ShiftTemplatesQuery.Pick.
+func (t *ShiftTemplatesTable) Pick(es ...keel.Expr) keel.Query[*workerschedule.ShiftTemplate] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ShiftTemplatesQuery.Load.
+func (t *ShiftTemplatesTable) Load(ls ...keel.Loader) keel.Query[*workerschedule.ShiftTemplate] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ShiftTemplatesQuery.Omit.
+func (t *ShiftTemplatesTable) Omit(cols ...keel.Column) keel.Query[*workerschedule.ShiftTemplate] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ShiftTemplatesQuery.Order.
+func (t *ShiftTemplatesTable) Order(os ...keel.Order) keel.Query[*workerschedule.ShiftTemplate] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ShiftTemplatesQuery.Limit.
+func (t *ShiftTemplatesTable) Limit(n int) keel.Query[*workerschedule.ShiftTemplate] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ShiftTemplatesQuery.Group.
+func (t *ShiftTemplatesTable) Group(es ...keel.Expr) keel.Query[*workerschedule.ShiftTemplate] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ShiftTemplatesQuery.GroupingSets.
+func (t *ShiftTemplatesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerschedule.ShiftTemplate] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ShiftTemplatesQuery.Rollup.
+func (t *ShiftTemplatesTable) Rollup(es ...keel.Expr) keel.Query[*workerschedule.ShiftTemplate] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ShiftTemplatesQuery.Cube.
+func (t *ShiftTemplatesTable) Cube(es ...keel.Expr) keel.Query[*workerschedule.ShiftTemplate] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ShiftTemplatesQuery.AllTenants.
+func (t *ShiftTemplatesTable) AllTenants() keel.Query[*workerschedule.ShiftTemplate] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ShiftTemplatesQuery.Join.
+func (t *ShiftTemplatesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerschedule.ShiftTemplate] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ShiftTemplatesQuery.LeftJoin.
+func (t *ShiftTemplatesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerschedule.ShiftTemplate] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ShiftTemplatesQuery.LeftJoinLateral.
+func (t *ShiftTemplatesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerschedule.ShiftTemplate] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ShiftTemplatesQuery.JoinLateral.
+func (t *ShiftTemplatesTable) JoinLateral(sub keel.LateralSource) keel.Query[*workerschedule.ShiftTemplate] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ShiftTemplatesQuery.Lock.
+func (t *ShiftTemplatesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerschedule.ShiftTemplate] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ShiftTemplatesQuery.DistinctOn.
+func (t *ShiftTemplatesTable) DistinctOn(es ...keel.Expr) keel.Query[*workerschedule.ShiftTemplate] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ShiftTemplatesQuery.Cache.
+func (t *ShiftTemplatesTable) Cache(opts ...keel.CacheOption) keel.Query[*workerschedule.ShiftTemplate] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ShiftTemplatesQuery.LoadStrategy.
+func (t *ShiftTemplatesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerschedule.ShiftTemplate] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ShiftTemplatesQuery.With.
+func (t *ShiftTemplatesTable) With(ctes ...*keel.CTETable) keel.Query[*workerschedule.ShiftTemplate] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ShiftTemplatesQuery.Compute.
+func (t *ShiftTemplatesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workerschedule.ShiftTemplate] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ShiftTemplatesTable) Create(ctx context.Context, db *keel.DB, row *workerschedule.ShiftTemplate) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ShiftTemplatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerschedule.ShiftTemplate) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ShiftTemplatesTable) Save(ctx context.Context, db *keel.DB, row *workerschedule.ShiftTemplate, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ShiftTemplatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerschedule.ShiftTemplate, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ShiftTemplatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerschedule.ShiftTemplate) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ShiftTemplatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerschedule.ShiftTemplate, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ShiftTemplatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerschedule.ShiftTemplate, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ShiftTemplatesTable) Copy(ctx context.Context, db *keel.DB, rows []*workerschedule.ShiftTemplate) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ShiftTemplatesQuery) Where(ps ...keel.Pred) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ShiftTemplatesQuery) Pick(es ...keel.Expr) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ShiftTemplatesQuery) Omit(cols ...keel.Column) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ShiftTemplatesQuery) Load(ls ...keel.Loader) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ShiftTemplatesQuery) Order(os ...keel.Order) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ShiftTemplatesQuery) Distinct() keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ShiftTemplatesQuery) Group(es ...keel.Expr) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ShiftTemplatesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ShiftTemplatesQuery) Rollup(es ...keel.Expr) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ShiftTemplatesQuery) Cube(es ...keel.Expr) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ShiftTemplatesQuery) Window(name string, w keel.Window) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ShiftTemplatesQuery) Having(ps ...keel.Pred) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ShiftTemplatesQuery) Limit(n int) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ShiftTemplatesQuery) Offset(n int) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ShiftTemplatesQuery) DistinctOn(es ...keel.Expr) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ShiftTemplatesQuery) AllTenants() keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ShiftTemplatesQuery) CustomPlan() keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ShiftTemplatesQuery) Timeout(d time.Duration) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ShiftTemplatesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ShiftTemplatesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ShiftTemplatesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ShiftTemplatesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ShiftTemplatesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ShiftTemplatesQuery) Cache(opts ...keel.CacheOption) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ShiftTemplatesQuery) With(ctes ...*keel.CTETable) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ShiftTemplatesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ShiftTemplatesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerschedule.ShiftTemplate] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ShiftTemplatesQuery) Clone() keel.Query[*workerschedule.ShiftTemplate] {
+	return &ShiftTemplatesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ShiftTemplatesQuery) One(ctx context.Context, db *keel.DB) (*workerschedule.ShiftTemplate, error) {
+	return keel.One[*workerschedule.ShiftTemplate](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ShiftTemplatesQuery) First(ctx context.Context, db *keel.DB) (*workerschedule.ShiftTemplate, error) {
+	return keel.First[*workerschedule.ShiftTemplate](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ShiftTemplatesQuery) List(ctx context.Context, db *keel.DB) ([]*workerschedule.ShiftTemplate, error) {
+	return keel.List[*workerschedule.ShiftTemplate](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ShiftTemplatesQuery) All(ctx context.Context, db *keel.DB) ([]*workerschedule.ShiftTemplate, error) {
+	return keel.All[*workerschedule.ShiftTemplate](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ShiftTemplatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerschedule.ShiftTemplate, error) {
+	return keel.UpdateReturning[*workerschedule.ShiftTemplate](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ShiftTemplatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerschedule.ShiftTemplate], error) {
+	return keel.PageOf[*workerschedule.ShiftTemplate](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ShiftTemplatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerschedule.ShiftTemplate) error) error {
+	return keel.Each[*workerschedule.ShiftTemplate](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newShiftTemplate() unsafe.Pointer { return unsafe.Pointer(new(workerschedule.ShiftTemplate)) }
@@ -536,7 +1255,7 @@ var workerAvailabilityPreferencesRef = keel.Ref{Table: &workerAvailabilityPrefer
 
 // WorkerAvailabilityPreferencesTable is the table of workerschedule.WorkerAvailabilityPreference.
 type WorkerAvailabilityPreferencesTable struct {
-	keel.Handle[*workerschedule.WorkerAvailabilityPreference]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -551,7 +1270,7 @@ type WorkerAvailabilityPreferencesTable struct {
 
 // WorkerAvailabilityPreferences references the worker_availability_preferences table.
 var WorkerAvailabilityPreferences = &WorkerAvailabilityPreferencesTable{
-	Handle:         keel.Handle[*workerschedule.WorkerAvailabilityPreference]{Ref: &workerAvailabilityPreferencesRef},
+	TableBase:      keel.TableBase{Ref: &workerAvailabilityPreferencesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerAvailabilityPreferencesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerAvailabilityPreferencesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerAvailabilityPreferencesRef, Index: 2}}},
@@ -564,10 +1283,10 @@ var WorkerAvailabilityPreferences = &WorkerAvailabilityPreferencesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &workerAvailabilityPreferencesRef, Index: 9}},
 }
 
-// BuildWorkerAvailabilityPreferences builds the handle of worker_availability_preferences for ref. Generated relation and alias methods call it.
+// BuildWorkerAvailabilityPreferences builds the table of worker_availability_preferences for ref. Generated relation and alias methods call it.
 func BuildWorkerAvailabilityPreferences(r *keel.Ref) *WorkerAvailabilityPreferencesTable {
 	return &WorkerAvailabilityPreferencesTable{
-		Handle:         keel.Handle[*workerschedule.WorkerAvailabilityPreference]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -592,6 +1311,365 @@ func (t *WorkerAvailabilityPreferencesTable) As(alias string) *WorkerAvailabilit
 // Get returns the worker_availability_preferences row with the given key, or keel.ErrNotFound.
 func (t *WorkerAvailabilityPreferencesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerschedule.WorkerAvailabilityPreference, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkerAvailabilityPreferencesQuery is a query over workerschedule.WorkerAvailabilityPreference.
+type WorkerAvailabilityPreferencesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workerschedule.WorkerAvailabilityPreference] = (*WorkerAvailabilityPreferencesTable)(nil)
+
+var _ keel.Query[*workerschedule.WorkerAvailabilityPreference] = (*WorkerAvailabilityPreferencesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerAvailabilityPreferencesTable) Query() keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return &WorkerAvailabilityPreferencesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerAvailabilityPreferencesQuery.Where.
+func (t *WorkerAvailabilityPreferencesTable) Where(ps ...keel.Pred) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerAvailabilityPreferencesQuery.Pick.
+func (t *WorkerAvailabilityPreferencesTable) Pick(es ...keel.Expr) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerAvailabilityPreferencesQuery.Load.
+func (t *WorkerAvailabilityPreferencesTable) Load(ls ...keel.Loader) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerAvailabilityPreferencesQuery.Omit.
+func (t *WorkerAvailabilityPreferencesTable) Omit(cols ...keel.Column) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerAvailabilityPreferencesQuery.Order.
+func (t *WorkerAvailabilityPreferencesTable) Order(os ...keel.Order) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerAvailabilityPreferencesQuery.Limit.
+func (t *WorkerAvailabilityPreferencesTable) Limit(n int) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerAvailabilityPreferencesQuery.Group.
+func (t *WorkerAvailabilityPreferencesTable) Group(es ...keel.Expr) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerAvailabilityPreferencesQuery.GroupingSets.
+func (t *WorkerAvailabilityPreferencesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerAvailabilityPreferencesQuery.Rollup.
+func (t *WorkerAvailabilityPreferencesTable) Rollup(es ...keel.Expr) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerAvailabilityPreferencesQuery.Cube.
+func (t *WorkerAvailabilityPreferencesTable) Cube(es ...keel.Expr) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerAvailabilityPreferencesQuery.AllTenants.
+func (t *WorkerAvailabilityPreferencesTable) AllTenants() keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerAvailabilityPreferencesQuery.Join.
+func (t *WorkerAvailabilityPreferencesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerAvailabilityPreferencesQuery.LeftJoin.
+func (t *WorkerAvailabilityPreferencesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerAvailabilityPreferencesQuery.LeftJoinLateral.
+func (t *WorkerAvailabilityPreferencesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerAvailabilityPreferencesQuery.JoinLateral.
+func (t *WorkerAvailabilityPreferencesTable) JoinLateral(sub keel.LateralSource) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerAvailabilityPreferencesQuery.Lock.
+func (t *WorkerAvailabilityPreferencesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerAvailabilityPreferencesQuery.DistinctOn.
+func (t *WorkerAvailabilityPreferencesTable) DistinctOn(es ...keel.Expr) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerAvailabilityPreferencesQuery.Cache.
+func (t *WorkerAvailabilityPreferencesTable) Cache(opts ...keel.CacheOption) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerAvailabilityPreferencesQuery.LoadStrategy.
+func (t *WorkerAvailabilityPreferencesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerAvailabilityPreferencesQuery.With.
+func (t *WorkerAvailabilityPreferencesTable) With(ctes ...*keel.CTETable) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerAvailabilityPreferencesQuery.Compute.
+func (t *WorkerAvailabilityPreferencesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerAvailabilityPreferencesTable) Create(ctx context.Context, db *keel.DB, row *workerschedule.WorkerAvailabilityPreference) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerAvailabilityPreferencesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerschedule.WorkerAvailabilityPreference) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerAvailabilityPreferencesTable) Save(ctx context.Context, db *keel.DB, row *workerschedule.WorkerAvailabilityPreference, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerAvailabilityPreferencesTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerschedule.WorkerAvailabilityPreference, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerAvailabilityPreferencesTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerschedule.WorkerAvailabilityPreference) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerAvailabilityPreferencesTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerschedule.WorkerAvailabilityPreference, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerAvailabilityPreferencesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerschedule.WorkerAvailabilityPreference, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerAvailabilityPreferencesTable) Copy(ctx context.Context, db *keel.DB, rows []*workerschedule.WorkerAvailabilityPreference) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerAvailabilityPreferencesQuery) Where(ps ...keel.Pred) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerAvailabilityPreferencesQuery) Pick(es ...keel.Expr) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerAvailabilityPreferencesQuery) Omit(cols ...keel.Column) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerAvailabilityPreferencesQuery) Load(ls ...keel.Loader) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerAvailabilityPreferencesQuery) Order(os ...keel.Order) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerAvailabilityPreferencesQuery) Distinct() keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerAvailabilityPreferencesQuery) Group(es ...keel.Expr) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerAvailabilityPreferencesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerAvailabilityPreferencesQuery) Rollup(es ...keel.Expr) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerAvailabilityPreferencesQuery) Cube(es ...keel.Expr) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerAvailabilityPreferencesQuery) Window(name string, w keel.Window) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerAvailabilityPreferencesQuery) Having(ps ...keel.Pred) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerAvailabilityPreferencesQuery) Limit(n int) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerAvailabilityPreferencesQuery) Offset(n int) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerAvailabilityPreferencesQuery) DistinctOn(es ...keel.Expr) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerAvailabilityPreferencesQuery) AllTenants() keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerAvailabilityPreferencesQuery) CustomPlan() keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerAvailabilityPreferencesQuery) Timeout(d time.Duration) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerAvailabilityPreferencesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerAvailabilityPreferencesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerAvailabilityPreferencesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerAvailabilityPreferencesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerAvailabilityPreferencesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerAvailabilityPreferencesQuery) Cache(opts ...keel.CacheOption) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerAvailabilityPreferencesQuery) With(ctes ...*keel.CTETable) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerAvailabilityPreferencesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerAvailabilityPreferencesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerAvailabilityPreferencesQuery) Clone() keel.Query[*workerschedule.WorkerAvailabilityPreference] {
+	return &WorkerAvailabilityPreferencesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerAvailabilityPreferencesQuery) One(ctx context.Context, db *keel.DB) (*workerschedule.WorkerAvailabilityPreference, error) {
+	return keel.One[*workerschedule.WorkerAvailabilityPreference](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerAvailabilityPreferencesQuery) First(ctx context.Context, db *keel.DB) (*workerschedule.WorkerAvailabilityPreference, error) {
+	return keel.First[*workerschedule.WorkerAvailabilityPreference](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerAvailabilityPreferencesQuery) List(ctx context.Context, db *keel.DB) ([]*workerschedule.WorkerAvailabilityPreference, error) {
+	return keel.List[*workerschedule.WorkerAvailabilityPreference](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerAvailabilityPreferencesQuery) All(ctx context.Context, db *keel.DB) ([]*workerschedule.WorkerAvailabilityPreference, error) {
+	return keel.All[*workerschedule.WorkerAvailabilityPreference](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerAvailabilityPreferencesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerschedule.WorkerAvailabilityPreference, error) {
+	return keel.UpdateReturning[*workerschedule.WorkerAvailabilityPreference](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerAvailabilityPreferencesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerschedule.WorkerAvailabilityPreference], error) {
+	return keel.PageOf[*workerschedule.WorkerAvailabilityPreference](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerAvailabilityPreferencesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerschedule.WorkerAvailabilityPreference) error) error {
+	return keel.Each[*workerschedule.WorkerAvailabilityPreference](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerAvailabilityPreference() unsafe.Pointer {
@@ -715,7 +1793,7 @@ var workerShiftAssignmentsRef = keel.Ref{Table: &workerShiftAssignmentsTable}
 
 // WorkerShiftAssignmentsTable is the table of workerschedule.WorkerShiftAssignment.
 type WorkerShiftAssignmentsTable struct {
-	keel.Handle[*workerschedule.WorkerShiftAssignment]
+	keel.TableBase
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -733,7 +1811,7 @@ type WorkerShiftAssignmentsTable struct {
 
 // WorkerShiftAssignments references the worker_shift_assignments table.
 var WorkerShiftAssignments = &WorkerShiftAssignmentsTable{
-	Handle:           keel.Handle[*workerschedule.WorkerShiftAssignment]{Ref: &workerShiftAssignmentsRef},
+	TableBase:        keel.TableBase{Ref: &workerShiftAssignmentsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 2}}},
@@ -749,10 +1827,10 @@ var WorkerShiftAssignments = &WorkerShiftAssignmentsTable{
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 12}},
 }
 
-// BuildWorkerShiftAssignments builds the handle of worker_shift_assignments for ref. Generated relation and alias methods call it.
+// BuildWorkerShiftAssignments builds the table of worker_shift_assignments for ref. Generated relation and alias methods call it.
 func BuildWorkerShiftAssignments(r *keel.Ref) *WorkerShiftAssignmentsTable {
 	return &WorkerShiftAssignmentsTable{
-		Handle:           keel.Handle[*workerschedule.WorkerShiftAssignment]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -790,6 +1868,365 @@ func (t *WorkerShiftAssignmentsTable) Worker() *workerdb.WorkersTable {
 // Get returns the worker_shift_assignments row with the given key, or keel.ErrNotFound.
 func (t *WorkerShiftAssignmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerschedule.WorkerShiftAssignment, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkerShiftAssignmentsQuery is a query over workerschedule.WorkerShiftAssignment.
+type WorkerShiftAssignmentsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workerschedule.WorkerShiftAssignment] = (*WorkerShiftAssignmentsTable)(nil)
+
+var _ keel.Query[*workerschedule.WorkerShiftAssignment] = (*WorkerShiftAssignmentsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerShiftAssignmentsTable) Query() keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return &WorkerShiftAssignmentsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerShiftAssignmentsQuery.Where.
+func (t *WorkerShiftAssignmentsTable) Where(ps ...keel.Pred) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerShiftAssignmentsQuery.Pick.
+func (t *WorkerShiftAssignmentsTable) Pick(es ...keel.Expr) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerShiftAssignmentsQuery.Load.
+func (t *WorkerShiftAssignmentsTable) Load(ls ...keel.Loader) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerShiftAssignmentsQuery.Omit.
+func (t *WorkerShiftAssignmentsTable) Omit(cols ...keel.Column) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerShiftAssignmentsQuery.Order.
+func (t *WorkerShiftAssignmentsTable) Order(os ...keel.Order) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerShiftAssignmentsQuery.Limit.
+func (t *WorkerShiftAssignmentsTable) Limit(n int) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerShiftAssignmentsQuery.Group.
+func (t *WorkerShiftAssignmentsTable) Group(es ...keel.Expr) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerShiftAssignmentsQuery.GroupingSets.
+func (t *WorkerShiftAssignmentsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerShiftAssignmentsQuery.Rollup.
+func (t *WorkerShiftAssignmentsTable) Rollup(es ...keel.Expr) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerShiftAssignmentsQuery.Cube.
+func (t *WorkerShiftAssignmentsTable) Cube(es ...keel.Expr) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerShiftAssignmentsQuery.AllTenants.
+func (t *WorkerShiftAssignmentsTable) AllTenants() keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerShiftAssignmentsQuery.Join.
+func (t *WorkerShiftAssignmentsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerShiftAssignmentsQuery.LeftJoin.
+func (t *WorkerShiftAssignmentsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerShiftAssignmentsQuery.LeftJoinLateral.
+func (t *WorkerShiftAssignmentsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerShiftAssignmentsQuery.JoinLateral.
+func (t *WorkerShiftAssignmentsTable) JoinLateral(sub keel.LateralSource) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerShiftAssignmentsQuery.Lock.
+func (t *WorkerShiftAssignmentsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerShiftAssignmentsQuery.DistinctOn.
+func (t *WorkerShiftAssignmentsTable) DistinctOn(es ...keel.Expr) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerShiftAssignmentsQuery.Cache.
+func (t *WorkerShiftAssignmentsTable) Cache(opts ...keel.CacheOption) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerShiftAssignmentsQuery.LoadStrategy.
+func (t *WorkerShiftAssignmentsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerShiftAssignmentsQuery.With.
+func (t *WorkerShiftAssignmentsTable) With(ctes ...*keel.CTETable) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerShiftAssignmentsQuery.Compute.
+func (t *WorkerShiftAssignmentsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerShiftAssignmentsTable) Create(ctx context.Context, db *keel.DB, row *workerschedule.WorkerShiftAssignment) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerShiftAssignmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerschedule.WorkerShiftAssignment) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerShiftAssignmentsTable) Save(ctx context.Context, db *keel.DB, row *workerschedule.WorkerShiftAssignment, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerShiftAssignmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerschedule.WorkerShiftAssignment, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerShiftAssignmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerschedule.WorkerShiftAssignment) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerShiftAssignmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerschedule.WorkerShiftAssignment, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerShiftAssignmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerschedule.WorkerShiftAssignment, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerShiftAssignmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*workerschedule.WorkerShiftAssignment) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerShiftAssignmentsQuery) Where(ps ...keel.Pred) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerShiftAssignmentsQuery) Pick(es ...keel.Expr) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerShiftAssignmentsQuery) Omit(cols ...keel.Column) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerShiftAssignmentsQuery) Load(ls ...keel.Loader) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerShiftAssignmentsQuery) Order(os ...keel.Order) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerShiftAssignmentsQuery) Distinct() keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerShiftAssignmentsQuery) Group(es ...keel.Expr) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerShiftAssignmentsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerShiftAssignmentsQuery) Rollup(es ...keel.Expr) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerShiftAssignmentsQuery) Cube(es ...keel.Expr) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerShiftAssignmentsQuery) Window(name string, w keel.Window) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerShiftAssignmentsQuery) Having(ps ...keel.Pred) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerShiftAssignmentsQuery) Limit(n int) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerShiftAssignmentsQuery) Offset(n int) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerShiftAssignmentsQuery) DistinctOn(es ...keel.Expr) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerShiftAssignmentsQuery) AllTenants() keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerShiftAssignmentsQuery) CustomPlan() keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerShiftAssignmentsQuery) Timeout(d time.Duration) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerShiftAssignmentsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerShiftAssignmentsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerShiftAssignmentsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerShiftAssignmentsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerShiftAssignmentsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerShiftAssignmentsQuery) Cache(opts ...keel.CacheOption) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerShiftAssignmentsQuery) With(ctes ...*keel.CTETable) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerShiftAssignmentsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerShiftAssignmentsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerShiftAssignmentsQuery) Clone() keel.Query[*workerschedule.WorkerShiftAssignment] {
+	return &WorkerShiftAssignmentsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerShiftAssignmentsQuery) One(ctx context.Context, db *keel.DB) (*workerschedule.WorkerShiftAssignment, error) {
+	return keel.One[*workerschedule.WorkerShiftAssignment](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerShiftAssignmentsQuery) First(ctx context.Context, db *keel.DB) (*workerschedule.WorkerShiftAssignment, error) {
+	return keel.First[*workerschedule.WorkerShiftAssignment](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerShiftAssignmentsQuery) List(ctx context.Context, db *keel.DB) ([]*workerschedule.WorkerShiftAssignment, error) {
+	return keel.List[*workerschedule.WorkerShiftAssignment](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerShiftAssignmentsQuery) All(ctx context.Context, db *keel.DB) ([]*workerschedule.WorkerShiftAssignment, error) {
+	return keel.All[*workerschedule.WorkerShiftAssignment](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerShiftAssignmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerschedule.WorkerShiftAssignment, error) {
+	return keel.UpdateReturning[*workerschedule.WorkerShiftAssignment](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerShiftAssignmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerschedule.WorkerShiftAssignment], error) {
+	return keel.PageOf[*workerschedule.WorkerShiftAssignment](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerShiftAssignmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerschedule.WorkerShiftAssignment) error) error {
+	return keel.Each[*workerschedule.WorkerShiftAssignment](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerShiftAssignment() unsafe.Pointer {

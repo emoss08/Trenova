@@ -168,24 +168,24 @@ func (b *tvBuilder) writeGuides(ctx context.Context, tx *keel.DB, guides []*tvGu
 		}
 	}
 
-	if err := volumegen.InsertRows(ctx, tx, tenderdb.RoutingGuides.Handle, rows); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, tenderdb.RoutingGuides, rows); err != nil {
 		return err
 	}
 	if err := volumegen.InsertRows(
 		ctx,
 		tx,
-		tenderdb.RoutingGuideEntries.Handle,
+		tenderdb.RoutingGuideEntries,
 		entries,
 	); err != nil {
 		return err
 	}
-	if err := volumegen.Backdate(ctx, tx, tenderdb.RoutingGuides.Handle, guideStamps); err != nil {
+	if err := volumegen.Backdate(ctx, tx, tenderdb.RoutingGuides, guideStamps); err != nil {
 		return err
 	}
 	if err := volumegen.Backdate(
 		ctx,
 		tx,
-		tenderdb.RoutingGuideEntries.Handle,
+		tenderdb.RoutingGuideEntries,
 		entryStamps,
 	); err != nil {
 		return err

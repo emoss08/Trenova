@@ -121,7 +121,7 @@ func (r *repository) UpsertVehiclePositions(
 
 func vehiclePositionsQuery(
 	req *telematicsports.ListVehiclePositionsRequest,
-) *keel.Query[*telematics.VehiclePosition] {
+) keel.Query[*telematics.VehiclePosition] {
 	vp := telematicsdb.VehiclePositions
 	tr := vp.Tractor()
 
@@ -429,7 +429,7 @@ func inspectionsBefore(req *telematicsports.ListVehicleInspectionsRequest) keel.
 
 func vehicleInspectionsQuery(
 	req *telematicsports.ListVehicleInspectionsRequest,
-) *keel.Query[*telematics.VehicleInspection] {
+) keel.Query[*telematics.VehicleInspection] {
 	vi := telematicsdb.VehicleInspections
 	q := vi.Where(
 		keel.When(req.TractorID.IsNotNil(), vi.TractorID.Eq(req.TractorID)),
@@ -510,7 +510,7 @@ func (r *repository) RecordStopOutcome(
 
 func openStopReviewsQuery(
 	req *telematicsports.ListOpenStopReviewsRequest,
-) *keel.Query[*telematics.TelematicsEvent] {
+) keel.Query[*telematics.TelematicsEvent] {
 	e := telematicsdb.TelematicsEvents
 	m := shipmentdb.ShipmentMoves
 	st := shipmentdb.Stops

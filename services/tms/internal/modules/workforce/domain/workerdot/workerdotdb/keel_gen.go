@@ -4,6 +4,7 @@ package workerdotdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -92,7 +93,7 @@ var workerDOTTestsRef = keel.Ref{Table: &workerDOTTestsTable}
 
 // WorkerDOTTestsTable is the table of workerdot.WorkerDOTTest.
 type WorkerDOTTestsTable struct {
-	keel.Handle[*workerdot.WorkerDOTTest]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -126,7 +127,7 @@ type WorkerDOTTestsTable struct {
 
 // WorkerDOTTests references the worker_dot_tests table.
 var WorkerDOTTests = &WorkerDOTTestsTable{
-	Handle:               keel.Handle[*workerdot.WorkerDOTTest]{Ref: &workerDOTTestsRef},
+	TableBase:            keel.TableBase{Ref: &workerDOTTestsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 2}}},
@@ -158,10 +159,10 @@ var WorkerDOTTests = &WorkerDOTTestsTable{
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 28}},
 }
 
-// BuildWorkerDOTTests builds the handle of worker_dot_tests for ref. Generated relation and alias methods call it.
+// BuildWorkerDOTTests builds the table of worker_dot_tests for ref. Generated relation and alias methods call it.
 func BuildWorkerDOTTests(r *keel.Ref) *WorkerDOTTestsTable {
 	return &WorkerDOTTestsTable{
-		Handle:               keel.Handle[*workerdot.WorkerDOTTest]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -230,6 +231,365 @@ func (t *WorkerDOTTestsTable) RecordedBy() *tenantdb.UsersTable {
 // Get returns the worker_dot_tests row with the given key, or keel.ErrNotFound.
 func (t *WorkerDOTTestsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerdot.WorkerDOTTest, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkerDOTTestsQuery is a query over workerdot.WorkerDOTTest.
+type WorkerDOTTestsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workerdot.WorkerDOTTest] = (*WorkerDOTTestsTable)(nil)
+
+var _ keel.Query[*workerdot.WorkerDOTTest] = (*WorkerDOTTestsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerDOTTestsTable) Query() keel.Query[*workerdot.WorkerDOTTest] {
+	return &WorkerDOTTestsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerDOTTestsQuery.Where.
+func (t *WorkerDOTTestsTable) Where(ps ...keel.Pred) keel.Query[*workerdot.WorkerDOTTest] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerDOTTestsQuery.Pick.
+func (t *WorkerDOTTestsTable) Pick(es ...keel.Expr) keel.Query[*workerdot.WorkerDOTTest] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerDOTTestsQuery.Load.
+func (t *WorkerDOTTestsTable) Load(ls ...keel.Loader) keel.Query[*workerdot.WorkerDOTTest] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerDOTTestsQuery.Omit.
+func (t *WorkerDOTTestsTable) Omit(cols ...keel.Column) keel.Query[*workerdot.WorkerDOTTest] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerDOTTestsQuery.Order.
+func (t *WorkerDOTTestsTable) Order(os ...keel.Order) keel.Query[*workerdot.WorkerDOTTest] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerDOTTestsQuery.Limit.
+func (t *WorkerDOTTestsTable) Limit(n int) keel.Query[*workerdot.WorkerDOTTest] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerDOTTestsQuery.Group.
+func (t *WorkerDOTTestsTable) Group(es ...keel.Expr) keel.Query[*workerdot.WorkerDOTTest] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerDOTTestsQuery.GroupingSets.
+func (t *WorkerDOTTestsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerdot.WorkerDOTTest] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerDOTTestsQuery.Rollup.
+func (t *WorkerDOTTestsTable) Rollup(es ...keel.Expr) keel.Query[*workerdot.WorkerDOTTest] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerDOTTestsQuery.Cube.
+func (t *WorkerDOTTestsTable) Cube(es ...keel.Expr) keel.Query[*workerdot.WorkerDOTTest] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerDOTTestsQuery.AllTenants.
+func (t *WorkerDOTTestsTable) AllTenants() keel.Query[*workerdot.WorkerDOTTest] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerDOTTestsQuery.Join.
+func (t *WorkerDOTTestsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerdot.WorkerDOTTest] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerDOTTestsQuery.LeftJoin.
+func (t *WorkerDOTTestsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerdot.WorkerDOTTest] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerDOTTestsQuery.LeftJoinLateral.
+func (t *WorkerDOTTestsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerdot.WorkerDOTTest] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerDOTTestsQuery.JoinLateral.
+func (t *WorkerDOTTestsTable) JoinLateral(sub keel.LateralSource) keel.Query[*workerdot.WorkerDOTTest] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerDOTTestsQuery.Lock.
+func (t *WorkerDOTTestsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerdot.WorkerDOTTest] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerDOTTestsQuery.DistinctOn.
+func (t *WorkerDOTTestsTable) DistinctOn(es ...keel.Expr) keel.Query[*workerdot.WorkerDOTTest] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerDOTTestsQuery.Cache.
+func (t *WorkerDOTTestsTable) Cache(opts ...keel.CacheOption) keel.Query[*workerdot.WorkerDOTTest] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerDOTTestsQuery.LoadStrategy.
+func (t *WorkerDOTTestsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerdot.WorkerDOTTest] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerDOTTestsQuery.With.
+func (t *WorkerDOTTestsTable) With(ctes ...*keel.CTETable) keel.Query[*workerdot.WorkerDOTTest] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerDOTTestsQuery.Compute.
+func (t *WorkerDOTTestsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workerdot.WorkerDOTTest] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerDOTTestsTable) Create(ctx context.Context, db *keel.DB, row *workerdot.WorkerDOTTest) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerDOTTestsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerdot.WorkerDOTTest) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerDOTTestsTable) Save(ctx context.Context, db *keel.DB, row *workerdot.WorkerDOTTest, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerDOTTestsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerdot.WorkerDOTTest, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerDOTTestsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerdot.WorkerDOTTest) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerDOTTestsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerdot.WorkerDOTTest, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerDOTTestsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerdot.WorkerDOTTest, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerDOTTestsTable) Copy(ctx context.Context, db *keel.DB, rows []*workerdot.WorkerDOTTest) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerDOTTestsQuery) Where(ps ...keel.Pred) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerDOTTestsQuery) Pick(es ...keel.Expr) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerDOTTestsQuery) Omit(cols ...keel.Column) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerDOTTestsQuery) Load(ls ...keel.Loader) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerDOTTestsQuery) Order(os ...keel.Order) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerDOTTestsQuery) Distinct() keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerDOTTestsQuery) Group(es ...keel.Expr) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerDOTTestsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerDOTTestsQuery) Rollup(es ...keel.Expr) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerDOTTestsQuery) Cube(es ...keel.Expr) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerDOTTestsQuery) Window(name string, w keel.Window) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerDOTTestsQuery) Having(ps ...keel.Pred) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerDOTTestsQuery) Limit(n int) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerDOTTestsQuery) Offset(n int) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerDOTTestsQuery) DistinctOn(es ...keel.Expr) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerDOTTestsQuery) AllTenants() keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerDOTTestsQuery) CustomPlan() keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerDOTTestsQuery) Timeout(d time.Duration) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerDOTTestsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerDOTTestsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerDOTTestsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerDOTTestsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerDOTTestsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerDOTTestsQuery) Cache(opts ...keel.CacheOption) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerDOTTestsQuery) With(ctes ...*keel.CTETable) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerDOTTestsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerDOTTestsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerdot.WorkerDOTTest] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerDOTTestsQuery) Clone() keel.Query[*workerdot.WorkerDOTTest] {
+	return &WorkerDOTTestsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerDOTTestsQuery) One(ctx context.Context, db *keel.DB) (*workerdot.WorkerDOTTest, error) {
+	return keel.One[*workerdot.WorkerDOTTest](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerDOTTestsQuery) First(ctx context.Context, db *keel.DB) (*workerdot.WorkerDOTTest, error) {
+	return keel.First[*workerdot.WorkerDOTTest](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerDOTTestsQuery) List(ctx context.Context, db *keel.DB) ([]*workerdot.WorkerDOTTest, error) {
+	return keel.List[*workerdot.WorkerDOTTest](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerDOTTestsQuery) All(ctx context.Context, db *keel.DB) ([]*workerdot.WorkerDOTTest, error) {
+	return keel.All[*workerdot.WorkerDOTTest](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerDOTTestsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerdot.WorkerDOTTest, error) {
+	return keel.UpdateReturning[*workerdot.WorkerDOTTest](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerDOTTestsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerdot.WorkerDOTTest], error) {
+	return keel.PageOf[*workerdot.WorkerDOTTest](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerDOTTestsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerdot.WorkerDOTTest) error) error {
+	return keel.Each[*workerdot.WorkerDOTTest](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerDOTTest() unsafe.Pointer { return unsafe.Pointer(new(workerdot.WorkerDOTTest)) }
@@ -505,7 +865,7 @@ var workerDOTViolationsRef = keel.Ref{Table: &workerDOTViolationsTable}
 
 // WorkerDOTViolationsTable is the table of workerdot.WorkerDOTViolation.
 type WorkerDOTViolationsTable struct {
-	keel.Handle[*workerdot.WorkerDOTViolation]
+	keel.TableBase
 	ID                        keelkinds.PulidIDCol
 	BusinessUnitID            keelkinds.PulidIDCol
 	OrganizationID            keelkinds.PulidIDCol
@@ -534,7 +894,7 @@ type WorkerDOTViolationsTable struct {
 
 // WorkerDOTViolations references the worker_dot_violations table.
 var WorkerDOTViolations = &WorkerDOTViolationsTable{
-	Handle:                    keel.Handle[*workerdot.WorkerDOTViolation]{Ref: &workerDOTViolationsRef},
+	TableBase:                 keel.TableBase{Ref: &workerDOTViolationsRef},
 	ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 0}}},
 	BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 1}}},
 	OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 2}}},
@@ -561,10 +921,10 @@ var WorkerDOTViolations = &WorkerDOTViolationsTable{
 	UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 23}},
 }
 
-// BuildWorkerDOTViolations builds the handle of worker_dot_violations for ref. Generated relation and alias methods call it.
+// BuildWorkerDOTViolations builds the table of worker_dot_violations for ref. Generated relation and alias methods call it.
 func BuildWorkerDOTViolations(r *keel.Ref) *WorkerDOTViolationsTable {
 	return &WorkerDOTViolationsTable{
-		Handle:                    keel.Handle[*workerdot.WorkerDOTViolation]{Ref: r},
+		TableBase:                 keel.TableBase{Ref: r},
 		ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -628,6 +988,365 @@ func (t *WorkerDOTViolationsTable) RecordedBy() *tenantdb.UsersTable {
 // Get returns the worker_dot_violations row with the given key, or keel.ErrNotFound.
 func (t *WorkerDOTViolationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerdot.WorkerDOTViolation, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkerDOTViolationsQuery is a query over workerdot.WorkerDOTViolation.
+type WorkerDOTViolationsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workerdot.WorkerDOTViolation] = (*WorkerDOTViolationsTable)(nil)
+
+var _ keel.Query[*workerdot.WorkerDOTViolation] = (*WorkerDOTViolationsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerDOTViolationsTable) Query() keel.Query[*workerdot.WorkerDOTViolation] {
+	return &WorkerDOTViolationsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerDOTViolationsQuery.Where.
+func (t *WorkerDOTViolationsTable) Where(ps ...keel.Pred) keel.Query[*workerdot.WorkerDOTViolation] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerDOTViolationsQuery.Pick.
+func (t *WorkerDOTViolationsTable) Pick(es ...keel.Expr) keel.Query[*workerdot.WorkerDOTViolation] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerDOTViolationsQuery.Load.
+func (t *WorkerDOTViolationsTable) Load(ls ...keel.Loader) keel.Query[*workerdot.WorkerDOTViolation] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerDOTViolationsQuery.Omit.
+func (t *WorkerDOTViolationsTable) Omit(cols ...keel.Column) keel.Query[*workerdot.WorkerDOTViolation] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerDOTViolationsQuery.Order.
+func (t *WorkerDOTViolationsTable) Order(os ...keel.Order) keel.Query[*workerdot.WorkerDOTViolation] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerDOTViolationsQuery.Limit.
+func (t *WorkerDOTViolationsTable) Limit(n int) keel.Query[*workerdot.WorkerDOTViolation] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerDOTViolationsQuery.Group.
+func (t *WorkerDOTViolationsTable) Group(es ...keel.Expr) keel.Query[*workerdot.WorkerDOTViolation] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerDOTViolationsQuery.GroupingSets.
+func (t *WorkerDOTViolationsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerdot.WorkerDOTViolation] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerDOTViolationsQuery.Rollup.
+func (t *WorkerDOTViolationsTable) Rollup(es ...keel.Expr) keel.Query[*workerdot.WorkerDOTViolation] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerDOTViolationsQuery.Cube.
+func (t *WorkerDOTViolationsTable) Cube(es ...keel.Expr) keel.Query[*workerdot.WorkerDOTViolation] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerDOTViolationsQuery.AllTenants.
+func (t *WorkerDOTViolationsTable) AllTenants() keel.Query[*workerdot.WorkerDOTViolation] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerDOTViolationsQuery.Join.
+func (t *WorkerDOTViolationsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerdot.WorkerDOTViolation] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerDOTViolationsQuery.LeftJoin.
+func (t *WorkerDOTViolationsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerdot.WorkerDOTViolation] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerDOTViolationsQuery.LeftJoinLateral.
+func (t *WorkerDOTViolationsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerdot.WorkerDOTViolation] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerDOTViolationsQuery.JoinLateral.
+func (t *WorkerDOTViolationsTable) JoinLateral(sub keel.LateralSource) keel.Query[*workerdot.WorkerDOTViolation] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerDOTViolationsQuery.Lock.
+func (t *WorkerDOTViolationsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerdot.WorkerDOTViolation] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerDOTViolationsQuery.DistinctOn.
+func (t *WorkerDOTViolationsTable) DistinctOn(es ...keel.Expr) keel.Query[*workerdot.WorkerDOTViolation] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerDOTViolationsQuery.Cache.
+func (t *WorkerDOTViolationsTable) Cache(opts ...keel.CacheOption) keel.Query[*workerdot.WorkerDOTViolation] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerDOTViolationsQuery.LoadStrategy.
+func (t *WorkerDOTViolationsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerdot.WorkerDOTViolation] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerDOTViolationsQuery.With.
+func (t *WorkerDOTViolationsTable) With(ctes ...*keel.CTETable) keel.Query[*workerdot.WorkerDOTViolation] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerDOTViolationsQuery.Compute.
+func (t *WorkerDOTViolationsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workerdot.WorkerDOTViolation] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerDOTViolationsTable) Create(ctx context.Context, db *keel.DB, row *workerdot.WorkerDOTViolation) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerDOTViolationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerdot.WorkerDOTViolation) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerDOTViolationsTable) Save(ctx context.Context, db *keel.DB, row *workerdot.WorkerDOTViolation, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerDOTViolationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerdot.WorkerDOTViolation, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerDOTViolationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerdot.WorkerDOTViolation) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerDOTViolationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerdot.WorkerDOTViolation, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerDOTViolationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerdot.WorkerDOTViolation, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerDOTViolationsTable) Copy(ctx context.Context, db *keel.DB, rows []*workerdot.WorkerDOTViolation) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerDOTViolationsQuery) Where(ps ...keel.Pred) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerDOTViolationsQuery) Pick(es ...keel.Expr) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerDOTViolationsQuery) Omit(cols ...keel.Column) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerDOTViolationsQuery) Load(ls ...keel.Loader) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerDOTViolationsQuery) Order(os ...keel.Order) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerDOTViolationsQuery) Distinct() keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerDOTViolationsQuery) Group(es ...keel.Expr) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerDOTViolationsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerDOTViolationsQuery) Rollup(es ...keel.Expr) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerDOTViolationsQuery) Cube(es ...keel.Expr) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerDOTViolationsQuery) Window(name string, w keel.Window) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerDOTViolationsQuery) Having(ps ...keel.Pred) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerDOTViolationsQuery) Limit(n int) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerDOTViolationsQuery) Offset(n int) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerDOTViolationsQuery) DistinctOn(es ...keel.Expr) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerDOTViolationsQuery) AllTenants() keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerDOTViolationsQuery) CustomPlan() keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerDOTViolationsQuery) Timeout(d time.Duration) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerDOTViolationsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerDOTViolationsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerDOTViolationsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerDOTViolationsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerDOTViolationsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerDOTViolationsQuery) Cache(opts ...keel.CacheOption) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerDOTViolationsQuery) With(ctes ...*keel.CTETable) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerDOTViolationsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerDOTViolationsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerdot.WorkerDOTViolation] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerDOTViolationsQuery) Clone() keel.Query[*workerdot.WorkerDOTViolation] {
+	return &WorkerDOTViolationsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerDOTViolationsQuery) One(ctx context.Context, db *keel.DB) (*workerdot.WorkerDOTViolation, error) {
+	return keel.One[*workerdot.WorkerDOTViolation](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerDOTViolationsQuery) First(ctx context.Context, db *keel.DB) (*workerdot.WorkerDOTViolation, error) {
+	return keel.First[*workerdot.WorkerDOTViolation](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerDOTViolationsQuery) List(ctx context.Context, db *keel.DB) ([]*workerdot.WorkerDOTViolation, error) {
+	return keel.List[*workerdot.WorkerDOTViolation](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerDOTViolationsQuery) All(ctx context.Context, db *keel.DB) ([]*workerdot.WorkerDOTViolation, error) {
+	return keel.All[*workerdot.WorkerDOTViolation](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerDOTViolationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerdot.WorkerDOTViolation, error) {
+	return keel.UpdateReturning[*workerdot.WorkerDOTViolation](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerDOTViolationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerdot.WorkerDOTViolation], error) {
+	return keel.PageOf[*workerdot.WorkerDOTViolation](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerDOTViolationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerdot.WorkerDOTViolation) error) error {
+	return keel.Each[*workerdot.WorkerDOTViolation](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerDOTViolation() unsafe.Pointer { return unsafe.Pointer(new(workerdot.WorkerDOTViolation)) }

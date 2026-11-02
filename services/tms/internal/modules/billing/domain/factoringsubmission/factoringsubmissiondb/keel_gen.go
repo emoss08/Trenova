@@ -4,6 +4,7 @@ package factoringsubmissiondb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -95,7 +96,7 @@ var submissionsRef = keel.Ref{Table: &submissionsTable}
 
 // SubmissionsTable is the table of factoringsubmission.Submission.
 type SubmissionsTable struct {
-	keel.Handle[*factoringsubmission.Submission]
+	keel.TableBase
 	ID                    keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
@@ -132,7 +133,7 @@ type SubmissionsTable struct {
 
 // Submissions references the factoring_submissions table.
 var Submissions = &SubmissionsTable{
-	Handle:                keel.Handle[*factoringsubmission.Submission]{Ref: &submissionsRef},
+	TableBase:             keel.TableBase{Ref: &submissionsRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionsRef, Index: 0}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionsRef, Index: 1}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionsRef, Index: 2}}},
@@ -167,10 +168,10 @@ var Submissions = &SubmissionsTable{
 	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &submissionsRef, Index: 31}},
 }
 
-// BuildSubmissions builds the handle of factoring_submissions for ref. Generated relation and alias methods call it.
+// BuildSubmissions builds the table of factoring_submissions for ref. Generated relation and alias methods call it.
 func BuildSubmissions(r *keel.Ref) *SubmissionsTable {
 	return &SubmissionsTable{
-		Handle:                keel.Handle[*factoringsubmission.Submission]{Ref: r},
+		TableBase:             keel.TableBase{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -232,6 +233,365 @@ func (t *SubmissionsTable) Items() *SubmissionItemsTable {
 // Get returns the factoring_submissions row with the given key, or keel.ErrNotFound.
 func (t *SubmissionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoringsubmission.Submission, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// SubmissionsQuery is a query over factoringsubmission.Submission.
+type SubmissionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*factoringsubmission.Submission] = (*SubmissionsTable)(nil)
+
+var _ keel.Query[*factoringsubmission.Submission] = (*SubmissionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SubmissionsTable) Query() keel.Query[*factoringsubmission.Submission] {
+	return &SubmissionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SubmissionsQuery.Where.
+func (t *SubmissionsTable) Where(ps ...keel.Pred) keel.Query[*factoringsubmission.Submission] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SubmissionsQuery.Pick.
+func (t *SubmissionsTable) Pick(es ...keel.Expr) keel.Query[*factoringsubmission.Submission] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SubmissionsQuery.Load.
+func (t *SubmissionsTable) Load(ls ...keel.Loader) keel.Query[*factoringsubmission.Submission] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SubmissionsQuery.Omit.
+func (t *SubmissionsTable) Omit(cols ...keel.Column) keel.Query[*factoringsubmission.Submission] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SubmissionsQuery.Order.
+func (t *SubmissionsTable) Order(os ...keel.Order) keel.Query[*factoringsubmission.Submission] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SubmissionsQuery.Limit.
+func (t *SubmissionsTable) Limit(n int) keel.Query[*factoringsubmission.Submission] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SubmissionsQuery.Group.
+func (t *SubmissionsTable) Group(es ...keel.Expr) keel.Query[*factoringsubmission.Submission] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SubmissionsQuery.GroupingSets.
+func (t *SubmissionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoringsubmission.Submission] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SubmissionsQuery.Rollup.
+func (t *SubmissionsTable) Rollup(es ...keel.Expr) keel.Query[*factoringsubmission.Submission] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SubmissionsQuery.Cube.
+func (t *SubmissionsTable) Cube(es ...keel.Expr) keel.Query[*factoringsubmission.Submission] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SubmissionsQuery.AllTenants.
+func (t *SubmissionsTable) AllTenants() keel.Query[*factoringsubmission.Submission] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SubmissionsQuery.Join.
+func (t *SubmissionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringsubmission.Submission] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SubmissionsQuery.LeftJoin.
+func (t *SubmissionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringsubmission.Submission] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SubmissionsQuery.LeftJoinLateral.
+func (t *SubmissionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoringsubmission.Submission] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SubmissionsQuery.JoinLateral.
+func (t *SubmissionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*factoringsubmission.Submission] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SubmissionsQuery.Lock.
+func (t *SubmissionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoringsubmission.Submission] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SubmissionsQuery.DistinctOn.
+func (t *SubmissionsTable) DistinctOn(es ...keel.Expr) keel.Query[*factoringsubmission.Submission] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SubmissionsQuery.Cache.
+func (t *SubmissionsTable) Cache(opts ...keel.CacheOption) keel.Query[*factoringsubmission.Submission] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SubmissionsQuery.LoadStrategy.
+func (t *SubmissionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoringsubmission.Submission] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SubmissionsQuery.With.
+func (t *SubmissionsTable) With(ctes ...*keel.CTETable) keel.Query[*factoringsubmission.Submission] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SubmissionsQuery.Compute.
+func (t *SubmissionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*factoringsubmission.Submission] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SubmissionsTable) Create(ctx context.Context, db *keel.DB, row *factoringsubmission.Submission) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SubmissionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoringsubmission.Submission) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *SubmissionsTable) Save(ctx context.Context, db *keel.DB, row *factoringsubmission.Submission, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SubmissionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoringsubmission.Submission, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SubmissionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoringsubmission.Submission) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SubmissionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoringsubmission.Submission, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SubmissionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoringsubmission.Submission, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SubmissionsTable) Copy(ctx context.Context, db *keel.DB, rows []*factoringsubmission.Submission) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SubmissionsQuery) Where(ps ...keel.Pred) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SubmissionsQuery) Pick(es ...keel.Expr) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SubmissionsQuery) Omit(cols ...keel.Column) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SubmissionsQuery) Load(ls ...keel.Loader) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SubmissionsQuery) Order(os ...keel.Order) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SubmissionsQuery) Distinct() keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SubmissionsQuery) Group(es ...keel.Expr) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SubmissionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SubmissionsQuery) Rollup(es ...keel.Expr) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SubmissionsQuery) Cube(es ...keel.Expr) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SubmissionsQuery) Window(name string, w keel.Window) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SubmissionsQuery) Having(ps ...keel.Pred) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SubmissionsQuery) Limit(n int) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SubmissionsQuery) Offset(n int) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SubmissionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SubmissionsQuery) AllTenants() keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SubmissionsQuery) CustomPlan() keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SubmissionsQuery) Timeout(d time.Duration) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SubmissionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SubmissionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SubmissionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SubmissionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SubmissionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SubmissionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SubmissionsQuery) With(ctes ...*keel.CTETable) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SubmissionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SubmissionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoringsubmission.Submission] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SubmissionsQuery) Clone() keel.Query[*factoringsubmission.Submission] {
+	return &SubmissionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SubmissionsQuery) One(ctx context.Context, db *keel.DB) (*factoringsubmission.Submission, error) {
+	return keel.One[*factoringsubmission.Submission](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SubmissionsQuery) First(ctx context.Context, db *keel.DB) (*factoringsubmission.Submission, error) {
+	return keel.First[*factoringsubmission.Submission](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SubmissionsQuery) List(ctx context.Context, db *keel.DB) ([]*factoringsubmission.Submission, error) {
+	return keel.List[*factoringsubmission.Submission](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SubmissionsQuery) All(ctx context.Context, db *keel.DB) ([]*factoringsubmission.Submission, error) {
+	return keel.All[*factoringsubmission.Submission](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SubmissionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoringsubmission.Submission, error) {
+	return keel.UpdateReturning[*factoringsubmission.Submission](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SubmissionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoringsubmission.Submission], error) {
+	return keel.PageOf[*factoringsubmission.Submission](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SubmissionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoringsubmission.Submission) error) error {
+	return keel.Each[*factoringsubmission.Submission](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newSubmission() unsafe.Pointer { return unsafe.Pointer(new(factoringsubmission.Submission)) }
@@ -500,7 +860,7 @@ var submissionItemsRef = keel.Ref{Table: &submissionItemsTable}
 
 // SubmissionItemsTable is the table of factoringsubmission.SubmissionItem.
 type SubmissionItemsTable struct {
-	keel.Handle[*factoringsubmission.SubmissionItem]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
@@ -532,7 +892,7 @@ type SubmissionItemsTable struct {
 
 // SubmissionItems references the factoring_submission_items table.
 var SubmissionItems = &SubmissionItemsTable{
-	Handle:               keel.Handle[*factoringsubmission.SubmissionItem]{Ref: &submissionItemsRef},
+	TableBase:            keel.TableBase{Ref: &submissionItemsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 0}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 1}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 2}}},
@@ -562,10 +922,10 @@ var SubmissionItems = &SubmissionItemsTable{
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &submissionItemsRef, Index: 26}},
 }
 
-// BuildSubmissionItems builds the handle of factoring_submission_items for ref. Generated relation and alias methods call it.
+// BuildSubmissionItems builds the table of factoring_submission_items for ref. Generated relation and alias methods call it.
 func BuildSubmissionItems(r *keel.Ref) *SubmissionItemsTable {
 	return &SubmissionItemsTable{
-		Handle:               keel.Handle[*factoringsubmission.SubmissionItem]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -622,6 +982,365 @@ func (t *SubmissionItemsTable) Submission() *SubmissionsTable {
 // Get returns the factoring_submission_items row with the given key, or keel.ErrNotFound.
 func (t *SubmissionItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoringsubmission.SubmissionItem, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// SubmissionItemsQuery is a query over factoringsubmission.SubmissionItem.
+type SubmissionItemsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*factoringsubmission.SubmissionItem] = (*SubmissionItemsTable)(nil)
+
+var _ keel.Query[*factoringsubmission.SubmissionItem] = (*SubmissionItemsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SubmissionItemsTable) Query() keel.Query[*factoringsubmission.SubmissionItem] {
+	return &SubmissionItemsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SubmissionItemsQuery.Where.
+func (t *SubmissionItemsTable) Where(ps ...keel.Pred) keel.Query[*factoringsubmission.SubmissionItem] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SubmissionItemsQuery.Pick.
+func (t *SubmissionItemsTable) Pick(es ...keel.Expr) keel.Query[*factoringsubmission.SubmissionItem] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SubmissionItemsQuery.Load.
+func (t *SubmissionItemsTable) Load(ls ...keel.Loader) keel.Query[*factoringsubmission.SubmissionItem] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SubmissionItemsQuery.Omit.
+func (t *SubmissionItemsTable) Omit(cols ...keel.Column) keel.Query[*factoringsubmission.SubmissionItem] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SubmissionItemsQuery.Order.
+func (t *SubmissionItemsTable) Order(os ...keel.Order) keel.Query[*factoringsubmission.SubmissionItem] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SubmissionItemsQuery.Limit.
+func (t *SubmissionItemsTable) Limit(n int) keel.Query[*factoringsubmission.SubmissionItem] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SubmissionItemsQuery.Group.
+func (t *SubmissionItemsTable) Group(es ...keel.Expr) keel.Query[*factoringsubmission.SubmissionItem] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SubmissionItemsQuery.GroupingSets.
+func (t *SubmissionItemsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoringsubmission.SubmissionItem] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SubmissionItemsQuery.Rollup.
+func (t *SubmissionItemsTable) Rollup(es ...keel.Expr) keel.Query[*factoringsubmission.SubmissionItem] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SubmissionItemsQuery.Cube.
+func (t *SubmissionItemsTable) Cube(es ...keel.Expr) keel.Query[*factoringsubmission.SubmissionItem] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SubmissionItemsQuery.AllTenants.
+func (t *SubmissionItemsTable) AllTenants() keel.Query[*factoringsubmission.SubmissionItem] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SubmissionItemsQuery.Join.
+func (t *SubmissionItemsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringsubmission.SubmissionItem] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SubmissionItemsQuery.LeftJoin.
+func (t *SubmissionItemsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringsubmission.SubmissionItem] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SubmissionItemsQuery.LeftJoinLateral.
+func (t *SubmissionItemsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoringsubmission.SubmissionItem] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SubmissionItemsQuery.JoinLateral.
+func (t *SubmissionItemsTable) JoinLateral(sub keel.LateralSource) keel.Query[*factoringsubmission.SubmissionItem] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SubmissionItemsQuery.Lock.
+func (t *SubmissionItemsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoringsubmission.SubmissionItem] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SubmissionItemsQuery.DistinctOn.
+func (t *SubmissionItemsTable) DistinctOn(es ...keel.Expr) keel.Query[*factoringsubmission.SubmissionItem] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SubmissionItemsQuery.Cache.
+func (t *SubmissionItemsTable) Cache(opts ...keel.CacheOption) keel.Query[*factoringsubmission.SubmissionItem] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SubmissionItemsQuery.LoadStrategy.
+func (t *SubmissionItemsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoringsubmission.SubmissionItem] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SubmissionItemsQuery.With.
+func (t *SubmissionItemsTable) With(ctes ...*keel.CTETable) keel.Query[*factoringsubmission.SubmissionItem] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SubmissionItemsQuery.Compute.
+func (t *SubmissionItemsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*factoringsubmission.SubmissionItem] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SubmissionItemsTable) Create(ctx context.Context, db *keel.DB, row *factoringsubmission.SubmissionItem) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SubmissionItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoringsubmission.SubmissionItem) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *SubmissionItemsTable) Save(ctx context.Context, db *keel.DB, row *factoringsubmission.SubmissionItem, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SubmissionItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoringsubmission.SubmissionItem, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SubmissionItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoringsubmission.SubmissionItem) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SubmissionItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoringsubmission.SubmissionItem, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SubmissionItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoringsubmission.SubmissionItem, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SubmissionItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*factoringsubmission.SubmissionItem) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SubmissionItemsQuery) Where(ps ...keel.Pred) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SubmissionItemsQuery) Pick(es ...keel.Expr) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SubmissionItemsQuery) Omit(cols ...keel.Column) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SubmissionItemsQuery) Load(ls ...keel.Loader) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SubmissionItemsQuery) Order(os ...keel.Order) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SubmissionItemsQuery) Distinct() keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SubmissionItemsQuery) Group(es ...keel.Expr) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SubmissionItemsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SubmissionItemsQuery) Rollup(es ...keel.Expr) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SubmissionItemsQuery) Cube(es ...keel.Expr) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SubmissionItemsQuery) Window(name string, w keel.Window) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SubmissionItemsQuery) Having(ps ...keel.Pred) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SubmissionItemsQuery) Limit(n int) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SubmissionItemsQuery) Offset(n int) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SubmissionItemsQuery) DistinctOn(es ...keel.Expr) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SubmissionItemsQuery) AllTenants() keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SubmissionItemsQuery) CustomPlan() keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SubmissionItemsQuery) Timeout(d time.Duration) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SubmissionItemsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SubmissionItemsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SubmissionItemsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SubmissionItemsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SubmissionItemsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SubmissionItemsQuery) Cache(opts ...keel.CacheOption) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SubmissionItemsQuery) With(ctes ...*keel.CTETable) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SubmissionItemsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SubmissionItemsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoringsubmission.SubmissionItem] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SubmissionItemsQuery) Clone() keel.Query[*factoringsubmission.SubmissionItem] {
+	return &SubmissionItemsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SubmissionItemsQuery) One(ctx context.Context, db *keel.DB) (*factoringsubmission.SubmissionItem, error) {
+	return keel.One[*factoringsubmission.SubmissionItem](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SubmissionItemsQuery) First(ctx context.Context, db *keel.DB) (*factoringsubmission.SubmissionItem, error) {
+	return keel.First[*factoringsubmission.SubmissionItem](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SubmissionItemsQuery) List(ctx context.Context, db *keel.DB) ([]*factoringsubmission.SubmissionItem, error) {
+	return keel.List[*factoringsubmission.SubmissionItem](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SubmissionItemsQuery) All(ctx context.Context, db *keel.DB) ([]*factoringsubmission.SubmissionItem, error) {
+	return keel.All[*factoringsubmission.SubmissionItem](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SubmissionItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoringsubmission.SubmissionItem, error) {
+	return keel.UpdateReturning[*factoringsubmission.SubmissionItem](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SubmissionItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoringsubmission.SubmissionItem], error) {
+	return keel.PageOf[*factoringsubmission.SubmissionItem](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SubmissionItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoringsubmission.SubmissionItem) error) error {
+	return keel.Each[*factoringsubmission.SubmissionItem](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newSubmissionItem() unsafe.Pointer {
@@ -856,7 +1575,7 @@ var transportsRef = keel.Ref{Table: &transportsTable}
 
 // TransportsTable is the table of factoringsubmission.Transport.
 type TransportsTable struct {
-	keel.Handle[*factoringsubmission.Transport]
+	keel.TableBase
 	ID                 keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
@@ -880,7 +1599,7 @@ type TransportsTable struct {
 
 // Transports references the factoring_transports table.
 var Transports = &TransportsTable{
-	Handle:             keel.Handle[*factoringsubmission.Transport]{Ref: &transportsRef},
+	TableBase:          keel.TableBase{Ref: &transportsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transportsRef, Index: 0}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transportsRef, Index: 1}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transportsRef, Index: 2}}},
@@ -902,10 +1621,10 @@ var Transports = &TransportsTable{
 	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &transportsRef, Index: 18}},
 }
 
-// BuildTransports builds the handle of factoring_transports for ref. Generated relation and alias methods call it.
+// BuildTransports builds the table of factoring_transports for ref. Generated relation and alias methods call it.
 func BuildTransports(r *keel.Ref) *TransportsTable {
 	return &TransportsTable{
-		Handle:             keel.Handle[*factoringsubmission.Transport]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -939,6 +1658,365 @@ func (t *TransportsTable) As(alias string) *TransportsTable {
 // Get returns the factoring_transports row with the given key, or keel.ErrNotFound.
 func (t *TransportsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoringsubmission.Transport, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// TransportsQuery is a query over factoringsubmission.Transport.
+type TransportsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*factoringsubmission.Transport] = (*TransportsTable)(nil)
+
+var _ keel.Query[*factoringsubmission.Transport] = (*TransportsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *TransportsTable) Query() keel.Query[*factoringsubmission.Transport] {
+	return &TransportsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see TransportsQuery.Where.
+func (t *TransportsTable) Where(ps ...keel.Pred) keel.Query[*factoringsubmission.Transport] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see TransportsQuery.Pick.
+func (t *TransportsTable) Pick(es ...keel.Expr) keel.Query[*factoringsubmission.Transport] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see TransportsQuery.Load.
+func (t *TransportsTable) Load(ls ...keel.Loader) keel.Query[*factoringsubmission.Transport] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see TransportsQuery.Omit.
+func (t *TransportsTable) Omit(cols ...keel.Column) keel.Query[*factoringsubmission.Transport] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see TransportsQuery.Order.
+func (t *TransportsTable) Order(os ...keel.Order) keel.Query[*factoringsubmission.Transport] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see TransportsQuery.Limit.
+func (t *TransportsTable) Limit(n int) keel.Query[*factoringsubmission.Transport] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see TransportsQuery.Group.
+func (t *TransportsTable) Group(es ...keel.Expr) keel.Query[*factoringsubmission.Transport] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see TransportsQuery.GroupingSets.
+func (t *TransportsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoringsubmission.Transport] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see TransportsQuery.Rollup.
+func (t *TransportsTable) Rollup(es ...keel.Expr) keel.Query[*factoringsubmission.Transport] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see TransportsQuery.Cube.
+func (t *TransportsTable) Cube(es ...keel.Expr) keel.Query[*factoringsubmission.Transport] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see TransportsQuery.AllTenants.
+func (t *TransportsTable) AllTenants() keel.Query[*factoringsubmission.Transport] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see TransportsQuery.Join.
+func (t *TransportsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringsubmission.Transport] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see TransportsQuery.LeftJoin.
+func (t *TransportsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringsubmission.Transport] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see TransportsQuery.LeftJoinLateral.
+func (t *TransportsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoringsubmission.Transport] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see TransportsQuery.JoinLateral.
+func (t *TransportsTable) JoinLateral(sub keel.LateralSource) keel.Query[*factoringsubmission.Transport] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see TransportsQuery.Lock.
+func (t *TransportsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoringsubmission.Transport] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see TransportsQuery.DistinctOn.
+func (t *TransportsTable) DistinctOn(es ...keel.Expr) keel.Query[*factoringsubmission.Transport] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see TransportsQuery.Cache.
+func (t *TransportsTable) Cache(opts ...keel.CacheOption) keel.Query[*factoringsubmission.Transport] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see TransportsQuery.LoadStrategy.
+func (t *TransportsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoringsubmission.Transport] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see TransportsQuery.With.
+func (t *TransportsTable) With(ctes ...*keel.CTETable) keel.Query[*factoringsubmission.Transport] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see TransportsQuery.Compute.
+func (t *TransportsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*factoringsubmission.Transport] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *TransportsTable) Create(ctx context.Context, db *keel.DB, row *factoringsubmission.Transport) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *TransportsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoringsubmission.Transport) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *TransportsTable) Save(ctx context.Context, db *keel.DB, row *factoringsubmission.Transport, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *TransportsTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoringsubmission.Transport, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *TransportsTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoringsubmission.Transport) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *TransportsTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoringsubmission.Transport, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *TransportsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoringsubmission.Transport, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *TransportsTable) Copy(ctx context.Context, db *keel.DB, rows []*factoringsubmission.Transport) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *TransportsQuery) Where(ps ...keel.Pred) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *TransportsQuery) Pick(es ...keel.Expr) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *TransportsQuery) Omit(cols ...keel.Column) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *TransportsQuery) Load(ls ...keel.Loader) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *TransportsQuery) Order(os ...keel.Order) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *TransportsQuery) Distinct() keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *TransportsQuery) Group(es ...keel.Expr) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *TransportsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *TransportsQuery) Rollup(es ...keel.Expr) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *TransportsQuery) Cube(es ...keel.Expr) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *TransportsQuery) Window(name string, w keel.Window) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *TransportsQuery) Having(ps ...keel.Pred) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *TransportsQuery) Limit(n int) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *TransportsQuery) Offset(n int) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *TransportsQuery) DistinctOn(es ...keel.Expr) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *TransportsQuery) AllTenants() keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *TransportsQuery) CustomPlan() keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *TransportsQuery) Timeout(d time.Duration) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *TransportsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *TransportsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *TransportsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *TransportsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *TransportsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *TransportsQuery) Cache(opts ...keel.CacheOption) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *TransportsQuery) With(ctes ...*keel.CTETable) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *TransportsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *TransportsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoringsubmission.Transport] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *TransportsQuery) Clone() keel.Query[*factoringsubmission.Transport] {
+	return &TransportsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *TransportsQuery) One(ctx context.Context, db *keel.DB) (*factoringsubmission.Transport, error) {
+	return keel.One[*factoringsubmission.Transport](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *TransportsQuery) First(ctx context.Context, db *keel.DB) (*factoringsubmission.Transport, error) {
+	return keel.First[*factoringsubmission.Transport](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *TransportsQuery) List(ctx context.Context, db *keel.DB) ([]*factoringsubmission.Transport, error) {
+	return keel.List[*factoringsubmission.Transport](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *TransportsQuery) All(ctx context.Context, db *keel.DB) ([]*factoringsubmission.Transport, error) {
+	return keel.All[*factoringsubmission.Transport](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *TransportsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoringsubmission.Transport, error) {
+	return keel.UpdateReturning[*factoringsubmission.Transport](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *TransportsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoringsubmission.Transport], error) {
+	return keel.PageOf[*factoringsubmission.Transport](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *TransportsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoringsubmission.Transport) error) error {
+	return keel.Each[*factoringsubmission.Transport](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newTransport() unsafe.Pointer { return unsafe.Pointer(new(factoringsubmission.Transport)) }

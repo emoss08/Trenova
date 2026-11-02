@@ -4,6 +4,7 @@ package auditdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -62,7 +63,7 @@ var dLQEntriesRef = keel.Ref{Table: &dLQEntriesTable}
 
 // DLQEntriesTable is the table of audit.DLQEntry.
 type DLQEntriesTable struct {
-	keel.Handle[*audit.DLQEntry]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	OriginalEntryID keelkinds.PulidIDCol
 	EntryData       keel.JSONBCol
@@ -79,7 +80,7 @@ type DLQEntriesTable struct {
 
 // DLQEntries references the audit_dlq_entries table.
 var DLQEntries = &DLQEntriesTable{
-	Handle:          keel.Handle[*audit.DLQEntry]{Ref: &dLQEntriesRef},
+	TableBase:       keel.TableBase{Ref: &dLQEntriesRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dLQEntriesRef, Index: 0}}},
 	OriginalEntryID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dLQEntriesRef, Index: 1}}},
 	EntryData:       keel.JSONBCol{Col: keel.Col{Ref: &dLQEntriesRef, Index: 2}},
@@ -94,10 +95,10 @@ var DLQEntries = &DLQEntriesTable{
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &dLQEntriesRef, Index: 11}},
 }
 
-// BuildDLQEntries builds the handle of audit_dlq_entries for ref. Generated relation and alias methods call it.
+// BuildDLQEntries builds the table of audit_dlq_entries for ref. Generated relation and alias methods call it.
 func BuildDLQEntries(r *keel.Ref) *DLQEntriesTable {
 	return &DLQEntriesTable{
-		Handle:          keel.Handle[*audit.DLQEntry]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OriginalEntryID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		EntryData:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -124,6 +125,365 @@ func (t *DLQEntriesTable) As(alias string) *DLQEntriesTable {
 // Get returns the audit_dlq_entries row with the given key, or keel.ErrNotFound.
 func (t *DLQEntriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*audit.DLQEntry, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// DLQEntriesQuery is a query over audit.DLQEntry.
+type DLQEntriesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*audit.DLQEntry] = (*DLQEntriesTable)(nil)
+
+var _ keel.Query[*audit.DLQEntry] = (*DLQEntriesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *DLQEntriesTable) Query() keel.Query[*audit.DLQEntry] {
+	return &DLQEntriesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see DLQEntriesQuery.Where.
+func (t *DLQEntriesTable) Where(ps ...keel.Pred) keel.Query[*audit.DLQEntry] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see DLQEntriesQuery.Pick.
+func (t *DLQEntriesTable) Pick(es ...keel.Expr) keel.Query[*audit.DLQEntry] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see DLQEntriesQuery.Load.
+func (t *DLQEntriesTable) Load(ls ...keel.Loader) keel.Query[*audit.DLQEntry] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see DLQEntriesQuery.Omit.
+func (t *DLQEntriesTable) Omit(cols ...keel.Column) keel.Query[*audit.DLQEntry] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see DLQEntriesQuery.Order.
+func (t *DLQEntriesTable) Order(os ...keel.Order) keel.Query[*audit.DLQEntry] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see DLQEntriesQuery.Limit.
+func (t *DLQEntriesTable) Limit(n int) keel.Query[*audit.DLQEntry] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see DLQEntriesQuery.Group.
+func (t *DLQEntriesTable) Group(es ...keel.Expr) keel.Query[*audit.DLQEntry] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see DLQEntriesQuery.GroupingSets.
+func (t *DLQEntriesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*audit.DLQEntry] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see DLQEntriesQuery.Rollup.
+func (t *DLQEntriesTable) Rollup(es ...keel.Expr) keel.Query[*audit.DLQEntry] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see DLQEntriesQuery.Cube.
+func (t *DLQEntriesTable) Cube(es ...keel.Expr) keel.Query[*audit.DLQEntry] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see DLQEntriesQuery.AllTenants.
+func (t *DLQEntriesTable) AllTenants() keel.Query[*audit.DLQEntry] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see DLQEntriesQuery.Join.
+func (t *DLQEntriesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.DLQEntry] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see DLQEntriesQuery.LeftJoin.
+func (t *DLQEntriesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.DLQEntry] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see DLQEntriesQuery.LeftJoinLateral.
+func (t *DLQEntriesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*audit.DLQEntry] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see DLQEntriesQuery.JoinLateral.
+func (t *DLQEntriesTable) JoinLateral(sub keel.LateralSource) keel.Query[*audit.DLQEntry] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see DLQEntriesQuery.Lock.
+func (t *DLQEntriesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*audit.DLQEntry] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see DLQEntriesQuery.DistinctOn.
+func (t *DLQEntriesTable) DistinctOn(es ...keel.Expr) keel.Query[*audit.DLQEntry] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see DLQEntriesQuery.Cache.
+func (t *DLQEntriesTable) Cache(opts ...keel.CacheOption) keel.Query[*audit.DLQEntry] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see DLQEntriesQuery.LoadStrategy.
+func (t *DLQEntriesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*audit.DLQEntry] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see DLQEntriesQuery.With.
+func (t *DLQEntriesTable) With(ctes ...*keel.CTETable) keel.Query[*audit.DLQEntry] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see DLQEntriesQuery.Compute.
+func (t *DLQEntriesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*audit.DLQEntry] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *DLQEntriesTable) Create(ctx context.Context, db *keel.DB, row *audit.DLQEntry) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *DLQEntriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*audit.DLQEntry) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *DLQEntriesTable) Save(ctx context.Context, db *keel.DB, row *audit.DLQEntry, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *DLQEntriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *audit.DLQEntry, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *DLQEntriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *audit.DLQEntry) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *DLQEntriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*audit.DLQEntry, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *DLQEntriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*audit.DLQEntry, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *DLQEntriesTable) Copy(ctx context.Context, db *keel.DB, rows []*audit.DLQEntry) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *DLQEntriesQuery) Where(ps ...keel.Pred) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *DLQEntriesQuery) Pick(es ...keel.Expr) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *DLQEntriesQuery) Omit(cols ...keel.Column) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *DLQEntriesQuery) Load(ls ...keel.Loader) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *DLQEntriesQuery) Order(os ...keel.Order) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *DLQEntriesQuery) Distinct() keel.Query[*audit.DLQEntry] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *DLQEntriesQuery) Group(es ...keel.Expr) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *DLQEntriesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *DLQEntriesQuery) Rollup(es ...keel.Expr) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *DLQEntriesQuery) Cube(es ...keel.Expr) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *DLQEntriesQuery) Window(name string, w keel.Window) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *DLQEntriesQuery) Having(ps ...keel.Pred) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *DLQEntriesQuery) Limit(n int) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *DLQEntriesQuery) Offset(n int) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *DLQEntriesQuery) DistinctOn(es ...keel.Expr) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *DLQEntriesQuery) AllTenants() keel.Query[*audit.DLQEntry] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *DLQEntriesQuery) CustomPlan() keel.Query[*audit.DLQEntry] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *DLQEntriesQuery) Timeout(d time.Duration) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *DLQEntriesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *DLQEntriesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *DLQEntriesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *DLQEntriesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *DLQEntriesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *DLQEntriesQuery) Cache(opts ...keel.CacheOption) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *DLQEntriesQuery) With(ctes ...*keel.CTETable) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *DLQEntriesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *DLQEntriesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*audit.DLQEntry] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *DLQEntriesQuery) Clone() keel.Query[*audit.DLQEntry] {
+	return &DLQEntriesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *DLQEntriesQuery) One(ctx context.Context, db *keel.DB) (*audit.DLQEntry, error) {
+	return keel.One[*audit.DLQEntry](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *DLQEntriesQuery) First(ctx context.Context, db *keel.DB) (*audit.DLQEntry, error) {
+	return keel.First[*audit.DLQEntry](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *DLQEntriesQuery) List(ctx context.Context, db *keel.DB) ([]*audit.DLQEntry, error) {
+	return keel.List[*audit.DLQEntry](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *DLQEntriesQuery) All(ctx context.Context, db *keel.DB) ([]*audit.DLQEntry, error) {
+	return keel.All[*audit.DLQEntry](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *DLQEntriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*audit.DLQEntry, error) {
+	return keel.UpdateReturning[*audit.DLQEntry](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *DLQEntriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*audit.DLQEntry], error) {
+	return keel.PageOf[*audit.DLQEntry](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *DLQEntriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*audit.DLQEntry) error) error {
+	return keel.Each[*audit.DLQEntry](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newDLQEntry() unsafe.Pointer { return unsafe.Pointer(new(audit.DLQEntry)) }
@@ -267,7 +627,7 @@ var entriesRef = keel.Ref{Table: &entriesTable}
 
 // EntriesTable is the table of audit.Entry.
 type EntriesTable struct {
-	keel.Handle[*audit.Entry]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	UserID         keelkinds.PulidIDCol
 	PrincipalType  keel.StringCol
@@ -294,7 +654,7 @@ type EntriesTable struct {
 
 // Entries references the audit_entries table.
 var Entries = &EntriesTable{
-	Handle:         keel.Handle[*audit.Entry]{Ref: &entriesRef},
+	TableBase:      keel.TableBase{Ref: &entriesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 0}}},
 	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 1}}},
 	PrincipalType:  keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 2}},
@@ -319,10 +679,10 @@ var Entries = &EntriesTable{
 	Critical:       keel.BoolCol{Col: keel.Col{Ref: &entriesRef, Index: 21}},
 }
 
-// BuildEntries builds the handle of audit_entries for ref. Generated relation and alias methods call it.
+// BuildEntries builds the table of audit_entries for ref. Generated relation and alias methods call it.
 func BuildEntries(r *keel.Ref) *EntriesTable {
 	return &EntriesTable{
-		Handle:         keel.Handle[*audit.Entry]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		PrincipalType:  keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -363,6 +723,365 @@ func (t *EntriesTable) APIKey() *apikeydb.KeysTable { return keel.Path(t.Ref, 1,
 // Get returns the audit_entries row with the given key, or keel.ErrNotFound.
 func (t *EntriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*audit.Entry, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EntriesQuery is a query over audit.Entry.
+type EntriesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*audit.Entry] = (*EntriesTable)(nil)
+
+var _ keel.Query[*audit.Entry] = (*EntriesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EntriesTable) Query() keel.Query[*audit.Entry] {
+	return &EntriesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EntriesQuery.Where.
+func (t *EntriesTable) Where(ps ...keel.Pred) keel.Query[*audit.Entry] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EntriesQuery.Pick.
+func (t *EntriesTable) Pick(es ...keel.Expr) keel.Query[*audit.Entry] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EntriesQuery.Load.
+func (t *EntriesTable) Load(ls ...keel.Loader) keel.Query[*audit.Entry] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EntriesQuery.Omit.
+func (t *EntriesTable) Omit(cols ...keel.Column) keel.Query[*audit.Entry] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EntriesQuery.Order.
+func (t *EntriesTable) Order(os ...keel.Order) keel.Query[*audit.Entry] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EntriesQuery.Limit.
+func (t *EntriesTable) Limit(n int) keel.Query[*audit.Entry] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EntriesQuery.Group.
+func (t *EntriesTable) Group(es ...keel.Expr) keel.Query[*audit.Entry] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EntriesQuery.GroupingSets.
+func (t *EntriesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*audit.Entry] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EntriesQuery.Rollup.
+func (t *EntriesTable) Rollup(es ...keel.Expr) keel.Query[*audit.Entry] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EntriesQuery.Cube.
+func (t *EntriesTable) Cube(es ...keel.Expr) keel.Query[*audit.Entry] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EntriesQuery.AllTenants.
+func (t *EntriesTable) AllTenants() keel.Query[*audit.Entry] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EntriesQuery.Join.
+func (t *EntriesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.Entry] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EntriesQuery.LeftJoin.
+func (t *EntriesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.Entry] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EntriesQuery.LeftJoinLateral.
+func (t *EntriesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*audit.Entry] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EntriesQuery.JoinLateral.
+func (t *EntriesTable) JoinLateral(sub keel.LateralSource) keel.Query[*audit.Entry] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EntriesQuery.Lock.
+func (t *EntriesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*audit.Entry] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EntriesQuery.DistinctOn.
+func (t *EntriesTable) DistinctOn(es ...keel.Expr) keel.Query[*audit.Entry] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EntriesQuery.Cache.
+func (t *EntriesTable) Cache(opts ...keel.CacheOption) keel.Query[*audit.Entry] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EntriesQuery.LoadStrategy.
+func (t *EntriesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*audit.Entry] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EntriesQuery.With.
+func (t *EntriesTable) With(ctes ...*keel.CTETable) keel.Query[*audit.Entry] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EntriesQuery.Compute.
+func (t *EntriesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*audit.Entry] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EntriesTable) Create(ctx context.Context, db *keel.DB, row *audit.Entry) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EntriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*audit.Entry) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EntriesTable) Save(ctx context.Context, db *keel.DB, row *audit.Entry, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EntriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *audit.Entry, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EntriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *audit.Entry) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EntriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*audit.Entry, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EntriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*audit.Entry, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EntriesTable) Copy(ctx context.Context, db *keel.DB, rows []*audit.Entry) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EntriesQuery) Where(ps ...keel.Pred) keel.Query[*audit.Entry] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EntriesQuery) Pick(es ...keel.Expr) keel.Query[*audit.Entry] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EntriesQuery) Omit(cols ...keel.Column) keel.Query[*audit.Entry] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EntriesQuery) Load(ls ...keel.Loader) keel.Query[*audit.Entry] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EntriesQuery) Order(os ...keel.Order) keel.Query[*audit.Entry] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EntriesQuery) Distinct() keel.Query[*audit.Entry] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EntriesQuery) Group(es ...keel.Expr) keel.Query[*audit.Entry] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EntriesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*audit.Entry] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EntriesQuery) Rollup(es ...keel.Expr) keel.Query[*audit.Entry] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EntriesQuery) Cube(es ...keel.Expr) keel.Query[*audit.Entry] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EntriesQuery) Window(name string, w keel.Window) keel.Query[*audit.Entry] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EntriesQuery) Having(ps ...keel.Pred) keel.Query[*audit.Entry] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EntriesQuery) Limit(n int) keel.Query[*audit.Entry] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EntriesQuery) Offset(n int) keel.Query[*audit.Entry] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EntriesQuery) DistinctOn(es ...keel.Expr) keel.Query[*audit.Entry] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EntriesQuery) AllTenants() keel.Query[*audit.Entry] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EntriesQuery) CustomPlan() keel.Query[*audit.Entry] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EntriesQuery) Timeout(d time.Duration) keel.Query[*audit.Entry] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EntriesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*audit.Entry] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EntriesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.Entry] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EntriesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.Entry] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EntriesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*audit.Entry] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EntriesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*audit.Entry] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EntriesQuery) Cache(opts ...keel.CacheOption) keel.Query[*audit.Entry] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EntriesQuery) With(ctes ...*keel.CTETable) keel.Query[*audit.Entry] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EntriesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*audit.Entry] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EntriesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*audit.Entry] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EntriesQuery) Clone() keel.Query[*audit.Entry] {
+	return &EntriesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EntriesQuery) One(ctx context.Context, db *keel.DB) (*audit.Entry, error) {
+	return keel.One[*audit.Entry](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EntriesQuery) First(ctx context.Context, db *keel.DB) (*audit.Entry, error) {
+	return keel.First[*audit.Entry](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EntriesQuery) List(ctx context.Context, db *keel.DB) ([]*audit.Entry, error) {
+	return keel.List[*audit.Entry](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EntriesQuery) All(ctx context.Context, db *keel.DB) ([]*audit.Entry, error) {
+	return keel.All[*audit.Entry](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EntriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*audit.Entry, error) {
+	return keel.UpdateReturning[*audit.Entry](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EntriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*audit.Entry], error) {
+	return keel.PageOf[*audit.Entry](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EntriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*audit.Entry) error) error {
+	return keel.Each[*audit.Entry](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEntry() unsafe.Pointer { return unsafe.Pointer(new(audit.Entry)) }

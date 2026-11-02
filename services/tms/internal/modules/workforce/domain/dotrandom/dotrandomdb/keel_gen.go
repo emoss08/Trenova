@@ -4,6 +4,7 @@ package dotrandomdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -80,7 +81,7 @@ var dOTRandomDrawsRef = keel.Ref{Table: &dOTRandomDrawsTable}
 
 // DOTRandomDrawsTable is the table of dotrandom.DOTRandomDraw.
 type DOTRandomDrawsTable struct {
-	keel.Handle[*dotrandom.DOTRandomDraw]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -107,7 +108,7 @@ type DOTRandomDrawsTable struct {
 
 // DOTRandomDraws references the dot_random_draws table.
 var DOTRandomDraws = &DOTRandomDrawsTable{
-	Handle:          keel.Handle[*dotrandom.DOTRandomDraw]{Ref: &dOTRandomDrawsRef},
+	TableBase:       keel.TableBase{Ref: &dOTRandomDrawsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 2}}},
@@ -132,10 +133,10 @@ var DOTRandomDraws = &DOTRandomDrawsTable{
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 21}},
 }
 
-// BuildDOTRandomDraws builds the handle of dot_random_draws for ref. Generated relation and alias methods call it.
+// BuildDOTRandomDraws builds the table of dot_random_draws for ref. Generated relation and alias methods call it.
 func BuildDOTRandomDraws(r *keel.Ref) *DOTRandomDrawsTable {
 	return &DOTRandomDrawsTable{
-		Handle:          keel.Handle[*dotrandom.DOTRandomDraw]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -187,6 +188,365 @@ func (t *DOTRandomDrawsTable) Entries() *DOTRandomDrawEntriesTable {
 // Get returns the dot_random_draws row with the given key, or keel.ErrNotFound.
 func (t *DOTRandomDrawsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*dotrandom.DOTRandomDraw, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// DOTRandomDrawsQuery is a query over dotrandom.DOTRandomDraw.
+type DOTRandomDrawsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*dotrandom.DOTRandomDraw] = (*DOTRandomDrawsTable)(nil)
+
+var _ keel.Query[*dotrandom.DOTRandomDraw] = (*DOTRandomDrawsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *DOTRandomDrawsTable) Query() keel.Query[*dotrandom.DOTRandomDraw] {
+	return &DOTRandomDrawsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see DOTRandomDrawsQuery.Where.
+func (t *DOTRandomDrawsTable) Where(ps ...keel.Pred) keel.Query[*dotrandom.DOTRandomDraw] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see DOTRandomDrawsQuery.Pick.
+func (t *DOTRandomDrawsTable) Pick(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomDraw] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see DOTRandomDrawsQuery.Load.
+func (t *DOTRandomDrawsTable) Load(ls ...keel.Loader) keel.Query[*dotrandom.DOTRandomDraw] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see DOTRandomDrawsQuery.Omit.
+func (t *DOTRandomDrawsTable) Omit(cols ...keel.Column) keel.Query[*dotrandom.DOTRandomDraw] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see DOTRandomDrawsQuery.Order.
+func (t *DOTRandomDrawsTable) Order(os ...keel.Order) keel.Query[*dotrandom.DOTRandomDraw] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see DOTRandomDrawsQuery.Limit.
+func (t *DOTRandomDrawsTable) Limit(n int) keel.Query[*dotrandom.DOTRandomDraw] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see DOTRandomDrawsQuery.Group.
+func (t *DOTRandomDrawsTable) Group(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomDraw] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see DOTRandomDrawsQuery.GroupingSets.
+func (t *DOTRandomDrawsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*dotrandom.DOTRandomDraw] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see DOTRandomDrawsQuery.Rollup.
+func (t *DOTRandomDrawsTable) Rollup(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomDraw] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see DOTRandomDrawsQuery.Cube.
+func (t *DOTRandomDrawsTable) Cube(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomDraw] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see DOTRandomDrawsQuery.AllTenants.
+func (t *DOTRandomDrawsTable) AllTenants() keel.Query[*dotrandom.DOTRandomDraw] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see DOTRandomDrawsQuery.Join.
+func (t *DOTRandomDrawsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dotrandom.DOTRandomDraw] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see DOTRandomDrawsQuery.LeftJoin.
+func (t *DOTRandomDrawsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dotrandom.DOTRandomDraw] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see DOTRandomDrawsQuery.LeftJoinLateral.
+func (t *DOTRandomDrawsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*dotrandom.DOTRandomDraw] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see DOTRandomDrawsQuery.JoinLateral.
+func (t *DOTRandomDrawsTable) JoinLateral(sub keel.LateralSource) keel.Query[*dotrandom.DOTRandomDraw] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see DOTRandomDrawsQuery.Lock.
+func (t *DOTRandomDrawsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*dotrandom.DOTRandomDraw] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see DOTRandomDrawsQuery.DistinctOn.
+func (t *DOTRandomDrawsTable) DistinctOn(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomDraw] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see DOTRandomDrawsQuery.Cache.
+func (t *DOTRandomDrawsTable) Cache(opts ...keel.CacheOption) keel.Query[*dotrandom.DOTRandomDraw] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see DOTRandomDrawsQuery.LoadStrategy.
+func (t *DOTRandomDrawsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*dotrandom.DOTRandomDraw] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see DOTRandomDrawsQuery.With.
+func (t *DOTRandomDrawsTable) With(ctes ...*keel.CTETable) keel.Query[*dotrandom.DOTRandomDraw] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see DOTRandomDrawsQuery.Compute.
+func (t *DOTRandomDrawsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*dotrandom.DOTRandomDraw] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *DOTRandomDrawsTable) Create(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomDraw) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *DOTRandomDrawsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomDraw) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *DOTRandomDrawsTable) Save(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomDraw, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *DOTRandomDrawsTable) SaveExcept(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomDraw, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *DOTRandomDrawsTable) DeleteRow(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomDraw) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *DOTRandomDrawsTable) Upsert(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomDraw, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *DOTRandomDrawsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomDraw, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *DOTRandomDrawsTable) Copy(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomDraw) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *DOTRandomDrawsQuery) Where(ps ...keel.Pred) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *DOTRandomDrawsQuery) Pick(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *DOTRandomDrawsQuery) Omit(cols ...keel.Column) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *DOTRandomDrawsQuery) Load(ls ...keel.Loader) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *DOTRandomDrawsQuery) Order(os ...keel.Order) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *DOTRandomDrawsQuery) Distinct() keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *DOTRandomDrawsQuery) Group(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *DOTRandomDrawsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *DOTRandomDrawsQuery) Rollup(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *DOTRandomDrawsQuery) Cube(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *DOTRandomDrawsQuery) Window(name string, w keel.Window) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *DOTRandomDrawsQuery) Having(ps ...keel.Pred) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *DOTRandomDrawsQuery) Limit(n int) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *DOTRandomDrawsQuery) Offset(n int) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *DOTRandomDrawsQuery) DistinctOn(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *DOTRandomDrawsQuery) AllTenants() keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *DOTRandomDrawsQuery) CustomPlan() keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *DOTRandomDrawsQuery) Timeout(d time.Duration) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *DOTRandomDrawsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *DOTRandomDrawsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *DOTRandomDrawsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *DOTRandomDrawsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *DOTRandomDrawsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *DOTRandomDrawsQuery) Cache(opts ...keel.CacheOption) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *DOTRandomDrawsQuery) With(ctes ...*keel.CTETable) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *DOTRandomDrawsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *DOTRandomDrawsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*dotrandom.DOTRandomDraw] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *DOTRandomDrawsQuery) Clone() keel.Query[*dotrandom.DOTRandomDraw] {
+	return &DOTRandomDrawsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *DOTRandomDrawsQuery) One(ctx context.Context, db *keel.DB) (*dotrandom.DOTRandomDraw, error) {
+	return keel.One[*dotrandom.DOTRandomDraw](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *DOTRandomDrawsQuery) First(ctx context.Context, db *keel.DB) (*dotrandom.DOTRandomDraw, error) {
+	return keel.First[*dotrandom.DOTRandomDraw](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *DOTRandomDrawsQuery) List(ctx context.Context, db *keel.DB) ([]*dotrandom.DOTRandomDraw, error) {
+	return keel.List[*dotrandom.DOTRandomDraw](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *DOTRandomDrawsQuery) All(ctx context.Context, db *keel.DB) ([]*dotrandom.DOTRandomDraw, error) {
+	return keel.All[*dotrandom.DOTRandomDraw](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *DOTRandomDrawsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*dotrandom.DOTRandomDraw, error) {
+	return keel.UpdateReturning[*dotrandom.DOTRandomDraw](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *DOTRandomDrawsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*dotrandom.DOTRandomDraw], error) {
+	return keel.PageOf[*dotrandom.DOTRandomDraw](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *DOTRandomDrawsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*dotrandom.DOTRandomDraw) error) error {
+	return keel.Each[*dotrandom.DOTRandomDraw](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newDOTRandomDraw() unsafe.Pointer { return unsafe.Pointer(new(dotrandom.DOTRandomDraw)) }
@@ -376,7 +736,7 @@ var dOTRandomDrawEntriesRef = keel.Ref{Table: &dOTRandomDrawEntriesTable}
 
 // DOTRandomDrawEntriesTable is the table of dotrandom.DOTRandomDrawEntry.
 type DOTRandomDrawEntriesTable struct {
-	keel.Handle[*dotrandom.DOTRandomDrawEntry]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -396,7 +756,7 @@ type DOTRandomDrawEntriesTable struct {
 
 // DOTRandomDrawEntries references the dot_random_draw_entries table.
 var DOTRandomDrawEntries = &DOTRandomDrawEntriesTable{
-	Handle:         keel.Handle[*dotrandom.DOTRandomDrawEntry]{Ref: &dOTRandomDrawEntriesRef},
+	TableBase:      keel.TableBase{Ref: &dOTRandomDrawEntriesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 2}}},
@@ -414,10 +774,10 @@ var DOTRandomDrawEntries = &DOTRandomDrawEntriesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 14}},
 }
 
-// BuildDOTRandomDrawEntries builds the handle of dot_random_draw_entries for ref. Generated relation and alias methods call it.
+// BuildDOTRandomDrawEntries builds the table of dot_random_draw_entries for ref. Generated relation and alias methods call it.
 func BuildDOTRandomDrawEntries(r *keel.Ref) *DOTRandomDrawEntriesTable {
 	return &DOTRandomDrawEntriesTable{
-		Handle:         keel.Handle[*dotrandom.DOTRandomDrawEntry]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -457,6 +817,365 @@ func (t *DOTRandomDrawEntriesTable) Worker() *workerdb.WorkersTable {
 // Get returns the dot_random_draw_entries row with the given key, or keel.ErrNotFound.
 func (t *DOTRandomDrawEntriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*dotrandom.DOTRandomDrawEntry, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// DOTRandomDrawEntriesQuery is a query over dotrandom.DOTRandomDrawEntry.
+type DOTRandomDrawEntriesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*dotrandom.DOTRandomDrawEntry] = (*DOTRandomDrawEntriesTable)(nil)
+
+var _ keel.Query[*dotrandom.DOTRandomDrawEntry] = (*DOTRandomDrawEntriesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *DOTRandomDrawEntriesTable) Query() keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return &DOTRandomDrawEntriesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see DOTRandomDrawEntriesQuery.Where.
+func (t *DOTRandomDrawEntriesTable) Where(ps ...keel.Pred) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see DOTRandomDrawEntriesQuery.Pick.
+func (t *DOTRandomDrawEntriesTable) Pick(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see DOTRandomDrawEntriesQuery.Load.
+func (t *DOTRandomDrawEntriesTable) Load(ls ...keel.Loader) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see DOTRandomDrawEntriesQuery.Omit.
+func (t *DOTRandomDrawEntriesTable) Omit(cols ...keel.Column) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see DOTRandomDrawEntriesQuery.Order.
+func (t *DOTRandomDrawEntriesTable) Order(os ...keel.Order) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see DOTRandomDrawEntriesQuery.Limit.
+func (t *DOTRandomDrawEntriesTable) Limit(n int) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see DOTRandomDrawEntriesQuery.Group.
+func (t *DOTRandomDrawEntriesTable) Group(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see DOTRandomDrawEntriesQuery.GroupingSets.
+func (t *DOTRandomDrawEntriesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see DOTRandomDrawEntriesQuery.Rollup.
+func (t *DOTRandomDrawEntriesTable) Rollup(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see DOTRandomDrawEntriesQuery.Cube.
+func (t *DOTRandomDrawEntriesTable) Cube(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see DOTRandomDrawEntriesQuery.AllTenants.
+func (t *DOTRandomDrawEntriesTable) AllTenants() keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see DOTRandomDrawEntriesQuery.Join.
+func (t *DOTRandomDrawEntriesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see DOTRandomDrawEntriesQuery.LeftJoin.
+func (t *DOTRandomDrawEntriesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see DOTRandomDrawEntriesQuery.LeftJoinLateral.
+func (t *DOTRandomDrawEntriesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see DOTRandomDrawEntriesQuery.JoinLateral.
+func (t *DOTRandomDrawEntriesTable) JoinLateral(sub keel.LateralSource) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see DOTRandomDrawEntriesQuery.Lock.
+func (t *DOTRandomDrawEntriesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see DOTRandomDrawEntriesQuery.DistinctOn.
+func (t *DOTRandomDrawEntriesTable) DistinctOn(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see DOTRandomDrawEntriesQuery.Cache.
+func (t *DOTRandomDrawEntriesTable) Cache(opts ...keel.CacheOption) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see DOTRandomDrawEntriesQuery.LoadStrategy.
+func (t *DOTRandomDrawEntriesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see DOTRandomDrawEntriesQuery.With.
+func (t *DOTRandomDrawEntriesTable) With(ctes ...*keel.CTETable) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see DOTRandomDrawEntriesQuery.Compute.
+func (t *DOTRandomDrawEntriesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *DOTRandomDrawEntriesTable) Create(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomDrawEntry) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *DOTRandomDrawEntriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomDrawEntry) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *DOTRandomDrawEntriesTable) Save(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomDrawEntry, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *DOTRandomDrawEntriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomDrawEntry, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *DOTRandomDrawEntriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomDrawEntry) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *DOTRandomDrawEntriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomDrawEntry, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *DOTRandomDrawEntriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomDrawEntry, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *DOTRandomDrawEntriesTable) Copy(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomDrawEntry) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *DOTRandomDrawEntriesQuery) Where(ps ...keel.Pred) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *DOTRandomDrawEntriesQuery) Pick(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *DOTRandomDrawEntriesQuery) Omit(cols ...keel.Column) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *DOTRandomDrawEntriesQuery) Load(ls ...keel.Loader) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *DOTRandomDrawEntriesQuery) Order(os ...keel.Order) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *DOTRandomDrawEntriesQuery) Distinct() keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *DOTRandomDrawEntriesQuery) Group(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *DOTRandomDrawEntriesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *DOTRandomDrawEntriesQuery) Rollup(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *DOTRandomDrawEntriesQuery) Cube(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *DOTRandomDrawEntriesQuery) Window(name string, w keel.Window) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *DOTRandomDrawEntriesQuery) Having(ps ...keel.Pred) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *DOTRandomDrawEntriesQuery) Limit(n int) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *DOTRandomDrawEntriesQuery) Offset(n int) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *DOTRandomDrawEntriesQuery) DistinctOn(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *DOTRandomDrawEntriesQuery) AllTenants() keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *DOTRandomDrawEntriesQuery) CustomPlan() keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *DOTRandomDrawEntriesQuery) Timeout(d time.Duration) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *DOTRandomDrawEntriesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *DOTRandomDrawEntriesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *DOTRandomDrawEntriesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *DOTRandomDrawEntriesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *DOTRandomDrawEntriesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *DOTRandomDrawEntriesQuery) Cache(opts ...keel.CacheOption) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *DOTRandomDrawEntriesQuery) With(ctes ...*keel.CTETable) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *DOTRandomDrawEntriesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *DOTRandomDrawEntriesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *DOTRandomDrawEntriesQuery) Clone() keel.Query[*dotrandom.DOTRandomDrawEntry] {
+	return &DOTRandomDrawEntriesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *DOTRandomDrawEntriesQuery) One(ctx context.Context, db *keel.DB) (*dotrandom.DOTRandomDrawEntry, error) {
+	return keel.One[*dotrandom.DOTRandomDrawEntry](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *DOTRandomDrawEntriesQuery) First(ctx context.Context, db *keel.DB) (*dotrandom.DOTRandomDrawEntry, error) {
+	return keel.First[*dotrandom.DOTRandomDrawEntry](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *DOTRandomDrawEntriesQuery) List(ctx context.Context, db *keel.DB) ([]*dotrandom.DOTRandomDrawEntry, error) {
+	return keel.List[*dotrandom.DOTRandomDrawEntry](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *DOTRandomDrawEntriesQuery) All(ctx context.Context, db *keel.DB) ([]*dotrandom.DOTRandomDrawEntry, error) {
+	return keel.All[*dotrandom.DOTRandomDrawEntry](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *DOTRandomDrawEntriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*dotrandom.DOTRandomDrawEntry, error) {
+	return keel.UpdateReturning[*dotrandom.DOTRandomDrawEntry](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *DOTRandomDrawEntriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*dotrandom.DOTRandomDrawEntry], error) {
+	return keel.PageOf[*dotrandom.DOTRandomDrawEntry](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *DOTRandomDrawEntriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*dotrandom.DOTRandomDrawEntry) error) error {
+	return keel.Each[*dotrandom.DOTRandomDrawEntry](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newDOTRandomDrawEntry() unsafe.Pointer { return unsafe.Pointer(new(dotrandom.DOTRandomDrawEntry)) }
@@ -617,7 +1336,7 @@ var dOTRandomPoolsRef = keel.Ref{Table: &dOTRandomPoolsTable}
 
 // DOTRandomPoolsTable is the table of dotrandom.DOTRandomPool.
 type DOTRandomPoolsTable struct {
-	keel.Handle[*dotrandom.DOTRandomPool]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -639,7 +1358,7 @@ type DOTRandomPoolsTable struct {
 
 // DOTRandomPools references the dot_random_pools table.
 var DOTRandomPools = &DOTRandomPoolsTable{
-	Handle:              keel.Handle[*dotrandom.DOTRandomPool]{Ref: &dOTRandomPoolsRef},
+	TableBase:           keel.TableBase{Ref: &dOTRandomPoolsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 2}}},
@@ -659,10 +1378,10 @@ var DOTRandomPools = &DOTRandomPoolsTable{
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 16}},
 }
 
-// BuildDOTRandomPools builds the handle of dot_random_pools for ref. Generated relation and alias methods call it.
+// BuildDOTRandomPools builds the table of dot_random_pools for ref. Generated relation and alias methods call it.
 func BuildDOTRandomPools(r *keel.Ref) *DOTRandomPoolsTable {
 	return &DOTRandomPoolsTable{
-		Handle:              keel.Handle[*dotrandom.DOTRandomPool]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -694,6 +1413,365 @@ func (t *DOTRandomPoolsTable) As(alias string) *DOTRandomPoolsTable {
 // Get returns the dot_random_pools row with the given key, or keel.ErrNotFound.
 func (t *DOTRandomPoolsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*dotrandom.DOTRandomPool, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// DOTRandomPoolsQuery is a query over dotrandom.DOTRandomPool.
+type DOTRandomPoolsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*dotrandom.DOTRandomPool] = (*DOTRandomPoolsTable)(nil)
+
+var _ keel.Query[*dotrandom.DOTRandomPool] = (*DOTRandomPoolsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *DOTRandomPoolsTable) Query() keel.Query[*dotrandom.DOTRandomPool] {
+	return &DOTRandomPoolsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see DOTRandomPoolsQuery.Where.
+func (t *DOTRandomPoolsTable) Where(ps ...keel.Pred) keel.Query[*dotrandom.DOTRandomPool] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see DOTRandomPoolsQuery.Pick.
+func (t *DOTRandomPoolsTable) Pick(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomPool] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see DOTRandomPoolsQuery.Load.
+func (t *DOTRandomPoolsTable) Load(ls ...keel.Loader) keel.Query[*dotrandom.DOTRandomPool] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see DOTRandomPoolsQuery.Omit.
+func (t *DOTRandomPoolsTable) Omit(cols ...keel.Column) keel.Query[*dotrandom.DOTRandomPool] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see DOTRandomPoolsQuery.Order.
+func (t *DOTRandomPoolsTable) Order(os ...keel.Order) keel.Query[*dotrandom.DOTRandomPool] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see DOTRandomPoolsQuery.Limit.
+func (t *DOTRandomPoolsTable) Limit(n int) keel.Query[*dotrandom.DOTRandomPool] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see DOTRandomPoolsQuery.Group.
+func (t *DOTRandomPoolsTable) Group(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomPool] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see DOTRandomPoolsQuery.GroupingSets.
+func (t *DOTRandomPoolsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*dotrandom.DOTRandomPool] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see DOTRandomPoolsQuery.Rollup.
+func (t *DOTRandomPoolsTable) Rollup(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomPool] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see DOTRandomPoolsQuery.Cube.
+func (t *DOTRandomPoolsTable) Cube(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomPool] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see DOTRandomPoolsQuery.AllTenants.
+func (t *DOTRandomPoolsTable) AllTenants() keel.Query[*dotrandom.DOTRandomPool] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see DOTRandomPoolsQuery.Join.
+func (t *DOTRandomPoolsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dotrandom.DOTRandomPool] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see DOTRandomPoolsQuery.LeftJoin.
+func (t *DOTRandomPoolsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dotrandom.DOTRandomPool] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see DOTRandomPoolsQuery.LeftJoinLateral.
+func (t *DOTRandomPoolsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*dotrandom.DOTRandomPool] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see DOTRandomPoolsQuery.JoinLateral.
+func (t *DOTRandomPoolsTable) JoinLateral(sub keel.LateralSource) keel.Query[*dotrandom.DOTRandomPool] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see DOTRandomPoolsQuery.Lock.
+func (t *DOTRandomPoolsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*dotrandom.DOTRandomPool] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see DOTRandomPoolsQuery.DistinctOn.
+func (t *DOTRandomPoolsTable) DistinctOn(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomPool] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see DOTRandomPoolsQuery.Cache.
+func (t *DOTRandomPoolsTable) Cache(opts ...keel.CacheOption) keel.Query[*dotrandom.DOTRandomPool] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see DOTRandomPoolsQuery.LoadStrategy.
+func (t *DOTRandomPoolsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*dotrandom.DOTRandomPool] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see DOTRandomPoolsQuery.With.
+func (t *DOTRandomPoolsTable) With(ctes ...*keel.CTETable) keel.Query[*dotrandom.DOTRandomPool] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see DOTRandomPoolsQuery.Compute.
+func (t *DOTRandomPoolsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*dotrandom.DOTRandomPool] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *DOTRandomPoolsTable) Create(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomPool) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *DOTRandomPoolsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomPool) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *DOTRandomPoolsTable) Save(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomPool, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *DOTRandomPoolsTable) SaveExcept(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomPool, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *DOTRandomPoolsTable) DeleteRow(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomPool) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *DOTRandomPoolsTable) Upsert(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomPool, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *DOTRandomPoolsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomPool, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *DOTRandomPoolsTable) Copy(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomPool) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *DOTRandomPoolsQuery) Where(ps ...keel.Pred) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *DOTRandomPoolsQuery) Pick(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *DOTRandomPoolsQuery) Omit(cols ...keel.Column) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *DOTRandomPoolsQuery) Load(ls ...keel.Loader) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *DOTRandomPoolsQuery) Order(os ...keel.Order) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *DOTRandomPoolsQuery) Distinct() keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *DOTRandomPoolsQuery) Group(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *DOTRandomPoolsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *DOTRandomPoolsQuery) Rollup(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *DOTRandomPoolsQuery) Cube(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *DOTRandomPoolsQuery) Window(name string, w keel.Window) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *DOTRandomPoolsQuery) Having(ps ...keel.Pred) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *DOTRandomPoolsQuery) Limit(n int) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *DOTRandomPoolsQuery) Offset(n int) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *DOTRandomPoolsQuery) DistinctOn(es ...keel.Expr) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *DOTRandomPoolsQuery) AllTenants() keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *DOTRandomPoolsQuery) CustomPlan() keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *DOTRandomPoolsQuery) Timeout(d time.Duration) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *DOTRandomPoolsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *DOTRandomPoolsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *DOTRandomPoolsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *DOTRandomPoolsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *DOTRandomPoolsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *DOTRandomPoolsQuery) Cache(opts ...keel.CacheOption) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *DOTRandomPoolsQuery) With(ctes ...*keel.CTETable) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *DOTRandomPoolsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *DOTRandomPoolsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*dotrandom.DOTRandomPool] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *DOTRandomPoolsQuery) Clone() keel.Query[*dotrandom.DOTRandomPool] {
+	return &DOTRandomPoolsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *DOTRandomPoolsQuery) One(ctx context.Context, db *keel.DB) (*dotrandom.DOTRandomPool, error) {
+	return keel.One[*dotrandom.DOTRandomPool](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *DOTRandomPoolsQuery) First(ctx context.Context, db *keel.DB) (*dotrandom.DOTRandomPool, error) {
+	return keel.First[*dotrandom.DOTRandomPool](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *DOTRandomPoolsQuery) List(ctx context.Context, db *keel.DB) ([]*dotrandom.DOTRandomPool, error) {
+	return keel.List[*dotrandom.DOTRandomPool](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *DOTRandomPoolsQuery) All(ctx context.Context, db *keel.DB) ([]*dotrandom.DOTRandomPool, error) {
+	return keel.All[*dotrandom.DOTRandomPool](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *DOTRandomPoolsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*dotrandom.DOTRandomPool, error) {
+	return keel.UpdateReturning[*dotrandom.DOTRandomPool](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *DOTRandomPoolsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*dotrandom.DOTRandomPool], error) {
+	return keel.PageOf[*dotrandom.DOTRandomPool](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *DOTRandomPoolsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*dotrandom.DOTRandomPool) error) error {
+	return keel.Each[*dotrandom.DOTRandomPool](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newDOTRandomPool() unsafe.Pointer { return unsafe.Pointer(new(dotrandom.DOTRandomPool)) }

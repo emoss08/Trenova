@@ -4,6 +4,7 @@ package dataentrycontroldb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -56,7 +57,7 @@ var dataEntryControlsRef = keel.Ref{Table: &dataEntryControlsTable}
 
 // DataEntryControlsTable is the table of dataentrycontrol.DataEntryControl.
 type DataEntryControlsTable struct {
-	keel.Handle[*dataentrycontrol.DataEntryControl]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -71,7 +72,7 @@ type DataEntryControlsTable struct {
 
 // DataEntryControls references the data_entry_controls table.
 var DataEntryControls = &DataEntryControlsTable{
-	Handle:         keel.Handle[*dataentrycontrol.DataEntryControl]{Ref: &dataEntryControlsRef},
+	TableBase:      keel.TableBase{Ref: &dataEntryControlsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 2}}},
@@ -84,10 +85,10 @@ var DataEntryControls = &DataEntryControlsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 9}},
 }
 
-// BuildDataEntryControls builds the handle of data_entry_controls for ref. Generated relation and alias methods call it.
+// BuildDataEntryControls builds the table of data_entry_controls for ref. Generated relation and alias methods call it.
 func BuildDataEntryControls(r *keel.Ref) *DataEntryControlsTable {
 	return &DataEntryControlsTable{
-		Handle:         keel.Handle[*dataentrycontrol.DataEntryControl]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -112,6 +113,365 @@ func (t *DataEntryControlsTable) As(alias string) *DataEntryControlsTable {
 // Get returns the data_entry_controls row with the given key, or keel.ErrNotFound.
 func (t *DataEntryControlsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*dataentrycontrol.DataEntryControl, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// DataEntryControlsQuery is a query over dataentrycontrol.DataEntryControl.
+type DataEntryControlsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*dataentrycontrol.DataEntryControl] = (*DataEntryControlsTable)(nil)
+
+var _ keel.Query[*dataentrycontrol.DataEntryControl] = (*DataEntryControlsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *DataEntryControlsTable) Query() keel.Query[*dataentrycontrol.DataEntryControl] {
+	return &DataEntryControlsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see DataEntryControlsQuery.Where.
+func (t *DataEntryControlsTable) Where(ps ...keel.Pred) keel.Query[*dataentrycontrol.DataEntryControl] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see DataEntryControlsQuery.Pick.
+func (t *DataEntryControlsTable) Pick(es ...keel.Expr) keel.Query[*dataentrycontrol.DataEntryControl] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see DataEntryControlsQuery.Load.
+func (t *DataEntryControlsTable) Load(ls ...keel.Loader) keel.Query[*dataentrycontrol.DataEntryControl] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see DataEntryControlsQuery.Omit.
+func (t *DataEntryControlsTable) Omit(cols ...keel.Column) keel.Query[*dataentrycontrol.DataEntryControl] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see DataEntryControlsQuery.Order.
+func (t *DataEntryControlsTable) Order(os ...keel.Order) keel.Query[*dataentrycontrol.DataEntryControl] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see DataEntryControlsQuery.Limit.
+func (t *DataEntryControlsTable) Limit(n int) keel.Query[*dataentrycontrol.DataEntryControl] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see DataEntryControlsQuery.Group.
+func (t *DataEntryControlsTable) Group(es ...keel.Expr) keel.Query[*dataentrycontrol.DataEntryControl] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see DataEntryControlsQuery.GroupingSets.
+func (t *DataEntryControlsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*dataentrycontrol.DataEntryControl] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see DataEntryControlsQuery.Rollup.
+func (t *DataEntryControlsTable) Rollup(es ...keel.Expr) keel.Query[*dataentrycontrol.DataEntryControl] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see DataEntryControlsQuery.Cube.
+func (t *DataEntryControlsTable) Cube(es ...keel.Expr) keel.Query[*dataentrycontrol.DataEntryControl] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see DataEntryControlsQuery.AllTenants.
+func (t *DataEntryControlsTable) AllTenants() keel.Query[*dataentrycontrol.DataEntryControl] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see DataEntryControlsQuery.Join.
+func (t *DataEntryControlsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dataentrycontrol.DataEntryControl] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see DataEntryControlsQuery.LeftJoin.
+func (t *DataEntryControlsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dataentrycontrol.DataEntryControl] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see DataEntryControlsQuery.LeftJoinLateral.
+func (t *DataEntryControlsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*dataentrycontrol.DataEntryControl] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see DataEntryControlsQuery.JoinLateral.
+func (t *DataEntryControlsTable) JoinLateral(sub keel.LateralSource) keel.Query[*dataentrycontrol.DataEntryControl] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see DataEntryControlsQuery.Lock.
+func (t *DataEntryControlsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*dataentrycontrol.DataEntryControl] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see DataEntryControlsQuery.DistinctOn.
+func (t *DataEntryControlsTable) DistinctOn(es ...keel.Expr) keel.Query[*dataentrycontrol.DataEntryControl] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see DataEntryControlsQuery.Cache.
+func (t *DataEntryControlsTable) Cache(opts ...keel.CacheOption) keel.Query[*dataentrycontrol.DataEntryControl] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see DataEntryControlsQuery.LoadStrategy.
+func (t *DataEntryControlsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*dataentrycontrol.DataEntryControl] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see DataEntryControlsQuery.With.
+func (t *DataEntryControlsTable) With(ctes ...*keel.CTETable) keel.Query[*dataentrycontrol.DataEntryControl] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see DataEntryControlsQuery.Compute.
+func (t *DataEntryControlsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*dataentrycontrol.DataEntryControl] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *DataEntryControlsTable) Create(ctx context.Context, db *keel.DB, row *dataentrycontrol.DataEntryControl) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *DataEntryControlsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*dataentrycontrol.DataEntryControl) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *DataEntryControlsTable) Save(ctx context.Context, db *keel.DB, row *dataentrycontrol.DataEntryControl, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *DataEntryControlsTable) SaveExcept(ctx context.Context, db *keel.DB, row *dataentrycontrol.DataEntryControl, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *DataEntryControlsTable) DeleteRow(ctx context.Context, db *keel.DB, row *dataentrycontrol.DataEntryControl) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *DataEntryControlsTable) Upsert(ctx context.Context, db *keel.DB, rows []*dataentrycontrol.DataEntryControl, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *DataEntryControlsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*dataentrycontrol.DataEntryControl, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *DataEntryControlsTable) Copy(ctx context.Context, db *keel.DB, rows []*dataentrycontrol.DataEntryControl) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *DataEntryControlsQuery) Where(ps ...keel.Pred) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *DataEntryControlsQuery) Pick(es ...keel.Expr) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *DataEntryControlsQuery) Omit(cols ...keel.Column) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *DataEntryControlsQuery) Load(ls ...keel.Loader) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *DataEntryControlsQuery) Order(os ...keel.Order) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *DataEntryControlsQuery) Distinct() keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *DataEntryControlsQuery) Group(es ...keel.Expr) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *DataEntryControlsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *DataEntryControlsQuery) Rollup(es ...keel.Expr) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *DataEntryControlsQuery) Cube(es ...keel.Expr) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *DataEntryControlsQuery) Window(name string, w keel.Window) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *DataEntryControlsQuery) Having(ps ...keel.Pred) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *DataEntryControlsQuery) Limit(n int) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *DataEntryControlsQuery) Offset(n int) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *DataEntryControlsQuery) DistinctOn(es ...keel.Expr) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *DataEntryControlsQuery) AllTenants() keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *DataEntryControlsQuery) CustomPlan() keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *DataEntryControlsQuery) Timeout(d time.Duration) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *DataEntryControlsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *DataEntryControlsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *DataEntryControlsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *DataEntryControlsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *DataEntryControlsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *DataEntryControlsQuery) Cache(opts ...keel.CacheOption) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *DataEntryControlsQuery) With(ctes ...*keel.CTETable) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *DataEntryControlsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *DataEntryControlsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*dataentrycontrol.DataEntryControl] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *DataEntryControlsQuery) Clone() keel.Query[*dataentrycontrol.DataEntryControl] {
+	return &DataEntryControlsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *DataEntryControlsQuery) One(ctx context.Context, db *keel.DB) (*dataentrycontrol.DataEntryControl, error) {
+	return keel.One[*dataentrycontrol.DataEntryControl](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *DataEntryControlsQuery) First(ctx context.Context, db *keel.DB) (*dataentrycontrol.DataEntryControl, error) {
+	return keel.First[*dataentrycontrol.DataEntryControl](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *DataEntryControlsQuery) List(ctx context.Context, db *keel.DB) ([]*dataentrycontrol.DataEntryControl, error) {
+	return keel.List[*dataentrycontrol.DataEntryControl](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *DataEntryControlsQuery) All(ctx context.Context, db *keel.DB) ([]*dataentrycontrol.DataEntryControl, error) {
+	return keel.All[*dataentrycontrol.DataEntryControl](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *DataEntryControlsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*dataentrycontrol.DataEntryControl, error) {
+	return keel.UpdateReturning[*dataentrycontrol.DataEntryControl](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *DataEntryControlsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*dataentrycontrol.DataEntryControl], error) {
+	return keel.PageOf[*dataentrycontrol.DataEntryControl](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *DataEntryControlsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*dataentrycontrol.DataEntryControl) error) error {
+	return keel.Each[*dataentrycontrol.DataEntryControl](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newDataEntryControl() unsafe.Pointer {

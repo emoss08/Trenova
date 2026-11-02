@@ -4,6 +4,7 @@ package ladingprojectdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -59,7 +60,7 @@ var flowEventsRef = keel.Ref{Table: &flowEventsTable}
 
 // FlowEventsTable is the table of ladingproject.FlowEvent.
 type FlowEventsTable struct {
-	keel.Handle[*ladingproject.FlowEvent]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -75,7 +76,7 @@ type FlowEventsTable struct {
 
 // FlowEvents references the edi_flow_events table.
 var FlowEvents = &FlowEventsTable{
-	Handle:         keel.Handle[*ladingproject.FlowEvent]{Ref: &flowEventsRef},
+	TableBase:      keel.TableBase{Ref: &flowEventsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 2}}},
@@ -89,10 +90,10 @@ var FlowEvents = &FlowEventsTable{
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &flowEventsRef, Index: 10}},
 }
 
-// BuildFlowEvents builds the handle of edi_flow_events for ref. Generated relation and alias methods call it.
+// BuildFlowEvents builds the table of edi_flow_events for ref. Generated relation and alias methods call it.
 func BuildFlowEvents(r *keel.Ref) *FlowEventsTable {
 	return &FlowEventsTable{
-		Handle:         keel.Handle[*ladingproject.FlowEvent]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -118,6 +119,365 @@ func (t *FlowEventsTable) As(alias string) *FlowEventsTable {
 // Get returns the edi_flow_events row with the given key, or keel.ErrNotFound.
 func (t *FlowEventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ladingproject.FlowEvent, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// FlowEventsQuery is a query over ladingproject.FlowEvent.
+type FlowEventsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*ladingproject.FlowEvent] = (*FlowEventsTable)(nil)
+
+var _ keel.Query[*ladingproject.FlowEvent] = (*FlowEventsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *FlowEventsTable) Query() keel.Query[*ladingproject.FlowEvent] {
+	return &FlowEventsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see FlowEventsQuery.Where.
+func (t *FlowEventsTable) Where(ps ...keel.Pred) keel.Query[*ladingproject.FlowEvent] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see FlowEventsQuery.Pick.
+func (t *FlowEventsTable) Pick(es ...keel.Expr) keel.Query[*ladingproject.FlowEvent] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see FlowEventsQuery.Load.
+func (t *FlowEventsTable) Load(ls ...keel.Loader) keel.Query[*ladingproject.FlowEvent] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see FlowEventsQuery.Omit.
+func (t *FlowEventsTable) Omit(cols ...keel.Column) keel.Query[*ladingproject.FlowEvent] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see FlowEventsQuery.Order.
+func (t *FlowEventsTable) Order(os ...keel.Order) keel.Query[*ladingproject.FlowEvent] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see FlowEventsQuery.Limit.
+func (t *FlowEventsTable) Limit(n int) keel.Query[*ladingproject.FlowEvent] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see FlowEventsQuery.Group.
+func (t *FlowEventsTable) Group(es ...keel.Expr) keel.Query[*ladingproject.FlowEvent] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see FlowEventsQuery.GroupingSets.
+func (t *FlowEventsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*ladingproject.FlowEvent] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see FlowEventsQuery.Rollup.
+func (t *FlowEventsTable) Rollup(es ...keel.Expr) keel.Query[*ladingproject.FlowEvent] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see FlowEventsQuery.Cube.
+func (t *FlowEventsTable) Cube(es ...keel.Expr) keel.Query[*ladingproject.FlowEvent] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see FlowEventsQuery.AllTenants.
+func (t *FlowEventsTable) AllTenants() keel.Query[*ladingproject.FlowEvent] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see FlowEventsQuery.Join.
+func (t *FlowEventsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.FlowEvent] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see FlowEventsQuery.LeftJoin.
+func (t *FlowEventsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.FlowEvent] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see FlowEventsQuery.LeftJoinLateral.
+func (t *FlowEventsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.FlowEvent] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see FlowEventsQuery.JoinLateral.
+func (t *FlowEventsTable) JoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.FlowEvent] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see FlowEventsQuery.Lock.
+func (t *FlowEventsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ladingproject.FlowEvent] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see FlowEventsQuery.DistinctOn.
+func (t *FlowEventsTable) DistinctOn(es ...keel.Expr) keel.Query[*ladingproject.FlowEvent] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see FlowEventsQuery.Cache.
+func (t *FlowEventsTable) Cache(opts ...keel.CacheOption) keel.Query[*ladingproject.FlowEvent] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see FlowEventsQuery.LoadStrategy.
+func (t *FlowEventsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*ladingproject.FlowEvent] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see FlowEventsQuery.With.
+func (t *FlowEventsTable) With(ctes ...*keel.CTETable) keel.Query[*ladingproject.FlowEvent] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see FlowEventsQuery.Compute.
+func (t *FlowEventsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ladingproject.FlowEvent] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *FlowEventsTable) Create(ctx context.Context, db *keel.DB, row *ladingproject.FlowEvent) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *FlowEventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ladingproject.FlowEvent) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *FlowEventsTable) Save(ctx context.Context, db *keel.DB, row *ladingproject.FlowEvent, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *FlowEventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *ladingproject.FlowEvent, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *FlowEventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *ladingproject.FlowEvent) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *FlowEventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*ladingproject.FlowEvent, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *FlowEventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ladingproject.FlowEvent, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *FlowEventsTable) Copy(ctx context.Context, db *keel.DB, rows []*ladingproject.FlowEvent) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *FlowEventsQuery) Where(ps ...keel.Pred) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *FlowEventsQuery) Pick(es ...keel.Expr) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *FlowEventsQuery) Omit(cols ...keel.Column) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *FlowEventsQuery) Load(ls ...keel.Loader) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *FlowEventsQuery) Order(os ...keel.Order) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *FlowEventsQuery) Distinct() keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *FlowEventsQuery) Group(es ...keel.Expr) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *FlowEventsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *FlowEventsQuery) Rollup(es ...keel.Expr) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *FlowEventsQuery) Cube(es ...keel.Expr) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *FlowEventsQuery) Window(name string, w keel.Window) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *FlowEventsQuery) Having(ps ...keel.Pred) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *FlowEventsQuery) Limit(n int) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *FlowEventsQuery) Offset(n int) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *FlowEventsQuery) DistinctOn(es ...keel.Expr) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *FlowEventsQuery) AllTenants() keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *FlowEventsQuery) CustomPlan() keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *FlowEventsQuery) Timeout(d time.Duration) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *FlowEventsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *FlowEventsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *FlowEventsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *FlowEventsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *FlowEventsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *FlowEventsQuery) Cache(opts ...keel.CacheOption) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *FlowEventsQuery) With(ctes ...*keel.CTETable) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *FlowEventsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *FlowEventsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*ladingproject.FlowEvent] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *FlowEventsQuery) Clone() keel.Query[*ladingproject.FlowEvent] {
+	return &FlowEventsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *FlowEventsQuery) One(ctx context.Context, db *keel.DB) (*ladingproject.FlowEvent, error) {
+	return keel.One[*ladingproject.FlowEvent](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *FlowEventsQuery) First(ctx context.Context, db *keel.DB) (*ladingproject.FlowEvent, error) {
+	return keel.First[*ladingproject.FlowEvent](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *FlowEventsQuery) List(ctx context.Context, db *keel.DB) ([]*ladingproject.FlowEvent, error) {
+	return keel.List[*ladingproject.FlowEvent](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *FlowEventsQuery) All(ctx context.Context, db *keel.DB) ([]*ladingproject.FlowEvent, error) {
+	return keel.All[*ladingproject.FlowEvent](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *FlowEventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ladingproject.FlowEvent, error) {
+	return keel.UpdateReturning[*ladingproject.FlowEvent](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *FlowEventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ladingproject.FlowEvent], error) {
+	return keel.PageOf[*ladingproject.FlowEvent](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *FlowEventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ladingproject.FlowEvent) error) error {
+	return keel.Each[*ladingproject.FlowEvent](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newFlowEvent() unsafe.Pointer { return unsafe.Pointer(new(ladingproject.FlowEvent)) }
@@ -256,7 +616,7 @@ var flowInstancesRef = keel.Ref{Table: &flowInstancesTable}
 
 // FlowInstancesTable is the table of ladingproject.FlowInstance.
 type FlowInstancesTable struct {
-	keel.Handle[*ladingproject.FlowInstance]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -282,7 +642,7 @@ type FlowInstancesTable struct {
 
 // FlowInstances references the edi_flow_instances table.
 var FlowInstances = &FlowInstancesTable{
-	Handle:         keel.Handle[*ladingproject.FlowInstance]{Ref: &flowInstancesRef},
+	TableBase:      keel.TableBase{Ref: &flowInstancesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 2}}},
@@ -306,10 +666,10 @@ var FlowInstances = &FlowInstancesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &flowInstancesRef, Index: 20}},
 }
 
-// BuildFlowInstances builds the handle of edi_flow_instances for ref. Generated relation and alias methods call it.
+// BuildFlowInstances builds the table of edi_flow_instances for ref. Generated relation and alias methods call it.
 func BuildFlowInstances(r *keel.Ref) *FlowInstancesTable {
 	return &FlowInstancesTable{
-		Handle:         keel.Handle[*ladingproject.FlowInstance]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -350,6 +710,365 @@ func (t *FlowInstancesTable) Partner() *edidb.EDIPartnersTable {
 // Get returns the edi_flow_instances row with the given key, or keel.ErrNotFound.
 func (t *FlowInstancesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ladingproject.FlowInstance, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// FlowInstancesQuery is a query over ladingproject.FlowInstance.
+type FlowInstancesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*ladingproject.FlowInstance] = (*FlowInstancesTable)(nil)
+
+var _ keel.Query[*ladingproject.FlowInstance] = (*FlowInstancesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *FlowInstancesTable) Query() keel.Query[*ladingproject.FlowInstance] {
+	return &FlowInstancesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see FlowInstancesQuery.Where.
+func (t *FlowInstancesTable) Where(ps ...keel.Pred) keel.Query[*ladingproject.FlowInstance] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see FlowInstancesQuery.Pick.
+func (t *FlowInstancesTable) Pick(es ...keel.Expr) keel.Query[*ladingproject.FlowInstance] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see FlowInstancesQuery.Load.
+func (t *FlowInstancesTable) Load(ls ...keel.Loader) keel.Query[*ladingproject.FlowInstance] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see FlowInstancesQuery.Omit.
+func (t *FlowInstancesTable) Omit(cols ...keel.Column) keel.Query[*ladingproject.FlowInstance] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see FlowInstancesQuery.Order.
+func (t *FlowInstancesTable) Order(os ...keel.Order) keel.Query[*ladingproject.FlowInstance] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see FlowInstancesQuery.Limit.
+func (t *FlowInstancesTable) Limit(n int) keel.Query[*ladingproject.FlowInstance] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see FlowInstancesQuery.Group.
+func (t *FlowInstancesTable) Group(es ...keel.Expr) keel.Query[*ladingproject.FlowInstance] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see FlowInstancesQuery.GroupingSets.
+func (t *FlowInstancesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*ladingproject.FlowInstance] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see FlowInstancesQuery.Rollup.
+func (t *FlowInstancesTable) Rollup(es ...keel.Expr) keel.Query[*ladingproject.FlowInstance] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see FlowInstancesQuery.Cube.
+func (t *FlowInstancesTable) Cube(es ...keel.Expr) keel.Query[*ladingproject.FlowInstance] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see FlowInstancesQuery.AllTenants.
+func (t *FlowInstancesTable) AllTenants() keel.Query[*ladingproject.FlowInstance] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see FlowInstancesQuery.Join.
+func (t *FlowInstancesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.FlowInstance] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see FlowInstancesQuery.LeftJoin.
+func (t *FlowInstancesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.FlowInstance] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see FlowInstancesQuery.LeftJoinLateral.
+func (t *FlowInstancesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.FlowInstance] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see FlowInstancesQuery.JoinLateral.
+func (t *FlowInstancesTable) JoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.FlowInstance] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see FlowInstancesQuery.Lock.
+func (t *FlowInstancesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ladingproject.FlowInstance] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see FlowInstancesQuery.DistinctOn.
+func (t *FlowInstancesTable) DistinctOn(es ...keel.Expr) keel.Query[*ladingproject.FlowInstance] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see FlowInstancesQuery.Cache.
+func (t *FlowInstancesTable) Cache(opts ...keel.CacheOption) keel.Query[*ladingproject.FlowInstance] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see FlowInstancesQuery.LoadStrategy.
+func (t *FlowInstancesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*ladingproject.FlowInstance] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see FlowInstancesQuery.With.
+func (t *FlowInstancesTable) With(ctes ...*keel.CTETable) keel.Query[*ladingproject.FlowInstance] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see FlowInstancesQuery.Compute.
+func (t *FlowInstancesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ladingproject.FlowInstance] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *FlowInstancesTable) Create(ctx context.Context, db *keel.DB, row *ladingproject.FlowInstance) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *FlowInstancesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ladingproject.FlowInstance) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *FlowInstancesTable) Save(ctx context.Context, db *keel.DB, row *ladingproject.FlowInstance, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *FlowInstancesTable) SaveExcept(ctx context.Context, db *keel.DB, row *ladingproject.FlowInstance, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *FlowInstancesTable) DeleteRow(ctx context.Context, db *keel.DB, row *ladingproject.FlowInstance) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *FlowInstancesTable) Upsert(ctx context.Context, db *keel.DB, rows []*ladingproject.FlowInstance, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *FlowInstancesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ladingproject.FlowInstance, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *FlowInstancesTable) Copy(ctx context.Context, db *keel.DB, rows []*ladingproject.FlowInstance) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *FlowInstancesQuery) Where(ps ...keel.Pred) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *FlowInstancesQuery) Pick(es ...keel.Expr) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *FlowInstancesQuery) Omit(cols ...keel.Column) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *FlowInstancesQuery) Load(ls ...keel.Loader) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *FlowInstancesQuery) Order(os ...keel.Order) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *FlowInstancesQuery) Distinct() keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *FlowInstancesQuery) Group(es ...keel.Expr) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *FlowInstancesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *FlowInstancesQuery) Rollup(es ...keel.Expr) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *FlowInstancesQuery) Cube(es ...keel.Expr) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *FlowInstancesQuery) Window(name string, w keel.Window) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *FlowInstancesQuery) Having(ps ...keel.Pred) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *FlowInstancesQuery) Limit(n int) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *FlowInstancesQuery) Offset(n int) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *FlowInstancesQuery) DistinctOn(es ...keel.Expr) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *FlowInstancesQuery) AllTenants() keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *FlowInstancesQuery) CustomPlan() keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *FlowInstancesQuery) Timeout(d time.Duration) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *FlowInstancesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *FlowInstancesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *FlowInstancesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *FlowInstancesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *FlowInstancesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *FlowInstancesQuery) Cache(opts ...keel.CacheOption) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *FlowInstancesQuery) With(ctes ...*keel.CTETable) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *FlowInstancesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *FlowInstancesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*ladingproject.FlowInstance] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *FlowInstancesQuery) Clone() keel.Query[*ladingproject.FlowInstance] {
+	return &FlowInstancesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *FlowInstancesQuery) One(ctx context.Context, db *keel.DB) (*ladingproject.FlowInstance, error) {
+	return keel.One[*ladingproject.FlowInstance](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *FlowInstancesQuery) First(ctx context.Context, db *keel.DB) (*ladingproject.FlowInstance, error) {
+	return keel.First[*ladingproject.FlowInstance](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *FlowInstancesQuery) List(ctx context.Context, db *keel.DB) ([]*ladingproject.FlowInstance, error) {
+	return keel.List[*ladingproject.FlowInstance](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *FlowInstancesQuery) All(ctx context.Context, db *keel.DB) ([]*ladingproject.FlowInstance, error) {
+	return keel.All[*ladingproject.FlowInstance](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *FlowInstancesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ladingproject.FlowInstance, error) {
+	return keel.UpdateReturning[*ladingproject.FlowInstance](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *FlowInstancesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ladingproject.FlowInstance], error) {
+	return keel.PageOf[*ladingproject.FlowInstance](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *FlowInstancesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ladingproject.FlowInstance) error) error {
+	return keel.Each[*ladingproject.FlowInstance](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newFlowInstance() unsafe.Pointer { return unsafe.Pointer(new(ladingproject.FlowInstance)) }
@@ -542,7 +1261,7 @@ var ladingProjectsRef = keel.Ref{Table: &ladingProjectsTable}
 
 // LadingProjectsTable is the table of ladingproject.LadingProject.
 type LadingProjectsTable struct {
-	keel.Handle[*ladingproject.LadingProject]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -558,7 +1277,7 @@ type LadingProjectsTable struct {
 
 // LadingProjects references the edi_lading_projects table.
 var LadingProjects = &LadingProjectsTable{
-	Handle:            keel.Handle[*ladingproject.LadingProject]{Ref: &ladingProjectsRef},
+	TableBase:         keel.TableBase{Ref: &ladingProjectsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 2}}},
@@ -572,10 +1291,10 @@ var LadingProjects = &LadingProjectsTable{
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &ladingProjectsRef, Index: 10}},
 }
 
-// BuildLadingProjects builds the handle of edi_lading_projects for ref. Generated relation and alias methods call it.
+// BuildLadingProjects builds the table of edi_lading_projects for ref. Generated relation and alias methods call it.
 func BuildLadingProjects(r *keel.Ref) *LadingProjectsTable {
 	return &LadingProjectsTable{
-		Handle:            keel.Handle[*ladingproject.LadingProject]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -611,6 +1330,365 @@ func (t *LadingProjectsTable) ActiveVersion() *LadingVersionsTable {
 // Get returns the edi_lading_projects row with the given key, or keel.ErrNotFound.
 func (t *LadingProjectsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ladingproject.LadingProject, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// LadingProjectsQuery is a query over ladingproject.LadingProject.
+type LadingProjectsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*ladingproject.LadingProject] = (*LadingProjectsTable)(nil)
+
+var _ keel.Query[*ladingproject.LadingProject] = (*LadingProjectsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *LadingProjectsTable) Query() keel.Query[*ladingproject.LadingProject] {
+	return &LadingProjectsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see LadingProjectsQuery.Where.
+func (t *LadingProjectsTable) Where(ps ...keel.Pred) keel.Query[*ladingproject.LadingProject] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see LadingProjectsQuery.Pick.
+func (t *LadingProjectsTable) Pick(es ...keel.Expr) keel.Query[*ladingproject.LadingProject] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see LadingProjectsQuery.Load.
+func (t *LadingProjectsTable) Load(ls ...keel.Loader) keel.Query[*ladingproject.LadingProject] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see LadingProjectsQuery.Omit.
+func (t *LadingProjectsTable) Omit(cols ...keel.Column) keel.Query[*ladingproject.LadingProject] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see LadingProjectsQuery.Order.
+func (t *LadingProjectsTable) Order(os ...keel.Order) keel.Query[*ladingproject.LadingProject] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see LadingProjectsQuery.Limit.
+func (t *LadingProjectsTable) Limit(n int) keel.Query[*ladingproject.LadingProject] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see LadingProjectsQuery.Group.
+func (t *LadingProjectsTable) Group(es ...keel.Expr) keel.Query[*ladingproject.LadingProject] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see LadingProjectsQuery.GroupingSets.
+func (t *LadingProjectsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*ladingproject.LadingProject] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see LadingProjectsQuery.Rollup.
+func (t *LadingProjectsTable) Rollup(es ...keel.Expr) keel.Query[*ladingproject.LadingProject] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see LadingProjectsQuery.Cube.
+func (t *LadingProjectsTable) Cube(es ...keel.Expr) keel.Query[*ladingproject.LadingProject] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see LadingProjectsQuery.AllTenants.
+func (t *LadingProjectsTable) AllTenants() keel.Query[*ladingproject.LadingProject] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see LadingProjectsQuery.Join.
+func (t *LadingProjectsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.LadingProject] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see LadingProjectsQuery.LeftJoin.
+func (t *LadingProjectsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.LadingProject] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see LadingProjectsQuery.LeftJoinLateral.
+func (t *LadingProjectsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.LadingProject] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see LadingProjectsQuery.JoinLateral.
+func (t *LadingProjectsTable) JoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.LadingProject] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see LadingProjectsQuery.Lock.
+func (t *LadingProjectsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ladingproject.LadingProject] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see LadingProjectsQuery.DistinctOn.
+func (t *LadingProjectsTable) DistinctOn(es ...keel.Expr) keel.Query[*ladingproject.LadingProject] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see LadingProjectsQuery.Cache.
+func (t *LadingProjectsTable) Cache(opts ...keel.CacheOption) keel.Query[*ladingproject.LadingProject] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see LadingProjectsQuery.LoadStrategy.
+func (t *LadingProjectsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*ladingproject.LadingProject] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see LadingProjectsQuery.With.
+func (t *LadingProjectsTable) With(ctes ...*keel.CTETable) keel.Query[*ladingproject.LadingProject] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see LadingProjectsQuery.Compute.
+func (t *LadingProjectsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ladingproject.LadingProject] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *LadingProjectsTable) Create(ctx context.Context, db *keel.DB, row *ladingproject.LadingProject) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *LadingProjectsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingProject) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *LadingProjectsTable) Save(ctx context.Context, db *keel.DB, row *ladingproject.LadingProject, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *LadingProjectsTable) SaveExcept(ctx context.Context, db *keel.DB, row *ladingproject.LadingProject, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *LadingProjectsTable) DeleteRow(ctx context.Context, db *keel.DB, row *ladingproject.LadingProject) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *LadingProjectsTable) Upsert(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingProject, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *LadingProjectsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingProject, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *LadingProjectsTable) Copy(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingProject) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *LadingProjectsQuery) Where(ps ...keel.Pred) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *LadingProjectsQuery) Pick(es ...keel.Expr) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *LadingProjectsQuery) Omit(cols ...keel.Column) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *LadingProjectsQuery) Load(ls ...keel.Loader) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *LadingProjectsQuery) Order(os ...keel.Order) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *LadingProjectsQuery) Distinct() keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *LadingProjectsQuery) Group(es ...keel.Expr) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *LadingProjectsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *LadingProjectsQuery) Rollup(es ...keel.Expr) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *LadingProjectsQuery) Cube(es ...keel.Expr) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *LadingProjectsQuery) Window(name string, w keel.Window) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *LadingProjectsQuery) Having(ps ...keel.Pred) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *LadingProjectsQuery) Limit(n int) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *LadingProjectsQuery) Offset(n int) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *LadingProjectsQuery) DistinctOn(es ...keel.Expr) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *LadingProjectsQuery) AllTenants() keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *LadingProjectsQuery) CustomPlan() keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *LadingProjectsQuery) Timeout(d time.Duration) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *LadingProjectsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *LadingProjectsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *LadingProjectsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *LadingProjectsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *LadingProjectsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *LadingProjectsQuery) Cache(opts ...keel.CacheOption) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *LadingProjectsQuery) With(ctes ...*keel.CTETable) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *LadingProjectsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *LadingProjectsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*ladingproject.LadingProject] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *LadingProjectsQuery) Clone() keel.Query[*ladingproject.LadingProject] {
+	return &LadingProjectsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *LadingProjectsQuery) One(ctx context.Context, db *keel.DB) (*ladingproject.LadingProject, error) {
+	return keel.One[*ladingproject.LadingProject](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *LadingProjectsQuery) First(ctx context.Context, db *keel.DB) (*ladingproject.LadingProject, error) {
+	return keel.First[*ladingproject.LadingProject](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *LadingProjectsQuery) List(ctx context.Context, db *keel.DB) ([]*ladingproject.LadingProject, error) {
+	return keel.List[*ladingproject.LadingProject](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *LadingProjectsQuery) All(ctx context.Context, db *keel.DB) ([]*ladingproject.LadingProject, error) {
+	return keel.All[*ladingproject.LadingProject](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *LadingProjectsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ladingproject.LadingProject, error) {
+	return keel.UpdateReturning[*ladingproject.LadingProject](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *LadingProjectsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ladingproject.LadingProject], error) {
+	return keel.PageOf[*ladingproject.LadingProject](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *LadingProjectsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ladingproject.LadingProject) error) error {
+	return keel.Each[*ladingproject.LadingProject](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newLadingProject() unsafe.Pointer { return unsafe.Pointer(new(ladingproject.LadingProject)) }
@@ -746,7 +1824,7 @@ var ladingReplaysRef = keel.Ref{Table: &ladingReplaysTable}
 
 // LadingReplaysTable is the table of ladingproject.LadingReplay.
 type LadingReplaysTable struct {
-	keel.Handle[*ladingproject.LadingReplay]
+	keel.TableBase
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -769,7 +1847,7 @@ type LadingReplaysTable struct {
 
 // LadingReplays references the edi_lading_replays table.
 var LadingReplays = &LadingReplaysTable{
-	Handle:           keel.Handle[*ladingproject.LadingReplay]{Ref: &ladingReplaysRef},
+	TableBase:        keel.TableBase{Ref: &ladingReplaysRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 2}}},
@@ -790,10 +1868,10 @@ var LadingReplays = &LadingReplaysTable{
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &ladingReplaysRef, Index: 17}},
 }
 
-// BuildLadingReplays builds the handle of edi_lading_replays for ref. Generated relation and alias methods call it.
+// BuildLadingReplays builds the table of edi_lading_replays for ref. Generated relation and alias methods call it.
 func BuildLadingReplays(r *keel.Ref) *LadingReplaysTable {
 	return &LadingReplaysTable{
-		Handle:           keel.Handle[*ladingproject.LadingReplay]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -826,6 +1904,365 @@ func (t *LadingReplaysTable) As(alias string) *LadingReplaysTable {
 // Get returns the edi_lading_replays row with the given key, or keel.ErrNotFound.
 func (t *LadingReplaysTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ladingproject.LadingReplay, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// LadingReplaysQuery is a query over ladingproject.LadingReplay.
+type LadingReplaysQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*ladingproject.LadingReplay] = (*LadingReplaysTable)(nil)
+
+var _ keel.Query[*ladingproject.LadingReplay] = (*LadingReplaysQuery)(nil)
+
+// Query starts a query over the table.
+func (t *LadingReplaysTable) Query() keel.Query[*ladingproject.LadingReplay] {
+	return &LadingReplaysQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see LadingReplaysQuery.Where.
+func (t *LadingReplaysTable) Where(ps ...keel.Pred) keel.Query[*ladingproject.LadingReplay] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see LadingReplaysQuery.Pick.
+func (t *LadingReplaysTable) Pick(es ...keel.Expr) keel.Query[*ladingproject.LadingReplay] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see LadingReplaysQuery.Load.
+func (t *LadingReplaysTable) Load(ls ...keel.Loader) keel.Query[*ladingproject.LadingReplay] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see LadingReplaysQuery.Omit.
+func (t *LadingReplaysTable) Omit(cols ...keel.Column) keel.Query[*ladingproject.LadingReplay] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see LadingReplaysQuery.Order.
+func (t *LadingReplaysTable) Order(os ...keel.Order) keel.Query[*ladingproject.LadingReplay] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see LadingReplaysQuery.Limit.
+func (t *LadingReplaysTable) Limit(n int) keel.Query[*ladingproject.LadingReplay] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see LadingReplaysQuery.Group.
+func (t *LadingReplaysTable) Group(es ...keel.Expr) keel.Query[*ladingproject.LadingReplay] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see LadingReplaysQuery.GroupingSets.
+func (t *LadingReplaysTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*ladingproject.LadingReplay] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see LadingReplaysQuery.Rollup.
+func (t *LadingReplaysTable) Rollup(es ...keel.Expr) keel.Query[*ladingproject.LadingReplay] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see LadingReplaysQuery.Cube.
+func (t *LadingReplaysTable) Cube(es ...keel.Expr) keel.Query[*ladingproject.LadingReplay] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see LadingReplaysQuery.AllTenants.
+func (t *LadingReplaysTable) AllTenants() keel.Query[*ladingproject.LadingReplay] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see LadingReplaysQuery.Join.
+func (t *LadingReplaysTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.LadingReplay] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see LadingReplaysQuery.LeftJoin.
+func (t *LadingReplaysTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.LadingReplay] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see LadingReplaysQuery.LeftJoinLateral.
+func (t *LadingReplaysTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.LadingReplay] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see LadingReplaysQuery.JoinLateral.
+func (t *LadingReplaysTable) JoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.LadingReplay] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see LadingReplaysQuery.Lock.
+func (t *LadingReplaysTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ladingproject.LadingReplay] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see LadingReplaysQuery.DistinctOn.
+func (t *LadingReplaysTable) DistinctOn(es ...keel.Expr) keel.Query[*ladingproject.LadingReplay] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see LadingReplaysQuery.Cache.
+func (t *LadingReplaysTable) Cache(opts ...keel.CacheOption) keel.Query[*ladingproject.LadingReplay] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see LadingReplaysQuery.LoadStrategy.
+func (t *LadingReplaysTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*ladingproject.LadingReplay] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see LadingReplaysQuery.With.
+func (t *LadingReplaysTable) With(ctes ...*keel.CTETable) keel.Query[*ladingproject.LadingReplay] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see LadingReplaysQuery.Compute.
+func (t *LadingReplaysTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ladingproject.LadingReplay] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *LadingReplaysTable) Create(ctx context.Context, db *keel.DB, row *ladingproject.LadingReplay) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *LadingReplaysTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingReplay) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *LadingReplaysTable) Save(ctx context.Context, db *keel.DB, row *ladingproject.LadingReplay, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *LadingReplaysTable) SaveExcept(ctx context.Context, db *keel.DB, row *ladingproject.LadingReplay, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *LadingReplaysTable) DeleteRow(ctx context.Context, db *keel.DB, row *ladingproject.LadingReplay) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *LadingReplaysTable) Upsert(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingReplay, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *LadingReplaysTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingReplay, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *LadingReplaysTable) Copy(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingReplay) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *LadingReplaysQuery) Where(ps ...keel.Pred) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *LadingReplaysQuery) Pick(es ...keel.Expr) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *LadingReplaysQuery) Omit(cols ...keel.Column) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *LadingReplaysQuery) Load(ls ...keel.Loader) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *LadingReplaysQuery) Order(os ...keel.Order) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *LadingReplaysQuery) Distinct() keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *LadingReplaysQuery) Group(es ...keel.Expr) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *LadingReplaysQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *LadingReplaysQuery) Rollup(es ...keel.Expr) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *LadingReplaysQuery) Cube(es ...keel.Expr) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *LadingReplaysQuery) Window(name string, w keel.Window) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *LadingReplaysQuery) Having(ps ...keel.Pred) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *LadingReplaysQuery) Limit(n int) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *LadingReplaysQuery) Offset(n int) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *LadingReplaysQuery) DistinctOn(es ...keel.Expr) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *LadingReplaysQuery) AllTenants() keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *LadingReplaysQuery) CustomPlan() keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *LadingReplaysQuery) Timeout(d time.Duration) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *LadingReplaysQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *LadingReplaysQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *LadingReplaysQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *LadingReplaysQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *LadingReplaysQuery) JoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *LadingReplaysQuery) Cache(opts ...keel.CacheOption) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *LadingReplaysQuery) With(ctes ...*keel.CTETable) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *LadingReplaysQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *LadingReplaysQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*ladingproject.LadingReplay] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *LadingReplaysQuery) Clone() keel.Query[*ladingproject.LadingReplay] {
+	return &LadingReplaysQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *LadingReplaysQuery) One(ctx context.Context, db *keel.DB) (*ladingproject.LadingReplay, error) {
+	return keel.One[*ladingproject.LadingReplay](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *LadingReplaysQuery) First(ctx context.Context, db *keel.DB) (*ladingproject.LadingReplay, error) {
+	return keel.First[*ladingproject.LadingReplay](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *LadingReplaysQuery) List(ctx context.Context, db *keel.DB) ([]*ladingproject.LadingReplay, error) {
+	return keel.List[*ladingproject.LadingReplay](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *LadingReplaysQuery) All(ctx context.Context, db *keel.DB) ([]*ladingproject.LadingReplay, error) {
+	return keel.All[*ladingproject.LadingReplay](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *LadingReplaysQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ladingproject.LadingReplay, error) {
+	return keel.UpdateReturning[*ladingproject.LadingReplay](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *LadingReplaysQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ladingproject.LadingReplay], error) {
+	return keel.PageOf[*ladingproject.LadingReplay](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *LadingReplaysQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ladingproject.LadingReplay) error) error {
+	return keel.Each[*ladingproject.LadingReplay](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newLadingReplay() unsafe.Pointer { return unsafe.Pointer(new(ladingproject.LadingReplay)) }
@@ -975,7 +2412,7 @@ var ladingSamplesRef = keel.Ref{Table: &ladingSamplesTable}
 
 // LadingSamplesTable is the table of ladingproject.LadingSample.
 type LadingSamplesTable struct {
-	keel.Handle[*ladingproject.LadingSample]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -988,7 +2425,7 @@ type LadingSamplesTable struct {
 
 // LadingSamples references the edi_lading_samples table.
 var LadingSamples = &LadingSamplesTable{
-	Handle:         keel.Handle[*ladingproject.LadingSample]{Ref: &ladingSamplesRef},
+	TableBase:      keel.TableBase{Ref: &ladingSamplesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingSamplesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingSamplesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingSamplesRef, Index: 2}}},
@@ -999,10 +2436,10 @@ var LadingSamples = &LadingSamplesTable{
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &ladingSamplesRef, Index: 7}},
 }
 
-// BuildLadingSamples builds the handle of edi_lading_samples for ref. Generated relation and alias methods call it.
+// BuildLadingSamples builds the table of edi_lading_samples for ref. Generated relation and alias methods call it.
 func BuildLadingSamples(r *keel.Ref) *LadingSamplesTable {
 	return &LadingSamplesTable{
-		Handle:         keel.Handle[*ladingproject.LadingSample]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1025,6 +2462,365 @@ func (t *LadingSamplesTable) As(alias string) *LadingSamplesTable {
 // Get returns the edi_lading_samples row with the given key, or keel.ErrNotFound.
 func (t *LadingSamplesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ladingproject.LadingSample, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// LadingSamplesQuery is a query over ladingproject.LadingSample.
+type LadingSamplesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*ladingproject.LadingSample] = (*LadingSamplesTable)(nil)
+
+var _ keel.Query[*ladingproject.LadingSample] = (*LadingSamplesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *LadingSamplesTable) Query() keel.Query[*ladingproject.LadingSample] {
+	return &LadingSamplesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see LadingSamplesQuery.Where.
+func (t *LadingSamplesTable) Where(ps ...keel.Pred) keel.Query[*ladingproject.LadingSample] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see LadingSamplesQuery.Pick.
+func (t *LadingSamplesTable) Pick(es ...keel.Expr) keel.Query[*ladingproject.LadingSample] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see LadingSamplesQuery.Load.
+func (t *LadingSamplesTable) Load(ls ...keel.Loader) keel.Query[*ladingproject.LadingSample] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see LadingSamplesQuery.Omit.
+func (t *LadingSamplesTable) Omit(cols ...keel.Column) keel.Query[*ladingproject.LadingSample] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see LadingSamplesQuery.Order.
+func (t *LadingSamplesTable) Order(os ...keel.Order) keel.Query[*ladingproject.LadingSample] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see LadingSamplesQuery.Limit.
+func (t *LadingSamplesTable) Limit(n int) keel.Query[*ladingproject.LadingSample] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see LadingSamplesQuery.Group.
+func (t *LadingSamplesTable) Group(es ...keel.Expr) keel.Query[*ladingproject.LadingSample] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see LadingSamplesQuery.GroupingSets.
+func (t *LadingSamplesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*ladingproject.LadingSample] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see LadingSamplesQuery.Rollup.
+func (t *LadingSamplesTable) Rollup(es ...keel.Expr) keel.Query[*ladingproject.LadingSample] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see LadingSamplesQuery.Cube.
+func (t *LadingSamplesTable) Cube(es ...keel.Expr) keel.Query[*ladingproject.LadingSample] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see LadingSamplesQuery.AllTenants.
+func (t *LadingSamplesTable) AllTenants() keel.Query[*ladingproject.LadingSample] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see LadingSamplesQuery.Join.
+func (t *LadingSamplesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.LadingSample] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see LadingSamplesQuery.LeftJoin.
+func (t *LadingSamplesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.LadingSample] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see LadingSamplesQuery.LeftJoinLateral.
+func (t *LadingSamplesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.LadingSample] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see LadingSamplesQuery.JoinLateral.
+func (t *LadingSamplesTable) JoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.LadingSample] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see LadingSamplesQuery.Lock.
+func (t *LadingSamplesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ladingproject.LadingSample] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see LadingSamplesQuery.DistinctOn.
+func (t *LadingSamplesTable) DistinctOn(es ...keel.Expr) keel.Query[*ladingproject.LadingSample] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see LadingSamplesQuery.Cache.
+func (t *LadingSamplesTable) Cache(opts ...keel.CacheOption) keel.Query[*ladingproject.LadingSample] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see LadingSamplesQuery.LoadStrategy.
+func (t *LadingSamplesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*ladingproject.LadingSample] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see LadingSamplesQuery.With.
+func (t *LadingSamplesTable) With(ctes ...*keel.CTETable) keel.Query[*ladingproject.LadingSample] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see LadingSamplesQuery.Compute.
+func (t *LadingSamplesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ladingproject.LadingSample] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *LadingSamplesTable) Create(ctx context.Context, db *keel.DB, row *ladingproject.LadingSample) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *LadingSamplesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingSample) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *LadingSamplesTable) Save(ctx context.Context, db *keel.DB, row *ladingproject.LadingSample, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *LadingSamplesTable) SaveExcept(ctx context.Context, db *keel.DB, row *ladingproject.LadingSample, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *LadingSamplesTable) DeleteRow(ctx context.Context, db *keel.DB, row *ladingproject.LadingSample) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *LadingSamplesTable) Upsert(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingSample, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *LadingSamplesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingSample, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *LadingSamplesTable) Copy(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingSample) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *LadingSamplesQuery) Where(ps ...keel.Pred) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *LadingSamplesQuery) Pick(es ...keel.Expr) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *LadingSamplesQuery) Omit(cols ...keel.Column) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *LadingSamplesQuery) Load(ls ...keel.Loader) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *LadingSamplesQuery) Order(os ...keel.Order) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *LadingSamplesQuery) Distinct() keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *LadingSamplesQuery) Group(es ...keel.Expr) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *LadingSamplesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *LadingSamplesQuery) Rollup(es ...keel.Expr) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *LadingSamplesQuery) Cube(es ...keel.Expr) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *LadingSamplesQuery) Window(name string, w keel.Window) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *LadingSamplesQuery) Having(ps ...keel.Pred) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *LadingSamplesQuery) Limit(n int) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *LadingSamplesQuery) Offset(n int) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *LadingSamplesQuery) DistinctOn(es ...keel.Expr) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *LadingSamplesQuery) AllTenants() keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *LadingSamplesQuery) CustomPlan() keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *LadingSamplesQuery) Timeout(d time.Duration) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *LadingSamplesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *LadingSamplesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *LadingSamplesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *LadingSamplesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *LadingSamplesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *LadingSamplesQuery) Cache(opts ...keel.CacheOption) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *LadingSamplesQuery) With(ctes ...*keel.CTETable) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *LadingSamplesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *LadingSamplesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*ladingproject.LadingSample] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *LadingSamplesQuery) Clone() keel.Query[*ladingproject.LadingSample] {
+	return &LadingSamplesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *LadingSamplesQuery) One(ctx context.Context, db *keel.DB) (*ladingproject.LadingSample, error) {
+	return keel.One[*ladingproject.LadingSample](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *LadingSamplesQuery) First(ctx context.Context, db *keel.DB) (*ladingproject.LadingSample, error) {
+	return keel.First[*ladingproject.LadingSample](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *LadingSamplesQuery) List(ctx context.Context, db *keel.DB) ([]*ladingproject.LadingSample, error) {
+	return keel.List[*ladingproject.LadingSample](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *LadingSamplesQuery) All(ctx context.Context, db *keel.DB) ([]*ladingproject.LadingSample, error) {
+	return keel.All[*ladingproject.LadingSample](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *LadingSamplesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ladingproject.LadingSample, error) {
+	return keel.UpdateReturning[*ladingproject.LadingSample](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *LadingSamplesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ladingproject.LadingSample], error) {
+	return keel.PageOf[*ladingproject.LadingSample](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *LadingSamplesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ladingproject.LadingSample) error) error {
+	return keel.Each[*ladingproject.LadingSample](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newLadingSample() unsafe.Pointer { return unsafe.Pointer(new(ladingproject.LadingSample)) }
@@ -1123,7 +2919,7 @@ var ladingShadowResultsRef = keel.Ref{Table: &ladingShadowResultsTable}
 
 // LadingShadowResultsTable is the table of ladingproject.LadingShadowResult.
 type LadingShadowResultsTable struct {
-	keel.Handle[*ladingproject.LadingShadowResult]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1140,7 +2936,7 @@ type LadingShadowResultsTable struct {
 
 // LadingShadowResults references the edi_lading_shadow_results table.
 var LadingShadowResults = &LadingShadowResultsTable{
-	Handle:         keel.Handle[*ladingproject.LadingShadowResult]{Ref: &ladingShadowResultsRef},
+	TableBase:      keel.TableBase{Ref: &ladingShadowResultsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 2}}},
@@ -1155,10 +2951,10 @@ var LadingShadowResults = &LadingShadowResultsTable{
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 11}},
 }
 
-// BuildLadingShadowResults builds the handle of edi_lading_shadow_results for ref. Generated relation and alias methods call it.
+// BuildLadingShadowResults builds the table of edi_lading_shadow_results for ref. Generated relation and alias methods call it.
 func BuildLadingShadowResults(r *keel.Ref) *LadingShadowResultsTable {
 	return &LadingShadowResultsTable{
-		Handle:         keel.Handle[*ladingproject.LadingShadowResult]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1185,6 +2981,365 @@ func (t *LadingShadowResultsTable) As(alias string) *LadingShadowResultsTable {
 // Get returns the edi_lading_shadow_results row with the given key, or keel.ErrNotFound.
 func (t *LadingShadowResultsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ladingproject.LadingShadowResult, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// LadingShadowResultsQuery is a query over ladingproject.LadingShadowResult.
+type LadingShadowResultsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*ladingproject.LadingShadowResult] = (*LadingShadowResultsTable)(nil)
+
+var _ keel.Query[*ladingproject.LadingShadowResult] = (*LadingShadowResultsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *LadingShadowResultsTable) Query() keel.Query[*ladingproject.LadingShadowResult] {
+	return &LadingShadowResultsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see LadingShadowResultsQuery.Where.
+func (t *LadingShadowResultsTable) Where(ps ...keel.Pred) keel.Query[*ladingproject.LadingShadowResult] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see LadingShadowResultsQuery.Pick.
+func (t *LadingShadowResultsTable) Pick(es ...keel.Expr) keel.Query[*ladingproject.LadingShadowResult] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see LadingShadowResultsQuery.Load.
+func (t *LadingShadowResultsTable) Load(ls ...keel.Loader) keel.Query[*ladingproject.LadingShadowResult] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see LadingShadowResultsQuery.Omit.
+func (t *LadingShadowResultsTable) Omit(cols ...keel.Column) keel.Query[*ladingproject.LadingShadowResult] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see LadingShadowResultsQuery.Order.
+func (t *LadingShadowResultsTable) Order(os ...keel.Order) keel.Query[*ladingproject.LadingShadowResult] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see LadingShadowResultsQuery.Limit.
+func (t *LadingShadowResultsTable) Limit(n int) keel.Query[*ladingproject.LadingShadowResult] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see LadingShadowResultsQuery.Group.
+func (t *LadingShadowResultsTable) Group(es ...keel.Expr) keel.Query[*ladingproject.LadingShadowResult] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see LadingShadowResultsQuery.GroupingSets.
+func (t *LadingShadowResultsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*ladingproject.LadingShadowResult] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see LadingShadowResultsQuery.Rollup.
+func (t *LadingShadowResultsTable) Rollup(es ...keel.Expr) keel.Query[*ladingproject.LadingShadowResult] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see LadingShadowResultsQuery.Cube.
+func (t *LadingShadowResultsTable) Cube(es ...keel.Expr) keel.Query[*ladingproject.LadingShadowResult] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see LadingShadowResultsQuery.AllTenants.
+func (t *LadingShadowResultsTable) AllTenants() keel.Query[*ladingproject.LadingShadowResult] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see LadingShadowResultsQuery.Join.
+func (t *LadingShadowResultsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.LadingShadowResult] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see LadingShadowResultsQuery.LeftJoin.
+func (t *LadingShadowResultsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.LadingShadowResult] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see LadingShadowResultsQuery.LeftJoinLateral.
+func (t *LadingShadowResultsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.LadingShadowResult] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see LadingShadowResultsQuery.JoinLateral.
+func (t *LadingShadowResultsTable) JoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.LadingShadowResult] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see LadingShadowResultsQuery.Lock.
+func (t *LadingShadowResultsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ladingproject.LadingShadowResult] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see LadingShadowResultsQuery.DistinctOn.
+func (t *LadingShadowResultsTable) DistinctOn(es ...keel.Expr) keel.Query[*ladingproject.LadingShadowResult] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see LadingShadowResultsQuery.Cache.
+func (t *LadingShadowResultsTable) Cache(opts ...keel.CacheOption) keel.Query[*ladingproject.LadingShadowResult] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see LadingShadowResultsQuery.LoadStrategy.
+func (t *LadingShadowResultsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*ladingproject.LadingShadowResult] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see LadingShadowResultsQuery.With.
+func (t *LadingShadowResultsTable) With(ctes ...*keel.CTETable) keel.Query[*ladingproject.LadingShadowResult] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see LadingShadowResultsQuery.Compute.
+func (t *LadingShadowResultsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ladingproject.LadingShadowResult] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *LadingShadowResultsTable) Create(ctx context.Context, db *keel.DB, row *ladingproject.LadingShadowResult) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *LadingShadowResultsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingShadowResult) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *LadingShadowResultsTable) Save(ctx context.Context, db *keel.DB, row *ladingproject.LadingShadowResult, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *LadingShadowResultsTable) SaveExcept(ctx context.Context, db *keel.DB, row *ladingproject.LadingShadowResult, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *LadingShadowResultsTable) DeleteRow(ctx context.Context, db *keel.DB, row *ladingproject.LadingShadowResult) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *LadingShadowResultsTable) Upsert(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingShadowResult, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *LadingShadowResultsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingShadowResult, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *LadingShadowResultsTable) Copy(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingShadowResult) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *LadingShadowResultsQuery) Where(ps ...keel.Pred) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *LadingShadowResultsQuery) Pick(es ...keel.Expr) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *LadingShadowResultsQuery) Omit(cols ...keel.Column) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *LadingShadowResultsQuery) Load(ls ...keel.Loader) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *LadingShadowResultsQuery) Order(os ...keel.Order) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *LadingShadowResultsQuery) Distinct() keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *LadingShadowResultsQuery) Group(es ...keel.Expr) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *LadingShadowResultsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *LadingShadowResultsQuery) Rollup(es ...keel.Expr) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *LadingShadowResultsQuery) Cube(es ...keel.Expr) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *LadingShadowResultsQuery) Window(name string, w keel.Window) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *LadingShadowResultsQuery) Having(ps ...keel.Pred) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *LadingShadowResultsQuery) Limit(n int) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *LadingShadowResultsQuery) Offset(n int) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *LadingShadowResultsQuery) DistinctOn(es ...keel.Expr) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *LadingShadowResultsQuery) AllTenants() keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *LadingShadowResultsQuery) CustomPlan() keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *LadingShadowResultsQuery) Timeout(d time.Duration) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *LadingShadowResultsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *LadingShadowResultsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *LadingShadowResultsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *LadingShadowResultsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *LadingShadowResultsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *LadingShadowResultsQuery) Cache(opts ...keel.CacheOption) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *LadingShadowResultsQuery) With(ctes ...*keel.CTETable) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *LadingShadowResultsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *LadingShadowResultsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*ladingproject.LadingShadowResult] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *LadingShadowResultsQuery) Clone() keel.Query[*ladingproject.LadingShadowResult] {
+	return &LadingShadowResultsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *LadingShadowResultsQuery) One(ctx context.Context, db *keel.DB) (*ladingproject.LadingShadowResult, error) {
+	return keel.One[*ladingproject.LadingShadowResult](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *LadingShadowResultsQuery) First(ctx context.Context, db *keel.DB) (*ladingproject.LadingShadowResult, error) {
+	return keel.First[*ladingproject.LadingShadowResult](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *LadingShadowResultsQuery) List(ctx context.Context, db *keel.DB) ([]*ladingproject.LadingShadowResult, error) {
+	return keel.List[*ladingproject.LadingShadowResult](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *LadingShadowResultsQuery) All(ctx context.Context, db *keel.DB) ([]*ladingproject.LadingShadowResult, error) {
+	return keel.All[*ladingproject.LadingShadowResult](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *LadingShadowResultsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ladingproject.LadingShadowResult, error) {
+	return keel.UpdateReturning[*ladingproject.LadingShadowResult](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *LadingShadowResultsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ladingproject.LadingShadowResult], error) {
+	return keel.PageOf[*ladingproject.LadingShadowResult](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *LadingShadowResultsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ladingproject.LadingShadowResult) error) error {
+	return keel.Each[*ladingproject.LadingShadowResult](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newLadingShadowResult() unsafe.Pointer {
@@ -1326,7 +3481,7 @@ var ladingVersionsRef = keel.Ref{Table: &ladingVersionsTable}
 
 // LadingVersionsTable is the table of ladingproject.LadingVersion.
 type LadingVersionsTable struct {
-	keel.Handle[*ladingproject.LadingVersion]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -1356,7 +3511,7 @@ type LadingVersionsTable struct {
 
 // LadingVersions references the edi_lading_versions table.
 var LadingVersions = &LadingVersionsTable{
-	Handle:          keel.Handle[*ladingproject.LadingVersion]{Ref: &ladingVersionsRef},
+	TableBase:       keel.TableBase{Ref: &ladingVersionsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 2}}},
@@ -1384,10 +3539,10 @@ var LadingVersions = &LadingVersionsTable{
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &ladingVersionsRef, Index: 24}},
 }
 
-// BuildLadingVersions builds the handle of edi_lading_versions for ref. Generated relation and alias methods call it.
+// BuildLadingVersions builds the table of edi_lading_versions for ref. Generated relation and alias methods call it.
 func BuildLadingVersions(r *keel.Ref) *LadingVersionsTable {
 	return &LadingVersionsTable{
-		Handle:          keel.Handle[*ladingproject.LadingVersion]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1427,6 +3582,365 @@ func (t *LadingVersionsTable) As(alias string) *LadingVersionsTable {
 // Get returns the edi_lading_versions row with the given key, or keel.ErrNotFound.
 func (t *LadingVersionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ladingproject.LadingVersion, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// LadingVersionsQuery is a query over ladingproject.LadingVersion.
+type LadingVersionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*ladingproject.LadingVersion] = (*LadingVersionsTable)(nil)
+
+var _ keel.Query[*ladingproject.LadingVersion] = (*LadingVersionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *LadingVersionsTable) Query() keel.Query[*ladingproject.LadingVersion] {
+	return &LadingVersionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see LadingVersionsQuery.Where.
+func (t *LadingVersionsTable) Where(ps ...keel.Pred) keel.Query[*ladingproject.LadingVersion] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see LadingVersionsQuery.Pick.
+func (t *LadingVersionsTable) Pick(es ...keel.Expr) keel.Query[*ladingproject.LadingVersion] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see LadingVersionsQuery.Load.
+func (t *LadingVersionsTable) Load(ls ...keel.Loader) keel.Query[*ladingproject.LadingVersion] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see LadingVersionsQuery.Omit.
+func (t *LadingVersionsTable) Omit(cols ...keel.Column) keel.Query[*ladingproject.LadingVersion] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see LadingVersionsQuery.Order.
+func (t *LadingVersionsTable) Order(os ...keel.Order) keel.Query[*ladingproject.LadingVersion] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see LadingVersionsQuery.Limit.
+func (t *LadingVersionsTable) Limit(n int) keel.Query[*ladingproject.LadingVersion] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see LadingVersionsQuery.Group.
+func (t *LadingVersionsTable) Group(es ...keel.Expr) keel.Query[*ladingproject.LadingVersion] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see LadingVersionsQuery.GroupingSets.
+func (t *LadingVersionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*ladingproject.LadingVersion] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see LadingVersionsQuery.Rollup.
+func (t *LadingVersionsTable) Rollup(es ...keel.Expr) keel.Query[*ladingproject.LadingVersion] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see LadingVersionsQuery.Cube.
+func (t *LadingVersionsTable) Cube(es ...keel.Expr) keel.Query[*ladingproject.LadingVersion] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see LadingVersionsQuery.AllTenants.
+func (t *LadingVersionsTable) AllTenants() keel.Query[*ladingproject.LadingVersion] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see LadingVersionsQuery.Join.
+func (t *LadingVersionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.LadingVersion] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see LadingVersionsQuery.LeftJoin.
+func (t *LadingVersionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.LadingVersion] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see LadingVersionsQuery.LeftJoinLateral.
+func (t *LadingVersionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.LadingVersion] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see LadingVersionsQuery.JoinLateral.
+func (t *LadingVersionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.LadingVersion] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see LadingVersionsQuery.Lock.
+func (t *LadingVersionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ladingproject.LadingVersion] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see LadingVersionsQuery.DistinctOn.
+func (t *LadingVersionsTable) DistinctOn(es ...keel.Expr) keel.Query[*ladingproject.LadingVersion] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see LadingVersionsQuery.Cache.
+func (t *LadingVersionsTable) Cache(opts ...keel.CacheOption) keel.Query[*ladingproject.LadingVersion] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see LadingVersionsQuery.LoadStrategy.
+func (t *LadingVersionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*ladingproject.LadingVersion] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see LadingVersionsQuery.With.
+func (t *LadingVersionsTable) With(ctes ...*keel.CTETable) keel.Query[*ladingproject.LadingVersion] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see LadingVersionsQuery.Compute.
+func (t *LadingVersionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ladingproject.LadingVersion] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *LadingVersionsTable) Create(ctx context.Context, db *keel.DB, row *ladingproject.LadingVersion) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *LadingVersionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingVersion) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *LadingVersionsTable) Save(ctx context.Context, db *keel.DB, row *ladingproject.LadingVersion, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *LadingVersionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *ladingproject.LadingVersion, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *LadingVersionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *ladingproject.LadingVersion) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *LadingVersionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingVersion, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *LadingVersionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingVersion, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *LadingVersionsTable) Copy(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingVersion) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *LadingVersionsQuery) Where(ps ...keel.Pred) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *LadingVersionsQuery) Pick(es ...keel.Expr) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *LadingVersionsQuery) Omit(cols ...keel.Column) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *LadingVersionsQuery) Load(ls ...keel.Loader) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *LadingVersionsQuery) Order(os ...keel.Order) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *LadingVersionsQuery) Distinct() keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *LadingVersionsQuery) Group(es ...keel.Expr) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *LadingVersionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *LadingVersionsQuery) Rollup(es ...keel.Expr) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *LadingVersionsQuery) Cube(es ...keel.Expr) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *LadingVersionsQuery) Window(name string, w keel.Window) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *LadingVersionsQuery) Having(ps ...keel.Pred) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *LadingVersionsQuery) Limit(n int) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *LadingVersionsQuery) Offset(n int) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *LadingVersionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *LadingVersionsQuery) AllTenants() keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *LadingVersionsQuery) CustomPlan() keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *LadingVersionsQuery) Timeout(d time.Duration) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *LadingVersionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *LadingVersionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *LadingVersionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *LadingVersionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *LadingVersionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *LadingVersionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *LadingVersionsQuery) With(ctes ...*keel.CTETable) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *LadingVersionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *LadingVersionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*ladingproject.LadingVersion] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *LadingVersionsQuery) Clone() keel.Query[*ladingproject.LadingVersion] {
+	return &LadingVersionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *LadingVersionsQuery) One(ctx context.Context, db *keel.DB) (*ladingproject.LadingVersion, error) {
+	return keel.One[*ladingproject.LadingVersion](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *LadingVersionsQuery) First(ctx context.Context, db *keel.DB) (*ladingproject.LadingVersion, error) {
+	return keel.First[*ladingproject.LadingVersion](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *LadingVersionsQuery) List(ctx context.Context, db *keel.DB) ([]*ladingproject.LadingVersion, error) {
+	return keel.List[*ladingproject.LadingVersion](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *LadingVersionsQuery) All(ctx context.Context, db *keel.DB) ([]*ladingproject.LadingVersion, error) {
+	return keel.All[*ladingproject.LadingVersion](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *LadingVersionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ladingproject.LadingVersion, error) {
+	return keel.UpdateReturning[*ladingproject.LadingVersion](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *LadingVersionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ladingproject.LadingVersion], error) {
+	return keel.PageOf[*ladingproject.LadingVersion](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *LadingVersionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ladingproject.LadingVersion) error) error {
+	return keel.Each[*ladingproject.LadingVersion](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newLadingVersion() unsafe.Pointer { return unsafe.Pointer(new(ladingproject.LadingVersion)) }

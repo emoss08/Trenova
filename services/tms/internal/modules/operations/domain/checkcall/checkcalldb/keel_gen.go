@@ -4,6 +4,7 @@ package checkcalldb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -70,7 +71,7 @@ var checkCallsRef = keel.Ref{Table: &checkCallsTable}
 
 // CheckCallsTable is the table of checkcall.CheckCall.
 type CheckCallsTable struct {
-	keel.Handle[*checkcall.CheckCall]
+	keel.TableBase
 	ID               keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
@@ -99,7 +100,7 @@ type CheckCallsTable struct {
 
 // CheckCalls references the check_calls table.
 var CheckCalls = &CheckCallsTable{
-	Handle:           keel.Handle[*checkcall.CheckCall]{Ref: &checkCallsRef},
+	TableBase:        keel.TableBase{Ref: &checkCallsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 0}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 1}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 2}}},
@@ -126,10 +127,10 @@ var CheckCalls = &CheckCallsTable{
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &checkCallsRef, Index: 23}},
 }
 
-// BuildCheckCalls builds the handle of check_calls for ref. Generated relation and alias methods call it.
+// BuildCheckCalls builds the table of check_calls for ref. Generated relation and alias methods call it.
 func BuildCheckCalls(r *keel.Ref) *CheckCallsTable {
 	return &CheckCallsTable{
-		Handle:           keel.Handle[*checkcall.CheckCall]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -168,6 +169,365 @@ func (t *CheckCallsTable) As(alias string) *CheckCallsTable {
 // Get returns the check_calls row with the given key, or keel.ErrNotFound.
 func (t *CheckCallsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*checkcall.CheckCall, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CheckCallsQuery is a query over checkcall.CheckCall.
+type CheckCallsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*checkcall.CheckCall] = (*CheckCallsTable)(nil)
+
+var _ keel.Query[*checkcall.CheckCall] = (*CheckCallsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CheckCallsTable) Query() keel.Query[*checkcall.CheckCall] {
+	return &CheckCallsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CheckCallsQuery.Where.
+func (t *CheckCallsTable) Where(ps ...keel.Pred) keel.Query[*checkcall.CheckCall] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CheckCallsQuery.Pick.
+func (t *CheckCallsTable) Pick(es ...keel.Expr) keel.Query[*checkcall.CheckCall] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CheckCallsQuery.Load.
+func (t *CheckCallsTable) Load(ls ...keel.Loader) keel.Query[*checkcall.CheckCall] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CheckCallsQuery.Omit.
+func (t *CheckCallsTable) Omit(cols ...keel.Column) keel.Query[*checkcall.CheckCall] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CheckCallsQuery.Order.
+func (t *CheckCallsTable) Order(os ...keel.Order) keel.Query[*checkcall.CheckCall] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CheckCallsQuery.Limit.
+func (t *CheckCallsTable) Limit(n int) keel.Query[*checkcall.CheckCall] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CheckCallsQuery.Group.
+func (t *CheckCallsTable) Group(es ...keel.Expr) keel.Query[*checkcall.CheckCall] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CheckCallsQuery.GroupingSets.
+func (t *CheckCallsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*checkcall.CheckCall] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CheckCallsQuery.Rollup.
+func (t *CheckCallsTable) Rollup(es ...keel.Expr) keel.Query[*checkcall.CheckCall] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CheckCallsQuery.Cube.
+func (t *CheckCallsTable) Cube(es ...keel.Expr) keel.Query[*checkcall.CheckCall] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CheckCallsQuery.AllTenants.
+func (t *CheckCallsTable) AllTenants() keel.Query[*checkcall.CheckCall] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CheckCallsQuery.Join.
+func (t *CheckCallsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*checkcall.CheckCall] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CheckCallsQuery.LeftJoin.
+func (t *CheckCallsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*checkcall.CheckCall] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CheckCallsQuery.LeftJoinLateral.
+func (t *CheckCallsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*checkcall.CheckCall] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CheckCallsQuery.JoinLateral.
+func (t *CheckCallsTable) JoinLateral(sub keel.LateralSource) keel.Query[*checkcall.CheckCall] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CheckCallsQuery.Lock.
+func (t *CheckCallsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*checkcall.CheckCall] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CheckCallsQuery.DistinctOn.
+func (t *CheckCallsTable) DistinctOn(es ...keel.Expr) keel.Query[*checkcall.CheckCall] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CheckCallsQuery.Cache.
+func (t *CheckCallsTable) Cache(opts ...keel.CacheOption) keel.Query[*checkcall.CheckCall] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CheckCallsQuery.LoadStrategy.
+func (t *CheckCallsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*checkcall.CheckCall] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CheckCallsQuery.With.
+func (t *CheckCallsTable) With(ctes ...*keel.CTETable) keel.Query[*checkcall.CheckCall] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CheckCallsQuery.Compute.
+func (t *CheckCallsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*checkcall.CheckCall] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CheckCallsTable) Create(ctx context.Context, db *keel.DB, row *checkcall.CheckCall) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CheckCallsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*checkcall.CheckCall) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CheckCallsTable) Save(ctx context.Context, db *keel.DB, row *checkcall.CheckCall, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CheckCallsTable) SaveExcept(ctx context.Context, db *keel.DB, row *checkcall.CheckCall, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CheckCallsTable) DeleteRow(ctx context.Context, db *keel.DB, row *checkcall.CheckCall) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CheckCallsTable) Upsert(ctx context.Context, db *keel.DB, rows []*checkcall.CheckCall, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CheckCallsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*checkcall.CheckCall, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CheckCallsTable) Copy(ctx context.Context, db *keel.DB, rows []*checkcall.CheckCall) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CheckCallsQuery) Where(ps ...keel.Pred) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CheckCallsQuery) Pick(es ...keel.Expr) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CheckCallsQuery) Omit(cols ...keel.Column) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CheckCallsQuery) Load(ls ...keel.Loader) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CheckCallsQuery) Order(os ...keel.Order) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CheckCallsQuery) Distinct() keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CheckCallsQuery) Group(es ...keel.Expr) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CheckCallsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CheckCallsQuery) Rollup(es ...keel.Expr) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CheckCallsQuery) Cube(es ...keel.Expr) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CheckCallsQuery) Window(name string, w keel.Window) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CheckCallsQuery) Having(ps ...keel.Pred) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CheckCallsQuery) Limit(n int) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CheckCallsQuery) Offset(n int) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CheckCallsQuery) DistinctOn(es ...keel.Expr) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CheckCallsQuery) AllTenants() keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CheckCallsQuery) CustomPlan() keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CheckCallsQuery) Timeout(d time.Duration) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CheckCallsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CheckCallsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CheckCallsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CheckCallsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CheckCallsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CheckCallsQuery) Cache(opts ...keel.CacheOption) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CheckCallsQuery) With(ctes ...*keel.CTETable) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CheckCallsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CheckCallsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*checkcall.CheckCall] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CheckCallsQuery) Clone() keel.Query[*checkcall.CheckCall] {
+	return &CheckCallsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CheckCallsQuery) One(ctx context.Context, db *keel.DB) (*checkcall.CheckCall, error) {
+	return keel.One[*checkcall.CheckCall](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CheckCallsQuery) First(ctx context.Context, db *keel.DB) (*checkcall.CheckCall, error) {
+	return keel.First[*checkcall.CheckCall](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CheckCallsQuery) List(ctx context.Context, db *keel.DB) ([]*checkcall.CheckCall, error) {
+	return keel.List[*checkcall.CheckCall](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CheckCallsQuery) All(ctx context.Context, db *keel.DB) ([]*checkcall.CheckCall, error) {
+	return keel.All[*checkcall.CheckCall](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CheckCallsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*checkcall.CheckCall, error) {
+	return keel.UpdateReturning[*checkcall.CheckCall](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CheckCallsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*checkcall.CheckCall], error) {
+	return keel.PageOf[*checkcall.CheckCall](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CheckCallsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*checkcall.CheckCall) error) error {
+	return keel.Each[*checkcall.CheckCall](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCheckCall() unsafe.Pointer { return unsafe.Pointer(new(checkcall.CheckCall)) }
@@ -368,7 +728,7 @@ var trackingLinksRef = keel.Ref{Table: &trackingLinksTable}
 
 // TrackingLinksTable is the table of checkcall.TrackingLink.
 type TrackingLinksTable struct {
-	keel.Handle[*checkcall.TrackingLink]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -387,7 +747,7 @@ type TrackingLinksTable struct {
 
 // TrackingLinks references the carrier_tracking_links table.
 var TrackingLinks = &TrackingLinksTable{
-	Handle:         keel.Handle[*checkcall.TrackingLink]{Ref: &trackingLinksRef},
+	TableBase:      keel.TableBase{Ref: &trackingLinksRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingLinksRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingLinksRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingLinksRef, Index: 2}}},
@@ -404,10 +764,10 @@ var TrackingLinks = &TrackingLinksTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &trackingLinksRef, Index: 13}},
 }
 
-// BuildTrackingLinks builds the handle of carrier_tracking_links for ref. Generated relation and alias methods call it.
+// BuildTrackingLinks builds the table of carrier_tracking_links for ref. Generated relation and alias methods call it.
 func BuildTrackingLinks(r *keel.Ref) *TrackingLinksTable {
 	return &TrackingLinksTable{
-		Handle:         keel.Handle[*checkcall.TrackingLink]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -436,6 +796,365 @@ func (t *TrackingLinksTable) As(alias string) *TrackingLinksTable {
 // Get returns the carrier_tracking_links row with the given key, or keel.ErrNotFound.
 func (t *TrackingLinksTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*checkcall.TrackingLink, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// TrackingLinksQuery is a query over checkcall.TrackingLink.
+type TrackingLinksQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*checkcall.TrackingLink] = (*TrackingLinksTable)(nil)
+
+var _ keel.Query[*checkcall.TrackingLink] = (*TrackingLinksQuery)(nil)
+
+// Query starts a query over the table.
+func (t *TrackingLinksTable) Query() keel.Query[*checkcall.TrackingLink] {
+	return &TrackingLinksQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see TrackingLinksQuery.Where.
+func (t *TrackingLinksTable) Where(ps ...keel.Pred) keel.Query[*checkcall.TrackingLink] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see TrackingLinksQuery.Pick.
+func (t *TrackingLinksTable) Pick(es ...keel.Expr) keel.Query[*checkcall.TrackingLink] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see TrackingLinksQuery.Load.
+func (t *TrackingLinksTable) Load(ls ...keel.Loader) keel.Query[*checkcall.TrackingLink] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see TrackingLinksQuery.Omit.
+func (t *TrackingLinksTable) Omit(cols ...keel.Column) keel.Query[*checkcall.TrackingLink] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see TrackingLinksQuery.Order.
+func (t *TrackingLinksTable) Order(os ...keel.Order) keel.Query[*checkcall.TrackingLink] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see TrackingLinksQuery.Limit.
+func (t *TrackingLinksTable) Limit(n int) keel.Query[*checkcall.TrackingLink] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see TrackingLinksQuery.Group.
+func (t *TrackingLinksTable) Group(es ...keel.Expr) keel.Query[*checkcall.TrackingLink] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see TrackingLinksQuery.GroupingSets.
+func (t *TrackingLinksTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*checkcall.TrackingLink] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see TrackingLinksQuery.Rollup.
+func (t *TrackingLinksTable) Rollup(es ...keel.Expr) keel.Query[*checkcall.TrackingLink] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see TrackingLinksQuery.Cube.
+func (t *TrackingLinksTable) Cube(es ...keel.Expr) keel.Query[*checkcall.TrackingLink] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see TrackingLinksQuery.AllTenants.
+func (t *TrackingLinksTable) AllTenants() keel.Query[*checkcall.TrackingLink] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see TrackingLinksQuery.Join.
+func (t *TrackingLinksTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*checkcall.TrackingLink] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see TrackingLinksQuery.LeftJoin.
+func (t *TrackingLinksTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*checkcall.TrackingLink] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see TrackingLinksQuery.LeftJoinLateral.
+func (t *TrackingLinksTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*checkcall.TrackingLink] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see TrackingLinksQuery.JoinLateral.
+func (t *TrackingLinksTable) JoinLateral(sub keel.LateralSource) keel.Query[*checkcall.TrackingLink] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see TrackingLinksQuery.Lock.
+func (t *TrackingLinksTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*checkcall.TrackingLink] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see TrackingLinksQuery.DistinctOn.
+func (t *TrackingLinksTable) DistinctOn(es ...keel.Expr) keel.Query[*checkcall.TrackingLink] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see TrackingLinksQuery.Cache.
+func (t *TrackingLinksTable) Cache(opts ...keel.CacheOption) keel.Query[*checkcall.TrackingLink] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see TrackingLinksQuery.LoadStrategy.
+func (t *TrackingLinksTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*checkcall.TrackingLink] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see TrackingLinksQuery.With.
+func (t *TrackingLinksTable) With(ctes ...*keel.CTETable) keel.Query[*checkcall.TrackingLink] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see TrackingLinksQuery.Compute.
+func (t *TrackingLinksTable) Compute(col keel.Column, e keel.Expr) keel.Query[*checkcall.TrackingLink] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *TrackingLinksTable) Create(ctx context.Context, db *keel.DB, row *checkcall.TrackingLink) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *TrackingLinksTable) CreateMany(ctx context.Context, db *keel.DB, rows []*checkcall.TrackingLink) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *TrackingLinksTable) Save(ctx context.Context, db *keel.DB, row *checkcall.TrackingLink, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *TrackingLinksTable) SaveExcept(ctx context.Context, db *keel.DB, row *checkcall.TrackingLink, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *TrackingLinksTable) DeleteRow(ctx context.Context, db *keel.DB, row *checkcall.TrackingLink) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *TrackingLinksTable) Upsert(ctx context.Context, db *keel.DB, rows []*checkcall.TrackingLink, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *TrackingLinksTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*checkcall.TrackingLink, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *TrackingLinksTable) Copy(ctx context.Context, db *keel.DB, rows []*checkcall.TrackingLink) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *TrackingLinksQuery) Where(ps ...keel.Pred) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *TrackingLinksQuery) Pick(es ...keel.Expr) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *TrackingLinksQuery) Omit(cols ...keel.Column) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *TrackingLinksQuery) Load(ls ...keel.Loader) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *TrackingLinksQuery) Order(os ...keel.Order) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *TrackingLinksQuery) Distinct() keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *TrackingLinksQuery) Group(es ...keel.Expr) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *TrackingLinksQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *TrackingLinksQuery) Rollup(es ...keel.Expr) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *TrackingLinksQuery) Cube(es ...keel.Expr) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *TrackingLinksQuery) Window(name string, w keel.Window) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *TrackingLinksQuery) Having(ps ...keel.Pred) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *TrackingLinksQuery) Limit(n int) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *TrackingLinksQuery) Offset(n int) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *TrackingLinksQuery) DistinctOn(es ...keel.Expr) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *TrackingLinksQuery) AllTenants() keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *TrackingLinksQuery) CustomPlan() keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *TrackingLinksQuery) Timeout(d time.Duration) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *TrackingLinksQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *TrackingLinksQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *TrackingLinksQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *TrackingLinksQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *TrackingLinksQuery) JoinLateral(sub keel.LateralSource) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *TrackingLinksQuery) Cache(opts ...keel.CacheOption) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *TrackingLinksQuery) With(ctes ...*keel.CTETable) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *TrackingLinksQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *TrackingLinksQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*checkcall.TrackingLink] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *TrackingLinksQuery) Clone() keel.Query[*checkcall.TrackingLink] {
+	return &TrackingLinksQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *TrackingLinksQuery) One(ctx context.Context, db *keel.DB) (*checkcall.TrackingLink, error) {
+	return keel.One[*checkcall.TrackingLink](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *TrackingLinksQuery) First(ctx context.Context, db *keel.DB) (*checkcall.TrackingLink, error) {
+	return keel.First[*checkcall.TrackingLink](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *TrackingLinksQuery) List(ctx context.Context, db *keel.DB) ([]*checkcall.TrackingLink, error) {
+	return keel.List[*checkcall.TrackingLink](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *TrackingLinksQuery) All(ctx context.Context, db *keel.DB) ([]*checkcall.TrackingLink, error) {
+	return keel.All[*checkcall.TrackingLink](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *TrackingLinksQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*checkcall.TrackingLink, error) {
+	return keel.UpdateReturning[*checkcall.TrackingLink](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *TrackingLinksQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*checkcall.TrackingLink], error) {
+	return keel.PageOf[*checkcall.TrackingLink](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *TrackingLinksQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*checkcall.TrackingLink) error) error {
+	return keel.Each[*checkcall.TrackingLink](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newTrackingLink() unsafe.Pointer { return unsafe.Pointer(new(checkcall.TrackingLink)) }

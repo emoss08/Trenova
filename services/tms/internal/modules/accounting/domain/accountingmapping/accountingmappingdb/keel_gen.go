@@ -4,6 +4,7 @@ package accountingmappingdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -77,7 +78,7 @@ var accountingMappingsRef = keel.Ref{Table: &accountingMappingsTable}
 
 // AccountingMappingsTable is the table of accountingmapping.AccountingMapping.
 type AccountingMappingsTable struct {
-	keel.Handle[*accountingmapping.AccountingMapping]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -104,7 +105,7 @@ type AccountingMappingsTable struct {
 
 // AccountingMappings references the accounting_mappings table.
 var AccountingMappings = &AccountingMappingsTable{
-	Handle:          keel.Handle[*accountingmapping.AccountingMapping]{Ref: &accountingMappingsRef},
+	TableBase:       keel.TableBase{Ref: &accountingMappingsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 2}}},
@@ -129,10 +130,10 @@ var AccountingMappings = &AccountingMappingsTable{
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &accountingMappingsRef, Index: 21}},
 }
 
-// BuildAccountingMappings builds the handle of accounting_mappings for ref. Generated relation and alias methods call it.
+// BuildAccountingMappings builds the table of accounting_mappings for ref. Generated relation and alias methods call it.
 func BuildAccountingMappings(r *keel.Ref) *AccountingMappingsTable {
 	return &AccountingMappingsTable{
-		Handle:          keel.Handle[*accountingmapping.AccountingMapping]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -174,6 +175,365 @@ func (t *AccountingMappingsTable) ConfirmedBy() *tenantdb.UsersTable {
 // Get returns the accounting_mappings row with the given key, or keel.ErrNotFound.
 func (t *AccountingMappingsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*accountingmapping.AccountingMapping, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// AccountingMappingsQuery is a query over accountingmapping.AccountingMapping.
+type AccountingMappingsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*accountingmapping.AccountingMapping] = (*AccountingMappingsTable)(nil)
+
+var _ keel.Query[*accountingmapping.AccountingMapping] = (*AccountingMappingsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AccountingMappingsTable) Query() keel.Query[*accountingmapping.AccountingMapping] {
+	return &AccountingMappingsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AccountingMappingsQuery.Where.
+func (t *AccountingMappingsTable) Where(ps ...keel.Pred) keel.Query[*accountingmapping.AccountingMapping] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AccountingMappingsQuery.Pick.
+func (t *AccountingMappingsTable) Pick(es ...keel.Expr) keel.Query[*accountingmapping.AccountingMapping] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AccountingMappingsQuery.Load.
+func (t *AccountingMappingsTable) Load(ls ...keel.Loader) keel.Query[*accountingmapping.AccountingMapping] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AccountingMappingsQuery.Omit.
+func (t *AccountingMappingsTable) Omit(cols ...keel.Column) keel.Query[*accountingmapping.AccountingMapping] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AccountingMappingsQuery.Order.
+func (t *AccountingMappingsTable) Order(os ...keel.Order) keel.Query[*accountingmapping.AccountingMapping] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AccountingMappingsQuery.Limit.
+func (t *AccountingMappingsTable) Limit(n int) keel.Query[*accountingmapping.AccountingMapping] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AccountingMappingsQuery.Group.
+func (t *AccountingMappingsTable) Group(es ...keel.Expr) keel.Query[*accountingmapping.AccountingMapping] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AccountingMappingsQuery.GroupingSets.
+func (t *AccountingMappingsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*accountingmapping.AccountingMapping] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AccountingMappingsQuery.Rollup.
+func (t *AccountingMappingsTable) Rollup(es ...keel.Expr) keel.Query[*accountingmapping.AccountingMapping] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AccountingMappingsQuery.Cube.
+func (t *AccountingMappingsTable) Cube(es ...keel.Expr) keel.Query[*accountingmapping.AccountingMapping] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AccountingMappingsQuery.AllTenants.
+func (t *AccountingMappingsTable) AllTenants() keel.Query[*accountingmapping.AccountingMapping] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AccountingMappingsQuery.Join.
+func (t *AccountingMappingsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accountingmapping.AccountingMapping] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AccountingMappingsQuery.LeftJoin.
+func (t *AccountingMappingsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accountingmapping.AccountingMapping] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AccountingMappingsQuery.LeftJoinLateral.
+func (t *AccountingMappingsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*accountingmapping.AccountingMapping] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AccountingMappingsQuery.JoinLateral.
+func (t *AccountingMappingsTable) JoinLateral(sub keel.LateralSource) keel.Query[*accountingmapping.AccountingMapping] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AccountingMappingsQuery.Lock.
+func (t *AccountingMappingsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*accountingmapping.AccountingMapping] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AccountingMappingsQuery.DistinctOn.
+func (t *AccountingMappingsTable) DistinctOn(es ...keel.Expr) keel.Query[*accountingmapping.AccountingMapping] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AccountingMappingsQuery.Cache.
+func (t *AccountingMappingsTable) Cache(opts ...keel.CacheOption) keel.Query[*accountingmapping.AccountingMapping] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AccountingMappingsQuery.LoadStrategy.
+func (t *AccountingMappingsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*accountingmapping.AccountingMapping] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AccountingMappingsQuery.With.
+func (t *AccountingMappingsTable) With(ctes ...*keel.CTETable) keel.Query[*accountingmapping.AccountingMapping] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AccountingMappingsQuery.Compute.
+func (t *AccountingMappingsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*accountingmapping.AccountingMapping] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AccountingMappingsTable) Create(ctx context.Context, db *keel.DB, row *accountingmapping.AccountingMapping) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AccountingMappingsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*accountingmapping.AccountingMapping) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AccountingMappingsTable) Save(ctx context.Context, db *keel.DB, row *accountingmapping.AccountingMapping, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AccountingMappingsTable) SaveExcept(ctx context.Context, db *keel.DB, row *accountingmapping.AccountingMapping, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AccountingMappingsTable) DeleteRow(ctx context.Context, db *keel.DB, row *accountingmapping.AccountingMapping) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AccountingMappingsTable) Upsert(ctx context.Context, db *keel.DB, rows []*accountingmapping.AccountingMapping, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AccountingMappingsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*accountingmapping.AccountingMapping, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AccountingMappingsTable) Copy(ctx context.Context, db *keel.DB, rows []*accountingmapping.AccountingMapping) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AccountingMappingsQuery) Where(ps ...keel.Pred) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AccountingMappingsQuery) Pick(es ...keel.Expr) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AccountingMappingsQuery) Omit(cols ...keel.Column) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AccountingMappingsQuery) Load(ls ...keel.Loader) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AccountingMappingsQuery) Order(os ...keel.Order) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AccountingMappingsQuery) Distinct() keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AccountingMappingsQuery) Group(es ...keel.Expr) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AccountingMappingsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AccountingMappingsQuery) Rollup(es ...keel.Expr) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AccountingMappingsQuery) Cube(es ...keel.Expr) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AccountingMappingsQuery) Window(name string, w keel.Window) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AccountingMappingsQuery) Having(ps ...keel.Pred) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AccountingMappingsQuery) Limit(n int) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AccountingMappingsQuery) Offset(n int) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AccountingMappingsQuery) DistinctOn(es ...keel.Expr) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AccountingMappingsQuery) AllTenants() keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AccountingMappingsQuery) CustomPlan() keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AccountingMappingsQuery) Timeout(d time.Duration) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AccountingMappingsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AccountingMappingsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AccountingMappingsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AccountingMappingsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AccountingMappingsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AccountingMappingsQuery) Cache(opts ...keel.CacheOption) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AccountingMappingsQuery) With(ctes ...*keel.CTETable) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AccountingMappingsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AccountingMappingsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*accountingmapping.AccountingMapping] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AccountingMappingsQuery) Clone() keel.Query[*accountingmapping.AccountingMapping] {
+	return &AccountingMappingsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AccountingMappingsQuery) One(ctx context.Context, db *keel.DB) (*accountingmapping.AccountingMapping, error) {
+	return keel.One[*accountingmapping.AccountingMapping](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AccountingMappingsQuery) First(ctx context.Context, db *keel.DB) (*accountingmapping.AccountingMapping, error) {
+	return keel.First[*accountingmapping.AccountingMapping](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AccountingMappingsQuery) List(ctx context.Context, db *keel.DB) ([]*accountingmapping.AccountingMapping, error) {
+	return keel.List[*accountingmapping.AccountingMapping](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AccountingMappingsQuery) All(ctx context.Context, db *keel.DB) ([]*accountingmapping.AccountingMapping, error) {
+	return keel.All[*accountingmapping.AccountingMapping](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AccountingMappingsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*accountingmapping.AccountingMapping, error) {
+	return keel.UpdateReturning[*accountingmapping.AccountingMapping](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AccountingMappingsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*accountingmapping.AccountingMapping], error) {
+	return keel.PageOf[*accountingmapping.AccountingMapping](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AccountingMappingsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*accountingmapping.AccountingMapping) error) error {
+	return keel.Each[*accountingmapping.AccountingMapping](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAccountingMapping() unsafe.Pointer {
@@ -403,7 +763,7 @@ var accountingReferenceObjectsRef = keel.Ref{Table: &accountingReferenceObjectsT
 
 // AccountingReferenceObjectsTable is the table of accountingmapping.AccountingReferenceObject.
 type AccountingReferenceObjectsTable struct {
-	keel.Handle[*accountingmapping.AccountingReferenceObject]
+	keel.TableBase
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
@@ -443,7 +803,7 @@ type AccountingReferenceObjectsTable struct {
 
 // AccountingReferenceObjects references the accounting_reference_objects table.
 var AccountingReferenceObjects = &AccountingReferenceObjectsTable{
-	Handle:                  keel.Handle[*accountingmapping.AccountingReferenceObject]{Ref: &accountingReferenceObjectsRef},
+	TableBase:               keel.TableBase{Ref: &accountingReferenceObjectsRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 1}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 2}}},
@@ -481,10 +841,10 @@ var AccountingReferenceObjects = &AccountingReferenceObjectsTable{
 	UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 34}},
 }
 
-// BuildAccountingReferenceObjects builds the handle of accounting_reference_objects for ref. Generated relation and alias methods call it.
+// BuildAccountingReferenceObjects builds the table of accounting_reference_objects for ref. Generated relation and alias methods call it.
 func BuildAccountingReferenceObjects(r *keel.Ref) *AccountingReferenceObjectsTable {
 	return &AccountingReferenceObjectsTable{
-		Handle:                  keel.Handle[*accountingmapping.AccountingReferenceObject]{Ref: r},
+		TableBase:               keel.TableBase{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -534,6 +894,365 @@ func (t *AccountingReferenceObjectsTable) As(alias string) *AccountingReferenceO
 // Get returns the accounting_reference_objects row with the given key, or keel.ErrNotFound.
 func (t *AccountingReferenceObjectsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*accountingmapping.AccountingReferenceObject, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// AccountingReferenceObjectsQuery is a query over accountingmapping.AccountingReferenceObject.
+type AccountingReferenceObjectsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*accountingmapping.AccountingReferenceObject] = (*AccountingReferenceObjectsTable)(nil)
+
+var _ keel.Query[*accountingmapping.AccountingReferenceObject] = (*AccountingReferenceObjectsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AccountingReferenceObjectsTable) Query() keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return &AccountingReferenceObjectsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AccountingReferenceObjectsQuery.Where.
+func (t *AccountingReferenceObjectsTable) Where(ps ...keel.Pred) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AccountingReferenceObjectsQuery.Pick.
+func (t *AccountingReferenceObjectsTable) Pick(es ...keel.Expr) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AccountingReferenceObjectsQuery.Load.
+func (t *AccountingReferenceObjectsTable) Load(ls ...keel.Loader) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AccountingReferenceObjectsQuery.Omit.
+func (t *AccountingReferenceObjectsTable) Omit(cols ...keel.Column) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AccountingReferenceObjectsQuery.Order.
+func (t *AccountingReferenceObjectsTable) Order(os ...keel.Order) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AccountingReferenceObjectsQuery.Limit.
+func (t *AccountingReferenceObjectsTable) Limit(n int) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AccountingReferenceObjectsQuery.Group.
+func (t *AccountingReferenceObjectsTable) Group(es ...keel.Expr) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AccountingReferenceObjectsQuery.GroupingSets.
+func (t *AccountingReferenceObjectsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AccountingReferenceObjectsQuery.Rollup.
+func (t *AccountingReferenceObjectsTable) Rollup(es ...keel.Expr) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AccountingReferenceObjectsQuery.Cube.
+func (t *AccountingReferenceObjectsTable) Cube(es ...keel.Expr) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AccountingReferenceObjectsQuery.AllTenants.
+func (t *AccountingReferenceObjectsTable) AllTenants() keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AccountingReferenceObjectsQuery.Join.
+func (t *AccountingReferenceObjectsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AccountingReferenceObjectsQuery.LeftJoin.
+func (t *AccountingReferenceObjectsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AccountingReferenceObjectsQuery.LeftJoinLateral.
+func (t *AccountingReferenceObjectsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AccountingReferenceObjectsQuery.JoinLateral.
+func (t *AccountingReferenceObjectsTable) JoinLateral(sub keel.LateralSource) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AccountingReferenceObjectsQuery.Lock.
+func (t *AccountingReferenceObjectsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AccountingReferenceObjectsQuery.DistinctOn.
+func (t *AccountingReferenceObjectsTable) DistinctOn(es ...keel.Expr) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AccountingReferenceObjectsQuery.Cache.
+func (t *AccountingReferenceObjectsTable) Cache(opts ...keel.CacheOption) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AccountingReferenceObjectsQuery.LoadStrategy.
+func (t *AccountingReferenceObjectsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AccountingReferenceObjectsQuery.With.
+func (t *AccountingReferenceObjectsTable) With(ctes ...*keel.CTETable) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AccountingReferenceObjectsQuery.Compute.
+func (t *AccountingReferenceObjectsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AccountingReferenceObjectsTable) Create(ctx context.Context, db *keel.DB, row *accountingmapping.AccountingReferenceObject) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AccountingReferenceObjectsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*accountingmapping.AccountingReferenceObject) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AccountingReferenceObjectsTable) Save(ctx context.Context, db *keel.DB, row *accountingmapping.AccountingReferenceObject, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AccountingReferenceObjectsTable) SaveExcept(ctx context.Context, db *keel.DB, row *accountingmapping.AccountingReferenceObject, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AccountingReferenceObjectsTable) DeleteRow(ctx context.Context, db *keel.DB, row *accountingmapping.AccountingReferenceObject) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AccountingReferenceObjectsTable) Upsert(ctx context.Context, db *keel.DB, rows []*accountingmapping.AccountingReferenceObject, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AccountingReferenceObjectsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*accountingmapping.AccountingReferenceObject, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AccountingReferenceObjectsTable) Copy(ctx context.Context, db *keel.DB, rows []*accountingmapping.AccountingReferenceObject) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AccountingReferenceObjectsQuery) Where(ps ...keel.Pred) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AccountingReferenceObjectsQuery) Pick(es ...keel.Expr) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AccountingReferenceObjectsQuery) Omit(cols ...keel.Column) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AccountingReferenceObjectsQuery) Load(ls ...keel.Loader) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AccountingReferenceObjectsQuery) Order(os ...keel.Order) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AccountingReferenceObjectsQuery) Distinct() keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AccountingReferenceObjectsQuery) Group(es ...keel.Expr) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AccountingReferenceObjectsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AccountingReferenceObjectsQuery) Rollup(es ...keel.Expr) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AccountingReferenceObjectsQuery) Cube(es ...keel.Expr) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AccountingReferenceObjectsQuery) Window(name string, w keel.Window) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AccountingReferenceObjectsQuery) Having(ps ...keel.Pred) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AccountingReferenceObjectsQuery) Limit(n int) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AccountingReferenceObjectsQuery) Offset(n int) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AccountingReferenceObjectsQuery) DistinctOn(es ...keel.Expr) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AccountingReferenceObjectsQuery) AllTenants() keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AccountingReferenceObjectsQuery) CustomPlan() keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AccountingReferenceObjectsQuery) Timeout(d time.Duration) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AccountingReferenceObjectsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AccountingReferenceObjectsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AccountingReferenceObjectsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AccountingReferenceObjectsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AccountingReferenceObjectsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AccountingReferenceObjectsQuery) Cache(opts ...keel.CacheOption) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AccountingReferenceObjectsQuery) With(ctes ...*keel.CTETable) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AccountingReferenceObjectsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AccountingReferenceObjectsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*accountingmapping.AccountingReferenceObject] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AccountingReferenceObjectsQuery) Clone() keel.Query[*accountingmapping.AccountingReferenceObject] {
+	return &AccountingReferenceObjectsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AccountingReferenceObjectsQuery) One(ctx context.Context, db *keel.DB) (*accountingmapping.AccountingReferenceObject, error) {
+	return keel.One[*accountingmapping.AccountingReferenceObject](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AccountingReferenceObjectsQuery) First(ctx context.Context, db *keel.DB) (*accountingmapping.AccountingReferenceObject, error) {
+	return keel.First[*accountingmapping.AccountingReferenceObject](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AccountingReferenceObjectsQuery) List(ctx context.Context, db *keel.DB) ([]*accountingmapping.AccountingReferenceObject, error) {
+	return keel.List[*accountingmapping.AccountingReferenceObject](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AccountingReferenceObjectsQuery) All(ctx context.Context, db *keel.DB) ([]*accountingmapping.AccountingReferenceObject, error) {
+	return keel.All[*accountingmapping.AccountingReferenceObject](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AccountingReferenceObjectsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*accountingmapping.AccountingReferenceObject, error) {
+	return keel.UpdateReturning[*accountingmapping.AccountingReferenceObject](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AccountingReferenceObjectsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*accountingmapping.AccountingReferenceObject], error) {
+	return keel.PageOf[*accountingmapping.AccountingReferenceObject](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AccountingReferenceObjectsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*accountingmapping.AccountingReferenceObject) error) error {
+	return keel.Each[*accountingmapping.AccountingReferenceObject](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAccountingReferenceObject() unsafe.Pointer {

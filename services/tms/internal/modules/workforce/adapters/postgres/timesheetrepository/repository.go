@@ -61,7 +61,7 @@ func limitOr(requested, fallback int) int {
 
 func entriesQuery(
 	req *timesheetports.ListTimeClockEntriesRequest,
-) *keel.Query[*timesheet.TimeClockEntry] {
+) keel.Query[*timesheet.TimeClockEntry] {
 	e := timesheetdb.TimeClockEntries
 	q := e.Where(
 		keel.When(req.WorkerID.IsNotNil(), e.WorkerID.Eq(req.WorkerID)),
@@ -180,7 +180,7 @@ func (r *repository) DeleteEntry(
 	})
 }
 
-func timesheetsQuery(req *timesheetports.ListTimesheetsRequest) *keel.Query[*timesheet.Timesheet] {
+func timesheetsQuery(req *timesheetports.ListTimesheetsRequest) keel.Query[*timesheet.Timesheet] {
 	t := timesheetdb.Timesheets
 	q := t.Where(
 		keel.When(req.WorkerID.IsNotNil(), t.WorkerID.Eq(req.WorkerID)),

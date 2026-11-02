@@ -69,7 +69,7 @@ func injuryLoads(includeWorker, includeDocument, includeEvent bool) []keel.Loade
 
 func injuriesQuery(
 	req *workersafetyports.ListWorkerInjuriesRequest,
-) *keel.Query[*workerinjury.WorkerInjury] {
+) keel.Query[*workerinjury.WorkerInjury] {
 	i := workerinjurydb.WorkerInjuries
 
 	return i.Where(

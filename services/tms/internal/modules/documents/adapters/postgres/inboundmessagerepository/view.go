@@ -155,7 +155,7 @@ func (r *viewRepository) WaitingCounts(
 
 		db := r.db.Keel(ctx)
 		v := triagedb.Views
-		views, err := v.Pick(v.ID, v.Query).
+		views, err := v.Pick(v.ID, v.QueryCol).
 			Where(v.ID.In(req.ViewIDs...)).
 			Limit(len(req.ViewIDs)).
 			List(ctx, db)
@@ -197,7 +197,7 @@ func waitingCountsQuery(views []*triage.View) keel.Projection {
 	return counts
 }
 
-func waitingSearchCount(view *triage.View) *keel.Query[*inboundmessage.InboundMessage] {
+func waitingSearchCount(view *triage.View) keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	q := m.Pick(keel.Text(view.ID.String()), keel.Count()).
 		Where(m.Status.In(needsReviewStatuses...), m.Parked.IsNull())

@@ -4,6 +4,7 @@ package workerreviewdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -83,7 +84,7 @@ var performanceReviewsRef = keel.Ref{Table: &performanceReviewsTable}
 
 // PerformanceReviewsTable is the table of workerreview.PerformanceReview.
 type PerformanceReviewsTable struct {
-	keel.Handle[*workerreview.PerformanceReview]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -113,7 +114,7 @@ type PerformanceReviewsTable struct {
 
 // PerformanceReviews references the performance_reviews table.
 var PerformanceReviews = &PerformanceReviewsTable{
-	Handle:         keel.Handle[*workerreview.PerformanceReview]{Ref: &performanceReviewsRef},
+	TableBase:      keel.TableBase{Ref: &performanceReviewsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 2}}},
@@ -141,10 +142,10 @@ var PerformanceReviews = &PerformanceReviewsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &performanceReviewsRef, Index: 24}},
 }
 
-// BuildPerformanceReviews builds the handle of performance_reviews for ref. Generated relation and alias methods call it.
+// BuildPerformanceReviews builds the table of performance_reviews for ref. Generated relation and alias methods call it.
 func BuildPerformanceReviews(r *keel.Ref) *PerformanceReviewsTable {
 	return &PerformanceReviewsTable{
-		Handle:         keel.Handle[*workerreview.PerformanceReview]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -199,6 +200,365 @@ func (t *PerformanceReviewsTable) Reviewer() *tenantdb.UsersTable {
 // Get returns the performance_reviews row with the given key, or keel.ErrNotFound.
 func (t *PerformanceReviewsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerreview.PerformanceReview, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// PerformanceReviewsQuery is a query over workerreview.PerformanceReview.
+type PerformanceReviewsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workerreview.PerformanceReview] = (*PerformanceReviewsTable)(nil)
+
+var _ keel.Query[*workerreview.PerformanceReview] = (*PerformanceReviewsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *PerformanceReviewsTable) Query() keel.Query[*workerreview.PerformanceReview] {
+	return &PerformanceReviewsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see PerformanceReviewsQuery.Where.
+func (t *PerformanceReviewsTable) Where(ps ...keel.Pred) keel.Query[*workerreview.PerformanceReview] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see PerformanceReviewsQuery.Pick.
+func (t *PerformanceReviewsTable) Pick(es ...keel.Expr) keel.Query[*workerreview.PerformanceReview] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see PerformanceReviewsQuery.Load.
+func (t *PerformanceReviewsTable) Load(ls ...keel.Loader) keel.Query[*workerreview.PerformanceReview] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see PerformanceReviewsQuery.Omit.
+func (t *PerformanceReviewsTable) Omit(cols ...keel.Column) keel.Query[*workerreview.PerformanceReview] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see PerformanceReviewsQuery.Order.
+func (t *PerformanceReviewsTable) Order(os ...keel.Order) keel.Query[*workerreview.PerformanceReview] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see PerformanceReviewsQuery.Limit.
+func (t *PerformanceReviewsTable) Limit(n int) keel.Query[*workerreview.PerformanceReview] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see PerformanceReviewsQuery.Group.
+func (t *PerformanceReviewsTable) Group(es ...keel.Expr) keel.Query[*workerreview.PerformanceReview] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see PerformanceReviewsQuery.GroupingSets.
+func (t *PerformanceReviewsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerreview.PerformanceReview] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see PerformanceReviewsQuery.Rollup.
+func (t *PerformanceReviewsTable) Rollup(es ...keel.Expr) keel.Query[*workerreview.PerformanceReview] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see PerformanceReviewsQuery.Cube.
+func (t *PerformanceReviewsTable) Cube(es ...keel.Expr) keel.Query[*workerreview.PerformanceReview] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see PerformanceReviewsQuery.AllTenants.
+func (t *PerformanceReviewsTable) AllTenants() keel.Query[*workerreview.PerformanceReview] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see PerformanceReviewsQuery.Join.
+func (t *PerformanceReviewsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerreview.PerformanceReview] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see PerformanceReviewsQuery.LeftJoin.
+func (t *PerformanceReviewsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerreview.PerformanceReview] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see PerformanceReviewsQuery.LeftJoinLateral.
+func (t *PerformanceReviewsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerreview.PerformanceReview] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see PerformanceReviewsQuery.JoinLateral.
+func (t *PerformanceReviewsTable) JoinLateral(sub keel.LateralSource) keel.Query[*workerreview.PerformanceReview] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see PerformanceReviewsQuery.Lock.
+func (t *PerformanceReviewsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerreview.PerformanceReview] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see PerformanceReviewsQuery.DistinctOn.
+func (t *PerformanceReviewsTable) DistinctOn(es ...keel.Expr) keel.Query[*workerreview.PerformanceReview] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see PerformanceReviewsQuery.Cache.
+func (t *PerformanceReviewsTable) Cache(opts ...keel.CacheOption) keel.Query[*workerreview.PerformanceReview] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see PerformanceReviewsQuery.LoadStrategy.
+func (t *PerformanceReviewsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerreview.PerformanceReview] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see PerformanceReviewsQuery.With.
+func (t *PerformanceReviewsTable) With(ctes ...*keel.CTETable) keel.Query[*workerreview.PerformanceReview] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see PerformanceReviewsQuery.Compute.
+func (t *PerformanceReviewsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workerreview.PerformanceReview] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *PerformanceReviewsTable) Create(ctx context.Context, db *keel.DB, row *workerreview.PerformanceReview) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *PerformanceReviewsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerreview.PerformanceReview) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *PerformanceReviewsTable) Save(ctx context.Context, db *keel.DB, row *workerreview.PerformanceReview, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *PerformanceReviewsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerreview.PerformanceReview, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *PerformanceReviewsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerreview.PerformanceReview) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *PerformanceReviewsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerreview.PerformanceReview, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *PerformanceReviewsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerreview.PerformanceReview, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *PerformanceReviewsTable) Copy(ctx context.Context, db *keel.DB, rows []*workerreview.PerformanceReview) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *PerformanceReviewsQuery) Where(ps ...keel.Pred) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *PerformanceReviewsQuery) Pick(es ...keel.Expr) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *PerformanceReviewsQuery) Omit(cols ...keel.Column) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *PerformanceReviewsQuery) Load(ls ...keel.Loader) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *PerformanceReviewsQuery) Order(os ...keel.Order) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *PerformanceReviewsQuery) Distinct() keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *PerformanceReviewsQuery) Group(es ...keel.Expr) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *PerformanceReviewsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *PerformanceReviewsQuery) Rollup(es ...keel.Expr) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *PerformanceReviewsQuery) Cube(es ...keel.Expr) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *PerformanceReviewsQuery) Window(name string, w keel.Window) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *PerformanceReviewsQuery) Having(ps ...keel.Pred) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *PerformanceReviewsQuery) Limit(n int) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *PerformanceReviewsQuery) Offset(n int) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *PerformanceReviewsQuery) DistinctOn(es ...keel.Expr) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *PerformanceReviewsQuery) AllTenants() keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *PerformanceReviewsQuery) CustomPlan() keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *PerformanceReviewsQuery) Timeout(d time.Duration) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *PerformanceReviewsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *PerformanceReviewsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *PerformanceReviewsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *PerformanceReviewsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *PerformanceReviewsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *PerformanceReviewsQuery) Cache(opts ...keel.CacheOption) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *PerformanceReviewsQuery) With(ctes ...*keel.CTETable) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *PerformanceReviewsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *PerformanceReviewsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerreview.PerformanceReview] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *PerformanceReviewsQuery) Clone() keel.Query[*workerreview.PerformanceReview] {
+	return &PerformanceReviewsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *PerformanceReviewsQuery) One(ctx context.Context, db *keel.DB) (*workerreview.PerformanceReview, error) {
+	return keel.One[*workerreview.PerformanceReview](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *PerformanceReviewsQuery) First(ctx context.Context, db *keel.DB) (*workerreview.PerformanceReview, error) {
+	return keel.First[*workerreview.PerformanceReview](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *PerformanceReviewsQuery) List(ctx context.Context, db *keel.DB) ([]*workerreview.PerformanceReview, error) {
+	return keel.List[*workerreview.PerformanceReview](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *PerformanceReviewsQuery) All(ctx context.Context, db *keel.DB) ([]*workerreview.PerformanceReview, error) {
+	return keel.All[*workerreview.PerformanceReview](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *PerformanceReviewsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerreview.PerformanceReview, error) {
+	return keel.UpdateReturning[*workerreview.PerformanceReview](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *PerformanceReviewsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerreview.PerformanceReview], error) {
+	return keel.PageOf[*workerreview.PerformanceReview](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *PerformanceReviewsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerreview.PerformanceReview) error) error {
+	return keel.Each[*workerreview.PerformanceReview](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newPerformanceReview() unsafe.Pointer {
@@ -429,7 +789,7 @@ var performanceReviewTemplatesRef = keel.Ref{Table: &performanceReviewTemplatesT
 
 // PerformanceReviewTemplatesTable is the table of workerreview.PerformanceReviewTemplate.
 type PerformanceReviewTemplatesTable struct {
-	keel.Handle[*workerreview.PerformanceReviewTemplate]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -448,7 +808,7 @@ type PerformanceReviewTemplatesTable struct {
 
 // PerformanceReviewTemplates references the performance_review_templates table.
 var PerformanceReviewTemplates = &PerformanceReviewTemplatesTable{
-	Handle:         keel.Handle[*workerreview.PerformanceReviewTemplate]{Ref: &performanceReviewTemplatesRef},
+	TableBase:      keel.TableBase{Ref: &performanceReviewTemplatesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewTemplatesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewTemplatesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewTemplatesRef, Index: 2}}},
@@ -465,10 +825,10 @@ var PerformanceReviewTemplates = &PerformanceReviewTemplatesTable{
 	SearchVector:   keel.TSVectorCol{Col: keel.Col{Ref: &performanceReviewTemplatesRef, Index: 13}},
 }
 
-// BuildPerformanceReviewTemplates builds the handle of performance_review_templates for ref. Generated relation and alias methods call it.
+// BuildPerformanceReviewTemplates builds the table of performance_review_templates for ref. Generated relation and alias methods call it.
 func BuildPerformanceReviewTemplates(r *keel.Ref) *PerformanceReviewTemplatesTable {
 	return &PerformanceReviewTemplatesTable{
-		Handle:         keel.Handle[*workerreview.PerformanceReviewTemplate]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -497,6 +857,365 @@ func (t *PerformanceReviewTemplatesTable) As(alias string) *PerformanceReviewTem
 // Get returns the performance_review_templates row with the given key, or keel.ErrNotFound.
 func (t *PerformanceReviewTemplatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerreview.PerformanceReviewTemplate, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// PerformanceReviewTemplatesQuery is a query over workerreview.PerformanceReviewTemplate.
+type PerformanceReviewTemplatesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workerreview.PerformanceReviewTemplate] = (*PerformanceReviewTemplatesTable)(nil)
+
+var _ keel.Query[*workerreview.PerformanceReviewTemplate] = (*PerformanceReviewTemplatesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *PerformanceReviewTemplatesTable) Query() keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return &PerformanceReviewTemplatesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see PerformanceReviewTemplatesQuery.Where.
+func (t *PerformanceReviewTemplatesTable) Where(ps ...keel.Pred) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see PerformanceReviewTemplatesQuery.Pick.
+func (t *PerformanceReviewTemplatesTable) Pick(es ...keel.Expr) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see PerformanceReviewTemplatesQuery.Load.
+func (t *PerformanceReviewTemplatesTable) Load(ls ...keel.Loader) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see PerformanceReviewTemplatesQuery.Omit.
+func (t *PerformanceReviewTemplatesTable) Omit(cols ...keel.Column) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see PerformanceReviewTemplatesQuery.Order.
+func (t *PerformanceReviewTemplatesTable) Order(os ...keel.Order) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see PerformanceReviewTemplatesQuery.Limit.
+func (t *PerformanceReviewTemplatesTable) Limit(n int) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see PerformanceReviewTemplatesQuery.Group.
+func (t *PerformanceReviewTemplatesTable) Group(es ...keel.Expr) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see PerformanceReviewTemplatesQuery.GroupingSets.
+func (t *PerformanceReviewTemplatesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see PerformanceReviewTemplatesQuery.Rollup.
+func (t *PerformanceReviewTemplatesTable) Rollup(es ...keel.Expr) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see PerformanceReviewTemplatesQuery.Cube.
+func (t *PerformanceReviewTemplatesTable) Cube(es ...keel.Expr) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see PerformanceReviewTemplatesQuery.AllTenants.
+func (t *PerformanceReviewTemplatesTable) AllTenants() keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see PerformanceReviewTemplatesQuery.Join.
+func (t *PerformanceReviewTemplatesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see PerformanceReviewTemplatesQuery.LeftJoin.
+func (t *PerformanceReviewTemplatesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see PerformanceReviewTemplatesQuery.LeftJoinLateral.
+func (t *PerformanceReviewTemplatesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see PerformanceReviewTemplatesQuery.JoinLateral.
+func (t *PerformanceReviewTemplatesTable) JoinLateral(sub keel.LateralSource) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see PerformanceReviewTemplatesQuery.Lock.
+func (t *PerformanceReviewTemplatesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see PerformanceReviewTemplatesQuery.DistinctOn.
+func (t *PerformanceReviewTemplatesTable) DistinctOn(es ...keel.Expr) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see PerformanceReviewTemplatesQuery.Cache.
+func (t *PerformanceReviewTemplatesTable) Cache(opts ...keel.CacheOption) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see PerformanceReviewTemplatesQuery.LoadStrategy.
+func (t *PerformanceReviewTemplatesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see PerformanceReviewTemplatesQuery.With.
+func (t *PerformanceReviewTemplatesTable) With(ctes ...*keel.CTETable) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see PerformanceReviewTemplatesQuery.Compute.
+func (t *PerformanceReviewTemplatesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *PerformanceReviewTemplatesTable) Create(ctx context.Context, db *keel.DB, row *workerreview.PerformanceReviewTemplate) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *PerformanceReviewTemplatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerreview.PerformanceReviewTemplate) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *PerformanceReviewTemplatesTable) Save(ctx context.Context, db *keel.DB, row *workerreview.PerformanceReviewTemplate, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *PerformanceReviewTemplatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerreview.PerformanceReviewTemplate, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *PerformanceReviewTemplatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerreview.PerformanceReviewTemplate) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *PerformanceReviewTemplatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerreview.PerformanceReviewTemplate, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *PerformanceReviewTemplatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerreview.PerformanceReviewTemplate, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *PerformanceReviewTemplatesTable) Copy(ctx context.Context, db *keel.DB, rows []*workerreview.PerformanceReviewTemplate) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *PerformanceReviewTemplatesQuery) Where(ps ...keel.Pred) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *PerformanceReviewTemplatesQuery) Pick(es ...keel.Expr) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *PerformanceReviewTemplatesQuery) Omit(cols ...keel.Column) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *PerformanceReviewTemplatesQuery) Load(ls ...keel.Loader) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *PerformanceReviewTemplatesQuery) Order(os ...keel.Order) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *PerformanceReviewTemplatesQuery) Distinct() keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *PerformanceReviewTemplatesQuery) Group(es ...keel.Expr) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *PerformanceReviewTemplatesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *PerformanceReviewTemplatesQuery) Rollup(es ...keel.Expr) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *PerformanceReviewTemplatesQuery) Cube(es ...keel.Expr) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *PerformanceReviewTemplatesQuery) Window(name string, w keel.Window) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *PerformanceReviewTemplatesQuery) Having(ps ...keel.Pred) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *PerformanceReviewTemplatesQuery) Limit(n int) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *PerformanceReviewTemplatesQuery) Offset(n int) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *PerformanceReviewTemplatesQuery) DistinctOn(es ...keel.Expr) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *PerformanceReviewTemplatesQuery) AllTenants() keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *PerformanceReviewTemplatesQuery) CustomPlan() keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *PerformanceReviewTemplatesQuery) Timeout(d time.Duration) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *PerformanceReviewTemplatesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *PerformanceReviewTemplatesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *PerformanceReviewTemplatesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *PerformanceReviewTemplatesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *PerformanceReviewTemplatesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *PerformanceReviewTemplatesQuery) Cache(opts ...keel.CacheOption) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *PerformanceReviewTemplatesQuery) With(ctes ...*keel.CTETable) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *PerformanceReviewTemplatesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *PerformanceReviewTemplatesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerreview.PerformanceReviewTemplate] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *PerformanceReviewTemplatesQuery) Clone() keel.Query[*workerreview.PerformanceReviewTemplate] {
+	return &PerformanceReviewTemplatesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *PerformanceReviewTemplatesQuery) One(ctx context.Context, db *keel.DB) (*workerreview.PerformanceReviewTemplate, error) {
+	return keel.One[*workerreview.PerformanceReviewTemplate](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *PerformanceReviewTemplatesQuery) First(ctx context.Context, db *keel.DB) (*workerreview.PerformanceReviewTemplate, error) {
+	return keel.First[*workerreview.PerformanceReviewTemplate](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *PerformanceReviewTemplatesQuery) List(ctx context.Context, db *keel.DB) ([]*workerreview.PerformanceReviewTemplate, error) {
+	return keel.List[*workerreview.PerformanceReviewTemplate](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *PerformanceReviewTemplatesQuery) All(ctx context.Context, db *keel.DB) ([]*workerreview.PerformanceReviewTemplate, error) {
+	return keel.All[*workerreview.PerformanceReviewTemplate](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *PerformanceReviewTemplatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerreview.PerformanceReviewTemplate, error) {
+	return keel.UpdateReturning[*workerreview.PerformanceReviewTemplate](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *PerformanceReviewTemplatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerreview.PerformanceReviewTemplate], error) {
+	return keel.PageOf[*workerreview.PerformanceReviewTemplate](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *PerformanceReviewTemplatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerreview.PerformanceReviewTemplate) error) error {
+	return keel.Each[*workerreview.PerformanceReviewTemplate](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newPerformanceReviewTemplate() unsafe.Pointer {

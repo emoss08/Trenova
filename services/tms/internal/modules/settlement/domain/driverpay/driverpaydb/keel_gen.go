@@ -4,6 +4,7 @@ package driverpaydb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -65,7 +66,7 @@ var payProfilesRef = keel.Ref{Table: &payProfilesTable}
 
 // PayProfilesTable is the table of driverpay.PayProfile.
 type PayProfilesTable struct {
-	keel.Handle[*driverpay.PayProfile]
+	keel.TableBase
 	ID                           keelkinds.PulidIDCol
 	BusinessUnitID               keelkinds.PulidIDCol
 	OrganizationID               keelkinds.PulidIDCol
@@ -84,7 +85,7 @@ type PayProfilesTable struct {
 
 // PayProfiles references the driver_pay_profiles table.
 var PayProfiles = &PayProfilesTable{
-	Handle:                       keel.Handle[*driverpay.PayProfile]{Ref: &payProfilesRef},
+	TableBase:                    keel.TableBase{Ref: &payProfilesRef},
 	ID:                           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfilesRef, Index: 0}}},
 	BusinessUnitID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfilesRef, Index: 1}}},
 	OrganizationID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfilesRef, Index: 2}}},
@@ -101,10 +102,10 @@ var PayProfiles = &PayProfilesTable{
 	UpdatedAt:                    keel.Int64Col{Col: keel.Col{Ref: &payProfilesRef, Index: 13}},
 }
 
-// BuildPayProfiles builds the handle of driver_pay_profiles for ref. Generated relation and alias methods call it.
+// BuildPayProfiles builds the table of driver_pay_profiles for ref. Generated relation and alias methods call it.
 func BuildPayProfiles(r *keel.Ref) *PayProfilesTable {
 	return &PayProfilesTable{
-		Handle:                       keel.Handle[*driverpay.PayProfile]{Ref: r},
+		TableBase:                    keel.TableBase{Ref: r},
 		ID:                           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -138,6 +139,365 @@ func (t *PayProfilesTable) Components() *PayProfileComponentsTable {
 // Get returns the driver_pay_profiles row with the given key, or keel.ErrNotFound.
 func (t *PayProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*driverpay.PayProfile, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// PayProfilesQuery is a query over driverpay.PayProfile.
+type PayProfilesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*driverpay.PayProfile] = (*PayProfilesTable)(nil)
+
+var _ keel.Query[*driverpay.PayProfile] = (*PayProfilesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *PayProfilesTable) Query() keel.Query[*driverpay.PayProfile] {
+	return &PayProfilesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see PayProfilesQuery.Where.
+func (t *PayProfilesTable) Where(ps ...keel.Pred) keel.Query[*driverpay.PayProfile] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see PayProfilesQuery.Pick.
+func (t *PayProfilesTable) Pick(es ...keel.Expr) keel.Query[*driverpay.PayProfile] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see PayProfilesQuery.Load.
+func (t *PayProfilesTable) Load(ls ...keel.Loader) keel.Query[*driverpay.PayProfile] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see PayProfilesQuery.Omit.
+func (t *PayProfilesTable) Omit(cols ...keel.Column) keel.Query[*driverpay.PayProfile] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see PayProfilesQuery.Order.
+func (t *PayProfilesTable) Order(os ...keel.Order) keel.Query[*driverpay.PayProfile] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see PayProfilesQuery.Limit.
+func (t *PayProfilesTable) Limit(n int) keel.Query[*driverpay.PayProfile] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see PayProfilesQuery.Group.
+func (t *PayProfilesTable) Group(es ...keel.Expr) keel.Query[*driverpay.PayProfile] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see PayProfilesQuery.GroupingSets.
+func (t *PayProfilesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*driverpay.PayProfile] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see PayProfilesQuery.Rollup.
+func (t *PayProfilesTable) Rollup(es ...keel.Expr) keel.Query[*driverpay.PayProfile] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see PayProfilesQuery.Cube.
+func (t *PayProfilesTable) Cube(es ...keel.Expr) keel.Query[*driverpay.PayProfile] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see PayProfilesQuery.AllTenants.
+func (t *PayProfilesTable) AllTenants() keel.Query[*driverpay.PayProfile] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see PayProfilesQuery.Join.
+func (t *PayProfilesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driverpay.PayProfile] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see PayProfilesQuery.LeftJoin.
+func (t *PayProfilesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driverpay.PayProfile] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see PayProfilesQuery.LeftJoinLateral.
+func (t *PayProfilesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*driverpay.PayProfile] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see PayProfilesQuery.JoinLateral.
+func (t *PayProfilesTable) JoinLateral(sub keel.LateralSource) keel.Query[*driverpay.PayProfile] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see PayProfilesQuery.Lock.
+func (t *PayProfilesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*driverpay.PayProfile] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see PayProfilesQuery.DistinctOn.
+func (t *PayProfilesTable) DistinctOn(es ...keel.Expr) keel.Query[*driverpay.PayProfile] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see PayProfilesQuery.Cache.
+func (t *PayProfilesTable) Cache(opts ...keel.CacheOption) keel.Query[*driverpay.PayProfile] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see PayProfilesQuery.LoadStrategy.
+func (t *PayProfilesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*driverpay.PayProfile] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see PayProfilesQuery.With.
+func (t *PayProfilesTable) With(ctes ...*keel.CTETable) keel.Query[*driverpay.PayProfile] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see PayProfilesQuery.Compute.
+func (t *PayProfilesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*driverpay.PayProfile] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *PayProfilesTable) Create(ctx context.Context, db *keel.DB, row *driverpay.PayProfile) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *PayProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*driverpay.PayProfile) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *PayProfilesTable) Save(ctx context.Context, db *keel.DB, row *driverpay.PayProfile, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *PayProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *driverpay.PayProfile, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *PayProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *driverpay.PayProfile) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *PayProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*driverpay.PayProfile, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *PayProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*driverpay.PayProfile, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *PayProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*driverpay.PayProfile) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *PayProfilesQuery) Where(ps ...keel.Pred) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *PayProfilesQuery) Pick(es ...keel.Expr) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *PayProfilesQuery) Omit(cols ...keel.Column) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *PayProfilesQuery) Load(ls ...keel.Loader) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *PayProfilesQuery) Order(os ...keel.Order) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *PayProfilesQuery) Distinct() keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *PayProfilesQuery) Group(es ...keel.Expr) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *PayProfilesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *PayProfilesQuery) Rollup(es ...keel.Expr) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *PayProfilesQuery) Cube(es ...keel.Expr) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *PayProfilesQuery) Window(name string, w keel.Window) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *PayProfilesQuery) Having(ps ...keel.Pred) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *PayProfilesQuery) Limit(n int) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *PayProfilesQuery) Offset(n int) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *PayProfilesQuery) DistinctOn(es ...keel.Expr) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *PayProfilesQuery) AllTenants() keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *PayProfilesQuery) CustomPlan() keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *PayProfilesQuery) Timeout(d time.Duration) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *PayProfilesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *PayProfilesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *PayProfilesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *PayProfilesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *PayProfilesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *PayProfilesQuery) Cache(opts ...keel.CacheOption) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *PayProfilesQuery) With(ctes ...*keel.CTETable) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *PayProfilesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *PayProfilesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*driverpay.PayProfile] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *PayProfilesQuery) Clone() keel.Query[*driverpay.PayProfile] {
+	return &PayProfilesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *PayProfilesQuery) One(ctx context.Context, db *keel.DB) (*driverpay.PayProfile, error) {
+	return keel.One[*driverpay.PayProfile](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *PayProfilesQuery) First(ctx context.Context, db *keel.DB) (*driverpay.PayProfile, error) {
+	return keel.First[*driverpay.PayProfile](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *PayProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*driverpay.PayProfile, error) {
+	return keel.List[*driverpay.PayProfile](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *PayProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*driverpay.PayProfile, error) {
+	return keel.All[*driverpay.PayProfile](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *PayProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*driverpay.PayProfile, error) {
+	return keel.UpdateReturning[*driverpay.PayProfile](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *PayProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*driverpay.PayProfile], error) {
+	return keel.PageOf[*driverpay.PayProfile](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *PayProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*driverpay.PayProfile) error) error {
+	return keel.Each[*driverpay.PayProfile](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newPayProfile() unsafe.Pointer { return unsafe.Pointer(new(driverpay.PayProfile)) }
@@ -280,7 +640,7 @@ var payProfileComponentsRef = keel.Ref{Table: &payProfileComponentsTable}
 
 // PayProfileComponentsTable is the table of driverpay.PayProfileComponent.
 type PayProfileComponentsTable struct {
-	keel.Handle[*driverpay.PayProfileComponent]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -302,7 +662,7 @@ type PayProfileComponentsTable struct {
 
 // PayProfileComponents references the driver_pay_profile_components table.
 var PayProfileComponents = &PayProfileComponentsTable{
-	Handle:          keel.Handle[*driverpay.PayProfileComponent]{Ref: &payProfileComponentsRef},
+	TableBase:       keel.TableBase{Ref: &payProfileComponentsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 2}}},
@@ -322,10 +682,10 @@ var PayProfileComponents = &PayProfileComponentsTable{
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 16}},
 }
 
-// BuildPayProfileComponents builds the handle of driver_pay_profile_components for ref. Generated relation and alias methods call it.
+// BuildPayProfileComponents builds the table of driver_pay_profile_components for ref. Generated relation and alias methods call it.
 func BuildPayProfileComponents(r *keel.Ref) *PayProfileComponentsTable {
 	return &PayProfileComponentsTable{
-		Handle:          keel.Handle[*driverpay.PayProfileComponent]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -357,6 +717,365 @@ func (t *PayProfileComponentsTable) As(alias string) *PayProfileComponentsTable 
 // Get returns the driver_pay_profile_components row with the given key, or keel.ErrNotFound.
 func (t *PayProfileComponentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*driverpay.PayProfileComponent, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// PayProfileComponentsQuery is a query over driverpay.PayProfileComponent.
+type PayProfileComponentsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*driverpay.PayProfileComponent] = (*PayProfileComponentsTable)(nil)
+
+var _ keel.Query[*driverpay.PayProfileComponent] = (*PayProfileComponentsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *PayProfileComponentsTable) Query() keel.Query[*driverpay.PayProfileComponent] {
+	return &PayProfileComponentsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see PayProfileComponentsQuery.Where.
+func (t *PayProfileComponentsTable) Where(ps ...keel.Pred) keel.Query[*driverpay.PayProfileComponent] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see PayProfileComponentsQuery.Pick.
+func (t *PayProfileComponentsTable) Pick(es ...keel.Expr) keel.Query[*driverpay.PayProfileComponent] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see PayProfileComponentsQuery.Load.
+func (t *PayProfileComponentsTable) Load(ls ...keel.Loader) keel.Query[*driverpay.PayProfileComponent] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see PayProfileComponentsQuery.Omit.
+func (t *PayProfileComponentsTable) Omit(cols ...keel.Column) keel.Query[*driverpay.PayProfileComponent] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see PayProfileComponentsQuery.Order.
+func (t *PayProfileComponentsTable) Order(os ...keel.Order) keel.Query[*driverpay.PayProfileComponent] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see PayProfileComponentsQuery.Limit.
+func (t *PayProfileComponentsTable) Limit(n int) keel.Query[*driverpay.PayProfileComponent] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see PayProfileComponentsQuery.Group.
+func (t *PayProfileComponentsTable) Group(es ...keel.Expr) keel.Query[*driverpay.PayProfileComponent] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see PayProfileComponentsQuery.GroupingSets.
+func (t *PayProfileComponentsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*driverpay.PayProfileComponent] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see PayProfileComponentsQuery.Rollup.
+func (t *PayProfileComponentsTable) Rollup(es ...keel.Expr) keel.Query[*driverpay.PayProfileComponent] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see PayProfileComponentsQuery.Cube.
+func (t *PayProfileComponentsTable) Cube(es ...keel.Expr) keel.Query[*driverpay.PayProfileComponent] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see PayProfileComponentsQuery.AllTenants.
+func (t *PayProfileComponentsTable) AllTenants() keel.Query[*driverpay.PayProfileComponent] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see PayProfileComponentsQuery.Join.
+func (t *PayProfileComponentsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driverpay.PayProfileComponent] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see PayProfileComponentsQuery.LeftJoin.
+func (t *PayProfileComponentsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driverpay.PayProfileComponent] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see PayProfileComponentsQuery.LeftJoinLateral.
+func (t *PayProfileComponentsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*driverpay.PayProfileComponent] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see PayProfileComponentsQuery.JoinLateral.
+func (t *PayProfileComponentsTable) JoinLateral(sub keel.LateralSource) keel.Query[*driverpay.PayProfileComponent] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see PayProfileComponentsQuery.Lock.
+func (t *PayProfileComponentsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*driverpay.PayProfileComponent] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see PayProfileComponentsQuery.DistinctOn.
+func (t *PayProfileComponentsTable) DistinctOn(es ...keel.Expr) keel.Query[*driverpay.PayProfileComponent] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see PayProfileComponentsQuery.Cache.
+func (t *PayProfileComponentsTable) Cache(opts ...keel.CacheOption) keel.Query[*driverpay.PayProfileComponent] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see PayProfileComponentsQuery.LoadStrategy.
+func (t *PayProfileComponentsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*driverpay.PayProfileComponent] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see PayProfileComponentsQuery.With.
+func (t *PayProfileComponentsTable) With(ctes ...*keel.CTETable) keel.Query[*driverpay.PayProfileComponent] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see PayProfileComponentsQuery.Compute.
+func (t *PayProfileComponentsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*driverpay.PayProfileComponent] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *PayProfileComponentsTable) Create(ctx context.Context, db *keel.DB, row *driverpay.PayProfileComponent) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *PayProfileComponentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*driverpay.PayProfileComponent) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *PayProfileComponentsTable) Save(ctx context.Context, db *keel.DB, row *driverpay.PayProfileComponent, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *PayProfileComponentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *driverpay.PayProfileComponent, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *PayProfileComponentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *driverpay.PayProfileComponent) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *PayProfileComponentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*driverpay.PayProfileComponent, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *PayProfileComponentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*driverpay.PayProfileComponent, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *PayProfileComponentsTable) Copy(ctx context.Context, db *keel.DB, rows []*driverpay.PayProfileComponent) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *PayProfileComponentsQuery) Where(ps ...keel.Pred) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *PayProfileComponentsQuery) Pick(es ...keel.Expr) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *PayProfileComponentsQuery) Omit(cols ...keel.Column) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *PayProfileComponentsQuery) Load(ls ...keel.Loader) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *PayProfileComponentsQuery) Order(os ...keel.Order) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *PayProfileComponentsQuery) Distinct() keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *PayProfileComponentsQuery) Group(es ...keel.Expr) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *PayProfileComponentsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *PayProfileComponentsQuery) Rollup(es ...keel.Expr) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *PayProfileComponentsQuery) Cube(es ...keel.Expr) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *PayProfileComponentsQuery) Window(name string, w keel.Window) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *PayProfileComponentsQuery) Having(ps ...keel.Pred) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *PayProfileComponentsQuery) Limit(n int) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *PayProfileComponentsQuery) Offset(n int) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *PayProfileComponentsQuery) DistinctOn(es ...keel.Expr) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *PayProfileComponentsQuery) AllTenants() keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *PayProfileComponentsQuery) CustomPlan() keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *PayProfileComponentsQuery) Timeout(d time.Duration) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *PayProfileComponentsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *PayProfileComponentsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *PayProfileComponentsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *PayProfileComponentsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *PayProfileComponentsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *PayProfileComponentsQuery) Cache(opts ...keel.CacheOption) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *PayProfileComponentsQuery) With(ctes ...*keel.CTETable) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *PayProfileComponentsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *PayProfileComponentsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*driverpay.PayProfileComponent] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *PayProfileComponentsQuery) Clone() keel.Query[*driverpay.PayProfileComponent] {
+	return &PayProfileComponentsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *PayProfileComponentsQuery) One(ctx context.Context, db *keel.DB) (*driverpay.PayProfileComponent, error) {
+	return keel.One[*driverpay.PayProfileComponent](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *PayProfileComponentsQuery) First(ctx context.Context, db *keel.DB) (*driverpay.PayProfileComponent, error) {
+	return keel.First[*driverpay.PayProfileComponent](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *PayProfileComponentsQuery) List(ctx context.Context, db *keel.DB) ([]*driverpay.PayProfileComponent, error) {
+	return keel.List[*driverpay.PayProfileComponent](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *PayProfileComponentsQuery) All(ctx context.Context, db *keel.DB) ([]*driverpay.PayProfileComponent, error) {
+	return keel.All[*driverpay.PayProfileComponent](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *PayProfileComponentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*driverpay.PayProfileComponent, error) {
+	return keel.UpdateReturning[*driverpay.PayProfileComponent](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *PayProfileComponentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*driverpay.PayProfileComponent], error) {
+	return keel.PageOf[*driverpay.PayProfileComponent](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *PayProfileComponentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*driverpay.PayProfileComponent) error) error {
+	return keel.Each[*driverpay.PayProfileComponent](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newPayProfileComponent() unsafe.Pointer {

@@ -4,6 +4,7 @@ package accessorialchargedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -65,7 +66,7 @@ var accessorialChargesRef = keel.Ref{Table: &accessorialChargesTable}
 
 // AccessorialChargesTable is the table of accessorialcharge.AccessorialCharge.
 type AccessorialChargesTable struct {
-	keel.Handle[*accessorialcharge.AccessorialCharge]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -84,7 +85,7 @@ type AccessorialChargesTable struct {
 
 // AccessorialCharges references the accessorial_charges table.
 var AccessorialCharges = &AccessorialChargesTable{
-	Handle:         keel.Handle[*accessorialcharge.AccessorialCharge]{Ref: &accessorialChargesRef},
+	TableBase:      keel.TableBase{Ref: &accessorialChargesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 2}}},
@@ -101,10 +102,10 @@ var AccessorialCharges = &AccessorialChargesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &accessorialChargesRef, Index: 13}},
 }
 
-// BuildAccessorialCharges builds the handle of accessorial_charges for ref. Generated relation and alias methods call it.
+// BuildAccessorialCharges builds the table of accessorial_charges for ref. Generated relation and alias methods call it.
 func BuildAccessorialCharges(r *keel.Ref) *AccessorialChargesTable {
 	return &AccessorialChargesTable{
-		Handle:         keel.Handle[*accessorialcharge.AccessorialCharge]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -133,6 +134,365 @@ func (t *AccessorialChargesTable) As(alias string) *AccessorialChargesTable {
 // Get returns the accessorial_charges row with the given key, or keel.ErrNotFound.
 func (t *AccessorialChargesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*accessorialcharge.AccessorialCharge, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// AccessorialChargesQuery is a query over accessorialcharge.AccessorialCharge.
+type AccessorialChargesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*accessorialcharge.AccessorialCharge] = (*AccessorialChargesTable)(nil)
+
+var _ keel.Query[*accessorialcharge.AccessorialCharge] = (*AccessorialChargesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AccessorialChargesTable) Query() keel.Query[*accessorialcharge.AccessorialCharge] {
+	return &AccessorialChargesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AccessorialChargesQuery.Where.
+func (t *AccessorialChargesTable) Where(ps ...keel.Pred) keel.Query[*accessorialcharge.AccessorialCharge] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AccessorialChargesQuery.Pick.
+func (t *AccessorialChargesTable) Pick(es ...keel.Expr) keel.Query[*accessorialcharge.AccessorialCharge] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AccessorialChargesQuery.Load.
+func (t *AccessorialChargesTable) Load(ls ...keel.Loader) keel.Query[*accessorialcharge.AccessorialCharge] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AccessorialChargesQuery.Omit.
+func (t *AccessorialChargesTable) Omit(cols ...keel.Column) keel.Query[*accessorialcharge.AccessorialCharge] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AccessorialChargesQuery.Order.
+func (t *AccessorialChargesTable) Order(os ...keel.Order) keel.Query[*accessorialcharge.AccessorialCharge] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AccessorialChargesQuery.Limit.
+func (t *AccessorialChargesTable) Limit(n int) keel.Query[*accessorialcharge.AccessorialCharge] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AccessorialChargesQuery.Group.
+func (t *AccessorialChargesTable) Group(es ...keel.Expr) keel.Query[*accessorialcharge.AccessorialCharge] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AccessorialChargesQuery.GroupingSets.
+func (t *AccessorialChargesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*accessorialcharge.AccessorialCharge] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AccessorialChargesQuery.Rollup.
+func (t *AccessorialChargesTable) Rollup(es ...keel.Expr) keel.Query[*accessorialcharge.AccessorialCharge] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AccessorialChargesQuery.Cube.
+func (t *AccessorialChargesTable) Cube(es ...keel.Expr) keel.Query[*accessorialcharge.AccessorialCharge] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AccessorialChargesQuery.AllTenants.
+func (t *AccessorialChargesTable) AllTenants() keel.Query[*accessorialcharge.AccessorialCharge] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AccessorialChargesQuery.Join.
+func (t *AccessorialChargesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accessorialcharge.AccessorialCharge] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AccessorialChargesQuery.LeftJoin.
+func (t *AccessorialChargesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accessorialcharge.AccessorialCharge] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AccessorialChargesQuery.LeftJoinLateral.
+func (t *AccessorialChargesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*accessorialcharge.AccessorialCharge] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AccessorialChargesQuery.JoinLateral.
+func (t *AccessorialChargesTable) JoinLateral(sub keel.LateralSource) keel.Query[*accessorialcharge.AccessorialCharge] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AccessorialChargesQuery.Lock.
+func (t *AccessorialChargesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*accessorialcharge.AccessorialCharge] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AccessorialChargesQuery.DistinctOn.
+func (t *AccessorialChargesTable) DistinctOn(es ...keel.Expr) keel.Query[*accessorialcharge.AccessorialCharge] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AccessorialChargesQuery.Cache.
+func (t *AccessorialChargesTable) Cache(opts ...keel.CacheOption) keel.Query[*accessorialcharge.AccessorialCharge] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AccessorialChargesQuery.LoadStrategy.
+func (t *AccessorialChargesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*accessorialcharge.AccessorialCharge] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AccessorialChargesQuery.With.
+func (t *AccessorialChargesTable) With(ctes ...*keel.CTETable) keel.Query[*accessorialcharge.AccessorialCharge] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AccessorialChargesQuery.Compute.
+func (t *AccessorialChargesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*accessorialcharge.AccessorialCharge] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AccessorialChargesTable) Create(ctx context.Context, db *keel.DB, row *accessorialcharge.AccessorialCharge) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AccessorialChargesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*accessorialcharge.AccessorialCharge) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AccessorialChargesTable) Save(ctx context.Context, db *keel.DB, row *accessorialcharge.AccessorialCharge, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AccessorialChargesTable) SaveExcept(ctx context.Context, db *keel.DB, row *accessorialcharge.AccessorialCharge, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AccessorialChargesTable) DeleteRow(ctx context.Context, db *keel.DB, row *accessorialcharge.AccessorialCharge) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AccessorialChargesTable) Upsert(ctx context.Context, db *keel.DB, rows []*accessorialcharge.AccessorialCharge, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AccessorialChargesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*accessorialcharge.AccessorialCharge, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AccessorialChargesTable) Copy(ctx context.Context, db *keel.DB, rows []*accessorialcharge.AccessorialCharge) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AccessorialChargesQuery) Where(ps ...keel.Pred) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AccessorialChargesQuery) Pick(es ...keel.Expr) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AccessorialChargesQuery) Omit(cols ...keel.Column) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AccessorialChargesQuery) Load(ls ...keel.Loader) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AccessorialChargesQuery) Order(os ...keel.Order) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AccessorialChargesQuery) Distinct() keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AccessorialChargesQuery) Group(es ...keel.Expr) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AccessorialChargesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AccessorialChargesQuery) Rollup(es ...keel.Expr) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AccessorialChargesQuery) Cube(es ...keel.Expr) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AccessorialChargesQuery) Window(name string, w keel.Window) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AccessorialChargesQuery) Having(ps ...keel.Pred) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AccessorialChargesQuery) Limit(n int) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AccessorialChargesQuery) Offset(n int) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AccessorialChargesQuery) DistinctOn(es ...keel.Expr) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AccessorialChargesQuery) AllTenants() keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AccessorialChargesQuery) CustomPlan() keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AccessorialChargesQuery) Timeout(d time.Duration) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AccessorialChargesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AccessorialChargesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AccessorialChargesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AccessorialChargesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AccessorialChargesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AccessorialChargesQuery) Cache(opts ...keel.CacheOption) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AccessorialChargesQuery) With(ctes ...*keel.CTETable) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AccessorialChargesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AccessorialChargesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*accessorialcharge.AccessorialCharge] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AccessorialChargesQuery) Clone() keel.Query[*accessorialcharge.AccessorialCharge] {
+	return &AccessorialChargesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AccessorialChargesQuery) One(ctx context.Context, db *keel.DB) (*accessorialcharge.AccessorialCharge, error) {
+	return keel.One[*accessorialcharge.AccessorialCharge](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AccessorialChargesQuery) First(ctx context.Context, db *keel.DB) (*accessorialcharge.AccessorialCharge, error) {
+	return keel.First[*accessorialcharge.AccessorialCharge](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AccessorialChargesQuery) List(ctx context.Context, db *keel.DB) ([]*accessorialcharge.AccessorialCharge, error) {
+	return keel.List[*accessorialcharge.AccessorialCharge](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AccessorialChargesQuery) All(ctx context.Context, db *keel.DB) ([]*accessorialcharge.AccessorialCharge, error) {
+	return keel.All[*accessorialcharge.AccessorialCharge](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AccessorialChargesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*accessorialcharge.AccessorialCharge, error) {
+	return keel.UpdateReturning[*accessorialcharge.AccessorialCharge](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AccessorialChargesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*accessorialcharge.AccessorialCharge], error) {
+	return keel.PageOf[*accessorialcharge.AccessorialCharge](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AccessorialChargesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*accessorialcharge.AccessorialCharge) error) error {
+	return keel.Each[*accessorialcharge.AccessorialCharge](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAccessorialCharge() unsafe.Pointer {

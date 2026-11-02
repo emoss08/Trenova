@@ -311,7 +311,7 @@ func (r *repository) SetApprovalWorkflowRunID(
 func listedTransfers(
 	req *editenderports.ListEDITransfersRequest,
 	direction string,
-) *keel.Query[*editransfer.EDITransfer] {
+) keel.Query[*editransfer.EDITransfer] {
 	t := editransferdb.EDITransfers
 	return t.Where(
 		tenantFilter(req.Filter.TenantInfo, direction),
@@ -323,7 +323,7 @@ func listedTransfers(
 	)
 }
 
-func inboundFileMessages(fileID pulid.ID) *keel.Query[*edimessage.EDIMessage] {
+func inboundFileMessages(fileID pulid.ID) keel.Query[*edimessage.EDIMessage] {
 	m := edimessagedb.EDIMessages
 	return m.Pick(m.ID).Where(m.InboundFileID.Eq(fileID))
 }
@@ -333,7 +333,7 @@ func newestFirst() []keel.Order {
 	return []keel.Order{t.CreatedAt.Desc(), t.ID.Desc()}
 }
 
-func withPartners(q *keel.Query[*editransfer.EDITransfer]) *keel.Query[*editransfer.EDITransfer] {
+func withPartners(q keel.Query[*editransfer.EDITransfer]) keel.Query[*editransfer.EDITransfer] {
 	t := editransferdb.EDITransfers
 	return q.Load(t.SourcePartner(), t.TargetPartner())
 }

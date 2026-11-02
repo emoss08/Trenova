@@ -4,6 +4,7 @@ package workerpolicydb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -67,7 +68,7 @@ var workerPoliciesRef = keel.Ref{Table: &workerPoliciesTable}
 
 // WorkerPoliciesTable is the table of workerpolicy.WorkerPolicy.
 type WorkerPoliciesTable struct {
-	keel.Handle[*workerpolicy.WorkerPolicy]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -89,7 +90,7 @@ type WorkerPoliciesTable struct {
 
 // WorkerPolicies references the worker_policies table.
 var WorkerPolicies = &WorkerPoliciesTable{
-	Handle:            keel.Handle[*workerpolicy.WorkerPolicy]{Ref: &workerPoliciesRef},
+	TableBase:         keel.TableBase{Ref: &workerPoliciesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 2}}},
@@ -109,10 +110,10 @@ var WorkerPolicies = &WorkerPoliciesTable{
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &workerPoliciesRef, Index: 16}},
 }
 
-// BuildWorkerPolicies builds the handle of worker_policies for ref. Generated relation and alias methods call it.
+// BuildWorkerPolicies builds the table of worker_policies for ref. Generated relation and alias methods call it.
 func BuildWorkerPolicies(r *keel.Ref) *WorkerPoliciesTable {
 	return &WorkerPoliciesTable{
-		Handle:            keel.Handle[*workerpolicy.WorkerPolicy]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -144,6 +145,365 @@ func (t *WorkerPoliciesTable) As(alias string) *WorkerPoliciesTable {
 // Get returns the worker_policies row with the given key, or keel.ErrNotFound.
 func (t *WorkerPoliciesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerpolicy.WorkerPolicy, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkerPoliciesQuery is a query over workerpolicy.WorkerPolicy.
+type WorkerPoliciesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workerpolicy.WorkerPolicy] = (*WorkerPoliciesTable)(nil)
+
+var _ keel.Query[*workerpolicy.WorkerPolicy] = (*WorkerPoliciesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerPoliciesTable) Query() keel.Query[*workerpolicy.WorkerPolicy] {
+	return &WorkerPoliciesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerPoliciesQuery.Where.
+func (t *WorkerPoliciesTable) Where(ps ...keel.Pred) keel.Query[*workerpolicy.WorkerPolicy] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerPoliciesQuery.Pick.
+func (t *WorkerPoliciesTable) Pick(es ...keel.Expr) keel.Query[*workerpolicy.WorkerPolicy] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerPoliciesQuery.Load.
+func (t *WorkerPoliciesTable) Load(ls ...keel.Loader) keel.Query[*workerpolicy.WorkerPolicy] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerPoliciesQuery.Omit.
+func (t *WorkerPoliciesTable) Omit(cols ...keel.Column) keel.Query[*workerpolicy.WorkerPolicy] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerPoliciesQuery.Order.
+func (t *WorkerPoliciesTable) Order(os ...keel.Order) keel.Query[*workerpolicy.WorkerPolicy] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerPoliciesQuery.Limit.
+func (t *WorkerPoliciesTable) Limit(n int) keel.Query[*workerpolicy.WorkerPolicy] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerPoliciesQuery.Group.
+func (t *WorkerPoliciesTable) Group(es ...keel.Expr) keel.Query[*workerpolicy.WorkerPolicy] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerPoliciesQuery.GroupingSets.
+func (t *WorkerPoliciesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerpolicy.WorkerPolicy] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerPoliciesQuery.Rollup.
+func (t *WorkerPoliciesTable) Rollup(es ...keel.Expr) keel.Query[*workerpolicy.WorkerPolicy] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerPoliciesQuery.Cube.
+func (t *WorkerPoliciesTable) Cube(es ...keel.Expr) keel.Query[*workerpolicy.WorkerPolicy] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerPoliciesQuery.AllTenants.
+func (t *WorkerPoliciesTable) AllTenants() keel.Query[*workerpolicy.WorkerPolicy] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerPoliciesQuery.Join.
+func (t *WorkerPoliciesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerpolicy.WorkerPolicy] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerPoliciesQuery.LeftJoin.
+func (t *WorkerPoliciesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerpolicy.WorkerPolicy] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerPoliciesQuery.LeftJoinLateral.
+func (t *WorkerPoliciesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerpolicy.WorkerPolicy] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerPoliciesQuery.JoinLateral.
+func (t *WorkerPoliciesTable) JoinLateral(sub keel.LateralSource) keel.Query[*workerpolicy.WorkerPolicy] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerPoliciesQuery.Lock.
+func (t *WorkerPoliciesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerpolicy.WorkerPolicy] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerPoliciesQuery.DistinctOn.
+func (t *WorkerPoliciesTable) DistinctOn(es ...keel.Expr) keel.Query[*workerpolicy.WorkerPolicy] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerPoliciesQuery.Cache.
+func (t *WorkerPoliciesTable) Cache(opts ...keel.CacheOption) keel.Query[*workerpolicy.WorkerPolicy] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerPoliciesQuery.LoadStrategy.
+func (t *WorkerPoliciesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerpolicy.WorkerPolicy] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerPoliciesQuery.With.
+func (t *WorkerPoliciesTable) With(ctes ...*keel.CTETable) keel.Query[*workerpolicy.WorkerPolicy] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerPoliciesQuery.Compute.
+func (t *WorkerPoliciesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workerpolicy.WorkerPolicy] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerPoliciesTable) Create(ctx context.Context, db *keel.DB, row *workerpolicy.WorkerPolicy) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerPoliciesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerpolicy.WorkerPolicy) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerPoliciesTable) Save(ctx context.Context, db *keel.DB, row *workerpolicy.WorkerPolicy, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerPoliciesTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerpolicy.WorkerPolicy, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerPoliciesTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerpolicy.WorkerPolicy) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerPoliciesTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerpolicy.WorkerPolicy, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerPoliciesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerpolicy.WorkerPolicy, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerPoliciesTable) Copy(ctx context.Context, db *keel.DB, rows []*workerpolicy.WorkerPolicy) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerPoliciesQuery) Where(ps ...keel.Pred) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerPoliciesQuery) Pick(es ...keel.Expr) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerPoliciesQuery) Omit(cols ...keel.Column) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerPoliciesQuery) Load(ls ...keel.Loader) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerPoliciesQuery) Order(os ...keel.Order) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerPoliciesQuery) Distinct() keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerPoliciesQuery) Group(es ...keel.Expr) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerPoliciesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerPoliciesQuery) Rollup(es ...keel.Expr) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerPoliciesQuery) Cube(es ...keel.Expr) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerPoliciesQuery) Window(name string, w keel.Window) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerPoliciesQuery) Having(ps ...keel.Pred) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerPoliciesQuery) Limit(n int) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerPoliciesQuery) Offset(n int) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerPoliciesQuery) DistinctOn(es ...keel.Expr) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerPoliciesQuery) AllTenants() keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerPoliciesQuery) CustomPlan() keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerPoliciesQuery) Timeout(d time.Duration) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerPoliciesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerPoliciesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerPoliciesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerPoliciesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerPoliciesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerPoliciesQuery) Cache(opts ...keel.CacheOption) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerPoliciesQuery) With(ctes ...*keel.CTETable) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerPoliciesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerPoliciesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerpolicy.WorkerPolicy] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerPoliciesQuery) Clone() keel.Query[*workerpolicy.WorkerPolicy] {
+	return &WorkerPoliciesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerPoliciesQuery) One(ctx context.Context, db *keel.DB) (*workerpolicy.WorkerPolicy, error) {
+	return keel.One[*workerpolicy.WorkerPolicy](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerPoliciesQuery) First(ctx context.Context, db *keel.DB) (*workerpolicy.WorkerPolicy, error) {
+	return keel.First[*workerpolicy.WorkerPolicy](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerPoliciesQuery) List(ctx context.Context, db *keel.DB) ([]*workerpolicy.WorkerPolicy, error) {
+	return keel.List[*workerpolicy.WorkerPolicy](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerPoliciesQuery) All(ctx context.Context, db *keel.DB) ([]*workerpolicy.WorkerPolicy, error) {
+	return keel.All[*workerpolicy.WorkerPolicy](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerPoliciesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerpolicy.WorkerPolicy, error) {
+	return keel.UpdateReturning[*workerpolicy.WorkerPolicy](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerPoliciesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerpolicy.WorkerPolicy], error) {
+	return keel.PageOf[*workerpolicy.WorkerPolicy](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerPoliciesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerpolicy.WorkerPolicy) error) error {
+	return keel.Each[*workerpolicy.WorkerPolicy](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerPolicy() unsafe.Pointer { return unsafe.Pointer(new(workerpolicy.WorkerPolicy)) }
@@ -304,7 +664,7 @@ var workerPolicyAcknowledgementsRef = keel.Ref{Table: &workerPolicyAcknowledgeme
 
 // WorkerPolicyAcknowledgementsTable is the table of workerpolicy.WorkerPolicyAcknowledgement.
 type WorkerPolicyAcknowledgementsTable struct {
-	keel.Handle[*workerpolicy.WorkerPolicyAcknowledgement]
+	keel.TableBase
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -323,7 +683,7 @@ type WorkerPolicyAcknowledgementsTable struct {
 
 // WorkerPolicyAcknowledgements references the worker_policy_acknowledgements table.
 var WorkerPolicyAcknowledgements = &WorkerPolicyAcknowledgementsTable{
-	Handle:             keel.Handle[*workerpolicy.WorkerPolicyAcknowledgement]{Ref: &workerPolicyAcknowledgementsRef},
+	TableBase:          keel.TableBase{Ref: &workerPolicyAcknowledgementsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPolicyAcknowledgementsRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPolicyAcknowledgementsRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPolicyAcknowledgementsRef, Index: 2}}},
@@ -340,10 +700,10 @@ var WorkerPolicyAcknowledgements = &WorkerPolicyAcknowledgementsTable{
 	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &workerPolicyAcknowledgementsRef, Index: 13}},
 }
 
-// BuildWorkerPolicyAcknowledgements builds the handle of worker_policy_acknowledgements for ref. Generated relation and alias methods call it.
+// BuildWorkerPolicyAcknowledgements builds the table of worker_policy_acknowledgements for ref. Generated relation and alias methods call it.
 func BuildWorkerPolicyAcknowledgements(r *keel.Ref) *WorkerPolicyAcknowledgementsTable {
 	return &WorkerPolicyAcknowledgementsTable{
-		Handle:             keel.Handle[*workerpolicy.WorkerPolicyAcknowledgement]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -382,6 +742,365 @@ func (t *WorkerPolicyAcknowledgementsTable) Worker() *workerdb.WorkersTable {
 // Get returns the worker_policy_acknowledgements row with the given key, or keel.ErrNotFound.
 func (t *WorkerPolicyAcknowledgementsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerpolicy.WorkerPolicyAcknowledgement, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkerPolicyAcknowledgementsQuery is a query over workerpolicy.WorkerPolicyAcknowledgement.
+type WorkerPolicyAcknowledgementsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workerpolicy.WorkerPolicyAcknowledgement] = (*WorkerPolicyAcknowledgementsTable)(nil)
+
+var _ keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] = (*WorkerPolicyAcknowledgementsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerPolicyAcknowledgementsTable) Query() keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return &WorkerPolicyAcknowledgementsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerPolicyAcknowledgementsQuery.Where.
+func (t *WorkerPolicyAcknowledgementsTable) Where(ps ...keel.Pred) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerPolicyAcknowledgementsQuery.Pick.
+func (t *WorkerPolicyAcknowledgementsTable) Pick(es ...keel.Expr) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerPolicyAcknowledgementsQuery.Load.
+func (t *WorkerPolicyAcknowledgementsTable) Load(ls ...keel.Loader) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerPolicyAcknowledgementsQuery.Omit.
+func (t *WorkerPolicyAcknowledgementsTable) Omit(cols ...keel.Column) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerPolicyAcknowledgementsQuery.Order.
+func (t *WorkerPolicyAcknowledgementsTable) Order(os ...keel.Order) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerPolicyAcknowledgementsQuery.Limit.
+func (t *WorkerPolicyAcknowledgementsTable) Limit(n int) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerPolicyAcknowledgementsQuery.Group.
+func (t *WorkerPolicyAcknowledgementsTable) Group(es ...keel.Expr) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerPolicyAcknowledgementsQuery.GroupingSets.
+func (t *WorkerPolicyAcknowledgementsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerPolicyAcknowledgementsQuery.Rollup.
+func (t *WorkerPolicyAcknowledgementsTable) Rollup(es ...keel.Expr) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerPolicyAcknowledgementsQuery.Cube.
+func (t *WorkerPolicyAcknowledgementsTable) Cube(es ...keel.Expr) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerPolicyAcknowledgementsQuery.AllTenants.
+func (t *WorkerPolicyAcknowledgementsTable) AllTenants() keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerPolicyAcknowledgementsQuery.Join.
+func (t *WorkerPolicyAcknowledgementsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerPolicyAcknowledgementsQuery.LeftJoin.
+func (t *WorkerPolicyAcknowledgementsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerPolicyAcknowledgementsQuery.LeftJoinLateral.
+func (t *WorkerPolicyAcknowledgementsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerPolicyAcknowledgementsQuery.JoinLateral.
+func (t *WorkerPolicyAcknowledgementsTable) JoinLateral(sub keel.LateralSource) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerPolicyAcknowledgementsQuery.Lock.
+func (t *WorkerPolicyAcknowledgementsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerPolicyAcknowledgementsQuery.DistinctOn.
+func (t *WorkerPolicyAcknowledgementsTable) DistinctOn(es ...keel.Expr) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerPolicyAcknowledgementsQuery.Cache.
+func (t *WorkerPolicyAcknowledgementsTable) Cache(opts ...keel.CacheOption) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerPolicyAcknowledgementsQuery.LoadStrategy.
+func (t *WorkerPolicyAcknowledgementsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerPolicyAcknowledgementsQuery.With.
+func (t *WorkerPolicyAcknowledgementsTable) With(ctes ...*keel.CTETable) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerPolicyAcknowledgementsQuery.Compute.
+func (t *WorkerPolicyAcknowledgementsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerPolicyAcknowledgementsTable) Create(ctx context.Context, db *keel.DB, row *workerpolicy.WorkerPolicyAcknowledgement) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerPolicyAcknowledgementsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerpolicy.WorkerPolicyAcknowledgement) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerPolicyAcknowledgementsTable) Save(ctx context.Context, db *keel.DB, row *workerpolicy.WorkerPolicyAcknowledgement, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerPolicyAcknowledgementsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerpolicy.WorkerPolicyAcknowledgement, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerPolicyAcknowledgementsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerpolicy.WorkerPolicyAcknowledgement) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerPolicyAcknowledgementsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerpolicy.WorkerPolicyAcknowledgement, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerPolicyAcknowledgementsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerpolicy.WorkerPolicyAcknowledgement, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerPolicyAcknowledgementsTable) Copy(ctx context.Context, db *keel.DB, rows []*workerpolicy.WorkerPolicyAcknowledgement) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerPolicyAcknowledgementsQuery) Where(ps ...keel.Pred) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerPolicyAcknowledgementsQuery) Pick(es ...keel.Expr) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerPolicyAcknowledgementsQuery) Omit(cols ...keel.Column) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerPolicyAcknowledgementsQuery) Load(ls ...keel.Loader) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerPolicyAcknowledgementsQuery) Order(os ...keel.Order) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerPolicyAcknowledgementsQuery) Distinct() keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerPolicyAcknowledgementsQuery) Group(es ...keel.Expr) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerPolicyAcknowledgementsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerPolicyAcknowledgementsQuery) Rollup(es ...keel.Expr) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerPolicyAcknowledgementsQuery) Cube(es ...keel.Expr) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerPolicyAcknowledgementsQuery) Window(name string, w keel.Window) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerPolicyAcknowledgementsQuery) Having(ps ...keel.Pred) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerPolicyAcknowledgementsQuery) Limit(n int) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerPolicyAcknowledgementsQuery) Offset(n int) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerPolicyAcknowledgementsQuery) DistinctOn(es ...keel.Expr) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerPolicyAcknowledgementsQuery) AllTenants() keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerPolicyAcknowledgementsQuery) CustomPlan() keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerPolicyAcknowledgementsQuery) Timeout(d time.Duration) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerPolicyAcknowledgementsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerPolicyAcknowledgementsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerPolicyAcknowledgementsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerPolicyAcknowledgementsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerPolicyAcknowledgementsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerPolicyAcknowledgementsQuery) Cache(opts ...keel.CacheOption) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerPolicyAcknowledgementsQuery) With(ctes ...*keel.CTETable) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerPolicyAcknowledgementsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerPolicyAcknowledgementsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerPolicyAcknowledgementsQuery) Clone() keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	return &WorkerPolicyAcknowledgementsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerPolicyAcknowledgementsQuery) One(ctx context.Context, db *keel.DB) (*workerpolicy.WorkerPolicyAcknowledgement, error) {
+	return keel.One[*workerpolicy.WorkerPolicyAcknowledgement](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerPolicyAcknowledgementsQuery) First(ctx context.Context, db *keel.DB) (*workerpolicy.WorkerPolicyAcknowledgement, error) {
+	return keel.First[*workerpolicy.WorkerPolicyAcknowledgement](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerPolicyAcknowledgementsQuery) List(ctx context.Context, db *keel.DB) ([]*workerpolicy.WorkerPolicyAcknowledgement, error) {
+	return keel.List[*workerpolicy.WorkerPolicyAcknowledgement](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerPolicyAcknowledgementsQuery) All(ctx context.Context, db *keel.DB) ([]*workerpolicy.WorkerPolicyAcknowledgement, error) {
+	return keel.All[*workerpolicy.WorkerPolicyAcknowledgement](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerPolicyAcknowledgementsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerpolicy.WorkerPolicyAcknowledgement, error) {
+	return keel.UpdateReturning[*workerpolicy.WorkerPolicyAcknowledgement](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerPolicyAcknowledgementsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerpolicy.WorkerPolicyAcknowledgement], error) {
+	return keel.PageOf[*workerpolicy.WorkerPolicyAcknowledgement](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerPolicyAcknowledgementsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerpolicy.WorkerPolicyAcknowledgement) error) error {
+	return keel.Each[*workerpolicy.WorkerPolicyAcknowledgement](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerPolicyAcknowledgement() unsafe.Pointer {

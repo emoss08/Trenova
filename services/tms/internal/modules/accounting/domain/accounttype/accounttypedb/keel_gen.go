@@ -4,6 +4,7 @@ package accounttypedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -64,7 +65,7 @@ var accountTypesRef = keel.Ref{Table: &accountTypesTable}
 
 // AccountTypesTable is the table of accounttype.AccountType.
 type AccountTypesTable struct {
-	keel.Handle[*accounttype.AccountType]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -84,7 +85,7 @@ type AccountTypesTable struct {
 
 // AccountTypes references the account_types table.
 var AccountTypes = &AccountTypesTable{
-	Handle:         keel.Handle[*accounttype.AccountType]{Ref: &accountTypesRef},
+	TableBase:      keel.TableBase{Ref: &accountTypesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountTypesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountTypesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountTypesRef, Index: 2}}},
@@ -102,10 +103,10 @@ var AccountTypes = &AccountTypesTable{
 	Rank:           keel.StringCol{Col: keel.Col{Ref: &accountTypesRef, Index: 14}},
 }
 
-// BuildAccountTypes builds the handle of account_types for ref. Generated relation and alias methods call it.
+// BuildAccountTypes builds the table of account_types for ref. Generated relation and alias methods call it.
 func BuildAccountTypes(r *keel.Ref) *AccountTypesTable {
 	return &AccountTypesTable{
-		Handle:         keel.Handle[*accounttype.AccountType]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -135,6 +136,365 @@ func (t *AccountTypesTable) As(alias string) *AccountTypesTable {
 // Get returns the account_types row with the given key, or keel.ErrNotFound.
 func (t *AccountTypesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*accounttype.AccountType, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// AccountTypesQuery is a query over accounttype.AccountType.
+type AccountTypesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*accounttype.AccountType] = (*AccountTypesTable)(nil)
+
+var _ keel.Query[*accounttype.AccountType] = (*AccountTypesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AccountTypesTable) Query() keel.Query[*accounttype.AccountType] {
+	return &AccountTypesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AccountTypesQuery.Where.
+func (t *AccountTypesTable) Where(ps ...keel.Pred) keel.Query[*accounttype.AccountType] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AccountTypesQuery.Pick.
+func (t *AccountTypesTable) Pick(es ...keel.Expr) keel.Query[*accounttype.AccountType] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AccountTypesQuery.Load.
+func (t *AccountTypesTable) Load(ls ...keel.Loader) keel.Query[*accounttype.AccountType] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AccountTypesQuery.Omit.
+func (t *AccountTypesTable) Omit(cols ...keel.Column) keel.Query[*accounttype.AccountType] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AccountTypesQuery.Order.
+func (t *AccountTypesTable) Order(os ...keel.Order) keel.Query[*accounttype.AccountType] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AccountTypesQuery.Limit.
+func (t *AccountTypesTable) Limit(n int) keel.Query[*accounttype.AccountType] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AccountTypesQuery.Group.
+func (t *AccountTypesTable) Group(es ...keel.Expr) keel.Query[*accounttype.AccountType] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AccountTypesQuery.GroupingSets.
+func (t *AccountTypesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*accounttype.AccountType] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AccountTypesQuery.Rollup.
+func (t *AccountTypesTable) Rollup(es ...keel.Expr) keel.Query[*accounttype.AccountType] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AccountTypesQuery.Cube.
+func (t *AccountTypesTable) Cube(es ...keel.Expr) keel.Query[*accounttype.AccountType] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AccountTypesQuery.AllTenants.
+func (t *AccountTypesTable) AllTenants() keel.Query[*accounttype.AccountType] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AccountTypesQuery.Join.
+func (t *AccountTypesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accounttype.AccountType] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AccountTypesQuery.LeftJoin.
+func (t *AccountTypesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accounttype.AccountType] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AccountTypesQuery.LeftJoinLateral.
+func (t *AccountTypesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*accounttype.AccountType] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AccountTypesQuery.JoinLateral.
+func (t *AccountTypesTable) JoinLateral(sub keel.LateralSource) keel.Query[*accounttype.AccountType] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AccountTypesQuery.Lock.
+func (t *AccountTypesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*accounttype.AccountType] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AccountTypesQuery.DistinctOn.
+func (t *AccountTypesTable) DistinctOn(es ...keel.Expr) keel.Query[*accounttype.AccountType] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AccountTypesQuery.Cache.
+func (t *AccountTypesTable) Cache(opts ...keel.CacheOption) keel.Query[*accounttype.AccountType] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AccountTypesQuery.LoadStrategy.
+func (t *AccountTypesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*accounttype.AccountType] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AccountTypesQuery.With.
+func (t *AccountTypesTable) With(ctes ...*keel.CTETable) keel.Query[*accounttype.AccountType] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AccountTypesQuery.Compute.
+func (t *AccountTypesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*accounttype.AccountType] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AccountTypesTable) Create(ctx context.Context, db *keel.DB, row *accounttype.AccountType) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AccountTypesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*accounttype.AccountType) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AccountTypesTable) Save(ctx context.Context, db *keel.DB, row *accounttype.AccountType, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AccountTypesTable) SaveExcept(ctx context.Context, db *keel.DB, row *accounttype.AccountType, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AccountTypesTable) DeleteRow(ctx context.Context, db *keel.DB, row *accounttype.AccountType) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AccountTypesTable) Upsert(ctx context.Context, db *keel.DB, rows []*accounttype.AccountType, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AccountTypesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*accounttype.AccountType, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AccountTypesTable) Copy(ctx context.Context, db *keel.DB, rows []*accounttype.AccountType) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AccountTypesQuery) Where(ps ...keel.Pred) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AccountTypesQuery) Pick(es ...keel.Expr) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AccountTypesQuery) Omit(cols ...keel.Column) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AccountTypesQuery) Load(ls ...keel.Loader) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AccountTypesQuery) Order(os ...keel.Order) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AccountTypesQuery) Distinct() keel.Query[*accounttype.AccountType] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AccountTypesQuery) Group(es ...keel.Expr) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AccountTypesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AccountTypesQuery) Rollup(es ...keel.Expr) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AccountTypesQuery) Cube(es ...keel.Expr) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AccountTypesQuery) Window(name string, w keel.Window) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AccountTypesQuery) Having(ps ...keel.Pred) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AccountTypesQuery) Limit(n int) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AccountTypesQuery) Offset(n int) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AccountTypesQuery) DistinctOn(es ...keel.Expr) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AccountTypesQuery) AllTenants() keel.Query[*accounttype.AccountType] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AccountTypesQuery) CustomPlan() keel.Query[*accounttype.AccountType] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AccountTypesQuery) Timeout(d time.Duration) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AccountTypesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AccountTypesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AccountTypesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AccountTypesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AccountTypesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AccountTypesQuery) Cache(opts ...keel.CacheOption) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AccountTypesQuery) With(ctes ...*keel.CTETable) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AccountTypesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AccountTypesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*accounttype.AccountType] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AccountTypesQuery) Clone() keel.Query[*accounttype.AccountType] {
+	return &AccountTypesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AccountTypesQuery) One(ctx context.Context, db *keel.DB) (*accounttype.AccountType, error) {
+	return keel.One[*accounttype.AccountType](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AccountTypesQuery) First(ctx context.Context, db *keel.DB) (*accounttype.AccountType, error) {
+	return keel.First[*accounttype.AccountType](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AccountTypesQuery) List(ctx context.Context, db *keel.DB) ([]*accounttype.AccountType, error) {
+	return keel.List[*accounttype.AccountType](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AccountTypesQuery) All(ctx context.Context, db *keel.DB) ([]*accounttype.AccountType, error) {
+	return keel.All[*accounttype.AccountType](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AccountTypesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*accounttype.AccountType, error) {
+	return keel.UpdateReturning[*accounttype.AccountType](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AccountTypesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*accounttype.AccountType], error) {
+	return keel.PageOf[*accounttype.AccountType](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AccountTypesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*accounttype.AccountType) error) error {
+	return keel.Each[*accounttype.AccountType](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAccountType() unsafe.Pointer { return unsafe.Pointer(new(accounttype.AccountType)) }

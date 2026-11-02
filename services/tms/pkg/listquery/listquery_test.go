@@ -523,7 +523,7 @@ func TestSearch_AModelWithoutConfigurationSearchesItsTextColumns(t *testing.T) {
 		Token          string `json:"-"`
 	}
 
-	h := keel.Handle[*bare]{
+	h := testTable[*bare]{
 		Ref: &keel.Ref{Table: newTrucksTable("test_bare_trucks", "bt", testOwners)},
 	}
 	q := h.Query()

@@ -4,6 +4,7 @@ package ssodb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -65,7 +66,7 @@ var sSOConfigsRef = keel.Ref{Table: &sSOConfigsTable}
 
 // SSOConfigsTable is the table of sso.SSOConfig.
 type SSOConfigsTable struct {
-	keel.Handle[*sso.SSOConfig]
+	keel.TableBase
 	ID               keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
@@ -90,7 +91,7 @@ type SSOConfigsTable struct {
 
 // SSOConfigs references the sso_configs table.
 var SSOConfigs = &SSOConfigsTable{
-	Handle:           keel.Handle[*sso.SSOConfig]{Ref: &sSOConfigsRef},
+	TableBase:        keel.TableBase{Ref: &sSOConfigsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sSOConfigsRef, Index: 0}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sSOConfigsRef, Index: 1}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sSOConfigsRef, Index: 2}}},
@@ -113,10 +114,10 @@ var SSOConfigs = &SSOConfigsTable{
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &sSOConfigsRef, Index: 19}},
 }
 
-// BuildSSOConfigs builds the handle of sso_configs for ref. Generated relation and alias methods call it.
+// BuildSSOConfigs builds the table of sso_configs for ref. Generated relation and alias methods call it.
 func BuildSSOConfigs(r *keel.Ref) *SSOConfigsTable {
 	return &SSOConfigsTable{
-		Handle:           keel.Handle[*sso.SSOConfig]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -151,6 +152,365 @@ func (t *SSOConfigsTable) As(alias string) *SSOConfigsTable {
 // Get returns the sso_configs row with the given key, or keel.ErrNotFound.
 func (t *SSOConfigsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*sso.SSOConfig, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// SSOConfigsQuery is a query over sso.SSOConfig.
+type SSOConfigsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*sso.SSOConfig] = (*SSOConfigsTable)(nil)
+
+var _ keel.Query[*sso.SSOConfig] = (*SSOConfigsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SSOConfigsTable) Query() keel.Query[*sso.SSOConfig] {
+	return &SSOConfigsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SSOConfigsQuery.Where.
+func (t *SSOConfigsTable) Where(ps ...keel.Pred) keel.Query[*sso.SSOConfig] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SSOConfigsQuery.Pick.
+func (t *SSOConfigsTable) Pick(es ...keel.Expr) keel.Query[*sso.SSOConfig] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SSOConfigsQuery.Load.
+func (t *SSOConfigsTable) Load(ls ...keel.Loader) keel.Query[*sso.SSOConfig] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SSOConfigsQuery.Omit.
+func (t *SSOConfigsTable) Omit(cols ...keel.Column) keel.Query[*sso.SSOConfig] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SSOConfigsQuery.Order.
+func (t *SSOConfigsTable) Order(os ...keel.Order) keel.Query[*sso.SSOConfig] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SSOConfigsQuery.Limit.
+func (t *SSOConfigsTable) Limit(n int) keel.Query[*sso.SSOConfig] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SSOConfigsQuery.Group.
+func (t *SSOConfigsTable) Group(es ...keel.Expr) keel.Query[*sso.SSOConfig] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SSOConfigsQuery.GroupingSets.
+func (t *SSOConfigsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*sso.SSOConfig] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SSOConfigsQuery.Rollup.
+func (t *SSOConfigsTable) Rollup(es ...keel.Expr) keel.Query[*sso.SSOConfig] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SSOConfigsQuery.Cube.
+func (t *SSOConfigsTable) Cube(es ...keel.Expr) keel.Query[*sso.SSOConfig] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SSOConfigsQuery.AllTenants.
+func (t *SSOConfigsTable) AllTenants() keel.Query[*sso.SSOConfig] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SSOConfigsQuery.Join.
+func (t *SSOConfigsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*sso.SSOConfig] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SSOConfigsQuery.LeftJoin.
+func (t *SSOConfigsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*sso.SSOConfig] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SSOConfigsQuery.LeftJoinLateral.
+func (t *SSOConfigsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*sso.SSOConfig] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SSOConfigsQuery.JoinLateral.
+func (t *SSOConfigsTable) JoinLateral(sub keel.LateralSource) keel.Query[*sso.SSOConfig] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SSOConfigsQuery.Lock.
+func (t *SSOConfigsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*sso.SSOConfig] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SSOConfigsQuery.DistinctOn.
+func (t *SSOConfigsTable) DistinctOn(es ...keel.Expr) keel.Query[*sso.SSOConfig] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SSOConfigsQuery.Cache.
+func (t *SSOConfigsTable) Cache(opts ...keel.CacheOption) keel.Query[*sso.SSOConfig] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SSOConfigsQuery.LoadStrategy.
+func (t *SSOConfigsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*sso.SSOConfig] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SSOConfigsQuery.With.
+func (t *SSOConfigsTable) With(ctes ...*keel.CTETable) keel.Query[*sso.SSOConfig] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SSOConfigsQuery.Compute.
+func (t *SSOConfigsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*sso.SSOConfig] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SSOConfigsTable) Create(ctx context.Context, db *keel.DB, row *sso.SSOConfig) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SSOConfigsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*sso.SSOConfig) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *SSOConfigsTable) Save(ctx context.Context, db *keel.DB, row *sso.SSOConfig, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SSOConfigsTable) SaveExcept(ctx context.Context, db *keel.DB, row *sso.SSOConfig, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SSOConfigsTable) DeleteRow(ctx context.Context, db *keel.DB, row *sso.SSOConfig) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SSOConfigsTable) Upsert(ctx context.Context, db *keel.DB, rows []*sso.SSOConfig, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SSOConfigsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*sso.SSOConfig, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SSOConfigsTable) Copy(ctx context.Context, db *keel.DB, rows []*sso.SSOConfig) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SSOConfigsQuery) Where(ps ...keel.Pred) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SSOConfigsQuery) Pick(es ...keel.Expr) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SSOConfigsQuery) Omit(cols ...keel.Column) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SSOConfigsQuery) Load(ls ...keel.Loader) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SSOConfigsQuery) Order(os ...keel.Order) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SSOConfigsQuery) Distinct() keel.Query[*sso.SSOConfig] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SSOConfigsQuery) Group(es ...keel.Expr) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SSOConfigsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SSOConfigsQuery) Rollup(es ...keel.Expr) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SSOConfigsQuery) Cube(es ...keel.Expr) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SSOConfigsQuery) Window(name string, w keel.Window) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SSOConfigsQuery) Having(ps ...keel.Pred) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SSOConfigsQuery) Limit(n int) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SSOConfigsQuery) Offset(n int) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SSOConfigsQuery) DistinctOn(es ...keel.Expr) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SSOConfigsQuery) AllTenants() keel.Query[*sso.SSOConfig] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SSOConfigsQuery) CustomPlan() keel.Query[*sso.SSOConfig] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SSOConfigsQuery) Timeout(d time.Duration) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SSOConfigsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SSOConfigsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SSOConfigsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SSOConfigsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SSOConfigsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SSOConfigsQuery) Cache(opts ...keel.CacheOption) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SSOConfigsQuery) With(ctes ...*keel.CTETable) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SSOConfigsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SSOConfigsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*sso.SSOConfig] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SSOConfigsQuery) Clone() keel.Query[*sso.SSOConfig] {
+	return &SSOConfigsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SSOConfigsQuery) One(ctx context.Context, db *keel.DB) (*sso.SSOConfig, error) {
+	return keel.One[*sso.SSOConfig](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SSOConfigsQuery) First(ctx context.Context, db *keel.DB) (*sso.SSOConfig, error) {
+	return keel.First[*sso.SSOConfig](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SSOConfigsQuery) List(ctx context.Context, db *keel.DB) ([]*sso.SSOConfig, error) {
+	return keel.List[*sso.SSOConfig](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SSOConfigsQuery) All(ctx context.Context, db *keel.DB) ([]*sso.SSOConfig, error) {
+	return keel.All[*sso.SSOConfig](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SSOConfigsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*sso.SSOConfig, error) {
+	return keel.UpdateReturning[*sso.SSOConfig](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SSOConfigsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*sso.SSOConfig], error) {
+	return keel.PageOf[*sso.SSOConfig](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SSOConfigsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*sso.SSOConfig) error) error {
+	return keel.Each[*sso.SSOConfig](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newSSOConfig() unsafe.Pointer { return unsafe.Pointer(new(sso.SSOConfig)) }
@@ -308,7 +668,7 @@ var sSOIdentityLinksRef = keel.Ref{Table: &sSOIdentityLinksTable}
 
 // SSOIdentityLinksTable is the table of sso.SSOIdentityLink.
 type SSOIdentityLinksTable struct {
-	keel.Handle[*sso.SSOIdentityLink]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -324,7 +684,7 @@ type SSOIdentityLinksTable struct {
 
 // SSOIdentityLinks references the sso_identity_links table.
 var SSOIdentityLinks = &SSOIdentityLinksTable{
-	Handle:         keel.Handle[*sso.SSOIdentityLink]{Ref: &sSOIdentityLinksRef},
+	TableBase:      keel.TableBase{Ref: &sSOIdentityLinksRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sSOIdentityLinksRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sSOIdentityLinksRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sSOIdentityLinksRef, Index: 2}}},
@@ -338,10 +698,10 @@ var SSOIdentityLinks = &SSOIdentityLinksTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &sSOIdentityLinksRef, Index: 10}},
 }
 
-// BuildSSOIdentityLinks builds the handle of sso_identity_links for ref. Generated relation and alias methods call it.
+// BuildSSOIdentityLinks builds the table of sso_identity_links for ref. Generated relation and alias methods call it.
 func BuildSSOIdentityLinks(r *keel.Ref) *SSOIdentityLinksTable {
 	return &SSOIdentityLinksTable{
-		Handle:         keel.Handle[*sso.SSOIdentityLink]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -367,6 +727,365 @@ func (t *SSOIdentityLinksTable) As(alias string) *SSOIdentityLinksTable {
 // Get returns the sso_identity_links row with the given key, or keel.ErrNotFound.
 func (t *SSOIdentityLinksTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*sso.SSOIdentityLink, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// SSOIdentityLinksQuery is a query over sso.SSOIdentityLink.
+type SSOIdentityLinksQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*sso.SSOIdentityLink] = (*SSOIdentityLinksTable)(nil)
+
+var _ keel.Query[*sso.SSOIdentityLink] = (*SSOIdentityLinksQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SSOIdentityLinksTable) Query() keel.Query[*sso.SSOIdentityLink] {
+	return &SSOIdentityLinksQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SSOIdentityLinksQuery.Where.
+func (t *SSOIdentityLinksTable) Where(ps ...keel.Pred) keel.Query[*sso.SSOIdentityLink] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SSOIdentityLinksQuery.Pick.
+func (t *SSOIdentityLinksTable) Pick(es ...keel.Expr) keel.Query[*sso.SSOIdentityLink] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SSOIdentityLinksQuery.Load.
+func (t *SSOIdentityLinksTable) Load(ls ...keel.Loader) keel.Query[*sso.SSOIdentityLink] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SSOIdentityLinksQuery.Omit.
+func (t *SSOIdentityLinksTable) Omit(cols ...keel.Column) keel.Query[*sso.SSOIdentityLink] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SSOIdentityLinksQuery.Order.
+func (t *SSOIdentityLinksTable) Order(os ...keel.Order) keel.Query[*sso.SSOIdentityLink] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SSOIdentityLinksQuery.Limit.
+func (t *SSOIdentityLinksTable) Limit(n int) keel.Query[*sso.SSOIdentityLink] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SSOIdentityLinksQuery.Group.
+func (t *SSOIdentityLinksTable) Group(es ...keel.Expr) keel.Query[*sso.SSOIdentityLink] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SSOIdentityLinksQuery.GroupingSets.
+func (t *SSOIdentityLinksTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*sso.SSOIdentityLink] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SSOIdentityLinksQuery.Rollup.
+func (t *SSOIdentityLinksTable) Rollup(es ...keel.Expr) keel.Query[*sso.SSOIdentityLink] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SSOIdentityLinksQuery.Cube.
+func (t *SSOIdentityLinksTable) Cube(es ...keel.Expr) keel.Query[*sso.SSOIdentityLink] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SSOIdentityLinksQuery.AllTenants.
+func (t *SSOIdentityLinksTable) AllTenants() keel.Query[*sso.SSOIdentityLink] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SSOIdentityLinksQuery.Join.
+func (t *SSOIdentityLinksTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*sso.SSOIdentityLink] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SSOIdentityLinksQuery.LeftJoin.
+func (t *SSOIdentityLinksTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*sso.SSOIdentityLink] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SSOIdentityLinksQuery.LeftJoinLateral.
+func (t *SSOIdentityLinksTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*sso.SSOIdentityLink] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SSOIdentityLinksQuery.JoinLateral.
+func (t *SSOIdentityLinksTable) JoinLateral(sub keel.LateralSource) keel.Query[*sso.SSOIdentityLink] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SSOIdentityLinksQuery.Lock.
+func (t *SSOIdentityLinksTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*sso.SSOIdentityLink] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SSOIdentityLinksQuery.DistinctOn.
+func (t *SSOIdentityLinksTable) DistinctOn(es ...keel.Expr) keel.Query[*sso.SSOIdentityLink] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SSOIdentityLinksQuery.Cache.
+func (t *SSOIdentityLinksTable) Cache(opts ...keel.CacheOption) keel.Query[*sso.SSOIdentityLink] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SSOIdentityLinksQuery.LoadStrategy.
+func (t *SSOIdentityLinksTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*sso.SSOIdentityLink] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SSOIdentityLinksQuery.With.
+func (t *SSOIdentityLinksTable) With(ctes ...*keel.CTETable) keel.Query[*sso.SSOIdentityLink] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SSOIdentityLinksQuery.Compute.
+func (t *SSOIdentityLinksTable) Compute(col keel.Column, e keel.Expr) keel.Query[*sso.SSOIdentityLink] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SSOIdentityLinksTable) Create(ctx context.Context, db *keel.DB, row *sso.SSOIdentityLink) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SSOIdentityLinksTable) CreateMany(ctx context.Context, db *keel.DB, rows []*sso.SSOIdentityLink) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *SSOIdentityLinksTable) Save(ctx context.Context, db *keel.DB, row *sso.SSOIdentityLink, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SSOIdentityLinksTable) SaveExcept(ctx context.Context, db *keel.DB, row *sso.SSOIdentityLink, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SSOIdentityLinksTable) DeleteRow(ctx context.Context, db *keel.DB, row *sso.SSOIdentityLink) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SSOIdentityLinksTable) Upsert(ctx context.Context, db *keel.DB, rows []*sso.SSOIdentityLink, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SSOIdentityLinksTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*sso.SSOIdentityLink, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SSOIdentityLinksTable) Copy(ctx context.Context, db *keel.DB, rows []*sso.SSOIdentityLink) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SSOIdentityLinksQuery) Where(ps ...keel.Pred) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SSOIdentityLinksQuery) Pick(es ...keel.Expr) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SSOIdentityLinksQuery) Omit(cols ...keel.Column) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SSOIdentityLinksQuery) Load(ls ...keel.Loader) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SSOIdentityLinksQuery) Order(os ...keel.Order) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SSOIdentityLinksQuery) Distinct() keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SSOIdentityLinksQuery) Group(es ...keel.Expr) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SSOIdentityLinksQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SSOIdentityLinksQuery) Rollup(es ...keel.Expr) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SSOIdentityLinksQuery) Cube(es ...keel.Expr) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SSOIdentityLinksQuery) Window(name string, w keel.Window) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SSOIdentityLinksQuery) Having(ps ...keel.Pred) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SSOIdentityLinksQuery) Limit(n int) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SSOIdentityLinksQuery) Offset(n int) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SSOIdentityLinksQuery) DistinctOn(es ...keel.Expr) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SSOIdentityLinksQuery) AllTenants() keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SSOIdentityLinksQuery) CustomPlan() keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SSOIdentityLinksQuery) Timeout(d time.Duration) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SSOIdentityLinksQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SSOIdentityLinksQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SSOIdentityLinksQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SSOIdentityLinksQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SSOIdentityLinksQuery) JoinLateral(sub keel.LateralSource) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SSOIdentityLinksQuery) Cache(opts ...keel.CacheOption) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SSOIdentityLinksQuery) With(ctes ...*keel.CTETable) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SSOIdentityLinksQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SSOIdentityLinksQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*sso.SSOIdentityLink] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SSOIdentityLinksQuery) Clone() keel.Query[*sso.SSOIdentityLink] {
+	return &SSOIdentityLinksQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SSOIdentityLinksQuery) One(ctx context.Context, db *keel.DB) (*sso.SSOIdentityLink, error) {
+	return keel.One[*sso.SSOIdentityLink](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SSOIdentityLinksQuery) First(ctx context.Context, db *keel.DB) (*sso.SSOIdentityLink, error) {
+	return keel.First[*sso.SSOIdentityLink](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SSOIdentityLinksQuery) List(ctx context.Context, db *keel.DB) ([]*sso.SSOIdentityLink, error) {
+	return keel.List[*sso.SSOIdentityLink](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SSOIdentityLinksQuery) All(ctx context.Context, db *keel.DB) ([]*sso.SSOIdentityLink, error) {
+	return keel.All[*sso.SSOIdentityLink](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SSOIdentityLinksQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*sso.SSOIdentityLink, error) {
+	return keel.UpdateReturning[*sso.SSOIdentityLink](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SSOIdentityLinksQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*sso.SSOIdentityLink], error) {
+	return keel.PageOf[*sso.SSOIdentityLink](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SSOIdentityLinksQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*sso.SSOIdentityLink) error) error {
+	return keel.Each[*sso.SSOIdentityLink](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newSSOIdentityLink() unsafe.Pointer { return unsafe.Pointer(new(sso.SSOIdentityLink)) }

@@ -130,7 +130,7 @@ func (r *repository) GetByIDs(
 	})
 }
 
-func reasonCodesByIDs(ids []pulid.ID) *keel.Query[*servicefailure.ReasonCode] {
+func reasonCodesByIDs(ids []pulid.ID) keel.Query[*servicefailure.ReasonCode] {
 	rc := servicefailuredb.ReasonCodes
 
 	return rc.Where(rc.ID.In(ids...)).Limit(len(ids))

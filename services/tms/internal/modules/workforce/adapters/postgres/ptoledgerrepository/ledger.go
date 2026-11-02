@@ -45,7 +45,7 @@ func sumOrZero(e keel.Expr) keel.NumericExpr {
 	return keel.NumericOf(e).Coalesce(0)
 }
 
-func balanceQuery(key *ptoledgerports.PTOBalanceKey) *keel.Query[*pto.WorkerPTOBalance] {
+func balanceQuery(key *ptoledgerports.PTOBalanceKey) keel.Query[*pto.WorkerPTOBalance] {
 	b := ptodb.WorkerPTOBalances
 
 	return b.Where(b.WorkerID.Eq(key.WorkerID), b.PTOType.Eq(key.PTOType))
@@ -194,8 +194,8 @@ func (r *repository) ListEntries(
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 					Shape: func(
-						q *keel.Query[*pto.WorkerPTOLedgerEntry],
-					) *keel.Query[*pto.WorkerPTOLedgerEntry] {
+						q keel.Query[*pto.WorkerPTOLedgerEntry],
+					) keel.Query[*pto.WorkerPTOLedgerEntry] {
 						return q.Load(listquery.When(req.IncludeWorker, e.Worker())...)
 					},
 				})

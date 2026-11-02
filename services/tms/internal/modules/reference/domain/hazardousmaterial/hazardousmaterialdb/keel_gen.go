@@ -4,6 +4,7 @@ package hazardousmaterialdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -76,7 +77,7 @@ var hazardousMaterialsRef = keel.Ref{Table: &hazardousMaterialsTable}
 
 // HazardousMaterialsTable is the table of hazardousmaterial.HazardousMaterial.
 type HazardousMaterialsTable struct {
-	keel.Handle[*hazardousmaterial.HazardousMaterial]
+	keel.TableBase
 	ID                          keelkinds.PulidIDCol
 	BusinessUnitID              keelkinds.PulidIDCol
 	OrganizationID              keelkinds.PulidIDCol
@@ -108,7 +109,7 @@ type HazardousMaterialsTable struct {
 
 // HazardousMaterials references the hazardous_materials table.
 var HazardousMaterials = &HazardousMaterialsTable{
-	Handle:                      keel.Handle[*hazardousmaterial.HazardousMaterial]{Ref: &hazardousMaterialsRef},
+	TableBase:                   keel.TableBase{Ref: &hazardousMaterialsRef},
 	ID:                          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 0}}},
 	BusinessUnitID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 1}}},
 	OrganizationID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 2}}},
@@ -138,10 +139,10 @@ var HazardousMaterials = &HazardousMaterialsTable{
 	UpdatedAt:                   keel.Int64Col{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 26}},
 }
 
-// BuildHazardousMaterials builds the handle of hazardous_materials for ref. Generated relation and alias methods call it.
+// BuildHazardousMaterials builds the table of hazardous_materials for ref. Generated relation and alias methods call it.
 func BuildHazardousMaterials(r *keel.Ref) *HazardousMaterialsTable {
 	return &HazardousMaterialsTable{
-		Handle:                      keel.Handle[*hazardousmaterial.HazardousMaterial]{Ref: r},
+		TableBase:                   keel.TableBase{Ref: r},
 		ID:                          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -183,6 +184,365 @@ func (t *HazardousMaterialsTable) As(alias string) *HazardousMaterialsTable {
 // Get returns the hazardous_materials row with the given key, or keel.ErrNotFound.
 func (t *HazardousMaterialsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*hazardousmaterial.HazardousMaterial, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// HazardousMaterialsQuery is a query over hazardousmaterial.HazardousMaterial.
+type HazardousMaterialsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*hazardousmaterial.HazardousMaterial] = (*HazardousMaterialsTable)(nil)
+
+var _ keel.Query[*hazardousmaterial.HazardousMaterial] = (*HazardousMaterialsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *HazardousMaterialsTable) Query() keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return &HazardousMaterialsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see HazardousMaterialsQuery.Where.
+func (t *HazardousMaterialsTable) Where(ps ...keel.Pred) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see HazardousMaterialsQuery.Pick.
+func (t *HazardousMaterialsTable) Pick(es ...keel.Expr) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see HazardousMaterialsQuery.Load.
+func (t *HazardousMaterialsTable) Load(ls ...keel.Loader) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see HazardousMaterialsQuery.Omit.
+func (t *HazardousMaterialsTable) Omit(cols ...keel.Column) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see HazardousMaterialsQuery.Order.
+func (t *HazardousMaterialsTable) Order(os ...keel.Order) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see HazardousMaterialsQuery.Limit.
+func (t *HazardousMaterialsTable) Limit(n int) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see HazardousMaterialsQuery.Group.
+func (t *HazardousMaterialsTable) Group(es ...keel.Expr) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see HazardousMaterialsQuery.GroupingSets.
+func (t *HazardousMaterialsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see HazardousMaterialsQuery.Rollup.
+func (t *HazardousMaterialsTable) Rollup(es ...keel.Expr) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see HazardousMaterialsQuery.Cube.
+func (t *HazardousMaterialsTable) Cube(es ...keel.Expr) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see HazardousMaterialsQuery.AllTenants.
+func (t *HazardousMaterialsTable) AllTenants() keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see HazardousMaterialsQuery.Join.
+func (t *HazardousMaterialsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see HazardousMaterialsQuery.LeftJoin.
+func (t *HazardousMaterialsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see HazardousMaterialsQuery.LeftJoinLateral.
+func (t *HazardousMaterialsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see HazardousMaterialsQuery.JoinLateral.
+func (t *HazardousMaterialsTable) JoinLateral(sub keel.LateralSource) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see HazardousMaterialsQuery.Lock.
+func (t *HazardousMaterialsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see HazardousMaterialsQuery.DistinctOn.
+func (t *HazardousMaterialsTable) DistinctOn(es ...keel.Expr) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see HazardousMaterialsQuery.Cache.
+func (t *HazardousMaterialsTable) Cache(opts ...keel.CacheOption) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see HazardousMaterialsQuery.LoadStrategy.
+func (t *HazardousMaterialsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see HazardousMaterialsQuery.With.
+func (t *HazardousMaterialsTable) With(ctes ...*keel.CTETable) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see HazardousMaterialsQuery.Compute.
+func (t *HazardousMaterialsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *HazardousMaterialsTable) Create(ctx context.Context, db *keel.DB, row *hazardousmaterial.HazardousMaterial) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *HazardousMaterialsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*hazardousmaterial.HazardousMaterial) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *HazardousMaterialsTable) Save(ctx context.Context, db *keel.DB, row *hazardousmaterial.HazardousMaterial, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *HazardousMaterialsTable) SaveExcept(ctx context.Context, db *keel.DB, row *hazardousmaterial.HazardousMaterial, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *HazardousMaterialsTable) DeleteRow(ctx context.Context, db *keel.DB, row *hazardousmaterial.HazardousMaterial) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *HazardousMaterialsTable) Upsert(ctx context.Context, db *keel.DB, rows []*hazardousmaterial.HazardousMaterial, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *HazardousMaterialsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*hazardousmaterial.HazardousMaterial, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *HazardousMaterialsTable) Copy(ctx context.Context, db *keel.DB, rows []*hazardousmaterial.HazardousMaterial) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *HazardousMaterialsQuery) Where(ps ...keel.Pred) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *HazardousMaterialsQuery) Pick(es ...keel.Expr) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *HazardousMaterialsQuery) Omit(cols ...keel.Column) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *HazardousMaterialsQuery) Load(ls ...keel.Loader) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *HazardousMaterialsQuery) Order(os ...keel.Order) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *HazardousMaterialsQuery) Distinct() keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *HazardousMaterialsQuery) Group(es ...keel.Expr) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *HazardousMaterialsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *HazardousMaterialsQuery) Rollup(es ...keel.Expr) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *HazardousMaterialsQuery) Cube(es ...keel.Expr) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *HazardousMaterialsQuery) Window(name string, w keel.Window) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *HazardousMaterialsQuery) Having(ps ...keel.Pred) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *HazardousMaterialsQuery) Limit(n int) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *HazardousMaterialsQuery) Offset(n int) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *HazardousMaterialsQuery) DistinctOn(es ...keel.Expr) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *HazardousMaterialsQuery) AllTenants() keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *HazardousMaterialsQuery) CustomPlan() keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *HazardousMaterialsQuery) Timeout(d time.Duration) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *HazardousMaterialsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *HazardousMaterialsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *HazardousMaterialsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *HazardousMaterialsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *HazardousMaterialsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *HazardousMaterialsQuery) Cache(opts ...keel.CacheOption) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *HazardousMaterialsQuery) With(ctes ...*keel.CTETable) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *HazardousMaterialsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *HazardousMaterialsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*hazardousmaterial.HazardousMaterial] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *HazardousMaterialsQuery) Clone() keel.Query[*hazardousmaterial.HazardousMaterial] {
+	return &HazardousMaterialsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *HazardousMaterialsQuery) One(ctx context.Context, db *keel.DB) (*hazardousmaterial.HazardousMaterial, error) {
+	return keel.One[*hazardousmaterial.HazardousMaterial](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *HazardousMaterialsQuery) First(ctx context.Context, db *keel.DB) (*hazardousmaterial.HazardousMaterial, error) {
+	return keel.First[*hazardousmaterial.HazardousMaterial](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *HazardousMaterialsQuery) List(ctx context.Context, db *keel.DB) ([]*hazardousmaterial.HazardousMaterial, error) {
+	return keel.List[*hazardousmaterial.HazardousMaterial](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *HazardousMaterialsQuery) All(ctx context.Context, db *keel.DB) ([]*hazardousmaterial.HazardousMaterial, error) {
+	return keel.All[*hazardousmaterial.HazardousMaterial](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *HazardousMaterialsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*hazardousmaterial.HazardousMaterial, error) {
+	return keel.UpdateReturning[*hazardousmaterial.HazardousMaterial](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *HazardousMaterialsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*hazardousmaterial.HazardousMaterial], error) {
+	return keel.PageOf[*hazardousmaterial.HazardousMaterial](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *HazardousMaterialsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*hazardousmaterial.HazardousMaterial) error) error {
+	return keel.Each[*hazardousmaterial.HazardousMaterial](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newHazardousMaterial() unsafe.Pointer {

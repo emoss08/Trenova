@@ -114,7 +114,7 @@ func (g *etaPhase) seed(ctx context.Context) error {
 		end := min(begin+etaChunk, total)
 		chunk := b.rows[begin:end]
 		if err = g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
-			return volumegen.InsertRows(ctx, tx, stopetadb.StopETAs.Handle, chunk)
+			return volumegen.InsertRows(ctx, tx, stopetadb.StopETAs, chunk)
 		}); err != nil {
 			return err
 		}

@@ -95,7 +95,7 @@ func countIf(preds ...keel.Pred) keel.Expr {
 func moveSummaryQuery(
 	filter *dispatchboardports.DispatchBoardFilter,
 	now, dayStart int64,
-) *moveQuery {
+) moveQuery {
 	asn := assignments
 	ca := carrierAssignments
 	pos := telematicsdb.VehiclePositions
@@ -194,7 +194,7 @@ func urgencyOf(now int64) moveUrgency {
 
 func driverSummaryQuery(
 	filter *dispatchboardports.DispatchBoardFilter,
-) *keel.Query[*worker.Worker] {
+) keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	return w.
 		Pick(

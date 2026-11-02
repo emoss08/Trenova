@@ -61,7 +61,7 @@ func (r *repository) ListCarrierInvoices(
 				q,
 				&listquery.Request[edicarrierinvoice.CarrierInvoice]{
 					Filter: req.Filter,
-					Shape: func(q *keel.Query[*edicarrierinvoice.CarrierInvoice]) *keel.Query[*edicarrierinvoice.CarrierInvoice] {
+					Shape: func(q keel.Query[*edicarrierinvoice.CarrierInvoice]) keel.Query[*edicarrierinvoice.CarrierInvoice] {
 						return q.Load(ci.Partner())
 					},
 					Then: []keel.Order{ci.CreatedAt.Desc()},

@@ -504,7 +504,7 @@ func localHour(ts keel.NumberValue, tz string) keel.Int64Expr {
 	)
 }
 
-func activeShipmentsQuery(window analyticsWindow) *keel.Query[*shipment.Shipment] {
+func activeShipmentsQuery(window analyticsWindow) keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 
 	return sp.Pick(
@@ -518,7 +518,7 @@ func activeShipmentsQuery(window analyticsWindow) *keel.Query[*shipment.Shipment
 	)
 }
 
-func hourlyShipmentsQuery(window analyticsWindow, tz string) *keel.Query[*shipment.Shipment] {
+func hourlyShipmentsQuery(window analyticsWindow, tz string) keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 	hour := localHour(sp.CreatedAt, tz)
 
@@ -563,7 +563,7 @@ func (p *Provider) getActiveShipments(
 	})
 }
 
-func onTimeQuery(window analyticsWindow) *keel.Query[*shipment.Stop] {
+func onTimeQuery(window analyticsWindow) keel.Query[*shipment.Stop] {
 	stp := shipmentdb.Stops
 	onTime := keel.Int64Of(stp.ActualArrival).
 		LteExpr(stp.ScheduledWindowEnd.Coalesce(stp.ScheduledWindowStart))
@@ -633,7 +633,7 @@ func (p *Provider) getOnTimePercent(
 	})
 }
 
-func revenueTodayQuery(window analyticsWindow) *keel.Query[*shipment.Shipment] {
+func revenueTodayQuery(window analyticsWindow) keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 	sm := shipmentdb.ShipmentMoves
 	delivered := shipmentdb.Shipments.As(mileageShipmentAlias)
@@ -656,7 +656,7 @@ func revenueTodayQuery(window analyticsWindow) *keel.Query[*shipment.Shipment] {
 	).Where(within(sp.ActualDeliveryDate, window.YesterdayStart, window.Now))
 }
 
-func hourlyRevenueQuery(window analyticsWindow, tz string) *keel.Query[*shipment.Shipment] {
+func hourlyRevenueQuery(window analyticsWindow, tz string) keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 	hour := localHour(sp.ActualDeliveryDate, tz)
 
@@ -696,7 +696,7 @@ func (p *Provider) getRevenueToday(
 	})
 }
 
-func emptyMileQuery(window analyticsWindow) *keel.Query[*shipment.ShipmentMove] {
+func emptyMileQuery(window analyticsWindow) keel.Query[*shipment.ShipmentMove] {
 	sm := shipmentdb.ShipmentMoves
 	today := within(sm.CreatedAt, window.TodayStart, window.Now)
 	yesterday := within(sm.CreatedAt, window.YesterdayStart, window.YesterdayEnd)
@@ -741,7 +741,7 @@ func (p *Provider) getEmptyMilePercent(
 	})
 }
 
-func atRiskQuery(window analyticsWindow) *keel.Query[*shipment.Shipment] {
+func atRiskQuery(window analyticsWindow) keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 	moves := sp.Moves()
 	stops := moves.Stops()
@@ -804,7 +804,7 @@ func (p *Provider) getAtRisk(
 	})
 }
 
-func unassignedQuery(window analyticsWindow) *keel.Query[*shipment.Shipment] {
+func unassignedQuery(window analyticsWindow) keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 
 	return sp.Pick(
@@ -841,7 +841,7 @@ func (p *Provider) getUnassigned(
 	})
 }
 
-func readyToDispatchQuery(window analyticsWindow) *keel.Query[*shipment.Shipment] {
+func readyToDispatchQuery(window analyticsWindow) keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 	a := shipmentdb.Assignments.As(driverAssignmentAlias)
 	sm := shipmentdb.ShipmentMoves.As(driverMoveAlias)
@@ -911,7 +911,7 @@ type detentionRow struct {
 	DwellSeconds int64
 }
 
-func detentionWatchlistQuery(now int64) *keel.Query[*shipment.Stop] {
+func detentionWatchlistQuery(now int64) keel.Query[*shipment.Stop] {
 	stp := shipmentdb.Stops
 	sm := shipmentdb.ShipmentMoves
 	sp := shipmentdb.Shipments
@@ -962,7 +962,7 @@ func (p *Provider) getDetentionWatchlist(ctx context.Context) (*DetentionWatchli
 	})
 }
 
-func customerMixQuery(now, currentStart, previousStart int64) *keel.Query[*shipment.Shipment] {
+func customerMixQuery(now, currentStart, previousStart int64) keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 	cus := customerdb.Customers
 	revenue := floatTotal(sp.TotalChargeAmount.Sum().Filter(sp.CreatedAt.Gte(currentStart)))
@@ -1013,7 +1013,7 @@ func placeLabel(loc *locationdb.LocationsTable) keel.StringExpr {
 	return loc.Code.NullIf("").Coalesce(loc.City.NullIf(""), loc.Name, "")
 }
 
-func tomorrowsPickupsQuery(from, to int64, limit, offset int) *keel.Query[*shipment.Stop] {
+func tomorrowsPickupsQuery(from, to int64, limit, offset int) keel.Query[*shipment.Stop] {
 	stp := shipmentdb.Stops
 	sm := shipmentdb.ShipmentMoves
 	sp := shipmentdb.Shipments

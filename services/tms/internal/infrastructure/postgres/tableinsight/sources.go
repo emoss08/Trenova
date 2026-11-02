@@ -29,7 +29,7 @@ func NewCustomerSource(p Params) Result {
 		Resource: permission.ResourceCustomer,
 		DB:       p.DB,
 		IDColumn: c.ID.Col,
-		Base:     Filtered(c.Handle),
+		Base:     Filtered(c.Query),
 		Columns: Columns{
 			fieldStatus:  Facet(c.Status.Col),
 			fieldStateID: Facet(c.StateID.Col),
@@ -43,7 +43,7 @@ func NewInvoiceSource(p Params) Result {
 		Resource: permission.ResourceInvoice,
 		DB:       p.DB,
 		IDColumn: i.ID.Col,
-		Base:     Filtered(i.Handle),
+		Base:     Filtered(i.Query),
 		Columns: Columns{
 			fieldStatus:         Facet(i.Status.Col),
 			"settlementStatus":  Facet(i.SettlementStatus.Col),
@@ -68,7 +68,7 @@ func NewLocationSource(p Params) Result {
 		Resource: permission.ResourceLocation,
 		DB:       p.DB,
 		IDColumn: l.ID.Col,
-		Base:     Filtered(l.Handle),
+		Base:     Filtered(l.Query),
 		Columns: Columns{
 			fieldStatus:          Facet(l.Status.Col),
 			"locationCategoryId": Facet(l.LocationCategoryID.Col),
@@ -83,7 +83,7 @@ func NewCarrierSource(p Params) Result {
 		Resource: permission.ResourceCarrier,
 		DB:       p.DB,
 		IDColumn: c.ID.Col,
-		Base:     Filtered(c.Handle),
+		Base:     Filtered(c.Query),
 		Columns: Columns{
 			fieldStatus:        Facet(c.Status.Col),
 			"carrierType":      Facet(c.CarrierType.Col),
@@ -99,7 +99,7 @@ func NewOrderSource(p Params) Result {
 		Resource: permission.ResourceOrder,
 		DB:       p.DB,
 		IDColumn: o.ID.Col,
-		Base:     Filtered(o.Handle),
+		Base:     Filtered(o.Query),
 		Columns: Columns{
 			fieldStatus:    Facet(o.Status.Col),
 			"customerId":   Facet(o.CustomerID.Col),
@@ -119,7 +119,7 @@ func NewServiceFailureSource(p Params) Result {
 		Resource: permission.ResourceServiceFailure,
 		DB:       p.DB,
 		IDColumn: sf.ID.Col,
-		Base:     Filtered(sf.Handle),
+		Base:     Filtered(sf.Query),
 		Columns: Columns{
 			fieldStatus:    Facet(sf.Status.Col),
 			"type":         Facet(sf.Type.Col),

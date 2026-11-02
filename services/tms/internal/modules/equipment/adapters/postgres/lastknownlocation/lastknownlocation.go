@@ -42,7 +42,7 @@ func Of(
 	current := ec.CurrentLocationID
 	lookup := func(column keel.Expr) keel.Expr {
 		return keel.Scalar(
-			keel.Handle[*keel.Row]{Ref: locations.ID.Ref}.
+			keel.RowsOf(locations.ID.Ref).
 				Pick(column).
 				Where(locations.ID.EqCol(current)),
 		)

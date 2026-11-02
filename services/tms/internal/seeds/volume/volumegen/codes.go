@@ -16,7 +16,7 @@ func Taken[T any](
 ) (map[string]struct{}, error) {
 	values, err := keel.Into[string](ctx, db, h.Pick(keel.StringOf(column).Lower().Coalesce("")))
 	if err != nil {
-		return nil, fmt.Errorf("load existing %s values: %w", h.Ref.Table.Name, err)
+		return nil, fmt.Errorf("load existing %s values: %w", h.TableRef().Table.Name, err)
 	}
 	taken := make(map[string]struct{}, len(values))
 	for _, v := range values {

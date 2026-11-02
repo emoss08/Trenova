@@ -1,0 +1,43 @@
+# genericlint allowlist: exported API that may name an instantiated generic type
+# whose methods every importer compiles again. One entry per line:
+# <package path> <identifier> <origin type> # reason
+# The package path and identifier may be *, to accept an origin type everywhere.
+# See docs/engineering/module-architecture.md#generics-and-build-time.
+#
+# Third-party types, accepted wherever they are reached:
+* * charm.land/huh/v2/internal/selector.Selector # TUI form library in the CLI
+* * github.com/99designs/gqlgen/graphql.ExecutionContextState # gqlgen's generated executor
+* * github.com/99designs/gqlgen/graphql.Omittable # gqlgen's optional input type in generated GraphQL models
+* * github.com/jackc/puddle/v2.Pool # pgxpool's connection pool, reached through *keel.DB and *pgxpool.Pool; about 35 functions per package that holds a database handle
+* * github.com/jackc/puddle/v2.Resource # part of puddle.Pool (see that entry)
+* * github.com/jackc/puddle/v2.resList # part of puddle.Pool (see that entry)
+* * github.com/jackc/puddle/v2/internal/genstack.GenStack # part of puddle.Pool (see that entry)
+* * github.com/jackc/puddle/v2/internal/genstack.stack # part of puddle.Pool (see that entry)
+* * github.com/meilisearch/meilisearch-go.Opt # meilisearch client options, search adapter only
+* * github.com/meilisearch/meilisearch-go.Stream # meilisearch client options, search adapter only
+* * github.com/minio/minio-go/v7/pkg/kvcache.Cache # inside minio.Client (shared/testutil only)
+* * github.com/minio/minio-go/v7/pkg/singleflight.Group # inside minio.Client (shared/testutil only)
+* * github.com/vikstrous/dataloadgen.Loader # GraphQL dataloaders; built per module behind typed accessors
+* * go.opentelemetry.io/otel/sdk/trace.evictedQueue # inside the OpenTelemetry SDK span type
+* * google.golang.org/grpc/internal/buffer.Unbounded # inside grpc.ClientConn, reached through the imaging client
+* * internal/nettest.queue # standard library test helper reached through a test-only package
+* * internal/sync.HashTrieMap # sync.Map inside minio.Client (shared/testutil only)
+* * internal/sync.entry # sync.Map inside minio.Client (shared/testutil only)
+* * internal/sync.indirect # sync.Map inside minio.Client (shared/testutil only)
+* * sync/atomic.Pointer # 4 methods, reached through third-party clients (redis, gin, grpc) and our own atomic fields
+#
+# First-party generic types:
+* * github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatakit.Record # master-data tool specs; each tool package instantiates its own
+* * github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementtools.SettlementDecisionTool # agent tool spec inside the settlement tool package
+* * github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec.ReceivableTool # agent tool specs; each tool package instantiates its own
+* * github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec.ReportingReceivableTool # agent tool specs; each tool package instantiates its own
+* * github.com/emoss08/trenova/pkg/approvalworkflow.Engine # one engine per approvable aggregate, reached only from that aggregate's service
+* * github.com/emoss08/trenova/pkg/memtable.Table # in-memory table; each service holds one for its own row type
+* * github.com/emoss08/trenova/pkg/scopedvalidation.BaseRule # the package's own rule constructor, instantiated by the rule's own package
+* * github.com/emoss08/trenova/pkg/scopedvalidation.Builder # the package's own builder; each entity validator instantiates it once for its own type
+* * github.com/emoss08/trenova/pkg/scopedvalidation.Validator # the package's own validator, built by Builder for one entity
+* * github.com/emoss08/trenova/pkg/tenantedvalidation.Builder # the package's own builder; each entity validator instantiates it once for its own type
+* * github.com/emoss08/trenova/pkg/tenantedvalidation.Validator # the package's own validator, built by Builder for one entity
+* * github.com/emoss08/trenova/pkg/validationframework.BaseTenantedRule # the package's own rule constructor, instantiated by the rule's own package
+* * github.com/emoss08/trenova/pkg/validationframework.FieldValidator # 3 methods, the package's own constructor
+* * github.com/emoss08/trenova/shared/ttlcache.Cache # the package's own constructor; callers hold it in unexported fields

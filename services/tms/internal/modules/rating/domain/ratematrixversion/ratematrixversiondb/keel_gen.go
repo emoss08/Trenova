@@ -4,6 +4,7 @@ package ratematrixversiondb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -65,7 +66,7 @@ var rateMatrixVersionsRef = keel.Ref{Table: &rateMatrixVersionsTable}
 
 // RateMatrixVersionsTable is the table of ratematrixversion.RateMatrixVersion.
 type RateMatrixVersionsTable struct {
-	keel.Handle[*ratematrixversion.RateMatrixVersion]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -84,7 +85,7 @@ type RateMatrixVersionsTable struct {
 
 // RateMatrixVersions references the rate_matrix_versions table.
 var RateMatrixVersions = &RateMatrixVersionsTable{
-	Handle:         keel.Handle[*ratematrixversion.RateMatrixVersion]{Ref: &rateMatrixVersionsRef},
+	TableBase:      keel.TableBase{Ref: &rateMatrixVersionsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 2}}},
@@ -101,10 +102,10 @@ var RateMatrixVersions = &RateMatrixVersionsTable{
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 13}},
 }
 
-// BuildRateMatrixVersions builds the handle of rate_matrix_versions for ref. Generated relation and alias methods call it.
+// BuildRateMatrixVersions builds the table of rate_matrix_versions for ref. Generated relation and alias methods call it.
 func BuildRateMatrixVersions(r *keel.Ref) *RateMatrixVersionsTable {
 	return &RateMatrixVersionsTable{
-		Handle:         keel.Handle[*ratematrixversion.RateMatrixVersion]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -138,6 +139,365 @@ func (t *RateMatrixVersionsTable) PublishedBy() *tenantdb.UsersTable {
 // Get returns the rate_matrix_versions row with the given key, or keel.ErrNotFound.
 func (t *RateMatrixVersionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ratematrixversion.RateMatrixVersion, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RateMatrixVersionsQuery is a query over ratematrixversion.RateMatrixVersion.
+type RateMatrixVersionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*ratematrixversion.RateMatrixVersion] = (*RateMatrixVersionsTable)(nil)
+
+var _ keel.Query[*ratematrixversion.RateMatrixVersion] = (*RateMatrixVersionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RateMatrixVersionsTable) Query() keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return &RateMatrixVersionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RateMatrixVersionsQuery.Where.
+func (t *RateMatrixVersionsTable) Where(ps ...keel.Pred) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RateMatrixVersionsQuery.Pick.
+func (t *RateMatrixVersionsTable) Pick(es ...keel.Expr) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RateMatrixVersionsQuery.Load.
+func (t *RateMatrixVersionsTable) Load(ls ...keel.Loader) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RateMatrixVersionsQuery.Omit.
+func (t *RateMatrixVersionsTable) Omit(cols ...keel.Column) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RateMatrixVersionsQuery.Order.
+func (t *RateMatrixVersionsTable) Order(os ...keel.Order) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RateMatrixVersionsQuery.Limit.
+func (t *RateMatrixVersionsTable) Limit(n int) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RateMatrixVersionsQuery.Group.
+func (t *RateMatrixVersionsTable) Group(es ...keel.Expr) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RateMatrixVersionsQuery.GroupingSets.
+func (t *RateMatrixVersionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RateMatrixVersionsQuery.Rollup.
+func (t *RateMatrixVersionsTable) Rollup(es ...keel.Expr) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RateMatrixVersionsQuery.Cube.
+func (t *RateMatrixVersionsTable) Cube(es ...keel.Expr) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RateMatrixVersionsQuery.AllTenants.
+func (t *RateMatrixVersionsTable) AllTenants() keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RateMatrixVersionsQuery.Join.
+func (t *RateMatrixVersionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RateMatrixVersionsQuery.LeftJoin.
+func (t *RateMatrixVersionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RateMatrixVersionsQuery.LeftJoinLateral.
+func (t *RateMatrixVersionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RateMatrixVersionsQuery.JoinLateral.
+func (t *RateMatrixVersionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RateMatrixVersionsQuery.Lock.
+func (t *RateMatrixVersionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RateMatrixVersionsQuery.DistinctOn.
+func (t *RateMatrixVersionsTable) DistinctOn(es ...keel.Expr) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RateMatrixVersionsQuery.Cache.
+func (t *RateMatrixVersionsTable) Cache(opts ...keel.CacheOption) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RateMatrixVersionsQuery.LoadStrategy.
+func (t *RateMatrixVersionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RateMatrixVersionsQuery.With.
+func (t *RateMatrixVersionsTable) With(ctes ...*keel.CTETable) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RateMatrixVersionsQuery.Compute.
+func (t *RateMatrixVersionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RateMatrixVersionsTable) Create(ctx context.Context, db *keel.DB, row *ratematrixversion.RateMatrixVersion) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RateMatrixVersionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ratematrixversion.RateMatrixVersion) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RateMatrixVersionsTable) Save(ctx context.Context, db *keel.DB, row *ratematrixversion.RateMatrixVersion, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RateMatrixVersionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *ratematrixversion.RateMatrixVersion, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RateMatrixVersionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *ratematrixversion.RateMatrixVersion) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RateMatrixVersionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*ratematrixversion.RateMatrixVersion, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RateMatrixVersionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ratematrixversion.RateMatrixVersion, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RateMatrixVersionsTable) Copy(ctx context.Context, db *keel.DB, rows []*ratematrixversion.RateMatrixVersion) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RateMatrixVersionsQuery) Where(ps ...keel.Pred) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RateMatrixVersionsQuery) Pick(es ...keel.Expr) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RateMatrixVersionsQuery) Omit(cols ...keel.Column) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RateMatrixVersionsQuery) Load(ls ...keel.Loader) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RateMatrixVersionsQuery) Order(os ...keel.Order) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RateMatrixVersionsQuery) Distinct() keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RateMatrixVersionsQuery) Group(es ...keel.Expr) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RateMatrixVersionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RateMatrixVersionsQuery) Rollup(es ...keel.Expr) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RateMatrixVersionsQuery) Cube(es ...keel.Expr) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RateMatrixVersionsQuery) Window(name string, w keel.Window) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RateMatrixVersionsQuery) Having(ps ...keel.Pred) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RateMatrixVersionsQuery) Limit(n int) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RateMatrixVersionsQuery) Offset(n int) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RateMatrixVersionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RateMatrixVersionsQuery) AllTenants() keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RateMatrixVersionsQuery) CustomPlan() keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RateMatrixVersionsQuery) Timeout(d time.Duration) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RateMatrixVersionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RateMatrixVersionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RateMatrixVersionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RateMatrixVersionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RateMatrixVersionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RateMatrixVersionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RateMatrixVersionsQuery) With(ctes ...*keel.CTETable) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RateMatrixVersionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RateMatrixVersionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*ratematrixversion.RateMatrixVersion] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RateMatrixVersionsQuery) Clone() keel.Query[*ratematrixversion.RateMatrixVersion] {
+	return &RateMatrixVersionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RateMatrixVersionsQuery) One(ctx context.Context, db *keel.DB) (*ratematrixversion.RateMatrixVersion, error) {
+	return keel.One[*ratematrixversion.RateMatrixVersion](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RateMatrixVersionsQuery) First(ctx context.Context, db *keel.DB) (*ratematrixversion.RateMatrixVersion, error) {
+	return keel.First[*ratematrixversion.RateMatrixVersion](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RateMatrixVersionsQuery) List(ctx context.Context, db *keel.DB) ([]*ratematrixversion.RateMatrixVersion, error) {
+	return keel.List[*ratematrixversion.RateMatrixVersion](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RateMatrixVersionsQuery) All(ctx context.Context, db *keel.DB) ([]*ratematrixversion.RateMatrixVersion, error) {
+	return keel.All[*ratematrixversion.RateMatrixVersion](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RateMatrixVersionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ratematrixversion.RateMatrixVersion, error) {
+	return keel.UpdateReturning[*ratematrixversion.RateMatrixVersion](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RateMatrixVersionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ratematrixversion.RateMatrixVersion], error) {
+	return keel.PageOf[*ratematrixversion.RateMatrixVersion](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RateMatrixVersionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ratematrixversion.RateMatrixVersion) error) error {
+	return keel.Each[*ratematrixversion.RateMatrixVersion](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRateMatrixVersion() unsafe.Pointer {

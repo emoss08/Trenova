@@ -105,11 +105,11 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 		Origin: conversationturn.AssistantTurnOriginCompaction, Status: conversation.AssistantTurnStatusCompleted,
 		Fingerprint: &agentfingerprint.Fingerprint{Model: "gpt-5.1-mini"},
 	}
-	insert(ctx, t, db, conversationdb.Threads.Handle, thread)
+	insert(ctx, t, db, conversationdb.Threads, thread)
 	turn.ThreadID, compaction.ThreadID = thread.ID, thread.ID
-	insert(ctx, t, db, agentdb.AgentRuns.Handle, run, stopped)
-	insert(ctx, t, db, conversationturndb.AssistantTurns.Handle, turn, compaction)
-	insert(ctx, t, db, agentexceptiondb.AgentExceptions.Handle, &agentexception.AgentException{
+	insert(ctx, t, db, agentdb.AgentRuns, run, stopped)
+	insert(ctx, t, db, conversationturndb.AssistantTurns, turn, compaction)
+	insert(ctx, t, db, agentexceptiondb.AgentExceptions, &agentexception.AgentException{
 		OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, RunID: stopped.ID,
 		Category: agentexception.CategoryUnableToDiagnose, SubjectType: agent.SubjectShipment,
 		SubjectID: stopped.SubjectID, AttemptSummary: "could not", Evidence: []agentevidence.EvidenceRef{},
@@ -147,9 +147,9 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 			Succeeded: true, LatencyMs: 40, CreatedAt: now - 5,
 		},
 	}
-	insert(ctx, t, db, aiusagedb.AIUsageRecords.Handle, usage...)
+	insert(ctx, t, db, aiusagedb.AIUsageRecords, usage...)
 	backdateUsage(ctx, t, db, usage...)
-	insert(ctx, t, db, agentrunstepdb.AgentRunSteps.Handle,
+	insert(ctx, t, db, agentrunstepdb.AgentRunSteps,
 		&agentrunstep.AgentRunStep{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
 			OwnerKind: string(
@@ -340,7 +340,7 @@ func TestRefreshCountsUncachedInputByTheCallsOwnProtocolWhenTheProviderIsGone(t 
 			CreatedAt: now - 5,
 		},
 	}
-	insert(ctx, t, db, aiusagedb.AIUsageRecords.Handle, usage...)
+	insert(ctx, t, db, aiusagedb.AIUsageRecords, usage...)
 	backdateUsage(ctx, t, db, usage...)
 
 	_, err := repo.RefreshUnits(ctx, aianalyticsports.RefreshRequest{

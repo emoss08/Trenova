@@ -225,7 +225,7 @@ func (r *flows) ListInstancesCursor(
 				&listquery.Request[ladingproject.FlowInstance]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
-					Shape: func(q *keel.Query[*ladingproject.FlowInstance]) *keel.Query[*ladingproject.FlowInstance] {
+					Shape: func(q keel.Query[*ladingproject.FlowInstance]) keel.Query[*ladingproject.FlowInstance] {
 						return q.Load(i.Partner())
 					},
 				},

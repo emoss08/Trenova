@@ -14,7 +14,7 @@ type Request[T any] struct {
 	Filter   *pagination.QueryOptions
 	Cursor   pagination.CursorInfo
 	Columns  []string
-	Shape    func(*keel.Query[*T]) *keel.Query[*T]
+	Shape    func(keel.Query[*T]) keel.Query[*T]
 	Then     []keel.Order
 	Keyset   *Keyset
 	Computed map[string]keel.Expr
@@ -32,7 +32,7 @@ type Keyset struct {
 func Connection[T any](
 	ctx context.Context,
 	db *keel.DB,
-	q *keel.Query[*T],
+	q keel.Query[*T],
 	req *Request[T],
 ) (*pagination.CursorListResult[*T], error) {
 	p := newPlan(q, req.Computed)
@@ -49,7 +49,7 @@ func Connection[T any](
 	}
 
 	page := keysetPage{orders: orders, shape: shape, after: after}
-	var matched *keel.Query[*T]
+	var matched keel.Query[*T]
 	if read != nil && after != "" {
 		matched = q.Clone()
 	}
@@ -75,7 +75,7 @@ func Connection[T any](
 	return fuzzyConnection(ctx, db, read, page)
 }
 
-func narrow[T any](p *plan, q *keel.Query[*T], req *Request[T]) *fuzzyRead[T] {
+func narrow[T any](p *plan, q keel.Query[*T], req *Request[T]) *fuzzyRead[T] {
 	q.Where(p.filters(req.Filter)...)
 
 	var read *fuzzyRead[T]
@@ -103,7 +103,7 @@ type keysetPage struct {
 func connectionPage[T any](
 	ctx context.Context,
 	db *keel.DB,
-	q *keel.Query[*T],
+	q keel.Query[*T],
 	req *Request[T],
 	kp keysetPage,
 ) (*pagination.CursorListResult[*T], error) {
@@ -157,7 +157,7 @@ func connectionOrder[T any](
 func List[T any](
 	ctx context.Context,
 	db *keel.DB,
-	q *keel.Query[*T],
+	q keel.Query[*T],
 	req *Request[T],
 ) (*pagination.ListResult[*T], error) {
 	p := newPlan(q, req.Computed)
@@ -181,10 +181,10 @@ func List[T any](
 
 func listRows[T any](
 	p *plan,
-	q *keel.Query[*T],
+	q keel.Query[*T],
 	req *Request[T],
 	rank keel.Expr,
-) (rows, counted *keel.Query[*T], err error) {
+) (rows, counted keel.Query[*T], err error) {
 	counted = q.Clone()
 	rows, err = shapeRows(q, req)
 	if err != nil {
@@ -206,7 +206,7 @@ func listRows[T any](
 func SelectOptions[T any](
 	ctx context.Context,
 	db *keel.DB,
-	q *keel.Query[*T],
+	q keel.Query[*T],
 	req *pagination.SelectQueryRequest,
 	search func(query string) keel.Pred,
 ) (*pagination.ListResult[*T], error) {
@@ -223,7 +223,7 @@ func SelectOptions[T any](
 func listAndCount[T any](
 	ctx context.Context,
 	db *keel.DB,
-	rows, counted *keel.Query[*T],
+	rows, counted keel.Query[*T],
 ) (*pagination.ListResult[*T], error) {
 	var items []*T
 	var total keel.RowCount
@@ -242,7 +242,7 @@ func Result[T any](items []T, total keel.RowCount) *pagination.ListResult[T] {
 	return &pagination.ListResult[T]{Items: items, Total: int(total.N), TotalExact: total.Exact}
 }
 
-func Pick[T any](q *keel.Query[*T], columns []string) (*keel.Query[*T], error) {
+func Pick[T any](q keel.Query[*T], columns []string) (keel.Query[*T], error) {
 	if len(columns) == 0 {
 		return q, nil
 	}
@@ -260,7 +260,7 @@ func Pick[T any](q *keel.Query[*T], columns []string) (*keel.Query[*T], error) {
 	return q.Pick(picks...), nil
 }
 
-func shapeRows[T any](q *keel.Query[*T], req *Request[T]) (*keel.Query[*T], error) {
+func shapeRows[T any](q keel.Query[*T], req *Request[T]) (keel.Query[*T], error) {
 	rows, err := Pick(q, req.Columns)
 	if err != nil {
 		return nil, err
@@ -297,7 +297,7 @@ func connectionResult[T any](
 ) (*pagination.CursorListResult[*T], error) {
 	cursors := make([]string, len(page.Items))
 	for i := range page.Items {
-		cursor, err := pagination.EncodeKeysetCursor(shape, page.CursorAt(i))
+		cursor, err := pagination.EncodeKeysetCursor(shape, keel.CursorAt(*page, i))
 		if err != nil {
 			return nil, err
 		}
@@ -338,6 +338,6 @@ func cursorLimit(filter *pagination.QueryOptions, cursor *pagination.CursorInfo)
 	return pagination.DefaultLimit
 }
 
-func Filter[T any](q *keel.Query[*T], filter *pagination.QueryOptions) *keel.Query[*T] {
+func Filter[T any](q keel.Query[*T], filter *pagination.QueryOptions) keel.Query[*T] {
 	return q.Where(newPlan(q, nil).where(filter)...)
 }

@@ -713,19 +713,19 @@ func Insert[T any](
 }
 
 func (g *Ledger) Write(ctx context.Context, tx *keel.DB, rows *Rows) error {
-	if err := Insert(ctx, tx, billingqueuedb.BillingQueueItems.Handle, rows.Items,
+	if err := Insert(ctx, tx, billingqueuedb.BillingQueueItems, rows.Items,
 		func(r *billingqueue.BillingQueueItem) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := Insert(ctx, tx, invoicedb.Invoices.Handle, rows.Invoices,
+	if err := Insert(ctx, tx, invoicedb.Invoices, rows.Invoices,
 		func(r *invoice.Invoice) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := Insert(ctx, tx, invoicedb.InvoiceLines.Handle, rows.Lines,
+	if err := Insert(ctx, tx, invoicedb.InvoiceLines, rows.Lines,
 		func(r *invoice.InvoiceLine) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
 		}, false); err != nil {
@@ -734,61 +734,61 @@ func (g *Ledger) Write(ctx context.Context, tx *keel.DB, rows *Rows) error {
 	if err := g.bilLinkInvoices(ctx, tx, rows.Links); err != nil {
 		return err
 	}
-	if err := Insert(ctx, tx, shipmentdb.ShipmentComments.Handle, rows.Comments,
+	if err := Insert(ctx, tx, shipmentdb.ShipmentComments, rows.Comments,
 		func(r *shipment.ShipmentComment) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.CreatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := Insert(ctx, tx, billingqueueeventdb.ItemEvents.Handle, rows.Events,
+	if err := Insert(ctx, tx, billingqueueeventdb.ItemEvents, rows.Events,
 		func(r *billingqueueevent.ItemEvent) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.At}
 		}, true); err != nil {
 		return err
 	}
-	if err := Insert(ctx, tx, customerpaymentdb.CreditMemoApplications.Handle, rows.MemoApps,
+	if err := Insert(ctx, tx, customerpaymentdb.CreditMemoApplications, rows.MemoApps,
 		func(r *customerpayment.CreditMemoApplication) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := Insert(ctx, tx, journalentrydb.JournalBatches.Handle, rows.Batches,
+	if err := Insert(ctx, tx, journalentrydb.JournalBatches, rows.Batches,
 		func(r *journalentry.JournalBatch) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := Insert(ctx, tx, journalentrydb.JournalEntries.Handle, rows.Entries,
+	if err := Insert(ctx, tx, journalentrydb.JournalEntries, rows.Entries,
 		func(r *journalentry.JournalEntry) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := Insert(ctx, tx, journalentrydb.JournalEntryLines.Handle, rows.JournalLines,
+	if err := Insert(ctx, tx, journalentrydb.JournalEntryLines, rows.JournalLines,
 		func(r *journalentry.JournalEntryLine) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := volumegen.InsertRows(ctx, tx, journalsourcedb.Sources.Handle, rows.sources); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, journalsourcedb.Sources, rows.sources); err != nil {
 		return fmt.Errorf("insert journal_sources: %w", err)
 	}
-	if err := volumegen.InsertRows(ctx, tx, journalsourcedb.SourceJournalLinks.Handle, rows.srcLinks); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, journalsourcedb.SourceJournalLinks, rows.srcLinks); err != nil {
 		return fmt.Errorf("insert source_journal_links: %w", err)
 	}
-	if err := Insert(ctx, tx, customerpaymentdb.Payments.Handle, rows.Payments,
+	if err := Insert(ctx, tx, customerpaymentdb.Payments, rows.Payments,
 		func(r *customerpayment.Payment) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := Insert(ctx, tx, customerpaymentdb.Applications.Handle, rows.Apps,
+	if err := Insert(ctx, tx, customerpaymentdb.Applications, rows.Apps,
 		func(r *customerpayment.Application) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := Insert(ctx, tx, customerledgerdb.CustomerLedgerEntries.Handle, rows.Ledger,
+	if err := Insert(ctx, tx, customerledgerdb.CustomerLedgerEntries, rows.Ledger,
 		func(r *customerledger.CustomerLedgerEntry) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt}
 		}, true); err != nil {
@@ -814,7 +814,7 @@ func (g *Ledger) bilLinkInvoices(
 		bq := billingqueuedb.BillingQueueItems
 		d := keel.Unnest("d", []string{"id", "invoice_id"}, items, invoices)
 		if _, err := bq.With(d).Join(d, d.Col("id").EqCol(bq.ID)).Where(keel.True()).
-			Update(ctx, tx, bq.InvoiceID.ToExpr(d.Col("invoice_id")), volumegen.KeepUpdated(bq.Handle)); err != nil {
+			Update(ctx, tx, bq.InvoiceID.ToExpr(d.Col("invoice_id")), volumegen.KeepUpdated(bq)); err != nil {
 			return fmt.Errorf("link billing queue items to invoices: %w", err)
 		}
 	}

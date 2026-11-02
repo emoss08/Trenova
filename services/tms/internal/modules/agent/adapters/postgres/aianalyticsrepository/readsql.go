@@ -127,7 +127,7 @@ func durationPercentiles(w *aianalyticsdb.WorkUnitsTable, filter keel.Pred) []ke
 	return out
 }
 
-func totalsQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytics.WorkUnit] {
+func totalsQuery(filter *aianalyticsports.Filter) keel.Query[*aianalytics.WorkUnit] {
 	w := aianalyticsdb.WorkUnits
 	picks := outcomeCounts(w)
 	picks = append(picks, keel.Count().Filter(completedUnit(w)))
@@ -136,7 +136,7 @@ func totalsQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytics.WorkU
 	return w.Pick(picks...).Where(unitWindow(w, filter)...)
 }
 
-func deploymentsQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytics.WorkUnit] {
+func deploymentsQuery(filter *aianalyticsports.Filter) keel.Query[*aianalytics.WorkUnit] {
 	w := aianalyticsdb.WorkUnits
 	keys := deploymentColumns(w)
 
@@ -148,7 +148,7 @@ func deploymentsQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytics.
 func outcomeDurationsQuery(
 	filter *aianalyticsports.Filter,
 	grouping aianalytics.Grouping,
-) *keel.Query[*aianalytics.WorkUnit] {
+) keel.Query[*aianalytics.WorkUnit] {
 	w := aianalyticsdb.WorkUnits
 	keys := append(groupColumns(w, grouping), w.Outcome)
 	picks := append(append([]keel.Expr{}, keys...), keel.Count())
@@ -170,7 +170,7 @@ func trendBucket(w *aianalyticsdb.WorkUnitsTable, starts []int64) keel.Expr {
 	return bucket.Else(keel.Int64(starts[0]))
 }
 
-func trendQuery(req *aianalyticsports.TrendRequest) *keel.Query[*aianalytics.WorkUnit] {
+func trendQuery(req *aianalyticsports.TrendRequest) keel.Query[*aianalytics.WorkUnit] {
 	w := aianalyticsdb.WorkUnits
 	keys := append(groupColumns(w, req.Grouping), trendBucket(w, req.BucketStarts))
 
@@ -185,7 +185,7 @@ func trendQuery(req *aianalyticsports.TrendRequest) *keel.Query[*aianalytics.Wor
 		Group(keys...)
 }
 
-func toolCellsQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytics.UnitTool] {
+func toolCellsQuery(filter *aianalyticsports.Filter) keel.Query[*aianalytics.UnitTool] {
 	t := aianalyticsdb.UnitTools
 
 	return t.Pick(t.ModelKey, t.ProviderID, t.ToolName, t.Cause, t.Calls.Sum()).
@@ -201,7 +201,7 @@ func toolKey(t *aianalyticsdb.UnitToolsTable, compareBy aianalytics.CompareBy) k
 	return t.ModelKey
 }
 
-func taskCellsQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytics.WorkUnit] {
+func taskCellsQuery(filter *aianalyticsports.Filter) keel.Query[*aianalytics.WorkUnit] {
 	w := aianalyticsdb.WorkUnits
 	keys := append(deploymentColumns(w), w.Task)
 
@@ -211,7 +211,7 @@ func taskCellsQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytics.Wo
 		Group(keys...)
 }
 
-func decisionsQuery(filter *aianalyticsports.Filter) *keel.Query[*agentdecision.AgentDecision] {
+func decisionsQuery(filter *aianalyticsports.Filter) keel.Query[*agentdecision.AgentDecision] {
 	d := agentdecisiondb.AgentDecisions
 	p := agentdb.AgentProposals
 	w := aianalyticsdb.WorkUnits
@@ -232,7 +232,7 @@ func decisionsQuery(filter *aianalyticsports.Filter) *keel.Query[*agentdecision.
 		Group(keys...)
 }
 
-func ratingsQuery(filter *aianalyticsports.Filter) *keel.Query[*aifeedback.Feedback] {
+func ratingsQuery(filter *aianalyticsports.Filter) keel.Query[*aifeedback.Feedback] {
 	f := aifeedbackdb.Feedbacks
 	w := aianalyticsdb.WorkUnits
 	keys := deploymentColumns(w)
@@ -248,7 +248,7 @@ func ratingsQuery(filter *aianalyticsports.Filter) *keel.Query[*aifeedback.Feedb
 
 func suggestionsQuery(
 	req *aianalyticsports.SuggestionRequest,
-) *keel.Query[*agentsuggestion.Suggestion] {
+) keel.Query[*agentsuggestion.Suggestion] {
 	s := agentsuggestiondb.Suggestions
 	d := agentdefinitiondb.Definitions
 
@@ -279,7 +279,7 @@ func suggestionsQuery(
 		Group(s.SuggestedAgentID)
 }
 
-func providerCallsQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytics.ProviderHour] {
+func providerCallsQuery(filter *aianalyticsports.Filter) keel.Query[*aianalytics.ProviderHour] {
 	h := aianalyticsdb.ProviderHours
 
 	return h.Pick(h.ModelKey, h.ProviderID, h.ErrorClass,
@@ -288,7 +288,7 @@ func providerCallsQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytic
 		Group(h.ModelKey, h.ProviderID, h.ErrorClass)
 }
 
-func firstTokenQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytics.ProviderHour] {
+func firstTokenQuery(filter *aianalyticsports.Filter) keel.Query[*aianalytics.ProviderHour] {
 	h := aianalyticsdb.ProviderHours
 	hist := keel.Int64ArrayOf(h.FirstTokenHist)
 	b := keel.Rows("b", []string{"v", "idx"},
@@ -306,7 +306,7 @@ func firstTokenQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytics.P
 		Group(h.ModelKey, h.ProviderID, bucket)
 }
 
-func providerHoursQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytics.ProviderHour] {
+func providerHoursQuery(filter *aianalyticsports.Filter) keel.Query[*aianalytics.ProviderHour] {
 	h := aianalyticsdb.ProviderHours
 
 	return h.Pick(
@@ -325,7 +325,7 @@ func providerHoursQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytic
 
 func providerVersionsQuery(
 	filter *aianalyticsports.Filter,
-) *keel.Query[*settingversion.SettingVersion] {
+) keel.Query[*settingversion.SettingVersion] {
 	v := settingversiondb.SettingVersions
 	changed := settingversiondb.SettingVersions.As("changed")
 
@@ -347,7 +347,7 @@ func providerVersionsQuery(
 		Order(v.SubjectID.Asc(), v.Version.Asc())
 }
 
-func toolCausesQuery(req *aianalyticsports.ToolFailureRequest) *keel.Query[*aianalytics.UnitTool] {
+func toolCausesQuery(req *aianalyticsports.ToolFailureRequest) keel.Query[*aianalytics.UnitTool] {
 	t := aianalyticsdb.UnitTools
 
 	return t.Pick(t.Cause, t.ProviderID, t.Calls.Sum()).
@@ -358,7 +358,7 @@ func toolCausesQuery(req *aianalyticsports.ToolFailureRequest) *keel.Query[*aian
 		Group(t.Cause, t.ProviderID)
 }
 
-func toolExamplesQuery(req *aianalyticsports.ToolFailureRequest) *keel.Query[*keel.Row] {
+func toolExamplesQuery(req *aianalyticsports.ToolFailureRequest) keel.Query[*keel.Row] {
 	t := aianalyticsdb.UnitTools
 	w := aianalyticsdb.WorkUnits
 	s := agentrunstepdb.AgentRunSteps
@@ -399,7 +399,7 @@ func toolExamplesQuery(req *aianalyticsports.ToolFailureRequest) *keel.Query[*ke
 		Limit(req.Limit)
 }
 
-func paletteQuery(since int64) *keel.Query[*aianalytics.ProviderHour] {
+func paletteQuery(since int64) keel.Query[*aianalytics.ProviderHour] {
 	h := aianalyticsdb.ProviderHours
 
 	return h.Pick(h.ModelKey, h.ProviderID).Where(h.Hour.Gte(floorHour(since))).Distinct()

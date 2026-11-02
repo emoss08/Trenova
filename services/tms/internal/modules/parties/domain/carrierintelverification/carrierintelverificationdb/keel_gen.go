@@ -4,6 +4,7 @@ package carrierintelverificationdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -72,7 +73,7 @@ var carrierEquipmentVerificationsRef = keel.Ref{Table: &carrierEquipmentVerifica
 
 // CarrierEquipmentVerificationsTable is the table of carrierintelverification.CarrierEquipmentVerification.
 type CarrierEquipmentVerificationsTable struct {
-	keel.Handle[*carrierintelverification.CarrierEquipmentVerification]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -102,7 +103,7 @@ type CarrierEquipmentVerificationsTable struct {
 
 // CarrierEquipmentVerifications references the carrier_equipment_verifications table.
 var CarrierEquipmentVerifications = &CarrierEquipmentVerificationsTable{
-	Handle:              keel.Handle[*carrierintelverification.CarrierEquipmentVerification]{Ref: &carrierEquipmentVerificationsRef},
+	TableBase:           keel.TableBase{Ref: &carrierEquipmentVerificationsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 2}}},
@@ -130,10 +131,10 @@ var CarrierEquipmentVerifications = &CarrierEquipmentVerificationsTable{
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 24}},
 }
 
-// BuildCarrierEquipmentVerifications builds the handle of carrier_equipment_verifications for ref. Generated relation and alias methods call it.
+// BuildCarrierEquipmentVerifications builds the table of carrier_equipment_verifications for ref. Generated relation and alias methods call it.
 func BuildCarrierEquipmentVerifications(r *keel.Ref) *CarrierEquipmentVerificationsTable {
 	return &CarrierEquipmentVerificationsTable{
-		Handle:              keel.Handle[*carrierintelverification.CarrierEquipmentVerification]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -173,6 +174,365 @@ func (t *CarrierEquipmentVerificationsTable) As(alias string) *CarrierEquipmentV
 // Get returns the carrier_equipment_verifications row with the given key, or keel.ErrNotFound.
 func (t *CarrierEquipmentVerificationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*carrierintelverification.CarrierEquipmentVerification, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CarrierEquipmentVerificationsQuery is a query over carrierintelverification.CarrierEquipmentVerification.
+type CarrierEquipmentVerificationsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*carrierintelverification.CarrierEquipmentVerification] = (*CarrierEquipmentVerificationsTable)(nil)
+
+var _ keel.Query[*carrierintelverification.CarrierEquipmentVerification] = (*CarrierEquipmentVerificationsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CarrierEquipmentVerificationsTable) Query() keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return &CarrierEquipmentVerificationsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CarrierEquipmentVerificationsQuery.Where.
+func (t *CarrierEquipmentVerificationsTable) Where(ps ...keel.Pred) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CarrierEquipmentVerificationsQuery.Pick.
+func (t *CarrierEquipmentVerificationsTable) Pick(es ...keel.Expr) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CarrierEquipmentVerificationsQuery.Load.
+func (t *CarrierEquipmentVerificationsTable) Load(ls ...keel.Loader) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CarrierEquipmentVerificationsQuery.Omit.
+func (t *CarrierEquipmentVerificationsTable) Omit(cols ...keel.Column) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CarrierEquipmentVerificationsQuery.Order.
+func (t *CarrierEquipmentVerificationsTable) Order(os ...keel.Order) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CarrierEquipmentVerificationsQuery.Limit.
+func (t *CarrierEquipmentVerificationsTable) Limit(n int) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CarrierEquipmentVerificationsQuery.Group.
+func (t *CarrierEquipmentVerificationsTable) Group(es ...keel.Expr) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CarrierEquipmentVerificationsQuery.GroupingSets.
+func (t *CarrierEquipmentVerificationsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CarrierEquipmentVerificationsQuery.Rollup.
+func (t *CarrierEquipmentVerificationsTable) Rollup(es ...keel.Expr) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CarrierEquipmentVerificationsQuery.Cube.
+func (t *CarrierEquipmentVerificationsTable) Cube(es ...keel.Expr) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CarrierEquipmentVerificationsQuery.AllTenants.
+func (t *CarrierEquipmentVerificationsTable) AllTenants() keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CarrierEquipmentVerificationsQuery.Join.
+func (t *CarrierEquipmentVerificationsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CarrierEquipmentVerificationsQuery.LeftJoin.
+func (t *CarrierEquipmentVerificationsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CarrierEquipmentVerificationsQuery.LeftJoinLateral.
+func (t *CarrierEquipmentVerificationsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CarrierEquipmentVerificationsQuery.JoinLateral.
+func (t *CarrierEquipmentVerificationsTable) JoinLateral(sub keel.LateralSource) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CarrierEquipmentVerificationsQuery.Lock.
+func (t *CarrierEquipmentVerificationsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CarrierEquipmentVerificationsQuery.DistinctOn.
+func (t *CarrierEquipmentVerificationsTable) DistinctOn(es ...keel.Expr) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CarrierEquipmentVerificationsQuery.Cache.
+func (t *CarrierEquipmentVerificationsTable) Cache(opts ...keel.CacheOption) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CarrierEquipmentVerificationsQuery.LoadStrategy.
+func (t *CarrierEquipmentVerificationsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CarrierEquipmentVerificationsQuery.With.
+func (t *CarrierEquipmentVerificationsTable) With(ctes ...*keel.CTETable) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CarrierEquipmentVerificationsQuery.Compute.
+func (t *CarrierEquipmentVerificationsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CarrierEquipmentVerificationsTable) Create(ctx context.Context, db *keel.DB, row *carrierintelverification.CarrierEquipmentVerification) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CarrierEquipmentVerificationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carrierintelverification.CarrierEquipmentVerification) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CarrierEquipmentVerificationsTable) Save(ctx context.Context, db *keel.DB, row *carrierintelverification.CarrierEquipmentVerification, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CarrierEquipmentVerificationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *carrierintelverification.CarrierEquipmentVerification, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CarrierEquipmentVerificationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *carrierintelverification.CarrierEquipmentVerification) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CarrierEquipmentVerificationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*carrierintelverification.CarrierEquipmentVerification, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CarrierEquipmentVerificationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carrierintelverification.CarrierEquipmentVerification, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CarrierEquipmentVerificationsTable) Copy(ctx context.Context, db *keel.DB, rows []*carrierintelverification.CarrierEquipmentVerification) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CarrierEquipmentVerificationsQuery) Where(ps ...keel.Pred) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CarrierEquipmentVerificationsQuery) Pick(es ...keel.Expr) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CarrierEquipmentVerificationsQuery) Omit(cols ...keel.Column) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CarrierEquipmentVerificationsQuery) Load(ls ...keel.Loader) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CarrierEquipmentVerificationsQuery) Order(os ...keel.Order) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CarrierEquipmentVerificationsQuery) Distinct() keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CarrierEquipmentVerificationsQuery) Group(es ...keel.Expr) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CarrierEquipmentVerificationsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CarrierEquipmentVerificationsQuery) Rollup(es ...keel.Expr) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CarrierEquipmentVerificationsQuery) Cube(es ...keel.Expr) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CarrierEquipmentVerificationsQuery) Window(name string, w keel.Window) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CarrierEquipmentVerificationsQuery) Having(ps ...keel.Pred) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CarrierEquipmentVerificationsQuery) Limit(n int) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CarrierEquipmentVerificationsQuery) Offset(n int) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CarrierEquipmentVerificationsQuery) DistinctOn(es ...keel.Expr) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CarrierEquipmentVerificationsQuery) AllTenants() keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CarrierEquipmentVerificationsQuery) CustomPlan() keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CarrierEquipmentVerificationsQuery) Timeout(d time.Duration) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CarrierEquipmentVerificationsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CarrierEquipmentVerificationsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CarrierEquipmentVerificationsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CarrierEquipmentVerificationsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CarrierEquipmentVerificationsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CarrierEquipmentVerificationsQuery) Cache(opts ...keel.CacheOption) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CarrierEquipmentVerificationsQuery) With(ctes ...*keel.CTETable) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CarrierEquipmentVerificationsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CarrierEquipmentVerificationsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CarrierEquipmentVerificationsQuery) Clone() keel.Query[*carrierintelverification.CarrierEquipmentVerification] {
+	return &CarrierEquipmentVerificationsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CarrierEquipmentVerificationsQuery) One(ctx context.Context, db *keel.DB) (*carrierintelverification.CarrierEquipmentVerification, error) {
+	return keel.One[*carrierintelverification.CarrierEquipmentVerification](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CarrierEquipmentVerificationsQuery) First(ctx context.Context, db *keel.DB) (*carrierintelverification.CarrierEquipmentVerification, error) {
+	return keel.First[*carrierintelverification.CarrierEquipmentVerification](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CarrierEquipmentVerificationsQuery) List(ctx context.Context, db *keel.DB) ([]*carrierintelverification.CarrierEquipmentVerification, error) {
+	return keel.List[*carrierintelverification.CarrierEquipmentVerification](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CarrierEquipmentVerificationsQuery) All(ctx context.Context, db *keel.DB) ([]*carrierintelverification.CarrierEquipmentVerification, error) {
+	return keel.All[*carrierintelverification.CarrierEquipmentVerification](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CarrierEquipmentVerificationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carrierintelverification.CarrierEquipmentVerification, error) {
+	return keel.UpdateReturning[*carrierintelverification.CarrierEquipmentVerification](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CarrierEquipmentVerificationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carrierintelverification.CarrierEquipmentVerification], error) {
+	return keel.PageOf[*carrierintelverification.CarrierEquipmentVerification](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CarrierEquipmentVerificationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carrierintelverification.CarrierEquipmentVerification) error) error {
+	return keel.Each[*carrierintelverification.CarrierEquipmentVerification](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCarrierEquipmentVerification() unsafe.Pointer {

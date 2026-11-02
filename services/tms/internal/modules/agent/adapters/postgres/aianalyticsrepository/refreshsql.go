@@ -369,7 +369,7 @@ func zeroed(col keel.AnyCol) keel.NumericExpr {
 	return keel.NumericOf(col).Coalesce(0)
 }
 
-func ownedUnitsSource(src *ownedSource, req *unitRefresh) *keel.Query[*keel.Row] {
+func ownedUnitsSource(src *ownedSource, req *unitRefresh) keel.Query[*keel.Row] {
 	owners := src.owners(req)
 
 	u := aiusagedb.AIUsageRecords
@@ -492,7 +492,7 @@ func standaloneCalls(u *aiusagedb.AIUsageRecordsTable) []keel.Pred {
 	}
 }
 
-func callUnitsSource(req *unitRefresh) *keel.Query[*keel.Row] {
+func callUnitsSource(req *unitRefresh) keel.Query[*keel.Row] {
 	u := aiusagedb.AIUsageRecords
 	key := callUnitKey(u)
 	touched := keel.CTE("touched", []string{colUnitID}, u.
@@ -552,7 +552,7 @@ func callUnitsSource(req *unitRefresh) *keel.Query[*keel.Row] {
 		Where(col("model").IsNotNull())
 }
 
-func clearUnitToolsQuery(stamp int64) *keel.Query[*aianalytics.UnitTool] {
+func clearUnitToolsQuery(stamp int64) keel.Query[*aianalytics.UnitTool] {
 	t := aianalyticsdb.UnitTools
 	w := aianalyticsdb.WorkUnits
 
@@ -560,7 +560,7 @@ func clearUnitToolsQuery(stamp int64) *keel.Query[*aianalytics.UnitTool] {
 		Where(w.RefreshStamp.Eq(stamp), w.Source.In(unitSources...))
 }
 
-func unitToolsSource(stamp int64) *keel.Query[*aianalytics.WorkUnit] {
+func unitToolsSource(stamp int64) keel.Query[*aianalytics.WorkUnit] {
 	w := aianalyticsdb.WorkUnits
 	s := agentrunstepdb.AgentRunSteps
 	stepCauses := keel.Rows("c", []string{"cause"}, stepCause(s))
@@ -595,7 +595,7 @@ func unitToolColumns(t *aianalyticsdb.UnitToolsTable) []keel.Column {
 		t.AgentDefinitionID, t.Task, t.Calls}
 }
 
-func clearProviderHoursQuery(fromHour, toHour int64) *keel.Query[*aianalytics.ProviderHour] {
+func clearProviderHoursQuery(fromHour, toHour int64) keel.Query[*aianalytics.ProviderHour] {
 	h := aianalyticsdb.ProviderHours
 
 	return h.Where(h.Hour.Gte(fromHour), h.Hour.Lt(toHour))
@@ -633,7 +633,7 @@ func sameHourKey(left, right *keel.CTETable) []keel.Pred {
 	return out
 }
 
-func providerHoursSource(fromHour, toHour int64) *keel.Query[*keel.Row] {
+func providerHoursSource(fromHour, toHour int64) keel.Query[*keel.Row] {
 	u := aiusagedb.AIUsageRecords
 	calls := keel.CTE("calls", append(append([]string{}, hourKeyColumns...),
 		"error_class", "succeeded", "first_token_ms", "trace_id"), u.

@@ -4,6 +4,7 @@ package holdreasondb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -66,7 +67,7 @@ var holdReasonsRef = keel.Ref{Table: &holdReasonsTable}
 
 // HoldReasonsTable is the table of holdreason.HoldReason.
 type HoldReasonsTable struct {
-	keel.Handle[*holdreason.HoldReason]
+	keel.TableBase
 	ID                       keelkinds.PulidIDCol
 	BusinessUnitID           keelkinds.PulidIDCol
 	OrganizationID           keelkinds.PulidIDCol
@@ -90,7 +91,7 @@ type HoldReasonsTable struct {
 
 // HoldReasons references the hold_reasons table.
 var HoldReasons = &HoldReasonsTable{
-	Handle:                   keel.Handle[*holdreason.HoldReason]{Ref: &holdReasonsRef},
+	TableBase:                keel.TableBase{Ref: &holdReasonsRef},
 	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 0}}},
 	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 1}}},
 	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 2}}},
@@ -112,10 +113,10 @@ var HoldReasons = &HoldReasonsTable{
 	SearchVector:             keel.TSVectorCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 18}},
 }
 
-// BuildHoldReasons builds the handle of hold_reasons for ref. Generated relation and alias methods call it.
+// BuildHoldReasons builds the table of hold_reasons for ref. Generated relation and alias methods call it.
 func BuildHoldReasons(r *keel.Ref) *HoldReasonsTable {
 	return &HoldReasonsTable{
-		Handle:                   keel.Handle[*holdreason.HoldReason]{Ref: r},
+		TableBase:                keel.TableBase{Ref: r},
 		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -149,6 +150,365 @@ func (t *HoldReasonsTable) As(alias string) *HoldReasonsTable {
 // Get returns the hold_reasons row with the given key, or keel.ErrNotFound.
 func (t *HoldReasonsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*holdreason.HoldReason, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// HoldReasonsQuery is a query over holdreason.HoldReason.
+type HoldReasonsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*holdreason.HoldReason] = (*HoldReasonsTable)(nil)
+
+var _ keel.Query[*holdreason.HoldReason] = (*HoldReasonsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *HoldReasonsTable) Query() keel.Query[*holdreason.HoldReason] {
+	return &HoldReasonsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see HoldReasonsQuery.Where.
+func (t *HoldReasonsTable) Where(ps ...keel.Pred) keel.Query[*holdreason.HoldReason] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see HoldReasonsQuery.Pick.
+func (t *HoldReasonsTable) Pick(es ...keel.Expr) keel.Query[*holdreason.HoldReason] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see HoldReasonsQuery.Load.
+func (t *HoldReasonsTable) Load(ls ...keel.Loader) keel.Query[*holdreason.HoldReason] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see HoldReasonsQuery.Omit.
+func (t *HoldReasonsTable) Omit(cols ...keel.Column) keel.Query[*holdreason.HoldReason] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see HoldReasonsQuery.Order.
+func (t *HoldReasonsTable) Order(os ...keel.Order) keel.Query[*holdreason.HoldReason] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see HoldReasonsQuery.Limit.
+func (t *HoldReasonsTable) Limit(n int) keel.Query[*holdreason.HoldReason] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see HoldReasonsQuery.Group.
+func (t *HoldReasonsTable) Group(es ...keel.Expr) keel.Query[*holdreason.HoldReason] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see HoldReasonsQuery.GroupingSets.
+func (t *HoldReasonsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*holdreason.HoldReason] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see HoldReasonsQuery.Rollup.
+func (t *HoldReasonsTable) Rollup(es ...keel.Expr) keel.Query[*holdreason.HoldReason] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see HoldReasonsQuery.Cube.
+func (t *HoldReasonsTable) Cube(es ...keel.Expr) keel.Query[*holdreason.HoldReason] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see HoldReasonsQuery.AllTenants.
+func (t *HoldReasonsTable) AllTenants() keel.Query[*holdreason.HoldReason] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see HoldReasonsQuery.Join.
+func (t *HoldReasonsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*holdreason.HoldReason] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see HoldReasonsQuery.LeftJoin.
+func (t *HoldReasonsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*holdreason.HoldReason] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see HoldReasonsQuery.LeftJoinLateral.
+func (t *HoldReasonsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*holdreason.HoldReason] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see HoldReasonsQuery.JoinLateral.
+func (t *HoldReasonsTable) JoinLateral(sub keel.LateralSource) keel.Query[*holdreason.HoldReason] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see HoldReasonsQuery.Lock.
+func (t *HoldReasonsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*holdreason.HoldReason] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see HoldReasonsQuery.DistinctOn.
+func (t *HoldReasonsTable) DistinctOn(es ...keel.Expr) keel.Query[*holdreason.HoldReason] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see HoldReasonsQuery.Cache.
+func (t *HoldReasonsTable) Cache(opts ...keel.CacheOption) keel.Query[*holdreason.HoldReason] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see HoldReasonsQuery.LoadStrategy.
+func (t *HoldReasonsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*holdreason.HoldReason] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see HoldReasonsQuery.With.
+func (t *HoldReasonsTable) With(ctes ...*keel.CTETable) keel.Query[*holdreason.HoldReason] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see HoldReasonsQuery.Compute.
+func (t *HoldReasonsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*holdreason.HoldReason] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *HoldReasonsTable) Create(ctx context.Context, db *keel.DB, row *holdreason.HoldReason) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *HoldReasonsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*holdreason.HoldReason) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *HoldReasonsTable) Save(ctx context.Context, db *keel.DB, row *holdreason.HoldReason, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *HoldReasonsTable) SaveExcept(ctx context.Context, db *keel.DB, row *holdreason.HoldReason, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *HoldReasonsTable) DeleteRow(ctx context.Context, db *keel.DB, row *holdreason.HoldReason) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *HoldReasonsTable) Upsert(ctx context.Context, db *keel.DB, rows []*holdreason.HoldReason, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *HoldReasonsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*holdreason.HoldReason, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *HoldReasonsTable) Copy(ctx context.Context, db *keel.DB, rows []*holdreason.HoldReason) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *HoldReasonsQuery) Where(ps ...keel.Pred) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *HoldReasonsQuery) Pick(es ...keel.Expr) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *HoldReasonsQuery) Omit(cols ...keel.Column) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *HoldReasonsQuery) Load(ls ...keel.Loader) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *HoldReasonsQuery) Order(os ...keel.Order) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *HoldReasonsQuery) Distinct() keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *HoldReasonsQuery) Group(es ...keel.Expr) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *HoldReasonsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *HoldReasonsQuery) Rollup(es ...keel.Expr) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *HoldReasonsQuery) Cube(es ...keel.Expr) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *HoldReasonsQuery) Window(name string, w keel.Window) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *HoldReasonsQuery) Having(ps ...keel.Pred) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *HoldReasonsQuery) Limit(n int) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *HoldReasonsQuery) Offset(n int) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *HoldReasonsQuery) DistinctOn(es ...keel.Expr) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *HoldReasonsQuery) AllTenants() keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *HoldReasonsQuery) CustomPlan() keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *HoldReasonsQuery) Timeout(d time.Duration) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *HoldReasonsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *HoldReasonsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *HoldReasonsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *HoldReasonsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *HoldReasonsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *HoldReasonsQuery) Cache(opts ...keel.CacheOption) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *HoldReasonsQuery) With(ctes ...*keel.CTETable) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *HoldReasonsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *HoldReasonsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*holdreason.HoldReason] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *HoldReasonsQuery) Clone() keel.Query[*holdreason.HoldReason] {
+	return &HoldReasonsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *HoldReasonsQuery) One(ctx context.Context, db *keel.DB) (*holdreason.HoldReason, error) {
+	return keel.One[*holdreason.HoldReason](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *HoldReasonsQuery) First(ctx context.Context, db *keel.DB) (*holdreason.HoldReason, error) {
+	return keel.First[*holdreason.HoldReason](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *HoldReasonsQuery) List(ctx context.Context, db *keel.DB) ([]*holdreason.HoldReason, error) {
+	return keel.List[*holdreason.HoldReason](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *HoldReasonsQuery) All(ctx context.Context, db *keel.DB) ([]*holdreason.HoldReason, error) {
+	return keel.All[*holdreason.HoldReason](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *HoldReasonsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*holdreason.HoldReason, error) {
+	return keel.UpdateReturning[*holdreason.HoldReason](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *HoldReasonsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*holdreason.HoldReason], error) {
+	return keel.PageOf[*holdreason.HoldReason](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *HoldReasonsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*holdreason.HoldReason) error) error {
+	return keel.Each[*holdreason.HoldReason](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newHoldReason() unsafe.Pointer { return unsafe.Pointer(new(holdreason.HoldReason)) }

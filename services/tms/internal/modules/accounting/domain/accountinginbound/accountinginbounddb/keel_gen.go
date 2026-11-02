@@ -4,6 +4,7 @@ package accountinginbounddb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -84,7 +85,7 @@ var accountingInboundChangesRef = keel.Ref{Table: &accountingInboundChangesTable
 
 // AccountingInboundChangesTable is the table of accountinginbound.AccountingInboundChange.
 type AccountingInboundChangesTable struct {
-	keel.Handle[*accountinginbound.AccountingInboundChange]
+	keel.TableBase
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -117,7 +118,7 @@ type AccountingInboundChangesTable struct {
 
 // AccountingInboundChanges references the accounting_inbound_changes table.
 var AccountingInboundChanges = &AccountingInboundChangesTable{
-	Handle:             keel.Handle[*accountinginbound.AccountingInboundChange]{Ref: &accountingInboundChangesRef},
+	TableBase:          keel.TableBase{Ref: &accountingInboundChangesRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 2}}},
@@ -148,10 +149,10 @@ var AccountingInboundChanges = &AccountingInboundChangesTable{
 	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 27}},
 }
 
-// BuildAccountingInboundChanges builds the handle of accounting_inbound_changes for ref. Generated relation and alias methods call it.
+// BuildAccountingInboundChanges builds the table of accounting_inbound_changes for ref. Generated relation and alias methods call it.
 func BuildAccountingInboundChanges(r *keel.Ref) *AccountingInboundChangesTable {
 	return &AccountingInboundChangesTable{
-		Handle:             keel.Handle[*accountinginbound.AccountingInboundChange]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -199,6 +200,365 @@ func (t *AccountingInboundChangesTable) DecidedBy() *tenantdb.UsersTable {
 // Get returns the accounting_inbound_changes row with the given key, or keel.ErrNotFound.
 func (t *AccountingInboundChangesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*accountinginbound.AccountingInboundChange, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// AccountingInboundChangesQuery is a query over accountinginbound.AccountingInboundChange.
+type AccountingInboundChangesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*accountinginbound.AccountingInboundChange] = (*AccountingInboundChangesTable)(nil)
+
+var _ keel.Query[*accountinginbound.AccountingInboundChange] = (*AccountingInboundChangesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AccountingInboundChangesTable) Query() keel.Query[*accountinginbound.AccountingInboundChange] {
+	return &AccountingInboundChangesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AccountingInboundChangesQuery.Where.
+func (t *AccountingInboundChangesTable) Where(ps ...keel.Pred) keel.Query[*accountinginbound.AccountingInboundChange] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AccountingInboundChangesQuery.Pick.
+func (t *AccountingInboundChangesTable) Pick(es ...keel.Expr) keel.Query[*accountinginbound.AccountingInboundChange] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AccountingInboundChangesQuery.Load.
+func (t *AccountingInboundChangesTable) Load(ls ...keel.Loader) keel.Query[*accountinginbound.AccountingInboundChange] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AccountingInboundChangesQuery.Omit.
+func (t *AccountingInboundChangesTable) Omit(cols ...keel.Column) keel.Query[*accountinginbound.AccountingInboundChange] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AccountingInboundChangesQuery.Order.
+func (t *AccountingInboundChangesTable) Order(os ...keel.Order) keel.Query[*accountinginbound.AccountingInboundChange] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AccountingInboundChangesQuery.Limit.
+func (t *AccountingInboundChangesTable) Limit(n int) keel.Query[*accountinginbound.AccountingInboundChange] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AccountingInboundChangesQuery.Group.
+func (t *AccountingInboundChangesTable) Group(es ...keel.Expr) keel.Query[*accountinginbound.AccountingInboundChange] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AccountingInboundChangesQuery.GroupingSets.
+func (t *AccountingInboundChangesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*accountinginbound.AccountingInboundChange] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AccountingInboundChangesQuery.Rollup.
+func (t *AccountingInboundChangesTable) Rollup(es ...keel.Expr) keel.Query[*accountinginbound.AccountingInboundChange] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AccountingInboundChangesQuery.Cube.
+func (t *AccountingInboundChangesTable) Cube(es ...keel.Expr) keel.Query[*accountinginbound.AccountingInboundChange] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AccountingInboundChangesQuery.AllTenants.
+func (t *AccountingInboundChangesTable) AllTenants() keel.Query[*accountinginbound.AccountingInboundChange] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AccountingInboundChangesQuery.Join.
+func (t *AccountingInboundChangesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accountinginbound.AccountingInboundChange] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AccountingInboundChangesQuery.LeftJoin.
+func (t *AccountingInboundChangesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accountinginbound.AccountingInboundChange] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AccountingInboundChangesQuery.LeftJoinLateral.
+func (t *AccountingInboundChangesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*accountinginbound.AccountingInboundChange] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AccountingInboundChangesQuery.JoinLateral.
+func (t *AccountingInboundChangesTable) JoinLateral(sub keel.LateralSource) keel.Query[*accountinginbound.AccountingInboundChange] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AccountingInboundChangesQuery.Lock.
+func (t *AccountingInboundChangesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*accountinginbound.AccountingInboundChange] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AccountingInboundChangesQuery.DistinctOn.
+func (t *AccountingInboundChangesTable) DistinctOn(es ...keel.Expr) keel.Query[*accountinginbound.AccountingInboundChange] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AccountingInboundChangesQuery.Cache.
+func (t *AccountingInboundChangesTable) Cache(opts ...keel.CacheOption) keel.Query[*accountinginbound.AccountingInboundChange] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AccountingInboundChangesQuery.LoadStrategy.
+func (t *AccountingInboundChangesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*accountinginbound.AccountingInboundChange] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AccountingInboundChangesQuery.With.
+func (t *AccountingInboundChangesTable) With(ctes ...*keel.CTETable) keel.Query[*accountinginbound.AccountingInboundChange] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AccountingInboundChangesQuery.Compute.
+func (t *AccountingInboundChangesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*accountinginbound.AccountingInboundChange] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AccountingInboundChangesTable) Create(ctx context.Context, db *keel.DB, row *accountinginbound.AccountingInboundChange) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AccountingInboundChangesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*accountinginbound.AccountingInboundChange) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AccountingInboundChangesTable) Save(ctx context.Context, db *keel.DB, row *accountinginbound.AccountingInboundChange, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AccountingInboundChangesTable) SaveExcept(ctx context.Context, db *keel.DB, row *accountinginbound.AccountingInboundChange, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AccountingInboundChangesTable) DeleteRow(ctx context.Context, db *keel.DB, row *accountinginbound.AccountingInboundChange) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AccountingInboundChangesTable) Upsert(ctx context.Context, db *keel.DB, rows []*accountinginbound.AccountingInboundChange, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AccountingInboundChangesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*accountinginbound.AccountingInboundChange, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AccountingInboundChangesTable) Copy(ctx context.Context, db *keel.DB, rows []*accountinginbound.AccountingInboundChange) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AccountingInboundChangesQuery) Where(ps ...keel.Pred) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AccountingInboundChangesQuery) Pick(es ...keel.Expr) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AccountingInboundChangesQuery) Omit(cols ...keel.Column) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AccountingInboundChangesQuery) Load(ls ...keel.Loader) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AccountingInboundChangesQuery) Order(os ...keel.Order) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AccountingInboundChangesQuery) Distinct() keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AccountingInboundChangesQuery) Group(es ...keel.Expr) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AccountingInboundChangesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AccountingInboundChangesQuery) Rollup(es ...keel.Expr) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AccountingInboundChangesQuery) Cube(es ...keel.Expr) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AccountingInboundChangesQuery) Window(name string, w keel.Window) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AccountingInboundChangesQuery) Having(ps ...keel.Pred) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AccountingInboundChangesQuery) Limit(n int) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AccountingInboundChangesQuery) Offset(n int) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AccountingInboundChangesQuery) DistinctOn(es ...keel.Expr) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AccountingInboundChangesQuery) AllTenants() keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AccountingInboundChangesQuery) CustomPlan() keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AccountingInboundChangesQuery) Timeout(d time.Duration) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AccountingInboundChangesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AccountingInboundChangesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AccountingInboundChangesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AccountingInboundChangesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AccountingInboundChangesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AccountingInboundChangesQuery) Cache(opts ...keel.CacheOption) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AccountingInboundChangesQuery) With(ctes ...*keel.CTETable) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AccountingInboundChangesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AccountingInboundChangesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*accountinginbound.AccountingInboundChange] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AccountingInboundChangesQuery) Clone() keel.Query[*accountinginbound.AccountingInboundChange] {
+	return &AccountingInboundChangesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AccountingInboundChangesQuery) One(ctx context.Context, db *keel.DB) (*accountinginbound.AccountingInboundChange, error) {
+	return keel.One[*accountinginbound.AccountingInboundChange](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AccountingInboundChangesQuery) First(ctx context.Context, db *keel.DB) (*accountinginbound.AccountingInboundChange, error) {
+	return keel.First[*accountinginbound.AccountingInboundChange](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AccountingInboundChangesQuery) List(ctx context.Context, db *keel.DB) ([]*accountinginbound.AccountingInboundChange, error) {
+	return keel.List[*accountinginbound.AccountingInboundChange](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AccountingInboundChangesQuery) All(ctx context.Context, db *keel.DB) ([]*accountinginbound.AccountingInboundChange, error) {
+	return keel.All[*accountinginbound.AccountingInboundChange](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AccountingInboundChangesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*accountinginbound.AccountingInboundChange, error) {
+	return keel.UpdateReturning[*accountinginbound.AccountingInboundChange](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AccountingInboundChangesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*accountinginbound.AccountingInboundChange], error) {
+	return keel.PageOf[*accountinginbound.AccountingInboundChange](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AccountingInboundChangesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*accountinginbound.AccountingInboundChange) error) error {
+	return keel.Each[*accountinginbound.AccountingInboundChange](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAccountingInboundChange() unsafe.Pointer {

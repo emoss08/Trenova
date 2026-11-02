@@ -4,6 +4,7 @@ package iftadb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -67,7 +68,7 @@ var jurisdictionsRef = keel.Ref{Table: &jurisdictionsTable}
 
 // JurisdictionsTable is the table of ifta.Jurisdiction.
 type JurisdictionsTable struct {
-	keel.Handle[*ifta.Jurisdiction]
+	keel.TableBase
 	ID           keelkinds.PulidIDCol
 	CountryCode  keel.StringCol
 	Code         keel.StringCol
@@ -83,7 +84,7 @@ type JurisdictionsTable struct {
 
 // Jurisdictions references the ifta_jurisdictions table.
 var Jurisdictions = &JurisdictionsTable{
-	Handle:       keel.Handle[*ifta.Jurisdiction]{Ref: &jurisdictionsRef},
+	TableBase:    keel.TableBase{Ref: &jurisdictionsRef},
 	ID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionsRef, Index: 0}}},
 	CountryCode:  keel.StringCol{Col: keel.Col{Ref: &jurisdictionsRef, Index: 1}},
 	Code:         keel.StringCol{Col: keel.Col{Ref: &jurisdictionsRef, Index: 2}},
@@ -97,10 +98,10 @@ var Jurisdictions = &JurisdictionsTable{
 	UpdatedAt:    keel.Int64Col{Col: keel.Col{Ref: &jurisdictionsRef, Index: 10}},
 }
 
-// BuildJurisdictions builds the handle of ifta_jurisdictions for ref. Generated relation and alias methods call it.
+// BuildJurisdictions builds the table of ifta_jurisdictions for ref. Generated relation and alias methods call it.
 func BuildJurisdictions(r *keel.Ref) *JurisdictionsTable {
 	return &JurisdictionsTable{
-		Handle:       keel.Handle[*ifta.Jurisdiction]{Ref: r},
+		TableBase:    keel.TableBase{Ref: r},
 		ID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		CountryCode:  keel.StringCol{Col: keel.Col{Ref: r, Index: 1}},
 		Code:         keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -131,6 +132,365 @@ func (t *JurisdictionsTable) UsState() *usstatedb.UsStatesTable {
 // Get returns the ifta_jurisdictions row with the given key, or keel.ErrNotFound.
 func (t *JurisdictionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ifta.Jurisdiction, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// JurisdictionsQuery is a query over ifta.Jurisdiction.
+type JurisdictionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*ifta.Jurisdiction] = (*JurisdictionsTable)(nil)
+
+var _ keel.Query[*ifta.Jurisdiction] = (*JurisdictionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *JurisdictionsTable) Query() keel.Query[*ifta.Jurisdiction] {
+	return &JurisdictionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see JurisdictionsQuery.Where.
+func (t *JurisdictionsTable) Where(ps ...keel.Pred) keel.Query[*ifta.Jurisdiction] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see JurisdictionsQuery.Pick.
+func (t *JurisdictionsTable) Pick(es ...keel.Expr) keel.Query[*ifta.Jurisdiction] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see JurisdictionsQuery.Load.
+func (t *JurisdictionsTable) Load(ls ...keel.Loader) keel.Query[*ifta.Jurisdiction] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see JurisdictionsQuery.Omit.
+func (t *JurisdictionsTable) Omit(cols ...keel.Column) keel.Query[*ifta.Jurisdiction] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see JurisdictionsQuery.Order.
+func (t *JurisdictionsTable) Order(os ...keel.Order) keel.Query[*ifta.Jurisdiction] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see JurisdictionsQuery.Limit.
+func (t *JurisdictionsTable) Limit(n int) keel.Query[*ifta.Jurisdiction] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see JurisdictionsQuery.Group.
+func (t *JurisdictionsTable) Group(es ...keel.Expr) keel.Query[*ifta.Jurisdiction] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see JurisdictionsQuery.GroupingSets.
+func (t *JurisdictionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*ifta.Jurisdiction] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see JurisdictionsQuery.Rollup.
+func (t *JurisdictionsTable) Rollup(es ...keel.Expr) keel.Query[*ifta.Jurisdiction] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see JurisdictionsQuery.Cube.
+func (t *JurisdictionsTable) Cube(es ...keel.Expr) keel.Query[*ifta.Jurisdiction] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see JurisdictionsQuery.AllTenants.
+func (t *JurisdictionsTable) AllTenants() keel.Query[*ifta.Jurisdiction] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see JurisdictionsQuery.Join.
+func (t *JurisdictionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ifta.Jurisdiction] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see JurisdictionsQuery.LeftJoin.
+func (t *JurisdictionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ifta.Jurisdiction] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see JurisdictionsQuery.LeftJoinLateral.
+func (t *JurisdictionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ifta.Jurisdiction] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see JurisdictionsQuery.JoinLateral.
+func (t *JurisdictionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*ifta.Jurisdiction] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see JurisdictionsQuery.Lock.
+func (t *JurisdictionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ifta.Jurisdiction] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see JurisdictionsQuery.DistinctOn.
+func (t *JurisdictionsTable) DistinctOn(es ...keel.Expr) keel.Query[*ifta.Jurisdiction] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see JurisdictionsQuery.Cache.
+func (t *JurisdictionsTable) Cache(opts ...keel.CacheOption) keel.Query[*ifta.Jurisdiction] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see JurisdictionsQuery.LoadStrategy.
+func (t *JurisdictionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*ifta.Jurisdiction] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see JurisdictionsQuery.With.
+func (t *JurisdictionsTable) With(ctes ...*keel.CTETable) keel.Query[*ifta.Jurisdiction] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see JurisdictionsQuery.Compute.
+func (t *JurisdictionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ifta.Jurisdiction] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *JurisdictionsTable) Create(ctx context.Context, db *keel.DB, row *ifta.Jurisdiction) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *JurisdictionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ifta.Jurisdiction) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *JurisdictionsTable) Save(ctx context.Context, db *keel.DB, row *ifta.Jurisdiction, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *JurisdictionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *ifta.Jurisdiction, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *JurisdictionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *ifta.Jurisdiction) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *JurisdictionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*ifta.Jurisdiction, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *JurisdictionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ifta.Jurisdiction, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *JurisdictionsTable) Copy(ctx context.Context, db *keel.DB, rows []*ifta.Jurisdiction) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *JurisdictionsQuery) Where(ps ...keel.Pred) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *JurisdictionsQuery) Pick(es ...keel.Expr) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *JurisdictionsQuery) Omit(cols ...keel.Column) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *JurisdictionsQuery) Load(ls ...keel.Loader) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *JurisdictionsQuery) Order(os ...keel.Order) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *JurisdictionsQuery) Distinct() keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *JurisdictionsQuery) Group(es ...keel.Expr) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *JurisdictionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *JurisdictionsQuery) Rollup(es ...keel.Expr) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *JurisdictionsQuery) Cube(es ...keel.Expr) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *JurisdictionsQuery) Window(name string, w keel.Window) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *JurisdictionsQuery) Having(ps ...keel.Pred) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *JurisdictionsQuery) Limit(n int) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *JurisdictionsQuery) Offset(n int) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *JurisdictionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *JurisdictionsQuery) AllTenants() keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *JurisdictionsQuery) CustomPlan() keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *JurisdictionsQuery) Timeout(d time.Duration) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *JurisdictionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *JurisdictionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *JurisdictionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *JurisdictionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *JurisdictionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *JurisdictionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *JurisdictionsQuery) With(ctes ...*keel.CTETable) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *JurisdictionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *JurisdictionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*ifta.Jurisdiction] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *JurisdictionsQuery) Clone() keel.Query[*ifta.Jurisdiction] {
+	return &JurisdictionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *JurisdictionsQuery) One(ctx context.Context, db *keel.DB) (*ifta.Jurisdiction, error) {
+	return keel.One[*ifta.Jurisdiction](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *JurisdictionsQuery) First(ctx context.Context, db *keel.DB) (*ifta.Jurisdiction, error) {
+	return keel.First[*ifta.Jurisdiction](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *JurisdictionsQuery) List(ctx context.Context, db *keel.DB) ([]*ifta.Jurisdiction, error) {
+	return keel.List[*ifta.Jurisdiction](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *JurisdictionsQuery) All(ctx context.Context, db *keel.DB) ([]*ifta.Jurisdiction, error) {
+	return keel.All[*ifta.Jurisdiction](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *JurisdictionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ifta.Jurisdiction, error) {
+	return keel.UpdateReturning[*ifta.Jurisdiction](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *JurisdictionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ifta.Jurisdiction], error) {
+	return keel.PageOf[*ifta.Jurisdiction](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *JurisdictionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ifta.Jurisdiction) error) error {
+	return keel.Each[*ifta.Jurisdiction](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newJurisdiction() unsafe.Pointer { return unsafe.Pointer(new(ifta.Jurisdiction)) }
@@ -270,7 +630,7 @@ var jurisdictionMileageEntriesRef = keel.Ref{Table: &jurisdictionMileageEntriesT
 
 // JurisdictionMileageEntriesTable is the table of ifta.JurisdictionMileageEntry.
 type JurisdictionMileageEntriesTable struct {
-	keel.Handle[*ifta.JurisdictionMileageEntry]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -292,7 +652,7 @@ type JurisdictionMileageEntriesTable struct {
 
 // JurisdictionMileageEntries references the ifta_jurisdiction_mileage_entries table.
 var JurisdictionMileageEntries = &JurisdictionMileageEntriesTable{
-	Handle:         keel.Handle[*ifta.JurisdictionMileageEntry]{Ref: &jurisdictionMileageEntriesRef},
+	TableBase:      keel.TableBase{Ref: &jurisdictionMileageEntriesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 2}}},
@@ -312,10 +672,10 @@ var JurisdictionMileageEntries = &JurisdictionMileageEntriesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 16}},
 }
 
-// BuildJurisdictionMileageEntries builds the handle of ifta_jurisdiction_mileage_entries for ref. Generated relation and alias methods call it.
+// BuildJurisdictionMileageEntries builds the table of ifta_jurisdiction_mileage_entries for ref. Generated relation and alias methods call it.
 func BuildJurisdictionMileageEntries(r *keel.Ref) *JurisdictionMileageEntriesTable {
 	return &JurisdictionMileageEntriesTable{
-		Handle:         keel.Handle[*ifta.JurisdictionMileageEntry]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -362,6 +722,365 @@ func (t *JurisdictionMileageEntriesTable) CreatedBy() *tenantdb.UsersTable {
 // Get returns the ifta_jurisdiction_mileage_entries row with the given key, or keel.ErrNotFound.
 func (t *JurisdictionMileageEntriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ifta.JurisdictionMileageEntry, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// JurisdictionMileageEntriesQuery is a query over ifta.JurisdictionMileageEntry.
+type JurisdictionMileageEntriesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*ifta.JurisdictionMileageEntry] = (*JurisdictionMileageEntriesTable)(nil)
+
+var _ keel.Query[*ifta.JurisdictionMileageEntry] = (*JurisdictionMileageEntriesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *JurisdictionMileageEntriesTable) Query() keel.Query[*ifta.JurisdictionMileageEntry] {
+	return &JurisdictionMileageEntriesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see JurisdictionMileageEntriesQuery.Where.
+func (t *JurisdictionMileageEntriesTable) Where(ps ...keel.Pred) keel.Query[*ifta.JurisdictionMileageEntry] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see JurisdictionMileageEntriesQuery.Pick.
+func (t *JurisdictionMileageEntriesTable) Pick(es ...keel.Expr) keel.Query[*ifta.JurisdictionMileageEntry] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see JurisdictionMileageEntriesQuery.Load.
+func (t *JurisdictionMileageEntriesTable) Load(ls ...keel.Loader) keel.Query[*ifta.JurisdictionMileageEntry] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see JurisdictionMileageEntriesQuery.Omit.
+func (t *JurisdictionMileageEntriesTable) Omit(cols ...keel.Column) keel.Query[*ifta.JurisdictionMileageEntry] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see JurisdictionMileageEntriesQuery.Order.
+func (t *JurisdictionMileageEntriesTable) Order(os ...keel.Order) keel.Query[*ifta.JurisdictionMileageEntry] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see JurisdictionMileageEntriesQuery.Limit.
+func (t *JurisdictionMileageEntriesTable) Limit(n int) keel.Query[*ifta.JurisdictionMileageEntry] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see JurisdictionMileageEntriesQuery.Group.
+func (t *JurisdictionMileageEntriesTable) Group(es ...keel.Expr) keel.Query[*ifta.JurisdictionMileageEntry] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see JurisdictionMileageEntriesQuery.GroupingSets.
+func (t *JurisdictionMileageEntriesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*ifta.JurisdictionMileageEntry] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see JurisdictionMileageEntriesQuery.Rollup.
+func (t *JurisdictionMileageEntriesTable) Rollup(es ...keel.Expr) keel.Query[*ifta.JurisdictionMileageEntry] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see JurisdictionMileageEntriesQuery.Cube.
+func (t *JurisdictionMileageEntriesTable) Cube(es ...keel.Expr) keel.Query[*ifta.JurisdictionMileageEntry] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see JurisdictionMileageEntriesQuery.AllTenants.
+func (t *JurisdictionMileageEntriesTable) AllTenants() keel.Query[*ifta.JurisdictionMileageEntry] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see JurisdictionMileageEntriesQuery.Join.
+func (t *JurisdictionMileageEntriesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ifta.JurisdictionMileageEntry] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see JurisdictionMileageEntriesQuery.LeftJoin.
+func (t *JurisdictionMileageEntriesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ifta.JurisdictionMileageEntry] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see JurisdictionMileageEntriesQuery.LeftJoinLateral.
+func (t *JurisdictionMileageEntriesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ifta.JurisdictionMileageEntry] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see JurisdictionMileageEntriesQuery.JoinLateral.
+func (t *JurisdictionMileageEntriesTable) JoinLateral(sub keel.LateralSource) keel.Query[*ifta.JurisdictionMileageEntry] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see JurisdictionMileageEntriesQuery.Lock.
+func (t *JurisdictionMileageEntriesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ifta.JurisdictionMileageEntry] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see JurisdictionMileageEntriesQuery.DistinctOn.
+func (t *JurisdictionMileageEntriesTable) DistinctOn(es ...keel.Expr) keel.Query[*ifta.JurisdictionMileageEntry] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see JurisdictionMileageEntriesQuery.Cache.
+func (t *JurisdictionMileageEntriesTable) Cache(opts ...keel.CacheOption) keel.Query[*ifta.JurisdictionMileageEntry] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see JurisdictionMileageEntriesQuery.LoadStrategy.
+func (t *JurisdictionMileageEntriesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*ifta.JurisdictionMileageEntry] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see JurisdictionMileageEntriesQuery.With.
+func (t *JurisdictionMileageEntriesTable) With(ctes ...*keel.CTETable) keel.Query[*ifta.JurisdictionMileageEntry] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see JurisdictionMileageEntriesQuery.Compute.
+func (t *JurisdictionMileageEntriesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ifta.JurisdictionMileageEntry] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *JurisdictionMileageEntriesTable) Create(ctx context.Context, db *keel.DB, row *ifta.JurisdictionMileageEntry) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *JurisdictionMileageEntriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ifta.JurisdictionMileageEntry) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *JurisdictionMileageEntriesTable) Save(ctx context.Context, db *keel.DB, row *ifta.JurisdictionMileageEntry, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *JurisdictionMileageEntriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *ifta.JurisdictionMileageEntry, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *JurisdictionMileageEntriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *ifta.JurisdictionMileageEntry) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *JurisdictionMileageEntriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*ifta.JurisdictionMileageEntry, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *JurisdictionMileageEntriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ifta.JurisdictionMileageEntry, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *JurisdictionMileageEntriesTable) Copy(ctx context.Context, db *keel.DB, rows []*ifta.JurisdictionMileageEntry) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *JurisdictionMileageEntriesQuery) Where(ps ...keel.Pred) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *JurisdictionMileageEntriesQuery) Pick(es ...keel.Expr) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *JurisdictionMileageEntriesQuery) Omit(cols ...keel.Column) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *JurisdictionMileageEntriesQuery) Load(ls ...keel.Loader) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *JurisdictionMileageEntriesQuery) Order(os ...keel.Order) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *JurisdictionMileageEntriesQuery) Distinct() keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *JurisdictionMileageEntriesQuery) Group(es ...keel.Expr) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *JurisdictionMileageEntriesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *JurisdictionMileageEntriesQuery) Rollup(es ...keel.Expr) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *JurisdictionMileageEntriesQuery) Cube(es ...keel.Expr) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *JurisdictionMileageEntriesQuery) Window(name string, w keel.Window) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *JurisdictionMileageEntriesQuery) Having(ps ...keel.Pred) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *JurisdictionMileageEntriesQuery) Limit(n int) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *JurisdictionMileageEntriesQuery) Offset(n int) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *JurisdictionMileageEntriesQuery) DistinctOn(es ...keel.Expr) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *JurisdictionMileageEntriesQuery) AllTenants() keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *JurisdictionMileageEntriesQuery) CustomPlan() keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *JurisdictionMileageEntriesQuery) Timeout(d time.Duration) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *JurisdictionMileageEntriesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *JurisdictionMileageEntriesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *JurisdictionMileageEntriesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *JurisdictionMileageEntriesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *JurisdictionMileageEntriesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *JurisdictionMileageEntriesQuery) Cache(opts ...keel.CacheOption) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *JurisdictionMileageEntriesQuery) With(ctes ...*keel.CTETable) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *JurisdictionMileageEntriesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *JurisdictionMileageEntriesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*ifta.JurisdictionMileageEntry] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *JurisdictionMileageEntriesQuery) Clone() keel.Query[*ifta.JurisdictionMileageEntry] {
+	return &JurisdictionMileageEntriesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *JurisdictionMileageEntriesQuery) One(ctx context.Context, db *keel.DB) (*ifta.JurisdictionMileageEntry, error) {
+	return keel.One[*ifta.JurisdictionMileageEntry](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *JurisdictionMileageEntriesQuery) First(ctx context.Context, db *keel.DB) (*ifta.JurisdictionMileageEntry, error) {
+	return keel.First[*ifta.JurisdictionMileageEntry](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *JurisdictionMileageEntriesQuery) List(ctx context.Context, db *keel.DB) ([]*ifta.JurisdictionMileageEntry, error) {
+	return keel.List[*ifta.JurisdictionMileageEntry](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *JurisdictionMileageEntriesQuery) All(ctx context.Context, db *keel.DB) ([]*ifta.JurisdictionMileageEntry, error) {
+	return keel.All[*ifta.JurisdictionMileageEntry](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *JurisdictionMileageEntriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ifta.JurisdictionMileageEntry, error) {
+	return keel.UpdateReturning[*ifta.JurisdictionMileageEntry](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *JurisdictionMileageEntriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ifta.JurisdictionMileageEntry], error) {
+	return keel.PageOf[*ifta.JurisdictionMileageEntry](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *JurisdictionMileageEntriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ifta.JurisdictionMileageEntry) error) error {
+	return keel.Each[*ifta.JurisdictionMileageEntry](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newJurisdictionMileageEntry() unsafe.Pointer {
@@ -560,7 +1279,7 @@ var returnsRef = keel.Ref{Table: &returnsTable}
 
 // ReturnsTable is the table of ifta.Return.
 type ReturnsTable struct {
-	keel.Handle[*ifta.Return]
+	keel.TableBase
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -603,7 +1322,7 @@ type ReturnsTable struct {
 
 // Returns references the ifta_returns table.
 var Returns = &ReturnsTable{
-	Handle:                keel.Handle[*ifta.Return]{Ref: &returnsRef},
+	TableBase:             keel.TableBase{Ref: &returnsRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnsRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnsRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnsRef, Index: 2}}},
@@ -644,10 +1363,10 @@ var Returns = &ReturnsTable{
 	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &returnsRef, Index: 37}},
 }
 
-// BuildReturns builds the handle of ifta_returns for ref. Generated relation and alias methods call it.
+// BuildReturns builds the table of ifta_returns for ref. Generated relation and alias methods call it.
 func BuildReturns(r *keel.Ref) *ReturnsTable {
 	return &ReturnsTable{
-		Handle:                keel.Handle[*ifta.Return]{Ref: r},
+		TableBase:             keel.TableBase{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -719,6 +1438,365 @@ func (t *ReturnsTable) Lines() *ReturnLinesTable { return keel.Path(t.Ref, 4, Bu
 // Get returns the ifta_returns row with the given key, or keel.ErrNotFound.
 func (t *ReturnsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ifta.Return, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ReturnsQuery is a query over ifta.Return.
+type ReturnsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*ifta.Return] = (*ReturnsTable)(nil)
+
+var _ keel.Query[*ifta.Return] = (*ReturnsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ReturnsTable) Query() keel.Query[*ifta.Return] {
+	return &ReturnsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ReturnsQuery.Where.
+func (t *ReturnsTable) Where(ps ...keel.Pred) keel.Query[*ifta.Return] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ReturnsQuery.Pick.
+func (t *ReturnsTable) Pick(es ...keel.Expr) keel.Query[*ifta.Return] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ReturnsQuery.Load.
+func (t *ReturnsTable) Load(ls ...keel.Loader) keel.Query[*ifta.Return] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ReturnsQuery.Omit.
+func (t *ReturnsTable) Omit(cols ...keel.Column) keel.Query[*ifta.Return] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ReturnsQuery.Order.
+func (t *ReturnsTable) Order(os ...keel.Order) keel.Query[*ifta.Return] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ReturnsQuery.Limit.
+func (t *ReturnsTable) Limit(n int) keel.Query[*ifta.Return] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ReturnsQuery.Group.
+func (t *ReturnsTable) Group(es ...keel.Expr) keel.Query[*ifta.Return] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ReturnsQuery.GroupingSets.
+func (t *ReturnsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*ifta.Return] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ReturnsQuery.Rollup.
+func (t *ReturnsTable) Rollup(es ...keel.Expr) keel.Query[*ifta.Return] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ReturnsQuery.Cube.
+func (t *ReturnsTable) Cube(es ...keel.Expr) keel.Query[*ifta.Return] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ReturnsQuery.AllTenants.
+func (t *ReturnsTable) AllTenants() keel.Query[*ifta.Return] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ReturnsQuery.Join.
+func (t *ReturnsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ifta.Return] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ReturnsQuery.LeftJoin.
+func (t *ReturnsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ifta.Return] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ReturnsQuery.LeftJoinLateral.
+func (t *ReturnsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ifta.Return] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ReturnsQuery.JoinLateral.
+func (t *ReturnsTable) JoinLateral(sub keel.LateralSource) keel.Query[*ifta.Return] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ReturnsQuery.Lock.
+func (t *ReturnsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ifta.Return] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ReturnsQuery.DistinctOn.
+func (t *ReturnsTable) DistinctOn(es ...keel.Expr) keel.Query[*ifta.Return] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ReturnsQuery.Cache.
+func (t *ReturnsTable) Cache(opts ...keel.CacheOption) keel.Query[*ifta.Return] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ReturnsQuery.LoadStrategy.
+func (t *ReturnsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*ifta.Return] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ReturnsQuery.With.
+func (t *ReturnsTable) With(ctes ...*keel.CTETable) keel.Query[*ifta.Return] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ReturnsQuery.Compute.
+func (t *ReturnsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ifta.Return] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ReturnsTable) Create(ctx context.Context, db *keel.DB, row *ifta.Return) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ReturnsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ifta.Return) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ReturnsTable) Save(ctx context.Context, db *keel.DB, row *ifta.Return, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ReturnsTable) SaveExcept(ctx context.Context, db *keel.DB, row *ifta.Return, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ReturnsTable) DeleteRow(ctx context.Context, db *keel.DB, row *ifta.Return) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ReturnsTable) Upsert(ctx context.Context, db *keel.DB, rows []*ifta.Return, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ReturnsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ifta.Return, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ReturnsTable) Copy(ctx context.Context, db *keel.DB, rows []*ifta.Return) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ReturnsQuery) Where(ps ...keel.Pred) keel.Query[*ifta.Return] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ReturnsQuery) Pick(es ...keel.Expr) keel.Query[*ifta.Return] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ReturnsQuery) Omit(cols ...keel.Column) keel.Query[*ifta.Return] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ReturnsQuery) Load(ls ...keel.Loader) keel.Query[*ifta.Return] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ReturnsQuery) Order(os ...keel.Order) keel.Query[*ifta.Return] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ReturnsQuery) Distinct() keel.Query[*ifta.Return] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ReturnsQuery) Group(es ...keel.Expr) keel.Query[*ifta.Return] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ReturnsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*ifta.Return] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ReturnsQuery) Rollup(es ...keel.Expr) keel.Query[*ifta.Return] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ReturnsQuery) Cube(es ...keel.Expr) keel.Query[*ifta.Return] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ReturnsQuery) Window(name string, w keel.Window) keel.Query[*ifta.Return] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ReturnsQuery) Having(ps ...keel.Pred) keel.Query[*ifta.Return] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ReturnsQuery) Limit(n int) keel.Query[*ifta.Return] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ReturnsQuery) Offset(n int) keel.Query[*ifta.Return] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ReturnsQuery) DistinctOn(es ...keel.Expr) keel.Query[*ifta.Return] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ReturnsQuery) AllTenants() keel.Query[*ifta.Return] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ReturnsQuery) CustomPlan() keel.Query[*ifta.Return] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ReturnsQuery) Timeout(d time.Duration) keel.Query[*ifta.Return] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ReturnsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ifta.Return] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ReturnsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ifta.Return] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ReturnsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ifta.Return] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ReturnsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ifta.Return] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ReturnsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*ifta.Return] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ReturnsQuery) Cache(opts ...keel.CacheOption) keel.Query[*ifta.Return] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ReturnsQuery) With(ctes ...*keel.CTETable) keel.Query[*ifta.Return] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ReturnsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*ifta.Return] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ReturnsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*ifta.Return] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ReturnsQuery) Clone() keel.Query[*ifta.Return] {
+	return &ReturnsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ReturnsQuery) One(ctx context.Context, db *keel.DB) (*ifta.Return, error) {
+	return keel.One[*ifta.Return](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ReturnsQuery) First(ctx context.Context, db *keel.DB) (*ifta.Return, error) {
+	return keel.First[*ifta.Return](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ReturnsQuery) List(ctx context.Context, db *keel.DB) ([]*ifta.Return, error) {
+	return keel.List[*ifta.Return](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ReturnsQuery) All(ctx context.Context, db *keel.DB) ([]*ifta.Return, error) {
+	return keel.All[*ifta.Return](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ReturnsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ifta.Return, error) {
+	return keel.UpdateReturning[*ifta.Return](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ReturnsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ifta.Return], error) {
+	return keel.PageOf[*ifta.Return](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ReturnsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ifta.Return) error) error {
+	return keel.Each[*ifta.Return](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newReturn() unsafe.Pointer { return unsafe.Pointer(new(ifta.Return)) }
@@ -1015,7 +2093,7 @@ var returnLinesRef = keel.Ref{Table: &returnLinesTable}
 
 // ReturnLinesTable is the table of ifta.ReturnLine.
 type ReturnLinesTable struct {
-	keel.Handle[*ifta.ReturnLine]
+	keel.TableBase
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -1047,7 +2125,7 @@ type ReturnLinesTable struct {
 
 // ReturnLines references the ifta_return_lines table.
 var ReturnLines = &ReturnLinesTable{
-	Handle:                 keel.Handle[*ifta.ReturnLine]{Ref: &returnLinesRef},
+	TableBase:              keel.TableBase{Ref: &returnLinesRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnLinesRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnLinesRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnLinesRef, Index: 2}}},
@@ -1077,10 +2155,10 @@ var ReturnLines = &ReturnLinesTable{
 	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &returnLinesRef, Index: 26}},
 }
 
-// BuildReturnLines builds the handle of ifta_return_lines for ref. Generated relation and alias methods call it.
+// BuildReturnLines builds the table of ifta_return_lines for ref. Generated relation and alias methods call it.
 func BuildReturnLines(r *keel.Ref) *ReturnLinesTable {
 	return &ReturnLinesTable{
-		Handle:                 keel.Handle[*ifta.ReturnLine]{Ref: r},
+		TableBase:              keel.TableBase{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1130,6 +2208,365 @@ func (t *ReturnLinesTable) Jurisdiction() *JurisdictionsTable {
 // Get returns the ifta_return_lines row with the given key, or keel.ErrNotFound.
 func (t *ReturnLinesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ifta.ReturnLine, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ReturnLinesQuery is a query over ifta.ReturnLine.
+type ReturnLinesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*ifta.ReturnLine] = (*ReturnLinesTable)(nil)
+
+var _ keel.Query[*ifta.ReturnLine] = (*ReturnLinesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ReturnLinesTable) Query() keel.Query[*ifta.ReturnLine] {
+	return &ReturnLinesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ReturnLinesQuery.Where.
+func (t *ReturnLinesTable) Where(ps ...keel.Pred) keel.Query[*ifta.ReturnLine] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ReturnLinesQuery.Pick.
+func (t *ReturnLinesTable) Pick(es ...keel.Expr) keel.Query[*ifta.ReturnLine] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ReturnLinesQuery.Load.
+func (t *ReturnLinesTable) Load(ls ...keel.Loader) keel.Query[*ifta.ReturnLine] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ReturnLinesQuery.Omit.
+func (t *ReturnLinesTable) Omit(cols ...keel.Column) keel.Query[*ifta.ReturnLine] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ReturnLinesQuery.Order.
+func (t *ReturnLinesTable) Order(os ...keel.Order) keel.Query[*ifta.ReturnLine] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ReturnLinesQuery.Limit.
+func (t *ReturnLinesTable) Limit(n int) keel.Query[*ifta.ReturnLine] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ReturnLinesQuery.Group.
+func (t *ReturnLinesTable) Group(es ...keel.Expr) keel.Query[*ifta.ReturnLine] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ReturnLinesQuery.GroupingSets.
+func (t *ReturnLinesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*ifta.ReturnLine] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ReturnLinesQuery.Rollup.
+func (t *ReturnLinesTable) Rollup(es ...keel.Expr) keel.Query[*ifta.ReturnLine] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ReturnLinesQuery.Cube.
+func (t *ReturnLinesTable) Cube(es ...keel.Expr) keel.Query[*ifta.ReturnLine] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ReturnLinesQuery.AllTenants.
+func (t *ReturnLinesTable) AllTenants() keel.Query[*ifta.ReturnLine] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ReturnLinesQuery.Join.
+func (t *ReturnLinesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ifta.ReturnLine] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ReturnLinesQuery.LeftJoin.
+func (t *ReturnLinesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ifta.ReturnLine] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ReturnLinesQuery.LeftJoinLateral.
+func (t *ReturnLinesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ifta.ReturnLine] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ReturnLinesQuery.JoinLateral.
+func (t *ReturnLinesTable) JoinLateral(sub keel.LateralSource) keel.Query[*ifta.ReturnLine] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ReturnLinesQuery.Lock.
+func (t *ReturnLinesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ifta.ReturnLine] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ReturnLinesQuery.DistinctOn.
+func (t *ReturnLinesTable) DistinctOn(es ...keel.Expr) keel.Query[*ifta.ReturnLine] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ReturnLinesQuery.Cache.
+func (t *ReturnLinesTable) Cache(opts ...keel.CacheOption) keel.Query[*ifta.ReturnLine] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ReturnLinesQuery.LoadStrategy.
+func (t *ReturnLinesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*ifta.ReturnLine] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ReturnLinesQuery.With.
+func (t *ReturnLinesTable) With(ctes ...*keel.CTETable) keel.Query[*ifta.ReturnLine] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ReturnLinesQuery.Compute.
+func (t *ReturnLinesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ifta.ReturnLine] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ReturnLinesTable) Create(ctx context.Context, db *keel.DB, row *ifta.ReturnLine) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ReturnLinesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ifta.ReturnLine) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ReturnLinesTable) Save(ctx context.Context, db *keel.DB, row *ifta.ReturnLine, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ReturnLinesTable) SaveExcept(ctx context.Context, db *keel.DB, row *ifta.ReturnLine, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ReturnLinesTable) DeleteRow(ctx context.Context, db *keel.DB, row *ifta.ReturnLine) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ReturnLinesTable) Upsert(ctx context.Context, db *keel.DB, rows []*ifta.ReturnLine, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ReturnLinesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ifta.ReturnLine, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ReturnLinesTable) Copy(ctx context.Context, db *keel.DB, rows []*ifta.ReturnLine) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ReturnLinesQuery) Where(ps ...keel.Pred) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ReturnLinesQuery) Pick(es ...keel.Expr) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ReturnLinesQuery) Omit(cols ...keel.Column) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ReturnLinesQuery) Load(ls ...keel.Loader) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ReturnLinesQuery) Order(os ...keel.Order) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ReturnLinesQuery) Distinct() keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ReturnLinesQuery) Group(es ...keel.Expr) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ReturnLinesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ReturnLinesQuery) Rollup(es ...keel.Expr) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ReturnLinesQuery) Cube(es ...keel.Expr) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ReturnLinesQuery) Window(name string, w keel.Window) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ReturnLinesQuery) Having(ps ...keel.Pred) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ReturnLinesQuery) Limit(n int) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ReturnLinesQuery) Offset(n int) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ReturnLinesQuery) DistinctOn(es ...keel.Expr) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ReturnLinesQuery) AllTenants() keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ReturnLinesQuery) CustomPlan() keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ReturnLinesQuery) Timeout(d time.Duration) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ReturnLinesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ReturnLinesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ReturnLinesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ReturnLinesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ReturnLinesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ReturnLinesQuery) Cache(opts ...keel.CacheOption) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ReturnLinesQuery) With(ctes ...*keel.CTETable) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ReturnLinesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ReturnLinesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*ifta.ReturnLine] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ReturnLinesQuery) Clone() keel.Query[*ifta.ReturnLine] {
+	return &ReturnLinesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ReturnLinesQuery) One(ctx context.Context, db *keel.DB) (*ifta.ReturnLine, error) {
+	return keel.One[*ifta.ReturnLine](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ReturnLinesQuery) First(ctx context.Context, db *keel.DB) (*ifta.ReturnLine, error) {
+	return keel.First[*ifta.ReturnLine](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ReturnLinesQuery) List(ctx context.Context, db *keel.DB) ([]*ifta.ReturnLine, error) {
+	return keel.List[*ifta.ReturnLine](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ReturnLinesQuery) All(ctx context.Context, db *keel.DB) ([]*ifta.ReturnLine, error) {
+	return keel.All[*ifta.ReturnLine](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ReturnLinesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ifta.ReturnLine, error) {
+	return keel.UpdateReturning[*ifta.ReturnLine](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ReturnLinesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ifta.ReturnLine], error) {
+	return keel.PageOf[*ifta.ReturnLine](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ReturnLinesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ifta.ReturnLine) error) error {
+	return keel.Each[*ifta.ReturnLine](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newReturnLine() unsafe.Pointer { return unsafe.Pointer(new(ifta.ReturnLine)) }
@@ -1319,7 +2756,7 @@ var taxRatesRef = keel.Ref{Table: &taxRatesTable}
 
 // TaxRatesTable is the table of ifta.TaxRate.
 type TaxRatesTable struct {
-	keel.Handle[*ifta.TaxRate]
+	keel.TableBase
 	ID                     keelkinds.PulidIDCol
 	JurisdictionID         keelkinds.PulidIDCol
 	Year                   keel.Int64Col
@@ -1337,7 +2774,7 @@ type TaxRatesTable struct {
 
 // TaxRates references the ifta_tax_rates table.
 var TaxRates = &TaxRatesTable{
-	Handle:                 keel.Handle[*ifta.TaxRate]{Ref: &taxRatesRef},
+	TableBase:              keel.TableBase{Ref: &taxRatesRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &taxRatesRef, Index: 0}}},
 	JurisdictionID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &taxRatesRef, Index: 1}}},
 	Year:                   keel.Int64Col{Col: keel.Col{Ref: &taxRatesRef, Index: 2}},
@@ -1353,10 +2790,10 @@ var TaxRates = &TaxRatesTable{
 	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &taxRatesRef, Index: 12}},
 }
 
-// BuildTaxRates builds the handle of ifta_tax_rates for ref. Generated relation and alias methods call it.
+// BuildTaxRates builds the table of ifta_tax_rates for ref. Generated relation and alias methods call it.
 func BuildTaxRates(r *keel.Ref) *TaxRatesTable {
 	return &TaxRatesTable{
-		Handle:                 keel.Handle[*ifta.TaxRate]{Ref: r},
+		TableBase:              keel.TableBase{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		JurisdictionID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Year:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 2}},
@@ -1389,6 +2826,365 @@ func (t *TaxRatesTable) Jurisdiction() *JurisdictionsTable {
 // Get returns the ifta_tax_rates row with the given key, or keel.ErrNotFound.
 func (t *TaxRatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ifta.TaxRate, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// TaxRatesQuery is a query over ifta.TaxRate.
+type TaxRatesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*ifta.TaxRate] = (*TaxRatesTable)(nil)
+
+var _ keel.Query[*ifta.TaxRate] = (*TaxRatesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *TaxRatesTable) Query() keel.Query[*ifta.TaxRate] {
+	return &TaxRatesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see TaxRatesQuery.Where.
+func (t *TaxRatesTable) Where(ps ...keel.Pred) keel.Query[*ifta.TaxRate] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see TaxRatesQuery.Pick.
+func (t *TaxRatesTable) Pick(es ...keel.Expr) keel.Query[*ifta.TaxRate] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see TaxRatesQuery.Load.
+func (t *TaxRatesTable) Load(ls ...keel.Loader) keel.Query[*ifta.TaxRate] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see TaxRatesQuery.Omit.
+func (t *TaxRatesTable) Omit(cols ...keel.Column) keel.Query[*ifta.TaxRate] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see TaxRatesQuery.Order.
+func (t *TaxRatesTable) Order(os ...keel.Order) keel.Query[*ifta.TaxRate] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see TaxRatesQuery.Limit.
+func (t *TaxRatesTable) Limit(n int) keel.Query[*ifta.TaxRate] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see TaxRatesQuery.Group.
+func (t *TaxRatesTable) Group(es ...keel.Expr) keel.Query[*ifta.TaxRate] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see TaxRatesQuery.GroupingSets.
+func (t *TaxRatesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*ifta.TaxRate] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see TaxRatesQuery.Rollup.
+func (t *TaxRatesTable) Rollup(es ...keel.Expr) keel.Query[*ifta.TaxRate] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see TaxRatesQuery.Cube.
+func (t *TaxRatesTable) Cube(es ...keel.Expr) keel.Query[*ifta.TaxRate] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see TaxRatesQuery.AllTenants.
+func (t *TaxRatesTable) AllTenants() keel.Query[*ifta.TaxRate] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see TaxRatesQuery.Join.
+func (t *TaxRatesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ifta.TaxRate] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see TaxRatesQuery.LeftJoin.
+func (t *TaxRatesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ifta.TaxRate] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see TaxRatesQuery.LeftJoinLateral.
+func (t *TaxRatesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ifta.TaxRate] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see TaxRatesQuery.JoinLateral.
+func (t *TaxRatesTable) JoinLateral(sub keel.LateralSource) keel.Query[*ifta.TaxRate] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see TaxRatesQuery.Lock.
+func (t *TaxRatesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ifta.TaxRate] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see TaxRatesQuery.DistinctOn.
+func (t *TaxRatesTable) DistinctOn(es ...keel.Expr) keel.Query[*ifta.TaxRate] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see TaxRatesQuery.Cache.
+func (t *TaxRatesTable) Cache(opts ...keel.CacheOption) keel.Query[*ifta.TaxRate] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see TaxRatesQuery.LoadStrategy.
+func (t *TaxRatesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*ifta.TaxRate] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see TaxRatesQuery.With.
+func (t *TaxRatesTable) With(ctes ...*keel.CTETable) keel.Query[*ifta.TaxRate] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see TaxRatesQuery.Compute.
+func (t *TaxRatesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ifta.TaxRate] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *TaxRatesTable) Create(ctx context.Context, db *keel.DB, row *ifta.TaxRate) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *TaxRatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ifta.TaxRate) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *TaxRatesTable) Save(ctx context.Context, db *keel.DB, row *ifta.TaxRate, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *TaxRatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *ifta.TaxRate, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *TaxRatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *ifta.TaxRate) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *TaxRatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*ifta.TaxRate, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *TaxRatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ifta.TaxRate, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *TaxRatesTable) Copy(ctx context.Context, db *keel.DB, rows []*ifta.TaxRate) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *TaxRatesQuery) Where(ps ...keel.Pred) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *TaxRatesQuery) Pick(es ...keel.Expr) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *TaxRatesQuery) Omit(cols ...keel.Column) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *TaxRatesQuery) Load(ls ...keel.Loader) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *TaxRatesQuery) Order(os ...keel.Order) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *TaxRatesQuery) Distinct() keel.Query[*ifta.TaxRate] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *TaxRatesQuery) Group(es ...keel.Expr) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *TaxRatesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *TaxRatesQuery) Rollup(es ...keel.Expr) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *TaxRatesQuery) Cube(es ...keel.Expr) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *TaxRatesQuery) Window(name string, w keel.Window) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *TaxRatesQuery) Having(ps ...keel.Pred) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *TaxRatesQuery) Limit(n int) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *TaxRatesQuery) Offset(n int) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *TaxRatesQuery) DistinctOn(es ...keel.Expr) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *TaxRatesQuery) AllTenants() keel.Query[*ifta.TaxRate] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *TaxRatesQuery) CustomPlan() keel.Query[*ifta.TaxRate] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *TaxRatesQuery) Timeout(d time.Duration) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *TaxRatesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *TaxRatesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *TaxRatesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *TaxRatesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *TaxRatesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *TaxRatesQuery) Cache(opts ...keel.CacheOption) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *TaxRatesQuery) With(ctes ...*keel.CTETable) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *TaxRatesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *TaxRatesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*ifta.TaxRate] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *TaxRatesQuery) Clone() keel.Query[*ifta.TaxRate] {
+	return &TaxRatesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *TaxRatesQuery) One(ctx context.Context, db *keel.DB) (*ifta.TaxRate, error) {
+	return keel.One[*ifta.TaxRate](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *TaxRatesQuery) First(ctx context.Context, db *keel.DB) (*ifta.TaxRate, error) {
+	return keel.First[*ifta.TaxRate](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *TaxRatesQuery) List(ctx context.Context, db *keel.DB) ([]*ifta.TaxRate, error) {
+	return keel.List[*ifta.TaxRate](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *TaxRatesQuery) All(ctx context.Context, db *keel.DB) ([]*ifta.TaxRate, error) {
+	return keel.All[*ifta.TaxRate](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *TaxRatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ifta.TaxRate, error) {
+	return keel.UpdateReturning[*ifta.TaxRate](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *TaxRatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ifta.TaxRate], error) {
+	return keel.PageOf[*ifta.TaxRate](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *TaxRatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ifta.TaxRate) error) error {
+	return keel.Each[*ifta.TaxRate](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newTaxRate() unsafe.Pointer { return unsafe.Pointer(new(ifta.TaxRate)) }

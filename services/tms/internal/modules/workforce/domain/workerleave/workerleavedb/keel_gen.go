@@ -4,6 +4,7 @@ package workerleavedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -66,7 +67,7 @@ var leaveControlsRef = keel.Ref{Table: &leaveControlsTable}
 
 // LeaveControlsTable is the table of workerleave.LeaveControl.
 type LeaveControlsTable struct {
-	keel.Handle[*workerleave.LeaveControl]
+	keel.TableBase
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -84,7 +85,7 @@ type LeaveControlsTable struct {
 
 // LeaveControls references the leave_controls table.
 var LeaveControls = &LeaveControlsTable{
-	Handle:                 keel.Handle[*workerleave.LeaveControl]{Ref: &leaveControlsRef},
+	TableBase:              keel.TableBase{Ref: &leaveControlsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &leaveControlsRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &leaveControlsRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &leaveControlsRef, Index: 2}}},
@@ -100,10 +101,10 @@ var LeaveControls = &LeaveControlsTable{
 	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &leaveControlsRef, Index: 12}},
 }
 
-// BuildLeaveControls builds the handle of leave_controls for ref. Generated relation and alias methods call it.
+// BuildLeaveControls builds the table of leave_controls for ref. Generated relation and alias methods call it.
 func BuildLeaveControls(r *keel.Ref) *LeaveControlsTable {
 	return &LeaveControlsTable{
-		Handle:                 keel.Handle[*workerleave.LeaveControl]{Ref: r},
+		TableBase:              keel.TableBase{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -131,6 +132,365 @@ func (t *LeaveControlsTable) As(alias string) *LeaveControlsTable {
 // Get returns the leave_controls row with the given key, or keel.ErrNotFound.
 func (t *LeaveControlsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerleave.LeaveControl, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// LeaveControlsQuery is a query over workerleave.LeaveControl.
+type LeaveControlsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workerleave.LeaveControl] = (*LeaveControlsTable)(nil)
+
+var _ keel.Query[*workerleave.LeaveControl] = (*LeaveControlsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *LeaveControlsTable) Query() keel.Query[*workerleave.LeaveControl] {
+	return &LeaveControlsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see LeaveControlsQuery.Where.
+func (t *LeaveControlsTable) Where(ps ...keel.Pred) keel.Query[*workerleave.LeaveControl] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see LeaveControlsQuery.Pick.
+func (t *LeaveControlsTable) Pick(es ...keel.Expr) keel.Query[*workerleave.LeaveControl] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see LeaveControlsQuery.Load.
+func (t *LeaveControlsTable) Load(ls ...keel.Loader) keel.Query[*workerleave.LeaveControl] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see LeaveControlsQuery.Omit.
+func (t *LeaveControlsTable) Omit(cols ...keel.Column) keel.Query[*workerleave.LeaveControl] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see LeaveControlsQuery.Order.
+func (t *LeaveControlsTable) Order(os ...keel.Order) keel.Query[*workerleave.LeaveControl] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see LeaveControlsQuery.Limit.
+func (t *LeaveControlsTable) Limit(n int) keel.Query[*workerleave.LeaveControl] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see LeaveControlsQuery.Group.
+func (t *LeaveControlsTable) Group(es ...keel.Expr) keel.Query[*workerleave.LeaveControl] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see LeaveControlsQuery.GroupingSets.
+func (t *LeaveControlsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerleave.LeaveControl] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see LeaveControlsQuery.Rollup.
+func (t *LeaveControlsTable) Rollup(es ...keel.Expr) keel.Query[*workerleave.LeaveControl] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see LeaveControlsQuery.Cube.
+func (t *LeaveControlsTable) Cube(es ...keel.Expr) keel.Query[*workerleave.LeaveControl] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see LeaveControlsQuery.AllTenants.
+func (t *LeaveControlsTable) AllTenants() keel.Query[*workerleave.LeaveControl] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see LeaveControlsQuery.Join.
+func (t *LeaveControlsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerleave.LeaveControl] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see LeaveControlsQuery.LeftJoin.
+func (t *LeaveControlsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerleave.LeaveControl] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see LeaveControlsQuery.LeftJoinLateral.
+func (t *LeaveControlsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerleave.LeaveControl] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see LeaveControlsQuery.JoinLateral.
+func (t *LeaveControlsTable) JoinLateral(sub keel.LateralSource) keel.Query[*workerleave.LeaveControl] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see LeaveControlsQuery.Lock.
+func (t *LeaveControlsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerleave.LeaveControl] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see LeaveControlsQuery.DistinctOn.
+func (t *LeaveControlsTable) DistinctOn(es ...keel.Expr) keel.Query[*workerleave.LeaveControl] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see LeaveControlsQuery.Cache.
+func (t *LeaveControlsTable) Cache(opts ...keel.CacheOption) keel.Query[*workerleave.LeaveControl] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see LeaveControlsQuery.LoadStrategy.
+func (t *LeaveControlsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerleave.LeaveControl] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see LeaveControlsQuery.With.
+func (t *LeaveControlsTable) With(ctes ...*keel.CTETable) keel.Query[*workerleave.LeaveControl] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see LeaveControlsQuery.Compute.
+func (t *LeaveControlsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workerleave.LeaveControl] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *LeaveControlsTable) Create(ctx context.Context, db *keel.DB, row *workerleave.LeaveControl) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *LeaveControlsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerleave.LeaveControl) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *LeaveControlsTable) Save(ctx context.Context, db *keel.DB, row *workerleave.LeaveControl, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *LeaveControlsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerleave.LeaveControl, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *LeaveControlsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerleave.LeaveControl) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *LeaveControlsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerleave.LeaveControl, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *LeaveControlsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerleave.LeaveControl, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *LeaveControlsTable) Copy(ctx context.Context, db *keel.DB, rows []*workerleave.LeaveControl) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *LeaveControlsQuery) Where(ps ...keel.Pred) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *LeaveControlsQuery) Pick(es ...keel.Expr) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *LeaveControlsQuery) Omit(cols ...keel.Column) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *LeaveControlsQuery) Load(ls ...keel.Loader) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *LeaveControlsQuery) Order(os ...keel.Order) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *LeaveControlsQuery) Distinct() keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *LeaveControlsQuery) Group(es ...keel.Expr) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *LeaveControlsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *LeaveControlsQuery) Rollup(es ...keel.Expr) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *LeaveControlsQuery) Cube(es ...keel.Expr) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *LeaveControlsQuery) Window(name string, w keel.Window) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *LeaveControlsQuery) Having(ps ...keel.Pred) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *LeaveControlsQuery) Limit(n int) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *LeaveControlsQuery) Offset(n int) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *LeaveControlsQuery) DistinctOn(es ...keel.Expr) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *LeaveControlsQuery) AllTenants() keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *LeaveControlsQuery) CustomPlan() keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *LeaveControlsQuery) Timeout(d time.Duration) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *LeaveControlsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *LeaveControlsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *LeaveControlsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *LeaveControlsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *LeaveControlsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *LeaveControlsQuery) Cache(opts ...keel.CacheOption) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *LeaveControlsQuery) With(ctes ...*keel.CTETable) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *LeaveControlsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *LeaveControlsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerleave.LeaveControl] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *LeaveControlsQuery) Clone() keel.Query[*workerleave.LeaveControl] {
+	return &LeaveControlsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *LeaveControlsQuery) One(ctx context.Context, db *keel.DB) (*workerleave.LeaveControl, error) {
+	return keel.One[*workerleave.LeaveControl](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *LeaveControlsQuery) First(ctx context.Context, db *keel.DB) (*workerleave.LeaveControl, error) {
+	return keel.First[*workerleave.LeaveControl](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *LeaveControlsQuery) List(ctx context.Context, db *keel.DB) ([]*workerleave.LeaveControl, error) {
+	return keel.List[*workerleave.LeaveControl](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *LeaveControlsQuery) All(ctx context.Context, db *keel.DB) ([]*workerleave.LeaveControl, error) {
+	return keel.All[*workerleave.LeaveControl](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *LeaveControlsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerleave.LeaveControl, error) {
+	return keel.UpdateReturning[*workerleave.LeaveControl](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *LeaveControlsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerleave.LeaveControl], error) {
+	return keel.PageOf[*workerleave.LeaveControl](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *LeaveControlsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerleave.LeaveControl) error) error {
+	return keel.Each[*workerleave.LeaveControl](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newLeaveControl() unsafe.Pointer { return unsafe.Pointer(new(workerleave.LeaveControl)) }
@@ -280,7 +640,7 @@ var workerLeaveCasesRef = keel.Ref{Table: &workerLeaveCasesTable}
 
 // WorkerLeaveCasesTable is the table of workerleave.WorkerLeaveCase.
 type WorkerLeaveCasesTable struct {
-	keel.Handle[*workerleave.WorkerLeaveCase]
+	keel.TableBase
 	ID                       keelkinds.PulidIDCol
 	BusinessUnitID           keelkinds.PulidIDCol
 	OrganizationID           keelkinds.PulidIDCol
@@ -314,7 +674,7 @@ type WorkerLeaveCasesTable struct {
 
 // WorkerLeaveCases references the worker_leave_cases table.
 var WorkerLeaveCases = &WorkerLeaveCasesTable{
-	Handle:                   keel.Handle[*workerleave.WorkerLeaveCase]{Ref: &workerLeaveCasesRef},
+	TableBase:                keel.TableBase{Ref: &workerLeaveCasesRef},
 	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 0}}},
 	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 1}}},
 	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 2}}},
@@ -346,10 +706,10 @@ var WorkerLeaveCases = &WorkerLeaveCasesTable{
 	UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 28}},
 }
 
-// BuildWorkerLeaveCases builds the handle of worker_leave_cases for ref. Generated relation and alias methods call it.
+// BuildWorkerLeaveCases builds the table of worker_leave_cases for ref. Generated relation and alias methods call it.
 func BuildWorkerLeaveCases(r *keel.Ref) *WorkerLeaveCasesTable {
 	return &WorkerLeaveCasesTable{
-		Handle:                   keel.Handle[*workerleave.WorkerLeaveCase]{Ref: r},
+		TableBase:                keel.TableBase{Ref: r},
 		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -413,6 +773,365 @@ func (t *WorkerLeaveCasesTable) Entries() *WorkerLeaveEntriesTable {
 // Get returns the worker_leave_cases row with the given key, or keel.ErrNotFound.
 func (t *WorkerLeaveCasesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerleave.WorkerLeaveCase, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkerLeaveCasesQuery is a query over workerleave.WorkerLeaveCase.
+type WorkerLeaveCasesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workerleave.WorkerLeaveCase] = (*WorkerLeaveCasesTable)(nil)
+
+var _ keel.Query[*workerleave.WorkerLeaveCase] = (*WorkerLeaveCasesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerLeaveCasesTable) Query() keel.Query[*workerleave.WorkerLeaveCase] {
+	return &WorkerLeaveCasesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerLeaveCasesQuery.Where.
+func (t *WorkerLeaveCasesTable) Where(ps ...keel.Pred) keel.Query[*workerleave.WorkerLeaveCase] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerLeaveCasesQuery.Pick.
+func (t *WorkerLeaveCasesTable) Pick(es ...keel.Expr) keel.Query[*workerleave.WorkerLeaveCase] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerLeaveCasesQuery.Load.
+func (t *WorkerLeaveCasesTable) Load(ls ...keel.Loader) keel.Query[*workerleave.WorkerLeaveCase] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerLeaveCasesQuery.Omit.
+func (t *WorkerLeaveCasesTable) Omit(cols ...keel.Column) keel.Query[*workerleave.WorkerLeaveCase] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerLeaveCasesQuery.Order.
+func (t *WorkerLeaveCasesTable) Order(os ...keel.Order) keel.Query[*workerleave.WorkerLeaveCase] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerLeaveCasesQuery.Limit.
+func (t *WorkerLeaveCasesTable) Limit(n int) keel.Query[*workerleave.WorkerLeaveCase] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerLeaveCasesQuery.Group.
+func (t *WorkerLeaveCasesTable) Group(es ...keel.Expr) keel.Query[*workerleave.WorkerLeaveCase] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerLeaveCasesQuery.GroupingSets.
+func (t *WorkerLeaveCasesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerleave.WorkerLeaveCase] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerLeaveCasesQuery.Rollup.
+func (t *WorkerLeaveCasesTable) Rollup(es ...keel.Expr) keel.Query[*workerleave.WorkerLeaveCase] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerLeaveCasesQuery.Cube.
+func (t *WorkerLeaveCasesTable) Cube(es ...keel.Expr) keel.Query[*workerleave.WorkerLeaveCase] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerLeaveCasesQuery.AllTenants.
+func (t *WorkerLeaveCasesTable) AllTenants() keel.Query[*workerleave.WorkerLeaveCase] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerLeaveCasesQuery.Join.
+func (t *WorkerLeaveCasesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerleave.WorkerLeaveCase] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerLeaveCasesQuery.LeftJoin.
+func (t *WorkerLeaveCasesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerleave.WorkerLeaveCase] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerLeaveCasesQuery.LeftJoinLateral.
+func (t *WorkerLeaveCasesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerleave.WorkerLeaveCase] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerLeaveCasesQuery.JoinLateral.
+func (t *WorkerLeaveCasesTable) JoinLateral(sub keel.LateralSource) keel.Query[*workerleave.WorkerLeaveCase] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerLeaveCasesQuery.Lock.
+func (t *WorkerLeaveCasesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerleave.WorkerLeaveCase] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerLeaveCasesQuery.DistinctOn.
+func (t *WorkerLeaveCasesTable) DistinctOn(es ...keel.Expr) keel.Query[*workerleave.WorkerLeaveCase] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerLeaveCasesQuery.Cache.
+func (t *WorkerLeaveCasesTable) Cache(opts ...keel.CacheOption) keel.Query[*workerleave.WorkerLeaveCase] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerLeaveCasesQuery.LoadStrategy.
+func (t *WorkerLeaveCasesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerleave.WorkerLeaveCase] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerLeaveCasesQuery.With.
+func (t *WorkerLeaveCasesTable) With(ctes ...*keel.CTETable) keel.Query[*workerleave.WorkerLeaveCase] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerLeaveCasesQuery.Compute.
+func (t *WorkerLeaveCasesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workerleave.WorkerLeaveCase] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerLeaveCasesTable) Create(ctx context.Context, db *keel.DB, row *workerleave.WorkerLeaveCase) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerLeaveCasesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerleave.WorkerLeaveCase) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerLeaveCasesTable) Save(ctx context.Context, db *keel.DB, row *workerleave.WorkerLeaveCase, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerLeaveCasesTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerleave.WorkerLeaveCase, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerLeaveCasesTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerleave.WorkerLeaveCase) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerLeaveCasesTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerleave.WorkerLeaveCase, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerLeaveCasesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerleave.WorkerLeaveCase, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerLeaveCasesTable) Copy(ctx context.Context, db *keel.DB, rows []*workerleave.WorkerLeaveCase) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerLeaveCasesQuery) Where(ps ...keel.Pred) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerLeaveCasesQuery) Pick(es ...keel.Expr) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerLeaveCasesQuery) Omit(cols ...keel.Column) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerLeaveCasesQuery) Load(ls ...keel.Loader) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerLeaveCasesQuery) Order(os ...keel.Order) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerLeaveCasesQuery) Distinct() keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerLeaveCasesQuery) Group(es ...keel.Expr) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerLeaveCasesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerLeaveCasesQuery) Rollup(es ...keel.Expr) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerLeaveCasesQuery) Cube(es ...keel.Expr) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerLeaveCasesQuery) Window(name string, w keel.Window) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerLeaveCasesQuery) Having(ps ...keel.Pred) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerLeaveCasesQuery) Limit(n int) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerLeaveCasesQuery) Offset(n int) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerLeaveCasesQuery) DistinctOn(es ...keel.Expr) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerLeaveCasesQuery) AllTenants() keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerLeaveCasesQuery) CustomPlan() keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerLeaveCasesQuery) Timeout(d time.Duration) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerLeaveCasesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerLeaveCasesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerLeaveCasesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerLeaveCasesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerLeaveCasesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerLeaveCasesQuery) Cache(opts ...keel.CacheOption) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerLeaveCasesQuery) With(ctes ...*keel.CTETable) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerLeaveCasesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerLeaveCasesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerleave.WorkerLeaveCase] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerLeaveCasesQuery) Clone() keel.Query[*workerleave.WorkerLeaveCase] {
+	return &WorkerLeaveCasesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerLeaveCasesQuery) One(ctx context.Context, db *keel.DB) (*workerleave.WorkerLeaveCase, error) {
+	return keel.One[*workerleave.WorkerLeaveCase](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerLeaveCasesQuery) First(ctx context.Context, db *keel.DB) (*workerleave.WorkerLeaveCase, error) {
+	return keel.First[*workerleave.WorkerLeaveCase](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerLeaveCasesQuery) List(ctx context.Context, db *keel.DB) ([]*workerleave.WorkerLeaveCase, error) {
+	return keel.List[*workerleave.WorkerLeaveCase](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerLeaveCasesQuery) All(ctx context.Context, db *keel.DB) ([]*workerleave.WorkerLeaveCase, error) {
+	return keel.All[*workerleave.WorkerLeaveCase](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerLeaveCasesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerleave.WorkerLeaveCase, error) {
+	return keel.UpdateReturning[*workerleave.WorkerLeaveCase](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerLeaveCasesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerleave.WorkerLeaveCase], error) {
+	return keel.PageOf[*workerleave.WorkerLeaveCase](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerLeaveCasesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerleave.WorkerLeaveCase) error) error {
+	return keel.Each[*workerleave.WorkerLeaveCase](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerLeaveCase() unsafe.Pointer { return unsafe.Pointer(new(workerleave.WorkerLeaveCase)) }
@@ -663,7 +1382,7 @@ var workerLeaveEntriesRef = keel.Ref{Table: &workerLeaveEntriesTable}
 
 // WorkerLeaveEntriesTable is the table of workerleave.WorkerLeaveEntry.
 type WorkerLeaveEntriesTable struct {
-	keel.Handle[*workerleave.WorkerLeaveEntry]
+	keel.TableBase
 	ID                       keelkinds.PulidIDCol
 	BusinessUnitID           keelkinds.PulidIDCol
 	OrganizationID           keelkinds.PulidIDCol
@@ -682,7 +1401,7 @@ type WorkerLeaveEntriesTable struct {
 
 // WorkerLeaveEntries references the worker_leave_entries table.
 var WorkerLeaveEntries = &WorkerLeaveEntriesTable{
-	Handle:                   keel.Handle[*workerleave.WorkerLeaveEntry]{Ref: &workerLeaveEntriesRef},
+	TableBase:                keel.TableBase{Ref: &workerLeaveEntriesRef},
 	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 0}}},
 	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 1}}},
 	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 2}}},
@@ -699,10 +1418,10 @@ var WorkerLeaveEntries = &WorkerLeaveEntriesTable{
 	UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 13}},
 }
 
-// BuildWorkerLeaveEntries builds the handle of worker_leave_entries for ref. Generated relation and alias methods call it.
+// BuildWorkerLeaveEntries builds the table of worker_leave_entries for ref. Generated relation and alias methods call it.
 func BuildWorkerLeaveEntries(r *keel.Ref) *WorkerLeaveEntriesTable {
 	return &WorkerLeaveEntriesTable{
-		Handle:                   keel.Handle[*workerleave.WorkerLeaveEntry]{Ref: r},
+		TableBase:                keel.TableBase{Ref: r},
 		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -736,6 +1455,365 @@ func (t *WorkerLeaveEntriesTable) LeaveCase() *WorkerLeaveCasesTable {
 // Get returns the worker_leave_entries row with the given key, or keel.ErrNotFound.
 func (t *WorkerLeaveEntriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerleave.WorkerLeaveEntry, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkerLeaveEntriesQuery is a query over workerleave.WorkerLeaveEntry.
+type WorkerLeaveEntriesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workerleave.WorkerLeaveEntry] = (*WorkerLeaveEntriesTable)(nil)
+
+var _ keel.Query[*workerleave.WorkerLeaveEntry] = (*WorkerLeaveEntriesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerLeaveEntriesTable) Query() keel.Query[*workerleave.WorkerLeaveEntry] {
+	return &WorkerLeaveEntriesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerLeaveEntriesQuery.Where.
+func (t *WorkerLeaveEntriesTable) Where(ps ...keel.Pred) keel.Query[*workerleave.WorkerLeaveEntry] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerLeaveEntriesQuery.Pick.
+func (t *WorkerLeaveEntriesTable) Pick(es ...keel.Expr) keel.Query[*workerleave.WorkerLeaveEntry] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerLeaveEntriesQuery.Load.
+func (t *WorkerLeaveEntriesTable) Load(ls ...keel.Loader) keel.Query[*workerleave.WorkerLeaveEntry] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerLeaveEntriesQuery.Omit.
+func (t *WorkerLeaveEntriesTable) Omit(cols ...keel.Column) keel.Query[*workerleave.WorkerLeaveEntry] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerLeaveEntriesQuery.Order.
+func (t *WorkerLeaveEntriesTable) Order(os ...keel.Order) keel.Query[*workerleave.WorkerLeaveEntry] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerLeaveEntriesQuery.Limit.
+func (t *WorkerLeaveEntriesTable) Limit(n int) keel.Query[*workerleave.WorkerLeaveEntry] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerLeaveEntriesQuery.Group.
+func (t *WorkerLeaveEntriesTable) Group(es ...keel.Expr) keel.Query[*workerleave.WorkerLeaveEntry] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerLeaveEntriesQuery.GroupingSets.
+func (t *WorkerLeaveEntriesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerleave.WorkerLeaveEntry] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerLeaveEntriesQuery.Rollup.
+func (t *WorkerLeaveEntriesTable) Rollup(es ...keel.Expr) keel.Query[*workerleave.WorkerLeaveEntry] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerLeaveEntriesQuery.Cube.
+func (t *WorkerLeaveEntriesTable) Cube(es ...keel.Expr) keel.Query[*workerleave.WorkerLeaveEntry] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerLeaveEntriesQuery.AllTenants.
+func (t *WorkerLeaveEntriesTable) AllTenants() keel.Query[*workerleave.WorkerLeaveEntry] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerLeaveEntriesQuery.Join.
+func (t *WorkerLeaveEntriesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerleave.WorkerLeaveEntry] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerLeaveEntriesQuery.LeftJoin.
+func (t *WorkerLeaveEntriesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerleave.WorkerLeaveEntry] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerLeaveEntriesQuery.LeftJoinLateral.
+func (t *WorkerLeaveEntriesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerleave.WorkerLeaveEntry] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerLeaveEntriesQuery.JoinLateral.
+func (t *WorkerLeaveEntriesTable) JoinLateral(sub keel.LateralSource) keel.Query[*workerleave.WorkerLeaveEntry] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerLeaveEntriesQuery.Lock.
+func (t *WorkerLeaveEntriesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerleave.WorkerLeaveEntry] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerLeaveEntriesQuery.DistinctOn.
+func (t *WorkerLeaveEntriesTable) DistinctOn(es ...keel.Expr) keel.Query[*workerleave.WorkerLeaveEntry] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerLeaveEntriesQuery.Cache.
+func (t *WorkerLeaveEntriesTable) Cache(opts ...keel.CacheOption) keel.Query[*workerleave.WorkerLeaveEntry] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerLeaveEntriesQuery.LoadStrategy.
+func (t *WorkerLeaveEntriesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerleave.WorkerLeaveEntry] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerLeaveEntriesQuery.With.
+func (t *WorkerLeaveEntriesTable) With(ctes ...*keel.CTETable) keel.Query[*workerleave.WorkerLeaveEntry] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerLeaveEntriesQuery.Compute.
+func (t *WorkerLeaveEntriesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workerleave.WorkerLeaveEntry] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerLeaveEntriesTable) Create(ctx context.Context, db *keel.DB, row *workerleave.WorkerLeaveEntry) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerLeaveEntriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerleave.WorkerLeaveEntry) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerLeaveEntriesTable) Save(ctx context.Context, db *keel.DB, row *workerleave.WorkerLeaveEntry, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerLeaveEntriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerleave.WorkerLeaveEntry, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerLeaveEntriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerleave.WorkerLeaveEntry) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerLeaveEntriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerleave.WorkerLeaveEntry, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerLeaveEntriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerleave.WorkerLeaveEntry, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerLeaveEntriesTable) Copy(ctx context.Context, db *keel.DB, rows []*workerleave.WorkerLeaveEntry) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerLeaveEntriesQuery) Where(ps ...keel.Pred) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerLeaveEntriesQuery) Pick(es ...keel.Expr) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerLeaveEntriesQuery) Omit(cols ...keel.Column) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerLeaveEntriesQuery) Load(ls ...keel.Loader) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerLeaveEntriesQuery) Order(os ...keel.Order) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerLeaveEntriesQuery) Distinct() keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerLeaveEntriesQuery) Group(es ...keel.Expr) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerLeaveEntriesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerLeaveEntriesQuery) Rollup(es ...keel.Expr) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerLeaveEntriesQuery) Cube(es ...keel.Expr) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerLeaveEntriesQuery) Window(name string, w keel.Window) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerLeaveEntriesQuery) Having(ps ...keel.Pred) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerLeaveEntriesQuery) Limit(n int) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerLeaveEntriesQuery) Offset(n int) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerLeaveEntriesQuery) DistinctOn(es ...keel.Expr) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerLeaveEntriesQuery) AllTenants() keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerLeaveEntriesQuery) CustomPlan() keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerLeaveEntriesQuery) Timeout(d time.Duration) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerLeaveEntriesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerLeaveEntriesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerLeaveEntriesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerLeaveEntriesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerLeaveEntriesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerLeaveEntriesQuery) Cache(opts ...keel.CacheOption) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerLeaveEntriesQuery) With(ctes ...*keel.CTETable) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerLeaveEntriesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerLeaveEntriesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerleave.WorkerLeaveEntry] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerLeaveEntriesQuery) Clone() keel.Query[*workerleave.WorkerLeaveEntry] {
+	return &WorkerLeaveEntriesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerLeaveEntriesQuery) One(ctx context.Context, db *keel.DB) (*workerleave.WorkerLeaveEntry, error) {
+	return keel.One[*workerleave.WorkerLeaveEntry](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerLeaveEntriesQuery) First(ctx context.Context, db *keel.DB) (*workerleave.WorkerLeaveEntry, error) {
+	return keel.First[*workerleave.WorkerLeaveEntry](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerLeaveEntriesQuery) List(ctx context.Context, db *keel.DB) ([]*workerleave.WorkerLeaveEntry, error) {
+	return keel.List[*workerleave.WorkerLeaveEntry](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerLeaveEntriesQuery) All(ctx context.Context, db *keel.DB) ([]*workerleave.WorkerLeaveEntry, error) {
+	return keel.All[*workerleave.WorkerLeaveEntry](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerLeaveEntriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerleave.WorkerLeaveEntry, error) {
+	return keel.UpdateReturning[*workerleave.WorkerLeaveEntry](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerLeaveEntriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerleave.WorkerLeaveEntry], error) {
+	return keel.PageOf[*workerleave.WorkerLeaveEntry](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerLeaveEntriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerleave.WorkerLeaveEntry) error) error {
+	return keel.Each[*workerleave.WorkerLeaveEntry](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerLeaveEntry() unsafe.Pointer { return unsafe.Pointer(new(workerleave.WorkerLeaveEntry)) }

@@ -4,6 +4,7 @@ package tractordb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -110,7 +111,7 @@ var tractorsRef = keel.Ref{Table: &tractorsTable}
 
 // TractorsTable is the table of tractor.Tractor.
 type TractorsTable struct {
-	keel.Handle[*tractor.Tractor]
+	keel.TableBase
 	ID                         keelkinds.PulidIDCol
 	BusinessUnitID             keelkinds.PulidIDCol
 	OrganizationID             keelkinds.PulidIDCol
@@ -151,7 +152,7 @@ type TractorsTable struct {
 
 // Tractors references the tractors table.
 var Tractors = &TractorsTable{
-	Handle:                     keel.Handle[*tractor.Tractor]{Ref: &tractorsRef},
+	TableBase:                  keel.TableBase{Ref: &tractorsRef},
 	ID:                         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tractorsRef, Index: 0}}},
 	BusinessUnitID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tractorsRef, Index: 1}}},
 	OrganizationID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tractorsRef, Index: 2}}},
@@ -190,10 +191,10 @@ var Tractors = &TractorsTable{
 	UpdatedAt:                  keel.Int64Col{Col: keel.Col{Ref: &tractorsRef, Index: 35}},
 }
 
-// BuildTractors builds the handle of tractors for ref. Generated relation and alias methods call it.
+// BuildTractors builds the table of tractors for ref. Generated relation and alias methods call it.
 func BuildTractors(r *keel.Ref) *TractorsTable {
 	return &TractorsTable{
-		Handle:                     keel.Handle[*tractor.Tractor]{Ref: r},
+		TableBase:                  keel.TableBase{Ref: r},
 		ID:                         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -289,6 +290,365 @@ func (t *TractorsTable) OwnerWorker() *workerdb.WorkersTable {
 // Get returns the tractors row with the given key, or keel.ErrNotFound.
 func (t *TractorsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*tractor.Tractor, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// TractorsQuery is a query over tractor.Tractor.
+type TractorsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*tractor.Tractor] = (*TractorsTable)(nil)
+
+var _ keel.Query[*tractor.Tractor] = (*TractorsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *TractorsTable) Query() keel.Query[*tractor.Tractor] {
+	return &TractorsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see TractorsQuery.Where.
+func (t *TractorsTable) Where(ps ...keel.Pred) keel.Query[*tractor.Tractor] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see TractorsQuery.Pick.
+func (t *TractorsTable) Pick(es ...keel.Expr) keel.Query[*tractor.Tractor] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see TractorsQuery.Load.
+func (t *TractorsTable) Load(ls ...keel.Loader) keel.Query[*tractor.Tractor] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see TractorsQuery.Omit.
+func (t *TractorsTable) Omit(cols ...keel.Column) keel.Query[*tractor.Tractor] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see TractorsQuery.Order.
+func (t *TractorsTable) Order(os ...keel.Order) keel.Query[*tractor.Tractor] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see TractorsQuery.Limit.
+func (t *TractorsTable) Limit(n int) keel.Query[*tractor.Tractor] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see TractorsQuery.Group.
+func (t *TractorsTable) Group(es ...keel.Expr) keel.Query[*tractor.Tractor] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see TractorsQuery.GroupingSets.
+func (t *TractorsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*tractor.Tractor] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see TractorsQuery.Rollup.
+func (t *TractorsTable) Rollup(es ...keel.Expr) keel.Query[*tractor.Tractor] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see TractorsQuery.Cube.
+func (t *TractorsTable) Cube(es ...keel.Expr) keel.Query[*tractor.Tractor] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see TractorsQuery.AllTenants.
+func (t *TractorsTable) AllTenants() keel.Query[*tractor.Tractor] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see TractorsQuery.Join.
+func (t *TractorsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*tractor.Tractor] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see TractorsQuery.LeftJoin.
+func (t *TractorsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*tractor.Tractor] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see TractorsQuery.LeftJoinLateral.
+func (t *TractorsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*tractor.Tractor] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see TractorsQuery.JoinLateral.
+func (t *TractorsTable) JoinLateral(sub keel.LateralSource) keel.Query[*tractor.Tractor] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see TractorsQuery.Lock.
+func (t *TractorsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*tractor.Tractor] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see TractorsQuery.DistinctOn.
+func (t *TractorsTable) DistinctOn(es ...keel.Expr) keel.Query[*tractor.Tractor] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see TractorsQuery.Cache.
+func (t *TractorsTable) Cache(opts ...keel.CacheOption) keel.Query[*tractor.Tractor] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see TractorsQuery.LoadStrategy.
+func (t *TractorsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*tractor.Tractor] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see TractorsQuery.With.
+func (t *TractorsTable) With(ctes ...*keel.CTETable) keel.Query[*tractor.Tractor] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see TractorsQuery.Compute.
+func (t *TractorsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*tractor.Tractor] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *TractorsTable) Create(ctx context.Context, db *keel.DB, row *tractor.Tractor) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *TractorsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*tractor.Tractor) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *TractorsTable) Save(ctx context.Context, db *keel.DB, row *tractor.Tractor, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *TractorsTable) SaveExcept(ctx context.Context, db *keel.DB, row *tractor.Tractor, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *TractorsTable) DeleteRow(ctx context.Context, db *keel.DB, row *tractor.Tractor) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *TractorsTable) Upsert(ctx context.Context, db *keel.DB, rows []*tractor.Tractor, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *TractorsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*tractor.Tractor, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *TractorsTable) Copy(ctx context.Context, db *keel.DB, rows []*tractor.Tractor) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *TractorsQuery) Where(ps ...keel.Pred) keel.Query[*tractor.Tractor] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *TractorsQuery) Pick(es ...keel.Expr) keel.Query[*tractor.Tractor] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *TractorsQuery) Omit(cols ...keel.Column) keel.Query[*tractor.Tractor] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *TractorsQuery) Load(ls ...keel.Loader) keel.Query[*tractor.Tractor] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *TractorsQuery) Order(os ...keel.Order) keel.Query[*tractor.Tractor] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *TractorsQuery) Distinct() keel.Query[*tractor.Tractor] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *TractorsQuery) Group(es ...keel.Expr) keel.Query[*tractor.Tractor] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *TractorsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*tractor.Tractor] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *TractorsQuery) Rollup(es ...keel.Expr) keel.Query[*tractor.Tractor] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *TractorsQuery) Cube(es ...keel.Expr) keel.Query[*tractor.Tractor] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *TractorsQuery) Window(name string, w keel.Window) keel.Query[*tractor.Tractor] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *TractorsQuery) Having(ps ...keel.Pred) keel.Query[*tractor.Tractor] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *TractorsQuery) Limit(n int) keel.Query[*tractor.Tractor] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *TractorsQuery) Offset(n int) keel.Query[*tractor.Tractor] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *TractorsQuery) DistinctOn(es ...keel.Expr) keel.Query[*tractor.Tractor] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *TractorsQuery) AllTenants() keel.Query[*tractor.Tractor] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *TractorsQuery) CustomPlan() keel.Query[*tractor.Tractor] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *TractorsQuery) Timeout(d time.Duration) keel.Query[*tractor.Tractor] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *TractorsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*tractor.Tractor] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *TractorsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*tractor.Tractor] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *TractorsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*tractor.Tractor] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *TractorsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*tractor.Tractor] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *TractorsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*tractor.Tractor] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *TractorsQuery) Cache(opts ...keel.CacheOption) keel.Query[*tractor.Tractor] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *TractorsQuery) With(ctes ...*keel.CTETable) keel.Query[*tractor.Tractor] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *TractorsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*tractor.Tractor] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *TractorsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*tractor.Tractor] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *TractorsQuery) Clone() keel.Query[*tractor.Tractor] {
+	return &TractorsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *TractorsQuery) One(ctx context.Context, db *keel.DB) (*tractor.Tractor, error) {
+	return keel.One[*tractor.Tractor](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *TractorsQuery) First(ctx context.Context, db *keel.DB) (*tractor.Tractor, error) {
+	return keel.First[*tractor.Tractor](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *TractorsQuery) List(ctx context.Context, db *keel.DB) ([]*tractor.Tractor, error) {
+	return keel.List[*tractor.Tractor](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *TractorsQuery) All(ctx context.Context, db *keel.DB) ([]*tractor.Tractor, error) {
+	return keel.All[*tractor.Tractor](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *TractorsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*tractor.Tractor, error) {
+	return keel.UpdateReturning[*tractor.Tractor](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *TractorsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*tractor.Tractor], error) {
+	return keel.PageOf[*tractor.Tractor](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *TractorsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*tractor.Tractor) error) error {
+	return keel.Each[*tractor.Tractor](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newTractor() unsafe.Pointer { return unsafe.Pointer(new(tractor.Tractor)) }

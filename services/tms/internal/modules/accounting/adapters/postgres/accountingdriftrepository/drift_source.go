@@ -324,7 +324,7 @@ func driverStates(req *accountingdriftports.ListAccountingDriftStatesRequest) ke
 
 func balanceDocuments(
 	req *accountingdriftports.ListAccountingDriftBalancesRequest,
-) *keel.Query[*accountingsync.AccountingSyncRecord] {
+) keel.Query[*accountingsync.AccountingSyncRecord] {
 	sr := accountingsyncdb.AccountingSyncRecords
 	inv := invoicedb.Invoices
 	return sr.Join(inv, inv.ID.EqCol(sr.ObjectID)).
@@ -447,7 +447,7 @@ func waitingInbound(
 func unsettledRecords(
 	req *accountingdriftports.ListAccountingDriftPendingCustomersRequest,
 	objectTypes ...accountingsync.SyncObjectType,
-) *keel.Query[*accountingsync.AccountingSyncRecord] {
+) keel.Query[*accountingsync.AccountingSyncRecord] {
 	sr := accountingsyncdb.AccountingSyncRecords
 	return sr.Where(
 		sr.ConnectionID.Eq(req.ConnectionID),

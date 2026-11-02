@@ -91,7 +91,7 @@ func (r *repository) SelectProfileOptions(
 
 func profileOptionsQuery(
 	req *edipartnerports.EDICommunicationProfileSelectOptionsRequest,
-) *keel.Query[*edi.EDICommunicationProfile] {
+) keel.Query[*edi.EDICommunicationProfile] {
 	cp := edidb.EDICommunicationProfiles
 	return cp.Pick(
 		cp.ID,
@@ -146,7 +146,7 @@ func (r *repository) ListProfilesByPartner(
 	})
 }
 
-func profilesByIDs(ids []pulid.ID) *keel.Query[*edi.EDICommunicationProfile] {
+func profilesByIDs(ids []pulid.ID) keel.Query[*edi.EDICommunicationProfile] {
 	cp := edidb.EDICommunicationProfiles
 
 	return cp.Where(cp.ID.In(ids...)).Limit(len(ids))
@@ -338,8 +338,8 @@ func (r *repository) ListProfilesCursor(
 }
 
 func withPartner(
-	q *keel.Query[*edi.EDICommunicationProfile],
-) *keel.Query[*edi.EDICommunicationProfile] {
+	q keel.Query[*edi.EDICommunicationProfile],
+) keel.Query[*edi.EDICommunicationProfile] {
 	return q.Load(edidb.EDICommunicationProfiles.Partner())
 }
 

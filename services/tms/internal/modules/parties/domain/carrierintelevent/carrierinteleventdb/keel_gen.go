@@ -4,6 +4,7 @@ package carrierinteleventdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -80,7 +81,7 @@ var carrierIntelEventsRef = keel.Ref{Table: &carrierIntelEventsTable}
 
 // CarrierIntelEventsTable is the table of carrierintelevent.CarrierIntelEvent.
 type CarrierIntelEventsTable struct {
-	keel.Handle[*carrierintelevent.CarrierIntelEvent]
+	keel.TableBase
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -118,7 +119,7 @@ type CarrierIntelEventsTable struct {
 
 // CarrierIntelEvents references the carrier_intel_events table.
 var CarrierIntelEvents = &CarrierIntelEventsTable{
-	Handle:           keel.Handle[*carrierintelevent.CarrierIntelEvent]{Ref: &carrierIntelEventsRef},
+	TableBase:        keel.TableBase{Ref: &carrierIntelEventsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 2}}},
@@ -154,10 +155,10 @@ var CarrierIntelEvents = &CarrierIntelEventsTable{
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 32}},
 }
 
-// BuildCarrierIntelEvents builds the handle of carrier_intel_events for ref. Generated relation and alias methods call it.
+// BuildCarrierIntelEvents builds the table of carrier_intel_events for ref. Generated relation and alias methods call it.
 func BuildCarrierIntelEvents(r *keel.Ref) *CarrierIntelEventsTable {
 	return &CarrierIntelEventsTable{
-		Handle:           keel.Handle[*carrierintelevent.CarrierIntelEvent]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -205,6 +206,365 @@ func (t *CarrierIntelEventsTable) As(alias string) *CarrierIntelEventsTable {
 // Get returns the carrier_intel_events row with the given key, or keel.ErrNotFound.
 func (t *CarrierIntelEventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*carrierintelevent.CarrierIntelEvent, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CarrierIntelEventsQuery is a query over carrierintelevent.CarrierIntelEvent.
+type CarrierIntelEventsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*carrierintelevent.CarrierIntelEvent] = (*CarrierIntelEventsTable)(nil)
+
+var _ keel.Query[*carrierintelevent.CarrierIntelEvent] = (*CarrierIntelEventsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CarrierIntelEventsTable) Query() keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return &CarrierIntelEventsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CarrierIntelEventsQuery.Where.
+func (t *CarrierIntelEventsTable) Where(ps ...keel.Pred) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CarrierIntelEventsQuery.Pick.
+func (t *CarrierIntelEventsTable) Pick(es ...keel.Expr) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CarrierIntelEventsQuery.Load.
+func (t *CarrierIntelEventsTable) Load(ls ...keel.Loader) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CarrierIntelEventsQuery.Omit.
+func (t *CarrierIntelEventsTable) Omit(cols ...keel.Column) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CarrierIntelEventsQuery.Order.
+func (t *CarrierIntelEventsTable) Order(os ...keel.Order) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CarrierIntelEventsQuery.Limit.
+func (t *CarrierIntelEventsTable) Limit(n int) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CarrierIntelEventsQuery.Group.
+func (t *CarrierIntelEventsTable) Group(es ...keel.Expr) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CarrierIntelEventsQuery.GroupingSets.
+func (t *CarrierIntelEventsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CarrierIntelEventsQuery.Rollup.
+func (t *CarrierIntelEventsTable) Rollup(es ...keel.Expr) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CarrierIntelEventsQuery.Cube.
+func (t *CarrierIntelEventsTable) Cube(es ...keel.Expr) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CarrierIntelEventsQuery.AllTenants.
+func (t *CarrierIntelEventsTable) AllTenants() keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CarrierIntelEventsQuery.Join.
+func (t *CarrierIntelEventsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CarrierIntelEventsQuery.LeftJoin.
+func (t *CarrierIntelEventsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CarrierIntelEventsQuery.LeftJoinLateral.
+func (t *CarrierIntelEventsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CarrierIntelEventsQuery.JoinLateral.
+func (t *CarrierIntelEventsTable) JoinLateral(sub keel.LateralSource) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CarrierIntelEventsQuery.Lock.
+func (t *CarrierIntelEventsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CarrierIntelEventsQuery.DistinctOn.
+func (t *CarrierIntelEventsTable) DistinctOn(es ...keel.Expr) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CarrierIntelEventsQuery.Cache.
+func (t *CarrierIntelEventsTable) Cache(opts ...keel.CacheOption) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CarrierIntelEventsQuery.LoadStrategy.
+func (t *CarrierIntelEventsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CarrierIntelEventsQuery.With.
+func (t *CarrierIntelEventsTable) With(ctes ...*keel.CTETable) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CarrierIntelEventsQuery.Compute.
+func (t *CarrierIntelEventsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CarrierIntelEventsTable) Create(ctx context.Context, db *keel.DB, row *carrierintelevent.CarrierIntelEvent) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CarrierIntelEventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carrierintelevent.CarrierIntelEvent) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CarrierIntelEventsTable) Save(ctx context.Context, db *keel.DB, row *carrierintelevent.CarrierIntelEvent, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CarrierIntelEventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *carrierintelevent.CarrierIntelEvent, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CarrierIntelEventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *carrierintelevent.CarrierIntelEvent) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CarrierIntelEventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*carrierintelevent.CarrierIntelEvent, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CarrierIntelEventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carrierintelevent.CarrierIntelEvent, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CarrierIntelEventsTable) Copy(ctx context.Context, db *keel.DB, rows []*carrierintelevent.CarrierIntelEvent) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CarrierIntelEventsQuery) Where(ps ...keel.Pred) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CarrierIntelEventsQuery) Pick(es ...keel.Expr) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CarrierIntelEventsQuery) Omit(cols ...keel.Column) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CarrierIntelEventsQuery) Load(ls ...keel.Loader) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CarrierIntelEventsQuery) Order(os ...keel.Order) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CarrierIntelEventsQuery) Distinct() keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CarrierIntelEventsQuery) Group(es ...keel.Expr) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CarrierIntelEventsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CarrierIntelEventsQuery) Rollup(es ...keel.Expr) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CarrierIntelEventsQuery) Cube(es ...keel.Expr) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CarrierIntelEventsQuery) Window(name string, w keel.Window) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CarrierIntelEventsQuery) Having(ps ...keel.Pred) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CarrierIntelEventsQuery) Limit(n int) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CarrierIntelEventsQuery) Offset(n int) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CarrierIntelEventsQuery) DistinctOn(es ...keel.Expr) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CarrierIntelEventsQuery) AllTenants() keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CarrierIntelEventsQuery) CustomPlan() keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CarrierIntelEventsQuery) Timeout(d time.Duration) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CarrierIntelEventsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CarrierIntelEventsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CarrierIntelEventsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CarrierIntelEventsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CarrierIntelEventsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CarrierIntelEventsQuery) Cache(opts ...keel.CacheOption) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CarrierIntelEventsQuery) With(ctes ...*keel.CTETable) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CarrierIntelEventsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CarrierIntelEventsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CarrierIntelEventsQuery) Clone() keel.Query[*carrierintelevent.CarrierIntelEvent] {
+	return &CarrierIntelEventsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CarrierIntelEventsQuery) One(ctx context.Context, db *keel.DB) (*carrierintelevent.CarrierIntelEvent, error) {
+	return keel.One[*carrierintelevent.CarrierIntelEvent](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CarrierIntelEventsQuery) First(ctx context.Context, db *keel.DB) (*carrierintelevent.CarrierIntelEvent, error) {
+	return keel.First[*carrierintelevent.CarrierIntelEvent](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CarrierIntelEventsQuery) List(ctx context.Context, db *keel.DB) ([]*carrierintelevent.CarrierIntelEvent, error) {
+	return keel.List[*carrierintelevent.CarrierIntelEvent](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CarrierIntelEventsQuery) All(ctx context.Context, db *keel.DB) ([]*carrierintelevent.CarrierIntelEvent, error) {
+	return keel.All[*carrierintelevent.CarrierIntelEvent](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CarrierIntelEventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carrierintelevent.CarrierIntelEvent, error) {
+	return keel.UpdateReturning[*carrierintelevent.CarrierIntelEvent](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CarrierIntelEventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carrierintelevent.CarrierIntelEvent], error) {
+	return keel.PageOf[*carrierintelevent.CarrierIntelEvent](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CarrierIntelEventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carrierintelevent.CarrierIntelEvent) error) error {
+	return keel.Each[*carrierintelevent.CarrierIntelEvent](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCarrierIntelEvent() unsafe.Pointer {

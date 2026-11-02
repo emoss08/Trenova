@@ -4,6 +4,7 @@ package sequenceconfigdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -56,7 +57,7 @@ var sequencesRef = keel.Ref{Table: &sequencesTable}
 
 // SequencesTable is the table of sequenceconfig.Sequence.
 type SequencesTable struct {
-	keel.Handle[*sequenceconfig.Sequence]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	SequenceType    SequenceTypeCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -72,7 +73,7 @@ type SequencesTable struct {
 
 // Sequences references the sequences table.
 var Sequences = &SequencesTable{
-	Handle:          keel.Handle[*sequenceconfig.Sequence]{Ref: &sequencesRef},
+	TableBase:       keel.TableBase{Ref: &sequencesRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sequencesRef, Index: 0}}},
 	SequenceType:    SequenceTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sequencesRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sequencesRef, Index: 2}}},
@@ -86,10 +87,10 @@ var Sequences = &SequencesTable{
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &sequencesRef, Index: 10}},
 }
 
-// BuildSequences builds the handle of sequences for ref. Generated relation and alias methods call it.
+// BuildSequences builds the table of sequences for ref. Generated relation and alias methods call it.
 func BuildSequences(r *keel.Ref) *SequencesTable {
 	return &SequencesTable{
-		Handle:          keel.Handle[*sequenceconfig.Sequence]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		SequenceType:    SequenceTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -115,6 +116,365 @@ func (t *SequencesTable) As(alias string) *SequencesTable {
 // Get returns the sequences row with the given key, or keel.ErrNotFound.
 func (t *SequencesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*sequenceconfig.Sequence, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// SequencesQuery is a query over sequenceconfig.Sequence.
+type SequencesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*sequenceconfig.Sequence] = (*SequencesTable)(nil)
+
+var _ keel.Query[*sequenceconfig.Sequence] = (*SequencesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SequencesTable) Query() keel.Query[*sequenceconfig.Sequence] {
+	return &SequencesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SequencesQuery.Where.
+func (t *SequencesTable) Where(ps ...keel.Pred) keel.Query[*sequenceconfig.Sequence] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SequencesQuery.Pick.
+func (t *SequencesTable) Pick(es ...keel.Expr) keel.Query[*sequenceconfig.Sequence] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SequencesQuery.Load.
+func (t *SequencesTable) Load(ls ...keel.Loader) keel.Query[*sequenceconfig.Sequence] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SequencesQuery.Omit.
+func (t *SequencesTable) Omit(cols ...keel.Column) keel.Query[*sequenceconfig.Sequence] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SequencesQuery.Order.
+func (t *SequencesTable) Order(os ...keel.Order) keel.Query[*sequenceconfig.Sequence] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SequencesQuery.Limit.
+func (t *SequencesTable) Limit(n int) keel.Query[*sequenceconfig.Sequence] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SequencesQuery.Group.
+func (t *SequencesTable) Group(es ...keel.Expr) keel.Query[*sequenceconfig.Sequence] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SequencesQuery.GroupingSets.
+func (t *SequencesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*sequenceconfig.Sequence] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SequencesQuery.Rollup.
+func (t *SequencesTable) Rollup(es ...keel.Expr) keel.Query[*sequenceconfig.Sequence] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SequencesQuery.Cube.
+func (t *SequencesTable) Cube(es ...keel.Expr) keel.Query[*sequenceconfig.Sequence] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SequencesQuery.AllTenants.
+func (t *SequencesTable) AllTenants() keel.Query[*sequenceconfig.Sequence] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SequencesQuery.Join.
+func (t *SequencesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*sequenceconfig.Sequence] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SequencesQuery.LeftJoin.
+func (t *SequencesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*sequenceconfig.Sequence] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SequencesQuery.LeftJoinLateral.
+func (t *SequencesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*sequenceconfig.Sequence] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SequencesQuery.JoinLateral.
+func (t *SequencesTable) JoinLateral(sub keel.LateralSource) keel.Query[*sequenceconfig.Sequence] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SequencesQuery.Lock.
+func (t *SequencesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*sequenceconfig.Sequence] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SequencesQuery.DistinctOn.
+func (t *SequencesTable) DistinctOn(es ...keel.Expr) keel.Query[*sequenceconfig.Sequence] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SequencesQuery.Cache.
+func (t *SequencesTable) Cache(opts ...keel.CacheOption) keel.Query[*sequenceconfig.Sequence] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SequencesQuery.LoadStrategy.
+func (t *SequencesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*sequenceconfig.Sequence] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SequencesQuery.With.
+func (t *SequencesTable) With(ctes ...*keel.CTETable) keel.Query[*sequenceconfig.Sequence] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SequencesQuery.Compute.
+func (t *SequencesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*sequenceconfig.Sequence] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SequencesTable) Create(ctx context.Context, db *keel.DB, row *sequenceconfig.Sequence) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SequencesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*sequenceconfig.Sequence) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *SequencesTable) Save(ctx context.Context, db *keel.DB, row *sequenceconfig.Sequence, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SequencesTable) SaveExcept(ctx context.Context, db *keel.DB, row *sequenceconfig.Sequence, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SequencesTable) DeleteRow(ctx context.Context, db *keel.DB, row *sequenceconfig.Sequence) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SequencesTable) Upsert(ctx context.Context, db *keel.DB, rows []*sequenceconfig.Sequence, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SequencesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*sequenceconfig.Sequence, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SequencesTable) Copy(ctx context.Context, db *keel.DB, rows []*sequenceconfig.Sequence) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SequencesQuery) Where(ps ...keel.Pred) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SequencesQuery) Pick(es ...keel.Expr) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SequencesQuery) Omit(cols ...keel.Column) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SequencesQuery) Load(ls ...keel.Loader) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SequencesQuery) Order(os ...keel.Order) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SequencesQuery) Distinct() keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SequencesQuery) Group(es ...keel.Expr) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SequencesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SequencesQuery) Rollup(es ...keel.Expr) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SequencesQuery) Cube(es ...keel.Expr) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SequencesQuery) Window(name string, w keel.Window) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SequencesQuery) Having(ps ...keel.Pred) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SequencesQuery) Limit(n int) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SequencesQuery) Offset(n int) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SequencesQuery) DistinctOn(es ...keel.Expr) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SequencesQuery) AllTenants() keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SequencesQuery) CustomPlan() keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SequencesQuery) Timeout(d time.Duration) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SequencesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SequencesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SequencesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SequencesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SequencesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SequencesQuery) Cache(opts ...keel.CacheOption) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SequencesQuery) With(ctes ...*keel.CTETable) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SequencesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SequencesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*sequenceconfig.Sequence] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SequencesQuery) Clone() keel.Query[*sequenceconfig.Sequence] {
+	return &SequencesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SequencesQuery) One(ctx context.Context, db *keel.DB) (*sequenceconfig.Sequence, error) {
+	return keel.One[*sequenceconfig.Sequence](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SequencesQuery) First(ctx context.Context, db *keel.DB) (*sequenceconfig.Sequence, error) {
+	return keel.First[*sequenceconfig.Sequence](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SequencesQuery) List(ctx context.Context, db *keel.DB) ([]*sequenceconfig.Sequence, error) {
+	return keel.List[*sequenceconfig.Sequence](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SequencesQuery) All(ctx context.Context, db *keel.DB) ([]*sequenceconfig.Sequence, error) {
+	return keel.All[*sequenceconfig.Sequence](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SequencesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*sequenceconfig.Sequence, error) {
+	return keel.UpdateReturning[*sequenceconfig.Sequence](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SequencesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*sequenceconfig.Sequence], error) {
+	return keel.PageOf[*sequenceconfig.Sequence](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SequencesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*sequenceconfig.Sequence) error) error {
+	return keel.Each[*sequenceconfig.Sequence](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newSequence() unsafe.Pointer { return unsafe.Pointer(new(sequenceconfig.Sequence)) }
@@ -237,7 +597,7 @@ var sequenceConfigsRef = keel.Ref{Table: &sequenceConfigsTable}
 
 // SequenceConfigsTable is the table of sequenceconfig.SequenceConfig.
 type SequenceConfigsTable struct {
-	keel.Handle[*sequenceconfig.SequenceConfig]
+	keel.TableBase
 	ID                      keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
@@ -266,7 +626,7 @@ type SequenceConfigsTable struct {
 
 // SequenceConfigs references the sequence_configs table.
 var SequenceConfigs = &SequenceConfigsTable{
-	Handle:                  keel.Handle[*sequenceconfig.SequenceConfig]{Ref: &sequenceConfigsRef},
+	TableBase:               keel.TableBase{Ref: &sequenceConfigsRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sequenceConfigsRef, Index: 0}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sequenceConfigsRef, Index: 1}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sequenceConfigsRef, Index: 2}}},
@@ -293,10 +653,10 @@ var SequenceConfigs = &SequenceConfigsTable{
 	UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: &sequenceConfigsRef, Index: 23}},
 }
 
-// BuildSequenceConfigs builds the handle of sequence_configs for ref. Generated relation and alias methods call it.
+// BuildSequenceConfigs builds the table of sequence_configs for ref. Generated relation and alias methods call it.
 func BuildSequenceConfigs(r *keel.Ref) *SequenceConfigsTable {
 	return &SequenceConfigsTable{
-		Handle:                  keel.Handle[*sequenceconfig.SequenceConfig]{Ref: r},
+		TableBase:               keel.TableBase{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -335,6 +695,365 @@ func (t *SequenceConfigsTable) As(alias string) *SequenceConfigsTable {
 // Get returns the sequence_configs row with the given key, or keel.ErrNotFound.
 func (t *SequenceConfigsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*sequenceconfig.SequenceConfig, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// SequenceConfigsQuery is a query over sequenceconfig.SequenceConfig.
+type SequenceConfigsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*sequenceconfig.SequenceConfig] = (*SequenceConfigsTable)(nil)
+
+var _ keel.Query[*sequenceconfig.SequenceConfig] = (*SequenceConfigsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SequenceConfigsTable) Query() keel.Query[*sequenceconfig.SequenceConfig] {
+	return &SequenceConfigsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SequenceConfigsQuery.Where.
+func (t *SequenceConfigsTable) Where(ps ...keel.Pred) keel.Query[*sequenceconfig.SequenceConfig] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SequenceConfigsQuery.Pick.
+func (t *SequenceConfigsTable) Pick(es ...keel.Expr) keel.Query[*sequenceconfig.SequenceConfig] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SequenceConfigsQuery.Load.
+func (t *SequenceConfigsTable) Load(ls ...keel.Loader) keel.Query[*sequenceconfig.SequenceConfig] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SequenceConfigsQuery.Omit.
+func (t *SequenceConfigsTable) Omit(cols ...keel.Column) keel.Query[*sequenceconfig.SequenceConfig] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SequenceConfigsQuery.Order.
+func (t *SequenceConfigsTable) Order(os ...keel.Order) keel.Query[*sequenceconfig.SequenceConfig] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SequenceConfigsQuery.Limit.
+func (t *SequenceConfigsTable) Limit(n int) keel.Query[*sequenceconfig.SequenceConfig] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SequenceConfigsQuery.Group.
+func (t *SequenceConfigsTable) Group(es ...keel.Expr) keel.Query[*sequenceconfig.SequenceConfig] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SequenceConfigsQuery.GroupingSets.
+func (t *SequenceConfigsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*sequenceconfig.SequenceConfig] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SequenceConfigsQuery.Rollup.
+func (t *SequenceConfigsTable) Rollup(es ...keel.Expr) keel.Query[*sequenceconfig.SequenceConfig] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SequenceConfigsQuery.Cube.
+func (t *SequenceConfigsTable) Cube(es ...keel.Expr) keel.Query[*sequenceconfig.SequenceConfig] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SequenceConfigsQuery.AllTenants.
+func (t *SequenceConfigsTable) AllTenants() keel.Query[*sequenceconfig.SequenceConfig] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SequenceConfigsQuery.Join.
+func (t *SequenceConfigsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*sequenceconfig.SequenceConfig] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SequenceConfigsQuery.LeftJoin.
+func (t *SequenceConfigsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*sequenceconfig.SequenceConfig] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SequenceConfigsQuery.LeftJoinLateral.
+func (t *SequenceConfigsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*sequenceconfig.SequenceConfig] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SequenceConfigsQuery.JoinLateral.
+func (t *SequenceConfigsTable) JoinLateral(sub keel.LateralSource) keel.Query[*sequenceconfig.SequenceConfig] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SequenceConfigsQuery.Lock.
+func (t *SequenceConfigsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*sequenceconfig.SequenceConfig] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SequenceConfigsQuery.DistinctOn.
+func (t *SequenceConfigsTable) DistinctOn(es ...keel.Expr) keel.Query[*sequenceconfig.SequenceConfig] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SequenceConfigsQuery.Cache.
+func (t *SequenceConfigsTable) Cache(opts ...keel.CacheOption) keel.Query[*sequenceconfig.SequenceConfig] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SequenceConfigsQuery.LoadStrategy.
+func (t *SequenceConfigsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*sequenceconfig.SequenceConfig] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SequenceConfigsQuery.With.
+func (t *SequenceConfigsTable) With(ctes ...*keel.CTETable) keel.Query[*sequenceconfig.SequenceConfig] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SequenceConfigsQuery.Compute.
+func (t *SequenceConfigsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*sequenceconfig.SequenceConfig] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SequenceConfigsTable) Create(ctx context.Context, db *keel.DB, row *sequenceconfig.SequenceConfig) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SequenceConfigsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*sequenceconfig.SequenceConfig) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *SequenceConfigsTable) Save(ctx context.Context, db *keel.DB, row *sequenceconfig.SequenceConfig, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SequenceConfigsTable) SaveExcept(ctx context.Context, db *keel.DB, row *sequenceconfig.SequenceConfig, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SequenceConfigsTable) DeleteRow(ctx context.Context, db *keel.DB, row *sequenceconfig.SequenceConfig) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SequenceConfigsTable) Upsert(ctx context.Context, db *keel.DB, rows []*sequenceconfig.SequenceConfig, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SequenceConfigsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*sequenceconfig.SequenceConfig, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SequenceConfigsTable) Copy(ctx context.Context, db *keel.DB, rows []*sequenceconfig.SequenceConfig) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SequenceConfigsQuery) Where(ps ...keel.Pred) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SequenceConfigsQuery) Pick(es ...keel.Expr) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SequenceConfigsQuery) Omit(cols ...keel.Column) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SequenceConfigsQuery) Load(ls ...keel.Loader) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SequenceConfigsQuery) Order(os ...keel.Order) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SequenceConfigsQuery) Distinct() keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SequenceConfigsQuery) Group(es ...keel.Expr) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SequenceConfigsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SequenceConfigsQuery) Rollup(es ...keel.Expr) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SequenceConfigsQuery) Cube(es ...keel.Expr) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SequenceConfigsQuery) Window(name string, w keel.Window) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SequenceConfigsQuery) Having(ps ...keel.Pred) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SequenceConfigsQuery) Limit(n int) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SequenceConfigsQuery) Offset(n int) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SequenceConfigsQuery) DistinctOn(es ...keel.Expr) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SequenceConfigsQuery) AllTenants() keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SequenceConfigsQuery) CustomPlan() keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SequenceConfigsQuery) Timeout(d time.Duration) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SequenceConfigsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SequenceConfigsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SequenceConfigsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SequenceConfigsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SequenceConfigsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SequenceConfigsQuery) Cache(opts ...keel.CacheOption) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SequenceConfigsQuery) With(ctes ...*keel.CTETable) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SequenceConfigsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SequenceConfigsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*sequenceconfig.SequenceConfig] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SequenceConfigsQuery) Clone() keel.Query[*sequenceconfig.SequenceConfig] {
+	return &SequenceConfigsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SequenceConfigsQuery) One(ctx context.Context, db *keel.DB) (*sequenceconfig.SequenceConfig, error) {
+	return keel.One[*sequenceconfig.SequenceConfig](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SequenceConfigsQuery) First(ctx context.Context, db *keel.DB) (*sequenceconfig.SequenceConfig, error) {
+	return keel.First[*sequenceconfig.SequenceConfig](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SequenceConfigsQuery) List(ctx context.Context, db *keel.DB) ([]*sequenceconfig.SequenceConfig, error) {
+	return keel.List[*sequenceconfig.SequenceConfig](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SequenceConfigsQuery) All(ctx context.Context, db *keel.DB) ([]*sequenceconfig.SequenceConfig, error) {
+	return keel.All[*sequenceconfig.SequenceConfig](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SequenceConfigsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*sequenceconfig.SequenceConfig, error) {
+	return keel.UpdateReturning[*sequenceconfig.SequenceConfig](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SequenceConfigsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*sequenceconfig.SequenceConfig], error) {
+	return keel.PageOf[*sequenceconfig.SequenceConfig](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SequenceConfigsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*sequenceconfig.SequenceConfig) error) error {
+	return keel.Each[*sequenceconfig.SequenceConfig](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newSequenceConfig() unsafe.Pointer { return unsafe.Pointer(new(sequenceconfig.SequenceConfig)) }

@@ -4,6 +4,7 @@ package telematicsdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -59,7 +60,7 @@ var feedStatesRef = keel.Ref{Table: &feedStatesTable}
 
 // FeedStatesTable is the table of telematics.FeedState.
 type FeedStatesTable struct {
-	keel.Handle[*telematics.FeedState]
+	keel.TableBase
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	Provider       keel.StringCol
@@ -73,7 +74,7 @@ type FeedStatesTable struct {
 
 // FeedStates references the telematics_feed_states table.
 var FeedStates = &FeedStatesTable{
-	Handle:         keel.Handle[*telematics.FeedState]{Ref: &feedStatesRef},
+	TableBase:      keel.TableBase{Ref: &feedStatesRef},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedStatesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedStatesRef, Index: 1}}},
 	Provider:       keel.StringCol{Col: keel.Col{Ref: &feedStatesRef, Index: 2}},
@@ -85,10 +86,10 @@ var FeedStates = &FeedStatesTable{
 	LastError:      keel.StringCol{Col: keel.Col{Ref: &feedStatesRef, Index: 8}},
 }
 
-// BuildFeedStates builds the handle of telematics_feed_states for ref. Generated relation and alias methods call it.
+// BuildFeedStates builds the table of telematics_feed_states for ref. Generated relation and alias methods call it.
 func BuildFeedStates(r *keel.Ref) *FeedStatesTable {
 	return &FeedStatesTable{
-		Handle:         keel.Handle[*telematics.FeedState]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Provider:       keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -107,6 +108,365 @@ func FeedStatesSchema() *schema.Table { return &feedStatesTable }
 // As returns a handle that references telematics_feed_states under its own alias.
 func (t *FeedStatesTable) As(alias string) *FeedStatesTable {
 	return keel.Alias(t.Ref, alias, BuildFeedStates)
+}
+
+// FeedStatesQuery is a query over telematics.FeedState.
+type FeedStatesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*telematics.FeedState] = (*FeedStatesTable)(nil)
+
+var _ keel.Query[*telematics.FeedState] = (*FeedStatesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *FeedStatesTable) Query() keel.Query[*telematics.FeedState] {
+	return &FeedStatesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see FeedStatesQuery.Where.
+func (t *FeedStatesTable) Where(ps ...keel.Pred) keel.Query[*telematics.FeedState] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see FeedStatesQuery.Pick.
+func (t *FeedStatesTable) Pick(es ...keel.Expr) keel.Query[*telematics.FeedState] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see FeedStatesQuery.Load.
+func (t *FeedStatesTable) Load(ls ...keel.Loader) keel.Query[*telematics.FeedState] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see FeedStatesQuery.Omit.
+func (t *FeedStatesTable) Omit(cols ...keel.Column) keel.Query[*telematics.FeedState] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see FeedStatesQuery.Order.
+func (t *FeedStatesTable) Order(os ...keel.Order) keel.Query[*telematics.FeedState] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see FeedStatesQuery.Limit.
+func (t *FeedStatesTable) Limit(n int) keel.Query[*telematics.FeedState] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see FeedStatesQuery.Group.
+func (t *FeedStatesTable) Group(es ...keel.Expr) keel.Query[*telematics.FeedState] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see FeedStatesQuery.GroupingSets.
+func (t *FeedStatesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*telematics.FeedState] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see FeedStatesQuery.Rollup.
+func (t *FeedStatesTable) Rollup(es ...keel.Expr) keel.Query[*telematics.FeedState] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see FeedStatesQuery.Cube.
+func (t *FeedStatesTable) Cube(es ...keel.Expr) keel.Query[*telematics.FeedState] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see FeedStatesQuery.AllTenants.
+func (t *FeedStatesTable) AllTenants() keel.Query[*telematics.FeedState] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see FeedStatesQuery.Join.
+func (t *FeedStatesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.FeedState] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see FeedStatesQuery.LeftJoin.
+func (t *FeedStatesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.FeedState] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see FeedStatesQuery.LeftJoinLateral.
+func (t *FeedStatesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*telematics.FeedState] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see FeedStatesQuery.JoinLateral.
+func (t *FeedStatesTable) JoinLateral(sub keel.LateralSource) keel.Query[*telematics.FeedState] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see FeedStatesQuery.Lock.
+func (t *FeedStatesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*telematics.FeedState] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see FeedStatesQuery.DistinctOn.
+func (t *FeedStatesTable) DistinctOn(es ...keel.Expr) keel.Query[*telematics.FeedState] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see FeedStatesQuery.Cache.
+func (t *FeedStatesTable) Cache(opts ...keel.CacheOption) keel.Query[*telematics.FeedState] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see FeedStatesQuery.LoadStrategy.
+func (t *FeedStatesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*telematics.FeedState] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see FeedStatesQuery.With.
+func (t *FeedStatesTable) With(ctes ...*keel.CTETable) keel.Query[*telematics.FeedState] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see FeedStatesQuery.Compute.
+func (t *FeedStatesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*telematics.FeedState] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *FeedStatesTable) Create(ctx context.Context, db *keel.DB, row *telematics.FeedState) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *FeedStatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*telematics.FeedState) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *FeedStatesTable) Save(ctx context.Context, db *keel.DB, row *telematics.FeedState, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *FeedStatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *telematics.FeedState, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *FeedStatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *telematics.FeedState) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *FeedStatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*telematics.FeedState, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *FeedStatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*telematics.FeedState, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *FeedStatesTable) Copy(ctx context.Context, db *keel.DB, rows []*telematics.FeedState) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *FeedStatesQuery) Where(ps ...keel.Pred) keel.Query[*telematics.FeedState] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *FeedStatesQuery) Pick(es ...keel.Expr) keel.Query[*telematics.FeedState] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *FeedStatesQuery) Omit(cols ...keel.Column) keel.Query[*telematics.FeedState] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *FeedStatesQuery) Load(ls ...keel.Loader) keel.Query[*telematics.FeedState] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *FeedStatesQuery) Order(os ...keel.Order) keel.Query[*telematics.FeedState] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *FeedStatesQuery) Distinct() keel.Query[*telematics.FeedState] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *FeedStatesQuery) Group(es ...keel.Expr) keel.Query[*telematics.FeedState] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *FeedStatesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*telematics.FeedState] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *FeedStatesQuery) Rollup(es ...keel.Expr) keel.Query[*telematics.FeedState] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *FeedStatesQuery) Cube(es ...keel.Expr) keel.Query[*telematics.FeedState] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *FeedStatesQuery) Window(name string, w keel.Window) keel.Query[*telematics.FeedState] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *FeedStatesQuery) Having(ps ...keel.Pred) keel.Query[*telematics.FeedState] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *FeedStatesQuery) Limit(n int) keel.Query[*telematics.FeedState] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *FeedStatesQuery) Offset(n int) keel.Query[*telematics.FeedState] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *FeedStatesQuery) DistinctOn(es ...keel.Expr) keel.Query[*telematics.FeedState] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *FeedStatesQuery) AllTenants() keel.Query[*telematics.FeedState] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *FeedStatesQuery) CustomPlan() keel.Query[*telematics.FeedState] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *FeedStatesQuery) Timeout(d time.Duration) keel.Query[*telematics.FeedState] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *FeedStatesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*telematics.FeedState] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *FeedStatesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.FeedState] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *FeedStatesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.FeedState] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *FeedStatesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*telematics.FeedState] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *FeedStatesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*telematics.FeedState] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *FeedStatesQuery) Cache(opts ...keel.CacheOption) keel.Query[*telematics.FeedState] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *FeedStatesQuery) With(ctes ...*keel.CTETable) keel.Query[*telematics.FeedState] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *FeedStatesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*telematics.FeedState] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *FeedStatesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*telematics.FeedState] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *FeedStatesQuery) Clone() keel.Query[*telematics.FeedState] {
+	return &FeedStatesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *FeedStatesQuery) One(ctx context.Context, db *keel.DB) (*telematics.FeedState, error) {
+	return keel.One[*telematics.FeedState](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *FeedStatesQuery) First(ctx context.Context, db *keel.DB) (*telematics.FeedState, error) {
+	return keel.First[*telematics.FeedState](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *FeedStatesQuery) List(ctx context.Context, db *keel.DB) ([]*telematics.FeedState, error) {
+	return keel.List[*telematics.FeedState](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *FeedStatesQuery) All(ctx context.Context, db *keel.DB) ([]*telematics.FeedState, error) {
+	return keel.All[*telematics.FeedState](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *FeedStatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*telematics.FeedState, error) {
+	return keel.UpdateReturning[*telematics.FeedState](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *FeedStatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*telematics.FeedState], error) {
+	return keel.PageOf[*telematics.FeedState](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *FeedStatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*telematics.FeedState) error) error {
+	return keel.Each[*telematics.FeedState](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newFeedState() unsafe.Pointer { return unsafe.Pointer(new(telematics.FeedState)) }
@@ -230,7 +590,7 @@ var formMappingsRef = keel.Ref{Table: &formMappingsTable}
 
 // FormMappingsTable is the table of telematics.FormMapping.
 type FormMappingsTable struct {
-	keel.Handle[*telematics.FormMapping]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -247,7 +607,7 @@ type FormMappingsTable struct {
 
 // FormMappings references the telematics_form_mappings table.
 var FormMappings = &FormMappingsTable{
-	Handle:         keel.Handle[*telematics.FormMapping]{Ref: &formMappingsRef},
+	TableBase:      keel.TableBase{Ref: &formMappingsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formMappingsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formMappingsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formMappingsRef, Index: 2}}},
@@ -262,10 +622,10 @@ var FormMappings = &FormMappingsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &formMappingsRef, Index: 11}},
 }
 
-// BuildFormMappings builds the handle of telematics_form_mappings for ref. Generated relation and alias methods call it.
+// BuildFormMappings builds the table of telematics_form_mappings for ref. Generated relation and alias methods call it.
 func BuildFormMappings(r *keel.Ref) *FormMappingsTable {
 	return &FormMappingsTable{
-		Handle:         keel.Handle[*telematics.FormMapping]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -297,6 +657,365 @@ func (t *FormMappingsTable) Items() *FormMappingItemsTable {
 // Get returns the telematics_form_mappings row with the given key, or keel.ErrNotFound.
 func (t *FormMappingsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*telematics.FormMapping, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// FormMappingsQuery is a query over telematics.FormMapping.
+type FormMappingsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*telematics.FormMapping] = (*FormMappingsTable)(nil)
+
+var _ keel.Query[*telematics.FormMapping] = (*FormMappingsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *FormMappingsTable) Query() keel.Query[*telematics.FormMapping] {
+	return &FormMappingsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see FormMappingsQuery.Where.
+func (t *FormMappingsTable) Where(ps ...keel.Pred) keel.Query[*telematics.FormMapping] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see FormMappingsQuery.Pick.
+func (t *FormMappingsTable) Pick(es ...keel.Expr) keel.Query[*telematics.FormMapping] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see FormMappingsQuery.Load.
+func (t *FormMappingsTable) Load(ls ...keel.Loader) keel.Query[*telematics.FormMapping] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see FormMappingsQuery.Omit.
+func (t *FormMappingsTable) Omit(cols ...keel.Column) keel.Query[*telematics.FormMapping] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see FormMappingsQuery.Order.
+func (t *FormMappingsTable) Order(os ...keel.Order) keel.Query[*telematics.FormMapping] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see FormMappingsQuery.Limit.
+func (t *FormMappingsTable) Limit(n int) keel.Query[*telematics.FormMapping] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see FormMappingsQuery.Group.
+func (t *FormMappingsTable) Group(es ...keel.Expr) keel.Query[*telematics.FormMapping] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see FormMappingsQuery.GroupingSets.
+func (t *FormMappingsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*telematics.FormMapping] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see FormMappingsQuery.Rollup.
+func (t *FormMappingsTable) Rollup(es ...keel.Expr) keel.Query[*telematics.FormMapping] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see FormMappingsQuery.Cube.
+func (t *FormMappingsTable) Cube(es ...keel.Expr) keel.Query[*telematics.FormMapping] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see FormMappingsQuery.AllTenants.
+func (t *FormMappingsTable) AllTenants() keel.Query[*telematics.FormMapping] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see FormMappingsQuery.Join.
+func (t *FormMappingsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.FormMapping] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see FormMappingsQuery.LeftJoin.
+func (t *FormMappingsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.FormMapping] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see FormMappingsQuery.LeftJoinLateral.
+func (t *FormMappingsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*telematics.FormMapping] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see FormMappingsQuery.JoinLateral.
+func (t *FormMappingsTable) JoinLateral(sub keel.LateralSource) keel.Query[*telematics.FormMapping] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see FormMappingsQuery.Lock.
+func (t *FormMappingsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*telematics.FormMapping] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see FormMappingsQuery.DistinctOn.
+func (t *FormMappingsTable) DistinctOn(es ...keel.Expr) keel.Query[*telematics.FormMapping] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see FormMappingsQuery.Cache.
+func (t *FormMappingsTable) Cache(opts ...keel.CacheOption) keel.Query[*telematics.FormMapping] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see FormMappingsQuery.LoadStrategy.
+func (t *FormMappingsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*telematics.FormMapping] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see FormMappingsQuery.With.
+func (t *FormMappingsTable) With(ctes ...*keel.CTETable) keel.Query[*telematics.FormMapping] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see FormMappingsQuery.Compute.
+func (t *FormMappingsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*telematics.FormMapping] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *FormMappingsTable) Create(ctx context.Context, db *keel.DB, row *telematics.FormMapping) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *FormMappingsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*telematics.FormMapping) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *FormMappingsTable) Save(ctx context.Context, db *keel.DB, row *telematics.FormMapping, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *FormMappingsTable) SaveExcept(ctx context.Context, db *keel.DB, row *telematics.FormMapping, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *FormMappingsTable) DeleteRow(ctx context.Context, db *keel.DB, row *telematics.FormMapping) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *FormMappingsTable) Upsert(ctx context.Context, db *keel.DB, rows []*telematics.FormMapping, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *FormMappingsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*telematics.FormMapping, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *FormMappingsTable) Copy(ctx context.Context, db *keel.DB, rows []*telematics.FormMapping) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *FormMappingsQuery) Where(ps ...keel.Pred) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *FormMappingsQuery) Pick(es ...keel.Expr) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *FormMappingsQuery) Omit(cols ...keel.Column) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *FormMappingsQuery) Load(ls ...keel.Loader) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *FormMappingsQuery) Order(os ...keel.Order) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *FormMappingsQuery) Distinct() keel.Query[*telematics.FormMapping] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *FormMappingsQuery) Group(es ...keel.Expr) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *FormMappingsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *FormMappingsQuery) Rollup(es ...keel.Expr) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *FormMappingsQuery) Cube(es ...keel.Expr) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *FormMappingsQuery) Window(name string, w keel.Window) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *FormMappingsQuery) Having(ps ...keel.Pred) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *FormMappingsQuery) Limit(n int) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *FormMappingsQuery) Offset(n int) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *FormMappingsQuery) DistinctOn(es ...keel.Expr) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *FormMappingsQuery) AllTenants() keel.Query[*telematics.FormMapping] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *FormMappingsQuery) CustomPlan() keel.Query[*telematics.FormMapping] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *FormMappingsQuery) Timeout(d time.Duration) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *FormMappingsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *FormMappingsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *FormMappingsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *FormMappingsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *FormMappingsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *FormMappingsQuery) Cache(opts ...keel.CacheOption) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *FormMappingsQuery) With(ctes ...*keel.CTETable) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *FormMappingsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *FormMappingsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*telematics.FormMapping] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *FormMappingsQuery) Clone() keel.Query[*telematics.FormMapping] {
+	return &FormMappingsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *FormMappingsQuery) One(ctx context.Context, db *keel.DB) (*telematics.FormMapping, error) {
+	return keel.One[*telematics.FormMapping](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *FormMappingsQuery) First(ctx context.Context, db *keel.DB) (*telematics.FormMapping, error) {
+	return keel.First[*telematics.FormMapping](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *FormMappingsQuery) List(ctx context.Context, db *keel.DB) ([]*telematics.FormMapping, error) {
+	return keel.List[*telematics.FormMapping](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *FormMappingsQuery) All(ctx context.Context, db *keel.DB) ([]*telematics.FormMapping, error) {
+	return keel.All[*telematics.FormMapping](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *FormMappingsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*telematics.FormMapping, error) {
+	return keel.UpdateReturning[*telematics.FormMapping](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *FormMappingsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*telematics.FormMapping], error) {
+	return keel.PageOf[*telematics.FormMapping](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *FormMappingsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*telematics.FormMapping) error) error {
+	return keel.Each[*telematics.FormMapping](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newFormMapping() unsafe.Pointer { return unsafe.Pointer(new(telematics.FormMapping)) }
@@ -426,7 +1145,7 @@ var formMappingItemsRef = keel.Ref{Table: &formMappingItemsTable}
 
 // FormMappingItemsTable is the table of telematics.FormMappingItem.
 type FormMappingItemsTable struct {
-	keel.Handle[*telematics.FormMappingItem]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
@@ -440,7 +1159,7 @@ type FormMappingItemsTable struct {
 
 // FormMappingItems references the telematics_form_mapping_items table.
 var FormMappingItems = &FormMappingItemsTable{
-	Handle:               keel.Handle[*telematics.FormMappingItem]{Ref: &formMappingItemsRef},
+	TableBase:            keel.TableBase{Ref: &formMappingItemsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formMappingItemsRef, Index: 0}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formMappingItemsRef, Index: 1}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formMappingItemsRef, Index: 2}}},
@@ -452,10 +1171,10 @@ var FormMappingItems = &FormMappingItemsTable{
 	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &formMappingItemsRef, Index: 8}},
 }
 
-// BuildFormMappingItems builds the handle of telematics_form_mapping_items for ref. Generated relation and alias methods call it.
+// BuildFormMappingItems builds the table of telematics_form_mapping_items for ref. Generated relation and alias methods call it.
 func BuildFormMappingItems(r *keel.Ref) *FormMappingItemsTable {
 	return &FormMappingItemsTable{
-		Handle:               keel.Handle[*telematics.FormMappingItem]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -479,6 +1198,365 @@ func (t *FormMappingItemsTable) As(alias string) *FormMappingItemsTable {
 // Get returns the telematics_form_mapping_items row with the given key, or keel.ErrNotFound.
 func (t *FormMappingItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*telematics.FormMappingItem, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// FormMappingItemsQuery is a query over telematics.FormMappingItem.
+type FormMappingItemsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*telematics.FormMappingItem] = (*FormMappingItemsTable)(nil)
+
+var _ keel.Query[*telematics.FormMappingItem] = (*FormMappingItemsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *FormMappingItemsTable) Query() keel.Query[*telematics.FormMappingItem] {
+	return &FormMappingItemsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see FormMappingItemsQuery.Where.
+func (t *FormMappingItemsTable) Where(ps ...keel.Pred) keel.Query[*telematics.FormMappingItem] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see FormMappingItemsQuery.Pick.
+func (t *FormMappingItemsTable) Pick(es ...keel.Expr) keel.Query[*telematics.FormMappingItem] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see FormMappingItemsQuery.Load.
+func (t *FormMappingItemsTable) Load(ls ...keel.Loader) keel.Query[*telematics.FormMappingItem] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see FormMappingItemsQuery.Omit.
+func (t *FormMappingItemsTable) Omit(cols ...keel.Column) keel.Query[*telematics.FormMappingItem] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see FormMappingItemsQuery.Order.
+func (t *FormMappingItemsTable) Order(os ...keel.Order) keel.Query[*telematics.FormMappingItem] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see FormMappingItemsQuery.Limit.
+func (t *FormMappingItemsTable) Limit(n int) keel.Query[*telematics.FormMappingItem] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see FormMappingItemsQuery.Group.
+func (t *FormMappingItemsTable) Group(es ...keel.Expr) keel.Query[*telematics.FormMappingItem] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see FormMappingItemsQuery.GroupingSets.
+func (t *FormMappingItemsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*telematics.FormMappingItem] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see FormMappingItemsQuery.Rollup.
+func (t *FormMappingItemsTable) Rollup(es ...keel.Expr) keel.Query[*telematics.FormMappingItem] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see FormMappingItemsQuery.Cube.
+func (t *FormMappingItemsTable) Cube(es ...keel.Expr) keel.Query[*telematics.FormMappingItem] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see FormMappingItemsQuery.AllTenants.
+func (t *FormMappingItemsTable) AllTenants() keel.Query[*telematics.FormMappingItem] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see FormMappingItemsQuery.Join.
+func (t *FormMappingItemsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.FormMappingItem] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see FormMappingItemsQuery.LeftJoin.
+func (t *FormMappingItemsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.FormMappingItem] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see FormMappingItemsQuery.LeftJoinLateral.
+func (t *FormMappingItemsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*telematics.FormMappingItem] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see FormMappingItemsQuery.JoinLateral.
+func (t *FormMappingItemsTable) JoinLateral(sub keel.LateralSource) keel.Query[*telematics.FormMappingItem] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see FormMappingItemsQuery.Lock.
+func (t *FormMappingItemsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*telematics.FormMappingItem] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see FormMappingItemsQuery.DistinctOn.
+func (t *FormMappingItemsTable) DistinctOn(es ...keel.Expr) keel.Query[*telematics.FormMappingItem] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see FormMappingItemsQuery.Cache.
+func (t *FormMappingItemsTable) Cache(opts ...keel.CacheOption) keel.Query[*telematics.FormMappingItem] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see FormMappingItemsQuery.LoadStrategy.
+func (t *FormMappingItemsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*telematics.FormMappingItem] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see FormMappingItemsQuery.With.
+func (t *FormMappingItemsTable) With(ctes ...*keel.CTETable) keel.Query[*telematics.FormMappingItem] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see FormMappingItemsQuery.Compute.
+func (t *FormMappingItemsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*telematics.FormMappingItem] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *FormMappingItemsTable) Create(ctx context.Context, db *keel.DB, row *telematics.FormMappingItem) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *FormMappingItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*telematics.FormMappingItem) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *FormMappingItemsTable) Save(ctx context.Context, db *keel.DB, row *telematics.FormMappingItem, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *FormMappingItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *telematics.FormMappingItem, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *FormMappingItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *telematics.FormMappingItem) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *FormMappingItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*telematics.FormMappingItem, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *FormMappingItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*telematics.FormMappingItem, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *FormMappingItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*telematics.FormMappingItem) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *FormMappingItemsQuery) Where(ps ...keel.Pred) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *FormMappingItemsQuery) Pick(es ...keel.Expr) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *FormMappingItemsQuery) Omit(cols ...keel.Column) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *FormMappingItemsQuery) Load(ls ...keel.Loader) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *FormMappingItemsQuery) Order(os ...keel.Order) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *FormMappingItemsQuery) Distinct() keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *FormMappingItemsQuery) Group(es ...keel.Expr) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *FormMappingItemsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *FormMappingItemsQuery) Rollup(es ...keel.Expr) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *FormMappingItemsQuery) Cube(es ...keel.Expr) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *FormMappingItemsQuery) Window(name string, w keel.Window) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *FormMappingItemsQuery) Having(ps ...keel.Pred) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *FormMappingItemsQuery) Limit(n int) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *FormMappingItemsQuery) Offset(n int) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *FormMappingItemsQuery) DistinctOn(es ...keel.Expr) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *FormMappingItemsQuery) AllTenants() keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *FormMappingItemsQuery) CustomPlan() keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *FormMappingItemsQuery) Timeout(d time.Duration) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *FormMappingItemsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *FormMappingItemsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *FormMappingItemsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *FormMappingItemsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *FormMappingItemsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *FormMappingItemsQuery) Cache(opts ...keel.CacheOption) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *FormMappingItemsQuery) With(ctes ...*keel.CTETable) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *FormMappingItemsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *FormMappingItemsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*telematics.FormMappingItem] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *FormMappingItemsQuery) Clone() keel.Query[*telematics.FormMappingItem] {
+	return &FormMappingItemsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *FormMappingItemsQuery) One(ctx context.Context, db *keel.DB) (*telematics.FormMappingItem, error) {
+	return keel.One[*telematics.FormMappingItem](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *FormMappingItemsQuery) First(ctx context.Context, db *keel.DB) (*telematics.FormMappingItem, error) {
+	return keel.First[*telematics.FormMappingItem](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *FormMappingItemsQuery) List(ctx context.Context, db *keel.DB) ([]*telematics.FormMappingItem, error) {
+	return keel.List[*telematics.FormMappingItem](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *FormMappingItemsQuery) All(ctx context.Context, db *keel.DB) ([]*telematics.FormMappingItem, error) {
+	return keel.All[*telematics.FormMappingItem](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *FormMappingItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*telematics.FormMappingItem, error) {
+	return keel.UpdateReturning[*telematics.FormMappingItem](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *FormMappingItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*telematics.FormMappingItem], error) {
+	return keel.PageOf[*telematics.FormMappingItem](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *FormMappingItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*telematics.FormMappingItem) error) error {
+	return keel.Each[*telematics.FormMappingItem](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newFormMappingItem() unsafe.Pointer { return unsafe.Pointer(new(telematics.FormMappingItem)) }
@@ -593,7 +1671,7 @@ var formSubmissionsRef = keel.Ref{Table: &formSubmissionsTable}
 
 // FormSubmissionsTable is the table of telematics.FormSubmission.
 type FormSubmissionsTable struct {
-	keel.Handle[*telematics.FormSubmission]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
@@ -615,7 +1693,7 @@ type FormSubmissionsTable struct {
 
 // FormSubmissions references the telematics_form_submissions table.
 var FormSubmissions = &FormSubmissionsTable{
-	Handle:               keel.Handle[*telematics.FormSubmission]{Ref: &formSubmissionsRef},
+	TableBase:            keel.TableBase{Ref: &formSubmissionsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 0}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 1}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 2}}},
@@ -635,10 +1713,10 @@ var FormSubmissions = &FormSubmissionsTable{
 	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &formSubmissionsRef, Index: 16}},
 }
 
-// BuildFormSubmissions builds the handle of telematics_form_submissions for ref. Generated relation and alias methods call it.
+// BuildFormSubmissions builds the table of telematics_form_submissions for ref. Generated relation and alias methods call it.
 func BuildFormSubmissions(r *keel.Ref) *FormSubmissionsTable {
 	return &FormSubmissionsTable{
-		Handle:               keel.Handle[*telematics.FormSubmission]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -670,6 +1748,365 @@ func (t *FormSubmissionsTable) As(alias string) *FormSubmissionsTable {
 // Get returns the telematics_form_submissions row with the given key, or keel.ErrNotFound.
 func (t *FormSubmissionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*telematics.FormSubmission, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// FormSubmissionsQuery is a query over telematics.FormSubmission.
+type FormSubmissionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*telematics.FormSubmission] = (*FormSubmissionsTable)(nil)
+
+var _ keel.Query[*telematics.FormSubmission] = (*FormSubmissionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *FormSubmissionsTable) Query() keel.Query[*telematics.FormSubmission] {
+	return &FormSubmissionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see FormSubmissionsQuery.Where.
+func (t *FormSubmissionsTable) Where(ps ...keel.Pred) keel.Query[*telematics.FormSubmission] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see FormSubmissionsQuery.Pick.
+func (t *FormSubmissionsTable) Pick(es ...keel.Expr) keel.Query[*telematics.FormSubmission] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see FormSubmissionsQuery.Load.
+func (t *FormSubmissionsTable) Load(ls ...keel.Loader) keel.Query[*telematics.FormSubmission] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see FormSubmissionsQuery.Omit.
+func (t *FormSubmissionsTable) Omit(cols ...keel.Column) keel.Query[*telematics.FormSubmission] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see FormSubmissionsQuery.Order.
+func (t *FormSubmissionsTable) Order(os ...keel.Order) keel.Query[*telematics.FormSubmission] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see FormSubmissionsQuery.Limit.
+func (t *FormSubmissionsTable) Limit(n int) keel.Query[*telematics.FormSubmission] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see FormSubmissionsQuery.Group.
+func (t *FormSubmissionsTable) Group(es ...keel.Expr) keel.Query[*telematics.FormSubmission] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see FormSubmissionsQuery.GroupingSets.
+func (t *FormSubmissionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*telematics.FormSubmission] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see FormSubmissionsQuery.Rollup.
+func (t *FormSubmissionsTable) Rollup(es ...keel.Expr) keel.Query[*telematics.FormSubmission] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see FormSubmissionsQuery.Cube.
+func (t *FormSubmissionsTable) Cube(es ...keel.Expr) keel.Query[*telematics.FormSubmission] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see FormSubmissionsQuery.AllTenants.
+func (t *FormSubmissionsTable) AllTenants() keel.Query[*telematics.FormSubmission] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see FormSubmissionsQuery.Join.
+func (t *FormSubmissionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.FormSubmission] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see FormSubmissionsQuery.LeftJoin.
+func (t *FormSubmissionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.FormSubmission] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see FormSubmissionsQuery.LeftJoinLateral.
+func (t *FormSubmissionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*telematics.FormSubmission] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see FormSubmissionsQuery.JoinLateral.
+func (t *FormSubmissionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*telematics.FormSubmission] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see FormSubmissionsQuery.Lock.
+func (t *FormSubmissionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*telematics.FormSubmission] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see FormSubmissionsQuery.DistinctOn.
+func (t *FormSubmissionsTable) DistinctOn(es ...keel.Expr) keel.Query[*telematics.FormSubmission] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see FormSubmissionsQuery.Cache.
+func (t *FormSubmissionsTable) Cache(opts ...keel.CacheOption) keel.Query[*telematics.FormSubmission] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see FormSubmissionsQuery.LoadStrategy.
+func (t *FormSubmissionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*telematics.FormSubmission] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see FormSubmissionsQuery.With.
+func (t *FormSubmissionsTable) With(ctes ...*keel.CTETable) keel.Query[*telematics.FormSubmission] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see FormSubmissionsQuery.Compute.
+func (t *FormSubmissionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*telematics.FormSubmission] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *FormSubmissionsTable) Create(ctx context.Context, db *keel.DB, row *telematics.FormSubmission) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *FormSubmissionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*telematics.FormSubmission) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *FormSubmissionsTable) Save(ctx context.Context, db *keel.DB, row *telematics.FormSubmission, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *FormSubmissionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *telematics.FormSubmission, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *FormSubmissionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *telematics.FormSubmission) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *FormSubmissionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*telematics.FormSubmission, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *FormSubmissionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*telematics.FormSubmission, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *FormSubmissionsTable) Copy(ctx context.Context, db *keel.DB, rows []*telematics.FormSubmission) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *FormSubmissionsQuery) Where(ps ...keel.Pred) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *FormSubmissionsQuery) Pick(es ...keel.Expr) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *FormSubmissionsQuery) Omit(cols ...keel.Column) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *FormSubmissionsQuery) Load(ls ...keel.Loader) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *FormSubmissionsQuery) Order(os ...keel.Order) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *FormSubmissionsQuery) Distinct() keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *FormSubmissionsQuery) Group(es ...keel.Expr) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *FormSubmissionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *FormSubmissionsQuery) Rollup(es ...keel.Expr) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *FormSubmissionsQuery) Cube(es ...keel.Expr) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *FormSubmissionsQuery) Window(name string, w keel.Window) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *FormSubmissionsQuery) Having(ps ...keel.Pred) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *FormSubmissionsQuery) Limit(n int) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *FormSubmissionsQuery) Offset(n int) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *FormSubmissionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *FormSubmissionsQuery) AllTenants() keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *FormSubmissionsQuery) CustomPlan() keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *FormSubmissionsQuery) Timeout(d time.Duration) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *FormSubmissionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *FormSubmissionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *FormSubmissionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *FormSubmissionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *FormSubmissionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *FormSubmissionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *FormSubmissionsQuery) With(ctes ...*keel.CTETable) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *FormSubmissionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *FormSubmissionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*telematics.FormSubmission] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *FormSubmissionsQuery) Clone() keel.Query[*telematics.FormSubmission] {
+	return &FormSubmissionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *FormSubmissionsQuery) One(ctx context.Context, db *keel.DB) (*telematics.FormSubmission, error) {
+	return keel.One[*telematics.FormSubmission](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *FormSubmissionsQuery) First(ctx context.Context, db *keel.DB) (*telematics.FormSubmission, error) {
+	return keel.First[*telematics.FormSubmission](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *FormSubmissionsQuery) List(ctx context.Context, db *keel.DB) ([]*telematics.FormSubmission, error) {
+	return keel.List[*telematics.FormSubmission](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *FormSubmissionsQuery) All(ctx context.Context, db *keel.DB) ([]*telematics.FormSubmission, error) {
+	return keel.All[*telematics.FormSubmission](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *FormSubmissionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*telematics.FormSubmission, error) {
+	return keel.UpdateReturning[*telematics.FormSubmission](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *FormSubmissionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*telematics.FormSubmission], error) {
+	return keel.PageOf[*telematics.FormSubmission](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *FormSubmissionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*telematics.FormSubmission) error) error {
+	return keel.Each[*telematics.FormSubmission](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newFormSubmission() unsafe.Pointer { return unsafe.Pointer(new(telematics.FormSubmission)) }
@@ -837,7 +2274,7 @@ var telematicsEventsRef = keel.Ref{Table: &telematicsEventsTable}
 
 // TelematicsEventsTable is the table of telematics.TelematicsEvent.
 type TelematicsEventsTable struct {
-	keel.Handle[*telematics.TelematicsEvent]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
@@ -861,7 +2298,7 @@ type TelematicsEventsTable struct {
 
 // TelematicsEvents references the telematics_events table.
 var TelematicsEvents = &TelematicsEventsTable{
-	Handle:            keel.Handle[*telematics.TelematicsEvent]{Ref: &telematicsEventsRef},
+	TableBase:         keel.TableBase{Ref: &telematicsEventsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 0}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 1}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 2}}},
@@ -883,10 +2320,10 @@ var TelematicsEvents = &TelematicsEventsTable{
 	MoveShipmentID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 18}}},
 }
 
-// BuildTelematicsEvents builds the handle of telematics_events for ref. Generated relation and alias methods call it.
+// BuildTelematicsEvents builds the table of telematics_events for ref. Generated relation and alias methods call it.
 func BuildTelematicsEvents(r *keel.Ref) *TelematicsEventsTable {
 	return &TelematicsEventsTable{
-		Handle:            keel.Handle[*telematics.TelematicsEvent]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -920,6 +2357,365 @@ func (t *TelematicsEventsTable) As(alias string) *TelematicsEventsTable {
 // Get returns the telematics_events row with the given key, or keel.ErrNotFound.
 func (t *TelematicsEventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*telematics.TelematicsEvent, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// TelematicsEventsQuery is a query over telematics.TelematicsEvent.
+type TelematicsEventsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*telematics.TelematicsEvent] = (*TelematicsEventsTable)(nil)
+
+var _ keel.Query[*telematics.TelematicsEvent] = (*TelematicsEventsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *TelematicsEventsTable) Query() keel.Query[*telematics.TelematicsEvent] {
+	return &TelematicsEventsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see TelematicsEventsQuery.Where.
+func (t *TelematicsEventsTable) Where(ps ...keel.Pred) keel.Query[*telematics.TelematicsEvent] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see TelematicsEventsQuery.Pick.
+func (t *TelematicsEventsTable) Pick(es ...keel.Expr) keel.Query[*telematics.TelematicsEvent] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see TelematicsEventsQuery.Load.
+func (t *TelematicsEventsTable) Load(ls ...keel.Loader) keel.Query[*telematics.TelematicsEvent] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see TelematicsEventsQuery.Omit.
+func (t *TelematicsEventsTable) Omit(cols ...keel.Column) keel.Query[*telematics.TelematicsEvent] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see TelematicsEventsQuery.Order.
+func (t *TelematicsEventsTable) Order(os ...keel.Order) keel.Query[*telematics.TelematicsEvent] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see TelematicsEventsQuery.Limit.
+func (t *TelematicsEventsTable) Limit(n int) keel.Query[*telematics.TelematicsEvent] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see TelematicsEventsQuery.Group.
+func (t *TelematicsEventsTable) Group(es ...keel.Expr) keel.Query[*telematics.TelematicsEvent] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see TelematicsEventsQuery.GroupingSets.
+func (t *TelematicsEventsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*telematics.TelematicsEvent] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see TelematicsEventsQuery.Rollup.
+func (t *TelematicsEventsTable) Rollup(es ...keel.Expr) keel.Query[*telematics.TelematicsEvent] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see TelematicsEventsQuery.Cube.
+func (t *TelematicsEventsTable) Cube(es ...keel.Expr) keel.Query[*telematics.TelematicsEvent] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see TelematicsEventsQuery.AllTenants.
+func (t *TelematicsEventsTable) AllTenants() keel.Query[*telematics.TelematicsEvent] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see TelematicsEventsQuery.Join.
+func (t *TelematicsEventsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.TelematicsEvent] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see TelematicsEventsQuery.LeftJoin.
+func (t *TelematicsEventsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.TelematicsEvent] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see TelematicsEventsQuery.LeftJoinLateral.
+func (t *TelematicsEventsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*telematics.TelematicsEvent] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see TelematicsEventsQuery.JoinLateral.
+func (t *TelematicsEventsTable) JoinLateral(sub keel.LateralSource) keel.Query[*telematics.TelematicsEvent] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see TelematicsEventsQuery.Lock.
+func (t *TelematicsEventsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*telematics.TelematicsEvent] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see TelematicsEventsQuery.DistinctOn.
+func (t *TelematicsEventsTable) DistinctOn(es ...keel.Expr) keel.Query[*telematics.TelematicsEvent] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see TelematicsEventsQuery.Cache.
+func (t *TelematicsEventsTable) Cache(opts ...keel.CacheOption) keel.Query[*telematics.TelematicsEvent] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see TelematicsEventsQuery.LoadStrategy.
+func (t *TelematicsEventsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*telematics.TelematicsEvent] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see TelematicsEventsQuery.With.
+func (t *TelematicsEventsTable) With(ctes ...*keel.CTETable) keel.Query[*telematics.TelematicsEvent] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see TelematicsEventsQuery.Compute.
+func (t *TelematicsEventsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*telematics.TelematicsEvent] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *TelematicsEventsTable) Create(ctx context.Context, db *keel.DB, row *telematics.TelematicsEvent) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *TelematicsEventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*telematics.TelematicsEvent) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *TelematicsEventsTable) Save(ctx context.Context, db *keel.DB, row *telematics.TelematicsEvent, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *TelematicsEventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *telematics.TelematicsEvent, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *TelematicsEventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *telematics.TelematicsEvent) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *TelematicsEventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*telematics.TelematicsEvent, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *TelematicsEventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*telematics.TelematicsEvent, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *TelematicsEventsTable) Copy(ctx context.Context, db *keel.DB, rows []*telematics.TelematicsEvent) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *TelematicsEventsQuery) Where(ps ...keel.Pred) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *TelematicsEventsQuery) Pick(es ...keel.Expr) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *TelematicsEventsQuery) Omit(cols ...keel.Column) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *TelematicsEventsQuery) Load(ls ...keel.Loader) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *TelematicsEventsQuery) Order(os ...keel.Order) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *TelematicsEventsQuery) Distinct() keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *TelematicsEventsQuery) Group(es ...keel.Expr) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *TelematicsEventsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *TelematicsEventsQuery) Rollup(es ...keel.Expr) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *TelematicsEventsQuery) Cube(es ...keel.Expr) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *TelematicsEventsQuery) Window(name string, w keel.Window) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *TelematicsEventsQuery) Having(ps ...keel.Pred) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *TelematicsEventsQuery) Limit(n int) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *TelematicsEventsQuery) Offset(n int) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *TelematicsEventsQuery) DistinctOn(es ...keel.Expr) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *TelematicsEventsQuery) AllTenants() keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *TelematicsEventsQuery) CustomPlan() keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *TelematicsEventsQuery) Timeout(d time.Duration) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *TelematicsEventsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *TelematicsEventsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *TelematicsEventsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *TelematicsEventsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *TelematicsEventsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *TelematicsEventsQuery) Cache(opts ...keel.CacheOption) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *TelematicsEventsQuery) With(ctes ...*keel.CTETable) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *TelematicsEventsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *TelematicsEventsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*telematics.TelematicsEvent] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *TelematicsEventsQuery) Clone() keel.Query[*telematics.TelematicsEvent] {
+	return &TelematicsEventsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *TelematicsEventsQuery) One(ctx context.Context, db *keel.DB) (*telematics.TelematicsEvent, error) {
+	return keel.One[*telematics.TelematicsEvent](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *TelematicsEventsQuery) First(ctx context.Context, db *keel.DB) (*telematics.TelematicsEvent, error) {
+	return keel.First[*telematics.TelematicsEvent](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *TelematicsEventsQuery) List(ctx context.Context, db *keel.DB) ([]*telematics.TelematicsEvent, error) {
+	return keel.List[*telematics.TelematicsEvent](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *TelematicsEventsQuery) All(ctx context.Context, db *keel.DB) ([]*telematics.TelematicsEvent, error) {
+	return keel.All[*telematics.TelematicsEvent](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *TelematicsEventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*telematics.TelematicsEvent, error) {
+	return keel.UpdateReturning[*telematics.TelematicsEvent](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *TelematicsEventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*telematics.TelematicsEvent], error) {
+	return keel.PageOf[*telematics.TelematicsEvent](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *TelematicsEventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*telematics.TelematicsEvent) error) error {
+	return keel.Each[*telematics.TelematicsEvent](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newTelematicsEvent() unsafe.Pointer { return unsafe.Pointer(new(telematics.TelematicsEvent)) }
@@ -1106,7 +2902,7 @@ var vehicleInspectionsRef = keel.Ref{Table: &vehicleInspectionsTable}
 
 // VehicleInspectionsTable is the table of telematics.VehicleInspection.
 type VehicleInspectionsTable struct {
-	keel.Handle[*telematics.VehicleInspection]
+	keel.TableBase
 	ID                    keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
@@ -1129,7 +2925,7 @@ type VehicleInspectionsTable struct {
 
 // VehicleInspections references the vehicle_inspections table.
 var VehicleInspections = &VehicleInspectionsTable{
-	Handle:                keel.Handle[*telematics.VehicleInspection]{Ref: &vehicleInspectionsRef},
+	TableBase:             keel.TableBase{Ref: &vehicleInspectionsRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &vehicleInspectionsRef, Index: 0}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &vehicleInspectionsRef, Index: 1}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &vehicleInspectionsRef, Index: 2}}},
@@ -1150,10 +2946,10 @@ var VehicleInspections = &VehicleInspectionsTable{
 	CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: &vehicleInspectionsRef, Index: 17}},
 }
 
-// BuildVehicleInspections builds the handle of vehicle_inspections for ref. Generated relation and alias methods call it.
+// BuildVehicleInspections builds the table of vehicle_inspections for ref. Generated relation and alias methods call it.
 func BuildVehicleInspections(r *keel.Ref) *VehicleInspectionsTable {
 	return &VehicleInspectionsTable{
-		Handle:                keel.Handle[*telematics.VehicleInspection]{Ref: r},
+		TableBase:             keel.TableBase{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1186,6 +2982,365 @@ func (t *VehicleInspectionsTable) As(alias string) *VehicleInspectionsTable {
 // Get returns the vehicle_inspections row with the given key, or keel.ErrNotFound.
 func (t *VehicleInspectionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*telematics.VehicleInspection, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// VehicleInspectionsQuery is a query over telematics.VehicleInspection.
+type VehicleInspectionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*telematics.VehicleInspection] = (*VehicleInspectionsTable)(nil)
+
+var _ keel.Query[*telematics.VehicleInspection] = (*VehicleInspectionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *VehicleInspectionsTable) Query() keel.Query[*telematics.VehicleInspection] {
+	return &VehicleInspectionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see VehicleInspectionsQuery.Where.
+func (t *VehicleInspectionsTable) Where(ps ...keel.Pred) keel.Query[*telematics.VehicleInspection] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see VehicleInspectionsQuery.Pick.
+func (t *VehicleInspectionsTable) Pick(es ...keel.Expr) keel.Query[*telematics.VehicleInspection] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see VehicleInspectionsQuery.Load.
+func (t *VehicleInspectionsTable) Load(ls ...keel.Loader) keel.Query[*telematics.VehicleInspection] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see VehicleInspectionsQuery.Omit.
+func (t *VehicleInspectionsTable) Omit(cols ...keel.Column) keel.Query[*telematics.VehicleInspection] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see VehicleInspectionsQuery.Order.
+func (t *VehicleInspectionsTable) Order(os ...keel.Order) keel.Query[*telematics.VehicleInspection] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see VehicleInspectionsQuery.Limit.
+func (t *VehicleInspectionsTable) Limit(n int) keel.Query[*telematics.VehicleInspection] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see VehicleInspectionsQuery.Group.
+func (t *VehicleInspectionsTable) Group(es ...keel.Expr) keel.Query[*telematics.VehicleInspection] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see VehicleInspectionsQuery.GroupingSets.
+func (t *VehicleInspectionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*telematics.VehicleInspection] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see VehicleInspectionsQuery.Rollup.
+func (t *VehicleInspectionsTable) Rollup(es ...keel.Expr) keel.Query[*telematics.VehicleInspection] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see VehicleInspectionsQuery.Cube.
+func (t *VehicleInspectionsTable) Cube(es ...keel.Expr) keel.Query[*telematics.VehicleInspection] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see VehicleInspectionsQuery.AllTenants.
+func (t *VehicleInspectionsTable) AllTenants() keel.Query[*telematics.VehicleInspection] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see VehicleInspectionsQuery.Join.
+func (t *VehicleInspectionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.VehicleInspection] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see VehicleInspectionsQuery.LeftJoin.
+func (t *VehicleInspectionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.VehicleInspection] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see VehicleInspectionsQuery.LeftJoinLateral.
+func (t *VehicleInspectionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*telematics.VehicleInspection] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see VehicleInspectionsQuery.JoinLateral.
+func (t *VehicleInspectionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*telematics.VehicleInspection] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see VehicleInspectionsQuery.Lock.
+func (t *VehicleInspectionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*telematics.VehicleInspection] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see VehicleInspectionsQuery.DistinctOn.
+func (t *VehicleInspectionsTable) DistinctOn(es ...keel.Expr) keel.Query[*telematics.VehicleInspection] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see VehicleInspectionsQuery.Cache.
+func (t *VehicleInspectionsTable) Cache(opts ...keel.CacheOption) keel.Query[*telematics.VehicleInspection] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see VehicleInspectionsQuery.LoadStrategy.
+func (t *VehicleInspectionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*telematics.VehicleInspection] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see VehicleInspectionsQuery.With.
+func (t *VehicleInspectionsTable) With(ctes ...*keel.CTETable) keel.Query[*telematics.VehicleInspection] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see VehicleInspectionsQuery.Compute.
+func (t *VehicleInspectionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*telematics.VehicleInspection] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *VehicleInspectionsTable) Create(ctx context.Context, db *keel.DB, row *telematics.VehicleInspection) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *VehicleInspectionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*telematics.VehicleInspection) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *VehicleInspectionsTable) Save(ctx context.Context, db *keel.DB, row *telematics.VehicleInspection, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *VehicleInspectionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *telematics.VehicleInspection, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *VehicleInspectionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *telematics.VehicleInspection) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *VehicleInspectionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*telematics.VehicleInspection, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *VehicleInspectionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*telematics.VehicleInspection, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *VehicleInspectionsTable) Copy(ctx context.Context, db *keel.DB, rows []*telematics.VehicleInspection) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *VehicleInspectionsQuery) Where(ps ...keel.Pred) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *VehicleInspectionsQuery) Pick(es ...keel.Expr) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *VehicleInspectionsQuery) Omit(cols ...keel.Column) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *VehicleInspectionsQuery) Load(ls ...keel.Loader) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *VehicleInspectionsQuery) Order(os ...keel.Order) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *VehicleInspectionsQuery) Distinct() keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *VehicleInspectionsQuery) Group(es ...keel.Expr) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *VehicleInspectionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *VehicleInspectionsQuery) Rollup(es ...keel.Expr) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *VehicleInspectionsQuery) Cube(es ...keel.Expr) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *VehicleInspectionsQuery) Window(name string, w keel.Window) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *VehicleInspectionsQuery) Having(ps ...keel.Pred) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *VehicleInspectionsQuery) Limit(n int) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *VehicleInspectionsQuery) Offset(n int) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *VehicleInspectionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *VehicleInspectionsQuery) AllTenants() keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *VehicleInspectionsQuery) CustomPlan() keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *VehicleInspectionsQuery) Timeout(d time.Duration) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *VehicleInspectionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *VehicleInspectionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *VehicleInspectionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *VehicleInspectionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *VehicleInspectionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *VehicleInspectionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *VehicleInspectionsQuery) With(ctes ...*keel.CTETable) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *VehicleInspectionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *VehicleInspectionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*telematics.VehicleInspection] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *VehicleInspectionsQuery) Clone() keel.Query[*telematics.VehicleInspection] {
+	return &VehicleInspectionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *VehicleInspectionsQuery) One(ctx context.Context, db *keel.DB) (*telematics.VehicleInspection, error) {
+	return keel.One[*telematics.VehicleInspection](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *VehicleInspectionsQuery) First(ctx context.Context, db *keel.DB) (*telematics.VehicleInspection, error) {
+	return keel.First[*telematics.VehicleInspection](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *VehicleInspectionsQuery) List(ctx context.Context, db *keel.DB) ([]*telematics.VehicleInspection, error) {
+	return keel.List[*telematics.VehicleInspection](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *VehicleInspectionsQuery) All(ctx context.Context, db *keel.DB) ([]*telematics.VehicleInspection, error) {
+	return keel.All[*telematics.VehicleInspection](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *VehicleInspectionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*telematics.VehicleInspection, error) {
+	return keel.UpdateReturning[*telematics.VehicleInspection](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *VehicleInspectionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*telematics.VehicleInspection], error) {
+	return keel.PageOf[*telematics.VehicleInspection](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *VehicleInspectionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*telematics.VehicleInspection) error) error {
+	return keel.Each[*telematics.VehicleInspection](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newVehicleInspection() unsafe.Pointer { return unsafe.Pointer(new(telematics.VehicleInspection)) }
@@ -1351,7 +3506,7 @@ var vehiclePositionsRef = keel.Ref{Table: &vehiclePositionsTable}
 
 // VehiclePositionsTable is the table of telematics.VehiclePosition.
 type VehiclePositionsTable struct {
-	keel.Handle[*telematics.VehiclePosition]
+	keel.TableBase
 	OrganizationID    keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	TractorID         keelkinds.PulidIDCol
@@ -1371,7 +3526,7 @@ type VehiclePositionsTable struct {
 
 // VehiclePositions references the telematics_vehicle_positions table.
 var VehiclePositions = &VehiclePositionsTable{
-	Handle:            keel.Handle[*telematics.VehiclePosition]{Ref: &vehiclePositionsRef},
+	TableBase:         keel.TableBase{Ref: &vehiclePositionsRef},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &vehiclePositionsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &vehiclePositionsRef, Index: 1}}},
 	TractorID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &vehiclePositionsRef, Index: 2}}},
@@ -1389,10 +3544,10 @@ var VehiclePositions = &VehiclePositionsTable{
 	ReceivedAt:        keel.Int64Col{Col: keel.Col{Ref: &vehiclePositionsRef, Index: 14}},
 }
 
-// BuildVehiclePositions builds the handle of telematics_vehicle_positions for ref. Generated relation and alias methods call it.
+// BuildVehiclePositions builds the table of telematics_vehicle_positions for ref. Generated relation and alias methods call it.
 func BuildVehiclePositions(r *keel.Ref) *VehiclePositionsTable {
 	return &VehiclePositionsTable{
-		Handle:            keel.Handle[*telematics.VehiclePosition]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		TractorID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1427,6 +3582,365 @@ func (t *VehiclePositionsTable) Tractor() *tractordb.TractorsTable {
 // Get returns the telematics_vehicle_positions row with the given key, or keel.ErrNotFound.
 func (t *VehiclePositionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*telematics.VehiclePosition, error) {
 	return t.Where(t.TractorID.Eq(key)).One(ctx, db)
+}
+
+// VehiclePositionsQuery is a query over telematics.VehiclePosition.
+type VehiclePositionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*telematics.VehiclePosition] = (*VehiclePositionsTable)(nil)
+
+var _ keel.Query[*telematics.VehiclePosition] = (*VehiclePositionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *VehiclePositionsTable) Query() keel.Query[*telematics.VehiclePosition] {
+	return &VehiclePositionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see VehiclePositionsQuery.Where.
+func (t *VehiclePositionsTable) Where(ps ...keel.Pred) keel.Query[*telematics.VehiclePosition] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see VehiclePositionsQuery.Pick.
+func (t *VehiclePositionsTable) Pick(es ...keel.Expr) keel.Query[*telematics.VehiclePosition] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see VehiclePositionsQuery.Load.
+func (t *VehiclePositionsTable) Load(ls ...keel.Loader) keel.Query[*telematics.VehiclePosition] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see VehiclePositionsQuery.Omit.
+func (t *VehiclePositionsTable) Omit(cols ...keel.Column) keel.Query[*telematics.VehiclePosition] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see VehiclePositionsQuery.Order.
+func (t *VehiclePositionsTable) Order(os ...keel.Order) keel.Query[*telematics.VehiclePosition] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see VehiclePositionsQuery.Limit.
+func (t *VehiclePositionsTable) Limit(n int) keel.Query[*telematics.VehiclePosition] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see VehiclePositionsQuery.Group.
+func (t *VehiclePositionsTable) Group(es ...keel.Expr) keel.Query[*telematics.VehiclePosition] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see VehiclePositionsQuery.GroupingSets.
+func (t *VehiclePositionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*telematics.VehiclePosition] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see VehiclePositionsQuery.Rollup.
+func (t *VehiclePositionsTable) Rollup(es ...keel.Expr) keel.Query[*telematics.VehiclePosition] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see VehiclePositionsQuery.Cube.
+func (t *VehiclePositionsTable) Cube(es ...keel.Expr) keel.Query[*telematics.VehiclePosition] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see VehiclePositionsQuery.AllTenants.
+func (t *VehiclePositionsTable) AllTenants() keel.Query[*telematics.VehiclePosition] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see VehiclePositionsQuery.Join.
+func (t *VehiclePositionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.VehiclePosition] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see VehiclePositionsQuery.LeftJoin.
+func (t *VehiclePositionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.VehiclePosition] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see VehiclePositionsQuery.LeftJoinLateral.
+func (t *VehiclePositionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*telematics.VehiclePosition] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see VehiclePositionsQuery.JoinLateral.
+func (t *VehiclePositionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*telematics.VehiclePosition] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see VehiclePositionsQuery.Lock.
+func (t *VehiclePositionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*telematics.VehiclePosition] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see VehiclePositionsQuery.DistinctOn.
+func (t *VehiclePositionsTable) DistinctOn(es ...keel.Expr) keel.Query[*telematics.VehiclePosition] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see VehiclePositionsQuery.Cache.
+func (t *VehiclePositionsTable) Cache(opts ...keel.CacheOption) keel.Query[*telematics.VehiclePosition] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see VehiclePositionsQuery.LoadStrategy.
+func (t *VehiclePositionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*telematics.VehiclePosition] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see VehiclePositionsQuery.With.
+func (t *VehiclePositionsTable) With(ctes ...*keel.CTETable) keel.Query[*telematics.VehiclePosition] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see VehiclePositionsQuery.Compute.
+func (t *VehiclePositionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*telematics.VehiclePosition] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *VehiclePositionsTable) Create(ctx context.Context, db *keel.DB, row *telematics.VehiclePosition) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *VehiclePositionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*telematics.VehiclePosition) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *VehiclePositionsTable) Save(ctx context.Context, db *keel.DB, row *telematics.VehiclePosition, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *VehiclePositionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *telematics.VehiclePosition, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *VehiclePositionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *telematics.VehiclePosition) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *VehiclePositionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*telematics.VehiclePosition, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *VehiclePositionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*telematics.VehiclePosition, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *VehiclePositionsTable) Copy(ctx context.Context, db *keel.DB, rows []*telematics.VehiclePosition) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *VehiclePositionsQuery) Where(ps ...keel.Pred) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *VehiclePositionsQuery) Pick(es ...keel.Expr) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *VehiclePositionsQuery) Omit(cols ...keel.Column) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *VehiclePositionsQuery) Load(ls ...keel.Loader) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *VehiclePositionsQuery) Order(os ...keel.Order) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *VehiclePositionsQuery) Distinct() keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *VehiclePositionsQuery) Group(es ...keel.Expr) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *VehiclePositionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *VehiclePositionsQuery) Rollup(es ...keel.Expr) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *VehiclePositionsQuery) Cube(es ...keel.Expr) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *VehiclePositionsQuery) Window(name string, w keel.Window) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *VehiclePositionsQuery) Having(ps ...keel.Pred) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *VehiclePositionsQuery) Limit(n int) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *VehiclePositionsQuery) Offset(n int) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *VehiclePositionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *VehiclePositionsQuery) AllTenants() keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *VehiclePositionsQuery) CustomPlan() keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *VehiclePositionsQuery) Timeout(d time.Duration) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *VehiclePositionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *VehiclePositionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *VehiclePositionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *VehiclePositionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *VehiclePositionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *VehiclePositionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *VehiclePositionsQuery) With(ctes ...*keel.CTETable) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *VehiclePositionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *VehiclePositionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*telematics.VehiclePosition] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *VehiclePositionsQuery) Clone() keel.Query[*telematics.VehiclePosition] {
+	return &VehiclePositionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *VehiclePositionsQuery) One(ctx context.Context, db *keel.DB) (*telematics.VehiclePosition, error) {
+	return keel.One[*telematics.VehiclePosition](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *VehiclePositionsQuery) First(ctx context.Context, db *keel.DB) (*telematics.VehiclePosition, error) {
+	return keel.First[*telematics.VehiclePosition](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *VehiclePositionsQuery) List(ctx context.Context, db *keel.DB) ([]*telematics.VehiclePosition, error) {
+	return keel.List[*telematics.VehiclePosition](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *VehiclePositionsQuery) All(ctx context.Context, db *keel.DB) ([]*telematics.VehiclePosition, error) {
+	return keel.All[*telematics.VehiclePosition](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *VehiclePositionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*telematics.VehiclePosition, error) {
+	return keel.UpdateReturning[*telematics.VehiclePosition](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *VehiclePositionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*telematics.VehiclePosition], error) {
+	return keel.PageOf[*telematics.VehiclePosition](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *VehiclePositionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*telematics.VehiclePosition) error) error {
+	return keel.Each[*telematics.VehiclePosition](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newVehiclePosition() unsafe.Pointer { return unsafe.Pointer(new(telematics.VehiclePosition)) }
@@ -1580,7 +4094,7 @@ var workerHOSLogsRef = keel.Ref{Table: &workerHOSLogsTable}
 
 // WorkerHOSLogsTable is the table of telematics.WorkerHOSLog.
 type WorkerHOSLogsTable struct {
-	keel.Handle[*telematics.WorkerHOSLog]
+	keel.TableBase
 	OrganizationID    keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	WorkerID          keelkinds.PulidIDCol
@@ -1595,7 +4109,7 @@ type WorkerHOSLogsTable struct {
 
 // WorkerHOSLogs references the worker_hos_logs table.
 var WorkerHOSLogs = &WorkerHOSLogsTable{
-	Handle:            keel.Handle[*telematics.WorkerHOSLog]{Ref: &workerHOSLogsRef},
+	TableBase:         keel.TableBase{Ref: &workerHOSLogsRef},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerHOSLogsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerHOSLogsRef, Index: 1}}},
 	WorkerID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerHOSLogsRef, Index: 2}}},
@@ -1608,10 +4122,10 @@ var WorkerHOSLogs = &WorkerHOSLogsTable{
 	ReceivedAt:        keel.Int64Col{Col: keel.Col{Ref: &workerHOSLogsRef, Index: 9}},
 }
 
-// BuildWorkerHOSLogs builds the handle of worker_hos_logs for ref. Generated relation and alias methods call it.
+// BuildWorkerHOSLogs builds the table of worker_hos_logs for ref. Generated relation and alias methods call it.
 func BuildWorkerHOSLogs(r *keel.Ref) *WorkerHOSLogsTable {
 	return &WorkerHOSLogsTable{
-		Handle:            keel.Handle[*telematics.WorkerHOSLog]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		WorkerID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1636,6 +4150,365 @@ func (t *WorkerHOSLogsTable) As(alias string) *WorkerHOSLogsTable {
 // Worker is the belongs relation.
 func (t *WorkerHOSLogsTable) Worker() *workerdb.WorkersTable {
 	return keel.Path(t.Ref, 0, workerdb.BuildWorkers)
+}
+
+// WorkerHOSLogsQuery is a query over telematics.WorkerHOSLog.
+type WorkerHOSLogsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*telematics.WorkerHOSLog] = (*WorkerHOSLogsTable)(nil)
+
+var _ keel.Query[*telematics.WorkerHOSLog] = (*WorkerHOSLogsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerHOSLogsTable) Query() keel.Query[*telematics.WorkerHOSLog] {
+	return &WorkerHOSLogsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerHOSLogsQuery.Where.
+func (t *WorkerHOSLogsTable) Where(ps ...keel.Pred) keel.Query[*telematics.WorkerHOSLog] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerHOSLogsQuery.Pick.
+func (t *WorkerHOSLogsTable) Pick(es ...keel.Expr) keel.Query[*telematics.WorkerHOSLog] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerHOSLogsQuery.Load.
+func (t *WorkerHOSLogsTable) Load(ls ...keel.Loader) keel.Query[*telematics.WorkerHOSLog] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerHOSLogsQuery.Omit.
+func (t *WorkerHOSLogsTable) Omit(cols ...keel.Column) keel.Query[*telematics.WorkerHOSLog] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerHOSLogsQuery.Order.
+func (t *WorkerHOSLogsTable) Order(os ...keel.Order) keel.Query[*telematics.WorkerHOSLog] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerHOSLogsQuery.Limit.
+func (t *WorkerHOSLogsTable) Limit(n int) keel.Query[*telematics.WorkerHOSLog] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerHOSLogsQuery.Group.
+func (t *WorkerHOSLogsTable) Group(es ...keel.Expr) keel.Query[*telematics.WorkerHOSLog] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerHOSLogsQuery.GroupingSets.
+func (t *WorkerHOSLogsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*telematics.WorkerHOSLog] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerHOSLogsQuery.Rollup.
+func (t *WorkerHOSLogsTable) Rollup(es ...keel.Expr) keel.Query[*telematics.WorkerHOSLog] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerHOSLogsQuery.Cube.
+func (t *WorkerHOSLogsTable) Cube(es ...keel.Expr) keel.Query[*telematics.WorkerHOSLog] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerHOSLogsQuery.AllTenants.
+func (t *WorkerHOSLogsTable) AllTenants() keel.Query[*telematics.WorkerHOSLog] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerHOSLogsQuery.Join.
+func (t *WorkerHOSLogsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.WorkerHOSLog] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerHOSLogsQuery.LeftJoin.
+func (t *WorkerHOSLogsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.WorkerHOSLog] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerHOSLogsQuery.LeftJoinLateral.
+func (t *WorkerHOSLogsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*telematics.WorkerHOSLog] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerHOSLogsQuery.JoinLateral.
+func (t *WorkerHOSLogsTable) JoinLateral(sub keel.LateralSource) keel.Query[*telematics.WorkerHOSLog] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerHOSLogsQuery.Lock.
+func (t *WorkerHOSLogsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*telematics.WorkerHOSLog] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerHOSLogsQuery.DistinctOn.
+func (t *WorkerHOSLogsTable) DistinctOn(es ...keel.Expr) keel.Query[*telematics.WorkerHOSLog] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerHOSLogsQuery.Cache.
+func (t *WorkerHOSLogsTable) Cache(opts ...keel.CacheOption) keel.Query[*telematics.WorkerHOSLog] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerHOSLogsQuery.LoadStrategy.
+func (t *WorkerHOSLogsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*telematics.WorkerHOSLog] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerHOSLogsQuery.With.
+func (t *WorkerHOSLogsTable) With(ctes ...*keel.CTETable) keel.Query[*telematics.WorkerHOSLog] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerHOSLogsQuery.Compute.
+func (t *WorkerHOSLogsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*telematics.WorkerHOSLog] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerHOSLogsTable) Create(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSLog) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerHOSLogsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSLog) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerHOSLogsTable) Save(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSLog, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerHOSLogsTable) SaveExcept(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSLog, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerHOSLogsTable) DeleteRow(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSLog) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerHOSLogsTable) Upsert(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSLog, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerHOSLogsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSLog, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerHOSLogsTable) Copy(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSLog) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerHOSLogsQuery) Where(ps ...keel.Pred) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerHOSLogsQuery) Pick(es ...keel.Expr) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerHOSLogsQuery) Omit(cols ...keel.Column) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerHOSLogsQuery) Load(ls ...keel.Loader) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerHOSLogsQuery) Order(os ...keel.Order) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerHOSLogsQuery) Distinct() keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerHOSLogsQuery) Group(es ...keel.Expr) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerHOSLogsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerHOSLogsQuery) Rollup(es ...keel.Expr) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerHOSLogsQuery) Cube(es ...keel.Expr) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerHOSLogsQuery) Window(name string, w keel.Window) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerHOSLogsQuery) Having(ps ...keel.Pred) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerHOSLogsQuery) Limit(n int) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerHOSLogsQuery) Offset(n int) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerHOSLogsQuery) DistinctOn(es ...keel.Expr) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerHOSLogsQuery) AllTenants() keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerHOSLogsQuery) CustomPlan() keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerHOSLogsQuery) Timeout(d time.Duration) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerHOSLogsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerHOSLogsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerHOSLogsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerHOSLogsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerHOSLogsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerHOSLogsQuery) Cache(opts ...keel.CacheOption) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerHOSLogsQuery) With(ctes ...*keel.CTETable) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerHOSLogsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerHOSLogsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*telematics.WorkerHOSLog] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerHOSLogsQuery) Clone() keel.Query[*telematics.WorkerHOSLog] {
+	return &WorkerHOSLogsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerHOSLogsQuery) One(ctx context.Context, db *keel.DB) (*telematics.WorkerHOSLog, error) {
+	return keel.One[*telematics.WorkerHOSLog](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerHOSLogsQuery) First(ctx context.Context, db *keel.DB) (*telematics.WorkerHOSLog, error) {
+	return keel.First[*telematics.WorkerHOSLog](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerHOSLogsQuery) List(ctx context.Context, db *keel.DB) ([]*telematics.WorkerHOSLog, error) {
+	return keel.List[*telematics.WorkerHOSLog](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerHOSLogsQuery) All(ctx context.Context, db *keel.DB) ([]*telematics.WorkerHOSLog, error) {
+	return keel.All[*telematics.WorkerHOSLog](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerHOSLogsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*telematics.WorkerHOSLog, error) {
+	return keel.UpdateReturning[*telematics.WorkerHOSLog](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerHOSLogsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*telematics.WorkerHOSLog], error) {
+	return keel.PageOf[*telematics.WorkerHOSLog](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerHOSLogsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*telematics.WorkerHOSLog) error) error {
+	return keel.Each[*telematics.WorkerHOSLog](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerHOSLog() unsafe.Pointer { return unsafe.Pointer(new(telematics.WorkerHOSLog)) }
@@ -1779,7 +4652,7 @@ var workerHOSStatesRef = keel.Ref{Table: &workerHOSStatesTable}
 
 // WorkerHOSStatesTable is the table of telematics.WorkerHOSState.
 type WorkerHOSStatesTable struct {
-	keel.Handle[*telematics.WorkerHOSState]
+	keel.TableBase
 	OrganizationID          keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	WorkerID                keelkinds.PulidIDCol
@@ -1807,7 +4680,7 @@ type WorkerHOSStatesTable struct {
 
 // WorkerHOSStates references the worker_hos_states table.
 var WorkerHOSStates = &WorkerHOSStatesTable{
-	Handle:                  keel.Handle[*telematics.WorkerHOSState]{Ref: &workerHOSStatesRef},
+	TableBase:               keel.TableBase{Ref: &workerHOSStatesRef},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 1}}},
 	WorkerID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 2}}},
@@ -1833,10 +4706,10 @@ var WorkerHOSStates = &WorkerHOSStatesTable{
 	ReceivedAt:              keel.Int64Col{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 22}},
 }
 
-// BuildWorkerHOSStates builds the handle of worker_hos_states for ref. Generated relation and alias methods call it.
+// BuildWorkerHOSStates builds the table of worker_hos_states for ref. Generated relation and alias methods call it.
 func BuildWorkerHOSStates(r *keel.Ref) *WorkerHOSStatesTable {
 	return &WorkerHOSStatesTable{
-		Handle:                  keel.Handle[*telematics.WorkerHOSState]{Ref: r},
+		TableBase:               keel.TableBase{Ref: r},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		WorkerID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1879,6 +4752,365 @@ func (t *WorkerHOSStatesTable) Worker() *workerdb.WorkersTable {
 // Get returns the worker_hos_states row with the given key, or keel.ErrNotFound.
 func (t *WorkerHOSStatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*telematics.WorkerHOSState, error) {
 	return t.Where(t.WorkerID.Eq(key)).One(ctx, db)
+}
+
+// WorkerHOSStatesQuery is a query over telematics.WorkerHOSState.
+type WorkerHOSStatesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*telematics.WorkerHOSState] = (*WorkerHOSStatesTable)(nil)
+
+var _ keel.Query[*telematics.WorkerHOSState] = (*WorkerHOSStatesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerHOSStatesTable) Query() keel.Query[*telematics.WorkerHOSState] {
+	return &WorkerHOSStatesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerHOSStatesQuery.Where.
+func (t *WorkerHOSStatesTable) Where(ps ...keel.Pred) keel.Query[*telematics.WorkerHOSState] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerHOSStatesQuery.Pick.
+func (t *WorkerHOSStatesTable) Pick(es ...keel.Expr) keel.Query[*telematics.WorkerHOSState] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerHOSStatesQuery.Load.
+func (t *WorkerHOSStatesTable) Load(ls ...keel.Loader) keel.Query[*telematics.WorkerHOSState] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerHOSStatesQuery.Omit.
+func (t *WorkerHOSStatesTable) Omit(cols ...keel.Column) keel.Query[*telematics.WorkerHOSState] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerHOSStatesQuery.Order.
+func (t *WorkerHOSStatesTable) Order(os ...keel.Order) keel.Query[*telematics.WorkerHOSState] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerHOSStatesQuery.Limit.
+func (t *WorkerHOSStatesTable) Limit(n int) keel.Query[*telematics.WorkerHOSState] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerHOSStatesQuery.Group.
+func (t *WorkerHOSStatesTable) Group(es ...keel.Expr) keel.Query[*telematics.WorkerHOSState] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerHOSStatesQuery.GroupingSets.
+func (t *WorkerHOSStatesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*telematics.WorkerHOSState] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerHOSStatesQuery.Rollup.
+func (t *WorkerHOSStatesTable) Rollup(es ...keel.Expr) keel.Query[*telematics.WorkerHOSState] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerHOSStatesQuery.Cube.
+func (t *WorkerHOSStatesTable) Cube(es ...keel.Expr) keel.Query[*telematics.WorkerHOSState] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerHOSStatesQuery.AllTenants.
+func (t *WorkerHOSStatesTable) AllTenants() keel.Query[*telematics.WorkerHOSState] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerHOSStatesQuery.Join.
+func (t *WorkerHOSStatesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.WorkerHOSState] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerHOSStatesQuery.LeftJoin.
+func (t *WorkerHOSStatesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.WorkerHOSState] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerHOSStatesQuery.LeftJoinLateral.
+func (t *WorkerHOSStatesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*telematics.WorkerHOSState] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerHOSStatesQuery.JoinLateral.
+func (t *WorkerHOSStatesTable) JoinLateral(sub keel.LateralSource) keel.Query[*telematics.WorkerHOSState] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerHOSStatesQuery.Lock.
+func (t *WorkerHOSStatesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*telematics.WorkerHOSState] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerHOSStatesQuery.DistinctOn.
+func (t *WorkerHOSStatesTable) DistinctOn(es ...keel.Expr) keel.Query[*telematics.WorkerHOSState] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerHOSStatesQuery.Cache.
+func (t *WorkerHOSStatesTable) Cache(opts ...keel.CacheOption) keel.Query[*telematics.WorkerHOSState] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerHOSStatesQuery.LoadStrategy.
+func (t *WorkerHOSStatesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*telematics.WorkerHOSState] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerHOSStatesQuery.With.
+func (t *WorkerHOSStatesTable) With(ctes ...*keel.CTETable) keel.Query[*telematics.WorkerHOSState] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerHOSStatesQuery.Compute.
+func (t *WorkerHOSStatesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*telematics.WorkerHOSState] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerHOSStatesTable) Create(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSState) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerHOSStatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSState) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerHOSStatesTable) Save(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSState, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerHOSStatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSState, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerHOSStatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSState) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerHOSStatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSState, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerHOSStatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSState, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerHOSStatesTable) Copy(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSState) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerHOSStatesQuery) Where(ps ...keel.Pred) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerHOSStatesQuery) Pick(es ...keel.Expr) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerHOSStatesQuery) Omit(cols ...keel.Column) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerHOSStatesQuery) Load(ls ...keel.Loader) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerHOSStatesQuery) Order(os ...keel.Order) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerHOSStatesQuery) Distinct() keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerHOSStatesQuery) Group(es ...keel.Expr) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerHOSStatesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerHOSStatesQuery) Rollup(es ...keel.Expr) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerHOSStatesQuery) Cube(es ...keel.Expr) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerHOSStatesQuery) Window(name string, w keel.Window) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerHOSStatesQuery) Having(ps ...keel.Pred) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerHOSStatesQuery) Limit(n int) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerHOSStatesQuery) Offset(n int) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerHOSStatesQuery) DistinctOn(es ...keel.Expr) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerHOSStatesQuery) AllTenants() keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerHOSStatesQuery) CustomPlan() keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerHOSStatesQuery) Timeout(d time.Duration) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerHOSStatesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerHOSStatesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerHOSStatesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerHOSStatesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerHOSStatesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerHOSStatesQuery) Cache(opts ...keel.CacheOption) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerHOSStatesQuery) With(ctes ...*keel.CTETable) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerHOSStatesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerHOSStatesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*telematics.WorkerHOSState] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerHOSStatesQuery) Clone() keel.Query[*telematics.WorkerHOSState] {
+	return &WorkerHOSStatesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerHOSStatesQuery) One(ctx context.Context, db *keel.DB) (*telematics.WorkerHOSState, error) {
+	return keel.One[*telematics.WorkerHOSState](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerHOSStatesQuery) First(ctx context.Context, db *keel.DB) (*telematics.WorkerHOSState, error) {
+	return keel.First[*telematics.WorkerHOSState](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerHOSStatesQuery) List(ctx context.Context, db *keel.DB) ([]*telematics.WorkerHOSState, error) {
+	return keel.List[*telematics.WorkerHOSState](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerHOSStatesQuery) All(ctx context.Context, db *keel.DB) ([]*telematics.WorkerHOSState, error) {
+	return keel.All[*telematics.WorkerHOSState](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerHOSStatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*telematics.WorkerHOSState, error) {
+	return keel.UpdateReturning[*telematics.WorkerHOSState](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerHOSStatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*telematics.WorkerHOSState], error) {
+	return keel.PageOf[*telematics.WorkerHOSState](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerHOSStatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*telematics.WorkerHOSState) error) error {
+	return keel.Each[*telematics.WorkerHOSState](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerHOSState() unsafe.Pointer { return unsafe.Pointer(new(telematics.WorkerHOSState)) }
@@ -2078,7 +5310,7 @@ var workerHOSViolationsRef = keel.Ref{Table: &workerHOSViolationsTable}
 
 // WorkerHOSViolationsTable is the table of telematics.WorkerHOSViolation.
 type WorkerHOSViolationsTable struct {
-	keel.Handle[*telematics.WorkerHOSViolation]
+	keel.TableBase
 	OrganizationID   keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	WorkerID         keelkinds.PulidIDCol
@@ -2093,7 +5325,7 @@ type WorkerHOSViolationsTable struct {
 
 // WorkerHOSViolations references the worker_hos_violations table.
 var WorkerHOSViolations = &WorkerHOSViolationsTable{
-	Handle:           keel.Handle[*telematics.WorkerHOSViolation]{Ref: &workerHOSViolationsRef},
+	TableBase:        keel.TableBase{Ref: &workerHOSViolationsRef},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerHOSViolationsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerHOSViolationsRef, Index: 1}}},
 	WorkerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerHOSViolationsRef, Index: 2}}},
@@ -2106,10 +5338,10 @@ var WorkerHOSViolations = &WorkerHOSViolationsTable{
 	DetectedAt:       keel.Int64Col{Col: keel.Col{Ref: &workerHOSViolationsRef, Index: 9}},
 }
 
-// BuildWorkerHOSViolations builds the handle of worker_hos_violations for ref. Generated relation and alias methods call it.
+// BuildWorkerHOSViolations builds the table of worker_hos_violations for ref. Generated relation and alias methods call it.
 func BuildWorkerHOSViolations(r *keel.Ref) *WorkerHOSViolationsTable {
 	return &WorkerHOSViolationsTable{
-		Handle:           keel.Handle[*telematics.WorkerHOSViolation]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		WorkerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2134,6 +5366,365 @@ func (t *WorkerHOSViolationsTable) As(alias string) *WorkerHOSViolationsTable {
 // Worker is the belongs relation.
 func (t *WorkerHOSViolationsTable) Worker() *workerdb.WorkersTable {
 	return keel.Path(t.Ref, 0, workerdb.BuildWorkers)
+}
+
+// WorkerHOSViolationsQuery is a query over telematics.WorkerHOSViolation.
+type WorkerHOSViolationsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*telematics.WorkerHOSViolation] = (*WorkerHOSViolationsTable)(nil)
+
+var _ keel.Query[*telematics.WorkerHOSViolation] = (*WorkerHOSViolationsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerHOSViolationsTable) Query() keel.Query[*telematics.WorkerHOSViolation] {
+	return &WorkerHOSViolationsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerHOSViolationsQuery.Where.
+func (t *WorkerHOSViolationsTable) Where(ps ...keel.Pred) keel.Query[*telematics.WorkerHOSViolation] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerHOSViolationsQuery.Pick.
+func (t *WorkerHOSViolationsTable) Pick(es ...keel.Expr) keel.Query[*telematics.WorkerHOSViolation] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerHOSViolationsQuery.Load.
+func (t *WorkerHOSViolationsTable) Load(ls ...keel.Loader) keel.Query[*telematics.WorkerHOSViolation] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerHOSViolationsQuery.Omit.
+func (t *WorkerHOSViolationsTable) Omit(cols ...keel.Column) keel.Query[*telematics.WorkerHOSViolation] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerHOSViolationsQuery.Order.
+func (t *WorkerHOSViolationsTable) Order(os ...keel.Order) keel.Query[*telematics.WorkerHOSViolation] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerHOSViolationsQuery.Limit.
+func (t *WorkerHOSViolationsTable) Limit(n int) keel.Query[*telematics.WorkerHOSViolation] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerHOSViolationsQuery.Group.
+func (t *WorkerHOSViolationsTable) Group(es ...keel.Expr) keel.Query[*telematics.WorkerHOSViolation] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerHOSViolationsQuery.GroupingSets.
+func (t *WorkerHOSViolationsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*telematics.WorkerHOSViolation] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerHOSViolationsQuery.Rollup.
+func (t *WorkerHOSViolationsTable) Rollup(es ...keel.Expr) keel.Query[*telematics.WorkerHOSViolation] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerHOSViolationsQuery.Cube.
+func (t *WorkerHOSViolationsTable) Cube(es ...keel.Expr) keel.Query[*telematics.WorkerHOSViolation] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerHOSViolationsQuery.AllTenants.
+func (t *WorkerHOSViolationsTable) AllTenants() keel.Query[*telematics.WorkerHOSViolation] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerHOSViolationsQuery.Join.
+func (t *WorkerHOSViolationsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.WorkerHOSViolation] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerHOSViolationsQuery.LeftJoin.
+func (t *WorkerHOSViolationsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.WorkerHOSViolation] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerHOSViolationsQuery.LeftJoinLateral.
+func (t *WorkerHOSViolationsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*telematics.WorkerHOSViolation] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerHOSViolationsQuery.JoinLateral.
+func (t *WorkerHOSViolationsTable) JoinLateral(sub keel.LateralSource) keel.Query[*telematics.WorkerHOSViolation] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerHOSViolationsQuery.Lock.
+func (t *WorkerHOSViolationsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*telematics.WorkerHOSViolation] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerHOSViolationsQuery.DistinctOn.
+func (t *WorkerHOSViolationsTable) DistinctOn(es ...keel.Expr) keel.Query[*telematics.WorkerHOSViolation] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerHOSViolationsQuery.Cache.
+func (t *WorkerHOSViolationsTable) Cache(opts ...keel.CacheOption) keel.Query[*telematics.WorkerHOSViolation] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerHOSViolationsQuery.LoadStrategy.
+func (t *WorkerHOSViolationsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*telematics.WorkerHOSViolation] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerHOSViolationsQuery.With.
+func (t *WorkerHOSViolationsTable) With(ctes ...*keel.CTETable) keel.Query[*telematics.WorkerHOSViolation] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerHOSViolationsQuery.Compute.
+func (t *WorkerHOSViolationsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*telematics.WorkerHOSViolation] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerHOSViolationsTable) Create(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSViolation) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerHOSViolationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSViolation) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerHOSViolationsTable) Save(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSViolation, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerHOSViolationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSViolation, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerHOSViolationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSViolation) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerHOSViolationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSViolation, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerHOSViolationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSViolation, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerHOSViolationsTable) Copy(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSViolation) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerHOSViolationsQuery) Where(ps ...keel.Pred) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerHOSViolationsQuery) Pick(es ...keel.Expr) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerHOSViolationsQuery) Omit(cols ...keel.Column) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerHOSViolationsQuery) Load(ls ...keel.Loader) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerHOSViolationsQuery) Order(os ...keel.Order) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerHOSViolationsQuery) Distinct() keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerHOSViolationsQuery) Group(es ...keel.Expr) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerHOSViolationsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerHOSViolationsQuery) Rollup(es ...keel.Expr) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerHOSViolationsQuery) Cube(es ...keel.Expr) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerHOSViolationsQuery) Window(name string, w keel.Window) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerHOSViolationsQuery) Having(ps ...keel.Pred) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerHOSViolationsQuery) Limit(n int) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerHOSViolationsQuery) Offset(n int) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerHOSViolationsQuery) DistinctOn(es ...keel.Expr) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerHOSViolationsQuery) AllTenants() keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerHOSViolationsQuery) CustomPlan() keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerHOSViolationsQuery) Timeout(d time.Duration) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerHOSViolationsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerHOSViolationsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerHOSViolationsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerHOSViolationsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerHOSViolationsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerHOSViolationsQuery) Cache(opts ...keel.CacheOption) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerHOSViolationsQuery) With(ctes ...*keel.CTETable) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerHOSViolationsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerHOSViolationsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*telematics.WorkerHOSViolation] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerHOSViolationsQuery) Clone() keel.Query[*telematics.WorkerHOSViolation] {
+	return &WorkerHOSViolationsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerHOSViolationsQuery) One(ctx context.Context, db *keel.DB) (*telematics.WorkerHOSViolation, error) {
+	return keel.One[*telematics.WorkerHOSViolation](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerHOSViolationsQuery) First(ctx context.Context, db *keel.DB) (*telematics.WorkerHOSViolation, error) {
+	return keel.First[*telematics.WorkerHOSViolation](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerHOSViolationsQuery) List(ctx context.Context, db *keel.DB) ([]*telematics.WorkerHOSViolation, error) {
+	return keel.List[*telematics.WorkerHOSViolation](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerHOSViolationsQuery) All(ctx context.Context, db *keel.DB) ([]*telematics.WorkerHOSViolation, error) {
+	return keel.All[*telematics.WorkerHOSViolation](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerHOSViolationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*telematics.WorkerHOSViolation, error) {
+	return keel.UpdateReturning[*telematics.WorkerHOSViolation](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerHOSViolationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*telematics.WorkerHOSViolation], error) {
+	return keel.PageOf[*telematics.WorkerHOSViolation](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerHOSViolationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*telematics.WorkerHOSViolation) error) error {
+	return keel.Each[*telematics.WorkerHOSViolation](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerHOSViolation() unsafe.Pointer {

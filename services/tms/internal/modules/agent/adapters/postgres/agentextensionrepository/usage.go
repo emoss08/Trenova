@@ -73,7 +73,7 @@ func (r *usageRepository) Reserve(
 
 func recordOutcome(
 	params agentextensionports.RecordExtensionOutcomeParams,
-) (*keel.Query[*agentextension.ExtensionUsageDaily], []keel.Assignment) {
+) (keel.Query[*agentextension.ExtensionUsageDaily], []keel.Assignment) {
 	u := agentextensiondb.ExtensionUsageDailies
 	var failures int64
 	if params.Failed {
@@ -117,7 +117,7 @@ type usageTotals struct {
 
 func summarize(
 	params agentextensionports.SummarizeExtensionUsageParams,
-) *keel.Query[*agentextension.ExtensionUsageDaily] {
+) keel.Query[*agentextension.ExtensionUsageDaily] {
 	u := agentextensiondb.ExtensionUsageDailies
 
 	return u.Group(u.ExtensionType).

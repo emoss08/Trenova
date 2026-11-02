@@ -142,8 +142,8 @@ func (r *remittanceRepository) get(
 }
 
 func withMatchedItem(
-	q *keel.Query[*factoringremittance.RemittanceLine],
-) *keel.Query[*factoringremittance.RemittanceLine] {
+	q keel.Query[*factoringremittance.RemittanceLine],
+) keel.Query[*factoringremittance.RemittanceLine] {
 	line := factoringremittancedb.RemittanceLines
 	item := line.SubmissionItem()
 	return q.
@@ -289,7 +289,7 @@ func (r *remittanceRepository) UpdateLines(
 
 func lineOutcomes(
 	lines []*factoringremittance.RemittanceLine,
-) (*keel.Query[*factoringremittance.RemittanceLine], []keel.Assignment, error) {
+) (keel.Query[*factoringremittance.RemittanceLine], []keel.Assignment, error) {
 	n := len(lines)
 	ids := make([]pulid.ID, n)
 	kinds := make([]string, n)
@@ -380,7 +380,7 @@ func (r *remittanceRepository) ListCandidates(
 
 func remittanceCandidates(
 	req *factoringremittanceports.ListRemittanceCandidatesRequest,
-) *keel.Query[*factoringsubmission.SubmissionItem] {
+) keel.Query[*factoringsubmission.SubmissionItem] {
 	item := factoringsubmissiondb.SubmissionItems
 	sub := item.Submission()
 	agr := sub.Agreement()
@@ -474,7 +474,7 @@ func (r *remittanceRepository) ListOpen(
 	)
 }
 
-func openRemittances(limit int) *keel.Query[*factoringremittance.Remittance] {
+func openRemittances(limit int) keel.Query[*factoringremittance.Remittance] {
 	rem := factoringremittancedb.Remittances
 	fac := rem.FactoringCompany()
 	return rem.Pick(

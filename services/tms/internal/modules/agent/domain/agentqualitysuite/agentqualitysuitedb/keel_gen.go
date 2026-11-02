@@ -4,6 +4,7 @@ package agentqualitysuitedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -79,7 +80,7 @@ var suiteRunsRef = keel.Ref{Table: &suiteRunsTable}
 
 // SuiteRunsTable is the table of agentqualitysuite.SuiteRun.
 type SuiteRunsTable struct {
-	keel.Handle[*agentqualitysuite.SuiteRun]
+	keel.TableBase
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -116,7 +117,7 @@ type SuiteRunsTable struct {
 
 // SuiteRuns references the agent_suite_runs table.
 var SuiteRuns = &SuiteRunsTable{
-	Handle:             keel.Handle[*agentqualitysuite.SuiteRun]{Ref: &suiteRunsRef},
+	TableBase:          keel.TableBase{Ref: &suiteRunsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 2}}},
@@ -151,10 +152,10 @@ var SuiteRuns = &SuiteRunsTable{
 	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &suiteRunsRef, Index: 31}},
 }
 
-// BuildSuiteRuns builds the handle of agent_suite_runs for ref. Generated relation and alias methods call it.
+// BuildSuiteRuns builds the table of agent_suite_runs for ref. Generated relation and alias methods call it.
 func BuildSuiteRuns(r *keel.Ref) *SuiteRunsTable {
 	return &SuiteRunsTable{
-		Handle:             keel.Handle[*agentqualitysuite.SuiteRun]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -201,6 +202,365 @@ func (t *SuiteRunsTable) As(alias string) *SuiteRunsTable {
 // Get returns the agent_suite_runs row with the given key, or keel.ErrNotFound.
 func (t *SuiteRunsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentqualitysuite.SuiteRun, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// SuiteRunsQuery is a query over agentqualitysuite.SuiteRun.
+type SuiteRunsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*agentqualitysuite.SuiteRun] = (*SuiteRunsTable)(nil)
+
+var _ keel.Query[*agentqualitysuite.SuiteRun] = (*SuiteRunsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SuiteRunsTable) Query() keel.Query[*agentqualitysuite.SuiteRun] {
+	return &SuiteRunsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SuiteRunsQuery.Where.
+func (t *SuiteRunsTable) Where(ps ...keel.Pred) keel.Query[*agentqualitysuite.SuiteRun] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SuiteRunsQuery.Pick.
+func (t *SuiteRunsTable) Pick(es ...keel.Expr) keel.Query[*agentqualitysuite.SuiteRun] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SuiteRunsQuery.Load.
+func (t *SuiteRunsTable) Load(ls ...keel.Loader) keel.Query[*agentqualitysuite.SuiteRun] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SuiteRunsQuery.Omit.
+func (t *SuiteRunsTable) Omit(cols ...keel.Column) keel.Query[*agentqualitysuite.SuiteRun] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SuiteRunsQuery.Order.
+func (t *SuiteRunsTable) Order(os ...keel.Order) keel.Query[*agentqualitysuite.SuiteRun] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SuiteRunsQuery.Limit.
+func (t *SuiteRunsTable) Limit(n int) keel.Query[*agentqualitysuite.SuiteRun] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SuiteRunsQuery.Group.
+func (t *SuiteRunsTable) Group(es ...keel.Expr) keel.Query[*agentqualitysuite.SuiteRun] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SuiteRunsQuery.GroupingSets.
+func (t *SuiteRunsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentqualitysuite.SuiteRun] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SuiteRunsQuery.Rollup.
+func (t *SuiteRunsTable) Rollup(es ...keel.Expr) keel.Query[*agentqualitysuite.SuiteRun] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SuiteRunsQuery.Cube.
+func (t *SuiteRunsTable) Cube(es ...keel.Expr) keel.Query[*agentqualitysuite.SuiteRun] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SuiteRunsQuery.AllTenants.
+func (t *SuiteRunsTable) AllTenants() keel.Query[*agentqualitysuite.SuiteRun] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SuiteRunsQuery.Join.
+func (t *SuiteRunsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentqualitysuite.SuiteRun] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SuiteRunsQuery.LeftJoin.
+func (t *SuiteRunsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentqualitysuite.SuiteRun] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SuiteRunsQuery.LeftJoinLateral.
+func (t *SuiteRunsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentqualitysuite.SuiteRun] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SuiteRunsQuery.JoinLateral.
+func (t *SuiteRunsTable) JoinLateral(sub keel.LateralSource) keel.Query[*agentqualitysuite.SuiteRun] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SuiteRunsQuery.Lock.
+func (t *SuiteRunsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentqualitysuite.SuiteRun] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SuiteRunsQuery.DistinctOn.
+func (t *SuiteRunsTable) DistinctOn(es ...keel.Expr) keel.Query[*agentqualitysuite.SuiteRun] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SuiteRunsQuery.Cache.
+func (t *SuiteRunsTable) Cache(opts ...keel.CacheOption) keel.Query[*agentqualitysuite.SuiteRun] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SuiteRunsQuery.LoadStrategy.
+func (t *SuiteRunsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentqualitysuite.SuiteRun] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SuiteRunsQuery.With.
+func (t *SuiteRunsTable) With(ctes ...*keel.CTETable) keel.Query[*agentqualitysuite.SuiteRun] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SuiteRunsQuery.Compute.
+func (t *SuiteRunsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agentqualitysuite.SuiteRun] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SuiteRunsTable) Create(ctx context.Context, db *keel.DB, row *agentqualitysuite.SuiteRun) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SuiteRunsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentqualitysuite.SuiteRun) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *SuiteRunsTable) Save(ctx context.Context, db *keel.DB, row *agentqualitysuite.SuiteRun, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SuiteRunsTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentqualitysuite.SuiteRun, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SuiteRunsTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentqualitysuite.SuiteRun) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SuiteRunsTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentqualitysuite.SuiteRun, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SuiteRunsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentqualitysuite.SuiteRun, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SuiteRunsTable) Copy(ctx context.Context, db *keel.DB, rows []*agentqualitysuite.SuiteRun) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SuiteRunsQuery) Where(ps ...keel.Pred) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SuiteRunsQuery) Pick(es ...keel.Expr) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SuiteRunsQuery) Omit(cols ...keel.Column) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SuiteRunsQuery) Load(ls ...keel.Loader) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SuiteRunsQuery) Order(os ...keel.Order) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SuiteRunsQuery) Distinct() keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SuiteRunsQuery) Group(es ...keel.Expr) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SuiteRunsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SuiteRunsQuery) Rollup(es ...keel.Expr) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SuiteRunsQuery) Cube(es ...keel.Expr) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SuiteRunsQuery) Window(name string, w keel.Window) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SuiteRunsQuery) Having(ps ...keel.Pred) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SuiteRunsQuery) Limit(n int) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SuiteRunsQuery) Offset(n int) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SuiteRunsQuery) DistinctOn(es ...keel.Expr) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SuiteRunsQuery) AllTenants() keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SuiteRunsQuery) CustomPlan() keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SuiteRunsQuery) Timeout(d time.Duration) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SuiteRunsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SuiteRunsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SuiteRunsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SuiteRunsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SuiteRunsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SuiteRunsQuery) Cache(opts ...keel.CacheOption) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SuiteRunsQuery) With(ctes ...*keel.CTETable) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SuiteRunsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SuiteRunsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentqualitysuite.SuiteRun] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SuiteRunsQuery) Clone() keel.Query[*agentqualitysuite.SuiteRun] {
+	return &SuiteRunsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SuiteRunsQuery) One(ctx context.Context, db *keel.DB) (*agentqualitysuite.SuiteRun, error) {
+	return keel.One[*agentqualitysuite.SuiteRun](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SuiteRunsQuery) First(ctx context.Context, db *keel.DB) (*agentqualitysuite.SuiteRun, error) {
+	return keel.First[*agentqualitysuite.SuiteRun](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SuiteRunsQuery) List(ctx context.Context, db *keel.DB) ([]*agentqualitysuite.SuiteRun, error) {
+	return keel.List[*agentqualitysuite.SuiteRun](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SuiteRunsQuery) All(ctx context.Context, db *keel.DB) ([]*agentqualitysuite.SuiteRun, error) {
+	return keel.All[*agentqualitysuite.SuiteRun](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SuiteRunsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentqualitysuite.SuiteRun, error) {
+	return keel.UpdateReturning[*agentqualitysuite.SuiteRun](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SuiteRunsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentqualitysuite.SuiteRun], error) {
+	return keel.PageOf[*agentqualitysuite.SuiteRun](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SuiteRunsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentqualitysuite.SuiteRun) error) error {
+	return keel.Each[*agentqualitysuite.SuiteRun](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newSuiteRun() unsafe.Pointer { return unsafe.Pointer(new(agentqualitysuite.SuiteRun)) }

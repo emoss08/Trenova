@@ -4,6 +4,7 @@ package documentcontentdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -69,7 +70,7 @@ var contentsRef = keel.Ref{Table: &contentsTable}
 
 // ContentsTable is the table of documentcontent.Content.
 type ContentsTable struct {
-	keel.Handle[*documentcontent.Content]
+	keel.TableBase
 	ID                       keelkinds.PulidIDCol
 	DocumentID               keelkinds.PulidIDCol
 	OrganizationID           keelkinds.PulidIDCol
@@ -95,7 +96,7 @@ type ContentsTable struct {
 
 // Contents references the document_contents table.
 var Contents = &ContentsTable{
-	Handle:                   keel.Handle[*documentcontent.Content]{Ref: &contentsRef},
+	TableBase:                keel.TableBase{Ref: &contentsRef},
 	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &contentsRef, Index: 0}}},
 	DocumentID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &contentsRef, Index: 1}}},
 	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &contentsRef, Index: 2}}},
@@ -119,10 +120,10 @@ var Contents = &ContentsTable{
 	RawObjectKey:             keel.StringCol{Col: keel.Col{Ref: &contentsRef, Index: 20}},
 }
 
-// BuildContents builds the handle of document_contents for ref. Generated relation and alias methods call it.
+// BuildContents builds the table of document_contents for ref. Generated relation and alias methods call it.
 func BuildContents(r *keel.Ref) *ContentsTable {
 	return &ContentsTable{
-		Handle:                   keel.Handle[*documentcontent.Content]{Ref: r},
+		TableBase:                keel.TableBase{Ref: r},
 		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		DocumentID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -158,6 +159,365 @@ func (t *ContentsTable) As(alias string) *ContentsTable {
 // Get returns the document_contents row with the given key, or keel.ErrNotFound.
 func (t *ContentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*documentcontent.Content, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ContentsQuery is a query over documentcontent.Content.
+type ContentsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*documentcontent.Content] = (*ContentsTable)(nil)
+
+var _ keel.Query[*documentcontent.Content] = (*ContentsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ContentsTable) Query() keel.Query[*documentcontent.Content] {
+	return &ContentsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ContentsQuery.Where.
+func (t *ContentsTable) Where(ps ...keel.Pred) keel.Query[*documentcontent.Content] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ContentsQuery.Pick.
+func (t *ContentsTable) Pick(es ...keel.Expr) keel.Query[*documentcontent.Content] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ContentsQuery.Load.
+func (t *ContentsTable) Load(ls ...keel.Loader) keel.Query[*documentcontent.Content] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ContentsQuery.Omit.
+func (t *ContentsTable) Omit(cols ...keel.Column) keel.Query[*documentcontent.Content] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ContentsQuery.Order.
+func (t *ContentsTable) Order(os ...keel.Order) keel.Query[*documentcontent.Content] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ContentsQuery.Limit.
+func (t *ContentsTable) Limit(n int) keel.Query[*documentcontent.Content] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ContentsQuery.Group.
+func (t *ContentsTable) Group(es ...keel.Expr) keel.Query[*documentcontent.Content] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ContentsQuery.GroupingSets.
+func (t *ContentsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*documentcontent.Content] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ContentsQuery.Rollup.
+func (t *ContentsTable) Rollup(es ...keel.Expr) keel.Query[*documentcontent.Content] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ContentsQuery.Cube.
+func (t *ContentsTable) Cube(es ...keel.Expr) keel.Query[*documentcontent.Content] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ContentsQuery.AllTenants.
+func (t *ContentsTable) AllTenants() keel.Query[*documentcontent.Content] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ContentsQuery.Join.
+func (t *ContentsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentcontent.Content] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ContentsQuery.LeftJoin.
+func (t *ContentsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentcontent.Content] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ContentsQuery.LeftJoinLateral.
+func (t *ContentsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*documentcontent.Content] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ContentsQuery.JoinLateral.
+func (t *ContentsTable) JoinLateral(sub keel.LateralSource) keel.Query[*documentcontent.Content] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ContentsQuery.Lock.
+func (t *ContentsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*documentcontent.Content] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ContentsQuery.DistinctOn.
+func (t *ContentsTable) DistinctOn(es ...keel.Expr) keel.Query[*documentcontent.Content] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ContentsQuery.Cache.
+func (t *ContentsTable) Cache(opts ...keel.CacheOption) keel.Query[*documentcontent.Content] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ContentsQuery.LoadStrategy.
+func (t *ContentsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*documentcontent.Content] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ContentsQuery.With.
+func (t *ContentsTable) With(ctes ...*keel.CTETable) keel.Query[*documentcontent.Content] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ContentsQuery.Compute.
+func (t *ContentsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*documentcontent.Content] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ContentsTable) Create(ctx context.Context, db *keel.DB, row *documentcontent.Content) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ContentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*documentcontent.Content) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ContentsTable) Save(ctx context.Context, db *keel.DB, row *documentcontent.Content, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ContentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *documentcontent.Content, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ContentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *documentcontent.Content) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ContentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*documentcontent.Content, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ContentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*documentcontent.Content, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ContentsTable) Copy(ctx context.Context, db *keel.DB, rows []*documentcontent.Content) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ContentsQuery) Where(ps ...keel.Pred) keel.Query[*documentcontent.Content] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ContentsQuery) Pick(es ...keel.Expr) keel.Query[*documentcontent.Content] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ContentsQuery) Omit(cols ...keel.Column) keel.Query[*documentcontent.Content] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ContentsQuery) Load(ls ...keel.Loader) keel.Query[*documentcontent.Content] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ContentsQuery) Order(os ...keel.Order) keel.Query[*documentcontent.Content] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ContentsQuery) Distinct() keel.Query[*documentcontent.Content] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ContentsQuery) Group(es ...keel.Expr) keel.Query[*documentcontent.Content] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ContentsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*documentcontent.Content] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ContentsQuery) Rollup(es ...keel.Expr) keel.Query[*documentcontent.Content] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ContentsQuery) Cube(es ...keel.Expr) keel.Query[*documentcontent.Content] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ContentsQuery) Window(name string, w keel.Window) keel.Query[*documentcontent.Content] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ContentsQuery) Having(ps ...keel.Pred) keel.Query[*documentcontent.Content] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ContentsQuery) Limit(n int) keel.Query[*documentcontent.Content] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ContentsQuery) Offset(n int) keel.Query[*documentcontent.Content] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ContentsQuery) DistinctOn(es ...keel.Expr) keel.Query[*documentcontent.Content] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ContentsQuery) AllTenants() keel.Query[*documentcontent.Content] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ContentsQuery) CustomPlan() keel.Query[*documentcontent.Content] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ContentsQuery) Timeout(d time.Duration) keel.Query[*documentcontent.Content] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ContentsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*documentcontent.Content] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ContentsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentcontent.Content] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ContentsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentcontent.Content] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ContentsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*documentcontent.Content] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ContentsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*documentcontent.Content] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ContentsQuery) Cache(opts ...keel.CacheOption) keel.Query[*documentcontent.Content] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ContentsQuery) With(ctes ...*keel.CTETable) keel.Query[*documentcontent.Content] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ContentsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*documentcontent.Content] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ContentsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*documentcontent.Content] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ContentsQuery) Clone() keel.Query[*documentcontent.Content] {
+	return &ContentsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ContentsQuery) One(ctx context.Context, db *keel.DB) (*documentcontent.Content, error) {
+	return keel.One[*documentcontent.Content](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ContentsQuery) First(ctx context.Context, db *keel.DB) (*documentcontent.Content, error) {
+	return keel.First[*documentcontent.Content](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ContentsQuery) List(ctx context.Context, db *keel.DB) ([]*documentcontent.Content, error) {
+	return keel.List[*documentcontent.Content](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ContentsQuery) All(ctx context.Context, db *keel.DB) ([]*documentcontent.Content, error) {
+	return keel.All[*documentcontent.Content](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ContentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*documentcontent.Content, error) {
+	return keel.UpdateReturning[*documentcontent.Content](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ContentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*documentcontent.Content], error) {
+	return keel.PageOf[*documentcontent.Content](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ContentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*documentcontent.Content) error) error {
+	return keel.Each[*documentcontent.Content](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newContent() unsafe.Pointer { return unsafe.Pointer(new(documentcontent.Content)) }
@@ -355,7 +715,7 @@ var pagesRef = keel.Ref{Table: &pagesTable}
 
 // PagesTable is the table of documentcontent.Page.
 type PagesTable struct {
-	keel.Handle[*documentcontent.Page]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	DocumentContentID    keelkinds.PulidIDCol
 	DocumentID           keelkinds.PulidIDCol
@@ -377,7 +737,7 @@ type PagesTable struct {
 
 // Pages references the document_content_pages table.
 var Pages = &PagesTable{
-	Handle:               keel.Handle[*documentcontent.Page]{Ref: &pagesRef},
+	TableBase:            keel.TableBase{Ref: &pagesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pagesRef, Index: 0}}},
 	DocumentContentID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pagesRef, Index: 1}}},
 	DocumentID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pagesRef, Index: 2}}},
@@ -397,10 +757,10 @@ var Pages = &PagesTable{
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &pagesRef, Index: 16}},
 }
 
-// BuildPages builds the handle of document_content_pages for ref. Generated relation and alias methods call it.
+// BuildPages builds the table of document_content_pages for ref. Generated relation and alias methods call it.
 func BuildPages(r *keel.Ref) *PagesTable {
 	return &PagesTable{
-		Handle:               keel.Handle[*documentcontent.Page]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		DocumentContentID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		DocumentID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -430,6 +790,365 @@ func (t *PagesTable) As(alias string) *PagesTable { return keel.Alias(t.Ref, ali
 // Get returns the document_content_pages row with the given key, or keel.ErrNotFound.
 func (t *PagesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*documentcontent.Page, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// PagesQuery is a query over documentcontent.Page.
+type PagesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*documentcontent.Page] = (*PagesTable)(nil)
+
+var _ keel.Query[*documentcontent.Page] = (*PagesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *PagesTable) Query() keel.Query[*documentcontent.Page] {
+	return &PagesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see PagesQuery.Where.
+func (t *PagesTable) Where(ps ...keel.Pred) keel.Query[*documentcontent.Page] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see PagesQuery.Pick.
+func (t *PagesTable) Pick(es ...keel.Expr) keel.Query[*documentcontent.Page] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see PagesQuery.Load.
+func (t *PagesTable) Load(ls ...keel.Loader) keel.Query[*documentcontent.Page] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see PagesQuery.Omit.
+func (t *PagesTable) Omit(cols ...keel.Column) keel.Query[*documentcontent.Page] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see PagesQuery.Order.
+func (t *PagesTable) Order(os ...keel.Order) keel.Query[*documentcontent.Page] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see PagesQuery.Limit.
+func (t *PagesTable) Limit(n int) keel.Query[*documentcontent.Page] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see PagesQuery.Group.
+func (t *PagesTable) Group(es ...keel.Expr) keel.Query[*documentcontent.Page] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see PagesQuery.GroupingSets.
+func (t *PagesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*documentcontent.Page] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see PagesQuery.Rollup.
+func (t *PagesTable) Rollup(es ...keel.Expr) keel.Query[*documentcontent.Page] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see PagesQuery.Cube.
+func (t *PagesTable) Cube(es ...keel.Expr) keel.Query[*documentcontent.Page] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see PagesQuery.AllTenants.
+func (t *PagesTable) AllTenants() keel.Query[*documentcontent.Page] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see PagesQuery.Join.
+func (t *PagesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentcontent.Page] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see PagesQuery.LeftJoin.
+func (t *PagesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentcontent.Page] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see PagesQuery.LeftJoinLateral.
+func (t *PagesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*documentcontent.Page] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see PagesQuery.JoinLateral.
+func (t *PagesTable) JoinLateral(sub keel.LateralSource) keel.Query[*documentcontent.Page] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see PagesQuery.Lock.
+func (t *PagesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*documentcontent.Page] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see PagesQuery.DistinctOn.
+func (t *PagesTable) DistinctOn(es ...keel.Expr) keel.Query[*documentcontent.Page] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see PagesQuery.Cache.
+func (t *PagesTable) Cache(opts ...keel.CacheOption) keel.Query[*documentcontent.Page] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see PagesQuery.LoadStrategy.
+func (t *PagesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*documentcontent.Page] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see PagesQuery.With.
+func (t *PagesTable) With(ctes ...*keel.CTETable) keel.Query[*documentcontent.Page] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see PagesQuery.Compute.
+func (t *PagesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*documentcontent.Page] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *PagesTable) Create(ctx context.Context, db *keel.DB, row *documentcontent.Page) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *PagesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*documentcontent.Page) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *PagesTable) Save(ctx context.Context, db *keel.DB, row *documentcontent.Page, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *PagesTable) SaveExcept(ctx context.Context, db *keel.DB, row *documentcontent.Page, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *PagesTable) DeleteRow(ctx context.Context, db *keel.DB, row *documentcontent.Page) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *PagesTable) Upsert(ctx context.Context, db *keel.DB, rows []*documentcontent.Page, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *PagesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*documentcontent.Page, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *PagesTable) Copy(ctx context.Context, db *keel.DB, rows []*documentcontent.Page) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *PagesQuery) Where(ps ...keel.Pred) keel.Query[*documentcontent.Page] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *PagesQuery) Pick(es ...keel.Expr) keel.Query[*documentcontent.Page] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *PagesQuery) Omit(cols ...keel.Column) keel.Query[*documentcontent.Page] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *PagesQuery) Load(ls ...keel.Loader) keel.Query[*documentcontent.Page] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *PagesQuery) Order(os ...keel.Order) keel.Query[*documentcontent.Page] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *PagesQuery) Distinct() keel.Query[*documentcontent.Page] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *PagesQuery) Group(es ...keel.Expr) keel.Query[*documentcontent.Page] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *PagesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*documentcontent.Page] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *PagesQuery) Rollup(es ...keel.Expr) keel.Query[*documentcontent.Page] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *PagesQuery) Cube(es ...keel.Expr) keel.Query[*documentcontent.Page] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *PagesQuery) Window(name string, w keel.Window) keel.Query[*documentcontent.Page] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *PagesQuery) Having(ps ...keel.Pred) keel.Query[*documentcontent.Page] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *PagesQuery) Limit(n int) keel.Query[*documentcontent.Page] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *PagesQuery) Offset(n int) keel.Query[*documentcontent.Page] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *PagesQuery) DistinctOn(es ...keel.Expr) keel.Query[*documentcontent.Page] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *PagesQuery) AllTenants() keel.Query[*documentcontent.Page] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *PagesQuery) CustomPlan() keel.Query[*documentcontent.Page] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *PagesQuery) Timeout(d time.Duration) keel.Query[*documentcontent.Page] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *PagesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*documentcontent.Page] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *PagesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentcontent.Page] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *PagesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentcontent.Page] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *PagesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*documentcontent.Page] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *PagesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*documentcontent.Page] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *PagesQuery) Cache(opts ...keel.CacheOption) keel.Query[*documentcontent.Page] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *PagesQuery) With(ctes ...*keel.CTETable) keel.Query[*documentcontent.Page] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *PagesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*documentcontent.Page] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *PagesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*documentcontent.Page] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *PagesQuery) Clone() keel.Query[*documentcontent.Page] {
+	return &PagesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *PagesQuery) One(ctx context.Context, db *keel.DB) (*documentcontent.Page, error) {
+	return keel.One[*documentcontent.Page](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *PagesQuery) First(ctx context.Context, db *keel.DB) (*documentcontent.Page, error) {
+	return keel.First[*documentcontent.Page](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *PagesQuery) List(ctx context.Context, db *keel.DB) ([]*documentcontent.Page, error) {
+	return keel.List[*documentcontent.Page](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *PagesQuery) All(ctx context.Context, db *keel.DB) ([]*documentcontent.Page, error) {
+	return keel.All[*documentcontent.Page](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *PagesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*documentcontent.Page, error) {
+	return keel.UpdateReturning[*documentcontent.Page](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *PagesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*documentcontent.Page], error) {
+	return keel.PageOf[*documentcontent.Page](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *PagesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*documentcontent.Page) error) error {
+	return keel.Each[*documentcontent.Page](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newPage() unsafe.Pointer { return unsafe.Pointer(new(documentcontent.Page)) }

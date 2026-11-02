@@ -4,6 +4,7 @@ package journalsourcedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -66,7 +67,7 @@ var sourcesRef = keel.Ref{Table: &sourcesTable}
 
 // SourcesTable is the table of journalsource.Source.
 type SourcesTable struct {
-	keel.Handle[*journalsource.Source]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -83,7 +84,7 @@ type SourcesTable struct {
 
 // Sources references the journal_sources table.
 var Sources = &SourcesTable{
-	Handle:               keel.Handle[*journalsource.Source]{Ref: &sourcesRef},
+	TableBase:            keel.TableBase{Ref: &sourcesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourcesRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourcesRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourcesRef, Index: 2}}},
@@ -98,10 +99,10 @@ var Sources = &SourcesTable{
 	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &sourcesRef, Index: 11}},
 }
 
-// BuildSources builds the handle of journal_sources for ref. Generated relation and alias methods call it.
+// BuildSources builds the table of journal_sources for ref. Generated relation and alias methods call it.
 func BuildSources(r *keel.Ref) *SourcesTable {
 	return &SourcesTable{
-		Handle:               keel.Handle[*journalsource.Source]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -136,6 +137,365 @@ func (t *SourcesTable) JournalEntry() *journalentrydb.JournalEntriesTable {
 // Get returns the journal_sources row with the given key, or keel.ErrNotFound.
 func (t *SourcesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*journalsource.Source, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// SourcesQuery is a query over journalsource.Source.
+type SourcesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*journalsource.Source] = (*SourcesTable)(nil)
+
+var _ keel.Query[*journalsource.Source] = (*SourcesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SourcesTable) Query() keel.Query[*journalsource.Source] {
+	return &SourcesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SourcesQuery.Where.
+func (t *SourcesTable) Where(ps ...keel.Pred) keel.Query[*journalsource.Source] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SourcesQuery.Pick.
+func (t *SourcesTable) Pick(es ...keel.Expr) keel.Query[*journalsource.Source] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SourcesQuery.Load.
+func (t *SourcesTable) Load(ls ...keel.Loader) keel.Query[*journalsource.Source] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SourcesQuery.Omit.
+func (t *SourcesTable) Omit(cols ...keel.Column) keel.Query[*journalsource.Source] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SourcesQuery.Order.
+func (t *SourcesTable) Order(os ...keel.Order) keel.Query[*journalsource.Source] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SourcesQuery.Limit.
+func (t *SourcesTable) Limit(n int) keel.Query[*journalsource.Source] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SourcesQuery.Group.
+func (t *SourcesTable) Group(es ...keel.Expr) keel.Query[*journalsource.Source] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SourcesQuery.GroupingSets.
+func (t *SourcesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*journalsource.Source] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SourcesQuery.Rollup.
+func (t *SourcesTable) Rollup(es ...keel.Expr) keel.Query[*journalsource.Source] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SourcesQuery.Cube.
+func (t *SourcesTable) Cube(es ...keel.Expr) keel.Query[*journalsource.Source] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SourcesQuery.AllTenants.
+func (t *SourcesTable) AllTenants() keel.Query[*journalsource.Source] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SourcesQuery.Join.
+func (t *SourcesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*journalsource.Source] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SourcesQuery.LeftJoin.
+func (t *SourcesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*journalsource.Source] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SourcesQuery.LeftJoinLateral.
+func (t *SourcesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*journalsource.Source] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SourcesQuery.JoinLateral.
+func (t *SourcesTable) JoinLateral(sub keel.LateralSource) keel.Query[*journalsource.Source] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SourcesQuery.Lock.
+func (t *SourcesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*journalsource.Source] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SourcesQuery.DistinctOn.
+func (t *SourcesTable) DistinctOn(es ...keel.Expr) keel.Query[*journalsource.Source] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SourcesQuery.Cache.
+func (t *SourcesTable) Cache(opts ...keel.CacheOption) keel.Query[*journalsource.Source] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SourcesQuery.LoadStrategy.
+func (t *SourcesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*journalsource.Source] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SourcesQuery.With.
+func (t *SourcesTable) With(ctes ...*keel.CTETable) keel.Query[*journalsource.Source] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SourcesQuery.Compute.
+func (t *SourcesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*journalsource.Source] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SourcesTable) Create(ctx context.Context, db *keel.DB, row *journalsource.Source) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SourcesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*journalsource.Source) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *SourcesTable) Save(ctx context.Context, db *keel.DB, row *journalsource.Source, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SourcesTable) SaveExcept(ctx context.Context, db *keel.DB, row *journalsource.Source, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SourcesTable) DeleteRow(ctx context.Context, db *keel.DB, row *journalsource.Source) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SourcesTable) Upsert(ctx context.Context, db *keel.DB, rows []*journalsource.Source, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SourcesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*journalsource.Source, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SourcesTable) Copy(ctx context.Context, db *keel.DB, rows []*journalsource.Source) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SourcesQuery) Where(ps ...keel.Pred) keel.Query[*journalsource.Source] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SourcesQuery) Pick(es ...keel.Expr) keel.Query[*journalsource.Source] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SourcesQuery) Omit(cols ...keel.Column) keel.Query[*journalsource.Source] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SourcesQuery) Load(ls ...keel.Loader) keel.Query[*journalsource.Source] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SourcesQuery) Order(os ...keel.Order) keel.Query[*journalsource.Source] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SourcesQuery) Distinct() keel.Query[*journalsource.Source] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SourcesQuery) Group(es ...keel.Expr) keel.Query[*journalsource.Source] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SourcesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*journalsource.Source] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SourcesQuery) Rollup(es ...keel.Expr) keel.Query[*journalsource.Source] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SourcesQuery) Cube(es ...keel.Expr) keel.Query[*journalsource.Source] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SourcesQuery) Window(name string, w keel.Window) keel.Query[*journalsource.Source] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SourcesQuery) Having(ps ...keel.Pred) keel.Query[*journalsource.Source] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SourcesQuery) Limit(n int) keel.Query[*journalsource.Source] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SourcesQuery) Offset(n int) keel.Query[*journalsource.Source] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SourcesQuery) DistinctOn(es ...keel.Expr) keel.Query[*journalsource.Source] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SourcesQuery) AllTenants() keel.Query[*journalsource.Source] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SourcesQuery) CustomPlan() keel.Query[*journalsource.Source] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SourcesQuery) Timeout(d time.Duration) keel.Query[*journalsource.Source] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SourcesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*journalsource.Source] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SourcesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*journalsource.Source] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SourcesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*journalsource.Source] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SourcesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*journalsource.Source] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SourcesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*journalsource.Source] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SourcesQuery) Cache(opts ...keel.CacheOption) keel.Query[*journalsource.Source] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SourcesQuery) With(ctes ...*keel.CTETable) keel.Query[*journalsource.Source] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SourcesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*journalsource.Source] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SourcesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*journalsource.Source] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SourcesQuery) Clone() keel.Query[*journalsource.Source] {
+	return &SourcesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SourcesQuery) One(ctx context.Context, db *keel.DB) (*journalsource.Source, error) {
+	return keel.One[*journalsource.Source](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SourcesQuery) First(ctx context.Context, db *keel.DB) (*journalsource.Source, error) {
+	return keel.First[*journalsource.Source](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SourcesQuery) List(ctx context.Context, db *keel.DB) ([]*journalsource.Source, error) {
+	return keel.List[*journalsource.Source](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SourcesQuery) All(ctx context.Context, db *keel.DB) ([]*journalsource.Source, error) {
+	return keel.All[*journalsource.Source](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SourcesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*journalsource.Source, error) {
+	return keel.UpdateReturning[*journalsource.Source](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SourcesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*journalsource.Source], error) {
+	return keel.PageOf[*journalsource.Source](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SourcesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*journalsource.Source) error) error {
+	return keel.Each[*journalsource.Source](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newSource() unsafe.Pointer { return unsafe.Pointer(new(journalsource.Source)) }
@@ -262,7 +622,7 @@ var sourceJournalLinksRef = keel.Ref{Table: &sourceJournalLinksTable}
 
 // SourceJournalLinksTable is the table of journalsource.SourceJournalLink.
 type SourceJournalLinksTable struct {
-	keel.Handle[*journalsource.SourceJournalLink]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -275,7 +635,7 @@ type SourceJournalLinksTable struct {
 
 // SourceJournalLinks references the source_journal_links table.
 var SourceJournalLinks = &SourceJournalLinksTable{
-	Handle:          keel.Handle[*journalsource.SourceJournalLink]{Ref: &sourceJournalLinksRef},
+	TableBase:       keel.TableBase{Ref: &sourceJournalLinksRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 2}}},
@@ -286,10 +646,10 @@ var SourceJournalLinks = &SourceJournalLinksTable{
 	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 7}},
 }
 
-// BuildSourceJournalLinks builds the handle of source_journal_links for ref. Generated relation and alias methods call it.
+// BuildSourceJournalLinks builds the table of source_journal_links for ref. Generated relation and alias methods call it.
 func BuildSourceJournalLinks(r *keel.Ref) *SourceJournalLinksTable {
 	return &SourceJournalLinksTable{
-		Handle:          keel.Handle[*journalsource.SourceJournalLink]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -312,6 +672,365 @@ func (t *SourceJournalLinksTable) As(alias string) *SourceJournalLinksTable {
 // Get returns the source_journal_links row with the given key, or keel.ErrNotFound.
 func (t *SourceJournalLinksTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*journalsource.SourceJournalLink, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// SourceJournalLinksQuery is a query over journalsource.SourceJournalLink.
+type SourceJournalLinksQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*journalsource.SourceJournalLink] = (*SourceJournalLinksTable)(nil)
+
+var _ keel.Query[*journalsource.SourceJournalLink] = (*SourceJournalLinksQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SourceJournalLinksTable) Query() keel.Query[*journalsource.SourceJournalLink] {
+	return &SourceJournalLinksQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SourceJournalLinksQuery.Where.
+func (t *SourceJournalLinksTable) Where(ps ...keel.Pred) keel.Query[*journalsource.SourceJournalLink] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SourceJournalLinksQuery.Pick.
+func (t *SourceJournalLinksTable) Pick(es ...keel.Expr) keel.Query[*journalsource.SourceJournalLink] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SourceJournalLinksQuery.Load.
+func (t *SourceJournalLinksTable) Load(ls ...keel.Loader) keel.Query[*journalsource.SourceJournalLink] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SourceJournalLinksQuery.Omit.
+func (t *SourceJournalLinksTable) Omit(cols ...keel.Column) keel.Query[*journalsource.SourceJournalLink] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SourceJournalLinksQuery.Order.
+func (t *SourceJournalLinksTable) Order(os ...keel.Order) keel.Query[*journalsource.SourceJournalLink] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SourceJournalLinksQuery.Limit.
+func (t *SourceJournalLinksTable) Limit(n int) keel.Query[*journalsource.SourceJournalLink] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SourceJournalLinksQuery.Group.
+func (t *SourceJournalLinksTable) Group(es ...keel.Expr) keel.Query[*journalsource.SourceJournalLink] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SourceJournalLinksQuery.GroupingSets.
+func (t *SourceJournalLinksTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*journalsource.SourceJournalLink] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SourceJournalLinksQuery.Rollup.
+func (t *SourceJournalLinksTable) Rollup(es ...keel.Expr) keel.Query[*journalsource.SourceJournalLink] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SourceJournalLinksQuery.Cube.
+func (t *SourceJournalLinksTable) Cube(es ...keel.Expr) keel.Query[*journalsource.SourceJournalLink] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SourceJournalLinksQuery.AllTenants.
+func (t *SourceJournalLinksTable) AllTenants() keel.Query[*journalsource.SourceJournalLink] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SourceJournalLinksQuery.Join.
+func (t *SourceJournalLinksTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*journalsource.SourceJournalLink] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SourceJournalLinksQuery.LeftJoin.
+func (t *SourceJournalLinksTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*journalsource.SourceJournalLink] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SourceJournalLinksQuery.LeftJoinLateral.
+func (t *SourceJournalLinksTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*journalsource.SourceJournalLink] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SourceJournalLinksQuery.JoinLateral.
+func (t *SourceJournalLinksTable) JoinLateral(sub keel.LateralSource) keel.Query[*journalsource.SourceJournalLink] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SourceJournalLinksQuery.Lock.
+func (t *SourceJournalLinksTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*journalsource.SourceJournalLink] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SourceJournalLinksQuery.DistinctOn.
+func (t *SourceJournalLinksTable) DistinctOn(es ...keel.Expr) keel.Query[*journalsource.SourceJournalLink] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SourceJournalLinksQuery.Cache.
+func (t *SourceJournalLinksTable) Cache(opts ...keel.CacheOption) keel.Query[*journalsource.SourceJournalLink] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SourceJournalLinksQuery.LoadStrategy.
+func (t *SourceJournalLinksTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*journalsource.SourceJournalLink] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SourceJournalLinksQuery.With.
+func (t *SourceJournalLinksTable) With(ctes ...*keel.CTETable) keel.Query[*journalsource.SourceJournalLink] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SourceJournalLinksQuery.Compute.
+func (t *SourceJournalLinksTable) Compute(col keel.Column, e keel.Expr) keel.Query[*journalsource.SourceJournalLink] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SourceJournalLinksTable) Create(ctx context.Context, db *keel.DB, row *journalsource.SourceJournalLink) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SourceJournalLinksTable) CreateMany(ctx context.Context, db *keel.DB, rows []*journalsource.SourceJournalLink) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *SourceJournalLinksTable) Save(ctx context.Context, db *keel.DB, row *journalsource.SourceJournalLink, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SourceJournalLinksTable) SaveExcept(ctx context.Context, db *keel.DB, row *journalsource.SourceJournalLink, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SourceJournalLinksTable) DeleteRow(ctx context.Context, db *keel.DB, row *journalsource.SourceJournalLink) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SourceJournalLinksTable) Upsert(ctx context.Context, db *keel.DB, rows []*journalsource.SourceJournalLink, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SourceJournalLinksTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*journalsource.SourceJournalLink, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SourceJournalLinksTable) Copy(ctx context.Context, db *keel.DB, rows []*journalsource.SourceJournalLink) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SourceJournalLinksQuery) Where(ps ...keel.Pred) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SourceJournalLinksQuery) Pick(es ...keel.Expr) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SourceJournalLinksQuery) Omit(cols ...keel.Column) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SourceJournalLinksQuery) Load(ls ...keel.Loader) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SourceJournalLinksQuery) Order(os ...keel.Order) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SourceJournalLinksQuery) Distinct() keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SourceJournalLinksQuery) Group(es ...keel.Expr) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SourceJournalLinksQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SourceJournalLinksQuery) Rollup(es ...keel.Expr) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SourceJournalLinksQuery) Cube(es ...keel.Expr) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SourceJournalLinksQuery) Window(name string, w keel.Window) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SourceJournalLinksQuery) Having(ps ...keel.Pred) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SourceJournalLinksQuery) Limit(n int) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SourceJournalLinksQuery) Offset(n int) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SourceJournalLinksQuery) DistinctOn(es ...keel.Expr) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SourceJournalLinksQuery) AllTenants() keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SourceJournalLinksQuery) CustomPlan() keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SourceJournalLinksQuery) Timeout(d time.Duration) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SourceJournalLinksQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SourceJournalLinksQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SourceJournalLinksQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SourceJournalLinksQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SourceJournalLinksQuery) JoinLateral(sub keel.LateralSource) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SourceJournalLinksQuery) Cache(opts ...keel.CacheOption) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SourceJournalLinksQuery) With(ctes ...*keel.CTETable) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SourceJournalLinksQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SourceJournalLinksQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*journalsource.SourceJournalLink] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SourceJournalLinksQuery) Clone() keel.Query[*journalsource.SourceJournalLink] {
+	return &SourceJournalLinksQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SourceJournalLinksQuery) One(ctx context.Context, db *keel.DB) (*journalsource.SourceJournalLink, error) {
+	return keel.One[*journalsource.SourceJournalLink](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SourceJournalLinksQuery) First(ctx context.Context, db *keel.DB) (*journalsource.SourceJournalLink, error) {
+	return keel.First[*journalsource.SourceJournalLink](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SourceJournalLinksQuery) List(ctx context.Context, db *keel.DB) ([]*journalsource.SourceJournalLink, error) {
+	return keel.List[*journalsource.SourceJournalLink](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SourceJournalLinksQuery) All(ctx context.Context, db *keel.DB) ([]*journalsource.SourceJournalLink, error) {
+	return keel.All[*journalsource.SourceJournalLink](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SourceJournalLinksQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*journalsource.SourceJournalLink, error) {
+	return keel.UpdateReturning[*journalsource.SourceJournalLink](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SourceJournalLinksQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*journalsource.SourceJournalLink], error) {
+	return keel.PageOf[*journalsource.SourceJournalLink](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SourceJournalLinksQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*journalsource.SourceJournalLink) error) error {
+	return keel.Each[*journalsource.SourceJournalLink](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newSourceJournalLink() unsafe.Pointer {

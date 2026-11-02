@@ -4,6 +4,7 @@ package aicorrectiondb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -74,7 +75,7 @@ var correctionsRef = keel.Ref{Table: &correctionsTable}
 
 // CorrectionsTable is the table of aicorrection.Correction.
 type CorrectionsTable struct {
-	keel.Handle[*aicorrection.Correction]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -107,7 +108,7 @@ type CorrectionsTable struct {
 
 // Corrections references the ai_corrections table.
 var Corrections = &CorrectionsTable{
-	Handle:               keel.Handle[*aicorrection.Correction]{Ref: &correctionsRef},
+	TableBase:            keel.TableBase{Ref: &correctionsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &correctionsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &correctionsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &correctionsRef, Index: 2}}},
@@ -138,10 +139,10 @@ var Corrections = &CorrectionsTable{
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &correctionsRef, Index: 27}},
 }
 
-// BuildCorrections builds the handle of ai_corrections for ref. Generated relation and alias methods call it.
+// BuildCorrections builds the table of ai_corrections for ref. Generated relation and alias methods call it.
 func BuildCorrections(r *keel.Ref) *CorrectionsTable {
 	return &CorrectionsTable{
-		Handle:               keel.Handle[*aicorrection.Correction]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -184,6 +185,365 @@ func (t *CorrectionsTable) As(alias string) *CorrectionsTable {
 // Get returns the ai_corrections row with the given key, or keel.ErrNotFound.
 func (t *CorrectionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*aicorrection.Correction, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CorrectionsQuery is a query over aicorrection.Correction.
+type CorrectionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*aicorrection.Correction] = (*CorrectionsTable)(nil)
+
+var _ keel.Query[*aicorrection.Correction] = (*CorrectionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CorrectionsTable) Query() keel.Query[*aicorrection.Correction] {
+	return &CorrectionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CorrectionsQuery.Where.
+func (t *CorrectionsTable) Where(ps ...keel.Pred) keel.Query[*aicorrection.Correction] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CorrectionsQuery.Pick.
+func (t *CorrectionsTable) Pick(es ...keel.Expr) keel.Query[*aicorrection.Correction] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CorrectionsQuery.Load.
+func (t *CorrectionsTable) Load(ls ...keel.Loader) keel.Query[*aicorrection.Correction] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CorrectionsQuery.Omit.
+func (t *CorrectionsTable) Omit(cols ...keel.Column) keel.Query[*aicorrection.Correction] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CorrectionsQuery.Order.
+func (t *CorrectionsTable) Order(os ...keel.Order) keel.Query[*aicorrection.Correction] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CorrectionsQuery.Limit.
+func (t *CorrectionsTable) Limit(n int) keel.Query[*aicorrection.Correction] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CorrectionsQuery.Group.
+func (t *CorrectionsTable) Group(es ...keel.Expr) keel.Query[*aicorrection.Correction] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CorrectionsQuery.GroupingSets.
+func (t *CorrectionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*aicorrection.Correction] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CorrectionsQuery.Rollup.
+func (t *CorrectionsTable) Rollup(es ...keel.Expr) keel.Query[*aicorrection.Correction] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CorrectionsQuery.Cube.
+func (t *CorrectionsTable) Cube(es ...keel.Expr) keel.Query[*aicorrection.Correction] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CorrectionsQuery.AllTenants.
+func (t *CorrectionsTable) AllTenants() keel.Query[*aicorrection.Correction] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CorrectionsQuery.Join.
+func (t *CorrectionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aicorrection.Correction] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CorrectionsQuery.LeftJoin.
+func (t *CorrectionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aicorrection.Correction] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CorrectionsQuery.LeftJoinLateral.
+func (t *CorrectionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aicorrection.Correction] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CorrectionsQuery.JoinLateral.
+func (t *CorrectionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*aicorrection.Correction] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CorrectionsQuery.Lock.
+func (t *CorrectionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aicorrection.Correction] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CorrectionsQuery.DistinctOn.
+func (t *CorrectionsTable) DistinctOn(es ...keel.Expr) keel.Query[*aicorrection.Correction] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CorrectionsQuery.Cache.
+func (t *CorrectionsTable) Cache(opts ...keel.CacheOption) keel.Query[*aicorrection.Correction] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CorrectionsQuery.LoadStrategy.
+func (t *CorrectionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*aicorrection.Correction] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CorrectionsQuery.With.
+func (t *CorrectionsTable) With(ctes ...*keel.CTETable) keel.Query[*aicorrection.Correction] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CorrectionsQuery.Compute.
+func (t *CorrectionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*aicorrection.Correction] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CorrectionsTable) Create(ctx context.Context, db *keel.DB, row *aicorrection.Correction) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CorrectionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*aicorrection.Correction) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CorrectionsTable) Save(ctx context.Context, db *keel.DB, row *aicorrection.Correction, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CorrectionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *aicorrection.Correction, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CorrectionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *aicorrection.Correction) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CorrectionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*aicorrection.Correction, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CorrectionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*aicorrection.Correction, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CorrectionsTable) Copy(ctx context.Context, db *keel.DB, rows []*aicorrection.Correction) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CorrectionsQuery) Where(ps ...keel.Pred) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CorrectionsQuery) Pick(es ...keel.Expr) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CorrectionsQuery) Omit(cols ...keel.Column) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CorrectionsQuery) Load(ls ...keel.Loader) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CorrectionsQuery) Order(os ...keel.Order) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CorrectionsQuery) Distinct() keel.Query[*aicorrection.Correction] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CorrectionsQuery) Group(es ...keel.Expr) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CorrectionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CorrectionsQuery) Rollup(es ...keel.Expr) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CorrectionsQuery) Cube(es ...keel.Expr) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CorrectionsQuery) Window(name string, w keel.Window) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CorrectionsQuery) Having(ps ...keel.Pred) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CorrectionsQuery) Limit(n int) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CorrectionsQuery) Offset(n int) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CorrectionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CorrectionsQuery) AllTenants() keel.Query[*aicorrection.Correction] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CorrectionsQuery) CustomPlan() keel.Query[*aicorrection.Correction] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CorrectionsQuery) Timeout(d time.Duration) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CorrectionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CorrectionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CorrectionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CorrectionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CorrectionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CorrectionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CorrectionsQuery) With(ctes ...*keel.CTETable) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CorrectionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CorrectionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*aicorrection.Correction] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CorrectionsQuery) Clone() keel.Query[*aicorrection.Correction] {
+	return &CorrectionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CorrectionsQuery) One(ctx context.Context, db *keel.DB) (*aicorrection.Correction, error) {
+	return keel.One[*aicorrection.Correction](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CorrectionsQuery) First(ctx context.Context, db *keel.DB) (*aicorrection.Correction, error) {
+	return keel.First[*aicorrection.Correction](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CorrectionsQuery) List(ctx context.Context, db *keel.DB) ([]*aicorrection.Correction, error) {
+	return keel.List[*aicorrection.Correction](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CorrectionsQuery) All(ctx context.Context, db *keel.DB) ([]*aicorrection.Correction, error) {
+	return keel.All[*aicorrection.Correction](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CorrectionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*aicorrection.Correction, error) {
+	return keel.UpdateReturning[*aicorrection.Correction](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CorrectionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*aicorrection.Correction], error) {
+	return keel.PageOf[*aicorrection.Correction](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CorrectionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*aicorrection.Correction) error) error {
+	return keel.Each[*aicorrection.Correction](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCorrection() unsafe.Pointer { return unsafe.Pointer(new(aicorrection.Correction)) }

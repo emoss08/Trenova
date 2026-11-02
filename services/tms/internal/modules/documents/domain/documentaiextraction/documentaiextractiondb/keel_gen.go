@@ -4,6 +4,7 @@ package documentaiextractiondb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -69,7 +70,7 @@ var extractionsRef = keel.Ref{Table: &extractionsTable}
 
 // ExtractionsTable is the table of documentaiextraction.Extraction.
 type ExtractionsTable struct {
-	keel.Handle[*documentaiextraction.Extraction]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	DocumentID     keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -96,7 +97,7 @@ type ExtractionsTable struct {
 
 // Extractions references the document_ai_extractions table.
 var Extractions = &ExtractionsTable{
-	Handle:         keel.Handle[*documentaiextraction.Extraction]{Ref: &extractionsRef},
+	TableBase:      keel.TableBase{Ref: &extractionsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionsRef, Index: 0}}},
 	DocumentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionsRef, Index: 2}}},
@@ -121,10 +122,10 @@ var Extractions = &ExtractionsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &extractionsRef, Index: 21}},
 }
 
-// BuildExtractions builds the handle of document_ai_extractions for ref. Generated relation and alias methods call it.
+// BuildExtractions builds the table of document_ai_extractions for ref. Generated relation and alias methods call it.
 func BuildExtractions(r *keel.Ref) *ExtractionsTable {
 	return &ExtractionsTable{
-		Handle:         keel.Handle[*documentaiextraction.Extraction]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		DocumentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -161,6 +162,365 @@ func (t *ExtractionsTable) As(alias string) *ExtractionsTable {
 // Get returns the document_ai_extractions row with the given key, or keel.ErrNotFound.
 func (t *ExtractionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*documentaiextraction.Extraction, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ExtractionsQuery is a query over documentaiextraction.Extraction.
+type ExtractionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*documentaiextraction.Extraction] = (*ExtractionsTable)(nil)
+
+var _ keel.Query[*documentaiextraction.Extraction] = (*ExtractionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ExtractionsTable) Query() keel.Query[*documentaiextraction.Extraction] {
+	return &ExtractionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ExtractionsQuery.Where.
+func (t *ExtractionsTable) Where(ps ...keel.Pred) keel.Query[*documentaiextraction.Extraction] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ExtractionsQuery.Pick.
+func (t *ExtractionsTable) Pick(es ...keel.Expr) keel.Query[*documentaiextraction.Extraction] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ExtractionsQuery.Load.
+func (t *ExtractionsTable) Load(ls ...keel.Loader) keel.Query[*documentaiextraction.Extraction] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ExtractionsQuery.Omit.
+func (t *ExtractionsTable) Omit(cols ...keel.Column) keel.Query[*documentaiextraction.Extraction] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ExtractionsQuery.Order.
+func (t *ExtractionsTable) Order(os ...keel.Order) keel.Query[*documentaiextraction.Extraction] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ExtractionsQuery.Limit.
+func (t *ExtractionsTable) Limit(n int) keel.Query[*documentaiextraction.Extraction] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ExtractionsQuery.Group.
+func (t *ExtractionsTable) Group(es ...keel.Expr) keel.Query[*documentaiextraction.Extraction] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ExtractionsQuery.GroupingSets.
+func (t *ExtractionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*documentaiextraction.Extraction] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ExtractionsQuery.Rollup.
+func (t *ExtractionsTable) Rollup(es ...keel.Expr) keel.Query[*documentaiextraction.Extraction] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ExtractionsQuery.Cube.
+func (t *ExtractionsTable) Cube(es ...keel.Expr) keel.Query[*documentaiextraction.Extraction] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ExtractionsQuery.AllTenants.
+func (t *ExtractionsTable) AllTenants() keel.Query[*documentaiextraction.Extraction] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ExtractionsQuery.Join.
+func (t *ExtractionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentaiextraction.Extraction] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ExtractionsQuery.LeftJoin.
+func (t *ExtractionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentaiextraction.Extraction] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ExtractionsQuery.LeftJoinLateral.
+func (t *ExtractionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*documentaiextraction.Extraction] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ExtractionsQuery.JoinLateral.
+func (t *ExtractionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*documentaiextraction.Extraction] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ExtractionsQuery.Lock.
+func (t *ExtractionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*documentaiextraction.Extraction] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ExtractionsQuery.DistinctOn.
+func (t *ExtractionsTable) DistinctOn(es ...keel.Expr) keel.Query[*documentaiextraction.Extraction] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ExtractionsQuery.Cache.
+func (t *ExtractionsTable) Cache(opts ...keel.CacheOption) keel.Query[*documentaiextraction.Extraction] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ExtractionsQuery.LoadStrategy.
+func (t *ExtractionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*documentaiextraction.Extraction] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ExtractionsQuery.With.
+func (t *ExtractionsTable) With(ctes ...*keel.CTETable) keel.Query[*documentaiextraction.Extraction] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ExtractionsQuery.Compute.
+func (t *ExtractionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*documentaiextraction.Extraction] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ExtractionsTable) Create(ctx context.Context, db *keel.DB, row *documentaiextraction.Extraction) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ExtractionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*documentaiextraction.Extraction) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ExtractionsTable) Save(ctx context.Context, db *keel.DB, row *documentaiextraction.Extraction, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ExtractionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *documentaiextraction.Extraction, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ExtractionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *documentaiextraction.Extraction) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ExtractionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*documentaiextraction.Extraction, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ExtractionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*documentaiextraction.Extraction, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ExtractionsTable) Copy(ctx context.Context, db *keel.DB, rows []*documentaiextraction.Extraction) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ExtractionsQuery) Where(ps ...keel.Pred) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ExtractionsQuery) Pick(es ...keel.Expr) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ExtractionsQuery) Omit(cols ...keel.Column) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ExtractionsQuery) Load(ls ...keel.Loader) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ExtractionsQuery) Order(os ...keel.Order) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ExtractionsQuery) Distinct() keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ExtractionsQuery) Group(es ...keel.Expr) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ExtractionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ExtractionsQuery) Rollup(es ...keel.Expr) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ExtractionsQuery) Cube(es ...keel.Expr) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ExtractionsQuery) Window(name string, w keel.Window) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ExtractionsQuery) Having(ps ...keel.Pred) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ExtractionsQuery) Limit(n int) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ExtractionsQuery) Offset(n int) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ExtractionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ExtractionsQuery) AllTenants() keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ExtractionsQuery) CustomPlan() keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ExtractionsQuery) Timeout(d time.Duration) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ExtractionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ExtractionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ExtractionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ExtractionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ExtractionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ExtractionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ExtractionsQuery) With(ctes ...*keel.CTETable) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ExtractionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ExtractionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*documentaiextraction.Extraction] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ExtractionsQuery) Clone() keel.Query[*documentaiextraction.Extraction] {
+	return &ExtractionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ExtractionsQuery) One(ctx context.Context, db *keel.DB) (*documentaiextraction.Extraction, error) {
+	return keel.One[*documentaiextraction.Extraction](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ExtractionsQuery) First(ctx context.Context, db *keel.DB) (*documentaiextraction.Extraction, error) {
+	return keel.First[*documentaiextraction.Extraction](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ExtractionsQuery) List(ctx context.Context, db *keel.DB) ([]*documentaiextraction.Extraction, error) {
+	return keel.List[*documentaiextraction.Extraction](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ExtractionsQuery) All(ctx context.Context, db *keel.DB) ([]*documentaiextraction.Extraction, error) {
+	return keel.All[*documentaiextraction.Extraction](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ExtractionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*documentaiextraction.Extraction, error) {
+	return keel.UpdateReturning[*documentaiextraction.Extraction](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ExtractionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*documentaiextraction.Extraction], error) {
+	return keel.PageOf[*documentaiextraction.Extraction](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ExtractionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*documentaiextraction.Extraction) error) error {
+	return keel.Each[*documentaiextraction.Extraction](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newExtraction() unsafe.Pointer { return unsafe.Pointer(new(documentaiextraction.Extraction)) }
