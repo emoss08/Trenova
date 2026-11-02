@@ -68,7 +68,7 @@ func (p *plan) resolve(name string) (field, bool) {
 	}
 
 	col := &rel.Target.Columns[index]
-	if copied, ok := p.copies[name]; ok && copied != nil {
+	if copied, found := p.copies[name]; found && copied != nil {
 		return field{expr: keel.DynOf(copied), col: col, column: true, index: index}, true
 	}
 	expr := keel.ResolvePath(p, rel.Name, col.Name)

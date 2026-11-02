@@ -1,12 +1,13 @@
 package listquery
 
 import (
+	"slices"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"slices"
 )
 
 const (
@@ -46,7 +47,10 @@ func (p *plan) pageOrders(
 	if len(out) == 0 && !ranked {
 		return p.orders(normalizeKeysetSort(nil))
 	}
-	if slices.ContainsFunc(sorts, func(s domaintypes.SortField) bool { return s.Field == idSortField }) {
+	if slices.ContainsFunc(
+		sorts,
+		func(s domaintypes.SortField) bool { return s.Field == idSortField },
+	) {
 		return out
 	}
 
