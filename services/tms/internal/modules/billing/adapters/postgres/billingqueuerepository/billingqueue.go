@@ -73,6 +73,53 @@ func shipmentNamed(query string) keel.Pred {
 	))
 }
 
+func shipmentCopies() map[string]keel.Expr {
+	bq := billingqueuedb.BillingQueueItems
+
+	return map[string]keel.Expr{
+		"shipment.customerId":         bq.ShipmentCustomerID,
+		"shipment.actualDeliveryDate": bq.ShipmentDeliveredAt,
+		"shipment.actualShipDate":     bq.ShipmentShippedAt,
+	}
+}
+
+const shipmentWindowCap = 1000
+
+func shipmentWindow(limit int) *listquery.Window {
+	return &listquery.Window{
+		Fields: []string{"shipment.actualDeliveryDate", "shipment.actualShipDate"},
+		Cap:    limit,
+	}
+}
+
+func listRequest(
+	req *billingqueueports.ListBillingQueueItemsRequest,
+	windowCap int,
+) *listquery.Request[billingqueue.BillingQueueItem] {
+	return &listquery.Request[billingqueue.BillingQueueItem]{
+		Filter:    req.Filter,
+		Shape:     listShape,
+		AlsoMatch: shipmentNamed,
+		Copies:    shipmentCopies(),
+		Window:    shipmentWindow(windowCap),
+	}
+}
+
+func connectionRequest(
+	req *billingqueueports.ListBillingQueueItemsRequest,
+	windowCap int,
+) *listquery.Request[billingqueue.BillingQueueItem] {
+	bq := billingqueuedb.BillingQueueItems
+	lr := listRequest(req, windowCap)
+	lr.Cursor = req.Cursor
+	lr.Keyset = &listquery.Keyset{
+		Orders: []keel.Order{bq.CreatedAt.Asc(), bq.ID.Asc()},
+		Shape:  laneCursorSort,
+	}
+
+	return lr
+}
+
 func listShape(
 	q keel.Query[*billingqueue.BillingQueueItem],
 ) keel.Query[*billingqueue.BillingQueueItem] {
@@ -98,11 +145,7 @@ func (r *repository) List(
 				ctx,
 				r.db.Keel(ctx),
 				listQuery(req),
-				&listquery.Request[billingqueue.BillingQueueItem]{
-					Filter:    req.Filter,
-					Shape:     listShape,
-					AlsoMatch: shipmentNamed,
-				},
+				listRequest(req, shipmentWindowCap),
 			)
 			if err != nil {
 				r.l.Error("failed to list billing queue items", zap.Error(err))
@@ -123,25 +166,23 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *billingqueueports.ListBillingQueueItemsRequest,
 ) (*pagination.CursorListResult[*billingqueue.BillingQueueItem], error) {
+	return r.connection(ctx, req, shipmentWindowCap)
+}
+
+func (r *repository) connection(
+	ctx context.Context,
+	req *billingqueueports.ListBillingQueueItemsRequest,
+	windowCap int,
+) (*pagination.CursorListResult[*billingqueue.BillingQueueItem], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*billingqueue.BillingQueueItem], error) {
-			bq := billingqueuedb.BillingQueueItems
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
 				listQuery(req),
-				&listquery.Request[billingqueue.BillingQueueItem]{
-					Filter:    req.Filter,
-					Cursor:    req.Cursor,
-					Shape:     listShape,
-					AlsoMatch: shipmentNamed,
-					Keyset: &listquery.Keyset{
-						Orders: []keel.Order{bq.CreatedAt.Asc(), bq.ID.Asc()},
-						Shape:  laneCursorSort,
-					},
-				},
+				connectionRequest(req, windowCap),
 			)
 			if err != nil {
 				r.l.Error("failed to page billing queue items", zap.Error(err))

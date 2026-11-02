@@ -38,7 +38,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/ports/servicetypeports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/shipmenttypeports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
-	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/pkg/listcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -95,7 +95,7 @@ func NewListEquipmentTypesTool(
 		EntityPlural: "equipment types",
 		Summary:      equipmentTypesSummary,
 		Resource:     permission.ResourceEquipmentType,
-		Config: listquery.Describe(
+		Config: listcatalog.Describe(
 			(*equipmenttype.EquipmentType)(nil),
 			equipmenttypedb.EquipmentTypesSchema(),
 		),
@@ -130,7 +130,7 @@ func NewListFleetCodesTool(repo fleetcodeports.FleetCodeRepository) agenttoolpor
 		EntityPlural: "fleet codes",
 		Summary:      fleetCodesSummary,
 		Resource:     permission.ResourceFleetCode,
-		Config: listquery.Describe(
+		Config: listcatalog.Describe(
 			(*fleetcode.FleetCode)(nil),
 			fleetcodedb.FleetCodesSchema(),
 		),
@@ -162,7 +162,7 @@ func NewListServiceTypesTool(
 		EntityPlural: "service types",
 		Summary:      serviceTypesSummary,
 		Resource:     permission.ResourceServiceType,
-		Config: listquery.Describe(
+		Config: listcatalog.Describe(
 			(*servicetype.ServiceType)(nil),
 			servicetypedb.ServiceTypesSchema(),
 		),
@@ -194,7 +194,7 @@ func NewListShipmentTypesTool(
 		EntityPlural: "shipment types",
 		Summary:      shipmentTypesSummary,
 		Resource:     permission.ResourceShipmentType,
-		Config: listquery.Describe(
+		Config: listcatalog.Describe(
 			(*shipmenttype.ShipmentType)(nil),
 			shipmenttypedb.ShipmentTypesSchema(),
 		),
@@ -235,7 +235,7 @@ func NewListCommoditiesTool(repo commodityports.CommodityRepository) agenttoolpo
 		EntityPlural: pluralCommodities,
 		Summary:      commoditiesSummary,
 		Resource:     permission.ResourceCommodity,
-		Config: listquery.Describe(
+		Config: listcatalog.Describe(
 			(*commodity.Commodity)(nil),
 			commoditydb.CommoditiesSchema(),
 		),
@@ -300,7 +300,7 @@ func NewListHazardousMaterialsTool(
 		EntityPlural: "hazardous materials",
 		Summary:      hazardousMaterialsSummary,
 		Resource:     permission.ResourceHazardousMaterial,
-		Config: listquery.Describe(
+		Config: listcatalog.Describe(
 			(*hazardousmaterial.HazardousMaterial)(nil),
 			hazardousmaterialdb.HazardousMaterialsSchema(),
 		),
@@ -363,7 +363,7 @@ func NewListAccessorialChargesTool(
 		EntityPlural: "accessorial charges",
 		Summary:      accessorialChargesSummary,
 		Resource:     permission.ResourceAccessorialCharge,
-		Config: listquery.Describe(
+		Config: listcatalog.Describe(
 			(*accessorialcharge.AccessorialCharge)(nil),
 			accessorialchargedb.AccessorialChargesSchema(),
 		),
@@ -412,7 +412,7 @@ func NewListDocumentTypesTool(
 		EntityPlural: "document types",
 		Summary:      documentTypesSummary,
 		Resource:     permission.ResourceDocumentType,
-		Config: listquery.Describe(
+		Config: listcatalog.Describe(
 			(*documenttype.DocumentType)(nil),
 			documenttypedb.DocumentTypesSchema(),
 		),
@@ -454,7 +454,7 @@ func NewListLocationCategoriesTool(
 		EntityPlural: "location categories",
 		Summary:      locationCategoriesSummary,
 		Resource:     permission.ResourceLocationCategory,
-		Config: listquery.Describe(
+		Config: listcatalog.Describe(
 			(*locationcategory.LocationCategory)(nil),
 			locationcategorydb.LocationCategoriesSchema(),
 		),
@@ -510,7 +510,7 @@ func NewListHoldReasonsTool(
 		EntityPlural: "hold reasons",
 		Summary:      holdReasonsSummary,
 		Resource:     permission.ResourceHoldReason,
-		Config: listquery.Describe(
+		Config: listcatalog.Describe(
 			(*holdreason.HoldReason)(nil),
 			holdreasondb.HoldReasonsSchema(),
 		),

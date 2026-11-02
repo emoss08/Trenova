@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/pkg/keelexpr"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -119,9 +119,9 @@ func refresh(ctx context.Context, db *keel.DB, tuneUp *aituneup.TuneUp) error {
 		t.Task.To(tuneUp.Task),
 		t.Evidence.To(tuneUp.Evidence),
 		t.Status.To(tuneUp.Status),
-		listquery.OptionalInt64(t.DismissedUntil, tuneUp.DismissedUntil),
+		keelexpr.OptionalInt64(t.DismissedUntil, tuneUp.DismissedUntil),
 		t.DecidedByID.To(tuneUp.DecidedByID),
-		listquery.OptionalInt64(t.DecidedAt, tuneUp.DecidedAt),
+		keelexpr.OptionalInt64(t.DecidedAt, tuneUp.DecidedAt),
 		t.ComputedAt.To(tuneUp.ComputedAt),
 	)
 	if err != nil {
@@ -139,7 +139,7 @@ func (r *repository) Decide(
 		updated, err := t.Where(t.ID.Eq(req.ID), t.Version.Eq(req.Version)).
 			UpdateReturning(ctx, r.db.Keel(ctx),
 				t.Status.To(req.Status),
-				listquery.OptionalInt64(t.DismissedUntil, req.DismissedUntil),
+				keelexpr.OptionalInt64(t.DismissedUntil, req.DismissedUntil),
 				t.DecidedByID.To(req.DecidedByID),
 				t.DecidedAt.To(req.DecidedAt),
 			)

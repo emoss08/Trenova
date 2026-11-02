@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
-	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/pkg/listcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
@@ -55,7 +55,7 @@ func ListSpec(repo shipmentports.ShipmentRepository) listtool.Spec {
 		Summary: "Shipments by status, billing state, dates or charges, such as picking up " +
 			"today.",
 		Resource: permission.ResourceShipment,
-		Config:   listquery.Describe((*shipment.Shipment)(nil), shipmentdb.ShipmentsSchema()),
+		Config:   listcatalog.Describe((*shipment.Shipment)(nil), shipmentdb.ShipmentsSchema()),
 		Fields: []filtercatalog.Field{
 			{
 				Name:   "status",

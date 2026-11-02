@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/pkg/keelexpr"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -206,8 +208,8 @@ func (r *repository) SelectOptions(
 				req.SelectQueryRequest,
 				func(query string) keel.Pred {
 					return keel.Or(
-						listquery.TextContainsFold(p.Name, query),
-						listquery.TextContainsFold(p.Model, query),
+						keelexpr.TextContainsFold(p.Name, query),
+						keelexpr.TextContainsFold(p.Model, query),
 					)
 				},
 			)

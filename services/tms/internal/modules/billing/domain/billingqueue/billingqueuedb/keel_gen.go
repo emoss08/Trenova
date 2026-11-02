@@ -79,6 +79,9 @@ var billingQueueItemsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
+		{Name: "shipment_customer_id", Quoted: `"shipment_customer_id"`, Field: "ShipmentCustomerID", Kind: schema.KindString, Flags: schema.FlagReadOnly | schema.FlagNoSelect | schema.FlagNullZero, Label: `Shipment Customer ID`},
+		{Name: "shipment_delivered_at", Quoted: `"shipment_delivered_at"`, Field: "ShipmentDeliveredAt", Kind: schema.KindInt64, Flags: schema.FlagReadOnly | schema.FlagNoSelect | schema.FlagNullable, Label: `Shipment Delivered At`},
+		{Name: "shipment_shipped_at", Quoted: `"shipment_shipped_at"`, Field: "ShipmentShippedAt", Kind: schema.KindInt64, Flags: schema.FlagReadOnly | schema.FlagNoSelect | schema.FlagNullable, Label: `Shipment Shipped At`},
 	},
 	Relations: []schema.Relation{
 		{Name: "Shipment", Alias: "s", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Shipment`, JSON: `shipment`},
@@ -161,6 +164,9 @@ type BillingQueueItemsTable struct {
 	CreatedAt                 keel.Int64Col
 	UpdatedAt                 keel.Int64Col
 	SearchVector              keel.TSVectorCol
+	ShipmentCustomerID        keelkinds.PulidIDCol
+	ShipmentDeliveredAt       keel.Int64Col
+	ShipmentShippedAt         keel.Int64Col
 }
 
 // BillingQueueItems references the billing_queue_items table.
@@ -216,6 +222,9 @@ var BillingQueueItems = &BillingQueueItemsTable{
 	CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 47}},
 	UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 48}},
 	SearchVector:              keel.TSVectorCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 49}},
+	ShipmentCustomerID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 50}}},
+	ShipmentDeliveredAt:       keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 51}},
+	ShipmentShippedAt:         keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 52}},
 }
 
 // BuildBillingQueueItems builds the table of billing_queue_items for ref. Generated relation and alias methods call it.
@@ -272,6 +281,9 @@ func BuildBillingQueueItems(r *keel.Ref) *BillingQueueItemsTable {
 		CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 47}},
 		UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 48}},
 		SearchVector:              keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 49}},
+		ShipmentCustomerID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 50}}},
+		ShipmentDeliveredAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 51}},
+		ShipmentShippedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 52}},
 	}
 }
 
@@ -776,6 +788,12 @@ func ptrBillingQueueItem(p unsafe.Pointer, c int32) any {
 		return &r.UpdatedAt
 	case 49:
 		return &r.SearchVector
+	case 50:
+		return (*string)(unsafe.Pointer(&r.ShipmentCustomerID))
+	case 51:
+		return &r.ShipmentDeliveredAt
+	case 52:
+		return &r.ShipmentShippedAt
 	}
 	return nil
 }
@@ -985,6 +1003,21 @@ func valueBillingQueueItem(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	case 49:
 		return r.SearchVector
+	case 50:
+		if r.ShipmentCustomerID == "" {
+			return nil
+		}
+		return string(r.ShipmentCustomerID)
+	case 51:
+		if r.ShipmentDeliveredAt == nil {
+			return nil
+		}
+		return *r.ShipmentDeliveredAt
+	case 52:
+		if r.ShipmentShippedAt == nil {
+			return nil
+		}
+		return *r.ShipmentShippedAt
 	}
 	return nil
 }

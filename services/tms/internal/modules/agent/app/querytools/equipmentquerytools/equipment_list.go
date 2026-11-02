@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
-	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/pkg/listcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -91,7 +91,7 @@ func NewListTractorsTool(
 			"available tractors",
 		},
 		Resource:      permission.ResourceTractor,
-		Config:        listquery.Describe((*tractor.Tractor)(nil), tractordb.TractorsSchema()),
+		Config:        listcatalog.Describe((*tractor.Tractor)(nil), tractordb.TractorsSchema()),
 		Fields:        equipmentFields(),
 		Access:        fieldgate.NewAccess(permissions),
 		PagesByCursor: true,
@@ -156,7 +156,7 @@ func NewListTrailersTool(repo trailerports.TrailerRepository) agenttoolports.Age
 			"find trailer by unit number", "available dry vans",
 		},
 		Resource:      permission.ResourceTrailer,
-		Config:        listquery.Describe((*trailer.Trailer)(nil), trailerdb.TrailersSchema()),
+		Config:        listcatalog.Describe((*trailer.Trailer)(nil), trailerdb.TrailersSchema()),
 		Fields:        fields,
 		PagesByCursor: true,
 		Fetch: func(ctx context.Context, opts *pagination.QueryOptions, cursor pagination.CursorInfo) (listtool.Page, error) {

@@ -4,6 +4,8 @@ package editransferrepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/keelexpr"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -212,7 +214,7 @@ func (r *repository) SelectOptions(
 				q,
 				req.SelectQueryRequest,
 				func(s string) keel.Pred {
-					return listquery.TextContainsFold(t.TenderPayload.Text("bol"), s)
+					return keelexpr.TextContainsFold(t.TenderPayload.Text("bol"), s)
 				},
 			)
 		},

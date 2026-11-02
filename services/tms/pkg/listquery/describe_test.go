@@ -3,13 +3,14 @@ package listquery
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/pkg/listcatalog"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDescribe_TheFieldsAListAnswersTo(t *testing.T) {
 	t.Parallel()
 
-	got := Describe(new(testTruck), testTrucks.Ref.Table)
+	got := listcatalog.Describe(new(testTruck), testTrucks.Ref.Table)
 
 	assert.True(t, got.FilterableFields["code"])
 	assert.True(t, got.FilterableFields["year"])
@@ -36,6 +37,6 @@ func TestDescribe_TheFieldsAListAnswersTo(t *testing.T) {
 func TestDescribe_WithoutAModelOrTable(t *testing.T) {
 	t.Parallel()
 
-	assert.Nil(t, Describe(nil, testTrucks.Ref.Table))
-	assert.Nil(t, Describe(new(testTruck), nil))
+	assert.Nil(t, listcatalog.Describe(nil, testTrucks.Ref.Table))
+	assert.Nil(t, listcatalog.Describe(new(testTruck), nil))
 }

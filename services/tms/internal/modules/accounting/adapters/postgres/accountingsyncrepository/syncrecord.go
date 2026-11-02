@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/keelexpr"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -378,8 +380,8 @@ func finishAssignments(record *accountingsync.AccountingSyncRecord) []keel.Assig
 	return []keel.Assignment{
 		sr.Status.To(record.Status),
 		sr.AttemptCount.To(int64(record.AttemptCount)),
-		listquery.OptionalInt64(sr.NextAttemptAt, record.NextAttemptAt),
-		listquery.OptionalInt64(sr.LeaseExpiresAt, record.LeaseExpiresAt),
+		keelexpr.OptionalInt64(sr.NextAttemptAt, record.NextAttemptAt),
+		keelexpr.OptionalInt64(sr.LeaseExpiresAt, record.LeaseExpiresAt),
 		keelassign.StringOrNull(sr.ExternalID, record.ExternalID),
 		keelassign.StringOrNull(sr.ExternalDocNumber, record.ExternalDocNumber),
 		keelassign.StringOrNull(sr.ExternalURL, record.ExternalURL),
@@ -391,7 +393,7 @@ func finishAssignments(record *accountingsync.AccountingSyncRecord) []keel.Assig
 		keelassign.StringOrNull(sr.ErrorCode, record.ErrorCode),
 		keelassign.StringOrNull(sr.ErrorMessage, record.ErrorMessage),
 		keelassign.StringOrNull(sr.Resolution, record.Resolution),
-		listquery.OptionalInt64(sr.SyncedAt, record.SyncedAt),
+		keelexpr.OptionalInt64(sr.SyncedAt, record.SyncedAt),
 		keelassign.StringOrNull(sr.DependsOnRecordID.StringCol, record.DependsOnRecordID.String()),
 		sr.Version.To(record.Version),
 		sr.UpdatedAt.To(record.UpdatedAt),

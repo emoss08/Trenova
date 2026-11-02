@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
-	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/pkg/listcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
 )
@@ -91,7 +91,7 @@ func NewListOrdersTool(
 			"shipments and their charges under a customer's order number, PO or BOL. " +
 			"order_get opens one with its shipments and charges.",
 		Resource: permission.ResourceOrder,
-		Config:   listquery.Describe((*order.Order)(nil), orderdb.OrdersSchema()),
+		Config:   listcatalog.Describe((*order.Order)(nil), orderdb.OrdersSchema()),
 		Fields: []filtercatalog.Field{
 			{
 				Name:   querytool.ParamStatus,

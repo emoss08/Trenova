@@ -1,6 +1,7 @@
 package listquery
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/emoss08/keel"
@@ -271,6 +272,23 @@ func TestFilters_ARelationPathJoinsItsTableUnderTheTenant(t *testing.T) {
 	assert.Equal(t, truckSelect+
 		`LEFT JOIN "test_owners" ow ON ow."id" = t."owner_id" AND ow."organization_id" = $1 AND ow."business_unit_id" = $2 `+
 		truckTenant+` AND (ow."name" = $3) LIMIT 10`, sql)
+}
+
+func TestFilters_ACopiedRelationFieldReadsTheCopyWithoutTheJoin(t *testing.T) {
+	t.Parallel()
+
+	q := testTrucks.Query()
+	p := newPlan(q, nil)
+	p.withCopies(map[string]keel.Expr{"owner.name": p.baseColumn(p.cat.Fields["ownerId"])})
+	q.Where(p.where(filters(domaintypes.FieldFilter{
+		Field:    "owner.name",
+		Operator: dbtype.OpEqual,
+		Value:    "Acme",
+	}))...).Limit(10)
+
+	sql, args := render(t, q)
+	assert.Equal(t, truckSelect+truckTenant+` AND (t."owner_id" = $3) LIMIT 10`, sql)
+	assert.Equal(t, []any{"org_1", "bu_1", "Acme"}, args)
 }
 
 func TestFilters_SkipWhatTheyCannotApply(t *testing.T) {
@@ -844,4 +862,29 @@ func TestResult_CarriesWhetherTheTotalWasCounted(t *testing.T) {
 			assert.Equal(t, tc.total.Exact, result.TotalExact)
 		})
 	}
+}
+
+func TestPageOrders_AnOffsetPageAlwaysHasADeterministicOrder(t *testing.T) {
+	t.Parallel()
+
+	ordered := func(sorts []domaintypes.SortField, then []keel.Order, ranked bool) string {
+		t.Helper()
+		q := testTrucks.Query()
+		p := newPlan(q, nil)
+		q.Order(p.pageOrders(sorts, then, ranked)...).Limit(3).Offset(2)
+		sql, _ := render(t, q)
+		_, order, found := strings.Cut(sql, "ORDER BY ")
+		require.True(t, found, sql)
+		return order
+	}
+
+	assert.Equal(t, `t."created_at" DESC, t."id" DESC LIMIT 3 OFFSET 2`, ordered(nil, nil, false),
+		"no sort asked for pages newest first, as the keyset lists do")
+	assert.Equal(t, `t."code" ASC, t."id" DESC LIMIT 3 OFFSET 2`, ordered(
+		[]domaintypes.SortField{{Field: "code", Direction: dbtype.SortDirectionAsc}}, nil, false),
+		"a sort on a column that repeats ends with the id")
+	assert.Equal(t, `t."id" ASC LIMIT 3 OFFSET 2`, ordered(
+		[]domaintypes.SortField{{Field: "id", Direction: dbtype.SortDirectionAsc}}, nil, false))
+	assert.Equal(t, `t."id" DESC LIMIT 3 OFFSET 2`, ordered(nil, nil, true),
+		"a ranked search breaks its ties by id")
 }

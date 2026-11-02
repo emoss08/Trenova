@@ -441,6 +441,16 @@ volume generator, not the query: give the table the rows and status mix producti
   under the cap, and read newest first only when the match is broader, with `CustomPlan` so the
   planner weighs that term: a common one walks the recency index, a rare one sorts its matches
   (`shipmentlistreadrepository.MatchOrderReferences`).
+- **A date window filter on a list paged in another order** (items delivered this week, oldest
+  queued first) has no index that gives both. Name the window's fields in
+  `listquery.Request.Window` with a cap: a capped count of the window decides the read. A window
+  that fits pages the table's rows `id IN (<the window> LIMIT cap+1)` names, the filter written
+  only inside the subquery so the planner cannot hash every match against it, a sort the plan guard
+  bounds by that `Limit`, as it bounds the key lookups the page's loads make from it; a larger
+  one pages in the list's own order with `CustomPlan`, planned for the window's real width,
+  which the guard explains without checking (`billingqueuerepository.shipmentWindow`). A picker's
+  text match is the same read: `listquery.SelectOptions` with `MatchCap` and `SelectShape`, the
+  shape applying the picks and order after the cap (`journalentryrepository.selectShape`).
 - **A read scoped to explicit ids** is bounded by them: drop the `LIMIT` when the ids fit in the
   page (`dispatchconsolerepository.boundedByMoveIDs`), or truncate in Go when a row per id is not
   guaranteed, rather than sorting a handful of rows under a `LIMIT` over a large table.
@@ -483,7 +493,10 @@ volume generator, not the query: give the table the rows and status mix producti
   FROM NEW.col)` on the source pushes a change to its children by an indexed key
   (`20261231023061_service_failure_location.sql`). A one-row copy has no set to recompute, and the
   trigger covers every writer, seeds and fixtures included; derivations over many child rows stay
-  in the repository refresh above.
+  in the repository refresh above. When the list filters the copy by the related field's own
+  name (`shipment.customerId` on a queue item), `listquery.Request.Copies` maps that name to the
+  copy, so the filter reads the child's index and not a join
+  (`20261231023114_billing_queue_shipment_copies.sql`, `billingqueuerepository.shipmentCopies`).
 - **A page whose filter needs a large parent** (unarrived ETAs on live shipments, exhausted tenders
   on uncovered moves) sorts above the join whenever the planner hashes the parent, and no index
   orders a join. Read the page from the child's own ordered partial index, check the parents of

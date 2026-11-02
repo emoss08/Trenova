@@ -22,7 +22,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
-	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/pkg/listcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -98,7 +98,7 @@ func AgentRunListSpec() listtool.Spec {
 			"worked on, and whether it failed, waits on a decision or is running. " +
 			"agent_get_run reads one.",
 		Resource: permission.ResourceAgentRun,
-		Config:   listquery.Describe((*agent.AgentRun)(nil), agentdb.AgentRunsSchema()),
+		Config:   listcatalog.Describe((*agent.AgentRun)(nil), agentdb.AgentRunsSchema()),
 		Fields: []filtercatalog.Field{
 			{
 				Name: agentRunFieldStatus,

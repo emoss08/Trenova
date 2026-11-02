@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/pkg/keelexpr"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -14,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -377,22 +378,22 @@ func workflowSets(item *watchtower.Item) []keel.Assignment {
 	return []keel.Assignment{
 		it.Status.To(item.Status),
 		it.AssigneeID.To(item.AssigneeID),
-		listquery.OptionalInt64(it.DueAt, item.DueAt),
-		listquery.OptionalInt64(it.SnoozedUntil, item.SnoozedUntil),
-		listquery.OptionalInt64(it.AcknowledgedAt, item.AcknowledgedAt),
+		keelexpr.OptionalInt64(it.DueAt, item.DueAt),
+		keelexpr.OptionalInt64(it.SnoozedUntil, item.SnoozedUntil),
+		keelexpr.OptionalInt64(it.AcknowledgedAt, item.AcknowledgedAt),
 		it.ResolutionCode.To(item.ResolutionCode),
 		it.ResolutionNote.To(item.ResolutionNote),
 		it.ResolvedByID.To(item.ResolvedByID),
-		listquery.OptionalInt64(it.ResolvedAt, item.ResolvedAt),
-		listquery.OptionalInt64(it.SourceClearedAt, item.SourceClearedAt),
+		keelexpr.OptionalInt64(it.ResolvedAt, item.ResolvedAt),
+		keelexpr.OptionalInt64(it.SourceClearedAt, item.SourceClearedAt),
 		it.Severity.To(item.Severity),
 		it.EscalationLevel.To(item.EscalationLevel),
-		listquery.OptionalInt64(it.LastEscalatedAt, item.LastEscalatedAt),
+		keelexpr.OptionalInt64(it.LastEscalatedAt, item.LastEscalatedAt),
 		it.DueLabel.To(item.DueLabel),
 		it.DueSource.To(item.DueSource),
 		it.AgentDefinitionID.To(item.AgentDefinitionID),
 		it.AgentRunID.To(item.AgentRunID),
-		listquery.OptionalInt64(it.AgentHandedAt, item.AgentHandedAt),
+		keelexpr.OptionalInt64(it.AgentHandedAt, item.AgentHandedAt),
 		it.AgentHandedByID.To(item.AgentHandedByID),
 	}
 }

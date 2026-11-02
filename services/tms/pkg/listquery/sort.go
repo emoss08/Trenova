@@ -1,6 +1,8 @@
 package listquery
 
 import (
+	"slices"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -34,6 +36,27 @@ func (p *plan) orders(sorts []domaintypes.SortField) []keel.Order {
 	}
 
 	return out
+}
+
+func (p *plan) pageOrders(
+	sorts []domaintypes.SortField,
+	then []keel.Order,
+	ranked bool,
+) []keel.Order {
+	out := append(p.orders(sorts), then...)
+	if len(out) == 0 && !ranked {
+		return p.orders(normalizeKeysetSort(nil))
+	}
+	if slices.ContainsFunc(
+		sorts,
+		func(s domaintypes.SortField) bool { return s.Field == idSortField },
+	) {
+		return out
+	}
+
+	return append(out, p.orders([]domaintypes.SortField{
+		{Field: idSortField, Direction: dbtype.SortDirectionDesc},
+	})...)
 }
 
 func (p *plan) keysetOrder(

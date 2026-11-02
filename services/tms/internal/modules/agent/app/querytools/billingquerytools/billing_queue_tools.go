@@ -24,7 +24,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
-	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/pkg/listcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -106,7 +106,7 @@ func buildBillingQueueList(
 		Summary: "List billing queue items, the shipments waiting on a biller. Open one with " +
 			"billing_get_queue_item before deciding it; Posted items need status Posted.",
 		Resource: permission.ResourceBillingQueue,
-		Config: listquery.Describe(
+		Config: listcatalog.Describe(
 			(*billingqueue.BillingQueueItem)(nil),
 			billingqueuedb.BillingQueueItemsSchema(),
 		),

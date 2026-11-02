@@ -4,6 +4,8 @@ package ediconnectionrepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/keelexpr"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -59,8 +61,8 @@ func (r *repository) ListConnections(
 			q := ec.Where(involvesOrganization(req.Filter.TenantInfo.OrgID))
 			if req.Filter.Query != "" {
 				q.Where(keel.Or(
-					listquery.TextContainsFold(ec.Method, req.Filter.Query),
-					listquery.TextContainsFold(ec.Status, req.Filter.Query),
+					keelexpr.TextContainsFold(ec.Method, req.Filter.Query),
+					keelexpr.TextContainsFold(ec.Status, req.Filter.Query),
 					ec.SourceOrganization().Name.ContainsFold(req.Filter.Query),
 					ec.TargetOrganization().Name.ContainsFold(req.Filter.Query),
 				))
@@ -112,7 +114,7 @@ func (r *repository) SelectOptions(
 				req.SelectQueryRequest,
 				func(s string) keel.Pred {
 					return keel.Or(
-						listquery.TextContainsFold(ec.Method, s),
+						keelexpr.TextContainsFold(ec.Method, s),
 						ec.SourceOrganization().Name.ContainsFold(s),
 						ec.TargetOrganization().Name.ContainsFold(s),
 					)

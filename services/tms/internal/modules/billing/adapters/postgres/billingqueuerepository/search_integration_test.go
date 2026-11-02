@@ -87,4 +87,19 @@ func TestListConnection_NarrowsToAShipmentsCustomerAndDeliveryDate(t *testing.T)
 	assert.NotContains(t, list(
 		domaintypes.FieldFilter{Field: "shipment.customerId", Operator: dbtype.OpEqual, Value: "cus_not_this_one"},
 	), item.ID)
+
+	pickedUp := delivered - 2*86_400
+	_, err := keel.Pool(f.db).Exec(f.ctx,
+		`UPDATE shipments SET actual_ship_date = $2 WHERE id = $1`, f.shipmentID, pickedUp)
+	require.NoError(t, err)
+	pickedUpOn := func(from, to int64) domaintypes.FieldFilter {
+		return domaintypes.FieldFilter{
+			Field:    "shipment.actualShipDate",
+			Operator: dbtype.OpDateRange,
+			Value:    map[string]any{"from": float64(from), "to": float64(to)},
+		}
+	}
+	assert.Contains(t, list(pickedUpOn(pickedUp-86_400, pickedUp+86_400)), item.ID,
+		"the shipment's pickup reaches the item it is queued for")
+	assert.NotContains(t, list(pickedUpOn(delivered, delivered+86_400)), item.ID)
 }

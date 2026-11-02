@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity/carriercapacitydb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carriercapacityports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
-	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/pkg/listcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
@@ -80,7 +80,7 @@ func NewListCarrierCapacityPostingsTool(
 			"after today for offers still open.",
 		SearchTerms: []string{"carrier capacity", "available trucks", "truck postings"},
 		Resource:    permission.ResourceCarrierCapacityPosting,
-		Config: listquery.Describe(
+		Config: listcatalog.Describe(
 			(*carriercapacity.Posting)(nil),
 			carriercapacitydb.PostingsSchema(),
 		),

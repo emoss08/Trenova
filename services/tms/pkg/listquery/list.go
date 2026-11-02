@@ -22,6 +22,8 @@ type Request[T any] struct {
 	// table, such as a queue item found by its shipment's PRO number: a row it
 	// matches is found beside the rows the query matches on their own columns.
 	AlsoMatch func(query string) keel.Pred
+	Copies    map[string]keel.Expr
+	Window    *Window
 }
 
 type Keyset struct {
@@ -35,8 +37,12 @@ func Connection[T any](
 	q keel.Query[*T],
 	req *Request[T],
 ) (*pagination.CursorListResult[*T], error) {
-	p := newPlan(q, req.Computed)
+	p := newPlan(q, req.Computed).withCopies(req.Copies)
 	read := narrow(p, q, req)
+	q, err := bindWindow(ctx, db, p, q, req)
+	if err != nil {
+		return nil, err
+	}
 
 	orders, shape, err := connectionOrder(p, req)
 	if err != nil {
@@ -160,8 +166,12 @@ func List[T any](
 	q keel.Query[*T],
 	req *Request[T],
 ) (*pagination.ListResult[*T], error) {
-	p := newPlan(q, req.Computed)
+	p := newPlan(q, req.Computed).withCopies(req.Copies)
 	read := narrow(p, q, req)
+	q, err := bindWindow(ctx, db, p, q, req)
+	if err != nil {
+		return nil, err
+	}
 
 	rows, counted, err := listRows(p, q, req, p.rank(queryOf(req.Filter)))
 	if err != nil {
@@ -194,13 +204,27 @@ func listRows[T any](
 	if rank != nil {
 		rows.Order(keel.Desc(rank).NullsLast())
 	}
-	rows.Order(p.orders(sortsOf(req.Filter))...)
-	rows.Order(req.Then...)
+	rows.Order(p.pageOrders(sortsOf(req.Filter), req.Then, rank != nil)...)
 
 	info := paginationOf(req.Filter)
 	rows.Limit(info.SafeLimit()).Offset(info.SafeOffset())
 
 	return rows, counted, nil
+}
+
+type selectOptions[T any] struct {
+	matchCap int
+	shape    func(keel.Query[*T]) keel.Query[*T]
+}
+
+type SelectOption[T any] func(*selectOptions[T])
+
+func MatchCap[T any](limit int) SelectOption[T] {
+	return func(o *selectOptions[T]) { o.matchCap = limit }
+}
+
+func SelectShape[T any](shape func(keel.Query[*T]) keel.Query[*T]) SelectOption[T] {
+	return func(o *selectOptions[T]) { o.shape = shape }
 }
 
 func SelectOptions[T any](
@@ -209,9 +233,24 @@ func SelectOptions[T any](
 	q keel.Query[*T],
 	req *pagination.SelectQueryRequest,
 	search func(query string) keel.Pred,
+	opts ...SelectOption[T],
 ) (*pagination.ListResult[*T], error) {
+	var o selectOptions[T]
+	for _, opt := range opts {
+		opt(&o)
+	}
 	if req.Query != "" && search != nil {
 		q.Where(search(req.Query))
+		if o.matchCap > 0 {
+			capped, err := capMatches(ctx, db, newPlan(q, nil), q, o.matchCap)
+			if err != nil {
+				return nil, err
+			}
+			q = capped
+		}
+	}
+	if o.shape != nil {
+		q = o.shape(q)
 	}
 
 	counted := q.Clone()

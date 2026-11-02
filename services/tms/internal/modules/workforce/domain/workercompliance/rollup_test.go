@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listcatalog"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
@@ -201,7 +202,7 @@ func TestProfileRollup_Equal(t *testing.T) {
 // the joined table, so this pins the SQL rather than merely asserting the
 // query is non-nil.
 func TestWorkerSearchConfig_ProfileIsFilterableAndSortable(t *testing.T) {
-	config := listquery.Describe(&worker.Worker{}, workerdb.WorkersSchema())
+	config := listcatalog.Describe(&worker.Worker{}, workerdb.WorkersSchema())
 
 	for _, field := range []string{
 		"profile.complianceStatus",

@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
-	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/pkg/listcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -35,7 +35,7 @@ func NewListCustomersTool(repo customerports.CustomerRepository) agenttoolports.
 		EntityPlural: pluralCustomers,
 		Summary:      customersSummary,
 		Resource:     permission.ResourceCustomer,
-		Config:       listquery.Describe((*customer.Customer)(nil), customerdb.CustomersSchema()),
+		Config:       listcatalog.Describe((*customer.Customer)(nil), customerdb.CustomersSchema()),
 		Fields: []filtercatalog.Field{
 			{
 				Name:   querytool.ListFieldStatus,
@@ -86,7 +86,7 @@ func NewListLocationsTool(repo locationports.LocationRepository) agenttoolports.
 		EntityPlural: pluralLocations,
 		Summary:      locationsSummary,
 		Resource:     permission.ResourceLocation,
-		Config:       listquery.Describe((*location.Location)(nil), locationdb.LocationsSchema()),
+		Config:       listcatalog.Describe((*location.Location)(nil), locationdb.LocationsSchema()),
 		Fields: []filtercatalog.Field{
 			{
 				Name:   querytool.ListFieldStatus,

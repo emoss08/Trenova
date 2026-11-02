@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
-	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/pkg/listcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -61,7 +61,7 @@ func NewListEquipmentManufacturersTool(
 		EntityPlural: "equipment manufacturers",
 		Summary:      equipmentManufacturersSummary,
 		Resource:     permission.ResourceEquipmentManufacturer,
-		Config: listquery.Describe(
+		Config: listcatalog.Describe(
 			(*equipmentmanufacturer.EquipmentManufacturer)(nil),
 			equipmentmanufacturerdb.EquipmentManufacturersSchema(),
 		),

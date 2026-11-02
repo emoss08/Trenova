@@ -12,6 +12,7 @@ type plan struct {
 	cat      *listcatalog.Catalog
 	ref      *keel.Ref
 	computed map[string]keel.Expr
+	copies   map[string]keel.Expr
 }
 
 type field struct {
@@ -25,6 +26,11 @@ type field struct {
 func newPlan[T any](q keel.Query[*T], computed map[string]keel.Expr) *plan {
 	ref := q.TableRef()
 	return &plan{cat: listcatalog.For[T](ref.Table), ref: ref, computed: computed}
+}
+
+func (p *plan) withCopies(copies map[string]keel.Expr) *plan {
+	p.copies = copies
+	return p
 }
 
 func (p *plan) baseColumn(index int32) keel.Col {
@@ -62,6 +68,9 @@ func (p *plan) resolve(name string) (field, bool) {
 	}
 
 	col := &rel.Target.Columns[index]
+	if copied, found := p.copies[name]; found && copied != nil {
+		return field{expr: keel.DynOf(copied), col: col, column: true, index: index}, true
+	}
 	expr := keel.ResolvePath(p, rel.Name, col.Name)
 	if expr.Err() != nil {
 		return field{}, false

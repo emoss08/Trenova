@@ -27,7 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
-	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/pkg/listcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -838,7 +838,7 @@ func NewListGLAccountsTool(
 			"type and status, with its balances when your data access reaches them. Use " +
 			"it to name the account a journal line posts to or to find an account by code.",
 		Resource: permission.ResourceGeneralLedgerAccount,
-		Config:   listquery.Describe((*glaccount.GLAccount)(nil), glaccountdb.GLAccountsSchema()),
+		Config:   listcatalog.Describe((*glaccount.GLAccount)(nil), glaccountdb.GLAccountsSchema()),
 		Fields: []filtercatalog.Field{
 			{
 				Name:   querytool.ParamStatus,
@@ -933,7 +933,7 @@ func NewListFiscalPeriodsTool(
 			"close by, with their dates and whether each is open, locked or closed. " +
 			"ledger_get_fiscal_close_blockers says what stops one from closing.",
 		Resource: permission.ResourceFiscalPeriod,
-		Config: listquery.Describe(
+		Config: listcatalog.Describe(
 			(*fiscalperiod.FiscalPeriod)(nil),
 			fiscalperioddb.FiscalPeriodsSchema(),
 		),

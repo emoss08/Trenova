@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment/recurringshipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
-	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/pkg/listcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
@@ -83,7 +83,7 @@ func NewListRecurringShipmentsTool(
 			"the id with shipment_update_recurring, shipment_set_recurring_status or " +
 			"shipment_generate_recurring.",
 		Resource: permission.ResourceRecurringShipment,
-		Config: listquery.Describe(
+		Config: listcatalog.Describe(
 			(*recurringshipment.RecurringShipment)(nil),
 			recurringshipmentdb.RecurringShipmentsSchema(),
 		),

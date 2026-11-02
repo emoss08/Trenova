@@ -22,7 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
-	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/pkg/listcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -455,7 +455,7 @@ func newListInvoiceRunsTool(
 			"billing period, by status, number or period. Open one with invoice_get_run to " +
 			"see its groups and items.",
 		Resource: permission.ResourceInvoiceRun,
-		Config: listquery.Describe(
+		Config: listcatalog.Describe(
 			(*invoicerun.InvoiceRun)(nil),
 			invoicerundb.InvoiceRunsSchema(),
 		),
