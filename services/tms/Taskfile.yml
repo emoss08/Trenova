@@ -45,6 +45,22 @@ vars:
   GO_JOBS: '{{if eq .LOW_RESOURCE "true"}}{{.LOW_RESOURCE_JOBS}}{{end}}'
   GO_TEST_JOBS: '{{.GO_JOBS | default "4"}}'
   AIR_FLAGS: '{{if .GO_JOBS}}--build.delay 2000{{end}}'
+  # gocut, for hot reload only: `task run-watch GOCUT=/path/to/gocut` (or
+  # run-worker-watch, or export GOCUT) runs the watch build's tools through
+  # gocut with -toolexec. gocut reuses a package's previous compile when
+  # nothing the package uses from a changed dependency changed. It runs in
+  # shadow mode (compiles anyway and reports what it would have reused) unless
+  # GOCUT_MODE=active, which skips those compiles. Tests, lint, CI and release
+  # builds never use it.
+  GOCUT: '{{.GOCUT | default ""}}'
+  # The one build command of every hot-reload task (run-watch, watch,
+  # run-worker-watch); .air.toml explains the flags. Each task appends -o and
+  # its main package.
+  WATCH_BUILD: >-
+    go build {{.GO_TAG_FLAG}}{{if .GOCUT}} -toolexec '{{.GOCUT}}'{{end}}
+    -gcflags=all=-dwarf=false
+    -gcflags='github.com/emoss08/trenova/...=-N -l -dwarf=false'
+    -ldflags='-s -w'
   # Search is off by default, Gotenberg only renders PDFs, and Redis Insight and
   # the Samsara simulator are debugging aids, so the API starts without them.
   # Temporal stays: every AI feature and background job runs on it. The imaging
@@ -99,9 +115,11 @@ tasks:
       - "{{.CLI_PATH}} api run"
 
   run-watch:
-    desc: Run the API server with hot reload
+    desc: Run the API server with hot reload (GOCUT=/path/to/gocut to build through gocut)
     cmds:
-      - air {{.AIR_FLAGS}}
+      - >-
+        air {{.AIR_FLAGS}}
+        --build.cmd "{{.WATCH_BUILD}} -o ./tmp/trenova-api ./cmd/api"
 
   build-bench:
     desc: "Measure rebuild times after representative edits (task build-bench -- --target cli --mode air)"
@@ -109,11 +127,11 @@ tasks:
       - ./scripts/buildbench/buildbench.sh {{.CLI_ARGS}}
 
   run-worker-watch:
-    desc: Run the worker service with hot reload
+    desc: Run the worker service with hot reload (GOCUT=/path/to/gocut to build through gocut)
     cmds:
       - >-
         air {{.AIR_FLAGS}}
-        --build.cmd "go build -tags nomsgpack -gcflags='github.com/emoss08/trenova/...=-N -l' -ldflags='-s -w' -o ./tmp/trenova-worker ./cmd/worker"
+        --build.cmd "{{.WATCH_BUILD}} -o ./tmp/trenova-worker ./cmd/worker"
         --build.bin "./tmp/trenova-worker"
 
   run-worker:
@@ -301,6 +319,7 @@ tasks:
       - golangci-lint run{{if .GO_JOBS}} --concurrency={{.GO_JOBS}}{{end}} ./...
       - go run ./scripts/archlint
       - go run ./scripts/pkgsizelint
+      - go run ./scripts/genericlint
 
   fmt:
     desc: Format code
@@ -553,7 +572,9 @@ tasks:
   watch:
     desc: Run API with hot reload
     cmds:
-      - air {{.AIR_FLAGS}}
+      - >-
+        air {{.AIR_FLAGS}}
+        --build.cmd "{{.WATCH_BUILD}} -o ./tmp/trenova-api ./cmd/api"
 
   watch-ui:
     desc: Run frontend with hot reload

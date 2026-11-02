@@ -2,18 +2,27 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-# -N -l (no optimisation, no inlining) takes a resolver-edit reload from ~25s
-# to ~17s and keeps private edits from changing a package's export data. It is
-# scoped to first-party packages rather than `all=` so the stdlib and runtime
-# stay optimised. -s -w leaves out the symbol table and DWARF, which only a
-# debugger reads, so the linker writes less on every reload. Both apply only
-# here and to run-worker-watch -- `task build-cli`, CI and the release image
+# `task run-watch` (and `task watch`, `task run-worker-watch`) pass the build
+# command from WATCH_BUILD in Taskfile.yml with --build.cmd, which is where the
+# optional gocut toolexec is added. The cmd below is the same build for air
+# started on its own; keep the two in step.
+#
+# WATCH_BUILD compiles first-party packages with -N -l (no optimisation, no
+# inlining), which takes a resolver-edit reload from ~25s to ~17s and keeps
+# private edits from changing a package's export data. It is scoped to
+# first-party packages rather than `all=` so the stdlib and runtime stay
+# optimised. Every package compiles with -dwarf=false: the link already drops
+# the symbol table and DWARF (-ldflags='-s -w'), which only a debugger reads,
+# so generating DWARF in the compiler was work the linker threw away. The
+# first-party pattern repeats -dwarf=false because, for a package that
+# matches several -gcflags patterns, the last one wins. All of this applies
+# only to the watch tasks -- `task build-cli`, tests, CI and the release image
 # are unaffected.
 #
 # The reloaded server runs unoptimised code, so do not benchmark against it,
 # and these flags key a separate build cache, so the first reload after
-# changing them rebuilds every first-party package once.
-cmd = "go build -tags nomsgpack -gcflags='github.com/emoss08/trenova/...=-N -l' -ldflags='-s -w' -o ./tmp/trenova-api ./cmd/api"
+# changing them rebuilds every package once.
+cmd = "go build -tags nomsgpack -gcflags=all=-dwarf=false -gcflags='github.com/emoss08/trenova/...=-N -l -dwarf=false' -ldflags='-s -w' -o ./tmp/trenova-api ./cmd/api"
 bin = "./tmp/trenova-api"
 delay = 100
 exclude_dir = ["assets", "tmp", "vendor", "ui", "platform", "microservices"]

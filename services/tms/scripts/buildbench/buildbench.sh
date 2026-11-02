@@ -161,7 +161,7 @@ bin="$work/$target"
 build_args=(-p "$jobs" -tags "$TAGS")
 mode_name=$mode
 if [[ "$mode" == air ]]; then
-	build_args+=("-gcflags=$module/...=-N -l" "-ldflags=-s -w")
+	build_args+=("-gcflags=all=-dwarf=false" "-gcflags=$module/...=-N -l -dwarf=false" "-ldflags=-s -w")
 	strip=true
 elif [[ "$strip" == true ]]; then
 	build_args+=("-ldflags=-s -w")
