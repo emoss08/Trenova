@@ -1,5 +1,5 @@
 {
-  "version": "sha256:835c4b4eeb47292da4a7688afc43428b421fbcb7da446d202290b190c8d68ce8",
+  "version": "sha256:3318ab7c9c859e9e393810f7d8ab888336a7ebd056c41187cb3e236296fb01c6",
   "screens": [
     {
       "path": "/",
@@ -6430,13 +6430,10 @@
         "CreateMemo",
         "CustomerBrokerIntelligence",
         "CustomerTable",
-        "CustomerTrackingProfile",
         "DataTableAggregates",
         "DataTableFacets",
         "DataTableInsightFields",
         "DataTableSeries",
-        "DeskCustomerCard",
-        "DeskCustomerRateAgreements",
         "DeskInvoiceCard",
         "DraftFactoringNoa",
         "ExportTableView",
@@ -6473,11 +6470,9 @@
         "SaveMyTableLayout",
         "ScheduleTableView",
         "SendFactoringNoa",
-        "ShipmentCustomerBillingRules",
         "ShipmentInvoices",
         "StartBulkEdit",
         "UndoMyBulkEdit",
-        "UpdateCustomerTrackingProfile",
         "VetCustomerBroker"
       ],
       "endpoints": [
@@ -6602,8 +6597,7 @@
         "factoring_remittance",
         "factoring_reserve",
         "factoring_submission",
-        "invoice",
-        "rate_agreement"
+        "invoice"
       ],
       "references": [
         "customer_payment",
@@ -36233,7 +36227,9 @@
     {
       "name": "CustomerTrackingProfile",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "customer"
+      ],
       "linked": [],
       "declared": []
     },
@@ -42764,13 +42760,6 @@
     },
     {
       "name": "UpdateCostingControl",
-      "type": "mutation",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
-      "name": "UpdateCustomerTrackingProfile",
       "type": "mutation",
       "reads": [],
       "linked": [],
