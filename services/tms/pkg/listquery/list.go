@@ -22,6 +22,7 @@ type Request[T any] struct {
 	// table, such as a queue item found by its shipment's PRO number: a row it
 	// matches is found beside the rows the query matches on their own columns.
 	AlsoMatch func(query string) keel.Pred
+	Copies    map[string]keel.Expr
 }
 
 type Keyset struct {
@@ -35,7 +36,7 @@ func Connection[T any](
 	q keel.Query[*T],
 	req *Request[T],
 ) (*pagination.CursorListResult[*T], error) {
-	p := newPlan(q, req.Computed)
+	p := newPlan(q, req.Computed).withCopies(req.Copies)
 	read := narrow(p, q, req)
 
 	orders, shape, err := connectionOrder(p, req)
@@ -160,7 +161,7 @@ func List[T any](
 	q keel.Query[*T],
 	req *Request[T],
 ) (*pagination.ListResult[*T], error) {
-	p := newPlan(q, req.Computed)
+	p := newPlan(q, req.Computed).withCopies(req.Copies)
 	read := narrow(p, q, req)
 
 	rows, counted, err := listRows(p, q, req, p.rank(queryOf(req.Filter)))

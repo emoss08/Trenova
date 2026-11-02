@@ -273,6 +273,23 @@ func TestFilters_ARelationPathJoinsItsTableUnderTheTenant(t *testing.T) {
 		truckTenant+` AND (ow."name" = $3) LIMIT 10`, sql)
 }
 
+func TestFilters_ACopiedRelationFieldReadsTheCopyWithoutTheJoin(t *testing.T) {
+	t.Parallel()
+
+	q := testTrucks.Query()
+	p := newPlan(q, nil)
+	p.withCopies(map[string]keel.Expr{"owner.name": p.baseColumn(p.cat.Fields["ownerId"])})
+	q.Where(p.where(filters(domaintypes.FieldFilter{
+		Field:    "owner.name",
+		Operator: dbtype.OpEqual,
+		Value:    "Acme",
+	}))...).Limit(10)
+
+	sql, args := render(t, q)
+	assert.Equal(t, truckSelect+truckTenant+` AND (t."owner_id" = $3) LIMIT 10`, sql)
+	assert.Equal(t, []any{"org_1", "bu_1", "Acme"}, args)
+}
+
 func TestFilters_SkipWhatTheyCannotApply(t *testing.T) {
 	t.Parallel()
 

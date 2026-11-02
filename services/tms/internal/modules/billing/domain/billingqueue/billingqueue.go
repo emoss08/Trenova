@@ -74,6 +74,9 @@ type BillingQueueItem struct {
 	CreatedAt                 int64                `json:"createdAt"                 keel:"created_at,autocreate"`
 	UpdatedAt                 int64                `json:"updatedAt"                 keel:"updated_at,autoupdate"`
 	SearchVector              string               `json:"-"                         keel:"search_vector,tsvector,readonly,noselect"`
+	ShipmentCustomerID        pulid.ID             `json:"-"                         keel:"shipment_customer_id,nullzero,readonly,noselect"`
+	ShipmentDeliveredAt       *int64               `json:"-"                         keel:"shipment_delivered_at,readonly,noselect"`
+	ShipmentShippedAt         *int64               `json:"-"                         keel:"shipment_shipped_at,readonly,noselect"`
 
 	Shipment       *shipment.Shipment `json:"shipment,omitempty"       keel:"belongs:shipment_id"`
 	BillToCustomer *customer.Customer `json:"billToCustomer,omitempty" keel:"belongs:bill_to_customer_id"`

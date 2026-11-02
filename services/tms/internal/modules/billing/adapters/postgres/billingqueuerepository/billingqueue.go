@@ -73,6 +73,16 @@ func shipmentNamed(query string) keel.Pred {
 	))
 }
 
+func shipmentCopies() map[string]keel.Expr {
+	bq := billingqueuedb.BillingQueueItems
+
+	return map[string]keel.Expr{
+		"shipment.customerId":         bq.ShipmentCustomerID,
+		"shipment.actualDeliveryDate": bq.ShipmentDeliveredAt,
+		"shipment.actualShipDate":     bq.ShipmentShippedAt,
+	}
+}
+
 func listShape(
 	q keel.Query[*billingqueue.BillingQueueItem],
 ) keel.Query[*billingqueue.BillingQueueItem] {
@@ -102,6 +112,7 @@ func (r *repository) List(
 					Filter:    req.Filter,
 					Shape:     listShape,
 					AlsoMatch: shipmentNamed,
+					Copies:    shipmentCopies(),
 				},
 			)
 			if err != nil {
@@ -137,6 +148,7 @@ func (r *repository) ListConnection(
 					Cursor:    req.Cursor,
 					Shape:     listShape,
 					AlsoMatch: shipmentNamed,
+					Copies:    shipmentCopies(),
 					Keyset: &listquery.Keyset{
 						Orders: []keel.Order{bq.CreatedAt.Asc(), bq.ID.Asc()},
 						Shape:  laneCursorSort,

@@ -483,7 +483,10 @@ volume generator, not the query: give the table the rows and status mix producti
   FROM NEW.col)` on the source pushes a change to its children by an indexed key
   (`20261231023061_service_failure_location.sql`). A one-row copy has no set to recompute, and the
   trigger covers every writer, seeds and fixtures included; derivations over many child rows stay
-  in the repository refresh above.
+  in the repository refresh above. When the list filters the copy by the related field's own
+  name (`shipment.customerId` on a queue item), `listquery.Request.Copies` maps that name to the
+  copy, so the filter reads the child's index and not a join
+  (`20261231023114_billing_queue_shipment_copies.sql`, `billingqueuerepository.shipmentCopies`).
 - **A page whose filter needs a large parent** (unarrived ETAs on live shipments, exhausted tenders
   on uncovered moves) sorts above the join whenever the planner hashes the parent, and no index
   orders a join. Read the page from the child's own ordered partial index, check the parents of
