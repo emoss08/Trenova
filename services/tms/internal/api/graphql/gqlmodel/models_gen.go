@@ -9607,7 +9607,7 @@ type Shipment struct {
 	TariffInputs map[string]any `json:"tariffInputs"`
 	// The freight the shipment bills, line by line, as its last rating produced it.
 	FreightLines           []*ShipmentFreightLine `json:"freightLines"`
-	TotalChargeAmount      string                 `json:"totalChargeAmount"`
+	TotalChargeAmount      *string                `json:"totalChargeAmount,omitempty"`
 	Pieces                 *int                   `json:"pieces,omitempty"`
 	Weight                 *int                   `json:"weight,omitempty"`
 	TemperatureMin         *int                   `json:"temperatureMin,omitempty"`

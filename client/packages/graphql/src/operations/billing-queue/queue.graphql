@@ -2,7 +2,7 @@ query BillingQueueItems(
   $input: DataTableConnectionInput!
   $filter: BillingQueueItemsFilterInput
   $includeTotalCount: Boolean = true
-) {
+) @requiresRead(kind: "shipment") {
   billingQueueItems(input: $input, filter: $filter) {
     edges {
       cursor

@@ -1976,13 +1976,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalChargeAmount",
-				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.TotalChargeAmount, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
 			{
 				Name:     "pieces",

@@ -62,7 +62,7 @@ func ShipmentToModel(
 		FreightChargeAmount:    nullDecimalString(entity.FreightChargeAmount),
 		TariffInputs:           tariffInputs,
 		FreightLines:           tariffmapping.FreightLinesToModel(entity.FreightLines),
-		TotalChargeAmount:      nullDecimalString(entity.TotalChargeAmount),
+		TotalChargeAmount:      gqldecimal.NullDecimalStringPtr(entity.TotalChargeAmount),
 		Pieces:                 gqlscalar.IntPtr(entity.Pieces),
 		Weight:                 gqlscalar.IntPtr(entity.Weight),
 		TemperatureMin:         intPtrFromInt16(entity.TemperatureMin),

@@ -9247,6 +9247,12 @@ func init() {
 				},
 			},
 			{
+				Name: "trackingProfile",
+				Relation: &RelationSpec{
+					Target: &CustomerTrackingProfileSpec,
+				},
+			},
+			{
 				Name:   "dotNumber",
 				Column: "dot_number",
 			},
@@ -9944,10 +9950,6 @@ func init() {
 			{
 				Name:   "notificationsEnabledAt",
 				Column: "notifications_enabled_at",
-			},
-			{
-				Name:   "version",
-				Column: "version",
 			},
 			{
 				Name:   "updatedAt",
