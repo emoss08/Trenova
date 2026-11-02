@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/pkg/keelexpr"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -295,7 +297,7 @@ func (r *repository) UpdateState(
 			s.Cadence.To(schedule.Cadence),
 			s.CronExpression.To(schedule.CronExpression),
 			s.Enabled.To(schedule.Enabled),
-			listquery.OptionalInt64(s.NextRunAt, schedule.NextRunAt),
+			keelexpr.OptionalInt64(s.NextRunAt, schedule.NextRunAt),
 		)
 		if err != nil {
 			r.l.Error("failed to update conversation schedule", zap.Error(err))
@@ -322,7 +324,7 @@ func (r *repository) RecordRun(
 		s := conversationscheduledb.Schedules
 		_, err := s.Where(s.ID.Eq(req.ID)).Update(ctx, r.db.Keel(ctx),
 			s.LastRunAt.To(req.RunAt),
-			listquery.OptionalInt64(s.NextRunAt, req.NextRunAt),
+			keelexpr.OptionalInt64(s.NextRunAt, req.NextRunAt),
 			s.LastTurnID.To(req.TurnID),
 			s.Version.ToExpr(s.Version),
 		)

@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/pkg/keelexpr"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -14,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -277,7 +278,7 @@ func (r *connectionRepository) StoreTokens(
 			r.db.Keel(ctx),
 			ac.AccessTokenExpiresAt.To(req.AccessTokenExpiresAt),
 			ac.RefreshTokenExpiresAt.To(req.RefreshTokenExpiresAt),
-			listquery.OptionalInt64(ac.LastRefreshedAt, req.RefreshedAt),
+			keelexpr.OptionalInt64(ac.LastRefreshedAt, req.RefreshedAt),
 			ac.UpdatedAt.To(req.At),
 			keelassign.StringOrNull(ac.AccessTokenCiphertext, req.AccessTokenCiphertext),
 			keelassign.StringOrNull(ac.RefreshTokenCiphertext, req.RefreshTokenCiphertext),

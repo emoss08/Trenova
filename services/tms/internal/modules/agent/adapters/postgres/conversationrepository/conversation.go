@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/pkg/keelexpr"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -12,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -315,7 +316,7 @@ func (r *repository) UpdateThread(
 			th.AutoCompactOff.To(thread.AutoCompactOff),
 			th.SubjectType.To(thread.SubjectType),
 			th.SubjectID.To(thread.SubjectID),
-			listquery.OptionalInt64(th.SnoozedUntil, thread.SnoozedUntil),
+			keelexpr.OptionalInt64(th.SnoozedUntil, thread.SnoozedUntil),
 			th.SnoozeAnchor.To(thread.SnoozeAnchor),
 			th.SnoozeStopID.To(thread.SnoozeStopID),
 		)

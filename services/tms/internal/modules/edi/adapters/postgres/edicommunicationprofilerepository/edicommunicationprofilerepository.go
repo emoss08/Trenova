@@ -5,6 +5,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/pkg/keelexpr"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -115,7 +117,7 @@ func profileOptionsSearch(s string) keel.Pred {
 	return keel.Or(
 		cp.Name.ContainsFold(s),
 		cp.Description.ContainsFold(s),
-		listquery.TextContainsFold(cp.Method, s),
+		keelexpr.TextContainsFold(cp.Method, s),
 	)
 }
 
