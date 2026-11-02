@@ -46,6 +46,7 @@ var (
 	origin      = newStopEdge("orig", false)
 	destination = newStopEdge("dest", true)
 
+	boardShipment      = shipmentdb.Shipments.As("board_sp")
 	assignments        = shipmentdb.Assignments
 	carrierAssignments = shipmentdb.CarrierAssignments
 	assignedCarriers   = carrierdb.Carriers.As("asn_car")
@@ -105,13 +106,28 @@ func zero(e keel.Expr) keel.Int64Expr {
 // live assignment and carrier assignment, and its first and last stops.
 func boardMoves() moveQuery {
 	sm := shipmentdb.ShipmentMoves
-	sp := shipmentdb.Shipments
+	sp := boardShipment
 	cus := customerdb.Customers
 	asn := assignments
 	ca := carrierAssignments
 
 	q := sm.
-		Join(sp, sp.ID.EqCol(sm.ShipmentID)).
+		JoinLateral(sp.
+			Pick(
+				sp.ID,
+				sp.ProNumber,
+				sp.BOL,
+				sp.Status,
+				sp.CustomerID,
+				sp.ServiceTypeID,
+				sp.TractorTypeID,
+				sp.TrailerTypeID,
+				sp.TemperatureMin,
+				sp.TemperatureMax,
+				sp.TotalChargeAmount,
+			).
+			Where(sp.ID.EqCol(sm.ShipmentID)).
+			Limit(1)).
 		LeftJoin(cus, cus.ID.EqCol(sp.CustomerID)).
 		LeftJoinLateral(asn.
 			Pick(
@@ -138,7 +154,7 @@ func boardMoves() moveQuery {
 
 func moveFilters(filter *dispatchboardports.DispatchBoardFilter) []keel.Pred {
 	sm := shipmentdb.ShipmentMoves
-	sp := shipmentdb.Shipments
+	sp := boardShipment
 
 	statuses := openBoardStatuses
 	if len(filter.MoveStatuses) > 0 {

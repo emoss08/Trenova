@@ -56,7 +56,7 @@ func (r *repository) ListBoardMoves(
 ) ([]*dispatchboardports.BoardMove, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*dispatchboardports.BoardMove, error) {
 		sm := shipmentdb.ShipmentMoves
-		sp := shipmentdb.Shipments
+		sp := boardShipment
 		asn := assignments
 		ca := carrierAssignments
 		orig := origin
